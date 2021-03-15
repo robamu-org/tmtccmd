@@ -1,0 +1,91 @@
+import struct
+import sys
+
+from tmtccmd.utility.tmtcc_logger import get_logger
+
+logger = get_logger()
+
+
+class ObjectIdManager:
+    """
+    Global object manager. Only one global instance should be created.
+    The instance can be retrieved with the get_manager class method.
+    """
+    MANAGER_INSTANCE = None
+
+    @classmethod
+    def get_manager(cls):
+        """
+        Retrieve a handle to the global object ID manager.
+        """
+        if cls.MANAGER_INSTANCE is None:
+            cls.MANAGER_INSTANCE = ObjectIdManager()
+        return cls.MANAGER_INSTANCE
+
+    def __init__(self):
+        self.object_id_dict = dict()
+        self.object_ids_instantiated = False
+
+    # noinspection PyUnresolvedReferences
+    def get_object_id(self, object_id_key: int):
+        if not self.object_ids_instantiated:
+            self.object_ids_instantiated = True
+            self.__set_object_ids()
+        object_id = self.object_id_dict.get(object_id_key)
+        if object_id is None:
+            try:
+                logger.error("This key does not exist in the object ID dictionary!")
+            except ImportError:
+                print("Could not import logger!")
+            return bytearray(4)
+        else:
+            return object_id
+
+    def get_key_from_raw_object_id(self, object_id: bytearray):
+        for key, raw_id in self.object_id_dict.items():
+            if raw_id == object_id:
+                return key
+        return None
+
+    def __set_object_ids(self):
+        try:
+            from tmtccmd.defaults.object_id_setup import set_core_object_ids
+            from tmtccmd.core.hook_helper import get_global_hook_obj
+            set_core_object_ids(self.object_id_dict)
+            hook_obj = get_global_hook_obj()
+            hook_obj.set_object_ids(self.object_id_dict)
+        except ImportError:
+            from tmtccmd.utility.tmtcc_logger import get_logger
+            logger = get_logger()
+            logger.exception("Could not import functions to set object IDs!")
+            sys.exit(1)
+        except AttributeError:
+            from tmtccmd.utility.tmtcc_logger import get_logger
+            logger = get_logger()
+            logger.exception("Please ensure that the object ID keys are defined as well and "
+                             "make sure get_object_id in not called the global namespace!")
+            sys.exit(1)
+
+
+def get_object_id(object_id_key: int):
+    return ObjectIdManager.get_manager().get_object_id(object_id_key)
+
+
+def get_key_from_raw_object_id(object_id_raw: bytearray) -> int:
+    from tmtccmd.core.definitions import CoreObjectIds
+    if not isinstance(object_id_raw, bytearray):
+        logger.warning("Invalid object ID type.")
+        return CoreObjectIds.INVALID
+    if len(object_id_raw) != 4:
+        logger.warning("Invalid object ID length")
+        return CoreObjectIds.INVALID
+    return ObjectIdManager.get_manager().get_key_from_raw_object_id(object_id_raw)
+
+
+def get_key_from_int_object_id(object_id_int: int) -> int:
+    from tmtccmd.core.definitions import CoreObjectIds
+    if not isinstance(object_id_int, int):
+        logger.warning("Invalid object ID type.")
+        return CoreObjectIds.INVALID
+    object_id_raw = bytearray(struct.pack("!I", object_id_int))
+    return ObjectIdManager.get_manager().get_key_from_raw_object_id(object_id_raw)
