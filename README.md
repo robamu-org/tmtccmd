@@ -1,4 +1,4 @@
-![](https://github.com/rmspacefish/tmtccmd/blob/develop/docs/logo_tmtccmd.png =100x)
+<p align="center"> <img src="https://github.com/rmspacefish/tmtccmd/blob/develop/docs/logo_tmtccmd.png" width="30%"> </p>
 
 TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 ====
