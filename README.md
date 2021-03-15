@@ -5,6 +5,9 @@ TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtcc
 
 ## Overview
 
+- Documentation: https://tmtccmd.readthedocs.io/en/latest/
+- Project Homepage: https://github.com/rmspacefish/tmtccmd
+
 This client was first developed by KSat for the 
 [SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board 
 software but has evolved into a more generic tool for satellite developers to perform TMTC 
