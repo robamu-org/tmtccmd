@@ -5,8 +5,9 @@ TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtcc
 
 ## Overview
 
-This client was first developed by KSat for the SOURCE project to test the on-board software but
-has evolved into a more generic tool for satellite developers to perform TMTC 
+This client was first developed by KSat for the 
+[SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board 
+software but has evolved into a more generic tool for satellite developers to perform TMTC 
 (Telemetry and Telecommand) handling and testing via different communication interfaces. 
 Currently, only the PUS standard is implemented as a packet standard. This tool can be used either 
 as a command line tool or as a GUI tool but the GUI capabilities are still in an Alpha state. 
