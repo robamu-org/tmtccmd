@@ -5,6 +5,6 @@ except ImportError:
 
 
 setup(
-    version='1.2',
+    version='1.0.0',
     packages=['core','com_if','defaults','pus_tc','pus_tm','sendreceive','utility'],
 )
