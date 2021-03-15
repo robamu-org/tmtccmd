@@ -1,5 +1,3 @@
-<p align="center"> <img src="https://github.com/rmspacefish/tmtccmd/blob/develop/docs/logo_tmtccmd.png" width="30%"> </p>
-
 TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 ====
 
@@ -39,3 +37,4 @@ An example which does not require additional software or hardware is still work-
 It is recommended to use Python 3.8.
 You can clone this repository with `pip install .`.
 Alternatively, you can use `pip install tmtccmd`.
+
