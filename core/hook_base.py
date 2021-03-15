@@ -28,10 +28,6 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def add_globals(self) -> Dict[int, any]:
-        return dict()
-
-    @abstractmethod
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.defaults.globals_setup import default_add_globals_pre_args_parsing
         default_add_globals_pre_args_parsing(gui=gui)
