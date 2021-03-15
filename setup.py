@@ -6,5 +6,5 @@ except ImportError:
 
 setup(
     version='1.0',
-    packages=['tmtccmd'],
+    packages=['core','com_if','defaults','pus_tc','pus_tm','sendreceive','utility'],
 )
