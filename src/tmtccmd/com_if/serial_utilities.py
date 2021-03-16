@@ -5,6 +5,30 @@ import serial
 import serial.tools.list_ports
 
 
+def determine_baud_rate() -> int:
+    prompt_baud_rate = False
+    baud_rate = 0
+    if os.path.isfile("config/tmtcc_config.json"):
+        with open("config/tmtcc_config.json", "r") as write:
+            try:
+                load_data = json.load(write)
+                baud_rate = load_data["BAUD_RATE"]
+            except KeyError:
+                prompt_baud_rate = True
+    else:
+        prompt_baud_rate = True
+
+    if prompt_baud_rate:
+        while True:
+            baud_rate = input("Please enter the baudrate for the serial protocol")
+            if baud_rate.isdigit():
+                baud_rate = int(baud_rate)
+                break
+            else:
+                print("Invalid baud rate specified, try again.")
+    return baud_rate
+
+
 def determine_com_port() -> str:
     reconfigure_com_port = False
     com_port = ""
