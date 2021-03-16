@@ -5,5 +5,6 @@ except ImportError:
 
 
 setup(
-    packages=["tmtccmd.core", ],
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
 )
