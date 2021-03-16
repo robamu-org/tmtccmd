@@ -17,12 +17,10 @@ LOGGER = get_logger()
 def create_communication_interface_default(
         com_if: int, tmtc_printer: TmTcPrinter
 ) -> Union[CommunicationInterface, None]:
-    from tmtccmd.com_if.serial_com_if import SerialCommunicationType, SerialComIF
+    from tmtccmd.com_if.serial_com_if import SerialComIF
     from tmtccmd.com_if.dummy_com_if import DummyComIF
     from tmtccmd.com_if.ethernet_com_if import EthernetComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
-    from tmtccmd.core.definitions import CoreGlobalIds
-    from tmtccmd.core.globals_manager import get_global
     """
     Return the desired communication interface object
     :param tmtc_printer: TmTcPrinter object.
