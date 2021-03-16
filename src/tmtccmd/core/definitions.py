@@ -33,9 +33,9 @@ class CoreModeList(enum.IntEnum):
     SequentialMode = 1
     ListenerMode = 2
     GUIMode = 3
-    SoftwareTestMode = 31
-    Idle = 32
-    PromptMode = 33
+    SoftwareTestMode = 4
+    Idle = 5
+    PromptMode = 6
 
 
 class CoreServiceList(enum.IntEnum):

@@ -41,7 +41,8 @@ class TmTcHookBase:
     def assign_communication_interface(
             self, com_if: int, tmtc_printer: TmTcPrinter
     ) -> Union[CommunicationInterface, None]:
-        pass
+        from tmtccmd.defaults.com_setup import create_communication_interface_default
+        return create_communication_interface_default()
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
