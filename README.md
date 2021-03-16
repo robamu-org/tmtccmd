@@ -1,4 +1,4 @@
-<p align="center"> <img src="https://github.com/rmspacefish/tmtccmd/blob/develop/docs/logo_tmtccmd_smaller.png" width="50%"> </p>
+<p align="center"> <img src="https://github.com/rmspacefish/tmtccmd/blob/develop/docs/logo_tmtccmd_smaller.png" width="40%"> </p>
 
 TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 ====
