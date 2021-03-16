@@ -8,6 +8,7 @@
 @author         R. Mueller, P. Scheurenbrand, D. Nguyen
 """
 import threading
+import os
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import *
@@ -18,12 +19,9 @@ from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeL
 from tmtccmd.pus_tc.base import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
+import tmtccmd.defaults as defaults_module
 
 LOGGER = get_logger()
-
-"""
-TODO: Make it look nicer. Add SOURCE or KSat logo.
-"""
 
 
 class TmTcFrontend(QMainWindow):
@@ -49,10 +47,19 @@ class TmTcFrontend(QMainWindow):
         self.service_list = []
         self.debug_mode = True
         self.is_busy = False
+        module_path = os.path.abspath(defaults_module.__file__).replace("__init__.py", "")
+        self.logo_path = f"{module_path}/logo.png"
+        print(self.logo_path)
         self.tmtc_handler.start(False)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start_ui)
+
+    def set_gui_logo(self, logo_total_path: str):
+        if os.path.isfile(logo_total_path):
+            self.logo_path = logo_total_path
+        else:
+            LOGGER.warning("Could not set logo, path invalid!")
 
     def service_index_changed(self, index: int):
         self.tmtc_handler.service = self.service_list[index]
@@ -129,10 +136,10 @@ class TmTcFrontend(QMainWindow):
 
         self.setWindowTitle("TMTC Commander")
         label = QLabel(self)
-        pixmap = QPixmap("logo.png")  # QPixmap is the class, easy to put pic on screen
+        pixmap = QPixmap(self.logo_path)  # QPixmap is the class, easy to put pic on screen
         label.setGeometry(720, 10, 100, 100)
         label.setPixmap(pixmap)
-        self.setWindowIcon(QIcon("logo.png"))
+        self.setWindowIcon(QIcon(self.logo_path))
         label.setScaledContents(True)
         row = 0
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
