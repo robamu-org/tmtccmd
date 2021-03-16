@@ -8,7 +8,7 @@ logger = get_logger()
 
 class ObjectIdManager:
     """
-    Global object manager. Only one global instance should be created.
+    Global object manager. This is a singleton class, only one global instance should be created.
     The instance can be retrieved with the get_manager class method.
     """
     MANAGER_INSTANCE = None
@@ -24,13 +24,9 @@ class ObjectIdManager:
 
     def __init__(self):
         self.object_id_dict = dict()
-        self.object_ids_instantiated = False
 
     # noinspection PyUnresolvedReferences
     def get_object_id(self, object_id_key: int):
-        if not self.object_ids_instantiated:
-            self.object_ids_instantiated = True
-            self.__set_object_ids()
         object_id = self.object_id_dict.get(object_id_key)
         if object_id is None:
             try:
@@ -46,6 +42,12 @@ class ObjectIdManager:
             if raw_id == object_id:
                 return key
         return None
+
+    def insert_object_id(self, object_id_key: int, object_id: bytearray):
+        self.object_id_dict.update({object_id_key: object_id})
+
+    def insert_object_ids(self, object_id_dict: Dict[int, bytearray]):
+        self.object_id_dict.update(object_id_dict)
 
     def __set_object_ids(self):
         try:
@@ -66,6 +68,13 @@ class ObjectIdManager:
                              "make sure get_object_id in not called the global namespace!")
             sys.exit(1)
 
+def insert_object_id(object_id_key: int, object_id: bytearray):
+    return ObjectIdManager.get_manager().insert_object_id(
+        object_id_key= object_id_key, object_id=object_id
+    )
+
+def insert_object_ids(object_id_dict: Dict[int, bytearray]):
+    return ObjectIdManager.get_manager().insert_object_ids(object_id_dict=object_id_dict)
 
 def get_object_id(object_id_key: int):
     return ObjectIdManager.get_manager().get_object_id(object_id_key)
