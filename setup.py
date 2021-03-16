@@ -1,11 +1,12 @@
 #!/usr/bin/python3
+"""
+We do the package handling in the static setup.cfg but include an empty setup.py
+to allow editable installs https://packaging.python.org/tutorials/packaging-projects/
+and provide extensibility
+"""
 try:
     from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
-# We do the package handling in the setup.py so we can have
-setup(
-    # package_dir={"": "src"},
-    # packages=find_packages(where="src"),
-)
+setup()
