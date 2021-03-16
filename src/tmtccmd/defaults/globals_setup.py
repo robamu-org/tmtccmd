@@ -1,33 +1,17 @@
 import argparse
+import pprint
 
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, CoreServiceList
 from tmtccmd.defaults.com_setup import default_set_up_ethernet_cfg, default_set_up_serial_cfg
+from tmtccmd.core.globals_manager import update_global
+from tmtccmd.utility.tmtcc_logger import get_logger
+
+LOGGER = get_logger()
 
 
 def default_add_globals_pre_args_parsing(gui: bool = False):
     from tmtccmd.core.globals_manager import update_global
-    import pprint
-
-    update_global(CoreGlobalIds.APID, 0xef)
-    update_global(CoreGlobalIds.COM_IF, CoreComInterfaces.EthernetUDP)
-    update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 2)
-    update_global(CoreGlobalIds.TM_TIMEOUT, 4)
-    update_global(CoreGlobalIds.DISPLAY_MODE, "long")
-    update_global(CoreGlobalIds.PRINT_TO_FILE, True)
-
-    update_global(CoreGlobalIds.SERIAL_CONFIG, dict())
-    update_global(CoreGlobalIds.ETHERNET_CONFIG, dict())
-    pp = pprint.PrettyPrinter()
-    update_global(CoreGlobalIds.PRETTY_PRINTER, pp)
-    update_global(CoreGlobalIds.TM_LISTENER_HANDLE, None)
-    update_global(CoreGlobalIds.COM_INTERFACE_HANDLE, None)
-    update_global(CoreGlobalIds.TMTC_PRINTER_HANDLE, None)
-    update_global(CoreGlobalIds.PRINT_RAW_TM, False)
-    update_global(CoreGlobalIds.RESEND_TC, False)
-
-    update_global(CoreGlobalIds.OP_CODE, "0")
-    update_global(CoreGlobalIds.MODE, CoreModeList.ListenerMode)
-
+    set_default_globals_pre_args_parsing(apid=0xef)
     if gui:
         default_set_up_ethernet_cfg()
 
@@ -37,10 +21,6 @@ def default_add_globals_pre_args_parsing(gui: bool = False):
 
 
 def default_add_globals_post_args_parsing(args: argparse.Namespace):
-    from tmtccmd.core.globals_manager import update_global
-    from tmtccmd.utility.tmtcc_logger import get_logger
-    logger = get_logger()
-
     mode_param = CoreModeList.ListenerMode
     if 0 <= args.mode <= 6:
         if args.mode == 0:
@@ -91,7 +71,7 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
     elif service == "23":
         service = CoreServiceList.SERVICE_23
     else:
-        logger.warning("Service not known! Setting standard service 17")
+        LOGGER.warning("Service not known! Setting standard service 17")
         service = CoreServiceList.SERVICE_17
 
     update_global(CoreGlobalIds.CURRENT_SERVICE, service)
@@ -137,3 +117,26 @@ def get_core_service_dict() -> dict:
     core_service_dict[CoreServiceList.SERVICE_23] = ["Service 23 File Management"]
     core_service_dict[CoreServiceList.SERVICE_200] = ["Service 200 Mode Management"]
     return core_service_dict
+
+
+def set_default_globals_pre_args_parsing(
+        apid: int, com_if_id: int = CoreComInterfaces.EthernetUDP, display_mode="long",
+        tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
+):
+    update_global(CoreGlobalIds.APID, apid)
+    update_global(CoreGlobalIds.COM_IF, com_if_id)
+    update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, tc_send_timeout_factor)
+    update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)
+    update_global(CoreGlobalIds.DISPLAY_MODE, display_mode)
+    update_global(CoreGlobalIds.PRINT_TO_FILE, print_to_file)
+    update_global(CoreGlobalIds.SERIAL_CONFIG, dict())
+    update_global(CoreGlobalIds.ETHERNET_CONFIG, dict())
+    pp = pprint.PrettyPrinter()
+    update_global(CoreGlobalIds.PRETTY_PRINTER, pp)
+    update_global(CoreGlobalIds.TM_LISTENER_HANDLE, None)
+    update_global(CoreGlobalIds.COM_INTERFACE_HANDLE, None)
+    update_global(CoreGlobalIds.TMTC_PRINTER_HANDLE, None)
+    update_global(CoreGlobalIds.PRINT_RAW_TM, False)
+    update_global(CoreGlobalIds.RESEND_TC, False)
+    update_global(CoreGlobalIds.OP_CODE, "0")
+    update_global(CoreGlobalIds.MODE, CoreModeList.ListenerMode)
