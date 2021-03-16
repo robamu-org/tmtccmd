@@ -1,0 +1,12 @@
+include LICENSE
+include NOTICE
+
+include docs/*.rst
+include docs/logo_tmtccmd.png
+include docs/conf.py
+include docs/Makefile
+include docs/*.md
+
+include tests/*
+
+include pycharm/*
