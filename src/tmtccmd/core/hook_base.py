@@ -24,7 +24,7 @@ class TmTcHookBase:
         return SW_NAME, SW_VERSION, SW_SUBVERSION
 
     @abstractmethod
-    def set_object_ids(self, object_id_dict: Dict[int, bytearray]):
+    def set_object_ids(self) -> Dict[int, bytearray]:
         pass
 
     @abstractmethod

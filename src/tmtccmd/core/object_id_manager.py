@@ -1,5 +1,6 @@
 import struct
 import sys
+from typing import Dict
 
 from tmtccmd.utility.tmtcc_logger import get_logger
 
@@ -49,7 +50,8 @@ class ObjectIdManager:
     def insert_object_ids(self, object_id_dict: Dict[int, bytearray]):
         self.object_id_dict.update(object_id_dict)
 
-    def __set_object_ids(self):
+    """
+        def __set_object_ids(self):
         try:
             from tmtccmd.defaults.object_id_setup import set_core_object_ids
             from tmtccmd.core.hook_helper import get_global_hook_obj
@@ -67,6 +69,8 @@ class ObjectIdManager:
             logger.exception("Please ensure that the object ID keys are defined as well and "
                              "make sure get_object_id in not called the global namespace!")
             sys.exit(1)
+    """
+
 
 def insert_object_id(object_id_key: int, object_id: bytearray):
     return ObjectIdManager.get_manager().insert_object_id(

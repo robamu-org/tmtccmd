@@ -1,8 +1,8 @@
 from typing import Dict
+from tmtccmd.core.definitions import CoreObjectIds
 
-
-def set_core_object_ids(object_id_dict: Dict[int, bytearray]):
-    from tmtccmd.core.definitions import CoreObjectIds
-    object_id_dict.update({
+def __get_core_object_ids() -> Dict[int, bytearray]:
+    object_id_dict = {
         CoreObjectIds.INVALID: bytearray([0xff, 0xff, 0xff, 0xff]),
-    })
+    }
+    return object_id_dict
