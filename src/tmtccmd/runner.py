@@ -56,9 +56,9 @@ def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False):
     """
     __set_up_tmtc_commander(use_gui=use_gui, reduced_printout=reduced_printout)
     if use_gui:
-        start_tmtc_commander_qt_gui()
+        __start_tmtc_commander_qt_gui()
     else:
-        start_tmtc_commander_cli()
+        __start_tmtc_commander_cli()
 
 
 def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
@@ -98,17 +98,17 @@ def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
     hook_obj = cast(TmTcHookBase, hook_obj_raw)
 
     if not reduced_printout:
-        handle_init_printout(use_gui, hook_obj.get_version())
+        __handle_init_printout(use_gui, hook_obj.get_version())
 
     logger.info("Starting TMTC Commander..")
 
     if use_gui:
         hook_obj.add_globals_pre_args_parsing(True)
     else:
-        handle_cli_args_and_globals()
+        __handle_cli_args_and_globals()
 
 
-def handle_init_printout(use_gui: bool, version_tuple: Tuple[str, int, int]):
+def __handle_init_printout(use_gui: bool, version_tuple: Tuple[str, int, int]):
     print("-- Python TMTC Commander --")
     if use_gui:
         print("-- GUI mode --")
@@ -118,7 +118,7 @@ def handle_init_printout(use_gui: bool, version_tuple: Tuple[str, int, int]):
     print(f"-- Software version {version_tuple[0]} v{version_tuple[1]}.{version_tuple[2]}--")
 
 
-def handle_cli_args_and_globals():
+def __handle_cli_args_and_globals():
     from typing import cast
     from tmtccmd.core.globals_manager import get_global
 
@@ -133,7 +133,7 @@ def handle_cli_args_and_globals():
     hook_obj.add_globals_post_args_parsing(args)
 
 
-def start_tmtc_commander_cli():
+def __start_tmtc_commander_cli():
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.core.globals_manager import get_global
     hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
@@ -151,7 +151,7 @@ def start_tmtc_commander_cli():
     tmtc_handler.start()
 
 
-def start_tmtc_commander_qt_gui():
+def __start_tmtc_commander_qt_gui():
     from tmtccmd.core.frontend import TmTcFrontend
     from tmtccmd.core.globals_manager import get_global
     try:
