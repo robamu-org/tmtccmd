@@ -158,7 +158,7 @@ class TmTcHandler:
             sender_and_receiver.send_single_tc_and_receive_tm(pus_packet_tuple=pus_packet_tuple)
             self.mode = CoreModeList.PromptMode
 
-        elif self.mode == CoreModeList.ServiceTestMode:
+        elif self.mode == CoreModeList.SequentialMode:
             from tmtccmd.core.globals_manager import get_global
             service_queue = deque()
             service_queue_packer = ServiceQueuePacker()

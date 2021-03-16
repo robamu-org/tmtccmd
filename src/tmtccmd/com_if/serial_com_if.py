@@ -4,10 +4,10 @@
 @author R. Mueller
 @date   01.11.2019
 """
+import enum
 import threading
 import time
 import logging
-from enum import Enum
 from collections import deque
 
 import serial
@@ -27,7 +27,18 @@ DLE_FRAME_LENGTH = 1500
 HEADER_BYTES_BEFORE_SIZE = 5
 
 
-class SerialCommunicationType(Enum):
+class SerialConfigIds(enum.Enum):
+    from enum import auto
+    SERIAL_PORT = auto()
+    SERIAL_BAUD_RATE = auto()
+    SERIAL_TIMEOUT = auto()
+    SERIAL_COMM_TYPE = auto()
+    SERIAL_FRAME_SIZE = auto()
+    SERIAL_DLE_QUEUE_LEN = auto()
+    SERIAL_DLE_MAX_FRAME_SIZE = auto()
+
+
+class SerialCommunicationType(enum.Enum):
     TIMEOUT_BASED = 0
     FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2

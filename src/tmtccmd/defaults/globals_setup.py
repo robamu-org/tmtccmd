@@ -30,7 +30,7 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
         elif args.mode == 2:
             mode_param = CoreModeList.SingleCommandMode
         elif args.mode == 3:
-            mode_param = CoreModeList.ServiceTestMode
+            mode_param = CoreModeList.SequentialMode
         elif args.mode == 4:
             mode_param = CoreModeList.SoftwareTestMode
     update_global(CoreGlobalIds.MODE, mode_param)

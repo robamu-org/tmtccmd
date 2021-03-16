@@ -79,7 +79,7 @@ class TmTcFrontend(QMainWindow):
         if self.debug_mode:
             LOGGER.info("Start Service Test Button pressed.")
         # LOGGER.info("start testing service: " + str(tmtcc_config.G_SERVICE))
-        # self.tmtc_handler.mode = tmtcc_config.ModeList.ServiceTestMode
+        # self.tmtc_handler.mode = tmtcc_config.ModeList.SequentialMode
         # start the action in a new process
         p = threading.Thread(target=self.handle_tm_tc_action)
         p.start()
@@ -115,7 +115,7 @@ class TmTcFrontend(QMainWindow):
     def handle_tm_tc_action(self):
         if self.debug_mode:
             LOGGER.info("Starting TMTC action..")
-        self.tmtc_handler.mode = CoreModeList.ServiceTestMode
+        self.tmtc_handler.mode = CoreModeList.SequentialMode
 
         self.set_send_buttons(False)
         self.tmtc_handler.perform_operation()
