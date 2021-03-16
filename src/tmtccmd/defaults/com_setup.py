@@ -1,9 +1,10 @@
 import sys
 from typing import Union
 
+from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces
+from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_utilities import determine_com_port
-from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
 
@@ -75,11 +76,9 @@ def create_communication_interface_default(
 
 
 def default_set_up_ethernet_cfg():
-    from tmtccmd.core.globals_manager import update_global
-    update_global(CoreGlobalIds.USE_ETHERNET, True)
-    from tmtccmd.core.globals_manager import get_global
     from config.custom_definitions import EthernetConfig
     from tmtccmd.com_if.ethernet_utilities import determine_ip_addresses
+    update_global(CoreGlobalIds.USE_ETHERNET, True)
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     # This will either load the addresses from a JSON file or prompt them from the user.
     send_addr, rcv_addr = determine_ip_addresses()
@@ -89,9 +88,7 @@ def default_set_up_ethernet_cfg():
 
 
 def default_set_up_serial_cfg(com_if: CoreComInterfaces):
-    from tmtccmd.core.globals_manager import update_global
     from tmtccmd.com_if.serial_com_if import SerialCommunicationType
-    from tmtccmd.core.globals_manager import get_global
     from config.custom_definitions import SerialConfig
     update_global(CoreGlobalIds.USE_SERIAL, True)
     serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)
