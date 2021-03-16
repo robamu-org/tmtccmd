@@ -6,7 +6,7 @@ from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_utilities import determine_com_port
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 
 LOGGER = get_logger()

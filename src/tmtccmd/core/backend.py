@@ -11,8 +11,8 @@ from tmtccmd.sendreceive.single_command_sender_receiver import SingleCommandSend
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
-from tmtccmd.utility.tmtcc_exit_handler import keyboard_interrupt_handler
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 from tmtccmd.pus_tc.packer import ServiceQueuePacker
 
 LOGGER = get_logger()

@@ -10,10 +10,10 @@ from collections import deque
 from tmtccmd.core.definitions import CoreGlobalIds
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.utility.tmtcc_tmtc_printer import get_logger
+from tmtccmd.utility.tmtc_printer import get_logger
 
 
 LOGGER = get_logger()

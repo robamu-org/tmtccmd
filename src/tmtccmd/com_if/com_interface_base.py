@@ -10,7 +10,7 @@ Description: Generic Communication Interface. Defines the syntax of the communic
 from abc import abstractmethod
 from typing import Tuple
 from tmtccmd.pus_tm.factory import PusTmListT
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tc.base import PusTcInfoT
 
 

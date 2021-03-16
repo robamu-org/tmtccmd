@@ -14,7 +14,7 @@ import serial
 import serial.tools.list_ports
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tm.factory import PusTelemetryFactory, PusTmListT
 from tmtccmd.pus_tc.base import PusTcInfoT
 from tmtccmd.utility.tmtcc_logger import get_logger

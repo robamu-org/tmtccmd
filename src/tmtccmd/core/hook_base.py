@@ -8,7 +8,7 @@ LOGGER = get_logger()
 
 class TmTcHookBase:
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+    from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.pus_tm.base import PusTelemetry
     from tmtccmd.pus_tc.base import PusTelecommand
     from tmtccmd.pus_tc.base import TcQueueT
