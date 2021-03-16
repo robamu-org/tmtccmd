@@ -3,8 +3,9 @@ import sys
 from typing import Dict
 
 from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.core.definitions import CoreObjectIds
 
-logger = get_logger()
+LOGGER = get_logger()
 
 
 class ObjectIdManager:
@@ -31,9 +32,9 @@ class ObjectIdManager:
         object_id = self.object_id_dict.get(object_id_key)
         if object_id is None:
             try:
-                logger.error("This key does not exist in the object ID dictionary!")
+                LOGGER.error("This key does not exist in the object ID dictionary!")
             except ImportError:
-                print("Could not import logger!")
+                print("Could not import LOGGER!")
             return bytearray(4)
         else:
             return object_id
@@ -60,13 +61,13 @@ class ObjectIdManager:
             hook_obj.set_object_ids(self.object_id_dict)
         except ImportError:
             from tmtccmd.utility.tmtcc_logger import get_logger
-            logger = get_logger()
-            logger.exception("Could not import functions to set object IDs!")
+            LOGGER = get_logger()
+            LOGGER.exception("Could not import functions to set object IDs!")
             sys.exit(1)
         except AttributeError:
             from tmtccmd.utility.tmtcc_logger import get_logger
-            logger = get_logger()
-            logger.exception("Please ensure that the object ID keys are defined as well and "
+            LOGGER = get_logger()
+            LOGGER.exception("Please ensure that the object ID keys are defined as well and "
                              "make sure get_object_id in not called the global namespace!")
             sys.exit(1)
     """
@@ -85,20 +86,18 @@ def get_object_id(object_id_key: int):
 
 
 def get_key_from_raw_object_id(object_id_raw: bytearray) -> int:
-    from tmtccmd.core.definitions import CoreObjectIds
     if not isinstance(object_id_raw, bytearray):
-        logger.warning("Invalid object ID type.")
+        LOGGER.warning("Invalid object ID type.")
         return CoreObjectIds.INVALID
     if len(object_id_raw) != 4:
-        logger.warning("Invalid object ID length")
+        LOGGER.warning("Invalid object ID length")
         return CoreObjectIds.INVALID
     return ObjectIdManager.get_manager().get_key_from_raw_object_id(object_id_raw)
 
 
 def get_key_from_int_object_id(object_id_int: int) -> int:
-    from tmtccmd.core.definitions import CoreObjectIds
     if not isinstance(object_id_int, int):
-        logger.warning("Invalid object ID type.")
+        LOGGER.warning("Invalid object ID type.")
         return CoreObjectIds.INVALID
     object_id_raw = bytearray(struct.pack("!I", object_id_int))
     return ObjectIdManager.get_manager().get_key_from_raw_object_id(object_id_raw)
