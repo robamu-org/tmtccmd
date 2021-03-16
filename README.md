@@ -34,8 +34,35 @@ An online version is available [here](https://tmtccmd.readthedocs.io/en/latest/)
 
 An example which does not require additional software or hardware is still work-in-progress.
 
+## Tests
+
+The tests are still work-in-progress. The first tests will target the internal
+PUS TMTC packaging modules.
+
 ## Installation
 
 It is recommended to use Python 3.8.
-You can clone this repository with `pip install .`.
-Alternatively, you can use `pip install tmtccmd`.
+For developers, it is recommended to add this repostiory as a submodule
+with the following command:
+
+```sh
+git submodule add https://github.com/rmspacefish/tmtccmd.git
+```
+
+After that, you can install the package in editable mode with the following command:
+
+```sh
+cd tmtccmd
+pip install -e .
+```
+
+To also install the requirements for the GUI mode, run this command instead
+
+```sh
+cd tmtccmd
+pip install -e .[gui]
+```
+
+Omit the `-e` for a regular installation. The package might move to PyPI soon.
+After that, installation will also be possible with `pip install tmtccmd`
+and `pip install tmtccmd[gui]`.
