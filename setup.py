@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 try:
     from setuptools import setup, find_packages
 except ImportError:
