@@ -1,12 +1,13 @@
 import sys
-from typing import Union
+from typing import Union, Tuple
 
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType
-from tmtccmd.com_if.serial_utilities import determine_com_port
+from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.ethernet_com_if import EthernetConfigIds
+from tmtccmd.com_if.ethernet_utilities import ethernet_address_t
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
@@ -72,29 +73,58 @@ def create_communication_interface_default(
         sys.exit(1)
 
 
-def default_set_up_ethernet_cfg():
+def default_tcpip_cfg_setup():
     from tmtccmd.com_if.ethernet_utilities import determine_ip_addresses
     update_global(CoreGlobalIds.USE_ETHERNET, True)
-    ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     # This will either load the addresses from a JSON file or prompt them from the user.
     send_addr, rcv_addr = determine_ip_addresses()
-    ethernet_cfg_dict.update({EthernetConfigIds.SEND_ADDRESS: send_addr})
-    ethernet_cfg_dict.update({EthernetConfigIds.RECV_ADDRESS: rcv_addr})
+    setup_tcpip_cfg(send_address=send_addr, receive_address=rcv_addr)
+
+
+def setup_tcpip_cfg(send_address: ethernet_address_t, receive_address: ethernet_address_t):
+    ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
+    ethernet_cfg_dict.update({EthernetConfigIds.SEND_ADDRESS: send_address})
+    ethernet_cfg_dict.update({EthernetConfigIds.RECV_ADDRESS: receive_address})
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_cfg_dict)
 
 
-def default_set_up_serial_cfg(com_if: CoreComInterfaces):
-    update_global(CoreGlobalIds.USE_SERIAL, True)
-    serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)
+def default_serial_cfg_setup(com_if: CoreComInterfaces):
+    baud_rate = determine_baud_rate()
     if com_if == CoreComInterfaces.Serial:
-        com_port = determine_com_port()
+        serial_port = determine_com_port()
     else:
-        com_port = ""
+        serial_port = ""
+    set_up_serial_cfg(com_if=com_if, baud_rate=baud_rate, com_port=serial_port)
+
+
+def set_up_serial_cfg(
+        com_if: CoreComInterfaces, baud_rate: int, com_port: str = "",  tm_timeout: float = 0.01,
+        ser_com_type: SerialCommunicationType = SerialCommunicationType.DLE_ENCODING,
+        ser_frame_size: int = 256, dle_queue_len: int = 25, dle_frame_size: int = 1024
+):
+    """
+    Default configuration to set up serial communication. The serial port and the baud rate
+    will be determined from a JSON configuration file and prompted from the user
+    :param com_if:
+    :param com_port:
+    :param baud_rate:
+    :param tm_timeout:
+    :param ser_com_type:
+    :param ser_frame_size:
+    :param dle_queue_len:
+    :param dle_frame_size:
+    :return:
+    """
+    update_global(CoreGlobalIds.USE_SERIAL, True)
+    if com_if == CoreComInterfaces.Serial and com_port == "":
+        LOGGER.warning("Invalid com port specified!")
+        com_port = determine_com_port()
+    serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)
     serial_cfg_dict.update({SerialConfigIds.SERIAL_PORT: com_port})
-    serial_cfg_dict.update({SerialConfigIds.SERIAL_BAUD_RATE: 115200})
-    serial_cfg_dict.update({SerialConfigIds.SERIAL_TIMEOUT: 0.01})
-    serial_cfg_dict.update({SerialConfigIds.SERIAL_COMM_TYPE: SerialCommunicationType.DLE_ENCODING})
-    serial_cfg_dict.update({SerialConfigIds.SERIAL_FRAME_SIZE: 256})
-    serial_cfg_dict.update({SerialConfigIds.SERIAL_DLE_QUEUE_LEN: 25})
-    serial_cfg_dict.update({SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE: 1024})
+    serial_cfg_dict.update({SerialConfigIds.SERIAL_BAUD_RATE: baud_rate})
+    serial_cfg_dict.update({SerialConfigIds.SERIAL_TIMEOUT: tm_timeout})
+    serial_cfg_dict.update({SerialConfigIds.SERIAL_COMM_TYPE: ser_com_type})
+    serial_cfg_dict.update({SerialConfigIds.SERIAL_FRAME_SIZE: ser_frame_size})
+    serial_cfg_dict.update({SerialConfigIds.SERIAL_DLE_QUEUE_LEN: dle_queue_len})
+    serial_cfg_dict.update({SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE: dle_frame_size})
     update_global(CoreGlobalIds.SERIAL_CONFIG, serial_cfg_dict)

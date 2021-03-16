@@ -26,6 +26,13 @@ def determine_baud_rate() -> int:
                 break
             else:
                 print("Invalid baud rate specified, try again.")
+        save_to_json = input("Do you want to store baud rate to configuration file? (y/n): ")
+        if save_to_json.lower() in ['y', "yes", "1"]:
+            with open("config/tmtcc_config.json", "r+") as file:
+                data = json.load(file)
+                data.update(dict(BAUD_RATE=baud_rate))
+                file.seek(0)
+                json.dump(data, file)
     return baud_rate
 
 
@@ -44,7 +51,7 @@ def determine_com_port() -> str:
                 reconfigure = input(
                     "COM port from configuration file not contained within serial"
                     "port list. Reconfigure serial port? [y/n]: ")
-                if reconfigure.lower() in ['y', "yes"]:
+                if reconfigure.lower() in ['y', "yes", "1"]:
                     write.close()
                     os.remove("config/tmtcc_config.json")
                     reconfigure_com_port = True
@@ -53,11 +60,14 @@ def determine_com_port() -> str:
 
     if reconfigure_com_port:
         com_port = prompt_com_port()
-        save_to_json = input("Do you want to store serial port to "
-                             "configuration? (y/n): ")
+        save_to_json = input("Do you want to store serial port to the"
+                             "configuration file? (y/n): ")
         if save_to_json.lower() in ['y', "yes"]:
-            with open("config/tmtcc_config.json", "w") as write:
-                json.dump(dict(COM_PORT=com_port), write, indent=4)
+            with open("config/tmtcc_config.json", "r+") as file:
+                data = json.load(file)
+                data.update(dict(COM_PORT=com_port))
+                file.seek(0)
+                json.dump(data, file)
     return com_port
 
 
