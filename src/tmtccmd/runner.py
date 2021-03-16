@@ -144,7 +144,7 @@ def __start_tmtc_commander_cli():
         logger.error("TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
                      "starting the program")
         sys.exit(0)
-    service = get_global(CoreGlobalIds.SERVICE)
+    service = get_global(CoreGlobalIds.CURRENT_SERVICE)
     op_code = get_global(CoreGlobalIds.OP_CODE)
     # The global variables are set by the argument parser.
     tmtc_handler = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
@@ -164,7 +164,7 @@ def __start_tmtc_commander_qt_gui():
         sys.exit(1)
     app = QApplication(["TMTC Commander"])
     tmtc_gui = TmTcFrontend(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
-                            get_global(CoreGlobalIds.SERVICE))
+                            get_global(CoreGlobalIds.CURRENT_SERVICE))
     tmtc_gui.start_ui()
     sys.exit(app.exec_())
 

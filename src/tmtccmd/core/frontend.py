@@ -237,7 +237,7 @@ class TmTcFrontend(QMainWindow):
             combo_box.addItem(service_dict[service_key][0])
             self.service_list.append(service_value)
 
-        default_service = get_global(CoreGlobalIds.SERVICE)
+        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
         combo_box.setCurrentIndex(default_service.value)
         combo_box.currentIndexChanged.connect(self.service_index_changed)
         grid.addWidget(combo_box, row, 0, 1, 1)

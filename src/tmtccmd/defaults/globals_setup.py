@@ -31,18 +31,9 @@ def default_add_globals_pre_args_parsing(gui: bool = False):
     if gui:
         default_set_up_ethernet_cfg()
 
-    servicelist = dict()
-    servicelist[CoreServiceList.SERVICE_2] = ["Service 2 Raw Commanding"]
-    servicelist[CoreServiceList.SERVICE_3] = ["Service 3 Housekeeping"]
-    servicelist[CoreServiceList.SERVICE_5] = ["Service 5 Event"]
-    servicelist[CoreServiceList.SERVICE_8] = ["Service 8 Functional Commanding"]
-    servicelist[CoreServiceList.SERVICE_9] = ["Service 9 Time"]
-    servicelist[CoreServiceList.SERVICE_17] = ["Service 17 Test"]
-    servicelist[CoreServiceList.SERVICE_20] = ["Service 20 Parameters"]
-    servicelist[CoreServiceList.SERVICE_23] = ["Service 23 File Management"]
-    servicelist[CoreServiceList.SERVICE_200] = ["Service 200 Mode Management"]
-    update_global(CoreGlobalIds.SERVICE, CoreServiceList.SERVICE_17)
-    update_global(CoreGlobalIds.SERVICELIST, servicelist)
+    service_dict = get_core_service_dict()
+    update_global(CoreGlobalIds.CURRENT_SERVICE, CoreServiceList.SERVICE_17)
+    update_global(CoreGlobalIds.SERVICE_DICT, service_dict)
 
 
 def default_add_globals_post_args_parsing(args: argparse.Namespace):
@@ -103,7 +94,7 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
         logger.warning("Service not known! Setting standard service 17")
         service = CoreServiceList.SERVICE_17
 
-    update_global(CoreGlobalIds.SERVICE, service)
+    update_global(CoreGlobalIds.CURRENT_SERVICE, service)
 
     if args.op_code is None:
         op_code = 0
@@ -132,3 +123,17 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
     if use_ethernet_cfg:
         # TODO: Port and IP address can also be passed as CLI parameters. Use them here if applicable
         default_set_up_ethernet_cfg()
+
+
+def get_core_service_dict() -> dict:
+    core_service_dict = dict()
+    core_service_dict[CoreServiceList.SERVICE_2] = ["Service 2 Raw Commanding"]
+    core_service_dict[CoreServiceList.SERVICE_3] = ["Service 3 Housekeeping"]
+    core_service_dict[CoreServiceList.SERVICE_5] = ["Service 5 Event"]
+    core_service_dict[CoreServiceList.SERVICE_8] = ["Service 8 Functional Commanding"]
+    core_service_dict[CoreServiceList.SERVICE_9] = ["Service 9 Time"]
+    core_service_dict[CoreServiceList.SERVICE_17] = ["Service 17 Test"]
+    core_service_dict[CoreServiceList.SERVICE_20] = ["Service 20 Parameters"]
+    core_service_dict[CoreServiceList.SERVICE_23] = ["Service 23 File Management"]
+    core_service_dict[CoreServiceList.SERVICE_200] = ["Service 200 Mode Management"]
+    return core_service_dict

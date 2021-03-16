@@ -63,8 +63,8 @@ class CoreGlobalIds(enum.IntEnum):
     # Parameters
     APID = 140
     MODE = 141
-    SERVICE = 142
-    SERVICELIST = 143
+    CURRENT_SERVICE = 142
+    SERVICE_DICT = 143
     COM_IF = 144
     OP_CODE = 145
     TM_TIMEOUT = 146
