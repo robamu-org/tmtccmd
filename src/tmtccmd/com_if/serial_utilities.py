@@ -26,7 +26,7 @@ def determine_baud_rate() -> int:
                 break
             else:
                 print("Invalid baud rate specified, try again.")
-        save_to_json = input("Do you want to store baud rate to configuration file? (y/n): ")
+        save_to_json = input("Do you want to store baud rate to the configuration file? (y/n): ")
         if save_to_json.lower() in ['y', "yes", "1"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 data = json.load(file)
