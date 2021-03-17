@@ -74,7 +74,7 @@ class TmTcHookBase:
         return None
 
     @staticmethod
-    def handle_servce_8_telemetry(
+    def handle_service_8_telemetry(
             object_id: int, action_id: int, custom_data: bytearray
     ) -> Tuple[list, list]:
         """
