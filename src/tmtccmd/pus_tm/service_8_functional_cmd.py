@@ -34,7 +34,7 @@ class Service8TM(PusTelemetry):
             from tmtccmd.core.hook_helper import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             self.custom_data_header, self.custom_data_content = \
-                hook_obj.handle_servce_8_telemetry(
+                hook_obj.handle_service_8_telemetry(
                     object_id=self.object_id_key, action_id=self.source_action_id,
                     custom_data=self.custom_data
                 )
