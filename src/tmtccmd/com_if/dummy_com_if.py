@@ -48,7 +48,7 @@ class DummyComIF(CommunicationInterface):
     def receive_telemetry(self, parameters: any = 0):
         tm_list = []
         if (self.service_sent == 17 or self.service_sent == 5) and self.reply_pending:
-            LOGGER.debug("receive crap called")
+            LOGGER.info("dummy_com_if: Receive function called")
             tm_packer = Service1TmPacked(subservice=1, ssc=self.ssc, tc_packet_id=self.tc_packet_id,
                                          tc_ssc=self.tc_ssc)
 

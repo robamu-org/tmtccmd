@@ -20,7 +20,7 @@ def determine_baud_rate() -> int:
 
     if prompt_baud_rate:
         while True:
-            baud_rate = input("Please enter the baudrate for the serial protocol")
+            baud_rate = input("Please enter the baudrate for the serial protocol: ")
             if baud_rate.isdigit():
                 baud_rate = int(baud_rate)
                 break
