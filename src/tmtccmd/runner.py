@@ -11,9 +11,9 @@ import sys
 from typing import Tuple
 
 from tmtccmd.core.hook_base import TmTcHookBase
-from tmtccmd.core.definitions import CoreGlobalIds, CoreObjectIds
+from tmtccmd.core.definitions import CoreGlobalIds
 from tmtccmd.core.globals_manager import update_global, get_global
-from tmtccmd.core.object_id_manager import insert_object_ids, insert_object_id
+from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.defaults.args_parser import parse_input_arguments
 from tmtccmd.defaults.object_id_setup import get_core_object_ids
 from tmtccmd.utility.tmtcc_logger import set_tmtc_logger, get_logger

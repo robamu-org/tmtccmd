@@ -1,6 +1,7 @@
 from typing import Dict
 from tmtccmd.core.definitions import CoreObjectIds
 
+
 def get_core_object_ids() -> Dict[int, bytearray]:
     """
     These are the object IDs for the tmtccmd core. The core will usually take care of

@@ -1,5 +1,4 @@
 import struct
-import sys
 from typing import Dict
 
 from tmtccmd.utility.tmtcc_logger import get_logger

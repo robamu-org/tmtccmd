@@ -42,7 +42,7 @@ class TmTcHookBase:
             self, com_if: int, tmtc_printer: TmTcPrinter
     ) -> Union[CommunicationInterface, None]:
         from tmtccmd.defaults.com_setup import create_communication_interface_default
-        return create_communication_interface_default()
+        return create_communication_interface_default(com_if=com_if, tmtc_printer=tmtc_printer)
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

@@ -221,7 +221,7 @@ class TmTcFrontend(QMainWindow):
         # add all possible ComIFs to the comboBox
         for com_if in CoreComInterfaces:
             com_if_combo_box.addItem(str(com_if))
-        com_if_combo_box.setCurrentIndex(self.tmtc_handler.com_if.value)
+        com_if_combo_box.setCurrentIndex(self.tmtc_handler.com_if)
         com_if_combo_box.currentIndexChanged.connect(com_if_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)
         row += 1
