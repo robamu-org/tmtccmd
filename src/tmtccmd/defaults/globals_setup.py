@@ -2,7 +2,7 @@ import argparse
 import pprint
 
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, CoreServiceList
-from tmtccmd.defaults.com_setup import default_set_up_ethernet_cfg, default_set_up_serial_cfg
+from tmtccmd.defaults.com_setup import default_serial_cfg_setup, default_tcpip_cfg_setup
 from tmtccmd.core.globals_manager import update_global
 from tmtccmd.utility.tmtcc_logger import get_logger
 
@@ -13,7 +13,7 @@ def default_add_globals_pre_args_parsing(gui: bool = False):
     from tmtccmd.core.globals_manager import update_global
     set_default_globals_pre_args_parsing(apid=0xef)
     if gui:
-        default_set_up_ethernet_cfg()
+        default_tcpip_cfg_setup()
 
     service_dict = get_core_service_dict()
     update_global(CoreGlobalIds.CURRENT_SERVICE, CoreServiceList.SERVICE_17)
@@ -95,14 +95,15 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
     if com_if == CoreComInterfaces.Serial or com_if == CoreComInterfaces.QEMU:
         use_serial_cfg = True
     if use_serial_cfg:
-        default_set_up_serial_cfg(com_if)
+        default_serial_cfg_setup(com_if=com_if)
 
     use_ethernet_cfg = False
     if com_if == CoreComInterfaces.EthernetUDP:
         use_ethernet_cfg = True
     if use_ethernet_cfg:
-        # TODO: Port and IP address can also be passed as CLI parameters. Use them here if applicable
-        default_set_up_ethernet_cfg()
+        # TODO: Port and IP address can also be passed as CLI parameters.
+        # Use them here if applicable?
+        default_tcpip_cfg_setup()
 
 
 def get_core_service_dict() -> dict:

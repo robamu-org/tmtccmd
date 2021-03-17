@@ -51,35 +51,16 @@ class ObjectIdManager:
     def insert_object_ids(self, object_id_dict: Dict[int, bytearray]):
         self.object_id_dict.update(object_id_dict)
 
-    """
-        def __set_object_ids(self):
-        try:
-            from tmtccmd.defaults.object_id_setup import set_core_object_ids
-            from tmtccmd.core.hook_helper import get_global_hook_obj
-            set_core_object_ids(self.object_id_dict)
-            hook_obj = get_global_hook_obj()
-            hook_obj.set_object_ids(self.object_id_dict)
-        except ImportError:
-            from tmtccmd.utility.tmtcc_logger import get_logger
-            LOGGER = get_logger()
-            LOGGER.exception("Could not import functions to set object IDs!")
-            sys.exit(1)
-        except AttributeError:
-            from tmtccmd.utility.tmtcc_logger import get_logger
-            LOGGER = get_logger()
-            LOGGER.exception("Please ensure that the object ID keys are defined as well and "
-                             "make sure get_object_id in not called the global namespace!")
-            sys.exit(1)
-    """
-
 
 def insert_object_id(object_id_key: int, object_id: bytearray):
     return ObjectIdManager.get_manager().insert_object_id(
-        object_id_key= object_id_key, object_id=object_id
+        object_id_key=object_id_key, object_id=object_id
     )
+
 
 def insert_object_ids(object_id_dict: Dict[int, bytearray]):
     return ObjectIdManager.get_manager().insert_object_ids(object_id_dict=object_id_dict)
+
 
 def get_object_id(object_id_key: int):
     return ObjectIdManager.get_manager().get_object_id(object_id_key)

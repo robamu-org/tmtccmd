@@ -1,5 +1,5 @@
 import sys
-from typing import Union, Tuple
+from typing import Union
 
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.core.globals_manager import get_global, update_global
