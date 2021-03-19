@@ -19,9 +19,9 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def get_version(self) -> Tuple[str, int, int]:
-        from tmtccmd.core.version import SW_NAME, SW_VERSION, SW_SUBVERSION
-        return SW_NAME, SW_VERSION, SW_SUBVERSION
+    def get_version(self) -> str:
+        from tmtccmd import VERSION_NAME, __version__
+        return f"{VERSION_NAME} {__version__}"
 
     @abstractmethod
     def set_object_ids(self) -> Dict[int, bytearray]:

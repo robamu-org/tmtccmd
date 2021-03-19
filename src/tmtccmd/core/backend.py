@@ -147,17 +147,20 @@ class TmTcHandler:
                 self.tm_listener.clear_reply_event()
 
         elif self.mode == CoreModeList.SingleCommandMode:
+            pus_packet_tuple = None
             if self.single_command_package[1] is None:
-                pus_packet_tuple = command_preparation().pack_command_tuple()
+                pus_command = command_preparation()
+                if pus_command is not None:
+                    pus_packet_tuple = pus_command.pack_command_tuple()
             else:
                 pus_packet_tuple = self.single_command_package
-            sender_and_receiver = SingleCommandSenderReceiver(
-                com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
-                tm_listener=self.tm_listener)
-            LOGGER.info("Performing single command operation..")
-            sender_and_receiver.send_single_tc_and_receive_tm(pus_packet_tuple=pus_packet_tuple)
-            self.mode = CoreModeList.PromptMode
-
+            if pus_packet_tuple is not None:
+                sender_and_receiver = SingleCommandSenderReceiver(
+                    com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
+                    tm_listener=self.tm_listener)
+                LOGGER.info("Performing single command operation..")
+                sender_and_receiver.send_single_tc_and_receive_tm(pus_packet_tuple=pus_packet_tuple)
+                self.mode = CoreModeList.PromptMode
         elif self.mode == CoreModeList.SequentialMode:
             from tmtccmd.core.globals_manager import get_global
             service_queue = deque()

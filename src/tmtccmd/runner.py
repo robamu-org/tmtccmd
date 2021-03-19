@@ -111,14 +111,14 @@ def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
         __handle_cli_args_and_globals()
 
 
-def __handle_init_printout(use_gui: bool, version_tuple: Tuple[str, int, int]):
+def __handle_init_printout(use_gui: bool, version_string: str):
     print("-- Python TMTC Commander --")
     if use_gui:
         print("-- GUI mode --")
     else:
         print("-- Command line mode --")
 
-    print(f"-- Software version {version_tuple[0]} v{version_tuple[1]}.{version_tuple[2]}--")
+    print(f"-- Software version {version_string}--")
 
 
 def __handle_cli_args_and_globals():

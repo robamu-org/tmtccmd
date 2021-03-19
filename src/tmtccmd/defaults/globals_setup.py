@@ -1,10 +1,12 @@
 import argparse
 import pprint
 from enum import IntEnum
+from typing import Tuple
 
-from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, CoreServiceList
+from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, \
+    CoreServiceList, DEBUG_MODE
 from tmtccmd.defaults.com_setup import default_serial_cfg_setup, default_tcpip_udp_cfg_setup
-from tmtccmd.core.globals_manager import update_global
+from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -35,11 +37,20 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
     """
 
     # Determine communication interface from arguments. Must be contained in core modes list
-    mode_param = args.mode
+    try:
+        mode_param = args.mode
+    except AttributeError:
+        LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
+        mode_param = CoreModeList.ListenerMode
     check_and_set_core_mode_arg(mode_param)
 
+
     # Determine communication interface from arguments. Must be contained in core comIF list
-    com_if_param = args.com_if
+    try:
+        com_if_param = args.com_if
+    except AttributeError:
+        LOGGER.warning("Passed namespace does not contain the com_if (-c) argument")
+        com_if_param = CoreComInterfaces.DUMMY
     check_and_set_core_com_if_arg(com_if_param)
 
     diplay_mode_param = "long"
@@ -51,7 +62,11 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
     update_global(CoreGlobalIds.DISPLAY_MODE, display_mode_param)
 
     # Determine service from arguments. Must be contained in core service list
-    service_param = args.service
+    try:
+        service_param = args.service
+    except AttributeError:
+        LOGGER.warning("Passed namespace does not contain the service (-s) argument")
+        service_param = CoreServiceList.SERVICE_17
     check_and_set_core_service_arg(service_param)
 
     if args.op_code is None:
@@ -60,20 +75,25 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
         op_code = str(args.op_code).lower()
     update_global(CoreGlobalIds.OP_CODE, op_code)
 
-    check_and_set_other_args()
+    try:
+        check_and_set_other_args(args=args)
+    except AttributeError:
+        LOGGER.exception("Passed arguments are missing components.")
 
     # For a serial communication interface, there are some configuration values like
     # baud rate and serial port which need to be set once but are expected to stay
     # the same for a given machine. Therefore, we use a JSON file to store and extract
     # those values
-    if com_if_param == CoreComInterfaces.SERIAL or com_if == CoreComInterfaces.QEMU_SERIAL:
-        default_serial_cfg_setup(com_if=com_if)
+    if com_if_param == CoreComInterfaces.SERIAL or com_if_param == CoreComInterfaces.QEMU_SERIAL:
+        default_serial_cfg_setup(com_if=com_if_param)
 
     # Same as above, but for server address and server port
     if com_if_param == CoreComInterfaces.TCPIP_UDP:
         # TODO: Port and IP address can also be passed as CLI parameters.
         #      Use them here if applicable?
         default_tcpip_udp_cfg_setup()
+    if DEBUG_MODE:
+        print_core_globals()
 
 
 def get_core_service_dict() -> dict:
@@ -124,21 +144,20 @@ def check_args_in_enum(param: any, int_enum: IntEnum, warning_hint: str) -> Tupl
     :param warning_hint:
     :return:
     """
-    args_as_int = 0
     if param is not None:
-        if type(param) == type(str):
-            if not mode_param.isdigit():
-                LOGGER.warning(f"Passed {warning_string} argument is not a digit.")
+        if isinstance(param, str):
+            if not param.isdigit():
+                LOGGER.warning(f"Passed {warning_hint} argument is not a digit.")
                 return False, 0
             else:
                 param = int(param)
-        elif type(param) == type(int):
+        elif isinstance(param, int):
             pass
         else:
-            LOGGER.warning(f"Passed {warning_string} type invalid.")
+            LOGGER.warning(f"Passed {warning_hint} type invalid.")
             return False, 0
     else:
-        LOGGER.warning(f"No {warning_string} argument passed.")
+        LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
 
     core_params_list = set(param.value for param in int_enum)
@@ -150,7 +169,7 @@ def check_args_in_enum(param: any, int_enum: IntEnum, warning_hint: str) -> Tupl
 
 def check_and_set_core_mode_arg(mode_arg: any):
     in_enum, mode_value = check_args_in_enum(
-        param=mode_param, int_enum=CoreModeList, warning_hint="mode"
+        param=mode_arg, int_enum=CoreModeList, warning_hint="mode"
     )
     if not in_enum:
         LOGGER.warning(f"Passed mode argument might be invalid, "
@@ -161,18 +180,18 @@ def check_and_set_core_mode_arg(mode_arg: any):
 
 def check_and_set_core_com_if_arg(com_if_arg: any):
     in_enum, com_if_value = check_args_in_enum(
-        param=com_if_param, int_enum=CoreComInterfaces, warning_hint="communication interface"
+        param=com_if_arg, int_enum=CoreComInterfaces, warning_hint="communication interface"
     )
     if not in_enum:
         LOGGER.warning(f"Passed communication interface argument might be invalid, "
                        f"setting to {CoreComInterfaces.DUMMY}")
         com_if_value = CoreComInterfaces.DUMMY
-    update_global(CoreGlobalIds.MODE, com_if_value)
+    update_global(CoreGlobalIds.COM_IF, com_if_value)
 
 
 def check_and_set_core_service_arg(service_arg: any):
     in_enum, service_value = check_args_in_enum(
-        param=service_param, int_enum=CoreServiceList, warning_hint="service"
+        param=service_arg, int_enum=CoreServiceList, warning_hint="service"
     )
     if not in_enum:
         LOGGER.warning(f"Passed service argument might be invalid, "
@@ -194,6 +213,19 @@ def check_and_set_other_args(args):
         update_global(CoreGlobalIds.PRINT_RAW_TM, args.raw_data_print)
     if args.print_log is not None:
         update_global(CoreGlobalIds.PRINT_TO_FILE, args.print_log)
-    if args.resent_tc is not None:
+    if args.resend_tc is not None:
         update_global(CoreGlobalIds.RESEND_TC, args.resend_tc)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 3)
+
+
+def print_core_globals():
+    """
+    Prints an imporant set of global parameters. Can be used for debugging function
+    or as an optional information output
+    :return:
+    """
+    service_param = get_global(CoreGlobalIds.CURRENT_SERVICE)
+    mode_param = get_global(CoreGlobalIds.MODE)
+    com_if_param = get_global(CoreGlobalIds.COM_IF)
+    print(f"Current globals | Mode(-m): {mode_param} | Service(-s): {service_param} | "
+          f"ComIF(-c): {com_if_param}")

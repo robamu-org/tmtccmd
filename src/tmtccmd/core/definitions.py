@@ -87,3 +87,5 @@ class CoreGlobalIds(enum.IntEnum):
     ETHERNET_CONFIG = 163
 
 
+DEBUG_MODE = False
+
