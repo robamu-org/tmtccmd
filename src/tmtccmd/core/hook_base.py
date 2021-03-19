@@ -1,6 +1,8 @@
 import argparse
 from abc import abstractmethod
 from typing import Union, Dict, Tuple
+
+from core.definitions import DEFAULT_APID
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -29,13 +31,13 @@ class TmTcHookBase:
 
     @abstractmethod
     def add_globals_pre_args_parsing(self, gui: bool = False):
-        from tmtccmd.defaults.globals_setup import default_add_globals_pre_args_parsing
-        default_add_globals_pre_args_parsing(gui=gui)
+        from tmtccmd.defaults.globals_setup import set_default_globals_pre_args_parsing
+        set_default_globals_pre_args_parsing(apid=DEFAULT_APID)
 
     @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
-        from tmtccmd.defaults.globals_setup import default_add_globals_post_args_parsing
-        default_add_globals_post_args_parsing(args=args)
+        from tmtccmd.defaults.globals_setup import set_default_globals_post_args_parsing
+        set_default_globals_post_args_parsing(args=args)
 
     @abstractmethod
     def assign_communication_interface(
