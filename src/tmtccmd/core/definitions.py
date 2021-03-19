@@ -29,13 +29,13 @@ class CoreObjectIds(enum.IntEnum):
 
 # Mode options, set by args parser
 class CoreModeList(enum.IntEnum):
-    SingleCommandMode = 0
-    SequentialMode = 1
-    ListenerMode = 2
-    GUIMode = 3
-    SoftwareTestMode = 4
-    Idle = 5
-    PromptMode = 6
+    SINGLE_CMD_MODE = 0
+    SEQUENTIAL_CMD_MODE = 1
+    LISTENER_MODE = 2
+    GUI_MODE = 3
+    SOFTWARE_TEST_MODE = 4
+    IDLE = 5
+    PROMPT_MODE = 6
 
 
 class CoreServiceList(enum.IntEnum):

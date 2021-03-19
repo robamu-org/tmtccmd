@@ -1,6 +1,6 @@
 import argparse
+import collections
 import pprint
-from enum import IntEnum
 from typing import Tuple
 
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, \
@@ -41,7 +41,7 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
         mode_param = args.mode
     except AttributeError:
         LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
-        mode_param = CoreModeList.ListenerMode
+        mode_param = CoreModeList.LISTENER_MODE
     check_and_set_core_mode_arg(mode_param)
 
     # Determine communication interface from arguments. Must be contained in core comIF list
@@ -52,7 +52,7 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
         com_if_param = CoreComInterfaces.DUMMY
     check_and_set_core_com_if_arg(com_if_param)
 
-    diplay_mode_param = "long"
+    display_mode_param = "long"
     if args.short_display_mode is not None:
         if args.short_display_mode:
             display_mode_param = "short"
@@ -129,10 +129,11 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.PRINT_RAW_TM, False)
     update_global(CoreGlobalIds.RESEND_TC, False)
     update_global(CoreGlobalIds.OP_CODE, "0")
-    update_global(CoreGlobalIds.MODE, CoreModeList.ListenerMode)
+    update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
-def check_args_in_enum(param: any, int_enum: IntEnum, warning_hint: str) -> Tuple[bool, int]:
+def check_args_in_enum(param: any, int_enum: collections.Iterable,
+                       warning_hint: str) -> Tuple[bool, int]:
     """
     This functions checks whether the integer representation of a given parameter in
     contained within the passed integer enumeration.
@@ -161,7 +162,7 @@ def check_args_in_enum(param: any, int_enum: IntEnum, warning_hint: str) -> Tupl
 
     core_params_list = set(param.value for param in int_enum)
     if param not in core_params_list:
-        LOGGER.warning(f"The {warning_string} argument is not contained in the core enumerations.")
+        LOGGER.warning(f"The {warning_hint} argument is not contained in the core enumerations.")
         return False, 0
     return True, param
 
@@ -172,8 +173,8 @@ def check_and_set_core_mode_arg(mode_arg: any):
     )
     if not in_enum:
         LOGGER.warning(f"Passed mode argument might be invalid, "
-                       f"setting to {CoreModeList.SingleCommandMode}")
-        mode_value = CoreModeList.SingleCommandMode
+                       f"setting to {CoreModeList.SINGLE_CMD_MODE}")
+        mode_value = CoreModeList.SINGLE_CMD_MODE
     update_global(CoreGlobalIds.MODE, mode_value)
 
 

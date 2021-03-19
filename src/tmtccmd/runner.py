@@ -8,7 +8,6 @@
 @author     R. Mueller
 """
 import sys
-from typing import Tuple
 
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreGlobalIds
@@ -118,7 +117,7 @@ def __handle_init_printout(use_gui: bool, version_string: str):
     else:
         print("-- Command line mode --")
 
-    print(f"-- Software version {version_string}--")
+    print(f"-- Software version {version_string} --")
 
 
 def __handle_cli_args_and_globals():
