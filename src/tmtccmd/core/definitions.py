@@ -9,10 +9,10 @@ ethernet_address_t = Tuple[str, int]
 
 
 class CoreComInterfaces(enum.IntEnum):
-    Dummy = 0
-    Serial = 1
-    EthernetUDP = 2
-    QEMU = 5
+    DUMMY = 0
+    SERIAL = 1
+    TCPIP_UDP = 2
+    QEMU_SERIAL = 5
 
 
 class QueueCommands(enum.Enum):

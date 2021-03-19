@@ -65,7 +65,7 @@ class TmTcHandler:
 
     @staticmethod
     def prepare_tmtc_handler_start(
-            init_com_if: int = CoreComInterfaces.Dummy,
+            init_com_if: int = CoreComInterfaces.DUMMY,
             init_mode: int = CoreModeList.ListenerMode,
             init_service: int = CoreServiceList.SERVICE_17
     ):

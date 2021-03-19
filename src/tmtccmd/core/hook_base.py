@@ -89,7 +89,8 @@ class TmTcHookBase:
         @return:
         """
         LOGGER.info(
-            "No service 8 handling implemented yet in handle_servce_8_telemetry hook function"
+            "TmTcHookBase: No service 8 handling implemented yet in handle_service_8_telemetry "
+            "hook function"
         )
         return [], []
 
@@ -109,7 +110,7 @@ class TmTcHookBase:
         at the end of the housekeeping packet. The last value is the number of parameters.
         """
         LOGGER.info(
-            "No service 3 housekeeping data handling implemented yet in "
+            "TmTcHookBase: No service 3 housekeeping data handling implemented yet in "
             "handle_service_3_housekeeping hook function"
         )
         return [], [], bytearray(), 0

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-QEMU Communication Interface to communicate with emulated QEMU hardware via the UART interface.
+QEMU_SERIAL Communication Interface to communicate with emulated QEMU_SERIAL hardware via the UART interface.
 
 It utilizes the the asyncio library.
 
@@ -8,7 +8,7 @@ Requirements:
   Python >= 3.7 (asyncio support)
 
 Instructions:
-  Run QEMU (modified for OBSW) via
+  Run QEMU_SERIAL (modified for OBSW) via
 
   qemu-system-arm -M isis-obc -monitor stdio \
       -bios path/to/sourceobsw-at91sam9g20_ek-sdram.bin \
@@ -62,7 +62,7 @@ def start_background_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 class QEMUComIF(CommunicationInterface):
     """
-    Specific Communication Interface implementation of the QEMU USART protocol for the TMTC software
+    Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the TMTC software
     """
     def __init__(self, tmtc_printer: TmTcPrinter, serial_timeout: float,
                  ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED):
@@ -111,7 +111,7 @@ class QEMUComIF(CommunicationInterface):
                 Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop).result()
             asyncio.run_coroutine_threadsafe(self.usart.open(), self.loop).result()
         except NotImplementedError:
-            LOGGER.exception("QEMU Initialization error, file does not exist!")
+            LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
             sys.exit()
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             self.reception_buffer = deque(maxlen=self.dle_queue_len)
@@ -238,15 +238,15 @@ class QEMUComIF(CommunicationInterface):
 
 
 class QmpException(Exception):
-    """An exception caused by the QML/QEMU as response to a failed command"""
+    """An exception caused by the QML/QEMU_SERIAL as response to a failed command"""
 
     def __init__(self, ret, *args, **kwargs):
         Exception.__init__(self, f"QMP error: {ret}")
-        self.ret = ret  # the 'return' structure provided by QEMU/QML
+        self.ret = ret  # the 'return' structure provided by QEMU_SERIAL/QML
 
 
 class QmpConnection:
-    """A connection to a QEMU machine via QMP"""
+    """A connection to a QEMU_SERIAL machine via QMP"""
     def __init__(self, addr=QEMU_ADDR_QMP):
         self.transport = None
         self.addr = addr
@@ -414,7 +414,7 @@ class Usart:
     @staticmethod
     async def create_async(addr):
         return Usart(addr)
-    """Connection to emulate a USART device for a given QEMU/At91 instance"""
+    """Connection to emulate a USART device for a given QEMU_SERIAL/At91 instance"""
 
     def __init__(self, addr):
         self.addr = addr

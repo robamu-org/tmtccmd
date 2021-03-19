@@ -28,7 +28,7 @@ def create_communication_interface_default(
     :return: CommunicationInterface object
     """
     try:
-        if com_if == CoreComInterfaces.EthernetUDP:
+        if com_if == CoreComInterfaces.TCPIP_UDP:
             ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
             send_addr = ethernet_cfg_dict[EthernetConfigIds.SEND_ADDRESS]
             rcv_addr = ethernet_cfg_dict[EthernetConfigIds.RECV_ADDRESS]
@@ -36,7 +36,7 @@ def create_communication_interface_default(
                 tmtc_printer=tmtc_printer, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
                 tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
                 send_address=send_addr, receive_address=rcv_addr)
-        elif com_if == CoreComInterfaces.Serial:
+        elif com_if == CoreComInterfaces.SERIAL:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
@@ -50,7 +50,7 @@ def create_communication_interface_default(
             dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
             communication_interface.set_dle_settings(dle_max_queue_len, dle_max_frame_size,
                                                      serial_timeout)
-        elif com_if == CoreComInterfaces.QEMU:
+        elif com_if == CoreComInterfaces.QEMU_SERIAL:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(
@@ -73,7 +73,7 @@ def create_communication_interface_default(
         sys.exit(1)
 
 
-def default_tcpip_cfg_setup():
+def default_tcpip_udp_cfg_setup():
     from tmtccmd.com_if.ethernet_utilities import determine_ip_addresses
     update_global(CoreGlobalIds.USE_ETHERNET, True)
     # This will either load the addresses from a JSON file or prompt them from the user.
@@ -90,7 +90,7 @@ def setup_tcpip_cfg(send_address: ethernet_address_t, receive_address: ethernet_
 
 def default_serial_cfg_setup(com_if: CoreComInterfaces):
     baud_rate = determine_baud_rate()
-    if com_if == CoreComInterfaces.Serial:
+    if com_if == CoreComInterfaces.SERIAL:
         serial_port = determine_com_port()
     else:
         serial_port = ""
@@ -116,7 +116,7 @@ def set_up_serial_cfg(
     :return:
     """
     update_global(CoreGlobalIds.USE_SERIAL, True)
-    if com_if == CoreComInterfaces.Serial and com_port == "":
+    if com_if == CoreComInterfaces.SERIAL and com_port == "":
         LOGGER.warning("Invalid com port specified!")
         com_port = determine_com_port()
     serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)

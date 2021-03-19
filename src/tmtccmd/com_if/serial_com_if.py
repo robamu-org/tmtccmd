@@ -1,6 +1,6 @@
 """
 @file   tmtcc_serial_com_if.py
-@brief  Serial Communication Interface
+@brief  SERIAL Communication Interface
 @author R. Mueller
 @date   01.11.2019
 """
@@ -106,7 +106,7 @@ class SerialComIF(CommunicationInterface):
             self.serial = serial.Serial(
                 port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout)
         except serial.SerialException:
-            LOGGER.error("Serial Port opening failure!")
+            LOGGER.error("SERIAL Port opening failure!")
             raise IOError
         """
         Needs to be called by application code once for DLE mode!
@@ -121,7 +121,7 @@ class SerialComIF(CommunicationInterface):
                 self.reception_thread.join(0.4)
             self.serial.close()
         except serial.SerialException:
-            logging.warning("Serial Port could not be closed!")
+            logging.warning("SERIAL Port could not be closed!")
 
     def send_data(self, data: bytearray):
         self.serial.write(data)

@@ -1,7 +1,7 @@
 """
 @file   tmtcc_dummy_com_if.py
 @date   09.03.2020
-@brief  Dummy Communication Interface
+@brief  DUMMY Communication Interface
 
 @author R. Mueller
 """
