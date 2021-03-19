@@ -158,11 +158,16 @@ def check_args_in_enum(param: any, enumeration: collections.Iterable,
     else:
         LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
-
-    params_list = set(param.value for param in enumeration)
-    if param not in params_list:
+    param_list = list()
+    for param in enumeration:
+        if isinstance(param.value, str):
+            # Make this case insensitive
+            param_list.append(param.value.lower())
+        else:
+            param_list.append(param.value)
+    if param not in param_list:
         if might_be_integer:
-            if int(param) in params_list:
+            if int(param) in param_list:
                 return True, int(param)
         LOGGER.warning(
             f"The {warning_hint} argument is not contained in the specified enumeration."
