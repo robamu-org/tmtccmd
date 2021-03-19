@@ -19,7 +19,7 @@ from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeL
 from tmtccmd.pus_tc.base import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com_if.ethernet_com_if import EthernetConfigIds
+from tmtccmd.com_if.udp_com_if import EthernetConfigIds
 import tmtccmd.defaults as defaults_module
 
 LOGGER = get_logger()

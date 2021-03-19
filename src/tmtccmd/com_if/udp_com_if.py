@@ -10,6 +10,7 @@ import select
 import socket
 import struct
 import sys
+import threading
 from typing import Tuple
 
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -47,6 +48,7 @@ class EthernetComIF(CommunicationInterface):
         self.udp_socket = None
         self.receive_address = receive_address
         self.destination_address = send_address
+        self.listener_thread = threading.Thread
         self.valid = True
 
     def __del__(self):

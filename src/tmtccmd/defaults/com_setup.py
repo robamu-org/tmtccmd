@@ -6,7 +6,7 @@ from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
-from tmtccmd.com_if.ethernet_com_if import EthernetConfigIds
+from tmtccmd.com_if.udp_com_if import EthernetConfigIds
 from tmtccmd.com_if.ethernet_utilities import ethernet_address_t
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -20,7 +20,7 @@ def create_communication_interface_default(
 ) -> Union[CommunicationInterface, None]:
     from tmtccmd.com_if.serial_com_if import SerialComIF
     from tmtccmd.com_if.dummy_com_if import DummyComIF
-    from tmtccmd.com_if.ethernet_com_if import EthernetComIF
+    from tmtccmd.com_if.udp_com_if import EthernetComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
     """
     Return the desired communication interface object
