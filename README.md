@@ -1,6 +1,6 @@
 <p align="center"> <img src="docs/logo_tmtccmd_smaller.png" width="40%"> </p>
 
-TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
+TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 ====
 
 ## Overview
@@ -8,7 +8,7 @@ TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtcc
 - Documentation: https://tmtccmd.readthedocs.io/en/latest/
 - Project Homepage: https://github.com/rmspacefish/tmtccmd
 
-This client was first developed by KSat for the 
+This commander application was first developed by KSat for the 
 [SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board 
 software but has evolved into a more generic tool for satellite developers to perform TMTC 
 (Telemetry and Telecommand) handling and testing via different communication interfaces. 
