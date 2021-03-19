@@ -44,7 +44,6 @@ def default_add_globals_post_args_parsing(args: argparse.Namespace):
         mode_param = CoreModeList.ListenerMode
     check_and_set_core_mode_arg(mode_param)
 
-
     # Determine communication interface from arguments. Must be contained in core comIF list
     try:
         com_if_param = args.com_if
