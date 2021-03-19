@@ -3,20 +3,52 @@ import json
 
 import serial
 import serial.tools.list_ports
+from tmtccmd.utility.tmtcc_logger import get_logger
+
+LOGGER = get_logger()
+
+
+def check_json_file() -> bool:
+    """
+    The check JSON file and return whether it was valid or not. A JSON file is invalid
+    if it does not exist or the format ins invalid.
+    :return: True if JSON file is valid, False if not and a new one was created
+    """
+    if not os.path.isfile("config/tmtcc_config.json"):
+        with open("config/tmtcc_config.json", "w") as file:
+            load_data = dict()
+            json.dump(load_data, file)
+            print("Configuration JSON config/tmtcc_config.json did not exist, created a new one.")
+            return False
+    else:
+        with open("config/tmtcc_config.json", "r+") as file:
+            try:
+                json.load(file)
+            except json.decoder.JSONDecodeError:
+                LOGGER.warning("JSON decode error, file format might be invalid. Replacing JSON")
+                void_data = dict()
+                json.dump(void_data, file)
+                return False
+    return True
 
 
 def determine_baud_rate() -> int:
-    prompt_baud_rate = False
+    """
+    Determine baud rate. Tries to read from JSON first. If the baud rate is not contained
+    in the config JSON, prompt it from user instead with the option to store value in JSON file.
+    :return: Determined baud rate
+    """
     baud_rate = 0
-    if os.path.isfile("config/tmtcc_config.json"):
-        with open("config/tmtcc_config.json", "r") as write:
-            try:
-                load_data = json.load(write)
-                baud_rate = load_data["BAUD_RATE"]
-            except KeyError:
-                prompt_baud_rate = True
-    else:
+    prompt_baud_rate = False
+    if not check_json_file():
         prompt_baud_rate = True
+
+    with open("config/tmtcc_config.json", "r") as read:
+        try:
+            load_data = json.load(read)
+            baud_rate = load_data["BAUD_RATE"]
+        except KeyError:
+            prompt_baud_rate = True
 
     if prompt_baud_rate:
         while True:
@@ -37,31 +69,33 @@ def determine_baud_rate() -> int:
 
 
 def determine_com_port() -> str:
+    """
+    Determine serial port. Tries to read from JSON first. If the com port is not contained
+    in the config JSON, prompt it from user instead with the option to store value in JSON file.
+    :return: Determined serial port
+    """
     reconfigure_com_port = False
     com_port = ""
-
-    if os.path.isfile("config/tmtcc_config.json"):
-        with open("config/tmtcc_config.json", "r") as write:
-            try:
-                load_data = json.load(write)
-                com_port = load_data["COM_PORT"]
-            except KeyError:
-                reconfigure_com_port = True
-            if not check_port_validity(com_port):
-                reconfigure = input(
-                    "COM port from configuration file not contained within serial"
-                    "port list. Reconfigure serial port? [y/n]: ")
-                if reconfigure.lower() in ['y', "yes", "1"]:
-                    write.close()
-                    os.remove("config/tmtcc_config.json")
-                    reconfigure_com_port = True
-    else:
+    if not check_json_file():
         reconfigure_com_port = True
+
+    with open("config/tmtcc_config.json", "r") as read:
+        try:
+            load_data = json.load(read)
+            com_port = load_data["COM_PORT"]
+        except KeyError:
+            reconfigure_com_port = True
+        if not check_port_validity(com_port):
+            reconfigure = input(
+                "COM port from configuration file not contained within serial"
+                "port list. Reconfigure serial port? [y/n]: ")
+            if reconfigure.lower() in ['y', "yes", "1"]:
+                reconfigure_com_port = True
 
     if reconfigure_com_port:
         com_port = prompt_com_port()
         save_to_json = input("Do you want to store serial port to the"
-                             "configuration file? (y/n): ")
+                             " configuration file? (y/n): ")
         if save_to_json.lower() in ['y', "yes"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 data = json.load(file)

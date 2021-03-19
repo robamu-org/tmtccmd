@@ -8,7 +8,6 @@
 @author     R. Mueller
 """
 import sys
-from typing import Tuple
 
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreGlobalIds
