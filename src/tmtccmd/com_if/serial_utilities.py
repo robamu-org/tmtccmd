@@ -1,35 +1,11 @@
-import os
 import json
 
 import serial
 import serial.tools.list_ports
 from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.json_handler import check_json_file
 
 LOGGER = get_logger()
-
-
-def check_json_file() -> bool:
-    """
-    The check JSON file and return whether it was valid or not. A JSON file is invalid
-    if it does not exist or the format ins invalid.
-    :return: True if JSON file is valid, False if not and a new one was created
-    """
-    if not os.path.isfile("config/tmtcc_config.json"):
-        with open("config/tmtcc_config.json", "w") as file:
-            load_data = dict()
-            json.dump(load_data, file)
-            print("Configuration JSON config/tmtcc_config.json did not exist, created a new one.")
-            return False
-    else:
-        with open("config/tmtcc_config.json", "r+") as file:
-            try:
-                json.load(file)
-            except json.decoder.JSONDecodeError:
-                LOGGER.warning("JSON decode error, file format might be invalid. Replacing JSON")
-                void_data = dict()
-                json.dump(void_data, file)
-                return False
-    return True
 
 
 def determine_baud_rate() -> int:
@@ -64,7 +40,9 @@ def determine_baud_rate() -> int:
                 data = json.load(file)
                 data.update(dict(BAUD_RATE=baud_rate))
                 file.seek(0)
-                json.dump(data, file)
+                json.dump(data, file, indent=4)
+            LOGGER.info("Baud rate was stored to the JSON file config/tmtcc_config.json")
+            LOGGER.info("Delete this file or edit it manually to change the baud rate")
     return baud_rate
 
 
@@ -102,6 +80,8 @@ def determine_com_port() -> str:
                 data.update(dict(COM_PORT=com_port))
                 file.seek(0)
                 json.dump(data, file)
+            LOGGER.info("Serial port was stored to the JSON file config/tmtcc_config.json")
+            LOGGER.info("Delete this file or edit it manually to change serial port")
     return com_port
 
 

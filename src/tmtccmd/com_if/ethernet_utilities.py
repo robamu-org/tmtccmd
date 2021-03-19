@@ -5,6 +5,7 @@ import struct
 from typing import Tuple
 
 from tmtccmd.core.definitions import ethernet_address_t
+from tmtccmd.utility.json_handler import check_json_file
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -14,38 +15,30 @@ def determine_ip_addresses() -> Tuple[ethernet_address_t, ethernet_address_t]:
     send_address = ()
     recv_address = ()
     reconfigure_ip_address = False
-    if os.path.isfile("config/tmtcc_config.json"):
-        with open("config/tmtcc_config.json", "r") as write:
-            load_data = json.load(write)
-            if "DEST_IP_ADDRESS" not in load_data or "DEST_PORT" not in load_data \
-                    or "RECV_IP_ADDRESS" not in load_data or "RECV_PORT" not in load_data:
-                reconfigure_ip_address = True
-            else:
-                send_address = load_data["DEST_IP_ADDRESS"], int(load_data["DEST_PORT"])
-                recv_address = load_data["RECV_IP_ADDRESS"], int(load_data["RECV_PORT"])
-    else:
+    if not check_json_file():
         reconfigure_ip_address = True
+
+    with open("config/tmtcc_config.json", "r") as write:
+        load_data = json.load(write)
+        if "DEST_IP_ADDRESS" not in load_data or "DEST_PORT" not in load_data \
+                or "RECV_IP_ADDRESS" not in load_data or "RECV_PORT" not in load_data:
+            reconfigure_ip_address = True
+        else:
+            send_address = load_data["DEST_IP_ADDRESS"], int(load_data["DEST_PORT"])
+            recv_address = load_data["RECV_IP_ADDRESS"], int(load_data["RECV_PORT"])
 
     if reconfigure_ip_address:
         send_address, recv_address = prompt_ip_addresses()
         save_to_json = input("Do you want to store the ethernet configuration? [y/n]: ")
         if save_to_json.lower() in ['y', "yes"]:
-
-            if os.path.isfile("config/tmtcc_config.json"):
-                # Load existing JSON config and update it
-                file_open_flag = "r+"
-            else:
-                # Create new JSON config
-                file_open_flag = "w"
-
-            with open("config/tmtcc_config.json", file_open_flag) as json_file:
-                json_dict = dict()
+            with open("config/tmtcc_config.json", "r+") as file:
+                json_dict = json.load(file)
                 json_dict["DEST_IP_ADDRESS"] = send_address[0]
                 json_dict["DEST_PORT"] = send_address[1]
                 json_dict["RECV_IP_ADDRESS"] = recv_address[0]
                 json_dict["RECV_PORT"] = recv_address[1]
-                json.dump(json_dict, json_file, indent=4)
-
+                file.seek(0)
+                json.dump(json_dict, file, indent=4)
             LOGGER.info("IP addresses were stored to the JSON file config/tmtcc_config.json.")
             LOGGER.info("Delete this file or edit it manually to change the loaded IP addresses.")
     return send_address, recv_address
