@@ -138,7 +138,6 @@ def __handle_cli_args_and_globals():
 
 def __start_tmtc_commander_cli():
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.core.globals_manager import get_global
     hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
     if not isinstance(hook_obj, TmTcHookBase):
         logger.error("TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
@@ -156,7 +155,6 @@ def __start_tmtc_commander_cli():
 
 def __start_tmtc_commander_qt_gui():
     from tmtccmd.core.frontend import TmTcFrontend
-    from tmtccmd.core.globals_manager import get_global
     try:
         from PyQt5.QtWidgets import QApplication
     except ImportError:
