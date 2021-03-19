@@ -1,7 +1,7 @@
 import argparse
 import collections
 import pprint
-from typing import Tuple
+from typing import Tuple, Union
 
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, \
     CoreServiceList, DEBUG_MODE
@@ -24,8 +24,9 @@ def default_add_globals_pre_args_parsing(gui: bool = False):
 
 
 def default_add_globals_post_args_parsing(
-        args: argparse.Namespace, custom_mode_list: collections.Iterable,
-        custom_service_list: collections.Iterable, custom_com_if_list: collections.Iterable):
+        args: argparse.Namespace, custom_mode_list: Union[None, collections.Iterable] = None,
+        custom_service_list: Union[None, collections.Iterable] = None,
+        custom_com_if_list: Union[None, collections.Iterable] = None):
     """
     This function takes the argument namespace as a parameter and determines following globals
     1. Mode (-m for default arguments)
@@ -55,7 +56,7 @@ def default_add_globals_post_args_parsing(
     except AttributeError:
         LOGGER.warning("Passed namespace does not contain the com_if (-c) argument")
         com_if_param = CoreComInterfaces.DUMMY
-    check_and_set_core_com_if_arg(com_if_arg=com_if_param)
+    check_and_set_core_com_if_arg(com_if_arg=com_if_param, custom_com_if_list=custom_com_if_list)
 
     display_mode_param = "long"
     if args.short_display_mode is not None:
@@ -166,19 +167,16 @@ def check_args_in_enum(param: any, enumeration: collections.Iterable,
         LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
     param_list = list()
-    for param in enumeration:
-        if isinstance(param.value, str):
+    for enum_value in enumeration:
+        if isinstance(enum_value.value, str):
             # Make this case insensitive
-            param_list.append(param.value.lower())
+            param_list.append(enum_value.value.lower())
         else:
-            param_list.append(param.value)
+            param_list.append(enum_value.value)
     if param not in param_list:
         if might_be_integer:
             if int(param) in param_list:
                 return True, int(param)
-        LOGGER.warning(
-            f"The {warning_hint} argument is not contained in the specified enumeration."
-        )
         return False, 0
     return True, param
 
@@ -255,7 +253,7 @@ def check_and_set_core_service_arg(
 
     service_arg_invalid = False
     if custom_service_list is not None:
-        in_enum, mode_value = check_args_in_enum(
+        in_enum, service_value = check_args_in_enum(
             param=service_arg, enumeration=custom_service_list, warning_hint="custom mode"
         )
         if not in_enum:
