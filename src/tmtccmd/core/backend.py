@@ -66,7 +66,7 @@ class TmTcHandler:
     @staticmethod
     def prepare_tmtc_handler_start(
             init_com_if: int = CoreComInterfaces.DUMMY,
-            init_mode: int = CoreModeList.ListenerMode,
+            init_mode: int = CoreModeList.LISTENER_MODE,
             init_service: int = CoreServiceList.SERVICE_17
     ):
         from multiprocessing import Process
@@ -136,17 +136,17 @@ class TmTcHandler:
         """
         Command handling.
         """
-        if self.mode == CoreModeList.PromptMode:
+        if self.mode == CoreModeList.PROMPT_MODE:
             self.prompt_mode()
 
-        if self.mode == CoreModeList.ListenerMode:
+        if self.mode == CoreModeList.LISTENER_MODE:
             if self.tm_listener.reply_event():
                 LOGGER.info("TmTcHandler: Packets received.")
                 self.tmtc_printer.print_telemetry_queue(self.tm_listener.retrieve_tm_packet_queue())
                 self.tm_listener.clear_tm_packet_queue()
                 self.tm_listener.clear_reply_event()
 
-        elif self.mode == CoreModeList.SingleCommandMode:
+        elif self.mode == CoreModeList.SINGLE_CMD_MODE:
             pus_packet_tuple = None
             if self.single_command_package[1] is None:
                 pus_command = command_preparation()
@@ -160,8 +160,8 @@ class TmTcHandler:
                     tm_listener=self.tm_listener)
                 LOGGER.info("Performing single command operation..")
                 sender_and_receiver.send_single_tc_and_receive_tm(pus_packet_tuple=pus_packet_tuple)
-                self.mode = CoreModeList.PromptMode
-        elif self.mode == CoreModeList.SequentialMode:
+                self.mode = CoreModeList.PROMPT_MODE
+        elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
             from tmtccmd.core.globals_manager import get_global
             service_queue = deque()
             service_queue_packer = ServiceQueuePacker()
@@ -174,9 +174,9 @@ class TmTcHandler:
                 com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
                 tm_listener=self.tm_listener, tc_queue=service_queue)
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
-            self.mode = CoreModeList.ListenerMode
+            self.mode = CoreModeList.LISTENER_MODE
 
-        elif self.mode == CoreModeList.SoftwareTestMode:
+        elif self.mode == CoreModeList.SOFTWARE_TEST_MODE:
             from tmtccmd.core.hook_helper import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             all_tc_queue = hook_obj.pack_total_service_queue()
@@ -200,15 +200,15 @@ class TmTcHandler:
                 LOGGER.error("Custom mode handling module not provided!")
 
     def __core_operation(self, one_shot):
-        if self.mode == CoreModeList.ListenerMode:
+        if self.mode == CoreModeList.LISTENER_MODE:
             one_shot = False
         if not one_shot:
             while True:
                 self.__handle_action()
-                if self.mode == CoreModeList.Idle:
+                if self.mode == CoreModeList.IDLE:
                     LOGGER.info("TMTC Client in idle mode")
                     time.sleep(5)
-                elif self.mode == CoreModeList.ListenerMode:
+                elif self.mode == CoreModeList.LISTENER_MODE:
                     time.sleep(1)
         else:
             self.__handle_action()
@@ -216,18 +216,14 @@ class TmTcHandler:
     def prompt_mode(self):
         next_mode = input("Please enter next mode (enter h for list of modes): ")
         if next_mode == 'h':
-            print("Mode 0: Idle mode")
-            print("Mode 1: Listener mode")
-            print("Mode 2: Single Command mode")
-            print("Mode 3: Service mode")
-            print("Mode 4: Software mode")
-            print("Mode 5: Binary upload mode")
-            print("Mode 5: Module test mode")
+            print("Mode 0: Single Command Mode")
+            print("Mode 1: Sequential Command Mode")
+            print("Mode 2: Listener Mode")
             self.prompt_mode()
         elif next_mode == 1:
-            self.mode = CoreModeList.ListenerMode
+            self.mode = CoreModeList.LISTENER_MODE
         else:
-            self.mode = CoreModeList.ListenerMode
+            self.mode = CoreModeList.LISTENER_MODE
 
     # These two will not be used for now.
     # @staticmethod
