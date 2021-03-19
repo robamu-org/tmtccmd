@@ -132,25 +132,24 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
-def check_args_in_enum(param: any, int_enum: collections.Iterable,
+def check_args_in_enum(param: any, enumeration: collections.Iterable,
                        warning_hint: str) -> Tuple[bool, int]:
     """
     This functions checks whether the integer representation of a given parameter in
-    contained within the passed integer enumeration.
-    TODO: It would be nice for the future if this function can also check the string
-          representation of the parameter against a list of strings
-    :param param:
-    :param int_enum:
+    contained within the passed collections, for example an (integer) enumeration.
+    Please note that if the passed parameter has a string representation but is a digit,
+    this function will attempt to check whether the integer representation is contained
+    inside the passed enumeration.
+    :param param:           Value to be checked
+    :param enumeration:     Enumeration, for example a enum.Enum or enum.IntEnum implementation
     :param warning_hint:
     :return:
     """
+    might_be_integer = False
     if param is not None:
         if isinstance(param, str):
-            if not param.isdigit():
-                LOGGER.warning(f"Passed {warning_hint} argument is not a digit.")
-                return False, 0
-            else:
-                param = int(param)
+            if param.isdigit():
+                might_be_integer = True
         elif isinstance(param, int):
             pass
         else:
@@ -160,9 +159,14 @@ def check_args_in_enum(param: any, int_enum: collections.Iterable,
         LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
 
-    core_params_list = set(param.value for param in int_enum)
-    if param not in core_params_list:
-        LOGGER.warning(f"The {warning_hint} argument is not contained in the core enumerations.")
+    params_list = set(param.value for param in enumeration)
+    if param not in params_list:
+        if might_be_integer:
+            if int(param) in params_list:
+                return True, int(param)
+        LOGGER.warning(
+            f"The {warning_hint} argument is not contained in the specified enumeration."
+        )
         return False, 0
     return True, param
 
@@ -170,7 +174,7 @@ def check_args_in_enum(param: any, int_enum: collections.Iterable,
 def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections.Iterable = None):
     """
     Checks whether the mode argument is contained inside the core mode list integer enumeration
-    or a custom mode list integer enumeraration which can be passed optionally.
+    or a custom mode list integer which can be passed optionally.
     This function will set the single command mode as the global mode parameter if the passed mode
     is not found in either enumerations.
     :param mode_arg:
@@ -178,7 +182,7 @@ def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections
     :return:
     """
     in_enum, mode_value = check_args_in_enum(
-        param=mode_arg, int_enum=CoreModeList, warning_hint="mode"
+        param=mode_arg, enumeration=CoreModeList, warning_hint="mode"
     )
     if in_enum:
         update_global(CoreGlobalIds.MODE, mode_value)
@@ -187,7 +191,7 @@ def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections
     mode_arg_invalid = False
     if custom_mode_int_enum is not None:
         in_enum, mode_value = check_args_in_enum(
-            param=mode_arg, int_enum=custom_mode_int_enum, warning_hint="custom mode"
+            param=mode_arg, enumeration=custom_mode_int_enum, warning_hint="custom mode"
         )
         if not in_enum:
             mode_arg_invalid = True
@@ -203,7 +207,7 @@ def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections
 
 def check_and_set_core_com_if_arg(com_if_arg: any):
     in_enum, com_if_value = check_args_in_enum(
-        param=com_if_arg, int_enum=CoreComInterfaces, warning_hint="communication interface"
+        param=com_if_arg, enumeration=CoreComInterfaces, warning_hint="communication interface"
     )
     if not in_enum:
         LOGGER.warning(f"Passed communication interface argument might be invalid, "
@@ -216,7 +220,7 @@ def check_and_set_core_service_arg(
         service_arg: any, custom_service_list: collections.Iterable = None
 ):
     in_enum, service_value = check_args_in_enum(
-        param=service_arg, int_enum=CoreServiceList, warning_hint="service"
+        param=service_arg, enumeration=CoreServiceList, warning_hint="service"
     )
     if in_enum:
         update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
@@ -225,7 +229,7 @@ def check_and_set_core_service_arg(
     service_arg_invalid = False
     if custom_service_list is not None:
         in_enum, mode_value = check_args_in_enum(
-            param=service_arg, int_enum=custom_service_list, warning_hint="custom mode"
+            param=service_arg, enumeration=custom_service_list, warning_hint="custom mode"
         )
         if not in_enum:
             service_arg_invalid = True
