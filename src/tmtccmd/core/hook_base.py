@@ -8,7 +8,7 @@ LOGGER = get_logger()
 
 class TmTcHookBase:
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+    from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.pus_tm.base import PusTelemetry
     from tmtccmd.pus_tc.base import PusTelecommand
     from tmtccmd.pus_tc.base import TcQueueT
@@ -19,12 +19,12 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def get_version(self) -> Tuple[str, int, int]:
-        from tmtccmd.core.version import SW_NAME, SW_VERSION, SW_SUBVERSION
-        return SW_NAME, SW_VERSION, SW_SUBVERSION
+    def get_version(self) -> str:
+        from tmtccmd import VERSION_NAME, __version__
+        return f"{VERSION_NAME} {__version__}"
 
     @abstractmethod
-    def set_object_ids(self, object_id_dict: Dict[int, bytearray]):
+    def set_object_ids(self) -> Dict[int, bytearray]:
         pass
 
     @abstractmethod
@@ -41,7 +41,8 @@ class TmTcHookBase:
     def assign_communication_interface(
             self, com_if: int, tmtc_printer: TmTcPrinter
     ) -> Union[CommunicationInterface, None]:
-        pass
+        from tmtccmd.defaults.com_setup import create_communication_interface_default
+        return create_communication_interface_default(com_if=com_if, tmtc_printer=tmtc_printer)
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
@@ -73,7 +74,7 @@ class TmTcHookBase:
         return None
 
     @staticmethod
-    def handle_servce_8_telemetry(
+    def handle_service_8_telemetry(
             object_id: int, action_id: int, custom_data: bytearray
     ) -> Tuple[list, list]:
         """
@@ -88,7 +89,8 @@ class TmTcHookBase:
         @return:
         """
         LOGGER.info(
-            "No service 8 handling implemented yet in handle_servce_8_telemetry hook function"
+            "TmTcHookBase: No service 8 handling implemented yet in handle_service_8_telemetry "
+            "hook function"
         )
         return [], []
 
@@ -108,7 +110,7 @@ class TmTcHookBase:
         at the end of the housekeeping packet. The last value is the number of parameters.
         """
         LOGGER.info(
-            "No service 3 housekeeping data handling implemented yet in "
+            "TmTcHookBase: No service 3 housekeeping data handling implemented yet in "
             "handle_service_3_housekeeping hook function"
         )
         return [], [], bytearray(), 0

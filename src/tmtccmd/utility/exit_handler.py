@@ -8,11 +8,6 @@ LOGGER = get_logger()
 def keyboard_interrupt_handler(com_interface: CommunicationInterface):
     LOGGER.info("Closing TMTC client")
     pass
-    # LOGGER.info("Disconnect registered")
-    # Unit Test closes Serial Port at the end
-    # We could do some optional stuff here
-    # if com_interface is not None:
-    #    com_interface.send_telecommand(bytearray([0, 0, 0, 0, 0]))
 
 
 class GracefulKiller:

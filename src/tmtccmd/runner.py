@@ -8,11 +8,13 @@
 @author     R. Mueller
 """
 import sys
-from typing import Tuple
 
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreGlobalIds
+from tmtccmd.core.globals_manager import update_global, get_global
+from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.defaults.args_parser import parse_input_arguments
+from tmtccmd.defaults.object_id_setup import get_core_object_ids
 from tmtccmd.utility.tmtcc_logger import set_tmtc_logger, get_logger
 
 logger = get_logger()
@@ -62,8 +64,6 @@ def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False):
 
 
 def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
-    from tmtccmd.core.globals_manager import update_global
-    from tmtccmd.core.definitions import CoreGlobalIds
 
     if hook_object is None:
         logger.error("Passed hook base object handle is invalid. Terminating..")
@@ -78,11 +78,13 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
         sys.exit(-1)
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
+    # Set core object IDs
+    insert_object_ids(get_core_object_ids())
+    # Set object IDs specified by the user.
+    insert_object_ids(hook_object.set_object_ids())
 
 
 def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
-    from tmtccmd.core.globals_manager import get_global
-    from tmtccmd.core.definitions import CoreGlobalIds
     from tmtccmd.core.hook_base import TmTcHookBase
     from typing import cast
     set_tmtc_logger()
@@ -108,14 +110,14 @@ def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
         __handle_cli_args_and_globals()
 
 
-def __handle_init_printout(use_gui: bool, version_tuple: Tuple[str, int, int]):
+def __handle_init_printout(use_gui: bool, version_string: str):
     print("-- Python TMTC Commander --")
     if use_gui:
         print("-- GUI mode --")
     else:
         print("-- Command line mode --")
 
-    print(f"-- Software version {version_tuple[0]} v{version_tuple[1]}.{version_tuple[2]}--")
+    print(f"-- Software version {version_string} --")
 
 
 def __handle_cli_args_and_globals():
@@ -135,13 +137,12 @@ def __handle_cli_args_and_globals():
 
 def __start_tmtc_commander_cli():
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.core.globals_manager import get_global
     hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
     if not isinstance(hook_obj, TmTcHookBase):
         logger.error("TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
                      "starting the program")
         sys.exit(0)
-    service = get_global(CoreGlobalIds.SERVICE)
+    service = get_global(CoreGlobalIds.CURRENT_SERVICE)
     op_code = get_global(CoreGlobalIds.OP_CODE)
     # The global variables are set by the argument parser.
     tmtc_handler = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
@@ -153,7 +154,6 @@ def __start_tmtc_commander_cli():
 
 def __start_tmtc_commander_qt_gui():
     from tmtccmd.core.frontend import TmTcFrontend
-    from tmtccmd.core.globals_manager import get_global
     try:
         from PyQt5.QtWidgets import QApplication
     except ImportError:
@@ -161,7 +161,7 @@ def __start_tmtc_commander_qt_gui():
         sys.exit(1)
     app = QApplication(["TMTC Commander"])
     tmtc_gui = TmTcFrontend(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
-                            get_global(CoreGlobalIds.SERVICE))
+                            get_global(CoreGlobalIds.CURRENT_SERVICE))
     tmtc_gui.start_ui()
     sys.exit(app.exec_())
 

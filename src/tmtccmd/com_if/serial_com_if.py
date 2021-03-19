@@ -1,20 +1,20 @@
 """
 @file   tmtcc_serial_com_if.py
-@brief  Serial Communication Interface
+@brief  SERIAL Communication Interface
 @author R. Mueller
 @date   01.11.2019
 """
+import enum
 import threading
 import time
 import logging
-from enum import Enum
 from collections import deque
 
 import serial
 import serial.tools.list_ports
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tm.factory import PusTelemetryFactory, PusTmListT
 from tmtccmd.pus_tc.base import PusTcInfoT
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -27,7 +27,18 @@ DLE_FRAME_LENGTH = 1500
 HEADER_BYTES_BEFORE_SIZE = 5
 
 
-class SerialCommunicationType(Enum):
+class SerialConfigIds(enum.Enum):
+    from enum import auto
+    SERIAL_PORT = auto()
+    SERIAL_BAUD_RATE = auto()
+    SERIAL_TIMEOUT = auto()
+    SERIAL_COMM_TYPE = auto()
+    SERIAL_FRAME_SIZE = auto()
+    SERIAL_DLE_QUEUE_LEN = auto()
+    SERIAL_DLE_MAX_FRAME_SIZE = auto()
+
+
+class SerialCommunicationType(enum.Enum):
     TIMEOUT_BASED = 0
     FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2
@@ -95,7 +106,7 @@ class SerialComIF(CommunicationInterface):
             self.serial = serial.Serial(
                 port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout)
         except serial.SerialException:
-            LOGGER.error("Serial Port opening failure!")
+            LOGGER.error("SERIAL Port opening failure!")
             raise IOError
         """
         Needs to be called by application code once for DLE mode!
@@ -110,7 +121,7 @@ class SerialComIF(CommunicationInterface):
                 self.reception_thread.join(0.4)
             self.serial.close()
         except serial.SerialException:
-            logging.warning("Serial Port could not be closed!")
+            logging.warning("SERIAL Port could not be closed!")
 
     def send_data(self, data: bytearray):
         self.serial.write(data)

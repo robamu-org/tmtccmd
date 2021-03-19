@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the TMTC commander core documentation!
+Welcome to the TMTC Commander Core documentation!
 =================================================
 
 This module is a generic tool for satellite developers to perform TMTC (Telemetry and Telecommand)

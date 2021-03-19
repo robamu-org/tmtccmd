@@ -1,6 +1,6 @@
-<p align="center"> <img src="https://github.com/rmspacefish/tmtccmd/blob/develop/docs/logo_tmtccmd_smaller.png" width="50%"> </p>
+<p align="center"> <img src="docs/logo_tmtccmd_smaller.png" width="40%"> </p>
 
-TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
+TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 ====
 
 ## Overview
@@ -8,12 +8,12 @@ TMTC Client Core [![Documentation Status](https://readthedocs.org/projects/tmtcc
 - Documentation: https://tmtccmd.readthedocs.io/en/latest/
 - Project Homepage: https://github.com/rmspacefish/tmtccmd
 
-This client was first developed by KSat for the 
+This commander application was first developed by KSat for the 
 [SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board 
 software but has evolved into a more generic tool for satellite developers to perform TMTC 
 (Telemetry and Telecommand) handling and testing via different communication interfaces. 
 Currently, only the PUS standard is implemented as a packet standard. This tool can be used either 
-as a command line tool or as a GUI tool but the GUI capabilities are still in an Alpha state. 
+as a command line tool or as a GUI tool, but the GUI capabilities are still in an Alpha state.
 
 This client currently supports the following communication interfaces:
 
@@ -49,7 +49,7 @@ with the following command:
 git submodule add https://github.com/rmspacefish/tmtccmd.git
 ```
 
-After that, you can install the package in editable mode with the following command:
+After that, you can install the package in an editable mode with the following command:
 
 ```sh
 cd tmtccmd

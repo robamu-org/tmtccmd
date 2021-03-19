@@ -99,7 +99,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
-        '-c', '--com_if', type=int, help='Communication Interface. 0: Dummy Interface, 1: Serial,'
+        '-c', '--com_if', type=int, help='Communication Interface. 0: DUMMY Interface, 1: SERIAL,'
                                          '2: UDP', default=2)
 
 

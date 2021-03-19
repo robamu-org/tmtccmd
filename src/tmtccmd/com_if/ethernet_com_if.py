@@ -5,6 +5,7 @@
 
 @author R. Mueller
 """
+import enum
 import select
 import socket
 import struct
@@ -15,10 +16,16 @@ from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.pus_tc.base import PusTcInfoT
-from tmtccmd.utility.tmtcc_tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.core.definitions import ethernet_address_t
 
 LOGGER = get_logger()
+
+
+class EthernetConfigIds(enum.Enum):
+    from enum import auto
+    SEND_ADDRESS = auto()
+    RECV_ADDRESS = auto()
 
 
 # pylint: disable=abstract-method

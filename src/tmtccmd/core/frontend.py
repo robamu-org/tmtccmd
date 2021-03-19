@@ -8,6 +8,7 @@
 @author         R. Mueller, P. Scheurenbrand, D. Nguyen
 """
 import threading
+import os
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import *
@@ -18,12 +19,10 @@ from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeL
 from tmtccmd.pus_tc.base import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
+from tmtccmd.com_if.ethernet_com_if import EthernetConfigIds
+import tmtccmd.defaults as defaults_module
 
 LOGGER = get_logger()
-
-"""
-TODO: Make it look nicer. Add SOURCE or KSat logo.
-"""
 
 
 class TmTcFrontend(QMainWindow):
@@ -49,10 +48,19 @@ class TmTcFrontend(QMainWindow):
         self.service_list = []
         self.debug_mode = True
         self.is_busy = False
+        module_path = os.path.abspath(defaults_module.__file__).replace("__init__.py", "")
+        self.logo_path = f"{module_path}/logo.png"
+        print(self.logo_path)
         self.tmtc_handler.start(False)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start_ui)
+
+    def set_gui_logo(self, logo_total_path: str):
+        if os.path.isfile(logo_total_path):
+            self.logo_path = logo_total_path
+        else:
+            LOGGER.warning("Could not set logo, path invalid!")
 
     def service_index_changed(self, index: int):
         self.tmtc_handler.service = self.service_list[index]
@@ -72,7 +80,7 @@ class TmTcFrontend(QMainWindow):
         if self.debug_mode:
             LOGGER.info("Start Service Test Button pressed.")
         # LOGGER.info("start testing service: " + str(tmtcc_config.G_SERVICE))
-        # self.tmtc_handler.mode = tmtcc_config.ModeList.ServiceTestMode
+        # self.tmtc_handler.mode = tmtcc_config.ModeList.SEQUENTIAL_CMD_MODE
         # start the action in a new process
         p = threading.Thread(target=self.handle_tm_tc_action)
         p.start()
@@ -100,7 +108,7 @@ class TmTcFrontend(QMainWindow):
             ssc=self.single_command_ssc)
         self.tmtc_handler.single_command_package = command.pack_command_tuple()
 
-        # self.tmtc_handler.mode = tmtcc_config.ModeList.SingleCommandMode
+        # self.tmtc_handler.mode = tmtcc_config.ModeList.SINGLE_CMD_MODE
         # start the action in a new process
         p = threading.Thread(target=self.handle_tm_tc_action)
         p.start()
@@ -108,7 +116,7 @@ class TmTcFrontend(QMainWindow):
     def handle_tm_tc_action(self):
         if self.debug_mode:
             LOGGER.info("Starting TMTC action..")
-        self.tmtc_handler.mode = CoreModeList.ServiceTestMode
+        self.tmtc_handler.mode = CoreModeList.SEQUENTIAL_CMD_MODE
 
         self.set_send_buttons(False)
         self.tmtc_handler.perform_operation()
@@ -129,10 +137,10 @@ class TmTcFrontend(QMainWindow):
 
         self.setWindowTitle("TMTC Commander")
         label = QLabel(self)
-        pixmap = QPixmap("logo.png")  # QPixmap is the class, easy to put pic on screen
+        pixmap = QPixmap(self.logo_path)  # QPixmap is the class, easy to put pic on screen
         label.setGeometry(720, 10, 100, 100)
         label.setPixmap(pixmap)
-        self.setWindowIcon(QIcon("logo.png"))
+        self.setWindowIcon(QIcon(self.logo_path))
         label.setScaledContents(True)
         row = 0
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
@@ -213,7 +221,7 @@ class TmTcFrontend(QMainWindow):
         # add all possible ComIFs to the comboBox
         for com_if in CoreComInterfaces:
             com_if_combo_box.addItem(str(com_if))
-        com_if_combo_box.setCurrentIndex(self.tmtc_handler.com_if.value)
+        com_if_combo_box.setCurrentIndex(self.tmtc_handler.com_if)
         com_if_combo_box.currentIndexChanged.connect(com_if_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)
         row += 1
@@ -230,7 +238,7 @@ class TmTcFrontend(QMainWindow):
             combo_box.addItem(service_dict[service_key][0])
             self.service_list.append(service_value)
 
-        default_service = get_global(CoreGlobalIds.SERVICE)
+        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
         combo_box.setCurrentIndex(default_service.value)
         combo_box.currentIndexChanged.connect(self.service_index_changed)
         grid.addWidget(combo_box, row, 0, 1, 1)
@@ -370,16 +378,14 @@ def number_timeout_factor(value: float):
 
 
 def ip_change_client(value):
-    from config.custom_definitions import EthernetConfig
     ethernet_config = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_config[EthernetConfig.RECV_ADDRESS] = value
+    ethernet_config[EthernetConfigIds.RECV_ADDRESS] = value
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
     LOGGER.info("Client IP changed: " + value)
 
 
 def ip_change_board(value):
-    from config.custom_definitions import EthernetConfig
     ethernet_config = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_config[EthernetConfig.SEND_ADDRESS] = value
+    ethernet_config[EthernetConfigIds.SEND_ADDRESS] = value
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
     LOGGER.info("Board IP changed: " + value)
