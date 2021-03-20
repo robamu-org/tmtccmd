@@ -19,7 +19,7 @@ def create_communication_interface_default(
 ) -> Union[CommunicationInterface, None]:
     from tmtccmd.com_if.serial_com_if import SerialComIF
     from tmtccmd.com_if.dummy_com_if import DummyComIF
-    from tmtccmd.com_if.udp_com_if import TcpIpUdpComIF
+    from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
     """
     Return the desired communication interface object

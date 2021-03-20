@@ -52,8 +52,9 @@ class TcpIpUdpComIF(CommunicationInterface):
 
     def open(self):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
         LOGGER.info(f"Binding UDP socket to {self.recv_addr[0]} and port {self.recv_addr[1]}")
+        # See https://stackoverflow.com/questions/3057029/do-i-have-to-bind-a-udp-socket-in-my-client-program-to-receive-data-i-always-g
+        # for more information as why an explicit UDP client bind is necessary.
         self.udp_socket.bind(self.recv_addr)
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
@@ -68,7 +69,9 @@ class TcpIpUdpComIF(CommunicationInterface):
     def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
         if self.udp_socket is None:
             return
-        self.udp_socket.sendto(tc_packet, self.send_address)
+        bytes_sent = self.udp_socket.sendto(tc_packet, self.send_address)
+        if bytes_sent != len(tc_packet):
+            LOGGER.warning("Not all bytes were sent!")
 
     def data_available(self, timeout: float = 0) -> bool:
         if self.udp_socket is None:
