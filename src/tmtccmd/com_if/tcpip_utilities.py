@@ -3,7 +3,7 @@ import os
 import socket
 import struct
 import enum
-from typing import Tuple
+from typing import Tuple, Union
 
 from tmtccmd.core.definitions import ethernet_address_t
 from tmtccmd.utility.json_handler import check_json_file
@@ -28,12 +28,12 @@ def determine_udp_send_address() -> ethernet_address_t:
 
     with open("config/tmtcc_config.json", "r") as write:
         load_data = json.load(write)
-        if JsonKeyNames.TCPIP_DEST_IP_ADDRESS.value not in load_data or \
-                JsonKeyNames.TCPIP_DEST_PORT.value not in load_data:
+        if JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value not in load_data or \
+                JsonKeyNames.TCPIP_UDP_DEST_PORT.value not in load_data:
             reconfigure_ip_address = True
         else:
-            ip_address = load_data[JsonKeyNames.TCPIP_DEST_IP_ADDRESS.value]
-            port = int(load_data[JsonKeyNames.TCPIP_DEST_PORT.value])
+            ip_address = load_data[JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value]
+            port = int(load_data[JsonKeyNames.TCPIP_UDP_DEST_PORT.value])
             address_tuple = ip_address, port
 
     if reconfigure_ip_address:
@@ -42,8 +42,8 @@ def determine_udp_send_address() -> ethernet_address_t:
         if save_to_json.lower() in ['y', "yes"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)
-                json_dict[JsonKeyNames.TCPIP_DEST_IP_ADDRESS.value] = address_tuple[0]
-                json_dict[JsonKeyNames.TCPIP_DEST_PORT.value] = address_tuple[1]
+                json_dict[JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value] = address_tuple[0]
+                json_dict[JsonKeyNames.TCPIP_UDP_DEST_PORT.value] = address_tuple[1]
                 file.seek(0)
                 json.dump(json_dict, file, indent=4)
             LOGGER.info(
@@ -53,7 +53,7 @@ def determine_udp_send_address() -> ethernet_address_t:
     return address_tuple
 
 
-def determine_udp_recv_address() -> ethernet_address_t:
+def determine_udp_recv_address() -> Union[None, ethernet_address_t]:
     address_tuple = ()
     reconfigure_ip_address = False
     if not check_json_file():
@@ -61,22 +61,34 @@ def determine_udp_recv_address() -> ethernet_address_t:
 
     with open("config/tmtcc_config.json", "r") as write:
         load_data = json.load(write)
-        if JsonKeyNames.TCPIP_RECV_IP_ADDRESS.value not in load_data or \
-                JsonKeyNames.TCPIP_RECV_PORT.value not in load_data:
+        if JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value not in load_data or \
+                JsonKeyNames.TCPIP_UDP_RECV_PORT.value not in load_data:
             reconfigure_ip_address = True
         else:
-            ip_address = load_data[JsonKeyNames.TCPIP_RECV_IP_ADDRESS.value]
-            port = int(load_data[JsonKeyNames.TCPIP_RECV_PORT.value])
+            ip_address = load_data[JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value]
+            if ip_address is None:
+                return None
+            port = int(load_data[JsonKeyNames.TCPIP_UDP_RECV_PORT.value])
             address_tuple = ip_address, port
 
     if reconfigure_ip_address:
+        use_recv_addr = input("Use receive address to bind client to? "
+                              "This is not necessary [y/n]: ")
+        if not use_recv_addr in ["y", "yes", "1"]:
+            with open("config/tmtcc_config.json", "r+") as file:
+                json_dict = json.load(file)
+                json_dict[JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value] = None
+                json_dict[JsonKeyNames.TCPIP_UDP_RECV_PORT.value] = None
+                file.seek(0)
+                json.dump(json_dict, file, indent=4)
+            return None
         address_tuple = prompt_ip_address(type_str="UDP receive")
         save_to_json = input("Do you want to store the UDP receive address configuration? [y/n]: ")
         if save_to_json.lower() in ['y', "yes"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)
-                json_dict[JsonKeyNames.TCPIP_RECV_IP_ADDRESS.value] = address_tuple[0]
-                json_dict[JsonKeyNames.TCPIP_RECV_PORT.value] = address_tuple[1]
+                json_dict[JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value] = address_tuple[0]
+                json_dict[JsonKeyNames.TCPIP_UDP_RECV_PORT.value] = address_tuple[1]
                 file.seek(0)
                 json.dump(json_dict, file, indent=4)
             LOGGER.info(
@@ -130,17 +142,17 @@ def determine_recv_buffer_len(udp: bool):
         reconfigure_recv_buf_size = True
     with open("config/tmtcc_config.json", "r") as write:
         load_data = json.load(write)
-        if JsonKeyNames.TCPIP_RECV_MAX_SIZE.value not in load_data:
+        if JsonKeyNames.TCPIP_UDP_RECV_MAX_SIZE.value not in load_data:
             reconfigure_recv_buf_size = True
         else:
-            recv_max_size = load_data[JsonKeyNames.TCPIP_RECV_MAX_SIZE.value]
+            recv_max_size = load_data[JsonKeyNames.TCPIP_UDP_RECV_MAX_SIZE.value]
     if reconfigure_recv_buf_size:
         recv_max_size = prompt_recv_buffer_len(udp=udp)
         store_size = input("Do you store the maximum receive size configuration? [y/n]: ")
         if store_size.lower() in ["y", "yes", "1"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)
-                json_dict[JsonKeyNames.TCPIP_RECV_MAX_SIZE.value] = recv_max_size
+                json_dict[JsonKeyNames.TCPIP_UDP_RECV_MAX_SIZE.value] = recv_max_size
                 file.seek(0)
                 json.dump(json_dict, file, indent=4)
     return recv_max_size

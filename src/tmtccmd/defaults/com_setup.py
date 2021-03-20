@@ -33,9 +33,11 @@ def create_communication_interface_default(
             recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
             max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
             communication_interface = TcpIpUdpComIF(
-                tmtc_printer=tmtc_printer, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
+                tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
                 tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
-                send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size)
+                send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
+                tmtc_printer=tmtc_printer
+            )
         elif com_if == CoreComInterfaces.SERIAL:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]

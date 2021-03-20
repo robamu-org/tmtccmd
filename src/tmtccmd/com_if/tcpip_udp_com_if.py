@@ -10,8 +10,7 @@ import select
 import socket
 import struct
 import sys
-import threading
-from typing import Tuple
+from typing import Tuple, Union
 
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
@@ -22,6 +21,9 @@ from tmtccmd.core.definitions import ethernet_address_t
 
 LOGGER = get_logger()
 
+UDP_RECV_WIRETAPPING_ENABLED = False
+UDP_SEND_WIRETAPPING_ENABLED = False
+
 
 # pylint: disable=abstract-method
 # pylint: disable=arguments-differ
@@ -30,9 +32,19 @@ class TcpIpUdpComIF(CommunicationInterface):
     """
     Communication interface for UDP communication.
     """
-    def __init__(self, tmtc_printer: TmTcPrinter, tm_timeout: float, tc_timeout_factor: float,
-                 send_address: ethernet_address_t, recv_addr: ethernet_address_t,
-                 max_recv_size: int):
+    def __init__(self, tm_timeout: float, tc_timeout_factor: float,
+                 send_address: ethernet_address_t, max_recv_size: int,
+                 recv_addr: Union[None, ethernet_address_t] = None,
+                 tmtc_printer: Union[None, TmTcPrinter] = None ):
+        """
+        Initialize a communication interface to send and receive UDP datagrams.
+        :param tm_timeout:
+        :param tc_timeout_factor:
+        :param send_address:
+        :param max_recv_size:
+        :param recv_addr:
+        :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
+        """
         super().__init__(tmtc_printer)
         self.tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
@@ -52,10 +64,12 @@ class TcpIpUdpComIF(CommunicationInterface):
 
     def open(self):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        LOGGER.info(f"Binding UDP socket to {self.recv_addr[0]} and port {self.recv_addr[1]}")
-        # See https://stackoverflow.com/questions/3057029/do-i-have-to-bind-a-udp-socket-in-my-client-program-to-receive-data-i-always-g
-        # for more information as why an explicit UDP client bind is necessary.
-        self.udp_socket.bind(self.recv_addr)
+        # Bind is possible but should not be necessary, and introduces risk of port alread
+        # being used.
+        # See: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-bind
+        if self.recv_addr is not None:
+            LOGGER.info(f"Binding UDP socket to {self.recv_addr[0]} and port {self.recv_addr[1]}")
+            self.udp_socket.bind(self.recv_addr)
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
 
@@ -104,10 +118,3 @@ class TcpIpUdpComIF(CommunicationInterface):
             LOGGER.warning("Connection reset exception occured!")
         return packet_list
 
-    def connect_to_board(self):
-        """
-        For UDP, this can be used to initiate communication.
-        :return:
-        """
-        ping = bytearray([])
-        self.send_telecommand(ping)
