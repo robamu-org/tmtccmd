@@ -3,7 +3,7 @@ import json
 import serial
 import serial.tools.list_ports
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.utility.json_handler import check_json_file
+from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 
 LOGGER = get_logger()
 
@@ -22,7 +22,7 @@ def determine_baud_rate() -> int:
     with open("config/tmtcc_config.json", "r") as read:
         try:
             load_data = json.load(read)
-            baud_rate = load_data["BAUD_RATE"]
+            baud_rate = load_data[JsonKeyNames.SERIAL_BAUDRATE.value]
         except KeyError:
             prompt_baud_rate = True
 
@@ -38,7 +38,7 @@ def determine_baud_rate() -> int:
         if save_to_json.lower() in ['y', "yes", "1"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 data = json.load(file)
-                data.update(dict(BAUD_RATE=baud_rate))
+                data[JsonKeyNames.SERIAL_BAUDRATE.value] = baud_rate
                 file.seek(0)
                 json.dump(data, file, indent=4)
             LOGGER.info("Baud rate was stored to the JSON file config/tmtcc_config.json")
@@ -60,7 +60,7 @@ def determine_com_port() -> str:
     with open("config/tmtcc_config.json", "r") as read:
         try:
             load_data = json.load(read)
-            com_port = load_data["COM_PORT"]
+            com_port = load_data[JsonKeyNames.SERIAL_PORT.value]
         except KeyError:
             reconfigure_com_port = True
         if not check_port_validity(com_port):
@@ -77,7 +77,7 @@ def determine_com_port() -> str:
         if save_to_json.lower() in ['y', "yes"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 data = json.load(file)
-                data.update(dict(COM_PORT=com_port))
+                data[JsonKeyNames.SERIAL_PORT.value] = com_port
                 file.seek(0)
                 json.dump(data, file)
             LOGGER.info("Serial port was stored to the JSON file config/tmtcc_config.json")

@@ -19,7 +19,7 @@ from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeL
 from tmtccmd.pus_tc.base import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com_if.udp_com_if import EthernetConfigIds
+from tmtccmd.com_if.udp_com_if import TcpIpConfigIds
 import tmtccmd.defaults as defaults_module
 
 LOGGER = get_logger()
@@ -379,13 +379,13 @@ def number_timeout_factor(value: float):
 
 def ip_change_client(value):
     ethernet_config = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_config[EthernetConfigIds.RECV_ADDRESS] = value
+    ethernet_config[TcpIpConfigIds.RECV_ADDRESS] = value
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
     LOGGER.info("Client IP changed: " + value)
 
 
 def ip_change_board(value):
     ethernet_config = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_config[EthernetConfigIds.SEND_ADDRESS] = value
+    ethernet_config[TcpIpConfigIds.SEND_ADDRESS] = value
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
     LOGGER.info("Board IP changed: " + value)

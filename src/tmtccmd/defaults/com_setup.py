@@ -6,8 +6,7 @@ from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
-from tmtccmd.com_if.udp_com_if import EthernetConfigIds
-from tmtccmd.com_if.ethernet_utilities import ethernet_address_t
+from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, ethernet_address_t
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
@@ -20,7 +19,7 @@ def create_communication_interface_default(
 ) -> Union[CommunicationInterface, None]:
     from tmtccmd.com_if.serial_com_if import SerialComIF
     from tmtccmd.com_if.dummy_com_if import DummyComIF
-    from tmtccmd.com_if.udp_com_if import EthernetComIF
+    from tmtccmd.com_if.udp_com_if import TcpIpUdpComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
     """
     Return the desired communication interface object
@@ -30,12 +29,12 @@ def create_communication_interface_default(
     try:
         if com_if == CoreComInterfaces.TCPIP_UDP:
             ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-            send_addr = ethernet_cfg_dict[EthernetConfigIds.SEND_ADDRESS]
-            rcv_addr = ethernet_cfg_dict[EthernetConfigIds.RECV_ADDRESS]
-            communication_interface = EthernetComIF(
+            send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
+            max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
+            communication_interface = TcpIpUdpComIF(
                 tmtc_printer=tmtc_printer, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
                 tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
-                send_address=send_addr, receive_address=rcv_addr)
+                send_address=send_addr, max_recv_size=max_recv_size)
         elif com_if == CoreComInterfaces.SERIAL:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
@@ -74,17 +73,14 @@ def create_communication_interface_default(
 
 
 def default_tcpip_udp_cfg_setup():
-    from tmtccmd.com_if.ethernet_utilities import determine_ip_addresses
+    from tmtccmd.com_if.tcpip_utilities import determine_udp_address, determine_recv_buffer_len
     update_global(CoreGlobalIds.USE_ETHERNET, True)
     # This will either load the addresses from a JSON file or prompt them from the user.
-    send_addr, rcv_addr = determine_ip_addresses()
-    setup_tcpip_cfg(send_address=send_addr, receive_address=rcv_addr)
-
-
-def setup_tcpip_cfg(send_address: ethernet_address_t, receive_address: ethernet_address_t):
+    send_tuple = determine_udp_address()
+    max_recv_buf_size = determine_recv_buffer_len(udp=True)
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_cfg_dict.update({EthernetConfigIds.SEND_ADDRESS: send_address})
-    ethernet_cfg_dict.update({EthernetConfigIds.RECV_ADDRESS: receive_address})
+    ethernet_cfg_dict.update({TcpIpConfigIds.SEND_ADDRESS: send_tuple})
+    ethernet_cfg_dict.update({TcpIpConfigIds.RECV_MAX_SIZE: max_recv_buf_size})
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_cfg_dict)
 
 

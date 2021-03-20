@@ -23,33 +23,21 @@ from tmtccmd.core.definitions import ethernet_address_t
 LOGGER = get_logger()
 
 
-class EthernetConfigIds(enum.Enum):
-    from enum import auto
-    SEND_ADDRESS = auto()
-    RECV_ADDRESS = auto()
-
-
 # pylint: disable=abstract-method
 # pylint: disable=arguments-differ
 # pylint: disable=too-many-arguments
-class EthernetComIF(CommunicationInterface):
+class TcpIpUdpComIF(CommunicationInterface):
     """
     Communication interface for UDP communication.
     """
-
-    def send_data(self, data: bytearray):
-        self.udp_socket.sendto(data, self.destination_address)
-
     def __init__(self, tmtc_printer: TmTcPrinter, tm_timeout: float, tc_timeout_factor: float,
-                 receive_address: ethernet_address_t, send_address: ethernet_address_t):
+                 send_address: ethernet_address_t, max_recv_size: int):
         super().__init__(tmtc_printer)
         self.tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
         self.udp_socket = None
-        self.receive_address = receive_address
-        self.destination_address = send_address
-        self.listener_thread = threading.Thread
-        self.valid = True
+        self.socket_address = send_address
+        self.max_recv_size = max_recv_size
 
     def __del__(self):
         try:
@@ -62,15 +50,20 @@ class EthernetComIF(CommunicationInterface):
 
     def open(self):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.set_up_socket(self.receive_address)
+        # Set non-blocking because we use select.
+        self.udp_socket.setblocking(False)
 
     def close(self) -> None:
-        self.udp_socket.close()
+        if self.udp_socket is None:
+            self.udp_socket.close()
+
+    def send_data(self, data: bytearray):
+        self.udp_socket.sendto(data, self.destination_address)
 
     def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
         if self.udp_socket is None:
             return
-        self.udp_socket.sendto(tc_packet, self.destination_address)
+        self.udp_socket.sendto(tc_packet, self.socket_address)
 
     def data_available(self, timeout: float = 0) -> bool:
         if self.udp_socket is None:
@@ -85,7 +78,7 @@ class EthernetComIF(CommunicationInterface):
             return False, []
         ready = self.data_available(poll_timeout)
         if ready:
-            data = self.udp_socket.recvfrom(1024)[0]
+            data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
             tm_packet = PusTelemetryFactory.create(bytearray(data))
             if tm_packet is None:
                 return False, []
@@ -102,29 +95,6 @@ class EthernetComIF(CommunicationInterface):
         except ConnectionResetError:
             LOGGER.warning("Connection reset exception occured!")
         return packet_list
-
-    def set_up_socket(self, receive_address: ethernet_address_t):
-        (recv_address, recv_port) = receive_address
-        """
-        Sets up the sockets for the UDP communication.
-        :return:
-        """
-        try:
-            if recv_address == socket.inet_ntoa(struct.pack('!L', socket.INADDR_ANY)):
-                recv_printout = "all interfaces (INADDR_ANY)"
-            elif recv_address == socket.inet_ntoa(struct.pack('!L', socket.INADDR_LOOPBACK)):
-                recv_printout = "localhost (INADDR_LOOPBACK)"
-            else:
-                recv_printout = receive_address[0]
-            LOGGER.info(f"Binding UDP socket to {recv_printout} and port {recv_port}")
-            self.udp_socket.bind(receive_address)
-            self.udp_socket.setblocking(False)
-        except OSError:
-            print("Socket already set-up.")
-        except TypeError as error:
-            print(error)
-            print("Invalid Receive Address.")
-            sys.exit()
 
     def connect_to_board(self):
         """
