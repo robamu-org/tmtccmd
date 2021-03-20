@@ -20,7 +20,7 @@ class TcpIpConfigIds(enum.Enum):
     RECV_MAX_SIZE = auto()
 
 
-def determine_udp_address() -> ethernet_address_t:
+def determine_udp_send_address() -> ethernet_address_t:
     address_tuple = ()
     reconfigure_ip_address = False
     if not check_json_file():
@@ -37,8 +37,8 @@ def determine_udp_address() -> ethernet_address_t:
             address_tuple = ip_address, port
 
     if reconfigure_ip_address:
-        address_tuple = prompt_ip_address(type_str="UDP")
-        save_to_json = input("Do you want to store the UDP address configuration? [y/n]: ")
+        address_tuple = prompt_ip_address(type_str="UDP send")
+        save_to_json = input("Do you want to store the UDP send address configuration? [y/n]: ")
         if save_to_json.lower() in ['y', "yes"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)
@@ -48,6 +48,39 @@ def determine_udp_address() -> ethernet_address_t:
                 json.dump(json_dict, file, indent=4)
             LOGGER.info(
                 "Destination IP address was stored to the JSON file config/tmtcc_config.json."
+            )
+            LOGGER.info("Delete this file or edit it manually to change the loaded IP addresses.")
+    return address_tuple
+
+
+def determine_udp_recv_address() -> ethernet_address_t:
+    address_tuple = ()
+    reconfigure_ip_address = False
+    if not check_json_file():
+        reconfigure_ip_address = True
+
+    with open("config/tmtcc_config.json", "r") as write:
+        load_data = json.load(write)
+        if JsonKeyNames.TCPIP_RECV_IP_ADDRESS.value not in load_data or \
+                JsonKeyNames.TCPIP_RECV_PORT.value not in load_data:
+            reconfigure_ip_address = True
+        else:
+            ip_address = load_data[JsonKeyNames.TCPIP_RECV_IP_ADDRESS.value]
+            port = int(load_data[JsonKeyNames.TCPIP_RECV_PORT.value])
+            address_tuple = ip_address, port
+
+    if reconfigure_ip_address:
+        address_tuple = prompt_ip_address(type_str="UDP receive")
+        save_to_json = input("Do you want to store the UDP receive address configuration? [y/n]: ")
+        if save_to_json.lower() in ['y', "yes"]:
+            with open("config/tmtcc_config.json", "r+") as file:
+                json_dict = json.load(file)
+                json_dict[JsonKeyNames.TCPIP_RECV_IP_ADDRESS.value] = address_tuple[0]
+                json_dict[JsonKeyNames.TCPIP_RECV_PORT.value] = address_tuple[1]
+                file.seek(0)
+                json.dump(json_dict, file, indent=4)
+            LOGGER.info(
+                "Reception IP address was stored to the JSON file config/tmtcc_config.json."
             )
             LOGGER.info("Delete this file or edit it manually to change the loaded IP addresses.")
     return address_tuple
@@ -63,25 +96,25 @@ def prompt_ip_address(type_str: str) -> ethernet_address_t:
 
         check_ip = True
         if ip_address == "localhost":
-            send_ip = socket.inet_ntoa(struct.pack('!L', socket.INADDR_LOOPBACK))
+            ip_address = socket.inet_ntoa(struct.pack('!L', socket.INADDR_LOOPBACK))
             check_ip = False
         elif ip_address == "any":
-            receive_ip = socket.inet_ntoa(struct.pack('!L', socket.INADDR_ANY))
+            ip_address = socket.inet_ntoa(struct.pack('!L', socket.INADDR_ANY))
             check_ip = False
         if check_ip:
             try:
-                socket.inet_aton(str(send_ip))
+                socket.inet_aton(str(ip_address))
             except socket.error:
                 LOGGER.warning("Invalid IP address format!")
                 continue
 
-        send_port = input(
+        port = input(
             f"Please enter {type_str} port: "
         )
-        address_tuple = (send_ip, int(send_port))
+        address_tuple = (ip_address, int(port))
 
-        LOGGER.info(f"Specified destination IP address: {send_ip}")
-        LOGGER.info(f"Specified destination port: {send_port}")
+        LOGGER.info(f"Specified {type_str} IP address: {ip_address}")
+        LOGGER.info(f"Specified {type_str} port: {port}")
 
         confirm = input("Please confirm selection [y/n]: ")
         if not confirm.lower() in ['y', "yes", 1]:
@@ -103,7 +136,7 @@ def determine_recv_buffer_len(udp: bool):
             recv_max_size = load_data[JsonKeyNames.TCPIP_RECV_MAX_SIZE.value]
     if reconfigure_recv_buf_size:
         recv_max_size = prompt_recv_buffer_len(udp=udp)
-        store_size = input("Do you store the maximum receive size configuration? [y/n]")
+        store_size = input("Do you store the maximum receive size configuration? [y/n]: ")
         if store_size.lower() in ["y", "yes", "1"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)

@@ -31,12 +31,14 @@ class TcpIpUdpComIF(CommunicationInterface):
     Communication interface for UDP communication.
     """
     def __init__(self, tmtc_printer: TmTcPrinter, tm_timeout: float, tc_timeout_factor: float,
-                 send_address: ethernet_address_t, max_recv_size: int):
+                 send_address: ethernet_address_t, recv_addr: ethernet_address_t,
+                 max_recv_size: int):
         super().__init__(tmtc_printer)
         self.tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
         self.udp_socket = None
-        self.socket_address = send_address
+        self.send_address = send_address
+        self.recv_addr = recv_addr
         self.max_recv_size = max_recv_size
 
     def __del__(self):
@@ -50,6 +52,9 @@ class TcpIpUdpComIF(CommunicationInterface):
 
     def open(self):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        LOGGER.info(f"Binding UDP socket to {self.recv_addr[0]} and port {self.recv_addr[1]}")
+        self.udp_socket.bind(self.recv_addr)
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
 
@@ -58,12 +63,12 @@ class TcpIpUdpComIF(CommunicationInterface):
             self.udp_socket.close()
 
     def send_data(self, data: bytearray):
-        self.udp_socket.sendto(data, self.destination_address)
+        self.udp_socket.sendto(data, self.send_address)
 
     def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
         if self.udp_socket is None:
             return
-        self.udp_socket.sendto(tc_packet, self.socket_address)
+        self.udp_socket.sendto(tc_packet, self.send_address)
 
     def data_available(self, timeout: float = 0) -> bool:
         if self.udp_socket is None:
