@@ -74,7 +74,7 @@ def determine_udp_recv_address() -> Union[None, ethernet_address_t]:
     if reconfigure_ip_address:
         use_recv_addr = input("Use receive address to bind client to? "
                               "This is not necessary [y/n]: ")
-        if not use_recv_addr in ["y", "yes", "1"]:
+        if use_recv_addr not in ["y", "yes", "1"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)
                 json_dict[JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value] = None

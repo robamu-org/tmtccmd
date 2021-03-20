@@ -32,7 +32,7 @@ class TmTcHookBase:
     @abstractmethod
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.defaults.globals_setup import set_default_globals_pre_args_parsing
-        set_default_globals_pre_args_parsing(apid=DEFAULT_APID)
+        set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
 
     @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):

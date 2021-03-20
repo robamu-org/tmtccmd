@@ -5,11 +5,8 @@
 
 @author R. Mueller
 """
-import enum
 import select
 import socket
-import struct
-import sys
 from typing import Tuple, Union
 
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -35,7 +32,7 @@ class TcpIpUdpComIF(CommunicationInterface):
     def __init__(self, tm_timeout: float, tc_timeout_factor: float,
                  send_address: ethernet_address_t, max_recv_size: int,
                  recv_addr: Union[None, ethernet_address_t] = None,
-                 tmtc_printer: Union[None, TmTcPrinter] = None ):
+                 tmtc_printer: Union[None, TmTcPrinter] = None):
         """
         Initialize a communication interface to send and receive UDP datagrams.
         :param tm_timeout:
