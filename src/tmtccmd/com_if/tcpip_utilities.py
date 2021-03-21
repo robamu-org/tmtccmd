@@ -169,6 +169,10 @@ def prompt_recv_buffer_len(udp: bool) -> int:
             LOGGER.warning("Specified size is not a number.")
             continue
         else:
-            recv_max_size = int(recv_max_size)
+            try:
+                recv_max_size = int(recv_max_size)
+            except ValueError:
+                LOGGER.warning("Specified input invalid")
+                continue
             break
     return recv_max_size

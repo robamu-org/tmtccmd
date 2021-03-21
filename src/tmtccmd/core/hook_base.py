@@ -2,7 +2,7 @@ import argparse
 from abc import abstractmethod
 from typing import Union, Dict, Tuple
 
-from core.definitions import DEFAULT_APID
+from tmtccmd.core.definitions import DEFAULT_APID
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
