@@ -84,6 +84,8 @@ def set_default_globals_post_args_parsing(
     except AttributeError:
         LOGGER.warning("Passed namespace does not contain the service (-s) argument")
         service_param = CoreServiceList.SERVICE_17
+    if isinstance(service_param, str):
+        service_param = service_param.lower()
     check_and_set_core_service_arg(
         service_arg=service_param, custom_service_list=custom_service_list
     )
