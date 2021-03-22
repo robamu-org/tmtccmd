@@ -1,8 +1,20 @@
 import json
 import os
+import enum
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
+
+
+class JsonKeyNames(enum.Enum):
+    TCPIP_UDP_DEST_IP_ADDRESS = "TCPIP_UDP_DEST_IP_ADDRESS"
+    TCPIP_UDP_DEST_PORT = "TCPIP_UDP_DEST_PORT"
+    TCPIP_UDP_RECV_IP_ADDRESS = "TCPIP_UDP_RECV_IP_ADDRESS"
+    TCPIP_UDP_RECV_PORT = "TCPIP_UDP_RECV_PORT"
+    TCPIP_UDP_RECV_MAX_SIZE = "TCPIP_UDP_RECV_MAX_SIZE"
+
+    SERIAL_BAUDRATE = "SERIAL_BAUDRATE"
+    SERIAL_PORT = "SERIAL_PORT"
 
 
 def check_json_file() -> bool:
