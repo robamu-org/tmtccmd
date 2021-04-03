@@ -44,6 +44,7 @@ class CoreServiceList(enum.IntEnum):
     SERVICE_5 = 5
     SERVICE_8 = 8
     SERVICE_9 = 9
+    SERVICE_11 = 11
     SERVICE_17 = 17
     SERVICE_20 = 20
     SERVICE_23 = 23
