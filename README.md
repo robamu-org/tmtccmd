@@ -55,6 +55,7 @@ with the following command:
 git submodule add https://github.com/rmspacefish/tmtccmd.git
 ```
 
+For the following commands, replace `python3` with `py` on Windows.
 After that, you can install the package in an editable mode with the following command:
 
 ```sh
