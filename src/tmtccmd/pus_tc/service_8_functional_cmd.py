@@ -9,10 +9,12 @@ class Srv8Subservices(enum.IntEnum):
     DATA_REPLY = 130
 
 
-def generate_action_command(object_id: bytearray, action_id: int, data: bytearray = bytearray([]),
-                            ssc: int = 0) -> PusTelecommand:
+def generate_action_command(
+        object_id: bytearray, action_id: int, app_data: bytearray = bytearray([]),
+        ssc: int = 0
+) -> PusTelecommand:
     data_to_pack = bytearray(object_id)
-    data_to_pack += make_action_id(action_id) + data
+    data_to_pack += make_action_id(action_id) + app_data
     return PusTelecommand(
         service=8, subservice=Srv8Subservices.FUNC_CMD, ssc=ssc, app_data=data_to_pack
     )

@@ -41,6 +41,12 @@ PUS TMTC packaging modules.
 
 ## Installation
 
+On Ubuntu, if `pip` is not installed yet, you can install it with
+
+```sh
+sudo apt-get install python3-pip
+```
+
 It is recommended to use Python 3.8.
 For developers, it is recommended to add this repostiory as a submodule
 with the following command:
@@ -49,18 +55,19 @@ with the following command:
 git submodule add https://github.com/rmspacefish/tmtccmd.git
 ```
 
+For the following commands, replace `python3` with `py` on Windows.
 After that, you can install the package in an editable mode with the following command:
 
 ```sh
 cd tmtccmd
-pip install -e .
+python3 -m pip install -e .
 ```
 
 To also install the requirements for the GUI mode, run this command instead
 
 ```sh
 cd tmtccmd
-pip install -e .[gui]
+python3 -m pip install -e .[gui]
 ```
 
 Omit the `-e` for a regular installation. The package might move to PyPI soon.

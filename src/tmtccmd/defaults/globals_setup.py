@@ -124,6 +124,7 @@ def get_core_service_dict() -> dict:
     core_service_dict[CoreServiceList.SERVICE_5] = ["Service 5 Event"]
     core_service_dict[CoreServiceList.SERVICE_8] = ["Service 8 Functional Commanding"]
     core_service_dict[CoreServiceList.SERVICE_9] = ["Service 9 Time"]
+    core_service_dict[CoreServiceList.SERVICE_11] = ["Service 11 Telecommand Scheduling"]
     core_service_dict[CoreServiceList.SERVICE_17] = ["Service 17 Test"]
     core_service_dict[CoreServiceList.SERVICE_20] = ["Service 20 Parameters"]
     core_service_dict[CoreServiceList.SERVICE_23] = ["Service 23 File Management"]
