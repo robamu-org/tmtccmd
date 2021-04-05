@@ -26,12 +26,12 @@ Features
 
 - `Packet Utilisation Standard (PUS)`_ TMTC stack to simplify the packaging of PUS telecommand 
   packets and the analysis and deserialization of raw PUS telemetry
-- Common communicaiton interfaces like a serial interface or a TCP/IP interface
+- Common communication interfaces like a serial interface or a TCP/IP interface
   to send and receive TMTC packets.
 - Listener mode to display incoming packets
 - Sequential mode which allows inserting telecommands into a queue
   and sending them in a sequential way, allowing to analyse the telemetry 
-  generated for each telecommand
+  generated for each telecommand separately
 - Special internal queue commands which allow operations like informative printouts or send delays
 - Components to simplify the handling of housekeeping replies (PUS Service 8) or action command 
   replies (PUS Service 3)
