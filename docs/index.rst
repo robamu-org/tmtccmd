@@ -10,13 +10,13 @@ This module is a generic tool for satellite developers to perform TMTC (Telemetr
 handling and testing via different communication interfaces. Currently, only the PUS standard is
 implemented as a packet standard. This tool can be used either as a command line tool
 or as a GUI tool but the GUI capabilities are still in an alpha state. 
-The generic parts were decoupled from the former TMTC program and integrated into
-a separate submodule to allow for easier adaption to other missions.
+The generic parts were decoupled from the former TMTC program
+to allow for easier adaption to other missions.
 
 This client currently supports the following communication interfaces:
 
 1. TCP/IP with UDP packets
-2. Serial Communication 
+2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
 
 A TCP implementation is planned.
