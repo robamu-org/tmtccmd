@@ -15,9 +15,10 @@ the TMTC commander
 	:align: center
 	
 The first way assumes that the OBSW can be run on a host computer and starts a TPC/IP
-server internally. The TMTC commander can then be used to sent telecommands via the TCP/IP
+server internally. The TMTC commander can then be used to send telecommands via the TCP/IP
 interface. The second way assumes that the OBSW is run on an external microcontroller.
-Here, the serial interface is used to send telecommands.
+Here, the serial interface is used to send telecommands. Other ways like sending TMTCs 
+via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 
 .. _`SOURCE`: https://www.ksat-stuttgart.de/en/our-missions/source/
 
