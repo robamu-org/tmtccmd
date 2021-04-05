@@ -5,16 +5,16 @@
 Overview
 =========
 
-This commander was written for the `SOURCE` project as a way to simplify the
+This commander was written for the `SOURCE`_ project as a way to simplify the
 software testing. The goal was to make it as easy as possible to send telecommands (TCs)
 to the On-Board Software running on an external On-Board Computer and to analyse
 the telemetry (TMs) coming back. The following graph shows two possible ways to use
 the TMTC commander
 
-.. image:: images/tmtccmd_usage.pdf
+.. image:: images/tmtccmd_usage.PNG
 	:align: center
 	
-.. SOURCE: https://www.ksat-stuttgart.de/en/our-missions/source/
+.. _`SOURCE`: https://www.ksat-stuttgart.de/en/our-missions/source/
 
 Features
 =========
