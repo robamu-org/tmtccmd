@@ -24,7 +24,7 @@ Here, the serial interface is used to send telecommands.
 Features
 =========
 
-- `Packet Utilisation Standard (PUS)` TMTC stack to simplify the packaging of PUS telecommand 
+- `Packet Utilisation Standard (PUS)`_ TMTC stack to simplify the packaging of PUS telecommand 
   packets and the analysis and deserialization of raw PUS telemetry
 - Common communicaiton interfaces like a serial interface or a TCP/IP interface
   to send and receive TMTC packets.
@@ -38,5 +38,5 @@ Features
 - Components to automatically deserialize telecommand verification replies (PUS Service 1)
   or Event replies (PUS Service 5)
 
-.. Packet Utilisation Standard (PUS): https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
+.. _`Packet Utilisation Standard (PUS)`: https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
 
