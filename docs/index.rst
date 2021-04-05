@@ -23,7 +23,7 @@ A TCP implementation is planned.
 
 Other pages (online)
 
-- `project page on GitHub`
+- `project page on GitHub`_
 - This page, when viewed online is at https://tmtccmd.readthedocs.io/en/latest/
 
 .. _`project page on GitHub`: https://github.com/rmspacefish/tmtccmd
@@ -33,6 +33,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   
    introduction
    gettingstarted
    api
