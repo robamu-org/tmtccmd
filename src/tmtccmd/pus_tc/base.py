@@ -1,7 +1,7 @@
 """
-@file   tmtcc_pus_tc_base.py
-@brief  This module contains the PUS telemetry class representation to
-        deserialize raw PUS telemetry packets.
+@file   base.py
+@brief
+This module contains the PUS telecommand class representation to pack telecommands.
 @author R. Mueller
 """
 import sys
@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Dict, Union, Tuple, Deque
 
 from tmtccmd.core.definitions import QueueCommands, CoreGlobalIds
+from tmtccmd.tmtc.spacepacket import SpacePacketHeaderSerializer, PacketTypes
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -38,6 +39,27 @@ TcQueueT = Deque[TcQueueEntryT]
 PusTcInfoQueueT = Deque[PusTcInfoT]
 
 
+class PusTcDataFieldHeaderSerialize:
+    def __init__(
+            self, service_type: int, service_subtype: int, source_id: int = 0,
+            pus_tc_version: int = 0b1, ack_flags: int = 0b1111
+    ):
+        self.service_type = service_type
+        self.service_subtype = service_subtype
+        self.source_id = source_id
+        self.pus_tc_version = pus_tc_version
+        self.ack_flags = ack_flags
+        self.pus_version_and_ack_byte = pus_tc_version << 4 | ack_flags
+
+    def pack(self) -> bytearray:
+        header_raw = bytearray()
+        header_raw.append(self.pus_version_and_ack_byte)
+        header_raw.append(self.service_type)
+        header_raw.append(self.service_subtype)
+        header_raw.append(self.source_id)
+        return header_raw
+
+
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 class PusTelecommand:
@@ -53,46 +75,81 @@ class PusTelecommand:
     # the 6 byte packet header, 4 byte data field header (1 byte source ID) and 2 byte CRC.
     CURRENT_NON_APP_DATA_SIZE = 10
 
-    def __init__(self, service: int, subservice: int, ssc=0, app_data: bytearray = bytearray([]),
-                 source_id: int = 0, version: int = 0, apid: int = -1):
+    def __init__(
+            self, service: int, subservice: int, ssc=0, app_data: bytearray = bytearray([]),
+            source_id: int = 0, pus_tc_version: int = 0b1, ack_flags: int = 0b1111, apid: int = -1
+    ):
+        """
+        Initiate a PUS telecommand from the given parameters. The raw byte representation
+        can then be retrieved with the pack() function.
+        :param service:         PUS service number
+        :param subservice:      PUS subservice number
+        :param ssc:             Source Sequence Count. Application should take care of incrementing
+                                this. Limited to 2 to the power of 14 by the number of bits in
+                                the header
+        :param app_data:        Application data in the Packet Data Field
+        :param source_id:       Source ID will be supplied as well. Can be used to distinguish
+                                different packet sources (e.g. different ground stations)
+        :param pus_tc_version:  PUS TC version. 1 for ECSS-E-70-41A
+        :param apid:            Application Process ID as specified by CCSDS
+        """
         # To get the correct globally configured APID
         if apid == -1:
             from tmtccmd.core.globals_manager import get_global
             apid = get_global(CoreGlobalIds.APID)
-        """
-        Initiates a telecommand with the given parameters.
-        """
-        packet_type = 1
-        data_field_header_flag = 1
-        self.packet_id_bytes = [0x0, 0x0]
-        self.packet_id_bytes[0] = \
-            ((version << 5) & 0xE0) | ((packet_type & 0x01) << 4) | \
-            ((data_field_header_flag & 0x01) << 3) | ((apid & 0x700) >> 8)
-        self.packet_id_bytes[1] = apid & 0xFF
-        self.packet_id = (self.packet_id_bytes[0] << 8) | self.packet_id_bytes[1]
-        self.ssc = ssc
-        self.psc = (ssc & 0x3FFF) | (0xC0 << 8)
-        self.pus_version_and_ack_byte = 0b0001_1111
-        self.service = service
-        self.subservice = subservice
-        self.source_id = source_id
+        self.apid = apid
+        packet_type = PacketTypes.PACKET_TYPE_TC
+        secondary_header_flag = 1
+        self._space_packet_header = SpacePacketHeaderSerializer(
+            apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
+            data_length=self.get_data_length(len(app_data)), source_sequence_count=ssc
+        )
+        self._data_field_header = PusTcDataFieldHeaderSerialize(
+            service_type=service, service_subtype=subservice, ack_flags=ack_flags,
+            source_id=source_id, pus_tc_version=pus_tc_version
+        )
         self.app_data = app_data
+        self.packed_data = bytearray()
 
     def __repr__(self):
         """
         Returns the representation of a class instance.
-        TODO: Maybe a custom ID or dict consisting of SSC, Service and Subservice would be better.
         """
-        return self.ssc
+        return f"{self.__class__.__name__}(service={self._data_field_header.service_type!r}, " \
+               f"subservice={self._data_field_header.service_subtype!r}, " \
+               f"ssc={self._space_packet_header.ssc!r}, apid={self.apid})"
 
     def __str__(self):
         """
         Returns string representation of a class instance.
         """
-        return "TC[" + str(self.service) + "," + str(self.subservice) + "] " + " with SSC " + \
-               str(self.ssc)
+        return f"TC[{self._data_field_header.service_type}, " \
+               f"{self._data_field_header.service_subtype} " \
+               f"] with SSC {self._space_packet_header.ssc}"
 
-    def get_data_length(self) -> int:
+    def get_total_length(self):
+        """
+        Length of full packet in bytes.
+        The header length is 6 bytes and the data length + 1 is the size of the data field.
+        """
+        return self.get_data_length(len(self.app_data)) + PusTelecommand.HEADER_SIZE + 1
+
+    def pack(self) -> bytearray:
+        """
+        Serializes the TC data fields into a bytearray.
+        """
+        self.packed_data.extend(self._space_packet_header.pack())
+        self.packed_data.extend(self._data_field_header.pack())
+        self.packed_data += self.app_data
+        crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
+        crc = crc_func(self.packed_data)
+
+        self.packed_data.append((crc & 0xFF00) >> 8)
+        self.packed_data.append(crc & 0xFF)
+        return self.packed_data
+
+    @staticmethod
+    def get_data_length(app_data_len: int) -> int:
         """
         Retrieve size of TC packet in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet data field) - 1.
@@ -100,52 +157,21 @@ class PusTelecommand:
         source ID + the length of the application data + length of the CRC16 checksum - 1
         """
         try:
-            data_length = 4 + len(self.app_data) + 1
+            data_length = 4 + app_data_len + 1
             return data_length
         except TypeError:
             LOGGER.error("PusTelecommand: Invalid type of application data!")
             return 0
-
-    def get_total_length(self):
-        """
-        Length of full packet in bytes.
-        The header length is 6 bytes and the data length + 1 is the size of the data field.
-        """
-        return self.get_data_length() + PusTelecommand.HEADER_SIZE + 1
-
-    def pack(self) -> bytearray:
-        """
-        Serializes the TC data fields into a bytearray.
-        """
-        data_to_pack = bytearray()
-        data_to_pack.append(self.packet_id_bytes[0])
-        data_to_pack.append(self.packet_id_bytes[1])
-        data_to_pack.append((self.psc & 0xFF00) >> 8)
-        data_to_pack.append(self.psc & 0xFF)
-        length = self.get_data_length()
-        data_to_pack.append((length & 0xFF00) >> 8)
-        data_to_pack.append(length & 0xFF)
-        data_to_pack.append(self.pus_version_and_ack_byte)
-        data_to_pack.append(self.service)
-        data_to_pack.append(self.subservice)
-        data_to_pack.append(self.source_id)
-        data_to_pack += self.app_data
-        crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
-        crc = crc_func(data_to_pack)
-
-        data_to_pack.append((crc & 0xFF00) >> 8)
-        data_to_pack.append(crc & 0xFF)
-        return data_to_pack
 
     def pack_information(self) -> PusTcInfoT:
         """
         Packs TM information into a dictionary.
         """
         tc_information = {
-            TcDictionaryKeys.SERVICE: self.service,
-            TcDictionaryKeys.SUBSERVICE: self.subservice,
-            TcDictionaryKeys.SSC: self.ssc,
-            TcDictionaryKeys.PACKET_ID: self.packet_id,
+            TcDictionaryKeys.SERVICE: self._data_field_header.service_type,
+            TcDictionaryKeys.SUBSERVICE: self._data_field_header.service_subtype,
+            TcDictionaryKeys.SSC: self._space_packet_header.ssc,
+            TcDictionaryKeys.PACKET_ID: self._space_packet_header.packet_id,
             TcDictionaryKeys.DATA: self.app_data
         }
         return tc_information
@@ -156,7 +182,9 @@ class PusTelecommand:
         return command_tuple
 
     def print(self):
-        """ Print the raw command in a clean format. """
+        """
+        Print the raw command in a clean format.
+        """
         packet = self.pack()
         print("Command in Hexadecimal: [", end="")
         for counter in range(len(packet)):
