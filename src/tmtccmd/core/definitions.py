@@ -86,9 +86,6 @@ class CoreGlobalIds(enum.IntEnum):
     USE_ETHERNET = 162
     ETHERNET_CONFIG = 163
 
-    # PUS specific
-    CUSTOM_HK_REPORT_FORMAT = 164
-
 
 DEFAULT_APID = 0xef
 DEBUG_MODE = False

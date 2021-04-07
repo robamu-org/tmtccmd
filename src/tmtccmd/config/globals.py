@@ -9,10 +9,6 @@ from tmtccmd.core.globals_manager import update_global
 LOGGER = get_logger()
 
 
-def set_hk_handling_for_custom_hk_format():
-    update_global(CoreGlobalIds.CUSTOM_HK_REPORT_FORMAT, True)
-
-
 def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections.Iterable = None):
     """
     Checks whether the mode argument is contained inside the core mode list integer enumeration

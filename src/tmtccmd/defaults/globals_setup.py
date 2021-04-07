@@ -36,7 +36,6 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.RESEND_TC, False)
     update_global(CoreGlobalIds.OP_CODE, "0")
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
-    update_global(CoreGlobalIds.CUSTOM_HK_REPORT_FORMAT, False)
 
 
 def set_default_globals_post_args_parsing(
