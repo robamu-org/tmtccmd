@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Program: tmtcc_pus_service_3.py
-Date: 30.12.2019
-Description: Deserialize Housekeeping TM
-Author: R. Mueller
+@file       service_3_housekeeping.py
+@date       07.04.2021
+@details    Deserialize Housekeeping TM
+@author     R. Mueller
 """
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.core.definitions import CoreGlobalIds
