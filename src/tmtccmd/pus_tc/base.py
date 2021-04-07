@@ -56,23 +56,39 @@ class PusTelecommand:
     CURRENT_NON_APP_DATA_SIZE = 10
 
     def __init__(self, service: int, subservice: int, ssc=0, app_data: bytearray = bytearray([]),
-                 source_id: int = 0, version: int = 0, sequence_flags: int = 0b11, apid: int = -1):
+                 source_id: int = 0, version: int = 0b000, apid: int = -1):
+        """
+        Initiate a PUS telecommand from the given parameters. The raw byte representation
+        can then be retrieved with the pack() function.
+        :param service:         PUS service number
+        :param subservice:      PUS subservice number
+        :param ssc:             Source Sequence Count. Application should take care of incrementing
+                                this. Limited to 2 to the power of 14 by the number of bits in
+                                the header
+        :param app_data:        Application data in the Packet Data Field
+        :param source_id:       Source ID will be supplied as well. Can be used to distinguish
+                                different packet sources (e.g. different ground stations)
+        :param version:         Version as specified in CCSDS 133.0-B-2. A version 1 CCSDS Packet
+                                has a binary representation of '000'
+        :param apid:            Application Process ID as specified by CCSDS
+        """
         # To get the correct globally configured APID
         if apid == -1:
             from tmtccmd.core.globals_manager import get_global
             apid = get_global(CoreGlobalIds.APID)
-        """
-        Initiates a telecommand with the given parameters.
-        """
+        self.apid = apid
         packet_type = 1
         data_field_header_flag = 1
         self.packet_id_bytes = [0x00, 0x00]
         self.packet_id_bytes[0], self.packet_id_bytes[1] = get_sp_packet_id_bytes(
             version=version, packet_type=packet_type, data_field_header_flag=data_field_header_flag,
-            apid=apid
+            apid=self.apid
         )
         self.packet_id = (self.packet_id_bytes[0] << 8) | self.packet_id_bytes[1]
-        self.sequence_flags = sequence_flags
+
+        # Sequence flags are defined by CCSDS but not used by the space packet protocol.
+        # A sequence flag of 0b11 specifies a stand-alone packet.
+        self.sequence_flags = 0b11
         self.ssc = ssc
         self.psc = get_sp_packet_sequence_control(
             sequence_flags=self.sequence_flags, source_sequence_count=self.ssc
@@ -87,9 +103,9 @@ class PusTelecommand:
     def __repr__(self):
         """
         Returns the representation of a class instance.
-        TODO: Maybe a custom ID or dict consisting of SSC, Service and Subservice would be better.
         """
-        return self.ssc
+        return f"{self.__class__.__name__}(service={self.service!r}, subservice={self.subservice!r}, " \
+               f"ssc={self.ssc!r}, apid={self.apid})"
 
     def __str__(self):
         """
