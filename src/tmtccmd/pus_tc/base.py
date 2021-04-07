@@ -1,7 +1,7 @@
 """
-@file   tmtcc_pus_tc_base.py
-@brief  This module contains the PUS telemetry class representation to
-        deserialize raw PUS telemetry packets.
+@file   base.py
+@brief
+This module contains the PUS telecommand class representation to pack telecommands.
 @author R. Mueller
 """
 import sys
@@ -9,6 +9,8 @@ from enum import Enum
 from typing import Dict, Union, Tuple, Deque
 
 from tmtccmd.core.definitions import QueueCommands, CoreGlobalIds
+from tmtccmd.tmtc.spacepacket import get_sp_packet_id_bytes, get_sp_space_packet_header,\
+    get_sp_packet_sequence_control
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -54,7 +56,7 @@ class PusTelecommand:
     CURRENT_NON_APP_DATA_SIZE = 10
 
     def __init__(self, service: int, subservice: int, ssc=0, app_data: bytearray = bytearray([]),
-                 source_id: int = 0, version: int = 0, apid: int = -1):
+                 source_id: int = 0, version: int = 0, sequence_flags: int = 0b11, apid: int = -1):
         # To get the correct globally configured APID
         if apid == -1:
             from tmtccmd.core.globals_manager import get_global
@@ -64,19 +66,23 @@ class PusTelecommand:
         """
         packet_type = 1
         data_field_header_flag = 1
-        self.packet_id_bytes = [0x0, 0x0]
-        self.packet_id_bytes[0] = \
-            ((version << 5) & 0xE0) | ((packet_type & 0x01) << 4) | \
-            ((data_field_header_flag & 0x01) << 3) | ((apid & 0x700) >> 8)
-        self.packet_id_bytes[1] = apid & 0xFF
+        self.packet_id_bytes = [0x00, 0x00]
+        self.packet_id_bytes[0], self.packet_id_bytes[1] = get_sp_packet_id_bytes(
+            version=version, packet_type=packet_type, data_field_header_flag=data_field_header_flag,
+            apid=apid
+        )
         self.packet_id = (self.packet_id_bytes[0] << 8) | self.packet_id_bytes[1]
+        self.sequence_flags = sequence_flags
         self.ssc = ssc
-        self.psc = (ssc & 0x3FFF) | (0xC0 << 8)
+        self.psc = get_sp_packet_sequence_control(
+            sequence_flags=self.sequence_flags, source_sequence_count=self.ssc
+        )
         self.pus_version_and_ack_byte = 0b0001_1111
         self.service = service
         self.subservice = subservice
         self.source_id = source_id
         self.app_data = app_data
+        self.packed_data = bytearray()
 
     def __repr__(self):
         """
@@ -92,7 +98,35 @@ class PusTelecommand:
         return "TC[" + str(self.service) + "," + str(self.subservice) + "] " + " with SSC " + \
                str(self.ssc)
 
-    def get_data_length(self) -> int:
+    def get_total_length(self):
+        """
+        Length of full packet in bytes.
+        The header length is 6 bytes and the data length + 1 is the size of the data field.
+        """
+        return self.get_data_length(len(self.app_data)) + PusTelecommand.HEADER_SIZE + 1
+
+    def pack(self) -> bytearray:
+        """
+        Serializes the TC data fields into a bytearray.
+        """
+        self.packed_data = get_sp_space_packet_header(
+            packet_id_byte_one=self.packet_id_bytes[0], packet_id_byte_two=self.packet_id_bytes[1],
+            data_length=self.get_data_length(len(self.app_data)), packet_sequence_control=self.psc
+        )
+        self.packed_data.append(self.pus_version_and_ack_byte)
+        self.packed_data.append(self.service)
+        self.packed_data.append(self.subservice)
+        self.packed_data.append(self.source_id)
+        self.packed_data += self.app_data
+        crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
+        crc = crc_func(self.packed_data)
+
+        self.packed_data.append((crc & 0xFF00) >> 8)
+        self.packed_data.append(crc & 0xFF)
+        return self.packed_data
+
+    @staticmethod
+    def get_data_length(app_data_len: int) -> int:
         """
         Retrieve size of TC packet in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet data field) - 1.
@@ -100,42 +134,11 @@ class PusTelecommand:
         source ID + the length of the application data + length of the CRC16 checksum - 1
         """
         try:
-            data_length = 4 + len(self.app_data) + 1
+            data_length = 4 + app_data_len + 1
             return data_length
         except TypeError:
             LOGGER.error("PusTelecommand: Invalid type of application data!")
             return 0
-
-    def get_total_length(self):
-        """
-        Length of full packet in bytes.
-        The header length is 6 bytes and the data length + 1 is the size of the data field.
-        """
-        return self.get_data_length() + PusTelecommand.HEADER_SIZE + 1
-
-    def pack(self) -> bytearray:
-        """
-        Serializes the TC data fields into a bytearray.
-        """
-        data_to_pack = bytearray()
-        data_to_pack.append(self.packet_id_bytes[0])
-        data_to_pack.append(self.packet_id_bytes[1])
-        data_to_pack.append((self.psc & 0xFF00) >> 8)
-        data_to_pack.append(self.psc & 0xFF)
-        length = self.get_data_length()
-        data_to_pack.append((length & 0xFF00) >> 8)
-        data_to_pack.append(length & 0xFF)
-        data_to_pack.append(self.pus_version_and_ack_byte)
-        data_to_pack.append(self.service)
-        data_to_pack.append(self.subservice)
-        data_to_pack.append(self.source_id)
-        data_to_pack += self.app_data
-        crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
-        crc = crc_func(data_to_pack)
-
-        data_to_pack.append((crc & 0xFF00) >> 8)
-        data_to_pack.append(crc & 0xFF)
-        return data_to_pack
 
     def pack_information(self) -> PusTcInfoT:
         """
@@ -156,7 +159,9 @@ class PusTelecommand:
         return command_tuple
 
     def print(self):
-        """ Print the raw command in a clean format. """
+        """
+        Print the raw command in a clean format.
+        """
         packet = self.pack()
         print("Command in Hexadecimal: [", end="")
         for counter in range(len(packet)):
