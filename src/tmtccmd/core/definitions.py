@@ -70,7 +70,6 @@ class CoreGlobalIds(enum.IntEnum):
     COM_IF = 144
     OP_CODE = 145
     TM_TIMEOUT = 146
-
     # Miscellaneous
     DISPLAY_MODE = 150
     USE_LISTENER_AFTER_OP = 151
@@ -86,6 +85,9 @@ class CoreGlobalIds(enum.IntEnum):
     SERIAL_CONFIG = 161
     USE_ETHERNET = 162
     ETHERNET_CONFIG = 163
+
+    # PUS specific
+    CUSTOM_HK_REPORT_FORMAT = 164
 
 
 DEFAULT_APID = 0xef

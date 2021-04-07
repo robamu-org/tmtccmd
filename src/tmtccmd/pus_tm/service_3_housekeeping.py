@@ -5,6 +5,8 @@ Date: 30.12.2019
 Description: Deserialize Housekeeping TM
 Author: R. Mueller
 """
+from tmtccmd.core.globals_manager import get_global
+from tmtccmd.core.definitions import CoreGlobalIds
 
 from tmtccmd.pus_tm.base import PusTelemetry
 from tmtccmd.pus_tm.service_3_base import Service3Base
@@ -105,12 +107,21 @@ class Service3TM(Service3Base):
     def handle_filling_hk_arrays(self):
         try:
             from tmtccmd.core.hook_helper import get_global_hook_obj
+            custom_hk_format = get_global(CoreGlobalIds.CUSTOM_HK_REPORT_FORMAT)
             hook_obj = get_global_hook_obj()
-            (self.hk_header, self.hk_content, self.validity_buffer, self.number_of_parameters) = \
-                hook_obj.handle_service_3_housekeeping(
-                    object_id=self.object_id_key, set_id=self.set_id, hk_data=self._tm_data[8:],
-                    service3_packet=self
-                )
+            if custom_hk_format:
+                (self.hk_header, self.hk_content, self.validity_buffer, self.number_of_parameters) \
+                    = hook_obj.handle_service_3_housekeeping(
+                        object_id=0, set_id=0, hk_data=self._tm_data[0:],
+                        service3_packet=self
+                    )
+            else:
+                (self.hk_header, self.hk_content, self.validity_buffer,
+                 self.number_of_parameters) = \
+                    hook_obj.handle_service_3_housekeeping(
+                        object_id=self.object_id_key, set_id=self.set_id, hk_data=self._tm_data[8:],
+                        service3_packet=self
+                    )
         except ImportError:
             LOGGER.warning("Service3TM: User HK handling file missing!")
             return

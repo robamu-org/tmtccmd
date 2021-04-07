@@ -1,12 +1,15 @@
 import argparse
 import collections
 import pprint
-from typing import Tuple, Union
+from typing import Union
 
+from tmtccmd.config.globals import check_and_set_core_mode_arg, check_and_set_core_com_if_arg, \
+    check_and_set_core_service_arg
+from tmtccmd.utility.conf_util import print_core_globals
 from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, \
     CoreServiceList, DEBUG_MODE
 from tmtccmd.defaults.com_setup import default_serial_cfg_setup, default_tcpip_udp_cfg_setup
-from tmtccmd.core.globals_manager import update_global, get_global
+from tmtccmd.core.globals_manager import update_global
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -33,6 +36,7 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.RESEND_TC, False)
     update_global(CoreGlobalIds.OP_CODE, "0")
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
+    update_global(CoreGlobalIds.CUSTOM_HK_REPORT_FORMAT, False)
 
 
 def set_default_globals_post_args_parsing(
@@ -132,134 +136,6 @@ def get_core_service_dict() -> dict:
     return core_service_dict
 
 
-def check_args_in_enum(param: any, enumeration: collections.Iterable,
-                       warning_hint: str) -> Tuple[bool, int]:
-    """
-    This functions checks whether the integer representation of a given parameter in
-    contained within the passed collections, for example an (integer) enumeration.
-    Please note that if the passed parameter has a string representation but is a digit,
-    this function will attempt to check whether the integer representation is contained
-    inside the passed enumeration.
-    :param param:           Value to be checked
-    :param enumeration:     Enumeration, for example a enum.Enum or enum.IntEnum implementation
-    :param warning_hint:
-    :return:
-    """
-    might_be_integer = False
-    if param is not None:
-        if isinstance(param, str):
-            if param.isdigit():
-                might_be_integer = True
-        elif isinstance(param, int):
-            pass
-        else:
-            LOGGER.warning(f"Passed {warning_hint} type invalid.")
-            return False, 0
-    else:
-        LOGGER.warning(f"No {warning_hint} argument passed.")
-        return False, 0
-    param_list = list()
-    for enum_value in enumeration:
-        if isinstance(enum_value.value, str):
-            # Make this case insensitive
-            param_list.append(enum_value.value.lower())
-        else:
-            param_list.append(enum_value.value)
-    if param not in param_list:
-        if might_be_integer:
-            if int(param) in param_list:
-                return True, int(param)
-        return False, 0
-    return True, param
-
-
-def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections.Iterable = None):
-    """
-    Checks whether the mode argument is contained inside the core mode list integer enumeration
-    or a custom mode list integer which can be passed optionally.
-    This function will set the single command mode as the global mode parameter if the passed mode
-    is not found in either enumerations.
-    :param mode_arg:
-    :param custom_mode_int_enum:
-    :return:
-    """
-    in_enum, mode_value = check_args_in_enum(
-        param=mode_arg, enumeration=CoreModeList, warning_hint="mode"
-    )
-    if in_enum:
-        update_global(CoreGlobalIds.MODE, mode_value)
-        return
-
-    mode_arg_invalid = False
-    if custom_mode_int_enum is not None:
-        in_enum, mode_value = check_args_in_enum(
-            param=mode_arg, enumeration=custom_mode_int_enum, warning_hint="custom mode"
-        )
-        if not in_enum:
-            mode_arg_invalid = True
-    else:
-        mode_arg_invalid = True
-
-    if mode_arg_invalid:
-        LOGGER.warning(f"Passed mode argument might be invalid, "
-                       f"setting to {CoreModeList.SINGLE_CMD_MODE}")
-        mode_value = CoreModeList.SINGLE_CMD_MODE
-    update_global(CoreGlobalIds.MODE, mode_value)
-
-
-def check_and_set_core_com_if_arg(com_if_arg: any, custom_com_if_list: collections.Iterable = None):
-    in_enum, com_if_value = check_args_in_enum(
-        param=com_if_arg, enumeration=CoreComInterfaces, warning_hint="communication interface"
-    )
-    if in_enum:
-        update_global(CoreGlobalIds.COM_IF, com_if_value)
-        return
-
-    com_if_arg_invalid = False
-    if custom_com_if_list is not None:
-        in_enum, com_if_value = check_args_in_enum(
-            param=com_if_arg, enumeration=custom_com_if_list,
-            warning_hint="custom communication interface"
-        )
-        if not in_enum:
-            com_if_arg_invalid = True
-    else:
-        com_if_arg_invalid = True
-
-    if com_if_arg_invalid:
-        LOGGER.warning(f"Passed communication interface argument might be invalid, "
-                       f"setting to {CoreComInterfaces.DUMMY}")
-        com_if_value = CoreComInterfaces.DUMMY
-    update_global(CoreGlobalIds.COM_IF, com_if_value)
-
-
-def check_and_set_core_service_arg(
-        service_arg: any, custom_service_list: collections.Iterable = None
-):
-    in_enum, service_value = check_args_in_enum(
-        param=service_arg, enumeration=CoreServiceList, warning_hint="service"
-    )
-    if in_enum:
-        update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
-        return
-
-    service_arg_invalid = False
-    if custom_service_list is not None:
-        in_enum, service_value = check_args_in_enum(
-            param=service_arg, enumeration=custom_service_list, warning_hint="custom mode"
-        )
-        if not in_enum:
-            service_arg_invalid = True
-    else:
-        service_arg_invalid = True
-
-    if service_arg_invalid:
-        LOGGER.warning(f"Passed service argument might be invalid, "
-                       f"setting to {CoreServiceList.SERVICE_17}")
-        service_value = CoreServiceList.SERVICE_17
-    update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
-
-
 def check_and_set_other_args(args):
     if args.listener is not None:
         update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)
@@ -276,16 +152,3 @@ def check_and_set_other_args(args):
     if args.resend_tc is not None:
         update_global(CoreGlobalIds.RESEND_TC, args.resend_tc)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 3)
-
-
-def print_core_globals():
-    """
-    Prints an imporant set of global parameters. Can be used for debugging function
-    or as an optional information output
-    :return:
-    """
-    service_param = get_global(CoreGlobalIds.CURRENT_SERVICE)
-    mode_param = get_global(CoreGlobalIds.MODE)
-    com_if_param = get_global(CoreGlobalIds.COM_IF)
-    print(f"Current globals | Mode(-m): {mode_param} | Service(-s): {service_param} | "
-          f"ComIF(-c): {com_if_param}")
