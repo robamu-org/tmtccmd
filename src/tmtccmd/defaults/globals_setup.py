@@ -3,6 +3,7 @@ import collections
 import pprint
 from typing import Union, List
 
+from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.globals import check_and_set_core_mode_arg, check_and_set_core_com_if_arg, \
     check_and_set_core_service_arg
 from tmtccmd.utility.conf_util import print_core_globals
@@ -71,8 +72,14 @@ def set_default_globals_post_args_parsing(
     try:
         com_if_param = args.com_if
     except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the com_if (-c) argument")
-        com_if_param = CoreComInterfaces.DUMMY
+        LOGGER.warning("No communication interface specified")
+        LOGGER.warning("Trying to set from existing configuration..")
+        com_if_param = "unspec"
+    if com_if_param == "unspec":
+        from tmtccmd.core.definitions import CoreComInterfacesString
+        LOGGER.info("Communication interface unspecified. "
+                    "Trying to read from JSON or prompting from user..")
+        com_if_param = determine_com_if(integer_to_string_dict=CoreComInterfacesString)
     com_if_param = check_and_set_core_com_if_arg(
         com_if_arg=com_if_param, custom_com_ifs_list=custom_com_ifs_lists
     )

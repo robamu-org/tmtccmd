@@ -141,8 +141,7 @@ def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
     help_text += dummy_line + ser_dle_line + udp_line + ser_fixed_line + ser_qemu_line
     arg_parser.add_argument(
         '-c', '--com_if', type=str,
-        help=help_text,
-        default="dummy"
+        help=help_text, default=CoreComInterfacesString[CoreComInterfaces.UNSPECIFIED]
     )
 
 

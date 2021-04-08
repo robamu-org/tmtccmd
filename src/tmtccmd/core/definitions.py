@@ -14,6 +14,7 @@ class CoreComInterfaces(enum.IntEnum):
     TCPIP_UDP = 2
     SERIAL_FIXED_FRAME = 4
     SERIAL_QEMU = 5
+    UNSPECIFIED = 0xffff
 
 
 CoreComInterfacesString = {
@@ -21,7 +22,8 @@ CoreComInterfacesString = {
     CoreComInterfaces.SERIAL_DLE: "ser_dle",
     CoreComInterfaces.TCPIP_UDP: "udp",
     CoreComInterfaces.SERIAL_FIXED_FRAME: "ser_fixed",
-    CoreComInterfaces.SERIAL_QEMU: "ser_qemu"
+    CoreComInterfaces.SERIAL_QEMU: "ser_qemu",
+    CoreComInterfaces.UNSPECIFIED: "unspec"
 }
 
 
