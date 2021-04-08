@@ -1,5 +1,5 @@
 import collections
-from typing import Tuple
+from typing import Tuple, Union
 
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.core.definitions import CoreGlobalIds
@@ -9,7 +9,17 @@ from tmtccmd.utility.tmtcc_logger import get_logger
 LOGGER = get_logger()
 
 
-def check_args_in_enum(param: any, iterable: collections.Iterable,
+class AnsiColors:
+    RED = "\x1b[31m"
+    GREEN = "\x1b[32m"
+    YELLOW = "\x1b[33m"
+    BLUE = "\x1b[34m"
+    MAGNETA = "\x1b[35m"
+    CYAN = "\x1b[36m"
+    RESET = "\x1b[0m"
+
+
+def check_args_in_enum(param: any, iterable: Union[collections.Iterable, dict],
                        warning_hint: str) -> Tuple[bool, int]:
     """
     This functions checks whether the integer representation of a given parameter in
@@ -18,7 +28,7 @@ def check_args_in_enum(param: any, iterable: collections.Iterable,
     this function will attempt to check whether the integer representation is contained
     inside the passed enumeration.
     :param param:           Value to be checked
-    :param enumeration:     Enumeration, for example a enum.Enum or enum.IntEnum implementation
+    :param iterable:     Enumeration, for example a enum.Enum or enum.IntEnum implementation
     :param warning_hint:
     :return:
     """

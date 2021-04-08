@@ -28,10 +28,12 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
     Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
+    from tmtccmd.utility.conf_util import AnsiColors
     descrip_text = \
-        "TMTC Client Command Line Interface\n" \
-        "This application provides generic components to execute TMTC commanding.\n" \
-        "The developer is expected to specify the packaged telecommands for a given\n" \
+        f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n" \
+        f"{AnsiColors.RESET}This application provides generic components to execute " \
+        f"TMTC commanding.\n" \
+        f"The developer is expected to specify the packaged telecommands for a given\n" \
         "service and operation code combination. The developer is also expected\n" \
         "to implement the handling of telemetry. All these tasks can be done by implementing\n" \
         "a hook object and passing it to the core."
