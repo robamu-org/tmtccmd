@@ -28,8 +28,15 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
     Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
+    descrip_text = \
+        "TMTC Client Command Line Interface\n" \
+        "This application provides generic components to execute TMTC commanding.\n" \
+        "The developer is expected to specify the packaged telecommands for a given\n" \
+        "service and operation code combination. The developer is also expected\n" \
+        "to implement the handling of telemetry. All these tasks can be done by implementing\n" \
+        "a hook object and passing it to the core."
     arg_parser = argparse.ArgumentParser(
-        description="TMTC Client Command Line Interface",
+        description=descrip_text,
         formatter_class=argparse.RawTextHelpFormatter
     )
 
@@ -74,28 +81,33 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
 
 
 def add_generic_arguments(arg_parser: argparse.ArgumentParser):
-    arg_parser.add_argument(
-        '-o', '--op_code', help='Operation code, which is passed to the TC '
-                                'packer functions', default=0)
     arg_parser.add_argument('-s', '--service', help='Service to test. Default: 17', default=17)
     arg_parser.add_argument(
-        '-l', '--listener',  help='Determine whether the listener mode will be active '
-                                  'after performing the operation',
-        action='store_false')
+        '-o', '--op_code',
+        help='Operation code, which is passed to the TC packer functions', default=0
+    )
+    arg_parser.add_argument(
+        '-l', '--listener',
+        help='Determine whether the listener mode will be active after performing the operation',
+        action='store_false'
+    )
     arg_parser.add_argument(
         '-t', '--tm_timeout', type=float, help='TM Timeout when listening to verification sequence.'
-        ' Default: 5 seconds', default=5.0)
+        ' Default: 5 seconds', default=5.0
+    )
     arg_parser.add_argument(
         '--nl', dest='print_log', help='Supply --nl to suppress print output to log files.',
-        action='store_false')
+        action='store_false'
+    )
     arg_parser.add_argument(
         '--np', dest='print_tm', help='Supply --np to suppress print output to console.',
-        action='store_false')
+        action='store_false'
+    )
 
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.core.definitions import CoreModeList, CoreModeStrings
-    help_text = f"Modes\n"
+    help_text = f"Core Modes.\n"
     onecmd_help = \
         f"{CoreModeList.SINGLE_CMD_MODE} or {CoreModeStrings[CoreModeList.SINGLE_CMD_MODE]}: " \
         f"Single Command Mode\n"
@@ -118,7 +130,8 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.core.definitions import CoreComInterfacesString, CoreComInterfaces
-    help_text = f"Communication Interface\n"
+    help_text = f"Core Communication Interface. If this is not specified, the commander core\n" \
+                f"will try to extract it from the JSON or prompt it from the user.\n"
     dummy_line = \
         f"{CoreComInterfaces.DUMMY} or " \
         f"{CoreComInterfacesString[CoreComInterfaces.DUMMY]}: Dummy Interface\n"
