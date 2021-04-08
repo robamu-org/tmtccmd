@@ -28,7 +28,10 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
     Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
-    arg_parser = argparse.ArgumentParser(description="TMTC Client Command Line Interface")
+    arg_parser = argparse.ArgumentParser(
+        description="TMTC Client Command Line Interface",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     add_default_mode_arguments(arg_parser)
     add_default_com_if_arguments(arg_parser)
@@ -91,16 +94,56 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
+    from tmtccmd.core.definitions import CoreModeList, CoreModeStrings
+    help_text = f"Modes\n"
+    onecmd_help = \
+        f"{CoreModeList.SINGLE_CMD_MODE} or {CoreModeStrings[CoreModeList.SINGLE_CMD_MODE]}: " \
+        f"Single Command Mode\n"
+    listener_help = \
+        f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: " \
+        f"Listener Mode\n"
+    seq_help = \
+        f"{CoreModeList.SEQUENTIAL_CMD_MODE} or " \
+        f"{CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]}: " \
+        f"Sequential Command Mode\n"
+    gui_help = \
+        f"{CoreModeList.GUI_MODE} or " \
+        f"{CoreModeStrings[CoreModeList.GUI_MODE]}: " \
+        f"GUI mode\n"
+    help_text += onecmd_help + seq_help + listener_help + gui_help
     arg_parser.add_argument(
-        '-m', '--mode', type=int, help='Target Mode. Default is 1 (Listener Mode), '
-        '1: Listener Mode, 2: Single Command Mode, 3: Service Test Mode, '
-        '4: Software Test Mode', default=0)
+        '-m', '--mode', type=str, help=help_text, default=0
+    )
 
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
+    from tmtccmd.core.definitions import CoreComInterfacesString, CoreComInterfaces
+    help_text = f"Communication Interface\n"
+    dummy_line = \
+        f"{CoreComInterfaces.DUMMY} or " \
+        f"{CoreComInterfacesString[CoreComInterfaces.DUMMY]}: Dummy Interface\n"
+    udp_line = \
+        f"{CoreComInterfaces.TCPIP_UDP} or " \
+        f"{CoreComInterfacesString[CoreComInterfaces.TCPIP_UDP]}: " \
+        f"UDP client\n"
+    ser_dle_line = \
+        f"{CoreComInterfaces.SERIAL_DLE} or " \
+        f"{CoreComInterfacesString[CoreComInterfaces.SERIAL_DLE]}: " \
+        f"Serial with DLE transport layer\n"
+    ser_fixed_line = \
+        f"{CoreComInterfaces.SERIAL_FIXED_FRAME} or " \
+        f"{CoreComInterfacesString[CoreComInterfaces.SERIAL_FIXED_FRAME]}: " \
+        f"Serial with fixed frames\n"
+    ser_qemu_line = \
+        f"{CoreComInterfaces.SERIAL_QEMU} or " \
+        f"{CoreComInterfacesString[CoreComInterfaces.SERIAL_QEMU]}: " \
+        f"QEMU serial interface\n"
+    help_text += dummy_line + ser_dle_line + udp_line + ser_fixed_line + ser_qemu_line
     arg_parser.add_argument(
-        '-c', '--com_if', type=int, help='Communication Interface. 0: DUMMY Interface, 1: SERIAL,'
-                                         '2: UDP', default=2)
+        '-c', '--com_if', type=str,
+        help=help_text,
+        default="dummy"
+    )
 
 
 def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):

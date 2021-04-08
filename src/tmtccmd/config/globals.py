@@ -1,36 +1,48 @@
 import collections
+from typing import List, Union
 
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.conf_util import check_args_in_enum
-from tmtccmd.core.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces, CoreServiceList
+from tmtccmd.core.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces,\
+    CoreServiceList, CoreComInterfacesString, CoreModeStrings
 from tmtccmd.core.globals_manager import update_global
 
 
 LOGGER = get_logger()
 
 
-def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections.Iterable = None):
+def check_and_set_core_mode_arg(
+        mode_arg: any,
+        custom_modes_list: Union[None, List[Union[dict, collections.Iterable]]] = None
+) -> int:
     """
     Checks whether the mode argument is contained inside the core mode list integer enumeration
     or a custom mode list integer which can be passed optionally.
     This function will set the single command mode as the global mode parameter if the passed mode
     is not found in either enumerations.
     :param mode_arg:
-    :param custom_mode_int_enum:
+    :param custom_modes_list:
     :return:
     """
     in_enum, mode_value = check_args_in_enum(
-        param=mode_arg, enumeration=CoreModeList, warning_hint="mode"
+        param=mode_arg, iterable=CoreModeList, warning_hint="mode integers"
     )
+    if not in_enum:
+        in_enum, mode_value = check_args_in_enum(
+            param=mode_arg, iterable=CoreModeStrings, warning_hint="mode strings"
+        )
     if in_enum:
         update_global(CoreGlobalIds.MODE, mode_value)
-        return
+        return mode_value
 
     mode_arg_invalid = False
-    if custom_mode_int_enum is not None:
-        in_enum, mode_value = check_args_in_enum(
-            param=mode_arg, enumeration=custom_mode_int_enum, warning_hint="custom mode"
-        )
+    if custom_modes_list is not None:
+        for custom_mode_entry in custom_modes_list:
+            in_enum, mode_value = check_args_in_enum(
+                param=mode_arg, iterable=custom_mode_entry, warning_hint="custom mode"
+            )
+            if in_enum:
+                break
         if not in_enum:
             mode_arg_invalid = True
     else:
@@ -43,20 +55,30 @@ def check_and_set_core_mode_arg(mode_arg: any, custom_mode_int_enum: collections
     update_global(CoreGlobalIds.MODE, mode_value)
 
 
-def check_and_set_core_com_if_arg(com_if_arg: any, custom_com_if_list: collections.Iterable = None):
+def check_and_set_core_com_if_arg(
+        com_if_arg: any,
+        custom_com_ifs_list: Union[None, List[Union[dict, collections.Iterable]]] = None
+) -> int:
     in_enum, com_if_value = check_args_in_enum(
-        param=com_if_arg, enumeration=CoreComInterfaces, warning_hint="communication interface"
+        param=com_if_arg, iterable=CoreComInterfaces, warning_hint="communication interface"
     )
+    if not in_enum:
+        in_enum, com_if_value = check_args_in_enum(
+            param=com_if_arg, iterable=CoreComInterfacesString,
+            warning_hint="communication interface"
+        )
     if in_enum:
         update_global(CoreGlobalIds.COM_IF, com_if_value)
-        return
-
+        return com_if_value
     com_if_arg_invalid = False
-    if custom_com_if_list is not None:
-        in_enum, com_if_value = check_args_in_enum(
-            param=com_if_arg, enumeration=custom_com_if_list,
-            warning_hint="custom communication interface"
-        )
+    if custom_com_ifs_list is not None:
+        for custom_com_ifs_entry in custom_com_ifs_list:
+            in_enum, com_if_value = check_args_in_enum(
+                param=com_if_arg, iterable=custom_com_ifs_entry,
+                warning_hint="custom communication interface"
+            )
+            if in_enum:
+                break
         if not in_enum:
             com_if_arg_invalid = True
     else:
@@ -67,13 +89,14 @@ def check_and_set_core_com_if_arg(com_if_arg: any, custom_com_if_list: collectio
                        f"setting to {CoreComInterfaces.DUMMY}")
         com_if_value = CoreComInterfaces.DUMMY
     update_global(CoreGlobalIds.COM_IF, com_if_value)
+    return com_if_value
 
 
 def check_and_set_core_service_arg(
         service_arg: any, custom_service_list: collections.Iterable = None
 ):
     in_enum, service_value = check_args_in_enum(
-        param=service_arg, enumeration=CoreServiceList, warning_hint="service"
+        param=service_arg, iterable=CoreServiceList, warning_hint="service"
     )
     if in_enum:
         update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
@@ -82,7 +105,7 @@ def check_and_set_core_service_arg(
     service_arg_invalid = False
     if custom_service_list is not None:
         in_enum, service_value = check_args_in_enum(
-            param=service_arg, enumeration=custom_service_list, warning_hint="custom mode"
+            param=service_arg, iterable=custom_service_list, warning_hint="custom mode"
         )
         if not in_enum:
             service_arg_invalid = True

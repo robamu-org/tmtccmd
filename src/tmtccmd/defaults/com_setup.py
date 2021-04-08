@@ -38,7 +38,8 @@ def create_communication_interface_default(
                 send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
                 tmtc_printer=tmtc_printer
             )
-        elif com_if == CoreComInterfaces.SERIAL:
+        elif com_if == CoreComInterfaces.SERIAL_DLE or \
+                com_if == CoreComInterfaces.SERIAL_FIXED_FRAME:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
@@ -52,7 +53,7 @@ def create_communication_interface_default(
             dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
             communication_interface.set_dle_settings(dle_max_queue_len, dle_max_frame_size,
                                                      serial_timeout)
-        elif com_if == CoreComInterfaces.QEMU_SERIAL:
+        elif com_if == CoreComInterfaces.SERIAL_QEMU:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(
@@ -90,7 +91,7 @@ def default_tcpip_udp_cfg_setup():
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_cfg_dict)
 
 
-def default_serial_cfg_setup(com_if: CoreComInterfaces):
+def default_serial_cfg_setup(com_if: int):
     baud_rate = determine_baud_rate()
     if com_if == CoreComInterfaces.SERIAL:
         serial_port = determine_com_port()
@@ -100,7 +101,7 @@ def default_serial_cfg_setup(com_if: CoreComInterfaces):
 
 
 def set_up_serial_cfg(
-        com_if: CoreComInterfaces, baud_rate: int, com_port: str = "",  tm_timeout: float = 0.01,
+        com_if: int, baud_rate: int, com_port: str = "",  tm_timeout: float = 0.01,
         ser_com_type: SerialCommunicationType = SerialCommunicationType.DLE_ENCODING,
         ser_frame_size: int = 256, dle_queue_len: int = 25, dle_frame_size: int = 1024
 ):

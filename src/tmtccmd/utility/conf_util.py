@@ -9,7 +9,7 @@ from tmtccmd.utility.tmtcc_logger import get_logger
 LOGGER = get_logger()
 
 
-def check_args_in_enum(param: any, enumeration: collections.Iterable,
+def check_args_in_enum(param: any, iterable: collections.Iterable,
                        warning_hint: str) -> Tuple[bool, int]:
     """
     This functions checks whether the integer representation of a given parameter in
@@ -35,18 +35,24 @@ def check_args_in_enum(param: any, enumeration: collections.Iterable,
     else:
         LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
-    param_list = list()
-    for enum_value in enumeration:
-        if isinstance(enum_value.value, str):
-            # Make this case insensitive
-            param_list.append(enum_value.value.lower())
-        else:
-            param_list.append(enum_value.value)
-    if param not in param_list:
-        if might_be_integer:
-            if int(param) in param_list:
-                return True, int(param)
-        return False, 0
+
+    if isinstance(iterable, dict):
+        for idx, enum_value in iterable.items():
+            if param == enum_value:
+                return True, idx
+    else:
+        param_list = list()
+        for idx, enum_value in enumerate(iterable):
+            if isinstance(enum_value.value, str):
+                # Make this case insensitive
+                param_list.append(enum_value.value.lower())
+            else:
+                param_list.append(enum_value.value)
+        if param not in param_list:
+            if might_be_integer:
+                if int(param) in param_list:
+                    return True, int(param)
+            return False, 0
     return True, param
 
 
