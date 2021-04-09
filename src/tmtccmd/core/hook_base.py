@@ -102,9 +102,17 @@ class TmTcHookBase:
     ) -> Tuple[list, list, bytearray, int]:
         """
         This function is called when a Service 3 Housekeeping packet is received.
-        @param object_id:
-        @param set_id:
-        @param hk_data:
+        If set_hk_handling_for_custom_hk_format from tmtcmd.config.globals was called
+        in add_globals_post_args_parsing, object_id and set_id will be zero and the whole source
+        data will be passed to the user in hk_data
+        @param object_id:   If the object ID dictionary was set up properly, the core will attempt
+                            to find the 4 byte object ID in the dictionary and pass the integer
+                            key here.
+        @param set_id:      Unique set ID of the HK reply
+        @param hk_data:     HK data. For custom HK handling, whole HK data will be passed here.
+                            Otherwise, a 8 byte SID conisting of the 4 byte object ID and
+                            4 byte set ID will be assumed and the remaining packet after
+                            the first 4 bytes will be passed here.
         @param service3_packet:
         @return: Expects a tuple, consisting of two lists, a bytearray and an integer
         The first list contains the header columns, the second list the list with

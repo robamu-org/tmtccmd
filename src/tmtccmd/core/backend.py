@@ -129,7 +129,7 @@ class TmTcHandler:
             LOGGER.info("Keyboard Interrupt.")
             sys.exit()
         except IOError:
-            LOGGER.error("IO Error occured!")
+            LOGGER.exception("IO Error occured")
             sys.exit()
 
     def __handle_action(self):

@@ -14,8 +14,9 @@ from tmtccmd.core.definitions import CoreGlobalIds
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.defaults.args_parser import parse_input_arguments
-from tmtccmd.defaults.object_id_setup import get_core_object_ids
+from tmtccmd.config.objects import get_core_object_ids
 from tmtccmd.utility.tmtcc_logger import set_tmtc_logger, get_logger
+from tmtccmd.utility.conf_util import AnsiColors
 
 logger = get_logger()
 
@@ -40,7 +41,7 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
     __assign_tmtc_commander_hooks(hook_object=hook_object)
 
 
-def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False):
+def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False, ansi_colors = True):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
     start the TMTC commander. Please note that assign_tmtc_commander_hooks needs to be called
@@ -56,7 +57,9 @@ def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False):
     :param reduced_printout:    It is possible to reduce the initial printout with this flag
     :return:
     """
-    __set_up_tmtc_commander(use_gui=use_gui, reduced_printout=reduced_printout)
+    __set_up_tmtc_commander(
+        use_gui=use_gui, reduced_printout=reduced_printout, ansi_colors=ansi_colors
+    )
     if use_gui:
         __start_tmtc_commander_qt_gui()
     else:
@@ -84,7 +87,7 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
     insert_object_ids(hook_object.set_object_ids())
 
 
-def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
+def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool, ansi_colors: bool = True):
     from tmtccmd.core.hook_base import TmTcHookBase
     from typing import cast
     set_tmtc_logger()
@@ -100,7 +103,7 @@ def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
     hook_obj = cast(TmTcHookBase, hook_obj_raw)
 
     if not reduced_printout:
-        __handle_init_printout(use_gui, hook_obj.get_version())
+        __handle_init_printout(use_gui, hook_obj.get_version(), ansi_colors)
 
     logger.info("Starting TMTC Commander..")
 
@@ -110,14 +113,18 @@ def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool):
         __handle_cli_args_and_globals()
 
 
-def __handle_init_printout(use_gui: bool, version_string: str):
-    print("-- Python TMTC Commander --")
+def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool):
+    if ansi_colors:
+        print(f"{AnsiColors.GREEN}", end="")
+    print(f"-- Python TMTC Commander --")
     if use_gui:
-        print("-- GUI mode --")
+        print(f"-- GUI mode --")
     else:
-        print("-- Command line mode --")
+        print(f"-- Command line mode --")
 
     print(f"-- Software version {version_string} --")
+    if ansi_colors:
+        print(f"{AnsiColors.RESET}", end="")
 
 
 def __handle_cli_args_and_globals():

@@ -71,7 +71,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         self.udp_socket.setblocking(False)
 
     def close(self) -> None:
-        if self.udp_socket is None:
+        if self.udp_socket is not None:
             self.udp_socket.close()
 
     def send_data(self, data: bytearray):

@@ -13,22 +13,15 @@ This commander application was first developed by KSat for the
 software but has evolved into a more generic tool for satellite developers to perform TMTC 
 (Telemetry and Telecommand) handling and testing via different communication interfaces. 
 Currently, only the PUS standard is implemented as a packet standard. This tool can be used either 
-as a command line tool or as a GUI tool, but the GUI capabilities are still in an Alpha state.
+as a command line tool or as a GUI tool, but the GUI capabilities are still in an alpha state.
 
 This client currently supports the following communication interfaces:
 
-1. Ethernet, UDP packets
-2. Serial Communication 
-3. QEMU
+1. TCP/IP with UDP packets
+2. Serial Communication using fixed frames or a simple ASCII based transport layer
+3. QEMU, using a virtual serial interface
 
-An implementation of the TCP protocol is planned.
-
-## Documentation
-
-The documentation will soon be moved to the `docs` folder which contains the documentation in
-form of `.rst` files. These can be converted to HTML and PDF format with 
-[Sphinx](https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html).
-An online version is available [here](https://tmtccmd.readthedocs.io/en/latest/).
+A TCP implementation is planned.
 
 ## Examples 
 
@@ -55,6 +48,7 @@ with the following command:
 git submodule add https://github.com/rmspacefish/tmtccmd.git
 ```
 
+For the following commands, replace `python3` with `py` on Windows.
 After that, you can install the package in an editable mode with the following command:
 
 ```sh
