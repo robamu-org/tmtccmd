@@ -65,7 +65,7 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
         )
 
     def append_space_packet_header_content(self, content_list: list):
-        content_list.append(str(chr(self.apid)))
+        content_list.append(str(hex(self.apid)))
         content_list.append(str(self.ssc))
 
     @staticmethod
