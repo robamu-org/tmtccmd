@@ -1,10 +1,6 @@
 import enum
 from typing import Tuple
 
-from tmtccmd.utility.tmtcc_logger import get_logger
-
-LOGGER = get_logger()
-
 
 SPACE_PACKET_HEADER_SIZE = 6
 
@@ -47,7 +43,7 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
         :param pus_packet_raw:
         """
         if len(pus_packet_raw) < SPACE_PACKET_HEADER_SIZE:
-            LOGGER.warning("SpacePacketHeaderDeserializer: Packet size smaller than PUS header size!")
+            print("SpacePacketHeaderDeserializer: Packet size smaller than PUS header size!")
             super().__init__(
                 packet_type=PacketTypes.PACKET_TYPE_TM, secondary_header_flag=0, sequence_flags=0,
                 source_sequence_count=0, data_length=0, version=0, apid=0
@@ -69,7 +65,7 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
         )
 
     def append_space_packet_header_content(self, content_list: list):
-        content_list.append(str(chr(self.apid)))
+        content_list.append(str(hex(self.apid)))
         content_list.append(str(self.ssc))
 
     @staticmethod
@@ -140,10 +136,12 @@ def get_sp_packet_id_num(packet_type: PacketTypes, secondary_header_flag: int, a
 
 def get_sp_packet_sequence_control(sequence_flags: int, source_sequence_count: int) -> int:
     if sequence_flags > 3:
-        LOGGER.warning("Sequence flag value larger than 0b11! Setting to 0b11..")
+        print("get_sp_packet_sequence_control: Sequence flag value larger than 0b11! "
+              "Setting to 0b11..")
         sequence_flags = 3
     if source_sequence_count > 0x3fff:
-        LOGGER.warning("Source sequence count largen than 0x3fff. Larger bits are cut off!")
+        print("get_sp_packet_sequence_control: Source sequence count largen than 0x3fff. "
+              "Larger bits are cut off!")
     return (source_sequence_count & 0x3FFF) | (sequence_flags << 14)
 
 

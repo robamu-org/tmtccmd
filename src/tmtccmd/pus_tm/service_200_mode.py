@@ -3,7 +3,7 @@
 """
 import struct
 
-from tmtccmd.pus_tm.base import PusTelemetry
+from tmtccmd.ecss.tm import PusTelemetry
 
 
 class Service200TM(PusTelemetry):

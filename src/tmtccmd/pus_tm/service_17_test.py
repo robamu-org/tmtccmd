@@ -1,4 +1,4 @@
-from tmtccmd.pus_tm.base import PusTelemetry
+from tmtccmd.ecss.tm import PusTelemetry
 
 
 class Service17TM(PusTelemetry):

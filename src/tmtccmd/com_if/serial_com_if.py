@@ -13,10 +13,10 @@ from collections import deque
 import serial
 import serial.tools.list_ports
 
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tm.factory import PusTelemetryFactory, PusTmListT
-from tmtccmd.pus_tc.base import PusTcInfoT
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
 
@@ -126,7 +126,7 @@ class SerialComIF(CommunicationInterface):
     def send_data(self, data: bytearray):
         self.serial.write(data)
 
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
+    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand = None) -> None:
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             data = tc_packet
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:

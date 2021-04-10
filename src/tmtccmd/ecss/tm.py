@@ -1,38 +1,10 @@
 import math
 import time
-
-from tmtc.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
-from tmtccmd.utility.tmtcc_logger import get_logger
-
 import datetime
-from enum import Enum, auto
-from typing import Dict
+
 from crcmod import crcmod
 
-LOGGER = get_logger()
-
-
-class TmDictionaryKeys(Enum):
-    SERVICE = auto()
-    SUBSERVICE = auto()
-    SUBCOUNTER = auto()
-    SSC = auto()
-    DATA = auto()
-    CRC = auto()
-    VALID = auto()
-    # Service 1
-    TC_PACKET_ID = auto()
-    TC_SSC = auto()
-    ERROR_CODE = auto()
-    STEP_NUMBER = auto()
-    # Service 5
-    EVENT_ID = auto()
-    REPORTER_ID = auto()
-    EVENT_PARAM_1 = auto()
-    EVENT_PARAM_2 = auto()
-
-
-PusTmInfoT = Dict[TmDictionaryKeys, any]
+from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
 
 
 class PusTelemetry:
@@ -52,23 +24,22 @@ class PusTelemetry:
         @param raw_telemetry:
         """
         if raw_telemetry == bytearray():
-            LOGGER.error("PusTelemetry: Given byte stream is empty!")
+            print("PusTelemetry: Given byte stream is empty!")
             raise ValueError
         self._packet_raw = raw_telemetry
         self._space_packet_header = SpacePacketHeaderDeserializer(pus_packet_raw=raw_telemetry)
         self._valid = False
         if self._space_packet_header.data_length + SPACE_PACKET_HEADER_SIZE + 1 > \
                 len(raw_telemetry):
-            LOGGER.error("PusTelemetry: Passed packet shorter than specified packet "
-                         "length in PUS header")
+            print("PusTelemetry: Passed packet shorter than specified packet length in PUS header")
             raise ValueError
         self._data_field_header = PusPacketDataFieldHeader(raw_telemetry[6:])
         self._tm_data = raw_telemetry[
-            PusPacketDataFieldHeader.DATA_HEADER_SIZE + SPACE_PACKET_HEADER_SIZE + 1:
-            len(raw_telemetry) - 2
-        ]
-        self._crc = raw_telemetry[len(raw_telemetry) - 2] << 8 | \
-            raw_telemetry[len(raw_telemetry) - 1]
+                        PusPacketDataFieldHeader.DATA_HEADER_SIZE + SPACE_PACKET_HEADER_SIZE + 1:
+                        len(raw_telemetry) - 2
+                        ]
+        self._crc = \
+            raw_telemetry[len(raw_telemetry) - 2] << 8 | raw_telemetry[len(raw_telemetry) - 1]
         self.print_info = ""
         self.__perform_crc_check(raw_telemetry)
 
@@ -102,11 +73,13 @@ class PusTelemetry:
         """
         return self._tm_data
 
-    def pack_tm_information(self) -> PusTmInfoT:
-        """
+    def get_tc_packet_id(self):
+        return self._space_packet_header.packet_id
+
+    """
+        def pack_tm_information(self) -> PusTmInfoT:
         Packs important TM information needed for tests in a convenient dictionary
         :return: TM dictionary
-        """
         tm_information = {
             TmDictionaryKeys.SERVICE: self.get_service(),
             TmDictionaryKeys.SUBSERVICE: self.get_subservice(),
@@ -116,18 +89,19 @@ class PusTelemetry:
             TmDictionaryKeys.VALID: self._valid
         }
         return tm_information
+    """
 
     def __perform_crc_check(self, raw_telemetry: bytearray):
         crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
         if len(raw_telemetry) < self.get_packet_size():
-            LOGGER.warning("SpacePacketHeaderDeserializer: Invalid packet length")
+            print("PusTelemetry: Invalid packet length")
             return
         data_to_check = raw_telemetry[0:self.get_packet_size()]
         crc = crc_func(data_to_check)
         if crc == 0:
             self._valid = True
         else:
-            LOGGER.warning("SpacePacketHeaderDeserializer: Invalid CRC detected !")
+            print("PusTelemetry: Invalid CRC detected !")
 
     def specify_packet_info(self, print_info: str):
         """
@@ -209,14 +183,14 @@ class PusTelemetry:
         """
         Print the full TM packet in a clean format.
         """
-        LOGGER.info(self.return_data_string(self._packet_raw, len(self._packet_raw)))
+        print(self.return_data_string(self._packet_raw, len(self._packet_raw)))
 
     def print_source_data(self):
         """
         Prints the TM source data in a clean format
         :return:
         """
-        LOGGER.info(self.return_data_string(self._tm_data, len(self._tm_data)))
+        print(self.return_data_string(self._tm_data, len(self._tm_data)))
 
     def return_source_data(self):
         """
@@ -282,6 +256,7 @@ class PusTelemetryTimestamp:
     """
     Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,
     and the size of the time stamp is expected to be seven bytes.
+    TODO: Implement more time formats
     """
     CDS_ID = 4
     SECONDS_PER_DAY = 86400
@@ -309,7 +284,8 @@ class PusTelemetryTimestamp:
         """
         timestamp = bytearray()
         p_field = (PusTelemetryTimestamp.CDS_ID << 4) + 0
-        days = (datetime.datetime.utcnow() - PusTelemetryTimestamp.EPOCH).days + \
+        days = \
+            (datetime.datetime.utcnow() - PusTelemetryTimestamp.EPOCH).days + \
             PusTelemetryTimestamp.DAYS_CCSDS_TO_UNIX
         days_h = (days & 0xFF00) >> 8
         days_l = days & 0xFF

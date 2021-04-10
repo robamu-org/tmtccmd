@@ -10,9 +10,21 @@ ethernet_address_t = Tuple[str, int]
 
 class CoreComInterfaces(enum.IntEnum):
     DUMMY = 0
-    SERIAL = 1
+    SERIAL_DLE = 1
     TCPIP_UDP = 2
-    QEMU_SERIAL = 5
+    SERIAL_FIXED_FRAME = 4
+    SERIAL_QEMU = 5
+    UNSPECIFIED = 0xffff
+
+
+CoreComInterfacesString = {
+    CoreComInterfaces.DUMMY: "dummy",
+    CoreComInterfaces.SERIAL_DLE: "ser_dle",
+    CoreComInterfaces.TCPIP_UDP: "udp",
+    CoreComInterfaces.SERIAL_FIXED_FRAME: "ser_fixed",
+    CoreComInterfaces.SERIAL_QEMU: "ser_qemu",
+    CoreComInterfaces.UNSPECIFIED: "unspec"
+}
 
 
 class QueueCommands(enum.Enum):
@@ -36,6 +48,14 @@ class CoreModeList(enum.IntEnum):
     SOFTWARE_TEST_MODE = 4
     IDLE = 5
     PROMPT_MODE = 6
+
+
+CoreModeStrings = {
+    CoreModeList.SINGLE_CMD_MODE: "onecmd",
+    CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
+    CoreModeList.LISTENER_MODE: "listener",
+    CoreModeList.GUI_MODE: "gui"
+}
 
 
 class CoreServiceList(enum.IntEnum):
@@ -70,7 +90,6 @@ class CoreGlobalIds(enum.IntEnum):
     COM_IF = 144
     OP_CODE = 145
     TM_TIMEOUT = 146
-
     # Miscellaneous
     DISPLAY_MODE = 150
     USE_LISTENER_AFTER_OP = 151

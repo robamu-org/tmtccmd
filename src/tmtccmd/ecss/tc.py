@@ -4,39 +4,33 @@
 This module contains the PUS telecommand class representation to pack telecommands.
 @author R. Mueller
 """
+from __future__ import annotations
 import sys
-from enum import Enum
-from typing import Dict, Union, Tuple, Deque
+from typing import Tuple
 
-from tmtccmd.core.definitions import QueueCommands, CoreGlobalIds
-from tmtccmd.tmtc.spacepacket import SpacePacketHeaderSerializer, PacketTypes
-from tmtccmd.utility.tmtcc_logger import get_logger
-
-LOGGER = get_logger()
+from tmtccmd.ccsds.spacepacket import \
+    SpacePacketHeaderSerializer, \
+    PacketTypes, \
+    SPACE_PACKET_HEADER_SIZE
 
 try:
     import crcmod
 except ImportError:
-    LOGGER.error("crcmod package not installed!")
+    print("crcmod package not installed!")
     sys.exit(1)
 
 
-class TcDictionaryKeys(Enum):
-    """ Keys for telecommand dictionary """
-    SERVICE = 1
-    SUBSERVICE = 2
-    SSC = 3
-    PACKET_ID = 4
-    DATA = 5
+ECSS_TC_DICT = {
+    "apid": 0xef
+}
 
 
-PusTcInfo = Dict[TcDictionaryKeys, any]
-PusTcInfoT = Union[PusTcInfo, None]
-PusTcTupleT = Tuple[bytearray, PusTcInfoT]
-TcAuxiliaryTupleT = Tuple[QueueCommands, any]
-TcQueueEntryT = Union[TcAuxiliaryTupleT, PusTcTupleT]
-TcQueueT = Deque[TcQueueEntryT]
-PusTcInfoQueueT = Deque[PusTcInfoT]
+def insert_default_apid(default_apid: int):
+    ECSS_TC_DICT["apid"] = default_apid
+
+
+def get_default_apid() -> int:
+    return ECSS_TC_DICT["apid"]
 
 
 class PusTcDataFieldHeaderSerialize:
@@ -64,26 +58,25 @@ class PusTcDataFieldHeaderSerialize:
 # pylint: disable=too-many-arguments
 class PusTelecommand:
     """
-    @brief  Class representation of a PUS telecommand.
-    @details
-    It can be used to pack a raw telecommand from
+    Class representation of a PUS telecommand. It can be used to pack a raw telecommand from
     input parameters. The structure of a PUS telecommand is specified in ECSS-E-70-41A on p.42
     and is also shown below (bottom)
     """
-    HEADER_SIZE = 6
     # This is the current size of a telecommand without application data. Consists of
     # the 6 byte packet header, 4 byte data field header (1 byte source ID) and 2 byte CRC.
     CURRENT_NON_APP_DATA_SIZE = 10
 
     def __init__(
-            self, service: int, subservice: int, ssc=0, app_data: bytearray = bytearray([]),
-            source_id: int = 0, pus_tc_version: int = 0b1, ack_flags: int = 0b1111, apid: int = -1
+            self, service: int, subservice: int, ssc=0,
+            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = 0b1,
+            ack_flags: int = 0b1111, apid: int = -1
     ):
         """
         Initiate a PUS telecommand from the given parameters. The raw byte representation
         can then be retrieved with the pack() function.
         :param service:         PUS service number
         :param subservice:      PUS subservice number
+        :param apid:            Application Process ID as specified by CCSDS
         :param ssc:             Source Sequence Count. Application should take care of incrementing
                                 this. Limited to 2 to the power of 14 by the number of bits in
                                 the header
@@ -91,12 +84,10 @@ class PusTelecommand:
         :param source_id:       Source ID will be supplied as well. Can be used to distinguish
                                 different packet sources (e.g. different ground stations)
         :param pus_tc_version:  PUS TC version. 1 for ECSS-E-70-41A
-        :param apid:            Application Process ID as specified by CCSDS
+
         """
-        # To get the correct globally configured APID
         if apid == -1:
-            from tmtccmd.core.globals_manager import get_global
-            apid = get_global(CoreGlobalIds.APID)
+            apid = get_default_apid()
         self.apid = apid
         packet_type = PacketTypes.PACKET_TYPE_TC
         secondary_header_flag = 1
@@ -132,7 +123,7 @@ class PusTelecommand:
         Length of full packet in bytes.
         The header length is 6 bytes and the data length + 1 is the size of the data field.
         """
-        return self.get_data_length(len(self.app_data)) + PusTelecommand.HEADER_SIZE + 1
+        return self.get_data_length(len(self.app_data)) + SPACE_PACKET_HEADER_SIZE + 1
 
     def pack(self) -> bytearray:
         """
@@ -160,26 +151,31 @@ class PusTelecommand:
             data_length = 4 + app_data_len + 1
             return data_length
         except TypeError:
-            LOGGER.error("PusTelecommand: Invalid type of application data!")
+            print("PusTelecommand: Invalid type of application data!")
             return 0
 
-    def pack_information(self) -> PusTcInfoT:
+    def pack_command_tuple(self) -> Tuple[bytearray, PusTelecommand]:
         """
-        Packs TM information into a dictionary.
+        Pack a tuple consisting of the raw packet as the first entry and the class representation
+        as the second entry
         """
-        tc_information = {
-            TcDictionaryKeys.SERVICE: self._data_field_header.service_type,
-            TcDictionaryKeys.SUBSERVICE: self._data_field_header.service_subtype,
-            TcDictionaryKeys.SSC: self._space_packet_header.ssc,
-            TcDictionaryKeys.PACKET_ID: self._space_packet_header.packet_id,
-            TcDictionaryKeys.DATA: self.app_data
-        }
-        return tc_information
-
-    def pack_command_tuple(self) -> PusTcTupleT:
-        """ Pack a tuple consisting of the raw packet and an information dictionary """
-        command_tuple = (self.pack(), self.pack_information())
+        command_tuple = (self.pack(), self)
         return command_tuple
+
+    def get_service(self):
+        return self._data_field_header.service_type
+
+    def get_subservice(self):
+        return self._data_field_header.service_subtype
+
+    def get_ssc(self):
+        return self._space_packet_header.ssc
+
+    def get_packet_id(self):
+        return self._space_packet_header.packet_id
+
+    def get_app_data(self):
+        return self.app_data
 
     def print(self):
         """
@@ -219,6 +215,10 @@ def generate_crc(data: bytearray) -> bytearray:
     data_with_crc.append((crc & 0xFF00) >> 8)
     data_with_crc.append(crc & 0xFF)
     return data_with_crc
+
+
+PusTcTupleT = Tuple[bytearray, PusTelecommand]
+
 
 # pylint: disable=line-too-long
 

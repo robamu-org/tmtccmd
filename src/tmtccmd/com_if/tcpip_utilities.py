@@ -1,9 +1,8 @@
 import json
-import os
 import socket
 import struct
 import enum
-from typing import Tuple, Union
+from typing import Union
 
 from tmtccmd.core.definitions import ethernet_address_t
 from tmtccmd.utility.json_handler import check_json_file
