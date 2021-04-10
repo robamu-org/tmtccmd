@@ -16,11 +16,13 @@ from PyQt5.QtGui import QPixmap, QIcon
 
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
-from tmtccmd.pus_tc.base import PusTelecommand
+from tmtccmd.config.globals import get_global_apid
+from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.defaults as defaults_module
+
 
 LOGGER = get_logger()
 
@@ -103,9 +105,11 @@ class TmTcFrontend(QMainWindow):
         # crc = int(self.commandTable.item(0, 4).text())
 
         # create a command out of the parsed table
+        apid = get_global_apid()
         command = PusTelecommand(
             service=self.single_command_service, subservice=self.single_command_sub_service,
-            ssc=self.single_command_ssc)
+            ssc=self.single_command_ssc, apid=apid
+        )
         self.tmtc_handler.single_command_package = command.pack_command_tuple()
 
         # self.tmtc_handler.mode = tmtcc_config.ModeList.SINGLE_CMD_MODE

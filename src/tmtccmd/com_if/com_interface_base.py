@@ -9,9 +9,10 @@ Description: Generic Communication Interface. Defines the syntax of the communic
 """
 from abc import abstractmethod
 from typing import Tuple
+
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus_tm.factory import PusTmListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.pus_tc.base import PusTcInfoT
 
 
 # pylint: disable=useless-return
@@ -54,11 +55,11 @@ class CommunicationInterface:
         """
 
     @abstractmethod
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
+    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
         """
         Send telecommands
         :param tc_packet: TC wiretapping_packet to send
-        :param tc_packet_info: TC wiretapping_packet information
+        :param tc_packet_obj: TC packet object representation
         :return: None for now
         """
 

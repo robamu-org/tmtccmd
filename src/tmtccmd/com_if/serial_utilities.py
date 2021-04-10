@@ -19,12 +19,13 @@ def determine_baud_rate() -> int:
     if not check_json_file():
         prompt_baud_rate = True
 
-    with open("config/tmtcc_config.json", "r") as read:
-        try:
-            load_data = json.load(read)
-            baud_rate = load_data[JsonKeyNames.SERIAL_BAUDRATE.value]
-        except KeyError:
-            prompt_baud_rate = True
+    if not prompt_baud_rate:
+        with open("config/tmtcc_config.json", "r") as read:
+            try:
+                load_data = json.load(read)
+                baud_rate = load_data[JsonKeyNames.SERIAL_BAUDRATE.value]
+            except KeyError:
+                prompt_baud_rate = True
 
     if prompt_baud_rate:
         while True:
@@ -79,7 +80,7 @@ def determine_com_port() -> str:
                 data = json.load(file)
                 data[JsonKeyNames.SERIAL_PORT.value] = com_port
                 file.seek(0)
-                json.dump(data, file)
+                json.dump(data, file, indent=4)
             LOGGER.info("Serial port was stored to the JSON file config/tmtcc_config.json")
             LOGGER.info("Delete this file or edit it manually to change serial port")
     return com_port

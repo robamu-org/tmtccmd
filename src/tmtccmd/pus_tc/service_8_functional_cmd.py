@@ -1,7 +1,8 @@
 import enum
 import struct
 
-from tmtccmd.pus_tc.base import PusTelecommand
+from tmtccmd.pus_tc.definitions import PusTelecommand
+from tmtccmd.config.globals import get_global_apid
 
 
 class Srv8Subservices(enum.IntEnum):
@@ -9,12 +10,16 @@ class Srv8Subservices(enum.IntEnum):
     DATA_REPLY = 130
 
 
-def generate_action_command(object_id: bytearray, action_id: int, data: bytearray = bytearray([]),
-                            ssc: int = 0) -> PusTelecommand:
+def generate_action_command(
+        object_id: bytearray, action_id: int, app_data: bytearray = bytearray([]),
+        ssc: int = 0, apid: int = -1
+) -> PusTelecommand:
+    if apid == -1:
+        apid = get_global_apid()
     data_to_pack = bytearray(object_id)
-    data_to_pack += make_action_id(action_id) + data
+    data_to_pack += make_action_id(action_id) + app_data
     return PusTelecommand(
-        service=8, subservice=Srv8Subservices.FUNC_CMD, ssc=ssc, app_data=data_to_pack
+        service=8, subservice=Srv8Subservices.FUNC_CMD, ssc=ssc, app_data=data_to_pack, apid=apid
     )
 
 

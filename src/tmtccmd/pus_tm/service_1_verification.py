@@ -6,14 +6,13 @@ Description: Deserialize Pus Verification TM
 Author: R. Mueller
 """
 import struct
-from typing import Dict
+from typing import Deque
 
-from tmtccmd.pus_tm.base import PusTelemetry, TmDictionaryKeys
-from tmtccmd.pus_tm.creator import PusTelemetryCreator
+from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
-PusPacketInfoService1T = Dict[TmDictionaryKeys, any]
 
 
 class Service1TM(PusTelemetry):
@@ -98,21 +97,22 @@ class Service1TM(PusTelemetry):
         else:
             LOGGER.error("Service1TM: Invalid subservice")
 
-    def pack_tm_information(self) -> PusPacketInfoService1T:
-        tm_information = super().pack_tm_information()
-        add_information = {
-            TmDictionaryKeys.TC_PACKET_ID: self.tc_packet_id,
-            TmDictionaryKeys.TC_SSC: self.tc_ssc,
-        }
-        tm_information.update(add_information)
-        if self.has_tc_error_code:
-            tm_information.update({TmDictionaryKeys.ERROR_CODE: self.err_code})
-        if self.is_step_reply:
-            tm_information.update({TmDictionaryKeys.STEP_NUMBER: self.step_number})
-        return tm_information
-
     def get_tc_ssc(self):
         return self.tc_ssc
+
+    def get_error_code(self):
+        if self.has_tc_error_code:
+            return self.err_code
+        else:
+            LOGGER.warning("Service1Tm: get_error_code: This is not a failure packet, returning 0")
+            return 0
+
+    def get_step_number(self):
+        if self.is_step_reply:
+            return self.step_number
+        else:
+            LOGGER.warning("Service1Tm: get_step_number: This is not a step reply, returning 0")
+            return 0
 
 
 class Service1TmPacked(PusTelemetryCreator):
@@ -130,3 +130,6 @@ class Service1TmPacked(PusTelemetryCreator):
 
     def pack(self) -> bytearray:
         return super().pack()
+
+
+PusVerifQueue = Deque[Service1TM]

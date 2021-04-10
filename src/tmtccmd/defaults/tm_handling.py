@@ -4,7 +4,7 @@
             it to your needs.
 """
 
-from tmtccmd.pus_tm.base import PusTelemetry
+from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.pus_tm.service_1_verification import Service1TM
 from tmtccmd.pus_tm.service_5_event import Service5TM

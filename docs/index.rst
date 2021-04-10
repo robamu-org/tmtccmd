@@ -9,22 +9,34 @@ Welcome to the TMTC Commander Core documentation!
 This module is a generic tool for satellite developers to perform TMTC (Telemetry and Telecommand)
 handling and testing via different communication interfaces. Currently, only the PUS standard is
 implemented as a packet standard. This tool can be used either as a command line tool
-or as a GUI tool. The generic parts were decoupled from the former TMTC program and integrated into
-a separate submodule to allow for easier adaption to other missions.
+or as a GUI tool but the GUI capabilities are still in an alpha state. 
+The generic parts were decoupled from the former TMTC program
+to allow for easier adaption to other missions.
 
 This client currently supports the following communication interfaces:
 
-1. Ethernet, UDP packets
-2. Serial Communication 
+1. TCP/IP with UDP packets
+2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
 
-The core is configured by passing a special instance of a hook object to the commander 
-before calling the main ``run_tmtc_commander`` function. This hook object is implemented by the user 
-and should implement the ``TmTcHookBase`` base class.
+A TCP implementation is planned.
+
+Other pages (online)
+
+- `project page on GitHub`_
+- This page, when viewed online is at https://tmtccmd.readthedocs.io/en/latest/
+
+.. _`project page on GitHub`: https://github.com/rmspacefish/tmtccmd
+
+Contents
+========
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   
+   introduction
+   gettingstarted
+   api
 
 Indices and tables
 ==================
