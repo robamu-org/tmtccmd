@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 from typing import Tuple
 
-from tmtccmd.tmtc.spacepacket import \
+from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
     PacketTypes, \
     SPACE_PACKET_HEADER_SIZE

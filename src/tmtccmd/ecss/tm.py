@@ -4,32 +4,7 @@ import datetime
 
 from crcmod import crcmod
 
-from tmtc.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
-
-
-"""
-class TmDictionaryKeys(Enum):
-    SERVICE = auto()
-    SUBSERVICE = auto()
-    SUBCOUNTER = auto()
-    SSC = auto()
-    DATA = auto()
-    CRC = auto()
-    VALID = auto()
-    # Service 1
-    TC_PACKET_ID = auto()
-    TC_SSC = auto()
-    ERROR_CODE = auto()
-    STEP_NUMBER = auto()
-    # Service 5
-    EVENT_ID = auto()
-    REPORTER_ID = auto()
-    EVENT_PARAM_1 = auto()
-    EVENT_PARAM_2 = auto()
-"""
-
-
-# PusTmInfoT = Dict[TmDictionaryKeys, any]
+from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
 
 
 class PusTelemetry:
