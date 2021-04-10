@@ -6,7 +6,7 @@ from typing import Tuple, Union
 
 from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreServiceList, CoreModeList
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.pus_tc.base import PusTcInfo, PusTelecommand
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.sendreceive.single_command_sender_receiver import SingleCommandSenderReceiver
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener
@@ -39,7 +39,8 @@ class TmTcHandler:
         self.tm_listener: Union[None, TmListener] = None
         self.exit_on_com_if_init_failure = True
 
-        self.single_command_package: Tuple[bytearray, Union[None, PusTcInfo]] = (bytearray(), None)
+        self.single_command_package: Tuple[bytearray, Union[None, PusTelecommand]] = \
+            (bytearray(), None)
 
     def set_one_shot_or_loop_handling(self, enable: bool):
         """

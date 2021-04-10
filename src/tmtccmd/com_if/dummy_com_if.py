@@ -8,7 +8,7 @@
 from typing import Tuple
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tc.base import PusTelecommand, PusTcInfoT, TcDictionaryKeys
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.pus_tm.service_1_verification import Service1TmPacked
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -64,9 +64,9 @@ class DummyComIF(CommunicationInterface):
             self.ssc += 1
         return tm_list
 
-    def send_telecommand(self, tc_packet: PusTelecommand, tc_packet_info: PusTcInfoT = None) -> None:
-        if isinstance(tc_packet_info, dict) and tc_packet_info.__len__() > 0:
-            self.service_sent = tc_packet_info[TcDictionaryKeys.SERVICE]
-            self.tc_packet_id = tc_packet_info[TcDictionaryKeys.PACKET_ID]
-            self.tc_ssc = tc_packet_info[TcDictionaryKeys.SSC]
+    def send_telecommand(self, tc_packet: PusTelecommand, tc_packet_obj: PusTelecommand = None):
+        if tc_packet_obj is not None:
+            self.service_sent = tc_packet_obj.get_service()
+            self.tc_packet_id = tc_packet_obj.get_packet_id()
+            self.tc_ssc = tc_packet_obj.get_ssc()
             self.reply_pending = True

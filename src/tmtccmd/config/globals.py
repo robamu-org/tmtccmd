@@ -5,10 +5,13 @@ from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.conf_util import check_args_in_enum
 from tmtccmd.core.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces,\
     CoreServiceList, CoreComInterfacesString, CoreModeStrings
-from tmtccmd.core.globals_manager import update_global
-
+from tmtccmd.core.globals_manager import update_global, get_global
 
 LOGGER = get_logger()
+
+
+def get_global_apid() -> int:
+    return get_global(CoreGlobalIds.APID)
 
 
 def check_and_set_core_mode_arg(

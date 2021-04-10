@@ -1,7 +1,7 @@
 import enum
 import struct
 
-from tmtccmd.pus_tc.base import PusTelecommand
+from tmtccmd.ecss.tc import PusTelecommand
 
 
 class Srv3Subservice(enum.IntEnum):

@@ -12,8 +12,8 @@ from typing import Tuple, Union
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
-from tmtccmd.pus_tc.base import PusTcInfoT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.core.definitions import ethernet_address_t
 
 LOGGER = get_logger()
@@ -77,7 +77,7 @@ class TcpIpUdpComIF(CommunicationInterface):
     def send_data(self, data: bytearray):
         self.udp_socket.sendto(data, self.send_address)
 
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
+    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
         if self.udp_socket is None:
             return
         bytes_sent = self.udp_socket.sendto(tc_packet, self.send_address)

@@ -12,6 +12,7 @@ from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeL
 from tmtccmd.defaults.com_setup import default_serial_cfg_setup, default_tcpip_udp_cfg_setup
 from tmtccmd.core.globals_manager import update_global
 from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.ecss.tc import insert_default_apid
 
 LOGGER = get_logger()
 
@@ -21,6 +22,7 @@ def set_default_globals_pre_args_parsing(
         tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
 ):
     update_global(CoreGlobalIds.APID, apid)
+    insert_default_apid(default_apid=apid)
     update_global(CoreGlobalIds.COM_IF, com_if_id)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, tc_send_timeout_factor)
     update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)
