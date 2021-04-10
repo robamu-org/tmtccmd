@@ -107,9 +107,12 @@ def check_and_set_core_service_arg(
 
     service_arg_invalid = False
     if custom_service_list is not None:
-        in_enum, service_value = check_args_in_enum(
-            param=service_arg, iterable=custom_service_list, warning_hint="custom mode"
-        )
+        for custom_services_entry in custom_service_list:
+            in_enum, service_value = check_args_in_enum(
+                param=service_arg, iterable=custom_services_entry, warning_hint="custom mode"
+            )
+            if in_enum:
+                break
         if not in_enum:
             service_arg_invalid = True
     else:
