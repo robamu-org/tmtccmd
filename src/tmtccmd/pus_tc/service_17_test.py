@@ -1,7 +1,7 @@
 import enum
 
 from tmtccmd.core.definitions import QueueCommands
-from tmtccmd.pus_tc.base import PusTelecommand, TcQueueT
+from tmtccmd.pus_tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.config.globals import get_global_apid
 
 

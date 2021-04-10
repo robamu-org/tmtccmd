@@ -1,7 +1,7 @@
 """
 @brief  Base class for implementation of PUS Service 2 handling.
 """
-from tmtccmd.pus_tm.base import PusTelemetry
+from tmtccmd.ecss.tm import PusTelemetry
 
 
 class Service2TM(PusTelemetry):

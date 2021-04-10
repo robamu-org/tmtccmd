@@ -1,13 +1,6 @@
-"""
-This module creates the class required to generate PUS telemetry packets.
-"""
-import crcmod
+from crcmod import crcmod
 
-from tmtccmd.pus_tm.base import PusTelemetry, PusTelemetryTimestamp
-from tmtccmd.utility.tmtcc_logger import get_logger
-
-
-LOGGER = get_logger()
+from tmtccmd.ecss.tm import PusTelemetryTimestamp, PusTelemetry
 
 
 # pylint: disable=too-many-instance-attributes
@@ -59,7 +52,7 @@ class PusTelemetryCreator:
             else:
                 print_out += str(hex(packet[counter])) + ", "
         print_out += "]"
-        LOGGER.info(print_out)
+        print(print_out)
 
     def pack(self) -> bytearray:
         """
@@ -100,5 +93,5 @@ class PusTelemetryCreator:
             data_length = 4 + PusTelemetry.PUS_TIMESTAMP_SIZE + len(self.source_data) + 1
             return data_length
         except TypeError:
-            LOGGER.error("PusTelecommand: Invalid type of application data!")
+            print("PusTelecommand: Invalid type of application data!")
             return 0

@@ -11,9 +11,9 @@ LOGGER = get_logger()
 class TmTcHookBase:
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
-    from tmtccmd.pus_tm.base import PusTelemetry
-    from tmtccmd.pus_tc.base import PusTelecommand
-    from tmtccmd.pus_tc.base import TcQueueT
+    from tmtccmd.ecss.tm import PusTelemetry
+    from tmtccmd.pus_tc.definitions import PusTelecommand
+    from tmtccmd.pus_tc.definitions import TcQueueT
     from tmtccmd.com_if.com_interface_base import CommunicationInterface
     from tmtccmd.pus_tm.service_3_base import Service3Base
 

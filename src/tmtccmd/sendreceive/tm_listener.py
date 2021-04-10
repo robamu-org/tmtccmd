@@ -12,7 +12,7 @@ from enum import Enum
 
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tm.factory import PusTmQueueT, PusTmInfoQueueT
+from tmtccmd.pus_tm.factory import PusTmQueueT
 
 LOGGER = get_logger()
 
@@ -233,13 +233,15 @@ class TmListener:
         return True
 
     @staticmethod
-    def retrieve_info_queue_from_packet_queue(
-            tm_queue: PusTmQueueT, pus_info_queue_to_fill: PusTmInfoQueueT):
+    def retrieve_info_queue_from_packet_queue(tm_queue: PusTmQueueT):
         tm_queue_copy = tm_queue.copy()
+        """
         while tm_queue_copy.__len__() != 0:
             pus_packet_list = tm_queue_copy.pop()
             for pus_packet in pus_packet_list:
                 pus_info_queue_to_fill.appendleft(pus_packet.pack_tm_information())
+        """
+
 
 
 

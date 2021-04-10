@@ -1,8 +1,9 @@
 import enum
 import struct
 
-from tmtccmd.pus_tc.base import PusTelecommand
+from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.config.globals import get_global_apid
+
 
 class Srv8Subservices(enum.IntEnum):
     FUNC_CMD = 128,

@@ -12,8 +12,8 @@ import os
 import enum
 
 from tmtccmd.ecss.tc import PusTelecommand
+from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
-from tmtccmd.pus_tm.base import PusTelemetry
 from tmtccmd.pus_tm.factory import PusTmQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -371,7 +371,7 @@ class TmTcPrinter:
     def __handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Brief TC print
-        :param tc_packet_info:
+        :param tc_packet_obj:
         :return:
         """
         self.__print_buffer = \
@@ -383,7 +383,7 @@ class TmTcPrinter:
     def __handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Long TC print
-        :param tc_packet_info:
+        :param tc_packet_obj:
         :return:
         """
         try:

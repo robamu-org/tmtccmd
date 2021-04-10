@@ -53,7 +53,7 @@ def determine_com_if(integer_to_string_dict: dict) -> int:
 
 
 def convert_com_if_string_to_integer(com_if_string: str) -> int:
-    from tmtccmd.core.definitions import CoreComInterfacesString, CoreComInterfaces
+    from tmtccmd.core.definitions import CoreComInterfacesString
     for com_if_int, com_if_string_in_dict in CoreComInterfacesString.items():
         if com_if_string == com_if_string_in_dict:
             return com_if_int

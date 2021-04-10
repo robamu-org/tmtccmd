@@ -13,11 +13,12 @@ def pack_boolean_parameter_command(
 ) -> Union[PusTelecommand, None]:
     """
     Generic function to pack a telecommand to tweak a boolean parameter
-    @param object_id:
-    @param domain_id:
-    @param unique_id:
-    @param parameter:
-    @param ssc:
+    :param object_id:
+    :param domain_id:
+    :param unique_id:
+    :param parameter:
+    :param ssc:
+    :param apid:
     @return:
     """
     if apid == -1:

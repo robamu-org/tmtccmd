@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 from typing import Deque, List, Tuple, Union
-from tmtccmd.pus_tm.base import PusTelemetry, PusTmInfoT
+from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
 PusRawTmList = List[bytearray]
 PusRawTmQueue = Deque[bytearray]
-PusTmTupleT = Tuple[PusTmInfoT, PusTelemetry]
+PusTmTupleT = Tuple[bytearray, PusTelemetry]
 
 PusTmListT = List[PusTelemetry]
 PusTmQueueT = Deque[PusTmListT]
 
-PusTmInfoQueueT = Deque[PusTmInfoT]
+PusTmObjQeue = Deque[PusTelemetry]
 PusTmTupleQueueT = Deque[PusTmTupleT]
 
 

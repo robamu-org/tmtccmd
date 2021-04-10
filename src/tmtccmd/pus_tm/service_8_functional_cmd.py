@@ -3,7 +3,7 @@
 """
 import struct
 
-from tmtccmd.pus_tm.base import PusTelemetry
+from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.definitions import CoreObjectIds

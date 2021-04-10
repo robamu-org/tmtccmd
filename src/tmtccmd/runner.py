@@ -41,7 +41,7 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
     __assign_tmtc_commander_hooks(hook_object=hook_object)
 
 
-def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False, ansi_colors = True):
+def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
     start the TMTC commander. Please note that assign_tmtc_commander_hooks needs to be called
@@ -55,6 +55,7 @@ def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False, ansi_color
 
     :param use_gui:             Specify whether the GUI is used or not
     :param reduced_printout:    It is possible to reduce the initial printout with this flag
+    :param ansi_colors:         Enable ANSI color output for terminal
     :return:
     """
     __set_up_tmtc_commander(

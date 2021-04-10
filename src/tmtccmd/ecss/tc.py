@@ -20,19 +20,6 @@ except ImportError:
     sys.exit(1)
 
 
-"""
-class TcDictionaryKeys(Enum):
-    #Keys for telecommand dictionary 
-    SERVICE = 1
-    SUBSERVICE = 2
-    SSC = 3
-    PACKET_ID = 4
-    DATA = 5
-"""
-
-# PusTcInfo = Dict[TcDictionaryKeys, any]
-# PusTcInfoT = Union[PusTcInfo, None]
-# PusTcInfoQueueT = Deque[PusTcInfoT]
 ECSS_TC_DICT = {
     "apid": 0xef
 }
@@ -203,19 +190,6 @@ class PusTelecommand:
                 print(str(hex(packet[counter])) + ", ", end="")
         print("]")
 
-    """
-
-    def pack_information(self) -> PusTcInfoT:
-        #Packs TM information into a dictionary.
-        tc_information = {
-            TcDictionaryKeys.SERVICE: self._data_field_header.service_type,
-            TcDictionaryKeys.SUBSERVICE: self._data_field_header.service_subtype,
-            TcDictionaryKeys.SSC: self._space_packet_header.ssc,
-            TcDictionaryKeys.PACKET_ID: self._space_packet_header.packet_id,
-            TcDictionaryKeys.DATA: self.app_data
-        }
-        return tc_information
-    """
 
 def generate_packet_crc(tc_packet: bytearray) -> bytearray:
     """
