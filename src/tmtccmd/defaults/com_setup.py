@@ -93,7 +93,7 @@ def default_tcpip_udp_cfg_setup():
 
 def default_serial_cfg_setup(com_if: int):
     baud_rate = determine_baud_rate()
-    if com_if == CoreComInterfaces.SERIAL:
+    if com_if == CoreComInterfaces.SERIAL_DLE:
         serial_port = determine_com_port()
     else:
         serial_port = ""
@@ -119,7 +119,7 @@ def set_up_serial_cfg(
     :return:
     """
     update_global(CoreGlobalIds.USE_SERIAL, True)
-    if com_if == CoreComInterfaces.SERIAL and com_port == "":
+    if com_if == CoreComInterfaces.SERIAL_DLE and com_port == "":
         LOGGER.warning("Invalid com port specified!")
         com_port = determine_com_port()
     serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)
