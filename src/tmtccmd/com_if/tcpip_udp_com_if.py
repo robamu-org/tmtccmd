@@ -112,6 +112,6 @@ class TcpIpUdpComIF(CommunicationInterface):
         try:
             (packet_received, packet_list) = self.poll_interface()
         except ConnectionResetError:
-            LOGGER.warning("Connection reset exception occured!")
+            LOGGER.exception("Connection reset exception occured!")
         return packet_list
 
