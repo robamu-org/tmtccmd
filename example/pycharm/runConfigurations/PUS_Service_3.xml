@@ -1,19 +1,19 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="tmtcc Service 8 UDP" type="PythonConfigurationType" factoryName="Python" folderName="UDP">
-    <module name="tmtc" />
+  <configuration default="false" name="PUS Service 3" type="PythonConfigurationType" factoryName="Python" folderName="Example">
+    <module name="example" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
-    <option name="SDK_HOME" value="" />
+    <option name="SDK_HOME" value="/usr/bin/python3.8" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="IS_MODULE_SDK" value="true" />
+    <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tmtc_client_cli.py" />
-    <option name="PARAMETERS" value="-m 3 -c 2 -s 8 -t 8" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tmtc_cli.py" />
+    <option name="PARAMETERS" value="-m seqcmd -s 3 -p --hk" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="true" />
     <option name="MODULE_MODE" value="false" />
