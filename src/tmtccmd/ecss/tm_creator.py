@@ -1,6 +1,20 @@
 from crcmod import crcmod
 
-from tmtccmd.ecss.tm import PusTelemetryTimestamp, PusTelemetry
+from tmtccmd.ecss.tm import PusCdsShortTimestamp, PusTelemetry
+from tmtccmd.ccsds.spacepacket import PacketTypes, SpacePacketHeaderSerializer, \
+    SPACE_PACKET_HEADER_SIZE
+
+ECSS_TM_DICT = {
+    "apid": 0xef
+}
+
+
+def insert_default_tm_apid(default_apid: int):
+    ECSS_TM_DICT["apid"] = default_apid
+
+
+def get_default_tm_apid() -> int:
+    return ECSS_TM_DICT["apid"]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -13,24 +27,23 @@ class PusTelemetryCreator:
     the ESA PUS standard in the PusTelemetry documentation.
     """
     def __init__(self, service: int, subservice: int, ssc: int = 0,
-                 source_data: bytearray = bytearray([]), apid: int = 0x73, version: int = 0):
+                 source_data: bytearray = bytearray([]), apid: int = -1, version: int = 0b000,
+                 pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: int = -1):
         """
         Initiates the unserialized data fields for the PUS telemetry packet.
         """
+        if apid == -1:
+            apid = get_default_tm_apid()
         # packet type for telemetry is 0 as specified in standard
-        packet_type = 0
         # specified in standard
         data_field_header_flag = 1
-        self.packet_id_bytes = [0x0, 0x0]
-        self.packet_id_bytes[0] = \
-            ((version << 5) & 0xE0) | ((packet_type & 0x01) << 4) | \
-            ((data_field_header_flag & 0x01) << 3) | ((apid & 0x700) >> 8)
-        self.packet_id_bytes[1] = apid & 0xFF
-        self.packet_id = (self.packet_id_bytes[0] << 8) | self.packet_id_bytes[1]
-        self.ssc = ssc
-        self.psc = (ssc & 0x3FFF) | (0xC0 << 8)
-        self.pus_version_and_ack_byte = 0b00011111
-
+        packet_type = PacketTypes.PACKET_TYPE_TM
+        data_length = self.get_source_data_length(timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE)
+        self._space_packet_header = SpacePacketHeaderSerializer(
+            apid=apid, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
+            version=version, data_length=data_length, source_sequence_count=ssc
+        )
+        self.pus_version_and_ack_byte = pus_tm_version | ack
         # NOTE: In PUS-C, the PUS Version is 2 and specified for the first 4 bits.
         # The other 4 bits of the first byte are the spacecraft time reference status
         # To change to PUS-C, set 0b00100000
@@ -60,18 +73,13 @@ class PusTelemetryCreator:
         """
         tm_packet_raw = bytearray()
         # PUS Header
-        tm_packet_raw.extend(self.packet_id_bytes)
-        tm_packet_raw.append((self.psc & 0xFF00) >> 8)
-        tm_packet_raw.append(self.psc & 0xFF)
-        source_length = self.get_source_data_length()
-        tm_packet_raw.append((source_length & 0xFF00) >> 8)
-        tm_packet_raw.append(source_length & 0xFF)
+        tm_packet_raw.extend(self._space_packet_header.pack())
         # PUS Source Data Field
         tm_packet_raw.append(self.data_field_version)
         tm_packet_raw.append(self.service)
         tm_packet_raw.append(self.subservice)
         tm_packet_raw.append(self.pack_subcounter)
-        tm_packet_raw.extend(PusTelemetryTimestamp.pack_current_time())
+        tm_packet_raw.extend(PusCdsShortTimestamp.pack_current_time())
         # Source Data
         tm_packet_raw.extend(self.source_data)
         # CRC16 checksum
@@ -81,7 +89,7 @@ class PusTelemetryCreator:
         tm_packet_raw.append(crc16 & 0xFF)
         return tm_packet_raw
 
-    def get_source_data_length(self) -> int:
+    def get_source_data_length(self, timestamp_len: int) -> int:
         """
         Retrieve size of TM packet data header in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet source data field) - 1.
@@ -90,7 +98,7 @@ class PusTelemetryCreator:
         length of the CRC16 checksum - 1
         """
         try:
-            data_length = 4 + PusTelemetry.PUS_TIMESTAMP_SIZE + len(self.source_data) + 1
+            data_length = 4 + timestamp_len + len(self.source_data) + 1
             return data_length
         except TypeError:
             print("PusTelecommand: Invalid type of application data!")

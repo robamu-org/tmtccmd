@@ -1,4 +1,8 @@
-from tmtccmd.core.hook_base import TmTcHookBase
+import argparse
+from typing import Union, Dict, Tuple
+from tmtccmd.core.hook_base import \
+    TmTcHookBase, TmTcPrinter, CommunicationInterface, TmTcHandler, PusTelemetry, TcQueueT, \
+    PusTelecommand, Service3Base
 
 
 class ExampleHookClass(TmTcHookBase):

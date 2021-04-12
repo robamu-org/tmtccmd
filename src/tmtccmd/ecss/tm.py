@@ -76,21 +76,6 @@ class PusTelemetry:
     def get_tc_packet_id(self):
         return self._space_packet_header.packet_id
 
-    """
-        def pack_tm_information(self) -> PusTmInfoT:
-        Packs important TM information needed for tests in a convenient dictionary
-        :return: TM dictionary
-        tm_information = {
-            TmDictionaryKeys.SERVICE: self.get_service(),
-            TmDictionaryKeys.SUBSERVICE: self.get_subservice(),
-            TmDictionaryKeys.SSC: self.get_ssc(),
-            TmDictionaryKeys.DATA: self._tm_data,
-            TmDictionaryKeys.CRC: self._crc,
-            TmDictionaryKeys.VALID: self._valid
-        }
-        return tm_information
-    """
-
     def __perform_crc_check(self, raw_telemetry: bytearray):
         crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
         if len(raw_telemetry) < self.get_packet_size():
@@ -156,14 +141,14 @@ class PusTelemetry:
 
     def get_raw_packet(self) -> bytes:
         """
-        Get the whole TM wiretapping_packet as a bytearray (raw)
+        Get the whole TM packet as a bytearray (raw)
         :return: TM wiretapping_packet
         """
         return self._packet_raw
 
     def get_packet_size(self) -> int:
         """
-        :return: Size of the TM wiretapping_packet
+        :return: Size of the TM packet
         """
         # PusHeader Size + _tm_data size
         size = SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
@@ -227,7 +212,7 @@ class PusPacketDataFieldHeader:
         self.service_type = bytes_array[1]
         self.service_subtype = bytes_array[2]
         self.subcounter = bytes_array[3]
-        self.time = PusTelemetryTimestamp(bytes_array[4:13])
+        self.time = PusCdsShortTimestamp(bytes_array[4:13])
 
     def append_data_field_header(self, content_list: list):
         """
@@ -252,7 +237,7 @@ class PusPacketDataFieldHeader:
         self.time.print_time_headers(header_list)
 
 
-class PusTelemetryTimestamp:
+class PusCdsShortTimestamp:
     """
     Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,
     and the size of the time stamp is expected to be seven bytes.
@@ -268,7 +253,7 @@ class PusTelemetryTimestamp:
         if len(byte_array) > 0:
             # pField = byte_array[0]
             self.days = ((byte_array[1] << 8) | (byte_array[2])) - \
-                        PusTelemetryTimestamp.DAYS_CCSDS_TO_UNIX
+                        PusCdsShortTimestamp.DAYS_CCSDS_TO_UNIX
             self.seconds = self.days * (24 * 60 * 60)
             s_day = ((byte_array[3] << 24) | (byte_array[4] << 16) |
                      (byte_array[5]) << 8 | byte_array[6]) / 1000
@@ -283,15 +268,15 @@ class PusTelemetryTimestamp:
         Returns a seven byte CDS short timestamp
         """
         timestamp = bytearray()
-        p_field = (PusTelemetryTimestamp.CDS_ID << 4) + 0
+        p_field = (PusCdsShortTimestamp.CDS_ID << 4) + 0
         days = \
-            (datetime.datetime.utcnow() - PusTelemetryTimestamp.EPOCH).days + \
-            PusTelemetryTimestamp.DAYS_CCSDS_TO_UNIX
+            (datetime.datetime.utcnow() - PusCdsShortTimestamp.EPOCH).days + \
+            PusCdsShortTimestamp.DAYS_CCSDS_TO_UNIX
         days_h = (days & 0xFF00) >> 8
         days_l = days & 0xFF
         seconds = time.time()
         fraction_ms = seconds - math.floor(seconds)
-        days_ms = int((seconds % PusTelemetryTimestamp.SECONDS_PER_DAY) * 1000 + fraction_ms)
+        days_ms = int((seconds % PusCdsShortTimestamp.SECONDS_PER_DAY) * 1000 + fraction_ms)
         days_ms_hh = (days_ms & 0xFF000000) >> 24
         days_ms_h = (days_ms & 0xFF0000) >> 16
         days_ms_l = (days_ms & 0xFF00) >> 8
