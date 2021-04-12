@@ -32,7 +32,7 @@ of the TMTC commander components.
 
 An example which does not require additional software or hardware is still work-in-progress.
 Until then, the [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation provides
-a good starting point to get started.
+a good starting point on how to implement a TMTC commander.
 
 ## Tests
 
