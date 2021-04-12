@@ -24,6 +24,10 @@ This client currently supports the following communication interfaces:
 
 A TCP implementation is planned.
 
+The TMTC commander also includes a Space Packet and a ECSS pus packet stack. Some of these
+components might be moved to an own library soon, so they were decoupled from the rest 
+of the TMTC commander components.
+
 ## Examples 
 
 An example which does not require additional software or hardware is still work-in-progress.
