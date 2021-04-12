@@ -1,7 +1,7 @@
 import os
 import struct
 
-from tmtccmd.pus_tm.base import PusTelemetry, TmDictionaryKeys, PusTmInfoT
+from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 logger = get_logger()
@@ -90,13 +90,3 @@ class Service20TM(PusTelemetry):
             custom_printout += f"{header_list}{os.linesep}"
             custom_printout += f"{content_list}"
         return custom_printout
-
-    def pack_tm_information(self) -> PusTmInfoT:
-        tm_information = super().pack_tm_information()
-        add_information = {
-            TmDictionaryKeys.REPORTER_ID: self.objectId,
-            TmDictionaryKeys.EVENT_ID: self.parameter_id,
-            TmDictionaryKeys.EVENT_PARAM_1: self.param
-        }
-        tm_information.update(add_information)
-        return tm_information

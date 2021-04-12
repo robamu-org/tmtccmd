@@ -26,7 +26,9 @@ import sys
 import time
 from collections import deque
 from threading import Thread
-from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTcInfoT, PusTmListT
+
+from tmtccmd.ecss.tc import PusTelecommand
+from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
@@ -138,7 +140,7 @@ class QEMUComIF(CommunicationInterface):
         asyncio.run_coroutine_threadsafe(
             self.send_data_async(data), self.loop).result()
 
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_info: PusTcInfoT = None) -> None:
+    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand = None):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             data = tc_packet
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:

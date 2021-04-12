@@ -19,7 +19,7 @@ from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.pus_tc.base import TcQueueEntryT
+from tmtccmd.pus_tc.definitions import TcQueueEntryT
 from tmtccmd.pus_tm.factory import PusTmQueueT
 from tmtccmd.core.globals_manager import get_global
 
@@ -67,7 +67,7 @@ class CommandSenderReceiver:
 
         # needed to store last actual TC packet from queue
         self._last_tc = bytearray()
-        self._last_tc_info = dict()
+        self._last_tc_info = None
 
         # this flag can be used to notify when the operation is finished
         self._operation_pending = False

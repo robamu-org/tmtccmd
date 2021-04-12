@@ -11,12 +11,11 @@
 import os
 import enum
 
-
+from tmtccmd.ecss.tc import PusTelecommand
+from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
-from tmtccmd.pus_tm.base import PusTelemetry
 from tmtccmd.pus_tm.factory import PusTmQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
-from tmtccmd.pus_tc.base import PusTcInfoT, TcDictionaryKeys
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
@@ -351,49 +350,47 @@ class TmTcPrinter:
         shift_number = position + (6 - 2 * (position - 1))
         return (byte >> shift_number) & 1
 
-    def print_telecommand(self, tc_packet: bytes, tc_packet_info: PusTcInfoT = None):
+    def print_telecommand(self, tc_packet: bytes, tc_packet_obj: PusTelecommand = None):
         """
         This function handles the printing of Telecommands
         :param tc_packet:
-        :param tc_packet_info:
+        :param tc_packet_obj:
         :return:
         """
         if self.print_tc:
             if len(tc_packet) == 0:
                 LOGGER.error("TMTC Printer: Empty packet was sent, configuration error")
                 return
-            if tc_packet_info is None:
+            if tc_packet_obj is None:
                 return
             if self.display_mode == DisplayMode.SHORT:
-                self.__handle_short_tc_print(tc_packet_info)
+                self.__handle_short_tc_print(tc_packet_obj=tc_packet_obj)
             else:
-                self.__handle_long_tc_print(tc_packet_info)
+                self.__handle_long_tc_print(tc_packet_obj=tc_packet_obj)
 
-    def __handle_short_tc_print(self, tc_packet_info: PusTcInfoT):
+    def __handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Brief TC print
-        :param tc_packet_info:
+        :param tc_packet_obj:
         :return:
         """
         self.__print_buffer = \
-            "Sent TC[" + str(tc_packet_info[TcDictionaryKeys.SERVICE]) + "," + \
-            str(tc_packet_info[TcDictionaryKeys.SUBSERVICE]) + "] " + "with SSC " + \
-            str(tc_packet_info[TcDictionaryKeys.SSC])
+            f"Sent TC[{tc_packet_obj.get_service()}, {tc_packet_obj.get_subservice()}] with SSC " \
+            f"{tc_packet_obj.get_ssc()}"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
-    def __handle_long_tc_print(self, tc_packet_info: PusTcInfoT):
+    def __handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Long TC print
-        :param tc_packet_info:
+        :param tc_packet_obj:
         :return:
         """
         try:
             self.__print_buffer = \
-                "Telecommand TC[" + str(tc_packet_info[TcDictionaryKeys.SERVICE]) + "," + \
-                str(tc_packet_info[TcDictionaryKeys.SUBSERVICE]) + "] with SSC " + \
-                str(tc_packet_info[TcDictionaryKeys.SSC]) + " sent with data " + \
-                self.return_data_string(tc_packet_info[TcDictionaryKeys.DATA])
+                f"Telecommand TC[{tc_packet_obj.get_service()}, {tc_packet_obj.get_subservice()}] " \
+                f"with SSC {tc_packet_obj.get_ssc()} sent with data " \
+                f"{self.return_data_string(tc_packet_obj.get_app_data())}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
         except TypeError as error:

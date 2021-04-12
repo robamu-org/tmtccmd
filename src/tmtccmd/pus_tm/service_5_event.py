@@ -6,8 +6,7 @@ Description: Deserialize PUS Event Report
 Author: R. Mueller
 """
 
-from tmtccmd.pus_tm.base import PusTelemetry, TmDictionaryKeys
-from tmtccmd.pus_tm.factory import PusTmInfoT
+from tmtccmd.ecss.tm import PusTelemetry
 import struct
 
 
@@ -23,17 +22,17 @@ class Service5TM(PusTelemetry):
             self.append_packet_info(" Error Med Severity")
         elif self.get_subservice() == 4:
             self.append_packet_info(" Error High Severity")
-        self.eventId = struct.unpack('>H', self._tm_data[0:2])[0]
-        self.objectId = struct.unpack('>I', self._tm_data[2:6])[0]
-        self.param1 = struct.unpack('>I', self._tm_data[6:10])[0]
-        self.param2 = struct.unpack('>I', self._tm_data[10:14])[0]
+        self.event_id = struct.unpack('>H', self._tm_data[0:2])[0]
+        self.object_id = struct.unpack('>I', self._tm_data[2:6])[0]
+        self.param_1 = struct.unpack('>I', self._tm_data[6:10])[0]
+        self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(str(self.eventId))
-        content_list.append(hex(self.objectId))
-        content_list.append(str(hex(self.param1)) + ", " + str(self.param1))
-        content_list.append(str(hex(self.param2)) + ", " + str(self.param2))
+        content_list.append(str(self.event_id))
+        content_list.append(hex(self.object_id))
+        content_list.append(str(hex(self.param_1)) + ", " + str(self.param_1))
+        content_list.append(str(hex(self.param_2)) + ", " + str(self.param_2))
 
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)
@@ -42,13 +41,14 @@ class Service5TM(PusTelemetry):
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
 
-    def pack_tm_information(self) -> PusTmInfoT:
-        tm_information = super().pack_tm_information()
-        add_information = {
-            TmDictionaryKeys.REPORTER_ID: self.objectId,
-            TmDictionaryKeys.EVENT_ID: self.eventId,
-            TmDictionaryKeys.EVENT_PARAM_1: self.param1,
-            TmDictionaryKeys.EVENT_PARAM_2: self.param2
-        }
-        tm_information.update(add_information)
-        return tm_information
+    def get_reporter_id(self):
+        return self.object_id
+
+    def get_event_id(self):
+        return self.event_id
+
+    def get_param_1(self):
+        return self.param_1
+
+    def get_param_2(self):
+        return self.param_2

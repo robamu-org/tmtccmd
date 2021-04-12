@@ -1,25 +1,34 @@
-from tmtccmd.pus_tc.base import PusTelecommand
+from typing import Union
+
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.config.globals import get_global_apid
 
 logger = get_logger()
 
 
-def pack_boolean_parameter_setting(object_id: bytearray, domain_id: int,
-                                   unique_id: int, parameter: bool, ssc: int):
+def pack_boolean_parameter_command(
+        object_id: bytearray, domain_id: int, unique_id: int, parameter: bool, ssc: int,
+        apid: int = -1
+) -> Union[PusTelecommand, None]:
     """
     Generic function to pack a telecommand to tweak a boolean parameter
-    @param object_id:
-    @param domain_id:
-    @param unique_id:
-    @param parameter:
-    @param ssc:
+    :param object_id:
+    :param domain_id:
+    :param unique_id:
+    :param parameter:
+    :param ssc:
+    :param apid:
     @return:
     """
+    if apid == -1:
+        apid = get_global_apid()
+
     parameter_id = bytearray(4)
     parameter_id[0] = domain_id
     if unique_id > 255:
         logger.warning("Invalid unique ID, should be smaller than 255!")
-        return
+        return None
     parameter_id[1] = unique_id
     parameter_id[2] = 0
     parameter_id[3] = 0
@@ -35,7 +44,7 @@ def pack_boolean_parameter_setting(object_id: bytearray, domain_id: int,
     data_to_pack.append(rows)
     data_to_pack.append(columns)
     data_to_pack.append(parameter)
-    return PusTelecommand(service=20, subservice=128, ssc=ssc, app_data=data_to_pack)
+    return PusTelecommand(service=20, subservice=128, ssc=ssc, app_data=data_to_pack, apid=apid)
 
 
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:

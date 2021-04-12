@@ -85,9 +85,9 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
     def __send_and_print_tc(self):
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
-            pus_packet, pus_packet_info = tc_queue_tuple
-            self.tc_info_queue.append(pus_packet_info)
-            self._com_interface.send_telecommand(pus_packet, pus_packet_info)
+            pus_packet, pus_packet_obj = tc_queue_tuple
+            self.tc_info_queue.append(pus_packet_obj)
+            self._com_interface.send_telecommand(pus_packet, pus_packet_obj)
             self.__handle_waiting()
 
     def __handle_waiting(self):
