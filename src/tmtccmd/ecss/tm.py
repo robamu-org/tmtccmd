@@ -41,6 +41,7 @@ class PusTelemetry:
         if self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE > \
                 len(raw_telemetry) - 2:
             print("PusTelemetry: Passed packet too short!")
+            raise ValueError
         self._tm_data = raw_telemetry[
             self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
         ]
