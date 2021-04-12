@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Example application for the TMTC Commander
 """
