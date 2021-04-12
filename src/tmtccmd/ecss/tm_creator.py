@@ -1,20 +1,8 @@
 from crcmod import crcmod
 
 from tmtccmd.ecss.tm import PusCdsShortTimestamp, PusTelemetry
-from tmtccmd.ccsds.spacepacket import PacketTypes, SpacePacketHeaderSerializer, \
-    SPACE_PACKET_HEADER_SIZE
-
-ECSS_TM_DICT = {
-    "apid": 0xef
-}
-
-
-def insert_default_tm_apid(default_apid: int):
-    ECSS_TM_DICT["apid"] = default_apid
-
-
-def get_default_tm_apid() -> int:
-    return ECSS_TM_DICT["apid"]
+from tmtccmd.ccsds.spacepacket import PacketTypes, SpacePacketHeaderSerializer
+from tmtccmd.ecss.conf import get_tm_apid, PusVersion, get_pus_tm_version
 
 
 # pylint: disable=too-many-instance-attributes
@@ -28,12 +16,16 @@ class PusTelemetryCreator:
     """
     def __init__(self, service: int, subservice: int, ssc: int = 0,
                  source_data: bytearray = bytearray([]), apid: int = -1, version: int = 0b000,
-                 pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: int = -1):
+                 pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
+                 ack: int = 0b1111, secondary_header_flag: int = -1):
         """
         Initiates the unserialized data fields for the PUS telemetry packet.
         """
         if apid == -1:
-            apid = get_default_tm_apid()
+            apid = get_tm_apid()
+        if pus_version == PusVersion.UNKNOWN:
+            pus_version = get_pus_tm_version()
+        self.pus_version = pus_version
         # packet type for telemetry is 0 as specified in standard
         # specified in standard
         data_field_header_flag = 1

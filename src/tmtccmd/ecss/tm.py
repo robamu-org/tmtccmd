@@ -5,6 +5,7 @@ import datetime
 from crcmod import crcmod
 
 from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
+from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
 class PusTelemetry:
@@ -26,6 +27,7 @@ class PusTelemetry:
         if raw_telemetry == bytearray():
             print("PusTelemetry: Given byte stream is empty!")
             raise ValueError
+        self.pus_version = get_pus_tm_version()
         self._packet_raw = raw_telemetry
         self._space_packet_header = SpacePacketHeaderDeserializer(pus_packet_raw=raw_telemetry)
         self._valid = False
@@ -33,11 +35,15 @@ class PusTelemetry:
                 len(raw_telemetry):
             print("PusTelemetry: Passed packet shorter than specified packet length in PUS header")
             raise ValueError
-        self._data_field_header = PusPacketDataFieldHeader(raw_telemetry[6:])
+        self._data_field_header = PusPacketDataFieldHeader(
+            raw_telemetry[SPACE_PACKET_HEADER_SIZE:], pus_version=self.pus_version
+        )
+        if self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE > \
+                len(raw_telemetry) - 2:
+            print("PusTelemetry: Passed packet too short!")
         self._tm_data = raw_telemetry[
-                        PusPacketDataFieldHeader.DATA_HEADER_SIZE + SPACE_PACKET_HEADER_SIZE + 1:
-                        len(raw_telemetry) - 2
-                        ]
+            self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
+        ]
         self._crc = \
             raw_telemetry[len(raw_telemetry) - 2] << 8 | raw_telemetry[len(raw_telemetry) - 1]
         self.print_info = ""
@@ -203,16 +209,27 @@ class PusTelemetry:
 
 class PusPacketDataFieldHeader:
     """
-    Unpacks the PUS packet data field header.
+    Unpacks the PUS packet data field header. Currently only supports CDS short timestamps
     """
-    DATA_HEADER_SIZE = PusTelemetry.PUS_TIMESTAMP_SIZE + 4
 
-    def __init__(self, bytes_array: bytearray):
-        self.pus_version_and_ack_byte = (bytes_array[0] & 0x70) >> 4
+    def __init__(self, bytes_array: bytearray, pus_version: PusVersion):
+        self.pus_version = pus_version
+        if pus_version == PusVersion.PUS_A:
+            self.pus_version_number = (bytes_array[0] & 0x70) >> 4
+        else:
+            self.pus_version_number = (bytes_array[0] & 0xF0) >> 4
+            self.spacecraft_time_ref = bytes_array[0] & 0x0F
         self.service_type = bytes_array[1]
         self.service_subtype = bytes_array[2]
-        self.subcounter = bytes_array[3]
-        self.time = PusCdsShortTimestamp(bytes_array[4:13])
+        if pus_version == PusVersion.PUS_A:
+            self.subcounter = bytes_array[3]
+        else:
+            self.subcounter = bytes_array[3] << 8 | bytes_array[4]
+            self.destination_id = bytes_array[5] << 8 | bytes_array[6]
+        if pus_version == PusVersion.PUS_A:
+            self.time = PusCdsShortTimestamp(bytes_array[4: 4 + PusTelemetry.PUS_TIMESTAMP_SIZE])
+        else:
+            self.time = PusCdsShortTimestamp(bytes_array[7: 7 + PusTelemetry.PUS_TIMESTAMP_SIZE])
 
     def append_data_field_header(self, content_list: list):
         """
@@ -235,6 +252,13 @@ class PusPacketDataFieldHeader:
         header_list.append("Subservice")
         header_list.append("Subcounter")
         self.time.print_time_headers(header_list)
+
+    def get_header_size(self):
+        if self.pus_version == PusVersion.PUS_A:
+            return PusTelemetry.PUS_TIMESTAMP_SIZE + 4
+        else:
+            return PusTelemetry.PUS_TIMESTAMP_SIZE + 7
+
 
 
 class PusCdsShortTimestamp:
@@ -259,8 +283,8 @@ class PusCdsShortTimestamp:
                      (byte_array[5]) << 8 | byte_array[6]) / 1000
             self.seconds += s_day
             self.time = self.seconds
-            self.datetime = str(datetime.datetime.
-                                utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S.%f"))
+            self.time_string = \
+                datetime.datetime.utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S.%f")
 
     @staticmethod
     def pack_current_time() -> bytearray:
@@ -292,7 +316,7 @@ class PusCdsShortTimestamp:
 
     def print_time(self, array):
         array.append(self.time)
-        array.append(self.datetime)
+        array.append(self.time_string)
 
     @staticmethod
     def print_time_headers(array):
