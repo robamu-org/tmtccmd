@@ -1,4 +1,4 @@
-name: pytest
+name: package
 
 on: [push]
 
