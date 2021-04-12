@@ -31,6 +31,8 @@ of the TMTC commander components.
 ## Examples 
 
 An example which does not require additional software or hardware is still work-in-progress.
+Until then, the [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation provides
+a good starting point to get started.
 
 ## Tests
 
