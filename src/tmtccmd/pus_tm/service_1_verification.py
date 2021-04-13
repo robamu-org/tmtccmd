@@ -28,6 +28,10 @@ class Service1TM(PusTelemetry):
         self.step_number = 0
         self.error_param1 = 0
         self.error_param2 = 0
+        self.tc_packet_id = 0
+        self.tc_ssc = 0
+        if len(self._tm_data) < 4:
+            LOGGER.warning("Service1TM: TM data less than 4 bytes!")
         self.tc_packet_id = self._tm_data[0] << 8 | self._tm_data[1]
         self.tc_ssc = ((self._tm_data[2] & 0x3F) << 8) | self._tm_data[3]
         if self.get_subservice() % 2 == 0:
