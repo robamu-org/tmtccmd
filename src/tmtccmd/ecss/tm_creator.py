@@ -17,7 +17,8 @@ class PusTelemetryCreator:
     def __init__(self, service: int, subservice: int, ssc: int = 0,
                  source_data: bytearray = bytearray([]), apid: int = -1, version: int = 0b000,
                  pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
-                 ack: int = 0b1111, secondary_header_flag: int = -1):
+                 ack: int = 0b1111, secondary_header_flag: int = -1, space_time_ref: int = 0b0000,
+                 destination_id: int = 0):
         """
         Initiates the unserialized data fields for the PUS telemetry packet.
         """
@@ -38,7 +39,6 @@ class PusTelemetryCreator:
         self.pus_version_and_ack_byte = pus_tm_version | ack
         # NOTE: In PUS-C, the PUS Version is 2 and specified for the first 4 bits.
         # The other 4 bits of the first byte are the spacecraft time reference status
-        # To change to PUS-C, set 0b00100000
         self.data_field_version = 0b00010000
         self.service = service
         self.subservice = subservice

@@ -74,15 +74,14 @@ class CommunicationInterface:
         packet_list = []
         return packet_list
 
-    @abstractmethod
-    def poll_interface(self, parameters: any = 0) -> Tuple[bool, PusTmListT]:
-        """
+    """
+        @abstractmethod
+    def poll_interface(self, parameters: any = 0) -> PusTmListT:
         Poll the interface and return a list of received packets
-        :param parameters:
-        :return: Tuple: boolean which specifies wheather a wiretapping_packet was received,
-        and the wiretapping_packet list containing
+        :param parameters:  Parameter, for example a timeout
+        :return: List of PUS telemetry objects. Will be empty if no reply was received.
         Tm packets
-        """
+    """
 
     @abstractmethod
     def data_available(self, parameters: any) -> int:

@@ -8,8 +8,7 @@ from tmtccmd.core.hook_base import \
 class ExampleHookClass(TmTcHookBase):
 
     def get_version(self) -> str:
-        from config.version import SW_NAME, VERSION_MAJOR, VERSION_MINOR, VERSION_SUBMINOR
-        return f"{SW_NAME} {VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_SUBMINOR}"
+        return "My Version String"
 
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.defaults.globals_setup import set_default_globals_pre_args_parsing

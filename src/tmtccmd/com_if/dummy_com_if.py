@@ -5,7 +5,7 @@
 
 @author R. Mueller
 """
-from typing import Tuple
+from typing import Tuple, cast
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.ecss.tc import PusTelecommand
@@ -19,6 +19,7 @@ LOGGER = get_logger()
 class DummyComIF(CommunicationInterface):
     def __init__(self, tmtc_printer):
         super().__init__(tmtc_printer)
+        self.dummy_handler = DummyHandler()
         self.service_sent = 0
         self.reply_pending = False
         self.ssc = 0
@@ -64,9 +65,22 @@ class DummyComIF(CommunicationInterface):
             self.ssc += 1
         return tm_list
 
-    def send_telecommand(self, tc_packet: PusTelecommand, tc_packet_obj: PusTelecommand = None):
+    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand = None):
         if tc_packet_obj is not None:
-            self.service_sent = tc_packet_obj.get_service()
-            self.tc_packet_id = tc_packet_obj.get_packet_id()
-            self.tc_ssc = tc_packet_obj.get_ssc()
-            self.reply_pending = True
+            self.dummy_handler.pass_telecommand(pus_tc=tc_packet_obj)
+
+
+class DummyHandler:
+    def __init__(self):
+        self.last_telecommand = None
+        self.next_telemetry_package = []
+
+    def pass_telecommand(self, pus_tc: PusTelecommand):
+        self.last_telecommand = pus_tc
+
+    def generate_reply_package(self):
+        telecommand = cast(PusTelecommand, self.last_telecommand)
+        if telecommand.get_service() == 17:
+            if telecommand.get_subservice() == 1:
+                pass
+
