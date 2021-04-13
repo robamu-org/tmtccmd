@@ -39,7 +39,12 @@ class SerialConfigIds(enum.Enum):
 
 
 class SerialCommunicationType(enum.Enum):
-    TIMEOUT_BASED = 0
+    """
+    Right now, two serial communication methods are supported. One uses frames with a fixed size
+    containing PUS packets and the other uses a simple ASCII based transport layer called DLE.
+    If DLE is used, it is expected that the sender side encoded the packets with the DLE
+    protocol. Any packets sent will also be encoded.
+    """
     FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2
 
