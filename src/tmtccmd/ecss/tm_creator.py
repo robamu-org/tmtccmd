@@ -29,7 +29,6 @@ class PusTelemetryCreator:
         self.pus_version = pus_version
         # packet type for telemetry is 0 as specified in standard
         # specified in standard
-        data_field_header_flag = 1
         packet_type = PacketTypes.PACKET_TYPE_TM
         self.source_data = source_data
         data_length = self.get_source_data_length(timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE)
