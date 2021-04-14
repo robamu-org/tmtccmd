@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Program: tmtcc_com_interface_base.py
-Date: 01.11.2019
-Description: Generic Communication Interface. Defines the syntax of the communication functions.
-             Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
+:file:      tmtcc_com_interface_base.py
+:data:      01.11.2019
+:details:
+Generic Communication Interface. Defines the syntax of the communication functions.
+Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 
-@author: R. Mueller
+:author:     R. Mueller
 """
 from abc import abstractmethod
 from typing import Tuple

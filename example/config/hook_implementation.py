@@ -3,6 +3,9 @@ from typing import Union, Dict, Tuple
 from tmtccmd.core.hook_base import \
     TmTcHookBase, TmTcPrinter, CommunicationInterface, TmTcHandler, PusTelemetry, TcQueueT, \
     PusTelecommand, Service3Base
+from tmtccmd.utility.tmtcc_logger import get_logger
+
+LOGGER = get_logger()
 
 
 class ExampleHookClass(TmTcHookBase):
@@ -21,19 +24,23 @@ class ExampleHookClass(TmTcHookBase):
     def assign_communication_interface(self, com_if: int, tmtc_printer: TmTcPrinter) -> \
             Union[CommunicationInterface, None]:
         from tmtccmd.defaults.com_setup import create_communication_interface_default
+        LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(com_if=com_if, tmtc_printer=tmtc_printer)
 
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
+        LOGGER.info("Mode operation hook was called")
         pass
 
     def pack_service_queue(self, service: int, op_code: str, service_queue: TcQueueT):
         from tmtccmd.defaults.tc_packing import default_service_queue_preparation
+        LOGGER.info("Service queue packer hook was called")
         default_service_queue_preparation(
             service=service, op_code=op_code, service_queue=service_queue
         )
 
     def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> PusTelemetry:
         from tmtccmd.defaults.tm_handling import default_factory_hook
+        LOGGER.info("TM user factory hook was called")
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
     def set_object_ids(self) -> Dict[int, bytearray]:
@@ -44,7 +51,9 @@ class ExampleHookClass(TmTcHookBase):
         return default_total_queue_preparation()
 
     def command_preparation_hook(self) -> Union[None, PusTelecommand]:
-        pass
+        LOGGER.info("Single command hook was called")
+        from tmtccmd.defaults.tc_packing import default_single_packet_preparation
+        return default_single_packet_preparation()
 
     @staticmethod
     def handle_service_8_telemetry(

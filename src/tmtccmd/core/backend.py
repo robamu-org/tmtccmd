@@ -162,6 +162,8 @@ class TmTcHandler:
                 LOGGER.info("Performing single command operation..")
                 sender_and_receiver.send_single_tc_and_receive_tm(pus_packet_tuple=pus_packet_tuple)
                 self.mode = CoreModeList.PROMPT_MODE
+            else:
+                LOGGER.warning("No valid packet for single command mode found or set..")
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
             from tmtccmd.core.globals_manager import get_global
             service_queue = deque()

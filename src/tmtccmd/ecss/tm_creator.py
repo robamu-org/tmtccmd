@@ -31,6 +31,7 @@ class PusTelemetryCreator:
         # specified in standard
         data_field_header_flag = 1
         packet_type = PacketTypes.PACKET_TYPE_TM
+        self.source_data = source_data
         data_length = self.get_source_data_length(timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE)
         self._space_packet_header = SpacePacketHeaderSerializer(
             apid=apid, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
@@ -44,8 +45,6 @@ class PusTelemetryCreator:
         self.subservice = subservice
         self.pack_subcounter = 0
         # it is assumed the time field consts of 8 bytes.
-
-        self.source_data = source_data
 
     def print(self):
         """ Print the raw command in a clean format. """
