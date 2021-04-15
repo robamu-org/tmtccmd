@@ -87,6 +87,8 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet)
                 self.current_ssc += 1
 
+                tm_packer = Service17TmPacked()
+
     def receive_reply_package(self) -> PusTmListT:
         if self.reply_pending:
             return_list = self.next_telemetry_package.copy()
