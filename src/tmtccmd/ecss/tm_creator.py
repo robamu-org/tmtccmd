@@ -36,13 +36,15 @@ class PusTelemetryCreator:
             apid=apid, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
             version=version, data_length=data_length, source_sequence_count=ssc
         )
-        self.pus_version_and_ack_byte = pus_tm_version | ack
+        self.pus_version_and_ack_byte = pus_tm_version | space_time_ref
         # NOTE: In PUS-C, the PUS Version is 2 and specified for the first 4 bits.
         # The other 4 bits of the first byte are the spacecraft time reference status
         self.data_field_version = 0b00010000
         self.service = service
         self.subservice = subservice
         self.pack_subcounter = 0
+        if pus_version == PusVersion.PUS_C:
+            self.destination_id = destination_id
         # it is assumed the time field consts of 8 bytes.
 
     def print(self):

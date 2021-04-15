@@ -223,6 +223,7 @@ class PusPacketDataFieldHeader:
         self.service_type = bytes_array[1]
         self.service_subtype = bytes_array[2]
         if pus_version == PusVersion.PUS_A:
+            # TODO: This can be optional too, so we should have that reconfigurability
             self.subcounter = bytes_array[3]
         else:
             self.subcounter = bytes_array[3] << 8 | bytes_array[4]
@@ -340,6 +341,8 @@ class PusCdsShortTimestamp:
 # 5. Binary Number
 # 6. Decimal Number
 #
+# Packet Structure for PUS A:
+#
 # -------------------------------------------Packet Header(48)------------------------------------------|   Packet   |
 #  ----------------Packet ID(16)----------------------|Packet Sequence Control (16)| Packet Length (16) | Data Field |
 # Version       | Type(1) |Data Field    |APID(11)    | SequenceFlags(2) |Sequence |                    | (Variable) |
@@ -353,12 +356,15 @@ class PusCdsShortTimestamp:
 # Packet Data Field Structure:
 #
 # ------------------------------------------------Packet Data Field------------------------------------------------- |
-# ---------------------------------Data Field Header ---------------------------|AppData|Spare|    PacketErrCtr      |
-# CCSDS(1)|TM PUS Ver.(3)|Ack(4)|SrvType (8)|SrvSubtype(8)|  Time (o)  |Spare(o)|  (var)|(var)|         (16)         |
-#        0x11 (0x1F)            |  0x11     |   0x01      |            |        |       |     | Calc.    |    Calc.  |
-#    0     001     1111         |00010001   | 00000001    |            |        |       |     |          |           |
-#    0      1       1111        |    17     |     2       |            |        |       |     |          |           |
+# ---------------------------------Data Field Header ------------------------------------|AppData|Spare|PacketErrCtr |
+# Spare(1)|TM PUS Ver.(3)|Spare(4)|SrvType (8)|SrvSubtype(8)|Subcounter(8)|Time(7)|Spare(o)|(var)  |(var)|  (16)       |
+#        0x11 (0x1F)              |  0x11     |   0x01      |             |       |        |       |     |     Calc.   |
+#    0     001     0000           |00010001   | 00000001    |             |       |        |       |     |             |
+#    0      1       0             |    17     |     2       |             |       |        |       |     |             |
 #
-# - The source ID is present as one byte. Is it necessary? For now, ground = 0x00.
+# - Thus subcounter is specified optional for PUS A, but for this implementation it is expected the subcounter
+#   is contained in the raw packet
+# - In PUS A, the destination ID can be present as one byte in the spare field. It was omitted for the FSFW
+# - In PUS C, the last spare bits of the first byte are replaced by the space time reference field
 # - PUS A and PUS C both use the CDS short seven byte timestamp in the time field
-# - PUS C has a 16 bit counter sequence counter and a 16 bit destination ID in the packet data field as the spar field
+# - PUS C has a 16 bit counter sequence counter and a 16 bit destination ID before the time field
