@@ -25,7 +25,7 @@ via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 Features
 =========
 
-- `Packet Utilisation Standard (PUS)`_ TMTC stack to simplify the packaging of PUS telecommand 
+- `Packet Utilisation Standard (PUS)`_ TMTC stack to simplify the packaging of PUS telecommand
   packets and the analysis and deserialization of raw PUS telemetry
 - Common communication interfaces like a serial interface or a TCP/IP interface
   to send and receive TMTC packets.

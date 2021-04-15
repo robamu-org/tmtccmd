@@ -1,5 +1,6 @@
 import enum
 
+
 class Srv5Subservices(enum.IntEnum):
     INFO_EVENT = 1,
     LOW_SEVERITY_EVENT = 2,
