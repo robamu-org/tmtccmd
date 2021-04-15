@@ -42,6 +42,8 @@ class PusTelemetry:
                 len(raw_telemetry) - 2:
             print("PusTelemetry: Passed packet too short!")
             raise ValueError
+        if self.get_packet_size() != len(raw_telemetry):
+            print(f"PusTelemetry: Packet length field {self._space_packet_header.data_length} might be invalid!")
         self._tm_data = raw_telemetry[
             self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
         ]
@@ -155,11 +157,10 @@ class PusTelemetry:
 
     def get_packet_size(self) -> int:
         """
-        :return: Size of the TM packet
+        :return: Size of the TM packet based on the space packet header data length field.
+        The space packet data field is the full length of data field minus one without the space packet header.
         """
-        # PusHeader Size + _tm_data size
-        size = SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
-        return size
+        return SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
 
     def get_ssc(self) -> int:
         """
@@ -356,7 +357,7 @@ class PusCdsShortTimestamp:
 # Packet Data Field Structure:
 #
 # ------------------------------------------------Packet Data Field------------------------------------------------- |
-# ---------------------------------Data Field Header ------------------------------------|AppData|Spare|PacketErrCtr |
+# ---------------------------------Data Field Header --------------------------------------|AppData|Spare|PacketErrCtr |
 # Spare(1)|TM PUS Ver.(3)|Spare(4)|SrvType (8)|SrvSubtype(8)|Subcounter(8)|Time(7)|Spare(o)|(var)  |(var)|  (16)       |
 #        0x11 (0x1F)              |  0x11     |   0x01      |             |       |        |       |     |     Calc.   |
 #    0     001     0000           |00010001   | 00000001    |             |       |        |       |     |             |

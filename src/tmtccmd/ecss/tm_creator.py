@@ -8,6 +8,9 @@ from tmtccmd.ecss.conf import get_tm_apid, PusVersion, get_pus_tm_version
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 class PusTelemetryCreator:
+    DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_A = 4
+    DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_C = 7
+
     """
     Alternative way to create a PUS Telemetry packet by specifying telemetry parameters,
     similarly to the way telecommands are created. This can be used to create telemetry
@@ -31,7 +34,9 @@ class PusTelemetryCreator:
         # specified in standard
         packet_type = PacketTypes.PACKET_TYPE_TM
         self.source_data = source_data
-        data_length = self.get_source_data_length(timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE)
+        data_length = self.get_source_data_length(
+            timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE, pus_version=pus_version
+        )
         self._space_packet_header = SpacePacketHeaderSerializer(
             apid=apid, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
             version=version, data_length=data_length, source_sequence_count=ssc
@@ -87,7 +92,7 @@ class PusTelemetryCreator:
         tm_packet_raw.append(crc16 & 0xFF)
         return tm_packet_raw
 
-    def get_source_data_length(self, timestamp_len: int) -> int:
+    def get_source_data_length(self, timestamp_len: int, pus_version: PusVersion) -> int:
         """
         Retrieve size of TM packet data header in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet source data field) - 1.
@@ -96,7 +101,12 @@ class PusTelemetryCreator:
         length of the CRC16 checksum - 1
         """
         try:
-            data_length = 4 + timestamp_len + len(self.source_data) + 1
+            if pus_version == PusVersion.PUS_A:
+                data_length = PusTelemetryCreator.DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_A + timestamp_len + \
+                              len(self.source_data) + 1
+            else:
+                data_length = PusTelemetryCreator.DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_C + timestamp_len + \
+                              len(self.source_data) + 1
             return data_length
         except TypeError:
             print("PusTelecommand: Invalid type of application data!")
