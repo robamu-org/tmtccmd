@@ -1,5 +1,5 @@
 from tmtccmd.ecss.tm import PusTelemetry
-
+from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 
 class Service17TM(PusTelemetry):
     def __init__(self, byte_array):

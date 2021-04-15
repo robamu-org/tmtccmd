@@ -1,4 +1,5 @@
-from enum import IntEnum
+import enum
+
 
 class Srv17Subservices(enum.IntEnum):
     PING_CMD = 1,
