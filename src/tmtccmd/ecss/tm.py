@@ -359,4 +359,6 @@ class PusCdsShortTimestamp:
 #    0     001     1111         |00010001   | 00000001    |            |        |       |     |          |           |
 #    0      1       1111        |    17     |     2       |            |        |       |     |          |           |
 #
-#   - The source ID is present as one byte. Is it necessary? For now, ground = 0x00.
+# - The source ID is present as one byte. Is it necessary? For now, ground = 0x00.
+# - PUS A and PUS C both use the CDS short seven byte timestamp in the time field
+# - PUS C has a 16 bit counter sequence counter and a 16 bit destination ID in the packet data field as the spar field
