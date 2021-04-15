@@ -10,7 +10,7 @@ from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus_tm.factory import PusTelemetryFactory, PusTmListT
 from tmtccmd.pus_tm.service_1_verification import Service1TmPacked
 from tmtccmd.pus_tm.service_17_test import Service17TmPacked
-from tmtccmd.pus.service_17 import Srv17Subservices
+from tmtccmd.pus.service_17_test import Srv17Subservices
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()

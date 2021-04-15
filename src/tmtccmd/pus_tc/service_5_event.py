@@ -3,11 +3,7 @@ import enum
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.core.definitions import QueueCommands
 from tmtccmd.pus_tc.definitions import PusTelecommand, TcQueueT
-
-
-class Srv5Subservices(enum.IntEnum):
-    ENABLE_EVENT_REPORTING = 5,
-    DISABLE_EVENT_REPORTING = 128
+from tmtccmd.pus.service_5_event import Srv5Subservices
 
 
 def pack_enable_event_reporting_command(ssc: int, apid: int = -1):
