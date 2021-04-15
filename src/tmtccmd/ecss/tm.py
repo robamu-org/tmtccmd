@@ -223,7 +223,7 @@ class PusPacketDataFieldHeader:
         self.service_type = bytes_array[1]
         self.service_subtype = bytes_array[2]
         if pus_version == PusVersion.PUS_A:
-            # TODO: This can be optional too, so we should have that reconfigurability
+            # TODO: This can be optional too, have option to ommit it?
             self.subcounter = bytes_array[3]
         else:
             self.subcounter = bytes_array[3] << 8 | bytes_array[4]

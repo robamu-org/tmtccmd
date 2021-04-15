@@ -70,7 +70,13 @@ class PusTelemetryCreator:
         tm_packet_raw.append(self.data_field_version)
         tm_packet_raw.append(self.service)
         tm_packet_raw.append(self.subservice)
-        tm_packet_raw.append(self.pack_subcounter)
+        if self.pus_version == PusVersion.PUS_A:
+            tm_packet_raw.append(self.pack_subcounter)
+        else:
+            tm_packet_raw.append((self.pack_subcounter >> 8) & 0xff)
+            tm_packet_raw.append(self.pack_subcounter & 0xff)
+            tm_packet_raw.append((self.destination_id >> 8) & 0xff)
+            tm_packet_raw.append(self.destination_id & 0xff)
         tm_packet_raw.extend(PusCdsShortTimestamp.pack_current_time())
         # Source Data
         tm_packet_raw.extend(self.source_data)
