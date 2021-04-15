@@ -12,25 +12,14 @@ from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
     PacketTypes, \
     SPACE_PACKET_HEADER_SIZE
+from tmtccmd.ecss.conf import get_default_apid
+
 
 try:
     import crcmod
 except ImportError:
     print("crcmod package not installed!")
     sys.exit(1)
-
-
-ECSS_TC_DICT = {
-    "apid": 0xef
-}
-
-
-def insert_default_apid(default_apid: int):
-    ECSS_TC_DICT["apid"] = default_apid
-
-
-def get_default_apid() -> int:
-    return ECSS_TC_DICT["apid"]
 
 
 class PusTcDataFieldHeaderSerialize:

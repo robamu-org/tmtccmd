@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Program: tmtcc_tm_service5.py
-Date: 30.12.2019
-Description: Deserialize PUS Event Report
-Author: R. Mueller
+:file:      service_5_event.py
+:date:      30.12.2019
+:brief:     Deserialize PUS Event Report
+:author:    R. Mueller
 """
-
-from tmtccmd.ecss.tm import PusTelemetry
 import struct
+from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.pus.service_5_event import Srv5Subservices
 
 
 class Service5TM(PusTelemetry):
     def __init__(self, byte_array):
         super().__init__(byte_array)
         self.specify_packet_info("Event")
-        if self.get_subservice() == 1:
+        if self.get_subservice() == Srv5Subservices.INFO_EVENT:
             self.append_packet_info(" Info")
-        elif self.get_subservice() == 2:
+        elif self.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:
             self.append_packet_info(" Error Low Severity")
-        elif self.get_subservice() == 3:
+        elif self.get_subservice() == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
             self.append_packet_info(" Error Med Severity")
-        elif self.get_subservice() == 4:
+        elif self.get_subservice() == Srv5Subservices.HIGH_SEVERITY_EVENT:
             self.append_packet_info(" Error High Severity")
         self.event_id = struct.unpack('>H', self._tm_data[0:2])[0]
         self.object_id = struct.unpack('>I', self._tm_data[2:6])[0]
