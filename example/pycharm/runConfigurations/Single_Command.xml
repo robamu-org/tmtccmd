@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="tmtcc Service 2 UDP" type="PythonConfigurationType" factoryName="Python" folderName="UDP">
-    <module name="tmtc" />
+  <configuration default="false" name="Single Command" type="PythonConfigurationType" factoryName="Python" folderName="Example">
+    <module name="example" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -12,8 +12,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tmtc_client_cli.py" />
-    <option name="PARAMETERS" value="-m 3 -c 2 -s 2 -t 4" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tmtccmd/tmtc_cli.py" />
+    <option name="PARAMETERS" value="-m onecmd -c 2" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

@@ -5,6 +5,7 @@ import datetime
 from crcmod import crcmod
 
 from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
+from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
 class PusTelemetry:
@@ -26,6 +27,7 @@ class PusTelemetry:
         if raw_telemetry == bytearray():
             print("PusTelemetry: Given byte stream is empty!")
             raise ValueError
+        self.pus_version = get_pus_tm_version()
         self._packet_raw = raw_telemetry
         self._space_packet_header = SpacePacketHeaderDeserializer(pus_packet_raw=raw_telemetry)
         self._valid = False
@@ -33,11 +35,18 @@ class PusTelemetry:
                 len(raw_telemetry):
             print("PusTelemetry: Passed packet shorter than specified packet length in PUS header")
             raise ValueError
-        self._data_field_header = PusPacketDataFieldHeader(raw_telemetry[6:])
+        self._data_field_header = PusPacketDataFieldHeader(
+            raw_telemetry[SPACE_PACKET_HEADER_SIZE:], pus_version=self.pus_version
+        )
+        if self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE > \
+                len(raw_telemetry) - 2:
+            print("PusTelemetry: Passed packet too short!")
+            raise ValueError
+        if self.get_packet_size() != len(raw_telemetry):
+            print(f"PusTelemetry: Packet length field {self._space_packet_header.data_length} might be invalid!")
         self._tm_data = raw_telemetry[
-                        PusPacketDataFieldHeader.DATA_HEADER_SIZE + SPACE_PACKET_HEADER_SIZE + 1:
-                        len(raw_telemetry) - 2
-                        ]
+            self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
+        ]
         self._crc = \
             raw_telemetry[len(raw_telemetry) - 2] << 8 | raw_telemetry[len(raw_telemetry) - 1]
         self.print_info = ""
@@ -75,21 +84,6 @@ class PusTelemetry:
 
     def get_tc_packet_id(self):
         return self._space_packet_header.packet_id
-
-    """
-        def pack_tm_information(self) -> PusTmInfoT:
-        Packs important TM information needed for tests in a convenient dictionary
-        :return: TM dictionary
-        tm_information = {
-            TmDictionaryKeys.SERVICE: self.get_service(),
-            TmDictionaryKeys.SUBSERVICE: self.get_subservice(),
-            TmDictionaryKeys.SSC: self.get_ssc(),
-            TmDictionaryKeys.DATA: self._tm_data,
-            TmDictionaryKeys.CRC: self._crc,
-            TmDictionaryKeys.VALID: self._valid
-        }
-        return tm_information
-    """
 
     def __perform_crc_check(self, raw_telemetry: bytearray):
         crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
@@ -156,18 +150,17 @@ class PusTelemetry:
 
     def get_raw_packet(self) -> bytes:
         """
-        Get the whole TM wiretapping_packet as a bytearray (raw)
+        Get the whole TM packet as a bytearray (raw)
         :return: TM wiretapping_packet
         """
         return self._packet_raw
 
     def get_packet_size(self) -> int:
         """
-        :return: Size of the TM wiretapping_packet
+        :return: Size of the TM packet based on the space packet header data length field.
+        The space packet data field is the full length of data field minus one without the space packet header.
         """
-        # PusHeader Size + _tm_data size
-        size = SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
-        return size
+        return SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
 
     def get_ssc(self) -> int:
         """
@@ -218,16 +211,28 @@ class PusTelemetry:
 
 class PusPacketDataFieldHeader:
     """
-    Unpacks the PUS packet data field header.
+    Unpacks the PUS packet data field header. Currently only supports CDS short timestamps
     """
-    DATA_HEADER_SIZE = PusTelemetry.PUS_TIMESTAMP_SIZE + 4
 
-    def __init__(self, bytes_array: bytearray):
-        self.pus_version_and_ack_byte = (bytes_array[0] & 0x70) >> 4
+    def __init__(self, bytes_array: bytearray, pus_version: PusVersion):
+        self.pus_version = pus_version
+        if pus_version == PusVersion.PUS_A:
+            self.pus_version_number = (bytes_array[0] & 0x70) >> 4
+        else:
+            self.pus_version_number = (bytes_array[0] & 0xF0) >> 4
+            self.spacecraft_time_ref = bytes_array[0] & 0x0F
         self.service_type = bytes_array[1]
         self.service_subtype = bytes_array[2]
-        self.subcounter = bytes_array[3]
-        self.time = PusTelemetryTimestamp(bytes_array[4:13])
+        if pus_version == PusVersion.PUS_A:
+            # TODO: This can be optional too, have option to ommit it?
+            self.subcounter = bytes_array[3]
+        else:
+            self.subcounter = bytes_array[3] << 8 | bytes_array[4]
+            self.destination_id = bytes_array[5] << 8 | bytes_array[6]
+        if pus_version == PusVersion.PUS_A:
+            self.time = PusCdsShortTimestamp(bytes_array[4: 4 + PusTelemetry.PUS_TIMESTAMP_SIZE])
+        else:
+            self.time = PusCdsShortTimestamp(bytes_array[7: 7 + PusTelemetry.PUS_TIMESTAMP_SIZE])
 
     def append_data_field_header(self, content_list: list):
         """
@@ -251,8 +256,14 @@ class PusPacketDataFieldHeader:
         header_list.append("Subcounter")
         self.time.print_time_headers(header_list)
 
+    def get_header_size(self):
+        if self.pus_version == PusVersion.PUS_A:
+            return PusTelemetry.PUS_TIMESTAMP_SIZE + 4
+        else:
+            return PusTelemetry.PUS_TIMESTAMP_SIZE + 7
 
-class PusTelemetryTimestamp:
+
+class PusCdsShortTimestamp:
     """
     Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,
     and the size of the time stamp is expected to be seven bytes.
@@ -268,14 +279,14 @@ class PusTelemetryTimestamp:
         if len(byte_array) > 0:
             # pField = byte_array[0]
             self.days = ((byte_array[1] << 8) | (byte_array[2])) - \
-                        PusTelemetryTimestamp.DAYS_CCSDS_TO_UNIX
+                        PusCdsShortTimestamp.DAYS_CCSDS_TO_UNIX
             self.seconds = self.days * (24 * 60 * 60)
             s_day = ((byte_array[3] << 24) | (byte_array[4] << 16) |
                      (byte_array[5]) << 8 | byte_array[6]) / 1000
             self.seconds += s_day
             self.time = self.seconds
-            self.datetime = str(datetime.datetime.
-                                utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S.%f"))
+            self.time_string = \
+                datetime.datetime.utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S.%f")
 
     @staticmethod
     def pack_current_time() -> bytearray:
@@ -283,15 +294,15 @@ class PusTelemetryTimestamp:
         Returns a seven byte CDS short timestamp
         """
         timestamp = bytearray()
-        p_field = (PusTelemetryTimestamp.CDS_ID << 4) + 0
+        p_field = (PusCdsShortTimestamp.CDS_ID << 4) + 0
         days = \
-            (datetime.datetime.utcnow() - PusTelemetryTimestamp.EPOCH).days + \
-            PusTelemetryTimestamp.DAYS_CCSDS_TO_UNIX
+            (datetime.datetime.utcnow() - PusCdsShortTimestamp.EPOCH).days + \
+            PusCdsShortTimestamp.DAYS_CCSDS_TO_UNIX
         days_h = (days & 0xFF00) >> 8
         days_l = days & 0xFF
         seconds = time.time()
         fraction_ms = seconds - math.floor(seconds)
-        days_ms = int((seconds % PusTelemetryTimestamp.SECONDS_PER_DAY) * 1000 + fraction_ms)
+        days_ms = int((seconds % PusCdsShortTimestamp.SECONDS_PER_DAY) * 1000 + fraction_ms)
         days_ms_hh = (days_ms & 0xFF000000) >> 24
         days_ms_h = (days_ms & 0xFF0000) >> 16
         days_ms_l = (days_ms & 0xFF00) >> 8
@@ -307,7 +318,7 @@ class PusTelemetryTimestamp:
 
     def print_time(self, array):
         array.append(self.time)
-        array.append(self.datetime)
+        array.append(self.time_string)
 
     @staticmethod
     def print_time_headers(array):
@@ -330,6 +341,8 @@ class PusTelemetryTimestamp:
 # 5. Binary Number
 # 6. Decimal Number
 #
+# Packet Structure for PUS A:
+#
 # -------------------------------------------Packet Header(48)------------------------------------------|   Packet   |
 #  ----------------Packet ID(16)----------------------|Packet Sequence Control (16)| Packet Length (16) | Data Field |
 # Version       | Type(1) |Data Field    |APID(11)    | SequenceFlags(2) |Sequence |                    | (Variable) |
@@ -343,10 +356,15 @@ class PusTelemetryTimestamp:
 # Packet Data Field Structure:
 #
 # ------------------------------------------------Packet Data Field------------------------------------------------- |
-# ---------------------------------Data Field Header ---------------------------|AppData|Spare|    PacketErrCtr      |
-# CCSDS(1)|TM PUS Ver.(3)|Ack(4)|SrvType (8)|SrvSubtype(8)|  Time (o)  |Spare(o)|  (var)|(var)|         (16)         |
-#        0x11 (0x1F)            |  0x11     |   0x01      |            |        |       |     | Calc.    |    Calc.  |
-#    0     001     1111         |00010001   | 00000001    |            |        |       |     |          |           |
-#    0      1       1111        |    17     |     2       |            |        |       |     |          |           |
+# ---------------------------------Data Field Header --------------------------------------|AppData|Spare|PacketErrCtr |
+# Spare(1)|TM PUS Ver.(3)|Spare(4)|SrvType (8)|SrvSubtype(8)|Subcounter(8)|Time(7)|Spare(o)|(var)  |(var)|  (16)       |
+#        0x11 (0x1F)              |  0x11     |   0x01      |             |       |        |       |     |     Calc.   |
+#    0     001     0000           |00010001   | 00000001    |             |       |        |       |     |             |
+#    0      1       0             |    17     |     2       |             |       |        |       |     |             |
 #
-#   - The source ID is present as one byte. Is it necessary? For now, ground = 0x00.
+# - Thus subcounter is specified optional for PUS A, but for this implementation it is expected the subcounter
+#   is contained in the raw packet
+# - In PUS A, the destination ID can be present as one byte in the spare field. It was omitted for the FSFW
+# - In PUS C, the last spare bits of the first byte are replaced by the space time reference field
+# - PUS A and PUS C both use the CDS short seven byte timestamp in the time field
+# - PUS C has a 16 bit counter sequence counter and a 16 bit destination ID before the time field

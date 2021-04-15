@@ -4,6 +4,9 @@ Argument parser module.
 """
 import argparse
 import sys
+
+from tmtccmd.core.definitions import CoreModeList, CoreComInterfaces
+
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 
@@ -64,8 +67,7 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
         action='store_true')
 
     if len(sys.argv) == 1:
-        print("No Input Arguments specified.")
-        arg_parser.print_help()
+        print("No input arguments specified. Run with -h to get list of arguments")
 
     args, unknown = arg_parser.parse_known_args()
 
@@ -188,20 +190,10 @@ def handle_unspecified_args(args) -> None:
     :param args:
     :return: None
     """
-    if args.com_if == 1 and args.tm_timeout is None:
-        args.tm_timeout = 6.0
+    if args.tm_timeout is None:
+        args.tm_timeout = 5.0
     if args.mode is None:
-        print("No mode specified with -m Parameter.")
-        print("Possible Modes: ")
-        print("1: Listener Mode")
-        print("2: Single Command Mode with manual command")
-        print("3: Service Mode, Commands specified in pus_tc folder")
-        print("4: Software Mode, runs all command specified in tmtcc_pus_tc_packer.py")
-        print("5: Unit Test, runs unit test specified in obsw_module_test.py")
-        args.mode = input("Please enter Mode: ")
-        if args.mode == 1 and args.service is None:
-            args.service = input("No Service specified for Service Mode. "
-                                 "Please enter PUS G_SERVICE number: ")
+        args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
 
 
 def handle_empty_args(args) -> None:
@@ -211,21 +203,9 @@ def handle_empty_args(args) -> None:
     :param args:
     :return:
     """
-    print_hk = input("Print HK packets ? (y/n or yes/no)")
-    try:
-        print_hk = print_hk.lower()
-    except TypeError:
-        pass
-    if print_hk in ('y', 'yes', 1):
-        args.print_hk = True
-    else:
-        args.print_hk = False
-    print_to_log = input("Export G_SERVICE test output to log files ? (y/n or yes/no)")
-    try:
-        print_to_log = print_to_log.lower()
-    except TypeError:
-        pass
-    if print_to_log in ('n', 'no', 0):
-        args.printFile = False
-    else:
-        args.printFile = True
+    print("No arguments specified. Setting dummy mode..")
+    args.com_if = CoreComInterfaces.DUMMY
+    print("Setting single command mode..")
+    args.mode = CoreModeList.SINGLE_CMD_MODE
+    print("Setting service 17 (ping command)..")
+    args.service = 17

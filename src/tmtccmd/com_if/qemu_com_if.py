@@ -151,12 +151,8 @@ class QEMUComIF(CommunicationInterface):
 
         self.send_data(data)
 
-    def receive_telemetry(self, parameters=0):
-        return self.poll_interface()
-
-    def poll_interface(self, parameters: any = 0) -> PusTmListT:
+    def receive_telemetry(self, parameters=0) -> PusTmListT:
         packet_list = []
-
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             if self.data_available():
                 data = self.usart.read(self.serial_frame_size, self.serial_timeout)

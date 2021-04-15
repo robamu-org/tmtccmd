@@ -39,7 +39,12 @@ class SerialConfigIds(enum.Enum):
 
 
 class SerialCommunicationType(enum.Enum):
-    TIMEOUT_BASED = 0
+    """
+    Right now, two serial communication methods are supported. One uses frames with a fixed size
+    containing PUS packets and the other uses a simple ASCII based transport layer called DLE.
+    If DLE is used, it is expected that the sender side encoded the packets with the DLE
+    protocol. Any packets sent will also be encoded.
+    """
     FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2
 
@@ -138,9 +143,6 @@ class SerialComIF(CommunicationInterface):
         self.send_data(data)
 
     def receive_telemetry(self, parameters: any = 0) -> PusTmListT:
-        return self.poll_interface()
-
-    def poll_interface(self, parameters: any = 0) -> PusTmListT:
         packet_list = []
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             if self.data_available():

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="tmtcc Service 3 UDP" type="PythonConfigurationType" factoryName="Python" folderName="UDP">
-    <module name="tmtc" />
+  <configuration default="false" name="PUS Service 17" type="PythonConfigurationType" factoryName="Python" folderName="Example">
+    <module name="example" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -12,8 +12,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tmtc_client_cli.py" />
-    <option name="PARAMETERS" value="-m 3 -c 2 -s 3 -p --hk" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tmtc_cli.py" />
+    <option name="PARAMETERS" value="-m seqcmd -s 17 -t 3" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="true" />
     <option name="MODULE_MODE" value="false" />

@@ -1,11 +1,16 @@
 from crcmod import crcmod
 
-from tmtccmd.ecss.tm import PusTelemetryTimestamp, PusTelemetry
+from tmtccmd.ecss.tm import PusCdsShortTimestamp, PusTelemetry
+from tmtccmd.ccsds.spacepacket import PacketTypes, SpacePacketHeaderSerializer
+from tmtccmd.ecss.conf import get_tm_apid, PusVersion, get_pus_tm_version
 
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 class PusTelemetryCreator:
+    DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_A = 4
+    DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_C = 7
+
     """
     Alternative way to create a PUS Telemetry packet by specifying telemetry parameters,
     similarly to the way telecommands are created. This can be used to create telemetry
@@ -13,34 +18,39 @@ class PusTelemetryCreator:
     the ESA PUS standard in the PusTelemetry documentation.
     """
     def __init__(self, service: int, subservice: int, ssc: int = 0,
-                 source_data: bytearray = bytearray([]), apid: int = 0x73, version: int = 0):
+                 source_data: bytearray = bytearray([]), apid: int = -1, version: int = 0b000,
+                 pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
+                 ack: int = 0b1111, secondary_header_flag: int = -1, space_time_ref: int = 0b0000,
+                 destination_id: int = 0):
         """
         Initiates the unserialized data fields for the PUS telemetry packet.
         """
+        if apid == -1:
+            apid = get_tm_apid()
+        if pus_version == PusVersion.UNKNOWN:
+            pus_version = get_pus_tm_version()
+        self.pus_version = pus_version
         # packet type for telemetry is 0 as specified in standard
-        packet_type = 0
         # specified in standard
-        data_field_header_flag = 1
-        self.packet_id_bytes = [0x0, 0x0]
-        self.packet_id_bytes[0] = \
-            ((version << 5) & 0xE0) | ((packet_type & 0x01) << 4) | \
-            ((data_field_header_flag & 0x01) << 3) | ((apid & 0x700) >> 8)
-        self.packet_id_bytes[1] = apid & 0xFF
-        self.packet_id = (self.packet_id_bytes[0] << 8) | self.packet_id_bytes[1]
-        self.ssc = ssc
-        self.psc = (ssc & 0x3FFF) | (0xC0 << 8)
-        self.pus_version_and_ack_byte = 0b00011111
-
+        packet_type = PacketTypes.PACKET_TYPE_TM
+        self.source_data = source_data
+        data_length = self.get_source_data_length(
+            timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE, pus_version=pus_version
+        )
+        self._space_packet_header = SpacePacketHeaderSerializer(
+            apid=apid, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
+            version=version, data_length=data_length, source_sequence_count=ssc
+        )
+        self.pus_version_and_ack_byte = pus_tm_version | space_time_ref
         # NOTE: In PUS-C, the PUS Version is 2 and specified for the first 4 bits.
         # The other 4 bits of the first byte are the spacecraft time reference status
-        # To change to PUS-C, set 0b00100000
         self.data_field_version = 0b00010000
         self.service = service
         self.subservice = subservice
         self.pack_subcounter = 0
+        if pus_version == PusVersion.PUS_C:
+            self.destination_id = destination_id
         # it is assumed the time field consts of 8 bytes.
-
-        self.source_data = source_data
 
     def print(self):
         """ Print the raw command in a clean format. """
@@ -60,18 +70,19 @@ class PusTelemetryCreator:
         """
         tm_packet_raw = bytearray()
         # PUS Header
-        tm_packet_raw.extend(self.packet_id_bytes)
-        tm_packet_raw.append((self.psc & 0xFF00) >> 8)
-        tm_packet_raw.append(self.psc & 0xFF)
-        source_length = self.get_source_data_length()
-        tm_packet_raw.append((source_length & 0xFF00) >> 8)
-        tm_packet_raw.append(source_length & 0xFF)
+        tm_packet_raw.extend(self._space_packet_header.pack())
         # PUS Source Data Field
         tm_packet_raw.append(self.data_field_version)
         tm_packet_raw.append(self.service)
         tm_packet_raw.append(self.subservice)
-        tm_packet_raw.append(self.pack_subcounter)
-        tm_packet_raw.extend(PusTelemetryTimestamp.pack_current_time())
+        if self.pus_version == PusVersion.PUS_A:
+            tm_packet_raw.append(self.pack_subcounter)
+        else:
+            tm_packet_raw.append((self.pack_subcounter >> 8) & 0xff)
+            tm_packet_raw.append(self.pack_subcounter & 0xff)
+            tm_packet_raw.append((self.destination_id >> 8) & 0xff)
+            tm_packet_raw.append(self.destination_id & 0xff)
+        tm_packet_raw.extend(PusCdsShortTimestamp.pack_current_time())
         # Source Data
         tm_packet_raw.extend(self.source_data)
         # CRC16 checksum
@@ -81,7 +92,7 @@ class PusTelemetryCreator:
         tm_packet_raw.append(crc16 & 0xFF)
         return tm_packet_raw
 
-    def get_source_data_length(self) -> int:
+    def get_source_data_length(self, timestamp_len: int, pus_version: PusVersion) -> int:
         """
         Retrieve size of TM packet data header in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet source data field) - 1.
@@ -90,7 +101,12 @@ class PusTelemetryCreator:
         length of the CRC16 checksum - 1
         """
         try:
-            data_length = 4 + PusTelemetry.PUS_TIMESTAMP_SIZE + len(self.source_data) + 1
+            if pus_version == PusVersion.PUS_A:
+                data_length = PusTelemetryCreator.DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_A + timestamp_len + \
+                              len(self.source_data) + 1
+            else:
+                data_length = PusTelemetryCreator.DATA_FIELD_HEADER_SIZE_WITHOUT_TIME_PUS_C + timestamp_len + \
+                              len(self.source_data) + 1
             return data_length
         except TypeError:
             print("PusTelecommand: Invalid type of application data!")

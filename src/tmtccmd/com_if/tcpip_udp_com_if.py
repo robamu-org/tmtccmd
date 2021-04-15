@@ -92,26 +92,20 @@ class TcpIpUdpComIF(CommunicationInterface):
             return True
         return False
 
-    def poll_interface(self, poll_timeout: float = 0) -> Tuple[bool, PusTmListT]:
+    def receive_telemetry(self, poll_timeout: float = 0) -> PusTmListT:
         if self.udp_socket is None:
-            return False, []
-        ready = self.data_available(poll_timeout)
-        if ready:
-            data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
-            tm_packet = PusTelemetryFactory.create(bytearray(data))
-            if tm_packet is None:
-                return False, []
-            packet_list = [tm_packet]
-            return True, packet_list
-        return False, []
-
-    def receive_telemetry(self, parameters: any = 0) -> PusTmListT:
-        packet_list = []
-        if self.udp_socket is None:
-            return packet_list
+            return []
         try:
-            (packet_received, packet_list) = self.poll_interface()
+            ready = self.data_available(poll_timeout)
+            if ready:
+                data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
+                tm_packet = PusTelemetryFactory.create(bytearray(data))
+                if tm_packet is None:
+                    return []
+                packet_list = [tm_packet]
+                return packet_list
+            return []
         except ConnectionResetError:
             LOGGER.warning("Connection reset exception occured!")
-        return packet_list
+            return []
 
