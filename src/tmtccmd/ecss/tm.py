@@ -263,7 +263,6 @@ class PusPacketDataFieldHeader:
             return PusTelemetry.PUS_TIMESTAMP_SIZE + 7
 
 
-
 class PusCdsShortTimestamp:
     """
     Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,

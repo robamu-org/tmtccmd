@@ -18,7 +18,6 @@ LOGGER = get_logger()
 
 class TmTcHookBase:
 
-
     def __init__(self):
         pass
 
