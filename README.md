@@ -1,6 +1,7 @@
 <p align="center"> <img src="docs/logo_tmtccmd_smaller.png" width="40%"> </p>
 
 TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
+[![pytest](https://github.com/rmspacefish/tmtccmd/actions/workflows/ci.yml/badge.svg?branch=develop&event=push)](https://github.com/rmspacefish/tmtccmd/actions/workflows/ci.yml)
 ====
 
 ## Overview
@@ -23,9 +24,15 @@ This client currently supports the following communication interfaces:
 
 A TCP implementation is planned.
 
+The TMTC commander also includes a Space Packet and a ECSS PUS packet stack. Some of these
+components might be moved to an own library soon, so they were decoupled from the rest 
+of the TMTC commander components.
+
 ## Examples 
 
 An example which does not require additional software or hardware is still work-in-progress.
+Until then, the [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation provides
+a good starting point on how to implement a TMTC commander.
 
 ## Tests
 

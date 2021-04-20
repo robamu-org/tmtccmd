@@ -75,10 +75,10 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
 
 
 class SpacePacketHeaderSerializer(SpacePacketCommonFields):
-    def __init__(self, apid: int, packet_type: PacketTypes, data_length: int,
-                 source_sequence_count: int,
-                 secondary_header_flag: int = 0b1, version: int = 0b000,
-                 sequence_flags: int = 0b11):
+    def __init__(
+            self, apid: int, packet_type: PacketTypes, data_length: int, source_sequence_count: int,
+            secondary_header_flag: int = 0b1, version: int = 0b000, sequence_flags: int = 0b11
+    ):
         """
         Serialize raw space packet header
         :param packet_type:             0 for telemetry, 1 for telecommands
@@ -91,8 +91,7 @@ class SpacePacketHeaderSerializer(SpacePacketCommonFields):
         """
         self.packet_id_bytes = [0x00, 0x00]
         self.packet_id_bytes[0], self.packet_id_bytes[1] = get_sp_packet_id_bytes(
-            version=version, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
-            apid=apid
+            version=version, packet_type=packet_type, secondary_header_flag=secondary_header_flag, apid=apid
         )
         super().__init__(
             packet_type=packet_type,

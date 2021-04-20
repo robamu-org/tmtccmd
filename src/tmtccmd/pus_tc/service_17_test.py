@@ -3,11 +3,7 @@ import enum
 from tmtccmd.core.definitions import QueueCommands
 from tmtccmd.pus_tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.config.globals import get_global_apid
-
-
-class Srv17Subservices(enum.IntEnum):
-    PING_CMD = 1,
-    GEN_EVENT = 128
+from tmtccmd.pus.service_17_test import Srv17Subservices
 
 
 def pack_service17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:

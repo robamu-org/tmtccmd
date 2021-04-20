@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Program: tmtcc_com_interface_base.py
-Date: 01.11.2019
-Description: Generic Communication Interface. Defines the syntax of the communication functions.
-             Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
+:file:      tmtcc_com_interface_base.py
+:data:      01.11.2019
+:details:
+Generic Communication Interface. Defines the syntax of the communication functions.
+Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 
-@author: R. Mueller
+:author:     R. Mueller
 """
 from abc import abstractmethod
 from typing import Tuple
@@ -51,13 +52,13 @@ class CommunicationInterface:
     @abstractmethod
     def send_data(self, data: bytearray):
         """
-        Send data, for example a frame containing packets.
+        Send raw data
         """
 
     @abstractmethod
     def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
         """
-        Send telecommands
+        Send telecommands.
         :param tc_packet: TC wiretapping_packet to send
         :param tc_packet_obj: TC packet object representation
         :return: None for now
@@ -66,8 +67,9 @@ class CommunicationInterface:
     @abstractmethod
     def receive_telemetry(self, parameters: any = 0) -> PusTmListT:
         """
-        Returns a list of packets. Most of the time,
-        this will simply call the pollInterface function
+        Returns a list of packets. The child class can use a separate thread to poll for
+        the packets or use some other mechanism and container like a deque to store packets
+        to be returned here.
         :param parameters:
         :return:
         """
@@ -75,19 +77,9 @@ class CommunicationInterface:
         return packet_list
 
     @abstractmethod
-    def poll_interface(self, parameters: any = 0) -> Tuple[bool, PusTmListT]:
-        """
-        Poll the interface and return a list of received packets
-        :param parameters:
-        :return: Tuple: boolean which specifies wheather a wiretapping_packet was received,
-        and the wiretapping_packet list containing
-        Tm packets
-        """
-
-    @abstractmethod
     def data_available(self, parameters: any) -> int:
         """
         Check whether TM data is available
-        :param parameters:
+        :param parameters: Can be an arbitrary parameter like a timeout
         :return: 0 if no data is available, number of bytes or anything > 0 otherwise.
         """

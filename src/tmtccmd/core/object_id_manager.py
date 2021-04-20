@@ -58,7 +58,8 @@ def insert_object_id(object_id_key: int, object_id: bytearray):
 
 
 def insert_object_ids(object_id_dict: Dict[int, bytearray]):
-    return ObjectIdManager.get_manager().insert_object_ids(object_id_dict=object_id_dict)
+    if object_id_dict is not None:
+        return ObjectIdManager.get_manager().insert_object_ids(object_id_dict=object_id_dict)
 
 
 def get_object_id(object_id_key: int):

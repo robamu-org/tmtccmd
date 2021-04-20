@@ -1,6 +1,8 @@
 import os
 from collections import deque
 
+from tmtccmd.ecss.tc import PusTelecommand
+
 from tmtccmd.pus_tc.definitions import TcQueueT
 from tmtccmd.core.definitions import CoreServiceList
 from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
@@ -10,10 +12,11 @@ from tmtccmd.utility.tmtcc_logger import get_logger
 LOGGER = get_logger()
 
 
-def default_service_queue_preparation(service: int, op_code: str, service_queue: TcQueueT):
-    from tmtccmd.pus_tc.service_5_event import pack_generic_service5_test_into
-    from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
+def default_single_packet_preparation() -> PusTelecommand:
+    return pack_service17_ping_command(ssc=1700)
 
+
+def default_service_queue_preparation(service: int, op_code: str, service_queue: TcQueueT):
     if service == CoreServiceList.SERVICE_5:
         return pack_generic_service5_test_into(service_queue)
     if service == CoreServiceList.SERVICE_17:
