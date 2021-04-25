@@ -33,6 +33,12 @@ class TestTelecommand(TestCase):
         packet_raw = generate_packet_crc(packet_raw)
         self.assertTrue(crc_func(packet_raw) == 0)
 
+    def test_getter_functions(self):
+        pus_17_telecommand = PusTelecommand(service=17, subservice=1, ssc=25)
+        self.assertTrue(pus_17_telecommand.get_ssc() == 25)
+        self.assertTrue(pus_17_telecommand.get_service() == 17)
+        self.assertTrue(pus_17_telecommand.get_subservice() == 1)
+
 
 
 if __name__ == '__main__':
