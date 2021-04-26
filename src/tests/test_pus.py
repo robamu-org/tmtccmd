@@ -17,13 +17,42 @@ class TestTelemetry(TestCase):
         pus_17_raw = pus_17_telecommand.pack()
         pus_17_telemetry = None
         tm_func = lambda raw_tm: Service17TM(raw_telemetry=raw_tm)
-        # self.assertRaises(ValueError, tm_func, pus_17_raw)
+        self.assertRaises(ValueError, tm_func, bytearray())
+        self.assertRaises(ValueError, tm_func, None)
 
         pus_17_telemetry = Service17TM(raw_telemetry=pus_17_raw)
         self.assertTrue(get_pus_tm_version() == PusVersion.PUS_C)
         self.assertTrue(pus_17_telemetry.get_service() == 17)
         self.assertTrue(pus_17_telemetry.get_subservice() == 1)
+        self.assertTrue(pus_17_telemetry.get_ssc() == 36)
+        self.assertTrue(pus_17_telemetry.get_tm_data() == bytearray())
+        self.assertTrue(pus_17_telemetry.is_valid())
+        self.assertTrue(pus_17_telemetry.get_custom_printout() == "")
+        self.assertTrue(pus_17_telemetry.return_source_data_string() == "[]")
+        pus_17_telemetry.print_source_data()
+        pus_17_telemetry.print_full_packet_string()
+        # This string changes  depending on system time, so its complicated to test its validity
+        full_string = pus_17_telemetry.return_full_packet_string()
+        print(pus_17_telemetry)
+        print(repr(pus_17_telemetry))
 
+        raw_tm_created = pus_17_telemetry.get_raw_packet()
+        self.assertTrue(raw_tm_created == pus_17_raw)
+        self.assertTrue(pus_17_telemetry.get_tc_packet_id() == 0x8 << 8 | 0xef)
+
+        test_list = []
+    def test_list_functionality(self):
+        pus_17_telecommand = Service17TmPacked(subservice=1, ssc=36)
+        pus_17_raw = pus_17_telecommand.pack()
+        pus_17_telemetry = Service17TM(raw_telemetry=pus_17_raw)
+
+        header_list = []
+        content_list = []
+        pus_17_telemetry.append_telemetry_column_headers(header_list=header_list)
+        pus_17_telemetry.append_telemetry_content(content_list=content_list)
+
+        self.assertTrue(header_list != [])
+        self.assertTrue(content_list != [])
 
 class TestTelecommand(TestCase):
 
