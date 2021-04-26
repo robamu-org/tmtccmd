@@ -22,7 +22,7 @@ ECSS_DICT = {
 }
 
 
-def insert_default_apid(default_apid: int):
+def set_default_apid(default_apid: int):
     ECSS_DICT[EcssConfKeys.ECSS_APID] = default_apid
 
 
