@@ -80,6 +80,16 @@ class PusTelecommand:
         self.apid = apid
         packet_type = PacketTypes.PACKET_TYPE_TC
         secondary_header_flag = 1
+        if subservice > 255:
+            print("Subservice value invalid. Setting to 0")
+            subservice = 0
+        if service > 255:
+            print("Service value invalid. Setting to 0")
+            service = 0
+        # SSC can have maximum of 14 bits
+        if ssc > pow(2, 14):
+            print("SSC invalid, setting to 0")
+            ssc = 0
         self._space_packet_header = SpacePacketHeaderSerializer(
             apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
             data_length=self.get_data_length(len(app_data)), source_sequence_count=ssc
@@ -104,8 +114,7 @@ class PusTelecommand:
         Returns string representation of a class instance.
         """
         return f"TC[{self._data_field_header.service_type}, " \
-               f"{self._data_field_header.service_subtype} " \
-               f"] with SSC {self._space_packet_header.ssc}"
+               f"{self._data_field_header.service_subtype}] with SSC {self._space_packet_header.ssc}"
 
     def get_total_length(self):
         """
@@ -118,6 +127,7 @@ class PusTelecommand:
         """
         Serializes the TC data fields into a bytearray.
         """
+        self.packed_data = bytearray()
         self.packed_data.extend(self._space_packet_header.pack())
         self.packed_data.extend(self._data_field_header.pack())
         self.packed_data += self.app_data
@@ -159,6 +169,9 @@ class PusTelecommand:
 
     def get_ssc(self):
         return self._space_packet_header.ssc
+
+    def get_apid(self):
+        return self._space_packet_header.apid
 
     def get_packet_id(self):
         return self._space_packet_header.packet_id

@@ -3,8 +3,8 @@ from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 
 
 class Service17TM(PusTelemetry):
-    def __init__(self, byte_array):
-        super().__init__(byte_array)
+    def __init__(self, raw_telemetry: bytearray):
+        super().__init__(raw_telemetry=raw_telemetry)
         self.specify_packet_info("Test Reply")
 
     def append_telemetry_content(self, content_list: list):

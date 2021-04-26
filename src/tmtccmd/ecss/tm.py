@@ -24,8 +24,11 @@ class PusTelemetry:
         Raises a ValueError if the format of the raw bytearray is invalid.
         @param raw_telemetry:
         """
-        if raw_telemetry == bytearray():
-            print("PusTelemetry: Given byte stream is empty!")
+        if raw_telemetry is None or raw_telemetry == bytearray():
+            if(raw_telemetry is None):
+                print("PusTelemetry: Given byte stream ivalid!")
+            elif (raw_telemetry == bytearray()):
+                print("PusTelemetry: Given byte stream empty!")
             raise ValueError
         self.pus_version = get_pus_tm_version()
         self._packet_raw = raw_telemetry
@@ -121,8 +124,8 @@ class PusTelemetry:
         :param content_list: Header content will be appended to this list
         :return:
         """
-        self._data_field_header.append_data_field_header(content_list)
-        self._space_packet_header.append_space_packet_header_content(content_list)
+        self._data_field_header.append_data_field_header(content_list=content_list)
+        self._space_packet_header.append_space_packet_header_content(content_list=content_list)
         if self.is_valid():
             content_list.append("Yes")
         else:
@@ -148,12 +151,12 @@ class PusTelemetry:
         """
         return ""
 
-    def get_raw_packet(self) -> bytes:
+    def get_raw_packet(self) -> bytearray:
         """
         Get the whole TM packet as a bytearray (raw)
         :return: TM wiretapping_packet
         """
-        return self._packet_raw
+        return bytearray(self._packet_raw)
 
     def get_packet_size(self) -> int:
         """
@@ -170,43 +173,26 @@ class PusTelemetry:
         return self._space_packet_header.ssc
 
     def return_full_packet_string(self):
-        return self.return_data_string(self._packet_raw, len(self._packet_raw))
+        return return_data_string(self._packet_raw, len(self._packet_raw))
 
     def print_full_packet_string(self):
         """
         Print the full TM packet in a clean format.
         """
-        print(self.return_data_string(self._packet_raw, len(self._packet_raw)))
+        print(return_data_string(self._packet_raw, len(self._packet_raw)))
 
     def print_source_data(self):
         """
         Prints the TM source data in a clean format
         :return:
         """
-        print(self.return_data_string(self._tm_data, len(self._tm_data)))
+        print(return_data_string(self._tm_data, len(self._tm_data)))
 
-    def return_source_data(self):
+    def return_source_data_string(self):
         """
         Returns the source data string
         """
-        return self.return_data_string(self._tm_data, len(self._tm_data))
-
-    @staticmethod
-    def return_data_string(byte_array: bytearray, length: int) -> str:
-        """
-        Returns the TM data in a clean printable string format
-        Prints payload data in default mode
-        and prints the whole packet if full_packet = True is passed.
-        :return:
-        """
-        str_to_print = "["
-        for index in range(length):
-            str_to_print += str(hex(byte_array[index])) + " , "
-        str_to_print = str_to_print.rstrip()
-        str_to_print = str_to_print.rstrip(',')
-        str_to_print = str_to_print.rstrip()
-        str_to_print += ']'
-        return str_to_print
+        return return_data_string(self._tm_data, len(self._tm_data))
 
 
 class PusPacketDataFieldHeader:
@@ -216,6 +202,9 @@ class PusPacketDataFieldHeader:
 
     def __init__(self, bytes_array: bytearray, pus_version: PusVersion):
         self.pus_version = pus_version
+        if len(bytes_array) < self.get_header_size():
+            print(f"Invalid PUS data field header size, less than expected {self.get_header_size()} bytes")
+            return
         if pus_version == PusVersion.PUS_A:
             self.pus_version_number = (bytes_array[0] & 0x70) >> 4
         else:
@@ -316,14 +305,31 @@ class PusCdsShortTimestamp:
         timestamp.append(days_ms_ll)
         return timestamp
 
-    def print_time(self, array):
-        array.append(self.time)
-        array.append(self.time_string)
+    def print_time(self, content_list):
+        content_list.append(self.time)
+        content_list.append(self.time_string)
 
     @staticmethod
-    def print_time_headers(array):
-        array.append("OBSWTime (s)")
-        array.append("Time")
+    def print_time_headers(header_list):
+        header_list.append("OBSWTime (s)")
+        header_list.append("Time")
+
+
+def return_data_string(byte_array: bytearray, length: int) -> str:
+    """
+    Returns the TM data in a clean printable string format
+    Prints payload data in default mode
+    and prints the whole packet if full_packet = True is passed.
+    :return:
+    """
+    str_to_print = "["
+    for index in range(length):
+        str_to_print += str(hex(byte_array[index])) + " , "
+    str_to_print = str_to_print.rstrip()
+    str_to_print = str_to_print.rstrip(',')
+    str_to_print = str_to_print.rstrip()
+    str_to_print += "]"
+    return str_to_print
 
 # pylint: disable=line-too-long
 # Structure of a PUS Packet :

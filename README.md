@@ -1,7 +1,8 @@
 <p align="center"> <img src="docs/logo_tmtccmd_smaller.png" width="40%"> </p>
 
 TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
-[![pytest](https://github.com/rmspacefish/tmtccmd/actions/workflows/ci.yml/badge.svg?branch=develop&event=push)](https://github.com/rmspacefish/tmtccmd/actions/workflows/ci.yml)
+[![package](https://github.com/rmspacefish/tmtccmd/actions/workflows/package.yml/badge.svg?branch=develop)](https://github.com/rmspacefish/tmtccmd/actions/workflows/package.yml)
+[![codecov](https://codecov.io/gh/rmspacefish/tmtccmd/branch/develop/graph/badge.svg?token=BVOE3A4WE4)](https://codecov.io/gh/rmspacefish/tmtccmd)
 ====
 
 ## Overview

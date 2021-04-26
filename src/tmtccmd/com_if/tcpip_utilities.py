@@ -36,8 +36,8 @@ def determine_udp_send_address() -> ethernet_address_t:
             address_tuple = ip_address, port
 
     if reconfigure_ip_address:
-        address_tuple = prompt_ip_address(type_str="UDP send")
-        save_to_json = input("Do you want to store the UDP send address configuration? [y/n]: ")
+        address_tuple = prompt_ip_address(type_str="UDP destination")
+        save_to_json = input("Do you want to store the destination send address configuration? [y/n]: ")
         if save_to_json.lower() in ['y', "yes"]:
             with open("config/tmtcc_config.json", "r+") as file:
                 json_dict = json.load(file)
