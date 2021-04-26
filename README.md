@@ -31,14 +31,38 @@ of the TMTC commander components.
 
 ## Examples 
 
-An example which does not require additional software or hardware is still work-in-progress.
-Until then, the [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation provides
-a good starting point on how to implement a TMTC commander.
+The `example` folder contains a simple example using a dummy communication interface.
+It can be run like this on Linux
+
+```sh
+cd example
+./tmtc_cli.py
+```
+
+or on Windows
+
+```sh
+cd example
+py tmtc_cli.py
+```
+
+The [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation of the TMTC commander
+provides a more complex implementation.
 
 ## Tests
 
-The tests are still work-in-progress. The first tests will target the internal
-PUS TMTC packaging modules.
+All tests are provided in the `src/test` folder and can be run with coverage information
+by running
+
+```sh
+coverage run -m pytest
+```
+
+provided that `pytest` and `coverage` were installed with
+
+```sh
+python3 -m pip install coverage pytest
+```
 
 ## Installation
 
@@ -71,6 +95,5 @@ cd tmtccmd
 python3 -m pip install -e .[gui]
 ```
 
-Omit the `-e` for a regular installation. The package might move to PyPI soon.
-After that, installation will also be possible with `pip install tmtccmd`
-and `pip install tmtccmd[gui]`.
+Omit the `-e` for a regular installation. Alternatively you can now install the package
+from PyPI with `python3 -m pip install -e tmtccmd`.

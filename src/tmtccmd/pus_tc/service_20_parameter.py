@@ -1,6 +1,8 @@
+import enum
 from typing import Union
 
 from tmtccmd.ecss.tc import PusTelecommand
+from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.config.globals import get_global_apid
 
@@ -35,8 +37,8 @@ def pack_boolean_parameter_command(
     data_to_pack = bytearray(object_id)
     data_to_pack.extend(parameter_id)
     # PTC and PFC for uint8_t according to CCSDS
-    ptc = 3
-    pfc = 4
+    ptc = EcssPtc.UNSIGNED
+    pfc = EcssPfcUnsigned.ONE_BYTE
     rows = 1
     columns = 1
     data_to_pack.append(ptc)
@@ -45,6 +47,13 @@ def pack_boolean_parameter_command(
     data_to_pack.append(columns)
     data_to_pack.append(parameter)
     return PusTelecommand(service=20, subservice=128, ssc=ssc, app_data=data_to_pack, apid=apid)
+
+
+def pack_float_vector_parameter_command(
+        object_id: bytearray, domain_id: int, unique_id: int, parameter: bytearray, ssc: int,
+        apid: int = -1
+):
+    pass
 
 
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
