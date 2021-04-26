@@ -1,4 +1,4 @@
-import collections
+import collections.abc
 from typing import Tuple, Union
 
 from tmtccmd.core.globals_manager import get_global
@@ -19,7 +19,7 @@ class AnsiColors:
     RESET = "\x1b[0m"
 
 
-def check_args_in_enum(param: any, iterable: Union[collections.Iterable, dict],
+def check_args_in_enum(param: any, iterable: Union[collections.abc.Iterable, dict],
                        warning_hint: str) -> Tuple[bool, int]:
     """
     This functions checks whether the integer representation of a given parameter in
