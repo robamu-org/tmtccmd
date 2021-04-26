@@ -216,6 +216,9 @@ class PusPacketDataFieldHeader:
 
     def __init__(self, bytes_array: bytearray, pus_version: PusVersion):
         self.pus_version = pus_version
+        if len(bytes_array) < self.get_header_size():
+            print(f"Invalid PUS data field header size, less than expected {self.get_header_size()} bytes")
+            return
         if pus_version == PusVersion.PUS_A:
             self.pus_version_number = (bytes_array[0] & 0x70) >> 4
         else:
