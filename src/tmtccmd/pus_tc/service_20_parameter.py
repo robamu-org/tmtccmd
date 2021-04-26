@@ -8,11 +8,6 @@ from tmtccmd.config.globals import get_global_apid
 logger = get_logger()
 
 
-class EcssPtc(enum.IntEnum):
-    UNSIGNED = 3
-    SIGNED = 4
-
-
 def pack_boolean_parameter_command(
         object_id: bytearray, domain_id: int, unique_id: int, parameter: bool, ssc: int,
         apid: int = -1
