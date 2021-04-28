@@ -16,7 +16,7 @@ def get_global_apid() -> int:
 
 def check_and_set_core_mode_arg(
         mode_arg: any,
-        custom_modes_list: Union[None, List[Union[dict, collections.Iterable]]] = None
+        custom_modes_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None
 ) -> int:
     """
     Checks whether the mode argument is contained inside the core mode list integer enumeration
@@ -60,7 +60,7 @@ def check_and_set_core_mode_arg(
 
 def check_and_set_core_com_if_arg(
         com_if_arg: any,
-        custom_com_ifs_list: Union[None, List[Union[dict, collections.Iterable]]] = None
+        custom_com_ifs_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None
 ) -> int:
     in_enum, com_if_value = check_args_in_enum(
         param=com_if_arg, iterable=CoreComInterfaces, warning_hint="communication interface"
@@ -96,7 +96,7 @@ def check_and_set_core_com_if_arg(
 
 
 def check_and_set_core_service_arg(
-        service_arg: any, custom_service_list: collections.Iterable = None
+        service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
     in_enum, service_value = check_args_in_enum(
         param=service_arg, iterable=CoreServiceList, warning_hint="service"
