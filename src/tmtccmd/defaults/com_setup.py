@@ -32,11 +32,12 @@ def create_communication_interface_default(
             send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
             recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
             max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
+            init_mode = get_global(CoreGlobalIds.MODE)
             communication_interface = TcpIpUdpComIF(
                 tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
                 tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
                 send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
-                tmtc_printer=tmtc_printer
+                tmtc_printer=tmtc_printer, init_mode=init_mode
             )
         elif com_if == CoreComInterfaces.SERIAL_DLE or \
                 com_if == CoreComInterfaces.SERIAL_FIXED_FRAME:

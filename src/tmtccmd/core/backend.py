@@ -15,6 +15,7 @@ from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 from tmtccmd.pus_tc.packer import ServiceQueuePacker
 
+
 LOGGER = get_logger()
 
 
