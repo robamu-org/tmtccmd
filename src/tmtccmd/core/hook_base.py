@@ -27,11 +27,10 @@ class TmTcHookBase:
         return f"{VERSION_NAME} {__version__}"
 
     @abstractmethod
-    def set_object_ids(self) -> Dict[int, bytearray]:
+    def set_object_ids(self) -> Dict[bytes, list]:
         """
-        The user can specify an object ID dictionary here mapping object ID bytearrays to object ID integer keys.
-        This mapping can be used by the TMTC core to get integer representations of the object ID bytearray.
-        It is recommended that the user uses an IntEnum class to specify the keys of this dictionary.
+        The user can specify an object ID dictionary here mapping object ID bytearrays to a list (e.g. containing
+        the string representation)
         """
         pass
 
@@ -96,7 +95,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_8_telemetry(
-            object_id_key: int, action_id: int, custom_data: bytearray
+            object_id: bytearray, action_id: int, custom_data: bytearray
     ) -> Tuple[list, list]:
         """
         This function is called by the TMTC core if a Service 8 data reply (subservice 130)
@@ -104,8 +103,7 @@ class TmTcHookBase:
         is a list of header strings to print and the second list is a list of values to print.
         The TMTC core will take care of printing both lists and logging them.
 
-        :param object_id_key:   Integer representation of the found object ID. See
-                                the :func:`~tmtccmd.core.hook_base.set_object_ids function for more information
+        :param object_id:   Object ID bytearray
         :param action_id:
         :param custom_data:
         :return
@@ -118,7 +116,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_3_housekeeping(
-        object_id_key: int, set_id: int, hk_data: bytearray, service3_packet: Service3Base
+        object_id: bytearray, set_id: int, hk_data: bytearray, service3_packet: Service3Base
     ) -> Tuple[list, list, bytearray, int]:
         """
         This function is called when a Service 3 Housekeeping packet is received.
@@ -143,7 +141,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_5_event(
-        object_id_key: int, event_id: int, param_1: int, param_2: int
+        object_id: bytearray, event_id: int, param_1: int, param_2: int
     ) -> str:
         """
         This function is called when a Service 5 Event Packet is received. The user can specify a custom

@@ -43,7 +43,7 @@ class ExampleHookClass(TmTcHookBase):
         LOGGER.info("TM user factory hook was called")
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
-    def set_object_ids(self) -> Dict[int, bytearray]:
+    def set_object_ids(self) -> Dict[bytes, list]:
         pass
 
     def pack_total_service_queue(self) -> Union[None, TcQueueT]:
