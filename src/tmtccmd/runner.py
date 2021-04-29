@@ -192,14 +192,15 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
 
 
 def __start_tmtc_commander_qt_gui(tmtc_frontend: Union[None, FrontendBase] = None):
-    from tmtccmd.core.frontend import TmTcFrontend
-    try:
-        from PyQt5.QtWidgets import QApplication
-    except ImportError:
-        logger.error("PyQt5 module not installed, can't run GUI mode!")
-        sys.exit(1)
-    app = QApplication(["TMTC Commander"])
+    app = None
     if tmtc_frontend is None:
+        from tmtccmd.core.frontend import TmTcFrontend
+        try:
+            from PyQt5.QtWidgets import QApplication
+        except ImportError:
+            logger.error("PyQt5 module not installed, can't run GUI mode!")
+            sys.exit(1)
+        app = QApplication(["TMTC Commander"])
         tmtc_gui = TmTcFrontend(
             get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
             get_global(CoreGlobalIds.CURRENT_SERVICE)
