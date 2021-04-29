@@ -11,3 +11,14 @@ class TestTmtcRunner(TestCase):
         run_tmtc_commander(False, True, False, tmtc_backend=backend_mock)
         backend_mock.start.assert_called_with()
         backend_mock.initialize.assert_called_with()
+
+    def test_errors(self):
+        self.assertRaises(
+            ValueError, initialize_tmtc_commander, None
+        )
+        self.assertRaises(
+            TypeError, run_tmtc_commander
+        )
+        self.assertRaises(
+            ValueError, run_tmtc_commander, False
+        )
