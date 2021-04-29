@@ -19,7 +19,29 @@ from tmtccmd.pus_tc.packer import ServiceQueuePacker
 LOGGER = get_logger()
 
 
-class TmTcHandler:
+class BackendBase:
+    @abstractmethod
+    def initialize(self):
+        """
+        Initialize the backend. Raise RuntimeError or ValueError on failure
+        """
+
+    @abstractmethod
+    def start(self):
+        """
+        Start the backend. Raise RuntimeError on failure
+        """
+
+    @abstractmethod
+    def set_mode(self, mode: int):
+        """
+        Set backend mode
+        :param mode:
+        :return:
+        """
+
+
+class TmTcHandler(BackendBase):
     """
     This is the primary class which handles TMTC reception. This can be seen as the backend
     in case a GUI or front-end is implemented.
@@ -119,9 +141,9 @@ class TmTcHandler:
                 self.communication_interface.close()
                 sys.exit(1)
         if perform_op_immediately:
-            self.perform_operation()
+            self.__perform_operation()
 
-    def perform_operation(self):
+    def __perform_operation(self):
         """
         Periodic operation
         """

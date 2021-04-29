@@ -35,13 +35,17 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
         initialize_tmtccmd(hook_obj)
         run_tmtc_client(False)
 
-    :param: hook_base:  Instantiation of a custom hook object. The TMTC core will call the various
-                        hook functions during program run-time.
+    :param hook_base:       Instantiation of a custom hook object. The TMTC core will call the various
+                            hook functions during program run-time.
+    :param tmtc_backend:    Custom backend
     """
     __assign_tmtc_commander_hooks(hook_object=hook_object)
 
 
-def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True):
+def run_tmtc_commander(
+        use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True,
+        tmtc_backend = None
+):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
     start the TMTC commander. Please note that assign_tmtc_commander_hooks needs to be called
@@ -64,7 +68,7 @@ def run_tmtc_commander(use_gui: bool, reduced_printout: bool = False, ansi_color
     if use_gui:
         __start_tmtc_commander_qt_gui()
     else:
-        __start_tmtc_commander_cli()
+        __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
 
 def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
@@ -88,7 +92,10 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
     insert_object_ids(hook_object.set_object_ids())
 
 
-def __set_up_tmtc_commander(use_gui: bool, reduced_printout: bool, ansi_colors: bool = True):
+def __set_up_tmtc_commander(
+        use_gui: bool, reduced_printout: bool, ansi_colors: bool = True,
+        tmtc_backend = None
+):
     from tmtccmd.core.hook_base import TmTcHookBase
     from typing import cast
     set_tmtc_logger()
@@ -143,7 +150,7 @@ def __handle_cli_args_and_globals():
     hook_obj.add_globals_post_args_parsing(args)
 
 
-def __start_tmtc_commander_cli():
+def __start_tmtc_commander_cli(tmtc_handler: handler):
     from tmtccmd.core.backend import TmTcHandler
     hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
     if not isinstance(hook_obj, TmTcHookBase):
@@ -152,10 +159,11 @@ def __start_tmtc_commander_cli():
         sys.exit(0)
     service = get_global(CoreGlobalIds.CURRENT_SERVICE)
     op_code = get_global(CoreGlobalIds.OP_CODE)
-    # The global variables are set by the argument parser.
-    tmtc_handler = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
-                               service, op_code)
-    tmtc_handler.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
+    if tmtc_handler is not None:
+        # The global variables are set by the argument parser.
+        tmtc_handler = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
+                                   service, op_code)
+        tmtc_handler.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
     tmtc_handler.initialize()
     tmtc_handler.start()
 
