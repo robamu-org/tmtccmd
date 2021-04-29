@@ -9,9 +9,11 @@
 """
 import threading
 import os
+import sys
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import *
+from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
 
 from tmtccmd.core.frontend_base import FrontendBase
@@ -143,18 +145,35 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         win = QWidget(self)
         self.setCentralWidget(win)
         grid = QGridLayout()
-
-        self.setWindowTitle("TMTC Commander")
-        label = QLabel(self)
-        pixmap = QPixmap(self.logo_path)  # QPixmap is the class, easy to put pic on screen
-        label.setGeometry(720, 10, 100, 100)
-        label.setPixmap(pixmap)
-        self.setWindowIcon(QIcon(self.logo_path))
-        label.setScaledContents(True)
+        win.setLayout(grid)
         row = 0
+        self.setWindowTitle("TMTC Commander")
+        self.setWindowIcon(QIcon(self.logo_path))
+
+        add_pixmap = False
+
+        if add_pixmap:
+            label = QLabel(self)
+            label.setGeometry(720, 10, 100, 100)
+
+            label.adjustSize()
+
+            pixmap = QPixmap(self.logo_path)
+            pixmap_width = pixmap.width()
+            pixmap_height = pixmap.height()
+
+            row += 1
+
+            pixmap_scaled = pixmap.scaled(pixmap_width * 0.3, pixmap_height * 0.3, QtCore.Qt.KeepAspectRatio)
+            label.setPixmap(pixmap_scaled)
+
+            label.setScaledContents(True)
+
+            grid.addWidget(label, row, 0, 1, 2)
+            row += 1
+
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
         row += 1
-
         checkbox_console = QCheckBox("Print output to console")
         checkbox_console.stateChanged.connect(self.checkbox_console_update)
 
@@ -241,16 +260,17 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         combo_box = QComboBox()
 
-        service_dict = get_global(CoreGlobalIds.SERVICELIST)
+        service_dict = get_global(CoreGlobalIds.SERVICE_DICT)
 
-        for service_key, service_value in service_dict.items():
-            combo_box.addItem(service_dict[service_key][0])
-            self.service_list.append(service_value)
+        if service_dict is not None:
+            for service_key, service_value in service_dict.items():
+                combo_box.addItem(service_dict[service_key][0])
+                self.service_list.append(service_value)
 
-        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-        combo_box.setCurrentIndex(default_service.value)
-        combo_box.currentIndexChanged.connect(self.service_index_changed)
-        grid.addWidget(combo_box, row, 0, 1, 1)
+            default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
+            combo_box.setCurrentIndex(default_service.value)
+            combo_box.currentIndexChanged.connect(self.service_index_changed)
+            grid.addWidget(combo_box, row, 0, 1, 1)
 
         self.service_test_button = QPushButton()
         self.service_test_button.setText("Start Service Test")
@@ -295,19 +315,18 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         spin_ssc.valueChanged.connect(self.single_command_set_ssc)
         single_command_grid.addWidget(spin_ssc, row, 2, 1, 1)
 
-        row += 1
+        # row += 1
+        grid.addItem(single_command_grid, row, 0, 1, 2)
+        # single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
 
-        single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
-
-        row += 1
+        # row += 1
 
         # TODO: how should this be converted to the byte array?
-        single_command_data_box = QTextEdit()
-        single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
+        # single_command_data_box = QTextEdit()
+        # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
 
-        grid.addItem(single_command_grid, row, 0, 1, 2)
 
-        row += 1
+        # row += 1
 
         # self.commandTable = SingleCommandTable()
         # grid.addWidget(self.commandTable, row, 0, 1, 2)
@@ -318,8 +337,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(self.single_command_button, row, 0, 1, 2)
         row += 1
 
-        win.setLayout(grid)
-        self.resize(900, 800)
         self.show()
 
         # resize table columns to fill the window width

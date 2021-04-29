@@ -24,7 +24,7 @@ def set_json_cfg_path(json_cfg_path: str):
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
-        com_if_id: int = CoreComInterfaces.TCPIP_UDP, display_mode="long",
+        com_if_id: int = CoreComInterfaces.DUMMY, display_mode="long",
         tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
 ):
     update_global(CoreGlobalIds.APID, apid)
@@ -160,6 +160,8 @@ def get_core_service_dict() -> dict:
     return core_service_dict
 
 
+def set_core_service_dict() -> dict:
+    update_global(CoreGlobalIds.SERVICE_DICT)
 def check_and_set_other_args(args):
     if args.listener is not None:
         update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)
