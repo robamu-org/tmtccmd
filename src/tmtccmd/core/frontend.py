@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/env python3
 """
 @file           tmtc_frontend.py
 @date           01.11.2019
@@ -55,7 +55,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.is_busy = False
         module_path = os.path.abspath(defaults_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
-        print(self.logo_path)
         self.tmtc_handler.start(False)
 
     def prepare_start(self, args: any) -> Process:

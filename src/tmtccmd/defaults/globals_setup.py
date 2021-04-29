@@ -160,8 +160,6 @@ def get_core_service_dict() -> dict:
     return core_service_dict
 
 
-def set_core_service_dict() -> dict:
-    update_global(CoreGlobalIds.SERVICE_DICT)
 def check_and_set_other_args(args):
     if args.listener is not None:
         update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)
