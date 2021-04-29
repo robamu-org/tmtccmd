@@ -10,6 +10,7 @@
 import sys
 
 from tmtccmd.core.hook_base import TmTcHookBase
+from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.definitions import CoreGlobalIds
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
@@ -138,6 +139,7 @@ def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool
 def __handle_cli_args_and_globals():
     from typing import cast
     from tmtccmd.core.globals_manager import get_global
+    from tmtccmd.defaults.globals_setup import set_json_cfg_path
 
     hook_obj = cast(TmTcHookBase, get_global(CoreGlobalIds.TMTC_HOOK))
     logger.info("Setting up pre-globals..")
@@ -146,11 +148,16 @@ def __handle_cli_args_and_globals():
     logger.info("Parsing input arguments..")
     args = parse_input_arguments()
 
+    json_cfg_path = hook_obj.set_json_config_file_path()
+
+    set_json_cfg_path(json_cfg_path=json_cfg_path)
+    get_global(CoreGlobalIds.JSON_CFG_PATH)
+
     logger.info("Setting up post-globals..")
-    hook_obj.add_globals_post_args_parsing(args)
+    hook_obj.add_globals_post_args_parsing(args, json_cfg_path=json_cfg_path)
 
 
-def __start_tmtc_commander_cli(tmtc_handler: handler):
+def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
     from tmtccmd.core.backend import TmTcHandler
     hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
     if not isinstance(hook_obj, TmTcHookBase):
@@ -159,13 +166,13 @@ def __start_tmtc_commander_cli(tmtc_handler: handler):
         sys.exit(0)
     service = get_global(CoreGlobalIds.CURRENT_SERVICE)
     op_code = get_global(CoreGlobalIds.OP_CODE)
-    if tmtc_handler is not None:
+    if tmtc_backend is None:
         # The global variables are set by the argument parser.
-        tmtc_handler = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
+        tmtc_backend = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
                                    service, op_code)
-        tmtc_handler.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
-    tmtc_handler.initialize()
-    tmtc_handler.start()
+        tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
+    tmtc_backend.initialize()
+    tmtc_backend.start()
 
 
 def __start_tmtc_commander_qt_gui():

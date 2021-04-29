@@ -45,7 +45,7 @@ class TmTcHookBase:
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
 
     @abstractmethod
-    def add_globals_post_args_parsing(self, args: argparse.Namespace):
+    def add_globals_post_args_parsing(self, args: argparse.Namespace, json_cfg_path: str=""):
         """
         Add global variables prior after parsing the CLI arguments.
         :param gui:  Specify whether a GUI is used
@@ -157,5 +157,7 @@ class TmTcHookBase:
         """
         return ""
 
-
+    @abstractmethod
+    def set_json_config_file_path(self) -> str:
+        return "tmtc_config.json"
 

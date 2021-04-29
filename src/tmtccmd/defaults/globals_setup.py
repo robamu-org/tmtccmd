@@ -17,6 +17,10 @@ from tmtccmd.ecss.conf import set_default_apid, set_pus_tc_version, set_pus_tm_v
 LOGGER = get_logger()
 
 
+def set_json_cfg_path(json_cfg_path: str):
+    update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
+
+
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
@@ -47,6 +51,7 @@ def set_default_globals_pre_args_parsing(
 
 def set_default_globals_post_args_parsing(
         args: argparse.Namespace,
+        json_cfg_path: str,
         custom_modes_list: Union[None, List[Union[collections.Iterable, dict]]] = None,
         custom_services_list: Union[None, List[Union[collections.Iterable, dict]]] = None,
         custom_com_ifs_lists: Union[None, List[Union[collections.Iterable, dict]]] = None):
@@ -85,7 +90,9 @@ def set_default_globals_post_args_parsing(
         from tmtccmd.core.definitions import CoreComInterfacesString
         LOGGER.info("Communication interface unspecified. "
                     "Trying to read from JSON or prompting from user..")
-        com_if_param = determine_com_if(integer_to_string_dict=CoreComInterfacesString)
+        com_if_param = determine_com_if(
+            integer_to_string_dict=CoreComInterfacesString, json_cfg_path=json_cfg_path
+        )
     com_if_param = check_and_set_core_com_if_arg(
         com_if_arg=com_if_param, custom_com_ifs_list=custom_com_ifs_lists
     )
@@ -134,7 +141,7 @@ def set_default_globals_post_args_parsing(
     if com_if_param == CoreComInterfaces.TCPIP_UDP:
         # TODO: Port and IP address can also be passed as CLI parameters.
         #      Use them here if applicable?
-        default_tcpip_udp_cfg_setup()
+        default_tcpip_udp_cfg_setup(json_cfg_path=json_cfg_path)
     if DEBUG_MODE:
         print_core_globals()
 

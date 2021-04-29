@@ -6,13 +6,13 @@ from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 LOGGER = get_logger()
 
 
-def determine_com_if(integer_to_string_dict: dict) -> int:
+def determine_com_if(integer_to_string_dict: dict, json_cfg_path: str) -> int:
     prompt_com_if = False
-    if not check_json_file():
+    if not check_json_file(json_cfg_path=json_cfg_path):
         prompt_com_if = True
 
     if not prompt_com_if:
-        with open("config/tmtcc_config.json", "r") as read:
+        with open(json_cfg_path, "r") as read:
             com_if_string = ""
             try:
                 load_data = json.load(read)
@@ -40,7 +40,7 @@ def determine_com_if(integer_to_string_dict: dict) -> int:
                 print("Invalid key, try again.")
         save_to_json = input("Do you want to store the communication interface? (y/n): ")
         if save_to_json.lower() in ['y', "yes", "1"]:
-            with open("config/tmtcc_config.json", "r+") as file:
+            with open(json_cfg_path, "r+") as file:
                 data = json.load(file)
                 data[JsonKeyNames.COM_IF.value] = com_if_string
                 file.seek(0)
