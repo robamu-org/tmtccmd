@@ -8,6 +8,7 @@
 @author     R. Mueller
 """
 import sys
+from typing import Union
 
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
@@ -45,7 +46,7 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
 
 def run_tmtc_commander(
         use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True,
-        tmtc_backend = None
+        tmtc_backend: Union[BackendBase, None] = None
 ):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
@@ -99,7 +100,7 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
 
 def __set_up_tmtc_commander(
         use_gui: bool, reduced_printout: bool, ansi_colors: bool = True,
-        tmtc_backend = None
+        tmtc_backend: Union[BackendBase, None] = None
 ):
     """
     Set up the TMTC commander. Raise ValueError if a passed parameter is invalid.

@@ -9,6 +9,10 @@ import struct
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices
 from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
+from tmtccmd.utility.tmtcc_logger import get_logger
+
+
+LOGGER = get_logger()
 
 
 class Service5TM(PusTelemetry):
@@ -49,10 +53,10 @@ class Service5TM(PusTelemetry):
             hook_obj = get_global_hook_obj()
             self.custom_data_header, self.custom_data_content = \
                 hook_obj.handle_service_5_event(
-                    object_id=self.object_id_key, event_id=event_id, param_1=param_1,param_2=param_2
+                    object_id=self.object_id_key, event_id=event_id, param_1=param_1, param_2=param_2
                 )
         except ImportError:
-            logger.warning("Service 5 user data hook not supplied!")
+            LOGGER.warning("Service 5 user data hook not supplied!")
 
     def get_reporter_id(self):
         return self.object_id
