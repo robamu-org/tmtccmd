@@ -4,7 +4,7 @@ from argparse import Namespace
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
-
+from tmtccmd.core.frontend_base import FrontendBase
 
 def create_hook_mock() -> TmTcHookBase:
     tmtc_hook_base = TmTcHookBase()
@@ -24,3 +24,10 @@ def create_backend_mock() -> TmTcHandler:
     tmtc_backend.start = MagicMock(return_value=0)
     tmtc_backend.initialize = MagicMock(return_value=0)
     return tmtc_backend
+
+
+def create_frontend_mock() -> FrontendBase:
+    from tmtccmd.core.frontend_base import FrontendBase
+    tmtc_frontend = FrontendBase()
+    tmtc_frontend.start = MagicMock(return_value=0)
+    return tmtc_frontend

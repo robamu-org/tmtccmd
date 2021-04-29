@@ -48,7 +48,8 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
 
 def run_tmtc_commander(
         use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True,
-        tmtc_backend: Union[BackendBase, None] = None, tmtc_frontend = None
+        tmtc_backend: Union[BackendBase, None] = None,
+        tmtc_frontend: Union[FrontendBase, None] = None
 ):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
@@ -178,7 +179,7 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
     if not isinstance(hook_obj, TmTcHookBase):
         logger.error("TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
                      "starting the program")
-        sys.exit(0)
+        raise ValueError
     service = get_global(CoreGlobalIds.CURRENT_SERVICE)
     op_code = get_global(CoreGlobalIds.OP_CODE)
     if tmtc_backend is None:
@@ -203,7 +204,7 @@ def __start_tmtc_commander_qt_gui(tmtc_frontend: Union[None, FrontendBase] = Non
             get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
             get_global(CoreGlobalIds.CURRENT_SERVICE)
         )
-    tmtc_gui.start(app)
+    tmtc_frontend.start(app)
 
 
 

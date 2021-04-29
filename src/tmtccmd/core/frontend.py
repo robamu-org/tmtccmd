@@ -42,10 +42,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     single_command_ssc: int = 20
     single_command_data: bytearray = bytearray([])
 
-    def __init__(self, init_com_if: CoreComInterfaces, init_mode: int, init_service: int):
+    def __init__(self, tmtc_backend: TmTcHandler):
         super(TmTcFrontend, self).__init__()
-        self.tmtc_handler = TmTcHandler(init_com_if=init_com_if, init_mode=init_mode,
-                                        init_service=init_service)
+        self.tmtc_handler = tmtc_backend
         # TODO: Perform initialization on button press with specified ComIF
         #       Also, when changing ComIF, ensure that old ComIF is closed (e.g. with printout)
         #       Lock all other elements while ComIF is invalid.
@@ -55,12 +54,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.is_busy = False
         module_path = os.path.abspath(defaults_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
-        self.tmtc_handler.start(False)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start_ui)
 
     def start(self, qt_app: any):
+        self.tmtc_handler.start(False)
         self.start_ui()
         sys.exit(qt_app.exec_())
 
