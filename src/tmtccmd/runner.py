@@ -50,7 +50,8 @@ def run_tmtc_commander(
     """
     This is the primary function to run the TMTC commander. Users should call this function to
     start the TMTC commander. Please note that assign_tmtc_commander_hooks needs to be called
-    before this function.
+    before this function. Raises RuntimeError if initialize_tmtc_commander
+    has not been called before calling this function.
 
     Example for a simple main function content to use the command line mode:
 
@@ -63,9 +64,12 @@ def run_tmtc_commander(
     :param ansi_colors:         Enable ANSI color output for terminal
     :return:
     """
-    __set_up_tmtc_commander(
-        use_gui=use_gui, reduced_printout=reduced_printout, ansi_colors=ansi_colors
-    )
+    try:
+        __set_up_tmtc_commander(
+            use_gui=use_gui, reduced_printout=reduced_printout, ansi_colors=ansi_colors
+        )
+    except ValueError:
+        raise RuntimeError
     if use_gui:
         __start_tmtc_commander_qt_gui()
     else:
@@ -97,6 +101,14 @@ def __set_up_tmtc_commander(
         use_gui: bool, reduced_printout: bool, ansi_colors: bool = True,
         tmtc_backend = None
 ):
+    """
+    Set up the TMTC commander. Raise ValueError if a passed parameter is invalid.
+    :param use_gui:
+    :param reduced_printout:
+    :param ansi_colors:
+    :param tmtc_backend:
+    :return:
+    """
     from tmtccmd.core.hook_base import TmTcHookBase
     from typing import cast
     set_tmtc_logger()
@@ -108,7 +120,7 @@ def __set_up_tmtc_commander(
     if hook_obj_raw is None:
         logger.info("No valid hook object found. "
                     "initialize_tmtc_commander needs to be called first. Terminating..")
-        sys.exit(-1)
+        raise ValueError
     hook_obj = cast(TmTcHookBase, hook_obj_raw)
 
     if not reduced_printout:

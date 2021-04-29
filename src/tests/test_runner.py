@@ -10,3 +10,4 @@ class TestTmtcRunner(TestCase):
         initialize_tmtc_commander(hook_object=hook_base)
         run_tmtc_commander(False, True, False, tmtc_backend=backend_mock)
         backend_mock.start.assert_called_with()
+        backend_mock.initialize.assert_called_with()
