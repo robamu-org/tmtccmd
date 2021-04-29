@@ -8,6 +8,7 @@
 import struct
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices
+from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
 
 
 class Service5TM(PusTelemetry):
@@ -24,6 +25,7 @@ class Service5TM(PusTelemetry):
             self.append_packet_info(" Error High Severity")
         self.event_id = struct.unpack('>H', self._tm_data[0:2])[0]
         self.object_id = struct.unpack('>I', self._tm_data[2:6])[0]
+        self.object_id_key = get_key_from_raw_object_id(self.get_tm_data()[2:6])
         self.param_1 = struct.unpack('>I', self._tm_data[6:10])[0]
         self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
 
@@ -40,6 +42,17 @@ class Service5TM(PusTelemetry):
         header_list.append("Reporter ID")
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
+
+    def handle_service_5_event(self, object_id: int, event_id: int, param_1: int, param_2: int) -> str:
+        try:
+            from tmtccmd.core.hook_helper import get_global_hook_obj
+            hook_obj = get_global_hook_obj()
+            self.custom_data_header, self.custom_data_content = \
+                hook_obj.handle_service_5_event(
+                    object_id=self.object_id_key, event_id=event_id, param_1=param_1,param_2=param_2
+                )
+        except ImportError:
+            logger.warning("Service 5 user data hook not supplied!")
 
     def get_reporter_id(self):
         return self.object_id
