@@ -52,9 +52,9 @@ def set_default_globals_pre_args_parsing(
 def set_default_globals_post_args_parsing(
         args: argparse.Namespace,
         json_cfg_path: str,
-        custom_modes_list: Union[None, List[Union[collections.Iterable, dict]]] = None,
-        custom_services_list: Union[None, List[Union[collections.Iterable, dict]]] = None,
-        custom_com_ifs_lists: Union[None, List[Union[collections.Iterable, dict]]] = None):
+        custom_modes_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None,
+        custom_services_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None,
+        custom_com_ifs_lists: Union[None, List[Union[collections.abc.Iterable, dict]]] = None):
     """
     This function takes the argument namespace as a parameter and determines
     a set of globals from the parsed arguments.

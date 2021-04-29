@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 from abc import abstractmethod
+from argparse import Namespace
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
@@ -9,6 +10,9 @@ def create_hook_mock() -> TmTcHookBase:
     tmtc_hook_base = TmTcHookBase()
     tmtc_hook_base.add_globals_pre_args_parsing = MagicMock(return_value=0)
     tmtc_hook_base.add_globals_post_args_parsing = MagicMock(return_value=0)
+    tmtc_hook_base.custom_args_parsing = MagicMock(
+        return_value=Namespace(service=17, mode=CoreModeList.IDLE)
+    )
     return tmtc_hook_base
 
 
