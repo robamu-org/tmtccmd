@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """
 @brief      Core method called by entry point files to initiate the TMTC commander.
             The commander is started by first running initialize_tmtc_commander and then
