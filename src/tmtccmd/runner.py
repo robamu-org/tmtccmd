@@ -79,6 +79,8 @@ def run_tmtc_commander(
     if use_gui:
         __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
     else:
+        if tmtc_backend is None:
+            tmtc_backend = get_default_tmtc_backend()
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
 
@@ -122,8 +124,9 @@ def __set_up_tmtc_commander(
     # of the commander core.
     hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
     if hook_obj_raw is None:
-        logger.info("No valid hook object found. "
-                    "initialize_tmtc_commander needs to be called first. Terminating..")
+        logger.info(
+            "No valid hook object found. initialize_tmtc_commander needs to be called first. Terminating.."
+        )
         raise ValueError
     hook_obj = cast(TmTcHookBase, hook_obj_raw)
 
@@ -177,17 +180,12 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
     from tmtccmd.core.backend import TmTcHandler
     hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
     if not isinstance(hook_obj, TmTcHookBase):
-        logger.error("TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
-                     "starting the program")
+        logger.error(
+            "TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
+            "starting the program"
+        )
         raise ValueError
     __get_backend_init_variables()
-    if tmtc_backend is None:
-        service, op_code, com_if, mode = __get_backend_init_variables()
-        # The global variables are set by the argument parser.
-        tmtc_backend = TmTcHandler(
-            init_com_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
-        )
-        tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
     tmtc_backend.initialize()
     tmtc_backend.start()
 
@@ -220,3 +218,14 @@ def __get_backend_init_variables():
     com_if = get_global(CoreGlobalIds.COM_IF)
     mode = get_global(CoreGlobalIds.MODE)
     return service, op_code, com_if, mode
+
+
+def get_default_tmtc_backend():
+    from tmtccmd.core.backend import TmTcHandler
+    service, op_code, com_if, mode = __get_backend_init_variables()
+    # The global variables are set by the argument parser.
+    tmtc_backend = TmTcHandler(
+        init_com_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
+    )
+    tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
+    return tmtc_backend

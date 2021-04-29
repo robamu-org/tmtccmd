@@ -1,5 +1,5 @@
 from unittest import TestCase
-from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander
+from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander, get_default_tmtc_backend
 from tests.backend_mock import create_backend_mock, create_hook_mock, create_frontend_mock
 
 
@@ -20,6 +20,8 @@ class TestTmtcRunner(TestCase):
         frontend_mock.start.assert_called_once()
         qt_app = frontend_mock.start.call_args[0][0]
         self.assertTrue(qt_app is None)
+        default_backend = get_default_tmtc_backend()
+        self.assertTrue(default_backend is not None)
 
     def test_errors(self):
         self.assertRaises(
