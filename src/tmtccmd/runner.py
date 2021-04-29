@@ -12,6 +12,7 @@ from typing import Union
 
 from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
+from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.definitions import CoreGlobalIds
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
@@ -47,7 +48,7 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
 
 def run_tmtc_commander(
         use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True,
-        tmtc_backend: Union[BackendBase, None] = None
+        tmtc_backend: Union[BackendBase, None] = None, tmtc_frontend = None
 ):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
@@ -75,7 +76,7 @@ def run_tmtc_commander(
         print("Invalid ")
         raise ValueError
     if use_gui:
-        __start_tmtc_commander_qt_gui()
+        __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
     else:
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
@@ -90,7 +91,7 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
             or hook_object.add_globals_post_args_parsing is None:
         logger.error("Passed hook base object handle is invalid. "
                      "Abstract functions have to be implemented!")
-        sys.exit(-1)
+        raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
     # Set core object IDs
@@ -189,7 +190,7 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
     tmtc_backend.start()
 
 
-def __start_tmtc_commander_qt_gui():
+def __start_tmtc_commander_qt_gui(tmtc_frontend: Union[None, FrontendBase] = None):
     from tmtccmd.core.frontend import TmTcFrontend
     try:
         from PyQt5.QtWidgets import QApplication
@@ -197,10 +198,12 @@ def __start_tmtc_commander_qt_gui():
         logger.error("PyQt5 module not installed, can't run GUI mode!")
         sys.exit(1)
     app = QApplication(["TMTC Commander"])
-    tmtc_gui = TmTcFrontend(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
-                            get_global(CoreGlobalIds.CURRENT_SERVICE))
-    tmtc_gui.start_ui()
-    sys.exit(app.exec_())
+    if tmtc_frontend is None:
+        tmtc_gui = TmTcFrontend(
+            get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
+            get_global(CoreGlobalIds.CURRENT_SERVICE)
+        )
+    tmtc_gui.start(app)
 
 
 

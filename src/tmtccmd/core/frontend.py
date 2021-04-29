@@ -14,6 +14,7 @@ from multiprocessing import Process
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap, QIcon
 
+from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
 from tmtccmd.config.globals import get_global_apid
@@ -27,7 +28,7 @@ import tmtccmd.defaults as defaults_module
 LOGGER = get_logger()
 
 
-class TmTcFrontend(QMainWindow):
+class TmTcFrontend(QMainWindow, FrontendBase):
 
     # TODO: this list should probably be inside an enum in the tmtcc_config.py
     service_test_button: QPushButton
@@ -57,6 +58,10 @@ class TmTcFrontend(QMainWindow):
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start_ui)
+
+    def start(self, qt_app: any):
+        self.start_ui()
+        sys.exit(qt_app.exec_())
 
     def set_gui_logo(self, logo_total_path: str):
         if os.path.isfile(logo_total_path):
