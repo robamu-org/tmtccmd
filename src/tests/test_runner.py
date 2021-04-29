@@ -4,6 +4,7 @@ from tests.backend_mock import create_backend_mock, create_hook_mock, create_fro
 
 
 class TestTmtcRunner(TestCase):
+
     def test_tmtc_runner(self):
         hook_base = create_hook_mock()
         backend_mock = create_backend_mock()
