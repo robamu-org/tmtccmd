@@ -180,32 +180,43 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
         logger.error("TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
                      "starting the program")
         raise ValueError
-    service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-    op_code = get_global(CoreGlobalIds.OP_CODE)
+    __get_backend_init_variables()
     if tmtc_backend is None:
+        service, op_code, com_if, mode = __get_backend_init_variables()
         # The global variables are set by the argument parser.
-        tmtc_backend = TmTcHandler(get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
-                                   service, op_code)
+        tmtc_backend = TmTcHandler(
+            init_com_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
+        )
         tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
     tmtc_backend.initialize()
     tmtc_backend.start()
 
 
-def __start_tmtc_commander_qt_gui(tmtc_frontend: Union[None, FrontendBase] = None):
+def __start_tmtc_commander_qt_gui(
+        tmtc_frontend: Union[None, FrontendBase] = None
+):
     app = None
     if tmtc_frontend is None:
         from tmtccmd.core.frontend import TmTcFrontend
+        from tmtccmd.core.backend import TmTcHandler
         try:
             from PyQt5.QtWidgets import QApplication
         except ImportError:
             logger.error("PyQt5 module not installed, can't run GUI mode!")
             sys.exit(1)
         app = QApplication(["TMTC Commander"])
-        tmtc_gui = TmTcFrontend(
-            get_global(CoreGlobalIds.COM_IF), get_global(CoreGlobalIds.MODE),
-            get_global(CoreGlobalIds.CURRENT_SERVICE)
+        service, op_code, com_if, mode = __get_backend_init_variables()
+        # The global variables are set by the argument parser.
+        tmtc_backend = TmTcHandler(
+            init_com_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
         )
+        tmtc_frontend = TmTcFrontend(tmtc_backend=tmtc_backend)
     tmtc_frontend.start(app)
 
 
-
+def __get_backend_init_variables():
+    service = get_global(CoreGlobalIds.CURRENT_SERVICE)
+    op_code = get_global(CoreGlobalIds.OP_CODE)
+    com_if = get_global(CoreGlobalIds.COM_IF)
+    mode = get_global(CoreGlobalIds.MODE)
+    return service, op_code, com_if, mode
