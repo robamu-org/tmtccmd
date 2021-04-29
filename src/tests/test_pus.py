@@ -14,10 +14,8 @@ from tmtccmd.ecss.tm import PusTelemetry
 
 class TestTelemetry(TestCase):
     def test_space_packet_functions(self):
-        ssc = get_sp_packet_sequence_control(sequence_flags=0b111, source_sequence_count=42)
-        print(ssc)
-        self.assertTrue(ssc & 0xC000 == 0b11)
-        pass
+        psc = get_sp_packet_sequence_control(sequence_flags=0b111, source_sequence_count=42)
+        self.assertTrue(psc & 0xc000 == 0xc000)
 
     def test_generic_pus_c(self):
         pus_17_telecommand = Service17TmPacked(subservice=1, ssc=36)

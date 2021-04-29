@@ -133,7 +133,7 @@ def get_sp_packet_sequence_control(sequence_flags: int, source_sequence_count: i
     if sequence_flags > 3:
         print("get_sp_packet_sequence_control: Sequence flag value larger than 0b11! "
               "Setting to 0b11..")
-        sequence_flags = 3
+        sequence_flags = 0b11
     if source_sequence_count > 0x3fff:
         print("get_sp_packet_sequence_control: Source sequence count largen than 0x3fff. "
               "Larger bits are cut off!")
