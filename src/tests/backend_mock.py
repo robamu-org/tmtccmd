@@ -1,6 +1,13 @@
 from unittest.mock import MagicMock
+from abc import abstractmethod
 from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
+
+
+def create_hook_mock() -> TmTcHookBase:
+    tmtc_hook_base = TmTcHookBase()
+    return tmtc_hook_base
 
 
 def create_backend_mock() -> TmTcHandler:
