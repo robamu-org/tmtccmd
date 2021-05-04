@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from tmtccmd.pus_tm.service_1_verification import Service1TmPacked, Service1TM
 from tmtccmd.pus_tm.service_5_event import Service5TM, Service5TmPacked, Severity
+from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.utility.tmtcc_logger import get_logger, set_tmtc_logger
 
@@ -37,3 +38,6 @@ class TestPrinter(TestCase):
         )
         service_5_tm = Service5TM(service_5_packed.pack(), call_srv5_hook=False)
         self.tmtc_printer.print_telemetry(packet=service_5_tm)
+
+        service_17_command = pack_service17_ping_command(ssc=0, apid=42)
+        self.tmtc_printer.print_telecommand(tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack())

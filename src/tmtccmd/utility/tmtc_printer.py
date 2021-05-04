@@ -354,18 +354,16 @@ class TmTcPrinter:
         shift_number = position + (6 - 2 * (position - 1))
         return (byte >> shift_number) & 1
 
-    def print_telecommand(self, tc_packet: bytes, tc_packet_obj: PusTelecommand = None):
+    def print_telecommand(self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytearray()):
         """
-        This function handles the printing of Telecommands
+        This function handles the printing of Telecommands. It assumed the packets are sent shortly before or after.
         :param tc_packet:
         :param tc_packet_obj:
         :return:
         """
         if self.print_tc:
-            if len(tc_packet) == 0:
-                LOGGER.error("TMTC Printer: Empty packet was sent, configuration error")
-                return
             if tc_packet_obj is None:
+                LOGGER.error("TMTC Printer: Invalid telecommand")
                 return
             if self._display_mode == DisplayMode.SHORT:
                 self._handle_short_tc_print(tc_packet_obj=tc_packet_obj)
