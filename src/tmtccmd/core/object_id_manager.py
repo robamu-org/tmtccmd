@@ -28,7 +28,7 @@ class ObjectIdManager:
 
     # noinspection PyUnresolvedReferences
     def get_object_id_info(self, object_id: bytearray):
-        object_id = self.object_id_dict.get(object_id_key)
+        object_id = self.object_id_dict.get(bytes(object_id))
         if object_id is None:
             try:
                 LOGGER.error("This key does not exist in the object ID dictionary!")
@@ -43,7 +43,7 @@ class ObjectIdManager:
         return get_object_id_info(object_id=object_id_bytearray)
 
     def insert_object_id(self, object_id: bytearray, object_id_info: list):
-        self.object_id_dict.update({object_id_key: object_id})
+        self.object_id_dict.update({bytes(object_id): object_id_info})
 
     def insert_object_ids(self, object_id_dict: Dict[bytearray, list]):
         self.object_id_dict.update(object_id_dict)
@@ -61,4 +61,4 @@ def insert_object_ids(object_id_dict: Dict[bytearray, list]):
 
 
 def get_object_id_info(object_id: bytearray):
-    return ObjectIdManager.get_manager().get_object_id(object_id)
+    return ObjectIdManager.get_manager().get_object_id_info(object_id=object_id)
