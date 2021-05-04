@@ -233,10 +233,9 @@ class TmTcPrinter:
         """
         if wiretapping_packet.get_service() == 2 and (wiretapping_packet.get_subservice() == 131 or
                                                       wiretapping_packet.get_subservice() == 130):
-            self.__print_buffer = "Wiretapping Packet or Raw Reply from TM [" + \
-                                  str(wiretapping_packet.get_service()) + "," + \
-                                  str(wiretapping_packet.get_subservice()) + "]: "
-            self.__print_buffer = self.__print_buffer + wiretapping_packet.return_source_data()
+            self.__print_buffer = f"Wiretapping Packet or Raw Reply from TM [{wiretapping_packet.get_service()}," \
+                                  f"{wiretapping_packet.get_subservice()}]: "
+            self.__print_buffer = self.__print_buffer + wiretapping_packet.return_source_data_string()
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
@@ -248,7 +247,7 @@ class TmTcPrinter:
         try:
             if srv8_tm.custom_data_content is [] or srv8_tm.custom_data_header is []:
                 self.__print_buffer = f"Service 8 Direct Command Reply TM[8,130] with TM data: " \
-                                      f"{srv8_tm.return_source_data()}"
+                                      f"{srv8_tm.return_source_data_string()}"
             else:
                 self.__print_buffer = f"{srv8_tm.custom_data_header}\n"
                 self.__print_buffer += f"{srv8_tm.custom_data_content}\n"
@@ -265,7 +264,7 @@ class TmTcPrinter:
         printout = srv_5_tm.get_custom_printout()
         if printout != "":
             self.__print_buffer += printout
-            LOGGER(printout)
+            LOGGER.info(printout)
             self.add_print_buffer_to_file_buffer()
 
     def print_string(self, string: str, add_cr_to_file_buffer: bool = False):

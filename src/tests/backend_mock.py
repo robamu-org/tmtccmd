@@ -6,6 +6,7 @@ from tmtccmd.core.hook_base import TmTcHookBase
 from tmtccmd.core.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
 from tmtccmd.core.frontend_base import FrontendBase
 
+
 def create_hook_mock() -> TmTcHookBase:
     tmtc_hook_base = TmTcHookBase()
     tmtc_hook_base.add_globals_pre_args_parsing = MagicMock(return_value=0)
