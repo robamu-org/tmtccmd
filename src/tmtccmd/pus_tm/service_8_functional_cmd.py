@@ -4,7 +4,6 @@
 import struct
 
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.definitions import CoreObjectIds
 
@@ -15,7 +14,6 @@ class Service8TM(PusTelemetry):
     def __init__(self, byte_array, call_srv8_hook: bool = True):
         super().__init__(byte_array)
         self.source_object_id = 0
-        self.object_id_key = CoreObjectIds.INVALID
         self.source_action_id = 0
         self.custom_data = bytearray()
         self.custom_data_header = []
@@ -23,7 +21,7 @@ class Service8TM(PusTelemetry):
         if self.get_subservice() == 130:
             self.specify_packet_info("Functional Data Reply")
             self.source_object_id = struct.unpack('!I', self.get_tm_data()[0:4])[0]
-            self.object_id_key = get_key_from_raw_object_id(self.get_tm_data()[0:4])
+            self.object_id_bytes = self.get_tm_data()[0:4]
             if self.object_id_key == CoreObjectIds.INVALID:
                 logger.warning("Service8TM: Unknown object ID")
             self.source_action_id = struct.unpack('!I', self.get_tm_data()[4:8])[0]
@@ -36,7 +34,7 @@ class Service8TM(PusTelemetry):
                 hook_obj = get_global_hook_obj()
                 self.custom_data_header, self.custom_data_content = \
                     hook_obj.handle_service_8_telemetry(
-                        object_id=self.object_id_key, action_id=self.source_action_id,
+                        object_id=self.object_id_bytes, action_id=self.source_action_id,
                         custom_data=self.custom_data
                     )
             except ImportError:
