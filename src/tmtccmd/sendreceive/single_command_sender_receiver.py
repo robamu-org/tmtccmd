@@ -50,7 +50,7 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
         self._operation_pending = True
         self._tm_listener.set_listener_mode(TmListener.ListenerModes.SEQUENCE)
         self._tmtc_printer.print_telecommand(tc_packet_obj=pus_packet_obj, tc_packet_raw=pus_packet_raw)
-        self._com_interface.send_telecommand(tc_packet=pus_packet, tc_packet_obj=pus_packet_obj)
+        self._com_interface.send_telecommand(tc_packet=pus_packet_raw, tc_packet_obj=pus_packet_obj)
         self._last_tc = pus_packet_raw
         self._last_tc_info = pus_packet_obj
         while self._operation_pending:
