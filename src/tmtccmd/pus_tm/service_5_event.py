@@ -6,6 +6,7 @@
 :author:    R. Mueller
 """
 import struct
+from tmtccmd.pus.service_list import PusServices
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
@@ -15,6 +16,7 @@ from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()
 
+
 class Service5TM(PusTelemetry):
     def __init__(self, byte_array, call_srv5_hook: bool = True):
         """
@@ -22,7 +24,10 @@ class Service5TM(PusTelemetry):
         :param byte_array:      Raw bytearray to deserialize, containing the service 5 packet.
         :param call_srv5_hook:  Calls the global hook function to retrieve a custom printout for Service 5 packets.
         """
-        super().__init__(byte_array)
+        super().__init__(raw_telemetry=byte_array)
+        if self.get_service() != 5:
+            LOGGER.warning("This packet is not an event service packet!")
+
         self.specify_packet_info("Event")
         if self.get_subservice() == Srv5Subservices.INFO_EVENT:
             self.append_packet_info(" Info")
@@ -98,16 +103,18 @@ class Service5TmPacked(PusTelemetryCreator):
             self, severity: Severity, event_id: int, object_id: bytearray = bytearray(),
             param_1: int = 0, param_2: int = 0, ssc: int = 0
     ):
-        self.object_id = object_id
         self.event_id = event_id
+        self.object_id = object_id
         self.param_1 = param_1
         self.param_2 = param_2
         source_data = bytearray()
-        source_data.extend(object_id)
         source_data.extend(struct.pack('!H', self.event_id))
+        source_data.extend(object_id)
         source_data.extend(struct.pack('!I', self.param_1))
         source_data.extend(struct.pack('!I', self.param_2))
-        super().__init__(service=1, subservice=severity, ssc=ssc, source_data=source_data)
+        super().__init__(
+            service=PusServices.SERVICE_5_EVENT, subservice=severity, ssc=ssc,
+            source_data=source_data)
 
     def pack(self) -> bytearray:
         return super().pack()

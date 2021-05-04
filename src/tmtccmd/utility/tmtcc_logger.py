@@ -8,6 +8,7 @@ import sys
 
 TMTC_LOGGER_NAME = "TMTC Logger"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"
+LOGGER_SET_UP = False
 
 
 # pylint: disable=arguments-differ
@@ -33,6 +34,7 @@ class DebugFilter(logging.Filter):
 
 
 def set_tmtc_logger() -> logging.Logger:
+    global LOGGER_SET_UP
     """
     Sets the LOGGER object which will be used globally. This needs to be called before using the logger.
     """
@@ -75,12 +77,17 @@ def set_tmtc_logger() -> logging.Logger:
     logger.addHandler(console_info_handler)
     logger.addHandler(console_debug_handler)
     logger.addHandler(console_error_handler)
+    LOGGER_SET_UP = True
     return logger
 
 
-def get_logger() -> logging.Logger:
+def get_logger(set_up_logger: bool = False) -> logging.Logger:
+    global LOGGER_SET_UP
     """
     Get the global LOGGER instance.
     """
     logger = logging.getLogger(TMTC_LOGGER_NAME)
+    if set_up_logger and not LOGGER_SET_UP:
+        LOGGER_SET_UP = True
+        set_tmtc_logger()
     return logger
