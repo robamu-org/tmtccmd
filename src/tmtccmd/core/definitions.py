@@ -83,6 +83,7 @@ class CoreGlobalIds(enum.IntEnum):
     PRETTY_PRINTER = 132
 
     # Parameters
+    JSON_CFG_PATH = 139
     APID = 140
     MODE = 141
     CURRENT_SERVICE = 142

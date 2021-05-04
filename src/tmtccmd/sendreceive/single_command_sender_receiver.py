@@ -43,16 +43,16 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
         :return:
         """
         try:
-            pus_packet, pus_packet_info = pus_packet_tuple
+            pus_packet_raw, pus_packet_obj = pus_packet_tuple
         except TypeError:
             logger.error("SingleCommandSenderReceiver: Invalid command input")
             return
         self._operation_pending = True
         self._tm_listener.set_listener_mode(TmListener.ListenerModes.SEQUENCE)
-        self._tmtc_printer.print_telecommand(pus_packet, pus_packet_info)
-        self._com_interface.send_telecommand(pus_packet, pus_packet_info)
-        self._last_tc = pus_packet
-        self._last_tc_info = pus_packet_info
+        self._tmtc_printer.print_telecommand(tc_packet_obj=pus_packet_obj, tc_packet_raw=pus_packet_raw)
+        self._com_interface.send_telecommand(tc_packet=pus_packet_raw, tc_packet_obj=pus_packet_obj)
+        self._last_tc = pus_packet_raw
+        self._last_tc_obj = pus_packet_obj
         while self._operation_pending:
             # wait until reply is received
             super()._check_for_first_reply()

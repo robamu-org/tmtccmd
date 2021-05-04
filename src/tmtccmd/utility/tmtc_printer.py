@@ -1,19 +1,16 @@
-#!/usr/bin/python3.8
-# -*- coding: utf-8 -*-
 """
-@file
-    tmtcc_config.py
-@date
-    01.11.2019
-@brief
-    Class that performs all printing functionalities
+:file:      tmtc_printer.py
+:date:      04.05.2021
+:brief:     Class that performs all printing functionalities
 """
 import os
 import enum
+from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
+from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.pus_tm.factory import PusTmQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -31,25 +28,27 @@ class TmTcPrinter:
     """
     This class handles printing to the command line and to files.
     """
-    def __init__(self, display_mode: DisplayMode.LONG, do_print_to_file: bool = True,
+    def __init__(self, display_mode: DisplayMode = DisplayMode.LONG, do_print_to_file: bool = True,
                  print_tc: bool = True):
         """
         :param display_mode:
         :param do_print_to_file: if true, print to file
         :param print_tc: if true, print TCs
         """
-        self.display_mode = display_mode
+        self._display_mode = display_mode
         self.do_print_to_file = do_print_to_file
         self.print_tc = print_tc
         self.__print_buffer = ""
         # global print buffer which will be useful to print something to file
         self.__file_buffer = ""
-        # TODO: Full print not working yet
         # List implementation to store multiple strings
         self.file_buffer_list = []
 
     def set_display_mode(self, display_mode: DisplayMode):
-        self.display_mode = display_mode
+        self._display_mode = display_mode
+
+    def get_display_mode(self) -> DisplayMode:
+        return self._display_mode
 
     def print_telemetry_queue(self, tm_queue: PusTmQueueT):
         """
@@ -59,17 +58,21 @@ class TmTcPrinter:
             for tm_packet in tm_list:
                 self.print_telemetry(tm_packet)
 
-    def print_telemetry(self, packet: PusTelemetry):
+    def print_telemetry(self, packet: PusTelemetry, print_raw_tm: bool = False):
         """
         This function handles printing telemetry
-        :param packet:
+        :param packet:          Object representation of TM packet to print. Must be a subclass of PusTelemetry.
+        :param print_raw_tm:    Specify whether the TM packet is printed in a raw way.
         :return:
         """
         if not isinstance(packet, PusTelemetry):
             LOGGER.warning("Passed packet is not instance of PusTelemetry!")
             return
-        # LOGGER.debug(packet.return_full_packet_string())
-        if self.display_mode == DisplayMode.SHORT:
+
+        if packet.get_service() == 5:
+            self.__handle_event_packet(cast(Service5TM, packet))
+
+        if self._display_mode == DisplayMode.SHORT:
             self.__handle_short_print(packet)
         else:
             self.__handle_long_tm_print(packet)
@@ -77,21 +80,16 @@ class TmTcPrinter:
 
         # Handle special packet types
         if packet.get_service() == 8 and packet.get_subservice() == 130:
-            from typing import cast
             self.__handle_data_reply_packet(cast(Service8TM, packet))
         if packet.get_service() == 3 and \
                 (packet.get_subservice() == 25 or packet.get_subservice() == 26):
-            from typing import cast
             self.__handle_hk_print(cast(Service3Base, packet))
         if packet.get_service() == 3 and \
                 (packet.get_subservice() == 10 or packet.get_subservice() == 12):
-            from typing import cast
             self.__handle_hk_definition_print(cast(Service3Base, packet))
 
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
-        if get_global(CoreGlobalIds.PRINT_RAW_TM):
-            self.__print_buffer = "TM Data:" + "\n" + self.return_data_string(packet.get_tm_data())
+        if print_raw_tm:
+            self.__print_buffer = f"TM Data:\n{self.return_data_string(packet.get_raw_packet())}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
@@ -234,10 +232,9 @@ class TmTcPrinter:
         """
         if wiretapping_packet.get_service() == 2 and (wiretapping_packet.get_subservice() == 131 or
                                                       wiretapping_packet.get_subservice() == 130):
-            self.__print_buffer = "Wiretapping Packet or Raw Reply from TM [" + \
-                                  str(wiretapping_packet.get_service()) + "," + \
-                                  str(wiretapping_packet.get_subservice()) + "]: "
-            self.__print_buffer = self.__print_buffer + wiretapping_packet.return_source_data()
+            self.__print_buffer = f"Wiretapping Packet or Raw Reply from TM [{wiretapping_packet.get_service()}," \
+                                  f"{wiretapping_packet.get_subservice()}]: "
+            self.__print_buffer = self.__print_buffer + wiretapping_packet.return_source_data_string()
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
@@ -249,10 +246,10 @@ class TmTcPrinter:
         try:
             if srv8_tm.custom_data_content is [] or srv8_tm.custom_data_header is []:
                 self.__print_buffer = f"Service 8 Direct Command Reply TM[8,130] with TM data: " \
-                                      f"{srv8_tm.return_source_data()}"
+                                      f"{srv8_tm.return_source_data_string()}"
             else:
-                self.__print_buffer = f"{srv8_tm.custom_data_header}{os.linesep}"
-                self.__print_buffer += f"{srv8_tm.custom_data_content}{os.linesep}"
+                self.__print_buffer = f"{srv8_tm.custom_data_header}\n"
+                self.__print_buffer += f"{srv8_tm.custom_data_content}\n"
                 LOGGER.info(f"Service 8 data for object ID {srv8_tm.object_id_key} "
                             f"and action ID {srv8_tm.source_action_id}:")
                 LOGGER.info(str(srv8_tm.custom_data_header))
@@ -261,6 +258,13 @@ class TmTcPrinter:
         except AttributeError:
             LOGGER.warning("Service 8 packet format invalid, no custom_data_content or custom_data_header found!")
             return
+
+    def __handle_event_packet(self, srv_5_tm: Service5TM):
+        printout = srv_5_tm.get_custom_printout()
+        if printout != "":
+            self.__print_buffer += printout
+            LOGGER.info(printout)
+            self.add_print_buffer_to_file_buffer()
 
     def print_string(self, string: str, add_cr_to_file_buffer: bool = False):
         """
@@ -350,25 +354,23 @@ class TmTcPrinter:
         shift_number = position + (6 - 2 * (position - 1))
         return (byte >> shift_number) & 1
 
-    def print_telecommand(self, tc_packet: bytes, tc_packet_obj: PusTelecommand = None):
+    def print_telecommand(self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytearray()):
         """
-        This function handles the printing of Telecommands
+        This function handles the printing of Telecommands. It assumed the packets are sent shortly before or after.
         :param tc_packet:
         :param tc_packet_obj:
         :return:
         """
         if self.print_tc:
-            if len(tc_packet) == 0:
-                LOGGER.error("TMTC Printer: Empty packet was sent, configuration error")
-                return
             if tc_packet_obj is None:
+                LOGGER.error("TMTC Printer: Invalid telecommand")
                 return
-            if self.display_mode == DisplayMode.SHORT:
-                self.__handle_short_tc_print(tc_packet_obj=tc_packet_obj)
+            if self._display_mode == DisplayMode.SHORT:
+                self._handle_short_tc_print(tc_packet_obj=tc_packet_obj)
             else:
-                self.__handle_long_tc_print(tc_packet_obj=tc_packet_obj)
+                self._handle_long_tc_print(tc_packet_obj=tc_packet_obj)
 
-    def __handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
+    def _handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Brief TC print
         :param tc_packet_obj:
@@ -380,7 +382,7 @@ class TmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
-    def __handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
+    def _handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Long TC print
         :param tc_packet_obj:

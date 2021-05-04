@@ -1,0 +1,12 @@
+from enum import IntEnum
+
+
+class PusServices(IntEnum):
+    SERVICE_1_VERIFICATION = 1
+    SERVICE_2_RAW_CMD = 2
+    SERVICE_3_HOUSEKEEPING = 3
+    SERVICE_5_EVENT = 5
+    SERVICE_6_MEMORY_MGMT = 6
+    SERVICE_8_FUNC_CMD = 8
+    SERVICE_9_TIME_MGMT = 9
+    SERVICE_17_TEST = 17

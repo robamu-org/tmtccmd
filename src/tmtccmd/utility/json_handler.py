@@ -18,20 +18,22 @@ class JsonKeyNames(enum.Enum):
     SERIAL_PORT = "SERIAL_PORT"
 
 
-def check_json_file() -> bool:
+def check_json_file(json_cfg_path: str) -> bool:
     """
     The check JSON file and return whether it was valid or not. A JSON file is invalid
     if it does not exist or the format ins invalid.
-    :return: True if JSON file is valid, False if not and a new one was created
+    :return: True if JSON file is valid, False if not and a new one was created at the specified path
     """
-    if not os.path.isfile("config/tmtcc_config.json"):
-        with open("config/tmtcc_config.json", "w") as file:
+    if json_cfg_path == "":
+        json_cfg_path = "tmtc_config.json"
+    if not os.path.isfile(json_cfg_path):
+        with open(json_cfg_path, "w") as file:
             load_data = dict()
             json.dump(load_data, file)
-            print("Configuration JSON config/tmtcc_config.json did not exist, created a new one.")
+            print(f"Configuration JSON {json_cfg_path} did not exist, created a new one.")
             return False
     else:
-        with open("config/tmtcc_config.json", "r+") as file:
+        with open(json_cfg_path, "r+") as file:
             try:
                 json.load(file)
             except json.decoder.JSONDecodeError:

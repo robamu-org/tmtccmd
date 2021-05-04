@@ -10,6 +10,7 @@ import socket
 from typing import Tuple, Union
 
 from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.core.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -32,7 +33,8 @@ class TcpIpUdpComIF(CommunicationInterface):
     def __init__(self, tm_timeout: float, tc_timeout_factor: float,
                  send_address: ethernet_address_t, max_recv_size: int,
                  recv_addr: Union[None, ethernet_address_t] = None,
-                 tmtc_printer: Union[None, TmTcPrinter] = None):
+                 tmtc_printer: Union[None, TmTcPrinter] = None,
+                 init_mode: int = CoreModeList.LISTENER_MODE):
         """
         Initialize a communication interface to send and receive UDP datagrams.
         :param tm_timeout:
@@ -49,6 +51,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         self.send_address = send_address
         self.recv_addr = recv_addr
         self.max_recv_size = max_recv_size
+        self.init_mode = init_mode
 
     def __del__(self):
         try:
@@ -59,7 +62,7 @@ class TcpIpUdpComIF(CommunicationInterface):
     def initialize(self) -> None:
         pass
 
-    def open(self):
+    def open(self, args: any = None):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Bind is possible but should not be necessary, and introduces risk of port alread
         # being used.
@@ -69,6 +72,11 @@ class TcpIpUdpComIF(CommunicationInterface):
             self.udp_socket.bind(self.recv_addr)
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
+        if self.init_mode == CoreModeList.LISTENER_MODE:
+            from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
+            # Send ping command immediately so the reception address is known for UDP
+            ping_cmd = pack_service17_ping_command(ssc=0)
+            self.send_telecommand(ping_cmd.pack(), ping_cmd)
 
     def close(self) -> None:
         if self.udp_socket is not None:
@@ -108,4 +116,5 @@ class TcpIpUdpComIF(CommunicationInterface):
         except ConnectionResetError:
             LOGGER.warning("Connection reset exception occured!")
             return []
+
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/env python3
 """
 @file           tmtc_frontend.py
 @date           01.11.2019
@@ -9,11 +9,14 @@
 """
 import threading
 import os
+import sys
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import *
+from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
 
+from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
 from tmtccmd.config.globals import get_global_apid
@@ -27,7 +30,7 @@ import tmtccmd.defaults as defaults_module
 LOGGER = get_logger()
 
 
-class TmTcFrontend(QMainWindow):
+class TmTcFrontend(QMainWindow, FrontendBase):
 
     # TODO: this list should probably be inside an enum in the tmtcc_config.py
     service_test_button: QPushButton
@@ -39,10 +42,9 @@ class TmTcFrontend(QMainWindow):
     single_command_ssc: int = 20
     single_command_data: bytearray = bytearray([])
 
-    def __init__(self, init_com_if: CoreComInterfaces, init_mode: int, init_service: int):
+    def __init__(self, tmtc_backend: TmTcHandler):
         super(TmTcFrontend, self).__init__()
-        self.tmtc_handler = TmTcHandler(init_com_if=init_com_if, init_mode=init_mode,
-                                        init_service=init_service)
+        self.tmtc_handler = tmtc_backend
         # TODO: Perform initialization on button press with specified ComIF
         #       Also, when changing ComIF, ensure that old ComIF is closed (e.g. with printout)
         #       Lock all other elements while ComIF is invalid.
@@ -52,11 +54,14 @@ class TmTcFrontend(QMainWindow):
         self.is_busy = False
         module_path = os.path.abspath(defaults_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
-        print(self.logo_path)
-        self.tmtc_handler.start(False)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start_ui)
+
+    def start(self, qt_app: any):
+        self.tmtc_handler.start(False)
+        self.start_ui()
+        sys.exit(qt_app.exec_())
 
     def set_gui_logo(self, logo_total_path: str):
         if os.path.isfile(logo_total_path):
@@ -138,18 +143,35 @@ class TmTcFrontend(QMainWindow):
         win = QWidget(self)
         self.setCentralWidget(win)
         grid = QGridLayout()
-
-        self.setWindowTitle("TMTC Commander")
-        label = QLabel(self)
-        pixmap = QPixmap(self.logo_path)  # QPixmap is the class, easy to put pic on screen
-        label.setGeometry(720, 10, 100, 100)
-        label.setPixmap(pixmap)
-        self.setWindowIcon(QIcon(self.logo_path))
-        label.setScaledContents(True)
+        win.setLayout(grid)
         row = 0
+        self.setWindowTitle("TMTC Commander")
+        self.setWindowIcon(QIcon(self.logo_path))
+
+        add_pixmap = False
+
+        if add_pixmap:
+            label = QLabel(self)
+            label.setGeometry(720, 10, 100, 100)
+
+            label.adjustSize()
+
+            pixmap = QPixmap(self.logo_path)
+            pixmap_width = pixmap.width()
+            pixmap_height = pixmap.height()
+
+            row += 1
+
+            pixmap_scaled = pixmap.scaled(pixmap_width * 0.3, pixmap_height * 0.3, QtCore.Qt.KeepAspectRatio)
+            label.setPixmap(pixmap_scaled)
+
+            label.setScaledContents(True)
+
+            grid.addWidget(label, row, 0, 1, 2)
+            row += 1
+
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
         row += 1
-
         checkbox_console = QCheckBox("Print output to console")
         checkbox_console.stateChanged.connect(self.checkbox_console_update)
 
@@ -236,16 +258,17 @@ class TmTcFrontend(QMainWindow):
 
         combo_box = QComboBox()
 
-        service_dict = get_global(CoreGlobalIds.SERVICELIST)
+        service_dict = get_global(CoreGlobalIds.SERVICE_DICT)
 
-        for service_key, service_value in service_dict.items():
-            combo_box.addItem(service_dict[service_key][0])
-            self.service_list.append(service_value)
+        if service_dict is not None:
+            for service_key, service_value in service_dict.items():
+                combo_box.addItem(service_dict[service_key][0])
+                self.service_list.append(service_value)
 
-        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-        combo_box.setCurrentIndex(default_service.value)
-        combo_box.currentIndexChanged.connect(self.service_index_changed)
-        grid.addWidget(combo_box, row, 0, 1, 1)
+            default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
+            combo_box.setCurrentIndex(default_service.value)
+            combo_box.currentIndexChanged.connect(self.service_index_changed)
+            grid.addWidget(combo_box, row, 0, 1, 1)
 
         self.service_test_button = QPushButton()
         self.service_test_button.setText("Start Service Test")
@@ -290,19 +313,17 @@ class TmTcFrontend(QMainWindow):
         spin_ssc.valueChanged.connect(self.single_command_set_ssc)
         single_command_grid.addWidget(spin_ssc, row, 2, 1, 1)
 
-        row += 1
+        # row += 1
+        grid.addItem(single_command_grid, row, 0, 1, 2)
+        # single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
 
-        single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
-
-        row += 1
+        # row += 1
 
         # TODO: how should this be converted to the byte array?
-        single_command_data_box = QTextEdit()
-        single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
+        # single_command_data_box = QTextEdit()
+        # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
 
-        grid.addItem(single_command_grid, row, 0, 1, 2)
-
-        row += 1
+        # row += 1
 
         # self.commandTable = SingleCommandTable()
         # grid.addWidget(self.commandTable, row, 0, 1, 2)
@@ -313,8 +334,6 @@ class TmTcFrontend(QMainWindow):
         grid.addWidget(self.single_command_button, row, 0, 1, 2)
         row += 1
 
-        win.setLayout(grid)
-        self.resize(900, 800)
         self.show()
 
         # resize table columns to fill the window width

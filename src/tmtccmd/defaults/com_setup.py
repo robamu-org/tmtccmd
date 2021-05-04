@@ -32,11 +32,12 @@ def create_communication_interface_default(
             send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
             recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
             max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
+            init_mode = get_global(CoreGlobalIds.MODE)
             communication_interface = TcpIpUdpComIF(
                 tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
                 tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
                 send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
-                tmtc_printer=tmtc_printer
+                tmtc_printer=tmtc_printer, init_mode=init_mode
             )
         elif com_if == CoreComInterfaces.SERIAL_DLE or \
                 com_if == CoreComInterfaces.SERIAL_FIXED_FRAME:
@@ -76,14 +77,14 @@ def create_communication_interface_default(
         sys.exit(1)
 
 
-def default_tcpip_udp_cfg_setup():
+def default_tcpip_udp_cfg_setup(json_cfg_path: str):
     from tmtccmd.com_if.tcpip_utilities import determine_udp_send_address, \
         determine_recv_buffer_len, determine_udp_recv_address
     update_global(CoreGlobalIds.USE_ETHERNET, True)
     # This will either load the addresses from a JSON file or prompt them from the user.
-    send_tuple = determine_udp_send_address()
-    recv_tuple = determine_udp_recv_address()
-    max_recv_buf_size = determine_recv_buffer_len(udp=True)
+    send_tuple = determine_udp_send_address(json_cfg_path=json_cfg_path)
+    recv_tuple = determine_udp_recv_address(json_cfg_path=json_cfg_path)
+    max_recv_buf_size = determine_recv_buffer_len(json_cfg_path=json_cfg_path, udp=True)
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     ethernet_cfg_dict.update({TcpIpConfigIds.SEND_ADDRESS: send_tuple})
     ethernet_cfg_dict.update({TcpIpConfigIds.RECV_ADDRESS: recv_tuple})

@@ -6,17 +6,22 @@ from crcmod import crcmod
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tc import generate_crc, generate_packet_crc
+from tmtccmd.ccsds.spacepacket import get_sp_packet_sequence_control
 from tmtccmd.ecss.conf import set_default_apid, get_default_apid, PusVersion, set_pus_tm_version, get_pus_tm_version
 from tmtccmd.pus_tm.service_17_test import Service17TM, Service17TmPacked
 from tmtccmd.ecss.tm import PusTelemetry
 
 
 class TestTelemetry(TestCase):
+    def test_space_packet_functions(self):
+        psc = get_sp_packet_sequence_control(sequence_flags=0b111, source_sequence_count=42)
+        self.assertTrue(psc & 0xc000 == 0xc000)
+
     def test_generic_pus_c(self):
         pus_17_telecommand = Service17TmPacked(subservice=1, ssc=36)
         pus_17_raw = pus_17_telecommand.pack()
         pus_17_telemetry = None
-        tm_func = lambda raw_tm: Service17TM(raw_telemetry=raw_tm)
+        def tm_func(raw_telemetry: bytearray): return Service17TM(raw_telemetry=raw_telemetry)
         self.assertRaises(ValueError, tm_func, bytearray())
         self.assertRaises(ValueError, tm_func, None)
 
@@ -40,7 +45,6 @@ class TestTelemetry(TestCase):
         self.assertTrue(raw_tm_created == pus_17_raw)
         self.assertTrue(pus_17_telemetry.get_tc_packet_id() == 0x8 << 8 | 0xef)
 
-        test_list = []
     def test_list_functionality(self):
         pus_17_telecommand = Service17TmPacked(subservice=1, ssc=36)
         pus_17_raw = pus_17_telecommand.pack()
@@ -54,6 +58,7 @@ class TestTelemetry(TestCase):
         self.assertTrue(header_list != [])
         self.assertTrue(content_list != [])
 
+
 class TestTelecommand(TestCase):
 
     def test_generic(self):
@@ -64,7 +69,7 @@ class TestTelecommand(TestCase):
         self.assertTrue(len(command_tuple[0]) == pus_17_telecommand.get_total_length())
         print(repr(pus_17_telecommand))
         print(pus_17_telecommand)
-        self.assertTrue(pus_17_telecommand.get_packet_id() == (0x18 << 8 |0xef))
+        self.assertTrue(pus_17_telecommand.get_packet_id() == (0x18 << 8 | 0xef))
         self.assertTrue(pus_17_telecommand.get_app_data() == bytearray())
         self.assertTrue(pus_17_telecommand.get_apid() == get_default_apid())
 
@@ -108,7 +113,6 @@ class TestTelecommand(TestCase):
         self.assertTrue(pus_17_telecommand.get_ssc() == 25)
         self.assertTrue(pus_17_telecommand.get_service() == 17)
         self.assertTrue(pus_17_telecommand.get_subservice() == 1)
-
 
 
 if __name__ == '__main__':

@@ -40,7 +40,7 @@ class Service3TM(Service3Base):
         :param minimum_reply_size:
         :param minimum_structure_report_header_size:
         """
-        from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
+        from tmtccmd.core.object_id_manager import get_object_id_info
         super().__init__(byte_array)
         if len(self._tm_data) < 8:
             warning = "Service3TM: handle_filling_definition_arrays: Invalid Service 3 packet," \
@@ -51,7 +51,6 @@ class Service3TM(Service3Base):
         self.custom_hk_handling = custom_hk_handling
         self.hk_structure_report_header_size = minimum_structure_report_header_size
         self.object_id = struct.unpack('!I', self._tm_data[0:4])[0]
-        self.object_id_key = get_key_from_raw_object_id(self._tm_data[0:4])
         self.set_id = struct.unpack('!I', self._tm_data[4:8])[0]
 
         self.specify_packet_info("Housekeeping Packet")

@@ -37,18 +37,14 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
     This class unnpacks the common spacepacket header, also see PUS structure below or
     PUS documentation.
     """
-    def __init__(self, pus_packet_raw: bytes):
+    def __init__(self, pus_packet_raw: bytearray):
         """
         Deserializes space packet fields from raw bytearray
         :param pus_packet_raw:
         """
         if len(pus_packet_raw) < SPACE_PACKET_HEADER_SIZE:
             print("SpacePacketHeaderDeserializer: Packet size smaller than PUS header size!")
-            super().__init__(
-                packet_type=PacketTypes.PACKET_TYPE_TM, secondary_header_flag=0, sequence_flags=0,
-                source_sequence_count=0, data_length=0, version=0, apid=0
-            )
-            return
+            raise ValueError
         packet_type_raw = pus_packet_raw[0] & 0x10
         if packet_type_raw == 0:
             packet_type = PacketTypes.PACKET_TYPE_TM
@@ -137,7 +133,7 @@ def get_sp_packet_sequence_control(sequence_flags: int, source_sequence_count: i
     if sequence_flags > 3:
         print("get_sp_packet_sequence_control: Sequence flag value larger than 0b11! "
               "Setting to 0b11..")
-        sequence_flags = 3
+        sequence_flags = 0b11
     if source_sequence_count > 0x3fff:
         print("get_sp_packet_sequence_control: Source sequence count largen than 0x3fff. "
               "Larger bits are cut off!")
