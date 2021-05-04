@@ -252,8 +252,8 @@ class TmTcPrinter:
                 self.__print_buffer = f"Service 8 Direct Command Reply TM[8,130] with TM data: " \
                                       f"{srv8_tm.return_source_data()}"
             else:
-                self.__print_buffer = f"{srv8_tm.custom_data_header}{os.linesep}"
-                self.__print_buffer += f"{srv8_tm.custom_data_content}{os.linesep}"
+                self.__print_buffer = f"{srv8_tm.custom_data_header}\n"
+                self.__print_buffer += f"{srv8_tm.custom_data_content}\n"
                 LOGGER.info(f"Service 8 data for object ID {srv8_tm.object_id_key} "
                             f"and action ID {srv8_tm.source_action_id}:")
                 LOGGER.info(str(srv8_tm.custom_data_header))
@@ -264,7 +264,11 @@ class TmTcPrinter:
             return
 
     def __handle_event_packet(self, srv_5_tm: Service5TM):
-        if srv_5_tm.get_custom_printout()
+        printout = srv_5_tm.get_custom_printout()
+        if printout != "":
+            self.__print_buffer += printout
+            LOGGER(printout)
+            self.add_print_buffer_to_file_buffer()
 
     def print_string(self, string: str, add_cr_to_file_buffer: bool = False):
         """

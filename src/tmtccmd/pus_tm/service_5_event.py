@@ -16,6 +16,11 @@ LOGGER = get_logger()
 
 class Service5TM(PusTelemetry):
     def __init__(self, byte_array, call_srv5_hook: bool = True):
+        """
+        Deserialize a raw service 5 packet
+        :param byte_array:      Raw bytearray to deserialize, containing the service 5 packet.
+        :param call_srv5_hook:  Calls the global hook function to retrieve a custom printout for Service 5 packets.
+        """
         super().__init__(byte_array)
         self.specify_packet_info("Event")
         if self.get_subservice() == Srv5Subservices.INFO_EVENT:
@@ -31,11 +36,14 @@ class Service5TM(PusTelemetry):
         self.object_id_key = get_key_from_raw_object_id(self.get_tm_data()[2:6])
         self.param_1 = struct.unpack('>I', self._tm_data[6:10])[0]
         self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
+        self.custom_service_5_print = ""
         if call_srv5_hook:
             from tmtccmd.core.hook_base import TmTcHookBase
             from tmtccmd.core.hook_helper import get_global_hook_obj
             hook_obj = get_global_hook_obj()
-            hook_obj.handle_service_8_telemetry()
+            self.custom_service_5_print = hook_obj.handle_service_5_event(
+                object_id=self._tm_data[2:6], event_id=self.event_id, param_1=self.param_1, param_2=self.param_2
+            )
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
@@ -61,6 +69,12 @@ class Service5TM(PusTelemetry):
                 )
         except ImportError:
             LOGGER.warning("Service 5 user data hook not supplied!")
+
+    def get_custom_printout(self) -> str:
+        return self.custom_service_5_print
+
+    def set_custom_printout(self, custom_printout: str):
+        self.custom_service_5_print = custom_printout
 
     def get_reporter_id(self):
         return self.object_id

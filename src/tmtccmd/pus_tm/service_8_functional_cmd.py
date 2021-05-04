@@ -12,7 +12,7 @@ logger = get_logger()
 
 
 class Service8TM(PusTelemetry):
-    def __init__(self, byte_array):
+    def __init__(self, byte_array, call_srv8_hook: bool = True):
         super().__init__(byte_array)
         self.source_object_id = 0
         self.object_id_key = CoreObjectIds.INVALID
@@ -30,16 +30,17 @@ class Service8TM(PusTelemetry):
             self.custom_data = self.get_tm_data()[8:]
         else:
             self.specify_packet_info("Functional Commanding Reply")
-        try:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
-            hook_obj = get_global_hook_obj()
-            self.custom_data_header, self.custom_data_content = \
-                hook_obj.handle_service_8_telemetry(
-                    object_id=self.object_id_key, action_id=self.source_action_id,
-                    custom_data=self.custom_data
-                )
-        except ImportError:
-            logger.warning("Service 8 user data hook not supplied!")
+        if call_srv8_hook:
+            try:
+                from tmtccmd.core.hook_helper import get_global_hook_obj
+                hook_obj = get_global_hook_obj()
+                self.custom_data_header, self.custom_data_content = \
+                    hook_obj.handle_service_8_telemetry(
+                        object_id=self.object_id_key, action_id=self.source_action_id,
+                        custom_data=self.custom_data
+                    )
+            except ImportError:
+                logger.warning("Service 8 user data hook not supplied!")
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
