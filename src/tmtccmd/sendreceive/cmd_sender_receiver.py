@@ -67,7 +67,7 @@ class CommandSenderReceiver:
 
         # needed to store last actual TC packet from queue
         self._last_tc = bytearray()
-        self._last_tc_info = None
+        self._last_tc_obj = None
 
         # this flag can be used to notify when the operation is finished
         self._operation_pending = False
@@ -180,7 +180,7 @@ class CommandSenderReceiver:
         elif queue_entry_first == QueueCommands.SET_TIMEOUT:
             self._tm_timeout = queue_entry_second
         else:
-            self._last_tc, self._last_tc_info = (queue_entry_first, queue_entry_second)
+            self._last_tc, self._last_tc_obj = (queue_entry_first, queue_entry_second)
             return True
         return queue_entry_is_telecommand
 
@@ -202,7 +202,7 @@ class CommandSenderReceiver:
             from tmtccmd.core.globals_manager import get_global
             if get_global(CoreGlobalIds.RESEND_TC):
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
-                self._com_interface.send_telecommand(self._last_tc, self._last_tc_info)
+                self._com_interface.send_telecommand(self._last_tc, self._last_tc_obj)
                 self._timeout_counter = self._timeout_counter + 1
                 self._start_time = time.time()
             else:
