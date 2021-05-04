@@ -10,7 +10,6 @@ from tmtccmd.pus.service_list import PusServices
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
-from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 
@@ -39,7 +38,6 @@ class Service5TM(PusTelemetry):
             self.append_packet_info(" Error High Severity")
         self.event_id = struct.unpack('>H', self._tm_data[0:2])[0]
         self.object_id = struct.unpack('>I', self._tm_data[2:6])[0]
-        self.object_id_key = get_key_from_raw_object_id(self.get_tm_data()[2:6])
         self.param_1 = struct.unpack('>I', self._tm_data[6:10])[0]
         self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
         self.custom_service_5_print = ""
