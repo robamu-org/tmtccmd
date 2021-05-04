@@ -323,7 +323,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         # single_command_data_box = QTextEdit()
         # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
 
-
         # row += 1
 
         # self.commandTable = SingleCommandTable()

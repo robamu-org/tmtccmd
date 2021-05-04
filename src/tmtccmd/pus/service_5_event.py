@@ -1,5 +1,6 @@
 import enum
 
+
 class Severity(enum.IntEnum):
     INFO = 1
     LOW_SEVERITY = 2

@@ -52,7 +52,7 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
         self._tmtc_printer.print_telecommand(tc_packet_obj=pus_packet_obj, tc_packet_raw=pus_packet_raw)
         self._com_interface.send_telecommand(tc_packet=pus_packet_raw, tc_packet_obj=pus_packet_obj)
         self._last_tc = pus_packet_raw
-        self._last_tc_info = pus_packet_obj
+        self._last_tc_obj = pus_packet_obj
         while self._operation_pending:
             # wait until reply is received
             super()._check_for_first_reply()
