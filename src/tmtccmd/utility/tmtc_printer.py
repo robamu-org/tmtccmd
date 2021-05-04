@@ -28,7 +28,7 @@ class TmTcPrinter:
     """
     This class handles printing to the command line and to files.
     """
-    def __init__(self, display_mode: DisplayMode.LONG, do_print_to_file: bool = True,
+    def __init__(self, display_mode: DisplayMode = DisplayMode.LONG, do_print_to_file: bool = True,
                  print_tc: bool = True):
         """
         :param display_mode:
