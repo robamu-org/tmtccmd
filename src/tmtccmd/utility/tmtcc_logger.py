@@ -24,7 +24,7 @@ class InfoFilter(logging.Filter):
 
 class DebugFilter(logging.Filter):
     """
-    Filter object, which is used so that only INFO and DEBUG messages are printed to stdout.
+    Filter object, which is used so that only DEBUG messages are printed to stdout.
     """
     def filter(self, rec):
         if rec.levelno == logging.DEBUG:
@@ -34,16 +34,18 @@ class DebugFilter(logging.Filter):
 
 def set_tmtc_logger() -> logging.Logger:
     """
-    Sets the LOGGER object which will be used globally.
+    Sets the LOGGER object which will be used globally. This needs to be called before using the logger.
     """
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     logger.setLevel(level=logging.DEBUG)
     generic_format = logging.Formatter(
         fmt='%(levelname)-8s: %(asctime)s.%(msecs)03d | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S')
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
     fault_format = logging.Formatter(
         fmt='%(levelname)-8s: %(asctime)s.%(msecs)03d | [%(filename)s:%(lineno)d] | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S')
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
     console_info_handler = logging.StreamHandler(stream=sys.stdout)
     console_info_handler.setLevel(logging.INFO)
@@ -57,11 +59,11 @@ def set_tmtc_logger() -> logging.Logger:
     console_error_handler.setLevel(logging.WARNING)
     try:
         error_file_handler = logging.FileHandler(
-            filename="log/" + ERROR_LOG_FILE_NAME, encoding='utf-8', mode='w')
+            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding='utf-8', mode='w')
     except FileNotFoundError:
         os.mkdir("log")
         error_file_handler = logging.FileHandler(
-            filename="log/" + ERROR_LOG_FILE_NAME, encoding='utf-8', mode='w')
+            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding='utf-8', mode='w')
 
     error_file_handler.setLevel(level=logging.WARNING)
 

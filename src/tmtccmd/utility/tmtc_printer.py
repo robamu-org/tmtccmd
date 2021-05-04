@@ -58,10 +58,11 @@ class TmTcPrinter:
             for tm_packet in tm_list:
                 self.print_telemetry(tm_packet)
 
-    def print_telemetry(self, packet: PusTelemetry):
+    def print_telemetry(self, packet: PusTelemetry, print_raw_tm: bool = False):
         """
         This function handles printing telemetry
-        :param packet:
+        :param packet:          Object representation of TM packet to print. Must be a subclass of PusTelemetry.
+        :param print_raw_tm:    Specify whether the TM packet is printed in a raw way.
         :return:
         """
         if not isinstance(packet, PusTelemetry):
@@ -70,7 +71,7 @@ class TmTcPrinter:
 
         if packet.get_service() == 5:
             self.__handle_event_packet(cast(Service5TM, packet))
-        # LOGGER.debug(packet.return_full_packet_string())
+
         if self._display_mode == DisplayMode.SHORT:
             self.__handle_short_print(packet)
         else:
@@ -87,10 +88,8 @@ class TmTcPrinter:
                 (packet.get_subservice() == 10 or packet.get_subservice() == 12):
             self.__handle_hk_definition_print(cast(Service3Base, packet))
 
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
-        if get_global(CoreGlobalIds.PRINT_RAW_TM):
-            self.__print_buffer = "TM Data:" + "\n" + self.return_data_string(packet.get_tm_data())
+        if print_raw_tm:
+            self.__print_buffer = f"TM Data:\n{self.return_data_string(packet.get_raw_packet())}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
