@@ -29,21 +29,21 @@ class CommunicationInterface:
         self.valid = True
 
     @abstractmethod
-    def initialize(self) -> any:
+    def initialize(self, args: any = None) -> any:
         """
         Perform initializations step which can not be done in constructor or which require
         returnvalues.
         """
 
     @abstractmethod
-    def open(self) -> None:
+    def open(self, args: any = None) -> None:
         """
         Opens the communication interface to allow communication.
         @return:
         """
 
     @abstractmethod
-    def close(self) -> None:
+    def close(self, args: any = None) -> None:
         """
         Closes the ComIF and releases any held resources (for example a Communication Port)
         :return:
