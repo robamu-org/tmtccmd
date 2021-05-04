@@ -41,3 +41,8 @@ class TestPrinter(TestCase):
 
         service_17_command = pack_service17_ping_command(ssc=0, apid=42)
         self.tmtc_printer.print_telecommand(tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack())
+        self.tmtc_printer.set_display_mode(DisplayMode.SHORT)
+        self.tmtc_printer.print_telecommand(tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack())
+        self.tmtc_printer.set_display_mode(DisplayMode.LONG)
+
+        self.tmtc_printer.clear_file_buffer()
