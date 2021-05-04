@@ -10,10 +10,12 @@
 """
 import os
 import enum
+from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
+from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.pus_tm.factory import PusTmQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -44,7 +46,6 @@ class TmTcPrinter:
         self.__print_buffer = ""
         # global print buffer which will be useful to print something to file
         self.__file_buffer = ""
-        # TODO: Full print not working yet
         # List implementation to store multiple strings
         self.file_buffer_list = []
 
@@ -68,6 +69,9 @@ class TmTcPrinter:
         if not isinstance(packet, PusTelemetry):
             LOGGER.warning("Passed packet is not instance of PusTelemetry!")
             return
+
+        if packet.get_service() == 5:
+            self.__handle_event_packet(cast(Service5TM, packet))
         # LOGGER.debug(packet.return_full_packet_string())
         if self.display_mode == DisplayMode.SHORT:
             self.__handle_short_print(packet)
@@ -77,15 +81,12 @@ class TmTcPrinter:
 
         # Handle special packet types
         if packet.get_service() == 8 and packet.get_subservice() == 130:
-            from typing import cast
             self.__handle_data_reply_packet(cast(Service8TM, packet))
         if packet.get_service() == 3 and \
                 (packet.get_subservice() == 25 or packet.get_subservice() == 26):
-            from typing import cast
             self.__handle_hk_print(cast(Service3Base, packet))
         if packet.get_service() == 3 and \
                 (packet.get_subservice() == 10 or packet.get_subservice() == 12):
-            from typing import cast
             self.__handle_hk_definition_print(cast(Service3Base, packet))
 
         from tmtccmd.core.globals_manager import get_global
@@ -261,6 +262,9 @@ class TmTcPrinter:
         except AttributeError:
             LOGGER.warning("Service 8 packet format invalid, no custom_data_content or custom_data_header found!")
             return
+
+    def __handle_event_packet(self, srv_5_tm: Service5TM):
+        if srv_5_tm.get_custom_printout()
 
     def print_string(self, string: str, add_cr_to_file_buffer: bool = False):
         """

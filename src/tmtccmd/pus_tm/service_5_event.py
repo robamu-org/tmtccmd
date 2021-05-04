@@ -9,9 +9,8 @@ import struct
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices
 
-
 class Service5TM(PusTelemetry):
-    def __init__(self, byte_array):
+    def __init__(self, byte_array, call_srv5_hook: bool = True):
         super().__init__(byte_array)
         self.specify_packet_info("Event")
         if self.get_subservice() == Srv5Subservices.INFO_EVENT:
@@ -26,6 +25,11 @@ class Service5TM(PusTelemetry):
         self.object_id = struct.unpack('>I', self._tm_data[2:6])[0]
         self.param_1 = struct.unpack('>I', self._tm_data[6:10])[0]
         self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
+        if call_srv5_hook:
+            from tmtccmd.core.hook_base import TmTcHookBase
+            from tmtccmd.core.hook_helper import get_global_hook_obj
+            hook_obj = get_global_hook_obj()
+            hook_obj.handle_service_8_telemetry()
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
