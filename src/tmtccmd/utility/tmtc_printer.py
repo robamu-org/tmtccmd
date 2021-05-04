@@ -1,12 +1,7 @@
-#!/usr/bin/python3.8
-# -*- coding: utf-8 -*-
 """
-@file
-    tmtcc_config.py
-@date
-    01.11.2019
-@brief
-    Class that performs all printing functionalities
+:file:      tmtc_printer.py
+:date:      04.05.2021
+:brief:     Class that performs all printing functionalities
 """
 import os
 import enum
@@ -40,7 +35,7 @@ class TmTcPrinter:
         :param do_print_to_file: if true, print to file
         :param print_tc: if true, print TCs
         """
-        self.display_mode = display_mode
+        self._display_mode = display_mode
         self.do_print_to_file = do_print_to_file
         self.print_tc = print_tc
         self.__print_buffer = ""
@@ -50,7 +45,10 @@ class TmTcPrinter:
         self.file_buffer_list = []
 
     def set_display_mode(self, display_mode: DisplayMode):
-        self.display_mode = display_mode
+        self._display_mode = display_mode
+
+    def get_display_mode(self) -> DisplayMode:
+        return self._display_mode
 
     def print_telemetry_queue(self, tm_queue: PusTmQueueT):
         """
@@ -73,7 +71,7 @@ class TmTcPrinter:
         if packet.get_service() == 5:
             self.__handle_event_packet(cast(Service5TM, packet))
         # LOGGER.debug(packet.return_full_packet_string())
-        if self.display_mode == DisplayMode.SHORT:
+        if self._display_mode == DisplayMode.SHORT:
             self.__handle_short_print(packet)
         else:
             self.__handle_long_tm_print(packet)
@@ -371,12 +369,12 @@ class TmTcPrinter:
                 return
             if tc_packet_obj is None:
                 return
-            if self.display_mode == DisplayMode.SHORT:
-                self.__handle_short_tc_print(tc_packet_obj=tc_packet_obj)
+            if self._display_mode == DisplayMode.SHORT:
+                self._handle_short_tc_print(tc_packet_obj=tc_packet_obj)
             else:
-                self.__handle_long_tc_print(tc_packet_obj=tc_packet_obj)
+                self._handle_long_tc_print(tc_packet_obj=tc_packet_obj)
 
-    def __handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
+    def _handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Brief TC print
         :param tc_packet_obj:
@@ -388,7 +386,7 @@ class TmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
-    def __handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
+    def _handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Long TC print
         :param tc_packet_obj:
