@@ -64,6 +64,9 @@ class PusTelemetryCreator:
         print_out += "]"
         print(print_out)
 
+    def set_source_data(self, source_data: bytearray):
+        self.source_data = source_data
+
     def pack(self) -> bytearray:
         """
         Serializes the PUS telemetry into a raw packet.

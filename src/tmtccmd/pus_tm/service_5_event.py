@@ -7,6 +7,7 @@
 """
 import struct
 from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 from tmtccmd.pus.service_5_event import Srv5Subservices
 from tmtccmd.core.object_id_manager import get_key_from_raw_object_id
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -87,3 +88,26 @@ class Service5TM(PusTelemetry):
 
     def get_param_2(self):
         return self.param_2
+
+
+class Service5TmPacked(PusTelemetryCreator):
+    """
+    Class representation for Service 5 TM creation.
+    """
+    def __init__(
+            self, has_object_id: bool, event_id: int, param_1: int = 0, param_2: int = 0,
+            object_id: bytearray = bytearray(4)
+    ):
+        self.object_id = object_id
+        self.event_id = event_id
+        self.param_1 = param_1
+        self.param_2 = param_2
+        source_data = bytearray()
+        source_data.extend(struct.pack('!I', self.object_id)[0])
+        source_data.extend(struct.pack('!H', self.event_id)[0])
+        source_data.extend(struct.pack('!I', self.param_1)[0])
+        source_data.extend(struct.pack('!I', self.param_2)[0])
+        super().__init__(service=1, subservice=subservice, ssc=ssc, source_data=source_data)
+
+    def pack(self) -> bytearray:
+        return super().pack()
