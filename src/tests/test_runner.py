@@ -31,5 +31,5 @@ class TestTmtcRunner(TestCase):
             TypeError, run_tmtc_commander
         )
         self.assertRaises(
-            ValueError, run_tmtc_commander, False
+            RuntimeError, run_tmtc_commander, False
         )
