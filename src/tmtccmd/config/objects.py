@@ -1,8 +1,7 @@
 from typing import Dict
-from tmtccmd.core.definitions import CoreObjectIds
 
 
-INVALID_ID = bytearray([0xff, 0xff, 0xff, 0xff])
+INVALID_ID = bytes([0xff, 0xff, 0xff, 0xff])
 
 
 def get_core_object_ids() -> Dict[bytes, list]:
@@ -12,6 +11,6 @@ def get_core_object_ids() -> Dict[bytes, list]:
     :return: Dictionary of the core object IDs
     """
     object_id_dict = {
-        bytes(INVALID_ID): ["Invalid ID"],
+        INVALID_ID: ["Invalid ID"],
     }
     return object_id_dict
