@@ -22,8 +22,8 @@ class Service8TM(PusTelemetry):
             self.specify_packet_info("Functional Data Reply")
             self.source_object_id = struct.unpack('!I', self.get_tm_data()[0:4])[0]
             self.object_id_bytes = self.get_tm_data()[0:4]
-            if self.object_id_key == CoreObjectIds.INVALID:
-                logger.warning("Service8TM: Unknown object ID")
+            # if self.object_id == CoreObjectIds.INVALID:
+            #    logger.warning("Service8TM: Unknown object ID")
             self.source_action_id = struct.unpack('!I', self.get_tm_data()[4:8])[0]
             self.custom_data = self.get_tm_data()[8:]
         else:
