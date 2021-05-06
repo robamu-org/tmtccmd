@@ -5,9 +5,8 @@ import struct
 
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.core.definitions import CoreObjectIds
 
-logger = get_logger()
+LOGGER = get_logger()
 
 
 class Service8TM(PusTelemetry):
@@ -38,7 +37,7 @@ class Service8TM(PusTelemetry):
                         custom_data=self.custom_data
                     )
             except ImportError:
-                logger.warning("Service 8 user data hook not supplied!")
+                LOGGER.warning("Service 8 user data hook not supplied!")
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)

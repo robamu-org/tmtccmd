@@ -2,7 +2,6 @@ import struct
 from typing import Dict
 
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.core.definitions import CoreObjectIds
 
 LOGGER = get_logger()
 
