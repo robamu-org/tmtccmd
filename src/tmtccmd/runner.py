@@ -165,14 +165,8 @@ def __handle_cli_args_and_globals():
 
     LOGGER.info("Parsing input arguments..")
     args = parse_input_arguments()
-
-    json_cfg_path = hook_obj.set_json_config_file_path()
-
-    set_json_cfg_path(json_cfg_path=json_cfg_path)
-    get_global(CoreGlobalIds.JSON_CFG_PATH)
-
     LOGGER.info("Setting up post-globals..")
-    hook_obj.add_globals_post_args_parsing(args, json_cfg_path=json_cfg_path)
+    hook_obj.add_globals_post_args_parsing(args=args)
 
 
 def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
