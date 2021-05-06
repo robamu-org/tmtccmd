@@ -1,5 +1,5 @@
 import argparse
-import collections
+import collections.abc
 import pprint
 from typing import Union, List
 
@@ -135,7 +135,7 @@ def set_default_globals_post_args_parsing(
     if com_if_param == CoreComInterfaces.SERIAL_DLE or \
             com_if_param == CoreComInterfaces.SERIAL_FIXED_FRAME or \
             com_if_param == CoreComInterfaces.SERIAL_QEMU:
-        default_serial_cfg_setup(com_if=com_if_param)
+        default_serial_cfg_setup(com_if=com_if_param, json_cfg_path=json_cfg_path)
 
     # Same as above, but for server address and server port
     if com_if_param == CoreComInterfaces.TCPIP_UDP:
