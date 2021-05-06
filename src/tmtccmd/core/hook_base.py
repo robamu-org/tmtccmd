@@ -48,14 +48,14 @@ class TmTcHookBase:
         return "tmtc_config.json"
 
     @abstractmethod
-    def add_globals_post_args_parsing(self, args: argparse.Namespace, json_cfg_path: str):
+    def add_globals_post_args_parsing(self, args: argparse.Namespace):
         """
         Add global variables prior after parsing the CLI arguments.
         :param gui:  Specify whether a GUI is used
         :param json_cfg_path: Config path which will be the path return in set_json_config_file_path
         """
         from tmtccmd.defaults.globals_setup import set_default_globals_post_args_parsing
-        set_default_globals_post_args_parsing(args=args, json_cfg_path=json_cfg_path)
+        set_default_globals_post_args_parsing(args=args, json_cfg_path=self.set_json_config_file_path())
 
     @abstractmethod
     def assign_communication_interface(
