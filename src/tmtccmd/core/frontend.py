@@ -12,9 +12,11 @@ import os
 import sys
 from multiprocessing import Process
 
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
+    QDoubleSpinBox, QFrame, QComboBox, QPushButton
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtCore import QTimer, Qt
 
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
@@ -31,17 +33,6 @@ LOGGER = get_logger()
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
-
-    # TODO: this list should probably be inside an enum in the tmtcc_config.py
-    service_test_button: QPushButton
-    command_button: QPushButton
-    command_table: QTableWidget
-
-    single_command_service: int = 17
-    single_command_sub_service: int = 1
-    single_command_ssc: int = 20
-    single_command_data: bytearray = bytearray([])
-
     def __init__(self, tmtc_backend: TmTcHandler):
         super(TmTcFrontend, self).__init__()
         self.tmtc_handler = tmtc_backend
@@ -59,9 +50,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         return Process(target=self.start_ui)
 
     def start(self, qt_app: any):
-        self.tmtc_handler.start(False)
         self.start_ui()
-        sys.exit(qt_app.exec_())
+        sys.exit(qt_app.exec())
 
     def set_gui_logo(self, logo_total_path: str):
         if os.path.isfile(logo_total_path):
@@ -74,58 +64,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if self.debug_mode:
             LOGGER.info("service_test_mode_selection updated: " + str(self.service_list[index]))
 
-    def single_command_set_service(self, value):
-        self.single_command_service = value
-
-    def single_command_set_sub_service(self, value):
-        self.single_command_sub_service = value
-
-    def single_command_set_ssc(self, value):
-        self.single_command_ssc = value
-
-    def __start_service_test_clicked(self):
-        if self.debug_mode:
-            LOGGER.info("Start Service Test Button pressed.")
-        # LOGGER.info("start testing service: " + str(tmtcc_config.G_SERVICE))
-        # self.tmtc_handler.mode = tmtcc_config.ModeList.SEQUENTIAL_CMD_MODE
-        # start the action in a new process
-        p = threading.Thread(target=self.handle_tm_tc_action)
-        p.start()
-
-    def send_single_command_clicked(self, table):
-        if self.debug_mode:
-            LOGGER.info("Send Single Command Pressed.")
-
-        # parse the values from the table
-        # service = int(self.commandTable.item(0, 0).text())
-        # subservice = int(self.commandTable.item(0, 1).text())
-        # ssc = int(self.commandTable.item(0, 2).text())
-
-        LOGGER.info(
-            f"service: {self.single_command_service} , subservice: "
-            f"{self.single_command_sub_service}, ssc: {self.single_command_ssc}"
-        )
-
-        # create a command out of the parsed table
-        apid = get_global_apid()
-        command = PusTelecommand(
-            service=self.single_command_service, subservice=self.single_command_sub_service,
-            ssc=self.single_command_ssc, apid=apid
-        )
-        self.tmtc_handler.single_command_package = command.pack_command_tuple()
-
-        # self.tmtc_handler.mode = tmtcc_config.ModeList.SINGLE_CMD_MODE
-        # start the action in a new process
-        p = threading.Thread(target=self.handle_tm_tc_action)
-        p.start()
-
     def handle_tm_tc_action(self):
         if self.debug_mode:
             LOGGER.info("Starting TMTC action..")
         self.tmtc_handler.mode = CoreModeList.SEQUENTIAL_CMD_MODE
 
         self.set_send_buttons(False)
-        self.tmtc_handler.start(perform_op_immediately=True)
+        self.tmtc_handler.perform_operation()
         self.is_busy = False
         self.set_send_buttons(True)
         if self.debug_mode:
@@ -158,7 +103,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
             row += 1
 
-            pixmap_scaled = pixmap.scaled(pixmap_width * 0.3, pixmap_height * 0.3, QtCore.Qt.KeepAspectRatio)
+            pixmap_scaled = pixmap.scaled(pixmap_width * 0.3, pixmap_height * 0.3, Qt.KeepAspectRatio)
             label.setPixmap(pixmap_scaled)
 
             label.setScaledContents(True)
@@ -219,54 +164,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(combo_box_op_codes, row, 1, 1, 1)
         row += 1
 
-        single_command_grid = QGridLayout()
-        single_command_grid.setSpacing(5)
 
-        single_command_grid.addWidget(QLabel("Service: "), row, 0, 1, 1)
-        single_command_grid.addWidget(QLabel("Subservice: "), row, 1, 1, 1)
-        single_command_grid.addWidget(QLabel("SSC: "), row, 2, 1, 1)
-
-        row += 1
-
-        spin_service = QSpinBox()
-        spin_service.setValue(self.single_command_service)
-        # TODO: set sensible min/max values
-        spin_service.setMinimum(0)
-        spin_service.setMaximum(99999)
-        spin_service.valueChanged.connect(self.single_command_set_service)
-        single_command_grid.addWidget(spin_service, row, 0, 1, 1)
-
-        spin_sub_service = QSpinBox()
-        spin_sub_service.setValue(self.single_command_sub_service)
-        # TODO: set sensible min/max values
-        spin_sub_service.setMinimum(0)
-        spin_sub_service.setMaximum(99999)
-        spin_sub_service.valueChanged.connect(self.single_command_set_sub_service)
-        single_command_grid.addWidget(spin_sub_service, row, 1, 1, 1)
-
-        spin_ssc = QSpinBox()
-        spin_ssc.setValue(self.single_command_ssc)
-        # TODO: set sensible min/max values
-        spin_ssc.setMinimum(0)
-        spin_ssc.setMaximum(99999)
-        spin_ssc.valueChanged.connect(self.single_command_set_ssc)
-        single_command_grid.addWidget(spin_ssc, row, 2, 1, 1)
-
-        # row += 1
-        grid.addItem(single_command_grid, row, 0, 1, 2)
-        # single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
-
-        # row += 1
-
-        # TODO: how should this be converted to the byte array?
-        # single_command_data_box = QTextEdit()
-        # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
-
-        # row += 1
-
-        # self.commandTable = SingleCommandTable()
-        # grid.addWidget(self.commandTable, row, 0, 1, 2)
-        row += 1
         self.command_button = QPushButton()
         self.command_button.setText("Send Command")
         self.command_button.clicked.connect(self.__start_service_test_clicked)
@@ -278,6 +176,43 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         # resize table columns to fill the window width
         # for i in range(0, 5):
         #    self.commandTable.setColumnWidth(i, int(self.commandTable.width() / 5) - 3)
+
+
+    def __start_service_test_clicked(self):
+        if self.debug_mode:
+            LOGGER.info("Start Service Test Button pressed.")
+        # LOGGER.info("start testing service: " + str(tmtcc_config.G_SERVICE))
+        # self.tmtc_handler.mode = tmtcc_config.ModeList.SEQUENTIAL_CMD_MODE
+        # start the action in a new process
+        p = threading.Thread(target=self.handle_tm_tc_action)
+        p.start()
+
+    def __send_single_command_clicked(self, table):
+        if self.debug_mode:
+            LOGGER.info("Send Single Command Pressed.")
+
+        # parse the values from the table
+        # service = int(self.commandTable.item(0, 0).text())
+        # subservice = int(self.commandTable.item(0, 1).text())
+        # ssc = int(self.commandTable.item(0, 2).text())
+
+        LOGGER.info(
+            f"service: {self.single_command_service} , subservice: "
+            f"{self.single_command_sub_service}, ssc: {self.single_command_ssc}"
+        )
+
+        # create a command out of the parsed table
+        apid = get_global_apid()
+        command = PusTelecommand(
+            service=self.single_command_service, subservice=self.single_command_sub_service,
+            ssc=self.single_command_ssc, apid=apid
+        )
+        self.tmtc_handler.single_command_package = command.pack_command_tuple()
+
+        # self.tmtc_handler.mode = tmtcc_config.ModeList.SINGLE_CMD_MODE
+        # start the action in a new process
+        p = threading.Thread(target=self.handle_tm_tc_action)
+        p.start()
 
     def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
@@ -347,12 +282,38 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.connect_button = QPushButton()
         self.connect_button.setText("Connect")
+        self.connect_button.pressed.connect(self.__connect_button_action)
+
         self.disconnect_button = QPushButton()
         self.disconnect_button.setText("Disconnect")
+        self.disconnect_button.pressed.connect(self.__disconnect_button_action)
+
         grid.addWidget(self.connect_button, row, 0, 1, 1)
         grid.addWidget(self.disconnect_button, row, 1, 1, 1)
         row += 1
         return row
+
+    def __connect_button_action(self):
+        LOGGER.info("Starting TM listener..")
+        self.tmtc_handler.start_listener(False)
+        self.connect_button.setStyleSheet("background-color: green")
+        self.connect_button.setEnabled(False)
+
+    def __disconnect_button_action(self):
+        LOGGER.info("Closing TM listener..")
+        if self.connect_button.isEnabled():
+            self.tmtc_handler.close_listener()
+            while True:
+                if not self.tmtc_handler.is_com_if_active():
+                    break
+                else:
+                    # timer = QTimer()
+                    # timer.
+                    pass
+                    # Sleep bad, need to user timer or sth here
+                    # time.sleep(0.4)
+
+
 
     def __add_vertical_separator(self, grid: QGridLayout, row: int):
         separator = QFrame()
@@ -432,3 +393,66 @@ def ip_change_board(value):
     ethernet_config[TcpIpConfigIds.SEND_ADDRESS] = value
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
     LOGGER.info("Board IP changed: " + value)
+
+# This stuff will probably not used in this form.. the single command is specified in code and we only need
+# a button to execute it.
+"""
+
+    def single_command_set_service(self, value):
+        self.single_command_service = value
+
+    def single_command_set_sub_service(self, value):
+        self.single_command_sub_service = value
+
+    def single_command_set_ssc(self, value):
+        self.single_command_ssc = value
+        
+        single_command_grid = QGridLayout()
+        single_command_grid.setSpacing(5)
+
+        single_command_grid.addWidget(QLabel("Service: "), row, 0, 1, 1)
+        single_command_grid.addWidget(QLabel("Subservice: "), row, 1, 1, 1)
+        single_command_grid.addWidget(QLabel("SSC: "), row, 2, 1, 1)
+
+        row += 1
+
+        spin_service = QSpinBox()
+        spin_service.setValue(self.single_command_service)
+        # TODO: set sensible min/max values
+        spin_service.setMinimum(0)
+        spin_service.setMaximum(99999)
+        spin_service.valueChanged.connect(self.single_command_set_service)
+        single_command_grid.addWidget(spin_service, row, 0, 1, 1)
+
+        spin_sub_service = QSpinBox()
+        spin_sub_service.setValue(self.single_command_sub_service)
+        # TODO: set sensible min/max values
+        spin_sub_service.setMinimum(0)
+        spin_sub_service.setMaximum(99999)
+        spin_sub_service.valueChanged.connect(self.single_command_set_sub_service)
+        single_command_grid.addWidget(spin_sub_service, row, 1, 1, 1)
+
+        spin_ssc = QSpinBox()
+        spin_ssc.setValue(self.single_command_ssc)
+        # TODO: set sensible min/max values
+        spin_ssc.setMinimum(0)
+        spin_ssc.setMaximum(99999)
+        spin_ssc.valueChanged.connect(self.single_command_set_ssc)
+        single_command_grid.addWidget(spin_ssc, row, 2, 1, 1)
+
+        # row += 1
+        grid.addItem(single_command_grid, row, 0, 1, 2)
+        # single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
+
+        row += 1
+
+        # TODO: how should this be converted to the byte array?
+        # single_command_data_box = QTextEdit()
+        # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
+
+        # row += 1
+
+        self.commandTable = SingleCommandTable()
+        # grid.addWidget(self.commandTable, row, 0, 1, 2)
+        row += 1
+"""

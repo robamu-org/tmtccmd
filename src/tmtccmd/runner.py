@@ -176,7 +176,7 @@ def __handle_cli_args_and_globals():
 def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
     __get_backend_init_variables()
     tmtc_backend.initialize()
-    tmtc_backend.start()
+    tmtc_backend.start_listener()
 
 
 def __start_tmtc_commander_qt_gui(

@@ -45,6 +45,8 @@ class TmListener:
         self.com_interface = com_interface
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
+        self.listener_active = False
+
         # I don't think a listener is useful without the main program,
         # so we might just declare it daemonic.
         self.listener_thread = threading.Thread(target=self.__perform_operation, daemon=True)
@@ -60,7 +62,6 @@ class TmListener:
         # maybe we will just make the thread daemonic...
         # self.terminationEvent = threading.Event()
 
-        # Will be filled for the Unit Test
         self.__listener_mode = self.ListenerModes.LISTENER
         self.__tm_packet_queue = deque()
 
@@ -73,6 +74,9 @@ class TmListener:
 
     def stop(self):
         self.event_listener_active.clear()
+
+    def is_listener_active(self) -> bool:
+        return self.listener_active
 
     def set_timeouts(self, tm_timeout):
         self.__tm_timeout = tm_timeout
@@ -142,11 +146,14 @@ class TmListener:
 
     def __perform_operation(self):
         while True:
+            # This is running in a daemon thread so it will stop automatically if all other threads have closed
             if self.event_listener_active.is_set():
+                self.listener_active = True
                 self.__default_operation()
             else:
-                # Check every 200 ms whether connection is up again.
-                time.sleep(0.2)
+                self.listener_active = False
+                # Check every 300 ms whether connection is up again.
+                time.sleep(0.3)
 
     def __default_operation(self):
         """

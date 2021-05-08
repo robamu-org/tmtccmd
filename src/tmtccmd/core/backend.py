@@ -1,6 +1,7 @@
 import atexit
 import time
 import sys
+from threading import Thread
 from abc import abstractmethod
 from collections import deque
 from typing import Tuple, Union
@@ -28,7 +29,7 @@ class BackendBase:
         """
 
     @abstractmethod
-    def start(self):
+    def start_listener(self):
         """
         Start the backend. Raise RuntimeError on failure
         """
@@ -54,6 +55,7 @@ class TmTcHandler(BackendBase):
     ):
         self.mode = init_mode
         self.com_if_key = communication_if.get_id()
+        self.com_if_active = False
         self.service = init_service
         self.op_code = init_opcode
 
@@ -70,6 +72,9 @@ class TmTcHandler(BackendBase):
 
     def get_com_if_id(self):
         return self.com_if_key
+
+    def is_com_if_active(self):
+        return self.com_if_active
 
     def set_one_shot_or_loop_handling(self, enable: bool):
         """
@@ -110,7 +115,7 @@ class TmTcHandler(BackendBase):
             LOGGER.error("Unexpected argument, should be TmTcHandler!")
             sys.exit(1)
         executed_handler.initialize()
-        executed_handler.start()
+        executed_handler.start_listener()
 
     def initialize(self):
         from tmtccmd.core.globals_manager import get_global
@@ -120,10 +125,11 @@ class TmTcHandler(BackendBase):
         """
         atexit.register(keyboard_interrupt_handler, com_interface=self.communication_interface)
 
-    def start(self, perform_op_immediately: bool = True):
+    def start_listener(self, perform_op_immediately: bool = True):
         try:
             self.communication_interface.open()
             self.tm_listener.start()
+            self.com_if_active = True
         except IOError:
             LOGGER.error("Communication Interface could not be opened!")
             LOGGER.info("TM listener will not be started")
@@ -132,9 +138,14 @@ class TmTcHandler(BackendBase):
                 self.communication_interface.close()
                 sys.exit(1)
         if perform_op_immediately:
-            self.__perform_operation()
+            self.perform_operation()
 
-    def __perform_operation(self):
+    def close_listener(self):
+        if self.com_if_active:
+            close_thread = Thread(target=self.__com_if_closing)
+            close_thread.start()
+
+    def perform_operation(self):
         """
         Periodic operation
         """
@@ -147,12 +158,20 @@ class TmTcHandler(BackendBase):
             LOGGER.exception("IO Error occured")
             sys.exit()
 
+    def __com_if_closing(self):
+        self.tm_listener.stop()
+        while True:
+            if not self.tm_listener.is_listener_active():
+                self.communication_interface.close()
+                self.com_if_active = False
+                break
+            else:
+                time.sleep(0.4)
+
     def __handle_action(self):
         """
         Command handling.
         """
-        if self.mode == CoreModeList.PROMPT_MODE:
-            self.prompt_mode()
 
         if self.mode == CoreModeList.LISTENER_MODE:
             if self.tm_listener.reply_event():
@@ -189,7 +208,8 @@ class TmTcHandler(BackendBase):
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
                 com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
-                tm_listener=self.tm_listener, tc_queue=service_queue)
+                tm_listener=self.tm_listener, tc_queue=service_queue
+            )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
 
@@ -229,31 +249,6 @@ class TmTcHandler(BackendBase):
                     time.sleep(1)
         else:
             self.__handle_action()
-
-    def prompt_mode(self):
-        next_mode = input("Please enter next mode (enter h for list of modes): ")
-        if next_mode == 'h':
-            print("Mode 0: Single Command Mode")
-            print("Mode 1: Sequential Command Mode")
-            print("Mode 2: Listener Mode")
-            self.prompt_mode()
-        elif next_mode == 1:
-            self.mode = CoreModeList.LISTENER_MODE
-        else:
-            self.mode = CoreModeList.LISTENER_MODE
-
-    # These two will not be used for now.
-    # @staticmethod
-    # def prepare_tmtc_handler_start_in_process(init_mode: ModeList):
-    #    from multiprocessing import Process
-    #    tmtc_handler_task = Process(target=TmTcHandler.start_tmtc_handler, args=(init_mode, ))
-    #    return tmtc_handler_task
-
-    # @staticmethod
-    # def start_tmtc_handler(handler_args: any):
-    #    tmtc_handler = TmTcHandler(handler_args)
-    #    tmtc_handler.initialize()
-    #    tmtc_handler.perform_operation()
 
 
 def command_preparation() -> PusTelecommand:

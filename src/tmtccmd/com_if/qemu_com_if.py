@@ -107,7 +107,7 @@ class QEMUComIF(CommunicationInterface):
                 target=start_background_loop, args=(self.loop,), daemon=True)
 
     def open(self, args: any = None) -> None:
-        self.background_loop_thread.start()
+        self.background_loop_thread.start_listener()
         try:
             self.usart = asyncio.run_coroutine_threadsafe(
                 Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop).result()
