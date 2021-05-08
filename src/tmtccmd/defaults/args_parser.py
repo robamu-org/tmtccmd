@@ -5,7 +5,7 @@ Argument parser module.
 import argparse
 import sys
 
-from tmtccmd.core.definitions import CoreModeList, CoreComInterfaces
+from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces
 
 from tmtccmd.utility.tmtcc_logger import get_logger
 
@@ -110,7 +110,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.core.definitions import CoreModeList, CoreModeStrings
+    from tmtccmd.config.definitions import CoreModeList, CoreModeStrings
     help_text = f"Core Modes.\n"
     onecmd_help = \
         f"{CoreModeList.SINGLE_CMD_MODE} or {CoreModeStrings[CoreModeList.SINGLE_CMD_MODE]}: " \
@@ -133,7 +133,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.core.definitions import CoreComInterfacesString, CoreComInterfaces
+    from tmtccmd.config.definitions import CoreComInterfacesString, CoreComInterfaces
     help_text = f"Core Communication Interface. If this is not specified, the commander core\n" \
                 f"will try to extract it from the JSON or prompt it from the user.\n"
     dummy_line = \

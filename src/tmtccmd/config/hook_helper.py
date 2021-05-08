@@ -8,7 +8,7 @@ LOGGER = get_logger()
 def get_global_hook_obj() -> TmTcHookBase:
     try:
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
 
         from typing import cast
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)

@@ -18,7 +18,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
+from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.utility.tmtcc_logger import get_logger

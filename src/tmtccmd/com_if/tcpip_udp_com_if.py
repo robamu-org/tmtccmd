@@ -10,12 +10,12 @@ import socket
 from typing import Union
 
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.core.definitions import CoreModeList
+from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.core.definitions import ethernet_address_t
+from tmtccmd.config.definitions import ethernet_address_t
 
 LOGGER = get_logger()
 

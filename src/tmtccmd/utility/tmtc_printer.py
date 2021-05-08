@@ -148,7 +148,7 @@ class TmTcPrinter:
         :return:
         """
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
             self.__print_buffer = f"HK Data from Object ID {tm_packet.object_id:#010x} and " \
@@ -162,7 +162,7 @@ class TmTcPrinter:
         :return:
         """
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
             self.__print_buffer = f"HK Definition from Object ID {tm_packet.object_id:#010x} " \

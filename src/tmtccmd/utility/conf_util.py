@@ -2,7 +2,7 @@ import collections.abc
 from typing import Tuple, Union
 
 from tmtccmd.core.globals_manager import get_global
-from tmtccmd.core.definitions import CoreGlobalIds
+from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 

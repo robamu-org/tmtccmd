@@ -22,7 +22,7 @@ class PusTelemetryFactory(object):
     @staticmethod
     def create(raw_tm_packet: bytearray) -> Union[PusTelemetry, None]:
         try:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook_helper import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             return hook_obj.tm_user_factory_hook(raw_tm_packet=raw_tm_packet)
         except ValueError:

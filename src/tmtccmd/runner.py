@@ -13,7 +13,7 @@ from typing import Union
 from tmtccmd.config.hook_base import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
-from tmtccmd.core.definitions import CoreGlobalIds
+from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.defaults.args_parser import parse_input_arguments
@@ -81,7 +81,7 @@ def run_tmtc_commander(
         __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
     else:
         if tmtc_backend is None:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook_helper import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             json_cfg_path = hook_obj.get_json_config_file_path()
             tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
@@ -104,7 +104,7 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
     # Set core object IDs
     insert_object_ids(get_core_object_ids())
     # Set object IDs specified by the user.
-    insert_object_ids(hook_object.set_object_ids())
+    insert_object_ids(hook_object.get_object_ids())
 
 
 def __set_up_tmtc_commander(

@@ -227,7 +227,7 @@ class TmListener:
         # the timeout value can be set by special TC queue entries if wiretapping_packet handling
         # takes longer, but it is reset here to the global value
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
         if self.__tm_timeout is not get_global(CoreGlobalIds.TM_TIMEOUT):
             self.__tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         return True

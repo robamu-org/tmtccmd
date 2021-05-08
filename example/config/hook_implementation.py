@@ -29,7 +29,7 @@ class ExampleHookClass(TmTcHookBase):
         from tmtccmd.defaults.com_setup import create_communication_interface_default
         LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(
-            com_if=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
+            com_if_id=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
 
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
@@ -48,7 +48,7 @@ class ExampleHookClass(TmTcHookBase):
         LOGGER.info("TM user factory hook was called")
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
-    def set_object_ids(self) -> Dict[bytes, list]:
+    def get_object_ids(self) -> Dict[bytes, list]:
         pass
 
     def pack_total_service_queue(self) -> Union[None, TcQueueT]:

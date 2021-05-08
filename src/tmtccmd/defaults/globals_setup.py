@@ -7,7 +7,7 @@ from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.globals import check_and_set_core_mode_arg, check_and_set_core_com_if_arg, \
     check_and_set_core_service_arg
 from tmtccmd.utility.conf_util import print_core_globals
-from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, \
+from tmtccmd.config.definitions import CoreGlobalIds, CoreComInterfaces, CoreModeList, \
     CoreServiceList, DEBUG_MODE
 from tmtccmd.defaults.com_setup import default_serial_cfg_setup, default_tcpip_udp_cfg_setup
 from tmtccmd.core.globals_manager import update_global
@@ -87,7 +87,7 @@ def set_default_globals_post_args_parsing(
         LOGGER.warning("Trying to set from existing configuration..")
         com_if_param = "unspec"
     if com_if_param == "unspec":
-        from tmtccmd.core.definitions import CoreComInterfacesString
+        from tmtccmd.config.definitions import CoreComInterfacesString
         LOGGER.info("Communication interface unspecified. "
                     "Trying to read from JSON or prompting from user..")
         com_if_param = determine_com_if(

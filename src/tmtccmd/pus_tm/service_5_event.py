@@ -42,7 +42,7 @@ class Service5TM(PusTelemetry):
         self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
         self.custom_service_5_print = ""
         if call_srv5_hook:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook_helper import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             self.custom_service_5_print = hook_obj.handle_service_5_event(
                 object_id=self._tm_data[2:6], event_id=self.event_id, param_1=self.param_1, param_2=self.param_2

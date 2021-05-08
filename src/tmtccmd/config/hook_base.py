@@ -2,7 +2,7 @@ import argparse
 from abc import abstractmethod
 from typing import Union, Dict, Tuple
 
-from tmtccmd.core.definitions import DEFAULT_APID
+from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -27,7 +27,7 @@ class TmTcHookBase:
         return f"{VERSION_NAME} {__version__}"
 
     @abstractmethod
-    def set_object_ids(self) -> Dict[bytes, list]:
+    def get_object_ids(self) -> Dict[bytes, list]:
         """
         The user can specify an object ID dictionary here mapping object ID bytearrays to a list (e.g. containing
         the string representation)
@@ -62,7 +62,7 @@ class TmTcHookBase:
 
     @abstractmethod
     def assign_communication_interface(
-            self, com_if: int, tmtc_printer: TmTcPrinter
+            self, com_if_id: int, tmtc_printer: TmTcPrinter
     ) -> Union[CommunicationInterface, None]:
         """
         Assign the communication interface used by the TMTC commander to send and receive TMTC with.
@@ -71,7 +71,7 @@ class TmTcHookBase:
         """
         from tmtccmd.defaults.com_setup import create_communication_interface_default
         return create_communication_interface_default(
-            com_if=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
+            com_if_id=com_if_id, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
 
     @abstractmethod

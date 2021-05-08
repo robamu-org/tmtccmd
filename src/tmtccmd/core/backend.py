@@ -5,7 +5,7 @@ from abc import abstractmethod
 from collections import deque
 from typing import Tuple, Union
 
-from tmtccmd.core.definitions import CoreComInterfaces, CoreGlobalIds, CoreServiceList, CoreModeList
+from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreServiceList, CoreModeList
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.sendreceive.single_command_sender_receiver import SingleCommandSenderReceiver
@@ -109,7 +109,6 @@ class TmTcHandler(BackendBase):
 
     def initialize(self):
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.hook_helper import get_global_hook_obj
         """
         Perform initialization steps which might be necessary after class construction.
         This has to be called at some point before using the class!

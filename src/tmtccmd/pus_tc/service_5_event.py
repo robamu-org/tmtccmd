@@ -1,5 +1,5 @@
 from tmtccmd.config.globals import get_global_apid
-from tmtccmd.core.definitions import QueueCommands
+from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.pus_tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.pus.service_5_event import Srv5Subservices
 

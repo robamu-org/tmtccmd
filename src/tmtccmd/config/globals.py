@@ -3,7 +3,7 @@ from typing import List, Union
 
 from tmtccmd.utility.tmtcc_logger import get_logger
 from tmtccmd.utility.conf_util import check_args_in_enum
-from tmtccmd.core.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces,\
+from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces,\
     CoreServiceList, CoreComInterfacesString, CoreModeStrings
 from tmtccmd.core.globals_manager import update_global, get_global
 

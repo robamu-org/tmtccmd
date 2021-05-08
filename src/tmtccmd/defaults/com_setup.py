@@ -1,7 +1,7 @@
 import sys
 from typing import Union
 
-from tmtccmd.core.definitions import CoreGlobalIds, CoreComInterfaces
+from tmtccmd.config.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType
