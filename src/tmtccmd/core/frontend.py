@@ -61,10 +61,11 @@ class WorkerThread(QObject):
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
-    def __init__(self, tmtc_backend: TmTcHandler):
+    def __init__(self, tmtc_backend: TmTcHandler, app_name: str):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
         self.tmtc_handler = tmtc_backend
+        self.app_name = app_name
 
         self.tmtc_handler.initialize()
         self.service_list = []
@@ -113,7 +114,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid = QGridLayout()
         win.setLayout(grid)
         row = 0
-        self.setWindowTitle("TMTC Commander")
+        self.setWindowTitle(self.app_name)
         self.setWindowIcon(QIcon(self.logo_path))
 
         add_pixmap = False
@@ -187,6 +188,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             grid.addWidget(combo_box_services, row, 0, 1, 1)
 
         combo_box_op_codes = QComboBox()
+        # TODO: Set up combo box for selected service. It also needs to be updated if another service is selected
         grid.addWidget(combo_box_op_codes, row, 1, 1, 1)
         row += 1
 

@@ -44,7 +44,6 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
                             hook functions during program run-time.
     :raises: ValueError for an invalid hook object.
     """
-
     if os.name == 'nt':
         import colorama
         colorama.init()
@@ -55,7 +54,8 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
 def run_tmtc_commander(
         use_gui: bool, reduced_printout: bool = False, ansi_colors: bool = True,
         tmtc_backend: Union[BackendBase, None] = None,
-        tmtc_frontend: Union[FrontendBase, None] = None
+        tmtc_frontend: Union[FrontendBase, None] = None,
+        app_name: str = "TMTC Commander"
 ):
     """
     This is the primary function to run the TMTC commander. Users should call this function to
@@ -85,7 +85,7 @@ def run_tmtc_commander(
         raise RuntimeError
 
     if use_gui:
-        __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
+        __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend, app_name=app_name)
     else:
         if tmtc_backend is None:
             from tmtccmd.config.hook import get_global_hook_obj
@@ -187,7 +187,7 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
 
 
 def __start_tmtc_commander_qt_gui(
-        tmtc_frontend: Union[None, FrontendBase] = None
+        tmtc_frontend: Union[None, FrontendBase] = None, app_name: str = "TMTC Commander"
 ):
     app = None
     if tmtc_frontend is None:
@@ -199,12 +199,12 @@ def __start_tmtc_commander_qt_gui(
         except ImportError:
             LOGGER.error("PyQt5 module not installed, can't run GUI mode!")
             sys.exit(1)
-        app = QApplication(["TMTC Commander"])
+        app = QApplication([app_name])
         hook_obj = get_global_hook_obj()
         json_cfg_path = hook_obj.get_json_config_file_path()
         # The global variables are set by the argument parser.
         tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
-        tmtc_frontend = TmTcFrontend(tmtc_backend=tmtc_backend)
+        tmtc_frontend = TmTcFrontend(tmtc_backend=tmtc_backend, app_name=app_name)
     tmtc_frontend.start(app)
 
 
