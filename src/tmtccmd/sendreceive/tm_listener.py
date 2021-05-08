@@ -68,7 +68,8 @@ class TmListener:
     def start(self):
         if not self.event_listener_active.is_set():
             self.event_listener_active.set()
-            self.listener_thread.start()
+            if not self.listener_thread.is_alive():
+                self.listener_thread.start()
         else:
             LOGGER.warning("TM listener is already active!")
 

@@ -11,6 +11,7 @@ import enum
 import threading
 import os
 import sys
+import time
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
@@ -52,19 +53,19 @@ class WorkerThread(QObject):
                 if not self.tmtc_handler.is_com_if_active():
                     break
                 else:
-                    time.sleep(0.5)
+                    time.sleep(0.4)
             self.finished.emit()
         else:
+            LOGGER.warning("Unknown worker operation code!")
             self.finished.emit()
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(self, tmtc_backend: TmTcHandler):
         super(TmTcFrontend, self).__init__()
+        super(QMainWindow, self).__init__()
         self.tmtc_handler = tmtc_backend
-        # TODO: Perform initialization on button press with specified ComIF
-        #       Also, when changing ComIF, ensure that old ComIF is closed (e.g. with printout)
-        #       Lock all other elements while ComIF is invalid.
+
         self.tmtc_handler.initialize()
         self.service_list = []
         self.debug_mode = True
@@ -166,7 +167,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row = self.__set_up_com_if_section(grid=grid, row=row)
         row = self.__add_vertical_separator(grid=grid, row=row)
 
-
         # service test mode gui
         grid.addWidget(QLabel("Service: "), row, 0, 1, 2)
         grid.addWidget(QLabel("Operation Code: "), row, 1, 1, 2)
@@ -190,7 +190,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(combo_box_op_codes, row, 1, 1, 1)
         row += 1
 
-
         self.command_button = QPushButton()
         self.command_button.setText("Send Command")
         self.command_button.clicked.connect(self.__start_service_test_clicked)
@@ -198,11 +197,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         self.show()
-
-        # resize table columns to fill the window width
-        # for i in range(0, 5):
-        #    self.commandTable.setColumnWidth(i, int(self.commandTable.width() / 5) - 3)
-
 
     def __start_service_test_clicked(self):
         if self.debug_mode:
@@ -308,10 +302,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.connect_button = QPushButton()
         self.connect_button.setText("Connect")
+        self.connect_button.setStyleSheet("background-color: lime")
         self.connect_button.pressed.connect(self.__connect_button_action)
 
         self.disconnect_button = QPushButton()
         self.disconnect_button.setText("Disconnect")
+        self.disconnect_button.setStyleSheet("background-color: orange")
         self.disconnect_button.pressed.connect(self.__disconnect_button_action)
         self.disconnect_button.setEnabled(False)
 
@@ -326,13 +322,16 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.connect_button.setStyleSheet("background-color: green")
         self.connect_button.setEnabled(False)
         self.disconnect_button.setEnabled(True)
+        self.disconnect_button.setStyleSheet("background-color: orange")
 
     def __disconnect_button_action(self):
         LOGGER.info("Closing TM listener..")
         self.disconnect_button.setEnabled(False)
         if not self.connect_button.isEnabled():
             self.thread = QThread()
-            self.worker = WorkerThread(op_code=WorkerOperationsCodes.DISCONNECT, tmtc_handler=self.tmtc_handler)
+            self.worker = WorkerThread(
+                op_code=WorkerOperationsCodes.DISCONNECT, tmtc_handler=self.tmtc_handler
+            )
             self.worker.moveToThread(self.thread)
 
             self.thread.started.connect(self.worker.run_worker)
@@ -348,8 +347,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __button_disconnected(self):
         self.connect_button.setEnabled(True)
         self.disconnect_button.setEnabled(False)
-        self.connect_button.setStyleSheet("background-color: red")
-        print("Disconnect successfull")
+        self.disconnect_button.setStyleSheet("background-color: red")
+        self.connect_button.setStyleSheet("background-color: lime")
+        LOGGER.info("Disconnect successfull")
 
     def __add_vertical_separator(self, grid: QGridLayout, row: int):
         separator = QFrame()
@@ -491,4 +491,8 @@ def ip_change_board(value):
         self.commandTable = SingleCommandTable()
         # grid.addWidget(self.commandTable, row, 0, 1, 2)
         row += 1
+                # resize table columns to fill the window width
+        # for i in range(0, 5):
+        #    self.commandTable.setColumnWidth(i, int(self.commandTable.width() / 5) - 3)
+
 """

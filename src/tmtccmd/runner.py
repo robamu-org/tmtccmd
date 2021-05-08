@@ -8,6 +8,7 @@
 :author:     R. Mueller
 """
 import sys
+import os
 from typing import Union
 
 from tmtccmd.config.hook import TmTcHookBase
@@ -43,6 +44,11 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
                             hook functions during program run-time.
     :raises: ValueError for an invalid hook object.
     """
+
+    if os.name == 'nt':
+        import colorama
+        colorama.init()
+
     __assign_tmtc_commander_hooks(hook_object=hook_object)
 
 
@@ -77,6 +83,7 @@ def run_tmtc_commander(
         )
     except ValueError:
         raise RuntimeError
+
     if use_gui:
         __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
     else:
