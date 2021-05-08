@@ -186,17 +186,17 @@ def __start_tmtc_commander_qt_gui(
     if tmtc_frontend is None:
         from tmtccmd.core.frontend import TmTcFrontend
         from tmtccmd.core.backend import TmTcHandler
+        from tmtccmd.config.hook import get_global_hook_obj
         try:
             from PyQt5.QtWidgets import QApplication
         except ImportError:
             LOGGER.error("PyQt5 module not installed, can't run GUI mode!")
             sys.exit(1)
         app = QApplication(["TMTC Commander"])
-        service, op_code, com_if, mode = __get_backend_init_variables()
+        hook_obj = get_global_hook_obj()
+        json_cfg_path = hook_obj.get_json_config_file_path()
         # The global variables are set by the argument parser.
-        tmtc_backend = TmTcHandler(
-            init_com_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
-        )
+        tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
         tmtc_frontend = TmTcFrontend(tmtc_backend=tmtc_backend)
     tmtc_frontend.start(app)
 

@@ -65,7 +65,7 @@ def create_communication_interface_default(
                 dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
-            communication_interface = DummyComIF(tmtc_printer=tmtc_printer)
+            communication_interface = DummyComIF(com_if_id=com_if_id, tmtc_printer=tmtc_printer)
         if not communication_interface.valid:
             LOGGER.warning("Invalid communication interface!")
             sys.exit()

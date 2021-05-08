@@ -12,13 +12,14 @@ from tmtccmd.pus_tm.service_1_verification import Service1TmPacked
 from tmtccmd.pus_tm.service_17_test import Service17TmPacked
 from tmtccmd.pus.service_17_test import Srv17Subservices
 from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 LOGGER = get_logger()
 
 
 class DummyComIF(CommunicationInterface):
-    def __init__(self, tmtc_printer):
-        super().__init__(tmtc_printer)
+    def __init__(self, com_if_id: int, tmtc_printer: TmTcPrinter):
+        super().__init__(com_if_id=com_if_id, tmtc_printer=tmtc_printer)
         self.dummy_handler = DummyHandler()
         self.service_sent = 0
         self.tc_ssc = 0
