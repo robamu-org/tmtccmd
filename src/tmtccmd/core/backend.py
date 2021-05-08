@@ -68,6 +68,9 @@ class TmTcHandler(BackendBase):
         self.single_command_package: Tuple[bytearray, Union[None, PusTelecommand]] = \
             (bytearray(), None)
 
+    def get_com_if_id(self):
+        return self.com_if_key
+
     def set_one_shot_or_loop_handling(self, enable: bool):
         """
         Specify whether the perform_operation() call will only handle one action depending
@@ -81,7 +84,7 @@ class TmTcHandler(BackendBase):
         """
         self.mode = mode
 
-    def set_com_if(self, com_if: int):
+    def set_com_if(self, com_if: CommunicationInterface):
         self.com_if = com_if
 
     def set_service(self, service: int):

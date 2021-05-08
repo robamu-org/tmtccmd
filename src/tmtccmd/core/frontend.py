@@ -101,13 +101,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         # subservice = int(self.commandTable.item(0, 1).text())
         # ssc = int(self.commandTable.item(0, 2).text())
 
-        LOGGER.info("service: " + str(self.single_command_service) +
-                    ", subservice: " + str(self.single_command_sub_service) +
-                    ", ssc: " + str(self.single_command_ssc))
-
-        # TODO: data needs to be parsed in a different way
-        # data = int(self.commandTable.item(0, 3).text())
-        # crc = int(self.commandTable.item(0, 4).text())
+        LOGGER.info(
+            f"service: {self.single_command_service} , subservice: "
+            f"{self.single_command_sub_service}, ssc: {self.single_command_ssc}"
+        )
 
         # create a command out of the parsed table
         apid = get_global_apid()
@@ -170,6 +167,120 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             grid.addWidget(label, row, 0, 1, 2)
             row += 1
 
+        row = self.__set_up_config_section(grid=grid, row=row)
+        row = self.__add_vert_sep(grid=grid, row=row)
+
+        # TODO: This should be a separate window where the user types in stuff and confirms it.
+        """
+        grid.addWidget(QLabel("Client IP:"), row, 0, 1, 1)
+        grid.addWidget(QLabel("Board IP:"), row, 1, 1, 1)
+        row += 1
+
+        spin_client_ip = QLineEdit()
+        # TODO: set sensible min/max values
+        spin_client_ip.setInputMask("000.000.000.000;_")
+        spin_client_ip.textChanged.connect(ip_change_client)
+        grid.addWidget(spin_client_ip, row, 0, 1, 1)
+
+        spin_board_ip = QLineEdit()
+        # TODO: set sensible min/max values
+        spin_board_ip.setInputMask("000.000.000.000;_")
+        spin_board_ip.textChanged.connect(ip_change_board)
+        # spin_board_ip.setText(obsw_config.G_SEND_ADDRESS[0])
+        grid.addWidget(spin_board_ip, row, 1, 1, 1)
+
+        row += 1
+        """
+
+        # com if configuration
+        row = self.__set_up_com_if_section(grid=grid, row=row)
+        row = self.__add_vert_sep(grid=grid, row=row)
+
+
+        # service test mode gui
+        grid.addWidget(QLabel("Service: "), row, 0, 1, 2)
+        grid.addWidget(QLabel("Operation Code: "), row, 1, 1, 2)
+        row += 1
+
+        combo_box_services = QComboBox()
+
+        service_dict = get_global(CoreGlobalIds.SERVICE_DICT)
+
+        if service_dict is not None:
+            for service_key, service_value in service_dict.items():
+                combo_box_services.addItem(service_dict[service_key][0])
+                self.service_list.append(service_value)
+
+            default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
+            combo_box_services.setCurrentIndex(default_service.value)
+            combo_box_services.currentIndexChanged.connect(self.service_index_changed)
+            grid.addWidget(combo_box_services, row, 0, 1, 1)
+
+        combo_box_op_codes = QComboBox()
+        grid.addWidget(combo_box_op_codes, row, 1, 1, 1)
+        row += 1
+
+        single_command_grid = QGridLayout()
+        single_command_grid.setSpacing(5)
+
+        single_command_grid.addWidget(QLabel("Service: "), row, 0, 1, 1)
+        single_command_grid.addWidget(QLabel("Subservice: "), row, 1, 1, 1)
+        single_command_grid.addWidget(QLabel("SSC: "), row, 2, 1, 1)
+
+        row += 1
+
+        spin_service = QSpinBox()
+        spin_service.setValue(self.single_command_service)
+        # TODO: set sensible min/max values
+        spin_service.setMinimum(0)
+        spin_service.setMaximum(99999)
+        spin_service.valueChanged.connect(self.single_command_set_service)
+        single_command_grid.addWidget(spin_service, row, 0, 1, 1)
+
+        spin_sub_service = QSpinBox()
+        spin_sub_service.setValue(self.single_command_sub_service)
+        # TODO: set sensible min/max values
+        spin_sub_service.setMinimum(0)
+        spin_sub_service.setMaximum(99999)
+        spin_sub_service.valueChanged.connect(self.single_command_set_sub_service)
+        single_command_grid.addWidget(spin_sub_service, row, 1, 1, 1)
+
+        spin_ssc = QSpinBox()
+        spin_ssc.setValue(self.single_command_ssc)
+        # TODO: set sensible min/max values
+        spin_ssc.setMinimum(0)
+        spin_ssc.setMaximum(99999)
+        spin_ssc.valueChanged.connect(self.single_command_set_ssc)
+        single_command_grid.addWidget(spin_ssc, row, 2, 1, 1)
+
+        # row += 1
+        grid.addItem(single_command_grid, row, 0, 1, 2)
+        # single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
+
+        # row += 1
+
+        # TODO: how should this be converted to the byte array?
+        # single_command_data_box = QTextEdit()
+        # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
+
+        # row += 1
+
+        # self.commandTable = SingleCommandTable()
+        # grid.addWidget(self.commandTable, row, 0, 1, 2)
+        row += 1
+        self.single_command_button = QPushButton()
+        self.single_command_button.setText("Send Command")
+        self.single_command_button.clicked.connect(self.send_single_command_clicked)
+        grid.addWidget(self.single_command_button, row, 0, 1, 2)
+        row += 1
+
+        self.show()
+
+        # resize table columns to fill the window width
+        # for i in range(0, 5):
+        #    self.commandTable.setColumnWidth(i, int(self.commandTable.width() / 5) - 3)
+
+    def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
         row += 1
         checkbox_console = QCheckBox("Print output to console")
@@ -222,123 +333,27 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         spin_timeout_factor.valueChanged.connect(number_timeout_factor)
         grid.addWidget(spin_timeout_factor, row, 1, 1, 1)
         row += 1
+        return row
 
-        grid.addWidget(QLabel("Client IP:"), row, 0, 1, 1)
-        grid.addWidget(QLabel("Board IP:"), row, 1, 1, 1)
-        row += 1
-
-        spin_client_ip = QLineEdit()
-        # TODO: set sensible min/max values
-        spin_client_ip.setInputMask("000.000.000.000;_")
-        spin_client_ip.textChanged.connect(ip_change_client)
-        grid.addWidget(spin_client_ip, row, 0, 1, 1)
-
-        spin_board_ip = QLineEdit()
-        # TODO: set sensible min/max values
-        spin_board_ip.setInputMask("000.000.000.000;_")
-        spin_board_ip.textChanged.connect(ip_change_board)
-        # spin_board_ip.setText(obsw_config.G_SEND_ADDRESS[0])
-        grid.addWidget(spin_board_ip, row, 1, 1, 1)
-
-        row += 1
-        # com if configuration
+    def __set_up_com_if_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Communication Interface:"), row, 0, 1, 1)
         com_if_combo_box = QComboBox()
         # add all possible ComIFs to the comboBox
         for com_if in CoreComInterfaces:
             com_if_combo_box.addItem(str(com_if))
-        com_if_combo_box.setCurrentIndex(self.tmtc_handler.com_if)
+        com_if_combo_box.setCurrentIndex(self.tmtc_handler.get_com_if_id())
         com_if_combo_box.currentIndexChanged.connect(com_if_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)
         row += 1
 
-        # service test mode gui
-        grid.addWidget(QLabel("Service Test Mode:"), row, 0, 1, 2)
+        self.connect_button = QPushButton()
+        self.connect_button.setText("Connect")
+        self.disconnect_button = QPushButton()
+        self.disconnect_button.setText("Disconnect")
+        grid.addWidget(self.connect_button, row, 0, 1, 1)
+        grid.addWidget(self.disconnect_button, row, 1, 1, 1)
         row += 1
-
-        combo_box = QComboBox()
-
-        service_dict = get_global(CoreGlobalIds.SERVICE_DICT)
-
-        if service_dict is not None:
-            for service_key, service_value in service_dict.items():
-                combo_box.addItem(service_dict[service_key][0])
-                self.service_list.append(service_value)
-
-            default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-            combo_box.setCurrentIndex(default_service.value)
-            combo_box.currentIndexChanged.connect(self.service_index_changed)
-            grid.addWidget(combo_box, row, 0, 1, 1)
-
-        self.service_test_button = QPushButton()
-        self.service_test_button.setText("Start Service Test")
-        self.service_test_button.clicked.connect(self.start_service_test_clicked)
-        grid.addWidget(self.service_test_button, row, 1, 1, 1)
-        row += 1
-
-        # single command operation
-        grid.addWidget(QLabel("Single Command Operation:"), row, 0, 1, 1)
-        row += 1
-
-        single_command_grid = QGridLayout()
-        single_command_grid.setSpacing(5)
-
-        single_command_grid.addWidget(QLabel("Service: "), row, 0, 1, 1)
-        single_command_grid.addWidget(QLabel("Subservice: "), row, 1, 1, 1)
-        single_command_grid.addWidget(QLabel("SSC: "), row, 2, 1, 1)
-
-        row += 1
-
-        spin_service = QSpinBox()
-        spin_service.setValue(self.single_command_service)
-        # TODO: set sensible min/max values
-        spin_service.setMinimum(0)
-        spin_service.setMaximum(99999)
-        spin_service.valueChanged.connect(self.single_command_set_service)
-        single_command_grid.addWidget(spin_service, row, 0, 1, 1)
-
-        spin_sub_service = QSpinBox()
-        spin_sub_service.setValue(self.single_command_sub_service)
-        # TODO: set sensible min/max values
-        spin_sub_service.setMinimum(0)
-        spin_sub_service.setMaximum(99999)
-        spin_sub_service.valueChanged.connect(self.single_command_set_sub_service)
-        single_command_grid.addWidget(spin_sub_service, row, 1, 1, 1)
-
-        spin_ssc = QSpinBox()
-        spin_ssc.setValue(self.single_command_ssc)
-        # TODO: set sensible min/max values
-        spin_ssc.setMinimum(0)
-        spin_ssc.setMaximum(99999)
-        spin_ssc.valueChanged.connect(self.single_command_set_ssc)
-        single_command_grid.addWidget(spin_ssc, row, 2, 1, 1)
-
-        # row += 1
-        grid.addItem(single_command_grid, row, 0, 1, 2)
-        # single_command_grid.addWidget(QLabel("Data: "), row, 0, 1, 3)
-
-        # row += 1
-
-        # TODO: how should this be converted to the byte array?
-        # single_command_data_box = QTextEdit()
-        # single_command_grid.addWidget(single_command_data_box, row, 0, 1, 3)
-
-        # row += 1
-
-        # self.commandTable = SingleCommandTable()
-        # grid.addWidget(self.commandTable, row, 0, 1, 2)
-        row += 1
-        self.single_command_button = QPushButton()
-        self.single_command_button.setText("Send single command: ")
-        self.single_command_button.clicked.connect(self.send_single_command_clicked)
-        grid.addWidget(self.single_command_button, row, 0, 1, 2)
-        row += 1
-
-        self.show()
-
-        # resize table columns to fill the window width
-        # for i in range(0, 5):
-        #    self.commandTable.setColumnWidth(i, int(self.commandTable.width() / 5) - 3)
+        return row
 
     def checkbox_log_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_TO_FILE, state)
@@ -355,6 +370,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if self.debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
 
+    def __add_vert_sep(self, grid: QGridLayout, row: int):
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        grid.addWidget(separator, row, 0, 1, 2)
+        row += 1
+        return row
 
 class SingleCommandTable(QTableWidget):
     def __init__(self):
