@@ -89,7 +89,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def service_index_changed(self, index: int):
         self.tmtc_handler.service = self.service_list[index]
         if self.debug_mode:
-            LOGGER.info("service_test_mode_selection updated: " + str(self.service_list[index]))
+            LOGGER.info("Service index changed: " + str(self.service_list[index]))
 
     def handle_tm_tc_action(self):
         if self.debug_mode:
@@ -179,7 +179,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if service_dict is not None:
             for service_key, service_value in service_dict.items():
                 combo_box_services.addItem(service_dict[service_key][0])
-                self.service_list.append(service_value)
+                self.service_list.append(service_key)
 
             default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
             combo_box_services.setCurrentIndex(default_service.value)
