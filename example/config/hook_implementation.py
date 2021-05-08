@@ -1,6 +1,6 @@
 import argparse
 from typing import Union, Dict, Tuple
-from tmtccmd.core.hook_base import \
+from tmtccmd.config.hook_base import \
     TmTcHookBase, TmTcPrinter, CommunicationInterface, TmTcHandler, PusTelemetry, TcQueueT, \
     PusTelecommand, Service3Base
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -10,7 +10,7 @@ LOGGER = get_logger()
 
 class ExampleHookClass(TmTcHookBase):
 
-    def set_json_config_file_path(self) -> str:
+    def get_json_config_file_path(self) -> str:
         return "tmtc_config.json"
 
     def get_version(self) -> str:
@@ -29,7 +29,7 @@ class ExampleHookClass(TmTcHookBase):
         from tmtccmd.defaults.com_setup import create_communication_interface_default
         LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(
-            com_if=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.set_json_config_file_path()
+            com_if=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
 
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

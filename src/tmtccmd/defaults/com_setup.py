@@ -15,7 +15,7 @@ LOGGER = get_logger()
 
 
 def create_communication_interface_default(
-        com_if: int, tmtc_printer: TmTcPrinter, json_cfg_path: str
+        com_if_id: int, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Union[CommunicationInterface, None]:
     from tmtccmd.com_if.serial_com_if import SerialComIF
     from tmtccmd.com_if.dummy_com_if import DummyComIF
@@ -27,7 +27,7 @@ def create_communication_interface_default(
     :return: CommunicationInterface object
     """
     try:
-        if com_if == CoreComInterfaces.TCPIP_UDP:
+        if com_if_id == CoreComInterfaces.TCPIP_UDP:
             ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
             send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
             recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
@@ -39,8 +39,8 @@ def create_communication_interface_default(
                 send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
                 tmtc_printer=tmtc_printer, init_mode=init_mode
             )
-        elif com_if == CoreComInterfaces.SERIAL_DLE or \
-                com_if == CoreComInterfaces.SERIAL_FIXED_FRAME:
+        elif com_if_id == CoreComInterfaces.SERIAL_DLE or \
+                com_if_id == CoreComInterfaces.SERIAL_FIXED_FRAME:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
@@ -54,7 +54,7 @@ def create_communication_interface_default(
             dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
             communication_interface.set_dle_settings(dle_max_queue_len, dle_max_frame_size,
                                                      serial_timeout)
-        elif com_if == CoreComInterfaces.SERIAL_QEMU:
+        elif com_if_id == CoreComInterfaces.SERIAL_QEMU:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(

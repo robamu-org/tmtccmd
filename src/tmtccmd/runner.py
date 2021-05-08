@@ -10,7 +10,7 @@
 import sys
 from typing import Union
 
-from tmtccmd.core.hook_base import TmTcHookBase
+from tmtccmd.config.hook_base import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.definitions import CoreGlobalIds
@@ -18,6 +18,7 @@ from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.defaults.args_parser import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
+from tmtccmd.defaults.com_setup import create_communication_interface_default
 from tmtccmd.utility.tmtcc_logger import set_tmtc_logger, get_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
@@ -80,7 +81,10 @@ def run_tmtc_commander(
         __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
     else:
         if tmtc_backend is None:
-            tmtc_backend = get_default_tmtc_backend()
+            from tmtccmd.core.hook_helper import get_global_hook_obj
+            hook_obj = get_global_hook_obj()
+            json_cfg_path = hook_obj.get_json_config_file_path()
+            tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
 
@@ -115,7 +119,7 @@ def __set_up_tmtc_commander(
     :param tmtc_backend:
     :return:
     """
-    from tmtccmd.core.hook_base import TmTcHookBase
+    from tmtccmd.config.hook_base import TmTcHookBase
     from typing import cast
     set_tmtc_logger()
 
@@ -158,7 +162,6 @@ def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool
 def __handle_cli_args_and_globals():
     from typing import cast
     from tmtccmd.core.globals_manager import get_global
-    from tmtccmd.defaults.globals_setup import set_json_cfg_path
 
     hook_obj = cast(TmTcHookBase, get_global(CoreGlobalIds.TMTC_HOOK))
     LOGGER.info("Setting up pre-globals..")
@@ -171,14 +174,6 @@ def __handle_cli_args_and_globals():
 
 
 def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
-    from tmtccmd.core.backend import TmTcHandler
-    hook_obj = get_global(CoreGlobalIds.TMTC_HOOK)
-    if not isinstance(hook_obj, TmTcHookBase):
-        LOGGER.error(
-            "TMTC hook is invalid. Please set it with initialize_tmtc_commander before"
-            "starting the program"
-        )
-        raise ValueError
     __get_backend_init_variables()
     tmtc_backend.initialize()
     tmtc_backend.start()
@@ -214,12 +209,20 @@ def __get_backend_init_variables():
     return service, op_code, com_if, mode
 
 
-def get_default_tmtc_backend():
+def get_default_tmtc_backend(hook_obj: TmTcHookBase, json_cfg_path: str):
     from tmtccmd.core.backend import TmTcHandler
-    service, op_code, com_if, mode = __get_backend_init_variables()
+    from tmtccmd.utility.tmtc_printer import TmTcPrinter
+    service, op_code, com_if_id, mode = __get_backend_init_variables()
+    display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
+    print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
+    tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
+    json_cfg_path = hook_obj.get_json_config_file_path()
+    com_if = create_communication_interface_default(
+        com_if_id=com_if_id, json_cfg_path=json_cfg_path, tmtc_printer=tmtc_printer
+    )
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
-        init_com_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
+        communication_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
     )
     tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
     return tmtc_backend

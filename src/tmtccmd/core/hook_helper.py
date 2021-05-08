@@ -1,5 +1,5 @@
 import sys
-from tmtccmd.core.hook_base import TmTcHookBase
+from tmtccmd.config.hook_base import TmTcHookBase
 from tmtccmd.utility.tmtcc_logger import get_logger
 
 LOGGER = get_logger()

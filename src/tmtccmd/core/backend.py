@@ -48,18 +48,18 @@ class TmTcHandler(BackendBase):
     in case a GUI or front-end is implemented.
     """
 
-    def __init__(self, init_com_if: int, init_mode: int,
-                 init_service: int, init_opcode: str = "0"):
+    def __init__(self, communication_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
+                 init_mode: int, init_service: int, init_opcode: str = "0"):
         self.mode = init_mode
-        self.com_if = init_com_if
+        self.com_if_key = communication_if.get_id()
         self.service = init_service
         self.op_code = init_opcode
 
         # This flag could be used later to command the TMTC Client with a front-end
         self.one_shot_operation = True
 
-        self.tmtc_printer: Union[None, TmTcPrinter] = None
-        self.communication_interface: Union[None, CommunicationInterface] = None
+        self.communication_interface = communication_if
+        self.tmtc_printer = tmtc_printer
         self.tm_listener: Union[None, TmListener] = None
         self.exit_on_com_if_init_failure = True
 
@@ -117,13 +117,6 @@ class TmTcHandler(BackendBase):
         com_if = get_global(CoreGlobalIds.COM_IF)
         tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
-        display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
-        print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
-        self.tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
-        hook_obj = get_global_hook_obj()
-        self.communication_interface = hook_obj.assign_communication_interface(
-            com_if=com_if, tmtc_printer=self.tmtc_printer
-        )
         self.tm_listener = TmListener(
             com_interface=self.communication_interface, tm_timeout=tm_timeout,
             tc_timeout_factor=tc_send_timeout_factor

@@ -44,7 +44,7 @@ class TmTcHookBase:
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
 
     @abstractmethod
-    def set_json_config_file_path(self) -> str:
+    def get_json_config_file_path(self) -> str:
         """
         The user can specify a path and filename for the JSON configuration file by overriding this function.
         :return:
@@ -58,7 +58,7 @@ class TmTcHookBase:
         :param args:  Specify whether a GUI is used
         """
         from tmtccmd.defaults.globals_setup import set_default_globals_post_args_parsing
-        set_default_globals_post_args_parsing(args=args, json_cfg_path=self.set_json_config_file_path())
+        set_default_globals_post_args_parsing(args=args, json_cfg_path=self.get_json_config_file_path())
 
     @abstractmethod
     def assign_communication_interface(
@@ -71,7 +71,7 @@ class TmTcHookBase:
         """
         from tmtccmd.defaults.com_setup import create_communication_interface_default
         return create_communication_interface_default(
-            com_if=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.set_json_config_file_path()
+            com_if=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
 
     @abstractmethod
