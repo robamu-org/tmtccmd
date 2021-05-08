@@ -15,6 +15,7 @@ import serial.tools.list_ports
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.core.definitions import CoreComInterfaces
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tm.factory import PusTelemetryFactory, PusTmListT
 from tmtccmd.utility.tmtcc_logger import get_logger
@@ -54,7 +55,7 @@ class SerialComIF(CommunicationInterface):
     """
     Communication Interface to use serial communication. This requires the PySerial library.
     """
-    def __init__(self, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int,
+    def __init__(self, com_if_id: int, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int,
                  serial_timeout: float,
                  ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED):
         """
@@ -66,7 +67,7 @@ class SerialComIF(CommunicationInterface):
         :param serial_timeout: Specify serial timeout
         :param ser_com_type: Specify how to handle serial reception
         """
-        super().__init__(tmtc_printer)
+        super().__init__(com_if_id=com_if_id, tmtc_printer=tmtc_printer)
 
         self.com_port = com_port
         self.baud_rate = baud_rate

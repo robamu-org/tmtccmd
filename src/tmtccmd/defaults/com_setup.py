@@ -47,9 +47,8 @@ def create_communication_interface_default(
             # Determine COM port, either extract from JSON file or ask from user.
             com_port = determine_com_port(json_cfg_path=json_cfg_path)
             communication_interface = SerialComIF(
-                tmtc_printer=tmtc_printer, com_port=com_port, baud_rate=serial_baudrate,
-                serial_timeout=serial_timeout,
-                ser_com_type=SerialCommunicationType.DLE_ENCODING)
+                com_if_id=com_if_id, tmtc_printer=tmtc_printer, com_port=com_port, baud_rate=serial_baudrate,
+                serial_timeout=serial_timeout, ser_com_type=SerialCommunicationType.DLE_ENCODING)
             dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
             dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
             communication_interface.set_dle_settings(dle_max_queue_len, dle_max_frame_size,

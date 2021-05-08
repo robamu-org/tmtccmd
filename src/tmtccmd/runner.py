@@ -222,7 +222,7 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, json_cfg_path: str):
     )
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
-        communication_if=com_if, init_mode=mode, init_service=service, init_opcode=op_code
+        communication_if=com_if, tmtc_printer=tmtc_printer, init_mode=mode, init_service=service, init_opcode=op_code
     )
     tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
     return tmtc_backend
