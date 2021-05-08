@@ -10,7 +10,7 @@
 import sys
 from typing import Union
 
-from tmtccmd.config.hook_base import TmTcHookBase
+from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.config.definitions import CoreGlobalIds
@@ -81,7 +81,7 @@ def run_tmtc_commander(
         __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend)
     else:
         if tmtc_backend is None:
-            from tmtccmd.config.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             json_cfg_path = hook_obj.get_json_config_file_path()
             tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
@@ -119,7 +119,7 @@ def __set_up_tmtc_commander(
     :param tmtc_backend:
     :return:
     """
-    from tmtccmd.config.hook_base import TmTcHookBase
+    from tmtccmd.config.hook import TmTcHookBase
     from typing import cast
     set_tmtc_logger()
 

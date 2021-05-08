@@ -1,22 +1,22 @@
-import argparse
-from abc import abstractmethod
-from typing import Union, Dict, Tuple
-
-from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.utility.tmtcc_logger import get_logger
-from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tc.definitions import PusTelecommand
-from tmtccmd.pus_tc.definitions import TcQueueT
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tm.service_3_base import Service3Base
-
 
 LOGGER = get_logger()
 
 
 class TmTcHookBase:
+    import argparse
+    from abc import abstractmethod
+    from typing import Union, Dict, Tuple
+
+    from tmtccmd.config.definitions import DEFAULT_APID
+
+    from tmtccmd.core.backend import TmTcHandler
+    from tmtccmd.utility.tmtc_printer import TmTcPrinter
+    from tmtccmd.ecss.tm import PusTelemetry
+    from tmtccmd.pus_tc.definitions import PusTelecommand
+    from tmtccmd.pus_tc.definitions import TcQueueT
+    from tmtccmd.com_if.com_interface_base import CommunicationInterface
+    from tmtccmd.pus_tm.service_3_base import Service3Base
 
     def __init__(self):
         pass
@@ -164,3 +164,20 @@ class TmTcHookBase:
         :return:    Custom information string which will be printed with the event
         """
         return ""
+
+
+def get_global_hook_obj() -> TmTcHookBase:
+    try:
+        from tmtccmd.core.globals_manager import get_global
+        from tmtccmd.config.definitions import CoreGlobalIds
+
+        from typing import cast
+        hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
+        if hook_obj_raw is None:
+            LOGGER.error("Hook object is invalid!")
+            sys.exit(0)
+        return cast(TmTcHookBase, hook_obj_raw)
+    except ImportError:
+        LOGGER.exception("Issues importing modules to get global hook handle!")
+    except AttributeError:
+        LOGGER.exception("Attribute error when trying to get global hook handle!")

@@ -24,7 +24,7 @@ class ServiceQueuePacker:
         Use hook object supplied by user
         """
         try:
-            from tmtccmd.config.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             hook_obj.pack_service_queue(
                 service=service, op_code=op_code, service_queue=service_queue

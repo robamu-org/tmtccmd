@@ -1,6 +1,6 @@
 import argparse
 from typing import Union, Dict, Tuple
-from tmtccmd.config.hook_base import \
+from tmtccmd.config.hook import \
     TmTcHookBase, TmTcPrinter, CommunicationInterface, TmTcHandler, PusTelemetry, TcQueueT, \
     PusTelecommand, Service3Base
 from tmtccmd.utility.tmtcc_logger import get_logger

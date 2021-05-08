@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 from argparse import Namespace
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.config.hook_base import TmTcHookBase
+from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
 from tmtccmd.core.frontend_base import FrontendBase
 
