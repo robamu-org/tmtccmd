@@ -9,7 +9,7 @@ This file transfers TC packing to the user application.
 import sys
 
 from tmtccmd.pus_tc.definitions import TcQueueT
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 

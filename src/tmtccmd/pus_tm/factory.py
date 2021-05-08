@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Deque, List, Tuple, Union
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 PusRawTmList = List[bytearray]

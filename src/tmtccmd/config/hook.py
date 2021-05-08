@@ -1,4 +1,4 @@
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
@@ -40,7 +40,7 @@ class TmTcHookBase:
         Add all global variables prior to parsing the CLI arguments.
         :param gui:  Specify whether a GUI is used
         """
-        from tmtccmd.defaults.globals_setup import set_default_globals_pre_args_parsing
+        from tmtccmd.config.globals import set_default_globals_pre_args_parsing
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
 
     @abstractmethod
@@ -57,7 +57,7 @@ class TmTcHookBase:
         Add global variables prior after parsing the CLI arguments.
         :param args:  Specify whether a GUI is used
         """
-        from tmtccmd.defaults.globals_setup import set_default_globals_post_args_parsing
+        from tmtccmd.config.globals import set_default_globals_post_args_parsing
         set_default_globals_post_args_parsing(args=args, json_cfg_path=self.get_json_config_file_path())
 
     @abstractmethod
@@ -69,7 +69,7 @@ class TmTcHookBase:
         :param com_if:          Integer representation of the communication interface to be created.
         :param tmtc_printer:    Printer utility instance.
         """
-        from tmtccmd.defaults.com_setup import create_communication_interface_default
+        from tmtccmd.config.com_if import create_communication_interface_default
         return create_communication_interface_default(
             com_if_id=com_if_id, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )

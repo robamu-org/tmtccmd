@@ -3,7 +3,7 @@ from typing import Union
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.config.globals import get_global_apid
 
 logger = get_logger()

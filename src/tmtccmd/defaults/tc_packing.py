@@ -7,7 +7,7 @@ from tmtccmd.pus_tc.definitions import TcQueueT
 from tmtccmd.config.definitions import CoreServiceList
 from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
 from tmtccmd.pus_tc.service_5_event import pack_generic_service5_test_into
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 

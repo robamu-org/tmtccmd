@@ -10,7 +10,7 @@ import threading
 from collections import deque
 from enum import Enum
 
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.pus_tm.factory import PusTmQueueT
 

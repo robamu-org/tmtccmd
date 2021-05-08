@@ -2,7 +2,7 @@ import json
 
 import serial
 import serial.tools.list_ports
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 
 LOGGER = get_logger()

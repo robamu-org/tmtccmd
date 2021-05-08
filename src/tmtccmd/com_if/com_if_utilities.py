@@ -1,6 +1,6 @@
 import json
 
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 LOGGER = get_logger()

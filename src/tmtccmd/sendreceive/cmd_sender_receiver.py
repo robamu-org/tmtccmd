@@ -16,7 +16,7 @@ import time
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.pus_tc.definitions import TcQueueEntryT

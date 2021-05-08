@@ -21,7 +21,7 @@ from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.pus_tc.definitions import PusTelecommand
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.defaults as defaults_module

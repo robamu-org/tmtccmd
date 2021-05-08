@@ -10,7 +10,7 @@ from tmtccmd.pus.service_list import PusServices
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 
 LOGGER = get_logger()

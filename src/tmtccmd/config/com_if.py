@@ -7,7 +7,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 

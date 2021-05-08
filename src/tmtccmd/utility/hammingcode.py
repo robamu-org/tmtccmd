@@ -37,7 +37,7 @@ Translated from ATMEL C library.
 """
 from enum import Enum
 
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 

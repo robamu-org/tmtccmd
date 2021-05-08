@@ -6,7 +6,7 @@ from typing import Union
 
 from tmtccmd.config.definitions import ethernet_address_t
 from tmtccmd.utility.json_handler import check_json_file
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.json_handler import JsonKeyNames
 
 LOGGER = get_logger()

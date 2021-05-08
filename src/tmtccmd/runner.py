@@ -16,10 +16,10 @@ from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
-from tmtccmd.defaults.args_parser import parse_input_arguments
+from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
-from tmtccmd.defaults.com_setup import create_communication_interface_default
-from tmtccmd.utility.tmtcc_logger import set_tmtc_logger, get_logger
+from tmtccmd.config.com_if import create_communication_interface_default
+from tmtccmd.utility.logger import set_tmtc_logger, get_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
 LOGGER = get_logger()

@@ -1,14 +1,20 @@
-import argparse
-from typing import Union, Dict, Tuple
-from tmtccmd.config.hook import \
-    TmTcHookBase, TmTcPrinter, CommunicationInterface, TmTcHandler, PusTelemetry, TcQueueT, \
-    PusTelecommand, Service3Base
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.config.hook import TmTcHookBase
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
 
 class ExampleHookClass(TmTcHookBase):
+    import argparse
+    from typing import Union, Dict, Tuple
+
+    from tmtccmd.core.backend import TmTcHandler
+    from tmtccmd.utility.tmtc_printer import TmTcPrinter
+    from tmtccmd.ecss.tm import PusTelemetry
+    from tmtccmd.pus_tc.definitions import PusTelecommand
+    from tmtccmd.pus_tc.definitions import TcQueueT
+    from tmtccmd.com_if.com_interface_base import CommunicationInterface
+    from tmtccmd.pus_tm.service_3_base import Service3Base
 
     def get_json_config_file_path(self) -> str:
         return "tmtc_config.json"
@@ -17,16 +23,16 @@ class ExampleHookClass(TmTcHookBase):
         return "My Version String"
 
     def add_globals_pre_args_parsing(self, gui: bool = False):
-        from tmtccmd.defaults.globals_setup import set_default_globals_pre_args_parsing
+        from tmtccmd.config.globals import set_default_globals_pre_args_parsing
         set_default_globals_pre_args_parsing(gui=gui, apid=0xef)
 
     def add_globals_post_args_parsing(self, args: argparse.Namespace, json_cfg_path: str = ""):
-        from tmtccmd.defaults.globals_setup import set_default_globals_post_args_parsing
+        from tmtccmd.config.globals import set_default_globals_post_args_parsing
         set_default_globals_post_args_parsing(args=args, json_cfg_path=json_cfg_path)
 
     def assign_communication_interface(self, com_if: int, tmtc_printer: TmTcPrinter) -> \
             Union[CommunicationInterface, None]:
-        from tmtccmd.defaults.com_setup import create_communication_interface_default
+        from tmtccmd.config.com_if import create_communication_interface_default
         LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(
             com_if_id=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()

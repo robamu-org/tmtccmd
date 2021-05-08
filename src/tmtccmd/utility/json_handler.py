@@ -1,7 +1,7 @@
 import json
 import os
 import enum
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 

@@ -3,7 +3,7 @@ from typing import Tuple, Union
 
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.config.definitions import CoreGlobalIds
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 
 LOGGER = get_logger()

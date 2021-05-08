@@ -6,7 +6,7 @@ from collections import deque
 from typing import Tuple, Union
 
 from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreServiceList, CoreModeList
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.sendreceive.single_command_sender_receiver import SingleCommandSenderReceiver
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
