@@ -7,6 +7,7 @@
 @manual
 @author         R. Mueller, P. Scheurenbrand, D. Nguyen
 """
+import enum
 import threading
 import os
 import sys
@@ -16,7 +17,7 @@ from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLa
     QDoubleSpinBox, QFrame, QComboBox, QPushButton
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread
 
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
@@ -30,6 +31,31 @@ import tmtccmd.defaults as defaults_module
 
 
 LOGGER = get_logger()
+
+
+class WorkerOperationsCodes(enum.IntEnum):
+    DISCONNECT = 0
+
+
+class WorkerThread(QObject):
+    finished = pyqtSignal()
+
+    def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: TmTcHandler):
+        super(QObject, self).__init__()
+        self.op_code = op_code
+        self.tmtc_handler = tmtc_handler
+
+    def run_worker(self):
+        if self.op_code == WorkerOperationsCodes.DISCONNECT:
+            self.tmtc_handler.close_listener()
+            while True:
+                if not self.tmtc_handler.is_com_if_active():
+                    break
+                else:
+                    time.sleep(0.5)
+            self.finished.emit()
+        else:
+            self.finished.emit()
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
@@ -287,6 +313,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.disconnect_button = QPushButton()
         self.disconnect_button.setText("Disconnect")
         self.disconnect_button.pressed.connect(self.__disconnect_button_action)
+        self.disconnect_button.setEnabled(False)
 
         grid.addWidget(self.connect_button, row, 0, 1, 1)
         grid.addWidget(self.disconnect_button, row, 1, 1, 1)
@@ -298,22 +325,31 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.tmtc_handler.start_listener(False)
         self.connect_button.setStyleSheet("background-color: green")
         self.connect_button.setEnabled(False)
+        self.disconnect_button.setEnabled(True)
 
     def __disconnect_button_action(self):
         LOGGER.info("Closing TM listener..")
-        if self.connect_button.isEnabled():
-            self.tmtc_handler.close_listener()
-            while True:
-                if not self.tmtc_handler.is_com_if_active():
-                    break
-                else:
-                    # timer = QTimer()
-                    # timer.
-                    pass
-                    # Sleep bad, need to user timer or sth here
-                    # time.sleep(0.4)
+        self.disconnect_button.setEnabled(False)
+        if not self.connect_button.isEnabled():
+            self.thread = QThread()
+            self.worker = WorkerThread(op_code=WorkerOperationsCodes.DISCONNECT, tmtc_handler=self.tmtc_handler)
+            self.worker.moveToThread(self.thread)
 
+            self.thread.started.connect(self.worker.run_worker)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
 
+            self.thread.finished.connect(
+                self.__button_disconnected
+            )
+            self.thread.start()
+
+    def __button_disconnected(self):
+        self.connect_button.setEnabled(True)
+        self.disconnect_button.setEnabled(False)
+        self.connect_button.setStyleSheet("background-color: red")
+        print("Disconnect successfull")
 
     def __add_vertical_separator(self, grid: QGridLayout, row: int):
         separator = QFrame()
