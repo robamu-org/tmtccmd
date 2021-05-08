@@ -34,7 +34,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     # TODO: this list should probably be inside an enum in the tmtcc_config.py
     service_test_button: QPushButton
-    single_command_button: QPushButton
+    command_button: QPushButton
     command_table: QTableWidget
 
     single_command_service: int = 17
@@ -83,7 +83,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def single_command_set_ssc(self, value):
         self.single_command_ssc = value
 
-    def start_service_test_clicked(self):
+    def __start_service_test_clicked(self):
         if self.debug_mode:
             LOGGER.info("Start Service Test Button pressed.")
         # LOGGER.info("start testing service: " + str(tmtcc_config.G_SERVICE))
@@ -125,15 +125,14 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.tmtc_handler.mode = CoreModeList.SEQUENTIAL_CMD_MODE
 
         self.set_send_buttons(False)
-        self.tmtc_handler.perform_operation()
+        self.tmtc_handler.start(perform_op_immediately=True)
         self.is_busy = False
         self.set_send_buttons(True)
         if self.debug_mode:
             LOGGER.info("Finished TMTC action..")
 
     def set_send_buttons(self, state: bool):
-        self.service_test_button.setEnabled(state)
-        self.single_command_button.setEnabled(state)
+        self.command_button.setEnabled(state)
 
     def start_ui(self):
 
@@ -168,7 +167,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             row += 1
 
         row = self.__set_up_config_section(grid=grid, row=row)
-        row = self.__add_vert_sep(grid=grid, row=row)
+        row = self.__add_vertical_separator(grid=grid, row=row)
 
         # TODO: This should be a separate window where the user types in stuff and confirms it.
         """
@@ -194,7 +193,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         # com if configuration
         row = self.__set_up_com_if_section(grid=grid, row=row)
-        row = self.__add_vert_sep(grid=grid, row=row)
+        row = self.__add_vertical_separator(grid=grid, row=row)
 
 
         # service test mode gui
@@ -268,10 +267,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         # self.commandTable = SingleCommandTable()
         # grid.addWidget(self.commandTable, row, 0, 1, 2)
         row += 1
-        self.single_command_button = QPushButton()
-        self.single_command_button.setText("Send Command")
-        self.single_command_button.clicked.connect(self.send_single_command_clicked)
-        grid.addWidget(self.single_command_button, row, 0, 1, 2)
+        self.command_button = QPushButton()
+        self.command_button.setText("Send Command")
+        self.command_button.clicked.connect(self.__start_service_test_clicked)
+        grid.addWidget(self.command_button, row, 0, 1, 2)
         row += 1
 
         self.show()
@@ -355,6 +354,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
+    def __add_vertical_separator(self, grid: QGridLayout, row: int):
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        grid.addWidget(separator, row, 0, 1, 2)
+        row += 1
+        return row
+
     def checkbox_log_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_TO_FILE, state)
         if self.debug_mode:
@@ -369,13 +375,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         update_global(CoreGlobalIds.PRINT_RAW_TM, state)
         if self.debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
-
-    def __add_vert_sep(self, grid: QGridLayout, row: int):
-        separator = QFrame()
-        separator.setFrameShape(QFrame.HLine)
-        grid.addWidget(separator, row, 0, 1, 2)
-        row += 1
-        return row
 
 class SingleCommandTable(QTableWidget):
     def __init__(self):
