@@ -212,6 +212,7 @@ def __get_backend_init_variables():
 def get_default_tmtc_backend(hook_obj: TmTcHookBase, json_cfg_path: str):
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
+    from tmtccmd.sendreceive.tm_listener import TmListener
     service, op_code, com_if_id, mode = __get_backend_init_variables()
     display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
     print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
@@ -220,9 +221,15 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, json_cfg_path: str):
     com_if = create_communication_interface_default(
         com_if_id=com_if_id, json_cfg_path=json_cfg_path, tmtc_printer=tmtc_printer
     )
+    tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
+    tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
+    tm_listener = TmListener(
+        com_interface=com_if, tm_timeout=tm_timeout, tc_timeout_factor=tc_send_timeout_factor
+    )
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
-        communication_if=com_if, tmtc_printer=tmtc_printer, init_mode=mode, init_service=service, init_opcode=op_code
+        communication_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=mode,
+        init_service=service, init_opcode=op_code
     )
     tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
     return tmtc_backend

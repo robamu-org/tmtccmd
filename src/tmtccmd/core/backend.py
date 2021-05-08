@@ -48,8 +48,10 @@ class TmTcHandler(BackendBase):
     in case a GUI or front-end is implemented.
     """
 
-    def __init__(self, communication_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-                 init_mode: int, init_service: int, init_opcode: str = "0"):
+    def __init__(
+            self, communication_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
+            init_mode: int, init_service: int, init_opcode: str = "0"
+    ):
         self.mode = init_mode
         self.com_if_key = communication_if.get_id()
         self.service = init_service
@@ -60,7 +62,7 @@ class TmTcHandler(BackendBase):
 
         self.communication_interface = communication_if
         self.tmtc_printer = tmtc_printer
-        self.tm_listener: Union[None, TmListener] = None
+        self.tm_listener = tm_listener
         self.exit_on_com_if_init_failure = True
 
         self.single_command_package: Tuple[bytearray, Union[None, PusTelecommand]] = \
@@ -113,13 +115,6 @@ class TmTcHandler(BackendBase):
         Perform initialization steps which might be necessary after class construction.
         This has to be called at some point before using the class!
         """
-        com_if = get_global(CoreGlobalIds.COM_IF)
-        tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
-        tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
-        self.tm_listener = TmListener(
-            com_interface=self.communication_interface, tm_timeout=tm_timeout,
-            tc_timeout_factor=tc_send_timeout_factor
-        )
         atexit.register(keyboard_interrupt_handler, com_interface=self.communication_interface)
 
     def start(self, perform_op_immediately: bool = True):
