@@ -1,3 +1,4 @@
+from tmtccmd.config.definitions import ServiceOpCodeDictT
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.utility.logger import get_logger
 
@@ -54,6 +55,9 @@ class ExampleHookClass(TmTcHookBase):
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
     def get_object_ids(self) -> Dict[bytes, list]:
+        pass
+
+    def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
         pass
 
     @staticmethod
