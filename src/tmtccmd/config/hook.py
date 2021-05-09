@@ -8,7 +8,7 @@ class TmTcHookBase:
     from abc import abstractmethod
     from typing import Union, Dict, Tuple
 
-    from tmtccmd.config.definitions import DEFAULT_APID
+    from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT, get_default_service_op_code_dict
 
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -73,6 +73,10 @@ class TmTcHookBase:
         return create_communication_interface_default(
             com_if_id=com_if_id, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
+
+    @abstractmethod
+    def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
+        get_default_service_op_code_dict()
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

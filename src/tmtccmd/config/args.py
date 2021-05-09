@@ -16,7 +16,7 @@ def parse_input_arguments(
         print_known_args: bool = False, print_unknown_args: bool = False
 ) -> argparse.Namespace:
     try:
-        from tmtccmd.core.hook_helper import get_global_hook_obj
+        from tmtccmd.config.hook import get_global_hook_obj
         hook_obj = get_global_hook_obj()
         args = hook_obj.custom_args_parsing()
         if args is None:
@@ -66,7 +66,7 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
         action='store_true')
 
     if len(sys.argv) == 1:
-        print("No input arguments specified. Run with -h to get list of arguments")
+        LOGGER.info("No input arguments specified. Run with -h to get list of arguments")
 
     args, unknown = arg_parser.parse_known_args()
 
@@ -111,9 +111,6 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config.definitions import CoreModeList, CoreModeStrings
     help_text = f"Core Modes.\n"
-    onecmd_help = \
-        f"{CoreModeList.SINGLE_CMD_MODE} or {CoreModeStrings[CoreModeList.SINGLE_CMD_MODE]}: " \
-        f"Single Command Mode\n"
     listener_help = \
         f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: " \
         f"Listener Mode\n"
@@ -125,7 +122,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeList.GUI_MODE} or " \
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: " \
         f"GUI mode\n"
-    help_text += onecmd_help + seq_help + listener_help + gui_help
+    help_text += seq_help + listener_help + gui_help
     arg_parser.add_argument(
         '-m', '--mode', type=str, help=help_text, default=0
     )
@@ -202,9 +199,9 @@ def handle_empty_args(args) -> None:
     :param args:
     :return:
     """
-    print("No arguments specified. Setting dummy mode..")
+    LOGGER.info("No arguments specified. Setting dummy mode..")
     args.com_if = CoreComInterfaces.DUMMY
-    print("Setting single command mode..")
-    args.mode = CoreModeList.SINGLE_CMD_MODE
-    print("Setting service 17 (ping command)..")
+    LOGGER.info("Setting sequential command mode..")
+    args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
+    LOGGER.info("Setting service 17 (ping command)..")
     args.service = 17

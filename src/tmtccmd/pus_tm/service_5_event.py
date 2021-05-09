@@ -64,7 +64,7 @@ class Service5TM(PusTelemetry):
 
     def handle_service_5_event(self, object_id: bytearray, event_id: int, param_1: int, param_2: int) -> str:
         try:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             custom_string = hook_obj.handle_service_5_event(
                     object_id=self.object_id, event_id=event_id, param_1=param_1, param_2=param_2

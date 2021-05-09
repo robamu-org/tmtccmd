@@ -179,24 +179,6 @@ class TmTcHandler(BackendBase):
                 self.tmtc_printer.print_telemetry_queue(self.tm_listener.retrieve_tm_packet_queue())
                 self.tm_listener.clear_tm_packet_queue()
                 self.tm_listener.clear_reply_event()
-
-        elif self.mode == CoreModeList.SINGLE_CMD_MODE:
-            pus_packet_tuple = None
-            if self.single_command_package[1] is None:
-                pus_command = command_preparation()
-                if pus_command is not None:
-                    pus_packet_tuple = pus_command.pack_command_tuple()
-            else:
-                pus_packet_tuple = self.single_command_package
-            if pus_packet_tuple is not None:
-                sender_and_receiver = SingleCommandSenderReceiver(
-                    com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
-                    tm_listener=self.tm_listener)
-                LOGGER.info("Performing single command operation..")
-                sender_and_receiver.send_single_tc_and_receive_tm(pus_packet_tuple=pus_packet_tuple)
-                self.mode = CoreModeList.PROMPT_MODE
-            else:
-                LOGGER.warning("No valid packet for single command mode found or set..")
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
             from tmtccmd.core.globals_manager import get_global
             service_queue = deque()
@@ -212,24 +194,9 @@ class TmTcHandler(BackendBase):
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
-
-        elif self.mode == CoreModeList.SOFTWARE_TEST_MODE:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
-            hook_obj = get_global_hook_obj()
-            all_tc_queue = hook_obj.pack_total_service_queue()
-            if all_tc_queue is None:
-                LOGGER.warning("TC queue specified in user hook is None object.")
-            else:
-                LOGGER.info("Performing multiple service commands operation")
-                sender_and_receiver = SequentialCommandSenderReceiver(
-                    com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
-                    tc_queue=all_tc_queue, tm_listener=self.tm_listener)
-                sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
-                LOGGER.info("SequentialSenderReceiver: Exporting output to log file.")
-                self.tmtc_printer.print_file_buffer_list_to_file("log/tmtc_log.txt", True)
         else:
             try:
-                from tmtccmd.core.hook_helper import get_global_hook_obj
+                from tmtccmd.config.hook import get_global_hook_obj
                 hook_obj = get_global_hook_obj()
                 hook_obj.perform_mode_operation(mode=self.mode, tmtc_backend=self)
             except ImportError as error:
@@ -249,18 +216,3 @@ class TmTcHandler(BackendBase):
                     time.sleep(1)
         else:
             self.__handle_action()
-
-
-def command_preparation() -> PusTelecommand:
-    """
-    Prepare command for single command testing
-    :return:
-    """
-    try:
-        from tmtccmd.core.hook_helper import get_global_hook_obj
-        hook_obj = get_global_hook_obj()
-        return hook_obj.command_preparation_hook()
-    except ImportError as e:
-        print(e)
-        LOGGER.error("Hook function for command application not implemented!")
-        sys.exit(1)

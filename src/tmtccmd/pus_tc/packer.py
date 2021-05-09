@@ -44,6 +44,7 @@ def default_single_packet_preparation() -> PusTelecommand:
 
 
 def default_service_queue_preparation(service: int, op_code: str, service_queue: TcQueueT):
+    from tmtccmd.config.definitions import CoreServiceList
     if service == CoreServiceList.SERVICE_5:
         return pack_generic_service5_test_into(service_queue)
     if service == CoreServiceList.SERVICE_17:

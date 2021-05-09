@@ -2,8 +2,9 @@
 @brief  Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple
+from typing import Tuple, Dict, Union
 
+ServiceOpCodeDictT = Dict[str, Dict[str, Union[Dict[str, any], None]]]
 ethernet_address_t = Tuple[str, int]
 
 
@@ -36,17 +37,14 @@ class QueueCommands(enum.Enum):
 
 # Mode options, set by args parser
 class CoreModeList(enum.IntEnum):
-    SINGLE_CMD_MODE = 0
-    SEQUENTIAL_CMD_MODE = 1
-    LISTENER_MODE = 2
-    GUI_MODE = 3
-    SOFTWARE_TEST_MODE = 4
+    SEQUENTIAL_CMD_MODE = 0
+    LISTENER_MODE = 1
+    GUI_MODE = 2
     IDLE = 5
     PROMPT_MODE = 6
 
 
 CoreModeStrings = {
-    CoreModeList.SINGLE_CMD_MODE: "onecmd",
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
     CoreModeList.GUI_MODE: "gui"
@@ -105,3 +103,7 @@ class CoreGlobalIds(enum.IntEnum):
 
 DEFAULT_APID = 0xef
 DEBUG_MODE = False
+
+
+def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
+    pass
