@@ -3,14 +3,13 @@ import argparse
 from abc import abstractmethod
 from typing import Union, Dict, Tuple
 
+from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
 from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
 
 class TmTcHookBase:
-
-    from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.ecss.tm import PusTelemetry
