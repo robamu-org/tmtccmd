@@ -15,7 +15,7 @@ import time
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
-    QDoubleSpinBox, QFrame, QComboBox, QPushButton
+    QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread

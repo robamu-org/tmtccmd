@@ -1,15 +1,16 @@
+import sys
+import argparse
+from abc import abstractmethod
+from typing import Union, Dict, Tuple
+
 from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
 
 class TmTcHookBase:
-    import argparse
-    from abc import abstractmethod
-    from typing import Union, Dict, Tuple
 
-    from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT, get_default_service_op_code_dict
-
+    from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.ecss.tm import PusTelemetry
@@ -76,7 +77,8 @@ class TmTcHookBase:
 
     @abstractmethod
     def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
-        get_default_service_op_code_dict()
+        from tmtccmd.config.definitions import get_default_service_op_code_dict
+        return get_default_service_op_code_dict()
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

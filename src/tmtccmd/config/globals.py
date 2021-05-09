@@ -4,10 +4,11 @@ import pprint
 from typing import Union, List
 
 from tmtccmd.utility.logger import get_logger
-from tmtccmd.utility.conf_util import check_args_in_enum
+from tmtccmd.utility.conf_util import check_args_in_enum, print_core_globals
 from tmtccmd.ecss.conf import PusVersion, set_default_apid, set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
-from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList, CoreServiceList, CoreModeStrings
+from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList, CoreServiceList, \
+    CoreModeStrings, CoreComInterfacesString
 from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.com_if import default_serial_cfg_setup
 from tmtccmd.config.definitions import DEBUG_MODE
