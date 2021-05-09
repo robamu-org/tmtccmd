@@ -5,7 +5,6 @@ import argparse
 import sys
 
 from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces
-
 from tmtccmd.utility.logger import get_logger
 
 
