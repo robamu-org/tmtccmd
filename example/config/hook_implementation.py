@@ -11,7 +11,6 @@ class ExampleHookClass(TmTcHookBase):
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.ecss.tm import PusTelemetry
-    from tmtccmd.pus_tc.definitions import PusTelecommand
     from tmtccmd.pus_tc.definitions import TcQueueT
     from tmtccmd.com_if.com_interface_base import CommunicationInterface
     from tmtccmd.pus_tm.service_3_base import Service3Base
@@ -43,28 +42,19 @@ class ExampleHookClass(TmTcHookBase):
         pass
 
     def pack_service_queue(self, service: int, op_code: str, service_queue: TcQueueT):
-        from tmtccmd.defaults.tc_packing import default_service_queue_preparation
+        from tmtccmd.pus_tc.packer import default_service_queue_preparation
         LOGGER.info("Service queue packer hook was called")
         default_service_queue_preparation(
             service=service, op_code=op_code, service_queue=service_queue
         )
 
     def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> PusTelemetry:
-        from tmtccmd.defaults.tm_handling import default_factory_hook
+        from tmtccmd.pus_tm.factory import default_factory_hook
         LOGGER.info("TM user factory hook was called")
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
     def get_object_ids(self) -> Dict[bytes, list]:
         pass
-
-    def pack_total_service_queue(self) -> Union[None, TcQueueT]:
-        from tmtccmd.defaults.tc_packing import default_total_queue_preparation
-        return default_total_queue_preparation()
-
-    def command_preparation_hook(self) -> Union[None, PusTelecommand]:
-        LOGGER.info("Single command hook was called")
-        from tmtccmd.defaults.tc_packing import default_single_packet_preparation
-        return default_single_packet_preparation()
 
     @staticmethod
     def handle_service_8_telemetry(

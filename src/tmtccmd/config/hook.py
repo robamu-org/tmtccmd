@@ -83,15 +83,7 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def pack_total_service_queue(self) -> Union[None, TcQueueT]:
-        pass
-
-    @abstractmethod
     def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> Union[None, PusTelemetry]:
-        pass
-
-    @abstractmethod
-    def command_preparation_hook(self) -> Union[None, PusTelecommand]:
         pass
 
     @staticmethod

@@ -9,7 +9,10 @@ This file transfers TC packing to the user application.
 import sys
 
 from tmtccmd.pus_tc.definitions import TcQueueT
+from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.utility.logger import get_logger
+from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
+from tmtccmd.pus_tc.service_5_event import pack_generic_service5_test_into
 
 LOGGER = get_logger()
 
@@ -36,3 +39,13 @@ class ServiceQueuePacker:
             sys.exit(1)
 
 
+def default_single_packet_preparation() -> PusTelecommand:
+    return pack_service17_ping_command(ssc=1700)
+
+
+def default_service_queue_preparation(service: int, op_code: str, service_queue: TcQueueT):
+    if service == CoreServiceList.SERVICE_5:
+        return pack_generic_service5_test_into(service_queue)
+    if service == CoreServiceList.SERVICE_17:
+        return service_queue.appendleft(pack_service17_ping_command(ssc=1700).pack_command_tuple())
+    LOGGER.warning("Invalid Service !")

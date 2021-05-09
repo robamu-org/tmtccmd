@@ -76,7 +76,7 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
     import coloredlogs
     coloredlogs.install(
         level='INFO', logger=logger, milliseconds=True,
-        fmt= '%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s',
+        fmt='%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 

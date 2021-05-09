@@ -28,7 +28,7 @@ from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
-import tmtccmd.defaults as defaults_module
+import tmtccmd.config as config_module
 
 
 LOGGER = get_logger()
@@ -71,7 +71,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.service_list = []
         self.debug_mode = True
         self.is_busy = False
-        module_path = os.path.abspath(defaults_module.__file__).replace("__init__.py", "")
+        module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
 
     def prepare_start(self, args: any) -> Process:
@@ -375,6 +375,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if self.debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
 
+
 class SingleCommandTable(QTableWidget):
     def __init__(self):
         super().__init__()
@@ -431,6 +432,7 @@ def ip_change_board(value):
     ethernet_config[TcpIpConfigIds.SEND_ADDRESS] = value
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
     LOGGER.info("Board IP changed: " + value)
+
 
 # This stuff will probably not used in this form.. the single command is specified in code and we only need
 # a button to execute it.
