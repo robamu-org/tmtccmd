@@ -29,7 +29,7 @@ class GlobalsManager:
             try:
                 from tmtccmd.utility.logger import get_logger
                 logger = get_logger()
-                logger.error(f"The key {global_param_key} for this  global does not exist in the dictionary!")
+                logger.warning(f"The key {global_param_key} for this global does not exist in the dictionary!")
             except ImportError:
                 print("Could not import LOGGER!")
             return None
