@@ -101,9 +101,26 @@ class CoreGlobalIds(enum.IntEnum):
     ETHERNET_CONFIG = 163
 
 
+class OpCodeDictKeys(enum.IntEnum):
+    INFO = 0
+    TIMEOUT = CoreGlobalIds.TM_TIMEOUT
+
+
 DEFAULT_APID = 0xef
 DEBUG_MODE = False
+SERVICE_OP_CODE_DICT = dict()
 
 
 def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
-    pass
+    global service_op_code_dict
+    if SERVICE_OP_CODE_DICT == dict():
+        op_code_dict_srv_17 = {
+            "0": {OpCodeDictKeys.INFO: "Ping Test"},
+        }
+        op_code_dict_srv_5 = {
+            "0": {OpCodeDictKeys.INFO: "Event Test"},
+        }
+
+        service_op_code_dict["17"] = op_code_dict_srv_17
+        service_op_code_dict["5"] = op_code_dict_srv_5
+    return service_op_code_dict
