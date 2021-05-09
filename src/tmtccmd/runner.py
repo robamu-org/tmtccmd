@@ -154,16 +154,13 @@ def __set_up_tmtc_commander(
 
 def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool):
     if ansi_colors:
-        print(f"{AnsiColors.GREEN}", end="")
-    print(f"-- Python TMTC Commander --")
+        print(f"{AnsiColors.CYAN}-- Python TMTC Commander --{AnsiColors.RESET}")
     if use_gui:
         print(f"-- GUI mode --")
     else:
         print(f"-- Command line mode --")
 
     print(f"-- Software version {version_string} --")
-    if ansi_colors:
-        print(f"{AnsiColors.RESET}", end="")
 
 
 def __handle_cli_args_and_globals():

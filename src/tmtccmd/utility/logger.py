@@ -34,6 +34,10 @@ class DebugFilter(logging.Filter):
 
 
 def set_tmtc_logger() -> logging.Logger:
+    """
+    Sets the LOGGER object which will be used globally. This needs to be called before using the logger.
+    :return:    Returns the instance of the global logger
+    """
     global LOGGER_SET_UP
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     logger.setLevel(level=logging.DEBUG)
@@ -78,19 +82,15 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
 
 
 def set_up_colorlog_logger(logger: logging.Logger):
-    from colorlog import ColoredFormatter
-    from colorlog import StreamHandler
-    """
-    Sets the LOGGER object which will be used globally. This needs to be called before using the logger.
-    """
+    from colorlog import ColoredFormatter, StreamHandler
     generic_format = ColoredFormatter(
         fmt='%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
     fault_format = ColoredFormatter(
-        fmt='%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d%(reset)s '
-            '%(blue)s[%(filename)s:%(lineno)d] %(reset)s%(message)s',
+        fmt='%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d '
+            '[%(filename)s:%(lineno)d] %(reset)s%(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
