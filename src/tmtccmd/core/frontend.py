@@ -92,7 +92,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def service_index_changed(self, index: int):
         self.tmtc_handler.service = self.service_list[index]
         if self.debug_mode:
-            LOGGER.info("Service index changed: " + str(self.service_list[index]))
+            LOGGER.info(f"Service index changed: {self.service_list[index]}")
 
     def handle_tm_tc_action(self):
         if self.debug_mode:
@@ -176,22 +176,26 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         combo_box_services = QComboBox()
+        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
 
         service_op_code_dict = self.hook_obj.get_service_op_code_dictionary()
         if service_op_code_dict is None:
             LOGGER.warning("Invalid service to operation code dictionary")
-            LOGGER.warning("Make sure to implement get_service_op_code_dictionary in the hook object properly")
-            # TODO: We could assign a default dict here instead of exiting the application
-            sys.exit(1)
-        else:
-            for service_key, service_value in service_op_code_dict.items():
-                combo_box_services.addItem(service_value[0])
-                self.service_list.append(service_key)
-
-            default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-            combo_box_services.setCurrentIndex(default_service.value)
-            combo_box_services.currentIndexChanged.connect(self.service_index_changed)
-            grid.addWidget(combo_box_services, row, 0, 1, 1)
+            LOGGER.warning("Setting default dictionary")
+            from tmtccmd.config.globals import get_default_service_op_code_dict
+            service_op_code_dict = get_default_service_op_code_dict()
+        index = 0
+        default_index = 0
+        for service_key, service_value in service_op_code_dict.items():
+            combo_box_services.addItem(service_value[0])
+            if service_key == default_service:
+                default_index = index
+            self.service_list.append(service_key)
+            index += 1
+        combo_box_services.setCurrentIndex(default_index)
+        combo_box_services.setCurrentIndex(0)
+        combo_box_services.currentIndexChanged.connect(self.service_index_changed)
+        grid.addWidget(combo_box_services, row, 0, 1, 1)
 
         combo_box_op_codes = QComboBox()
         # TODO: Set up combo box for selected service. It also needs to be updated if another service is selected
