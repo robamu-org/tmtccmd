@@ -22,6 +22,7 @@ from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread
 
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.pus_tc.definitions import PusTelecommand
@@ -61,11 +62,12 @@ class WorkerThread(QObject):
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
-    def __init__(self, tmtc_backend: TmTcHandler, app_name: str):
+    def __init__(self, hook_obj: TmTcHookBase, tmtc_backend: TmTcHandler, app_name: str):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
         self.tmtc_handler = tmtc_backend
         self.app_name = app_name
+        self.hook_obj = hook_obj
 
         self.tmtc_handler.initialize()
         self.service_list = []
@@ -175,11 +177,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         combo_box_services = QComboBox()
 
-        service_dict = get_global(CoreGlobalIds.SERVICE_DICT)
-
-        if service_dict is not None:
-            for service_key, service_value in service_dict.items():
-                combo_box_services.addItem(service_dict[service_key][0])
+        service_op_code_dict = self.hook_obj.get_service_op_code_dictionary()
+        if service_op_code_dict is None:
+            LOGGER.warning("Invalid service to operation code dictionary")
+            LOGGER.warning("Make sure to implement get_service_op_code_dictionary in the hook object properly")
+            # TODO: We could assign a default dict here instead of exiting the application
+            sys.exit(1)
+        else:
+            for service_key, service_value in service_op_code_dict.items():
+                combo_box_services.addItem(service_value[0])
                 self.service_list.append(service_key)
 
             default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)

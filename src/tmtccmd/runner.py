@@ -201,7 +201,7 @@ def __start_tmtc_commander_qt_gui(
         json_cfg_path = hook_obj.get_json_config_file_path()
         # The global variables are set by the argument parser.
         tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
-        tmtc_frontend = TmTcFrontend(tmtc_backend=tmtc_backend, app_name=app_name)
+        tmtc_frontend = TmTcFrontend(hook_obj=hook_obj, tmtc_backend=tmtc_backend, app_name=app_name)
     tmtc_frontend.start(app)
 
 
