@@ -109,17 +109,18 @@ def set_default_globals_post_args_parsing(
             display_mode_param = "long"
     update_global(CoreGlobalIds.DISPLAY_MODE, display_mode_param)
 
-    # Determine service from arguments. Must be contained in core service list
     try:
         service_param = args.service
     except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the service (-s) argument")
-        service_param = CoreServiceList.SERVICE_17
-    if isinstance(service_param, str):
-        service_param = service_param.lower()
+        LOGGER.warning("Passed namespace does not contain the service (-s) argument. Setting test service ID (17)")
+        service_param = CoreServiceList.SERVICE_17.value
+    update_global(CoreGlobalIds.SERVICE_DICT, service_param)
+    # Not used for now
+    """
     check_and_set_core_service_arg(
         service_arg=service_param, custom_service_list=custom_services_list
     )
+    """
 
     if args.op_code is None:
         op_code = 0
