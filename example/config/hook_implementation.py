@@ -42,7 +42,7 @@ class ExampleHookClass(TmTcHookBase):
         LOGGER.info("Mode operation hook was called")
         pass
 
-    def pack_service_queue(self, service: int, op_code: str, service_queue: TcQueueT):
+    def pack_service_queue(self, service: Union[str, int], op_code: str, service_queue: TcQueueT):
         from tmtccmd.pus_tc.packer import default_service_queue_preparation
         LOGGER.info("Service queue packer hook was called")
         default_service_queue_preparation(
