@@ -177,7 +177,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         combo_box_services = QComboBox()
         default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-
         service_op_code_dict = self.hook_obj.get_service_op_code_dictionary()
         if service_op_code_dict is None:
             LOGGER.warning("Invalid service to operation code dictionary")
@@ -193,7 +192,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self.service_list.append(service_key)
             index += 1
         combo_box_services.setCurrentIndex(default_index)
-        combo_box_services.setCurrentIndex(0)
         combo_box_services.currentIndexChanged.connect(self.service_index_changed)
         grid.addWidget(combo_box_services, row, 0, 1, 1)
 
