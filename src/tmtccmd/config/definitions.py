@@ -4,7 +4,13 @@
 import enum
 from typing import Tuple, Dict, Union
 
-ServiceOpCodeDictT = Dict[str, Dict[str, Union[Dict[str, any], None]]]
+ServiceNameT = str
+ServiceInfoT = str
+OpCodeNameT = str
+OpCodeInfoT = str
+OpCodeOptionsT = Dict[str, any]
+OpCodeEntryT = Dict[OpCodeNameT, Tuple[OpCodeInfoT, OpCodeOptionsT]]
+ServiceOpCodeDictT = Dict[ServiceNameT, Tuple[ServiceInfoT, OpCodeEntryT]]
 ethernet_address_t = Tuple[str, int]
 
 
@@ -51,17 +57,17 @@ CoreModeStrings = {
 }
 
 
-class CoreServiceList(enum.IntEnum):
-    SERVICE_2 = 2
-    SERVICE_3 = 3
-    SERVICE_5 = 5
-    SERVICE_8 = 8
-    SERVICE_9 = 9
-    SERVICE_11 = 11
-    SERVICE_17 = 17
-    SERVICE_20 = 20
-    SERVICE_23 = 23
-    SERVICE_200 = 200
+class CoreServiceList(enum.Enum):
+    SERVICE_2 = "2"
+    SERVICE_3 = "3"
+    SERVICE_5 = "5"
+    SERVICE_8 = "8"
+    SERVICE_9 = "9"
+    SERVICE_11 = "11"
+    SERVICE_17 = "17"
+    SERVICE_20 = "20"
+    SERVICE_23 = "23"
+    SERVICE_200 = "200"
 
 
 class CoreGlobalIds(enum.IntEnum):
@@ -121,6 +127,6 @@ def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
             "0": {OpCodeDictKeys.INFO: "Event Test"},
         }
 
-        service_op_code_dict["17"] = op_code_dict_srv_17
-        service_op_code_dict["5"] = op_code_dict_srv_5
+        service_op_code_dict[CoreServiceList.SERVICE_17.value] = op_code_dict_srv_17
+        service_op_code_dict[CoreServiceList.SERVICE_5.value] = op_code_dict_srv_5
     return service_op_code_dict
