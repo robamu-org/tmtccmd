@@ -84,7 +84,7 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def pack_service_queue(self, service: int, op_code: str, service_queue: TcQueueT):
+    def pack_service_queue(self, service: Union[int, str], op_code: str, service_queue: TcQueueT):
         pass
 
     @abstractmethod

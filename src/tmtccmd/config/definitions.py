@@ -89,10 +89,11 @@ class CoreGlobalIds(enum.IntEnum):
     APID = 140
     MODE = 141
     CURRENT_SERVICE = 142
-    SERVICE_DICT = 143
     COM_IF = 144
     OP_CODE = 145
     TM_TIMEOUT = 146
+    SERVICE_OP_CODE_DICT = 147
+
     # Miscellaneous
     DISPLAY_MODE = 150
     USE_LISTENER_AFTER_OP = 151

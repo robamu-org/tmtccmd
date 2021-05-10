@@ -83,7 +83,7 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
 
 
 def add_generic_arguments(arg_parser: argparse.ArgumentParser):
-    arg_parser.add_argument('-s', '--service', help='Service to test. Default: 17', default=17)
+    arg_parser.add_argument('-s', '--service', type=str, help='Service to test. Default: 17', default="17")
     arg_parser.add_argument(
         '-o', '--op_code',
         help='Operation code, which is passed to the TC packer functions', default=0

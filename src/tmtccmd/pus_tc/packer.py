@@ -43,11 +43,11 @@ def default_single_packet_preparation() -> PusTelecommand:
     return pack_service17_ping_command(ssc=1700)
 
 
-def default_service_queue_preparation(service: int, op_code: str, service_queue: TcQueueT):
+def default_service_queue_preparation(service: str, op_code: str, service_queue: TcQueueT):
     from tmtccmd.config.definitions import CoreServiceList, QueueCommands
-    if service == CoreServiceList.SERVICE_5:
+    if service == CoreServiceList.SERVICE_5.value:
         pack_generic_service5_test_into(service_queue)
-    if service == CoreServiceList.SERVICE_17:
+    if service == CoreServiceList.SERVICE_17.value:
         service_queue.appendleft((QueueCommands.PRINT, "Sending ping command PUS TC[17,1]"))
         service_queue.appendleft(pack_service17_ping_command(ssc=1700).pack_command_tuple())
     else:
