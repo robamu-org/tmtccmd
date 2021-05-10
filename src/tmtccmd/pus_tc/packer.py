@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-@file   obsw_tc_packer.py
-@details
-This file transfers TC packing to the user application.
-@author R. Mueller
-@date   01.11.2019
+:file:      obsw_tc_packer.py
+:author:    R. Mueller
+:date:      10.05.2021
 """
 import sys
+from typing import Union
 
 from tmtccmd.pus_tc.definitions import TcQueueT
 from tmtccmd.ecss.tc import PusTelecommand
