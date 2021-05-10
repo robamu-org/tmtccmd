@@ -109,21 +109,21 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config.definitions import CoreModeList, CoreModeStrings
-    help_text = f"Core Modes.\n"
-    listener_help = \
-        f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: " \
-        f"Listener Mode\n"
+    help_text = f"Core Modes. Default: seqcmd\n"
     seq_help = \
         f"{CoreModeList.SEQUENTIAL_CMD_MODE} or " \
         f"{CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]}: " \
         f"Sequential Command Mode\n"
+    listener_help = \
+        f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: " \
+        f"Listener Mode\n"
     gui_help = \
         f"{CoreModeList.GUI_MODE} or " \
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: " \
         f"GUI mode\n"
     help_text += seq_help + listener_help + gui_help
     arg_parser.add_argument(
-        '-m', '--mode', type=str, help=help_text, default=0
+        '-m', '--mode', type=str, help=help_text, default="seqcmd"
     )
 
 
