@@ -4,7 +4,7 @@ from typing import Union
 from tmtccmd.config.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType
+from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType, SerialComIF
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 from tmtccmd.utility.logger import get_logger
@@ -15,9 +15,8 @@ LOGGER = get_logger()
 
 
 def create_communication_interface_default(
-        com_if_id: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
+        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Union[CommunicationInterface, None]:
-    from tmtccmd.com_if.serial_com_if import SerialComIF
     from tmtccmd.com_if.dummy_com_if import DummyComIF
     from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
@@ -27,7 +26,7 @@ def create_communication_interface_default(
     :return: CommunicationInterface object
     """
     try:
-        if com_if_id == CoreComInterfaces.TCPIP_UDP.value:
+        if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
             ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
             send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
             recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
@@ -39,21 +38,12 @@ def create_communication_interface_default(
                 send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
                 tmtc_printer=tmtc_printer, init_mode=init_mode
             )
-        elif com_if_id == CoreComInterfaces.SERIAL_DLE.value or \
-                com_if_id == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
-            serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
-            serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
-            serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
-            # Determine COM port, either extract from JSON file or ask from user.
-            com_port = determine_com_port(json_cfg_path=json_cfg_path)
-            communication_interface = SerialComIF(
-                com_if_id=com_if_id, tmtc_printer=tmtc_printer, com_port=com_port, baud_rate=serial_baudrate,
-                serial_timeout=serial_timeout, ser_com_type=SerialCommunicationType.DLE_ENCODING)
-            dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
-            dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
-            communication_interface.set_dle_settings(dle_max_queue_len, dle_max_frame_size,
-                                                     serial_timeout)
-        elif com_if_id == CoreComInterfaces.SERIAL_QEMU.value:
+        elif com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
+                com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
+            communication_interface = create_default_serial_interface(
+                com_if_key=com_if_key, tmtc_printer=tmtc_printer, json_cfg_path=json_cfg_path
+            )
+        elif com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(
@@ -65,7 +55,7 @@ def create_communication_interface_default(
                 dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
-            communication_interface = DummyComIF(com_if_id=com_if_id, tmtc_printer=tmtc_printer)
+            communication_interface = DummyComIF(com_if_id=com_if_key, tmtc_printer=tmtc_printer)
         if not communication_interface.valid:
             LOGGER.warning("Invalid communication interface!")
             sys.exit()
@@ -101,6 +91,42 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
     set_up_serial_cfg(json_cfg_path=json_cfg_path, com_if_key=com_if_key, baud_rate=baud_rate, com_port=serial_port)
 
 
+def create_default_serial_interface(
+        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
+) -> Union[CommunicationInterface, None]:
+    try:
+        # For a serial communication interface, there are some configuration values like
+        # baud rate and serial port which need to be set once but are expected to stay
+        # the same for a given machine. Therefore, we use a JSON file to store and extract
+        # those values
+        if com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
+                com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value or \
+                com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
+            default_serial_cfg_setup(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
+        serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
+        serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
+        serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
+        # Determine COM port, either extract from JSON file or ask from user.
+        com_port = determine_com_port(json_cfg_path=json_cfg_path)
+        if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
+            ser_com_type = SerialCommunicationType.DLE_ENCODING
+        else:
+            ser_com_type = SerialCommunicationType.FIXED_FRAME_BASED
+        communication_interface = SerialComIF(
+            com_if_id=com_if_key, tmtc_printer=tmtc_printer, com_port=com_port, baud_rate=serial_baudrate,
+            serial_timeout=serial_timeout, ser_com_type=ser_com_type
+        )
+        if com_if_key == CoreComInterfaces.SERIAL_DLE:
+            dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
+            dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
+            communication_interface.set_dle_settings(
+                dle_max_queue_len, dle_max_frame_size, serial_timeout
+            )
+    except KeyError:
+        LOGGER.warning("Serial configuration global not configured properly")
+        return None
+    return communication_interface
+
 def set_up_serial_cfg(
         json_cfg_path: str, com_if_key: str, baud_rate: int, com_port: str = "",  tm_timeout: float = 0.01,
         ser_com_type: SerialCommunicationType = SerialCommunicationType.DLE_ENCODING,
@@ -121,8 +147,9 @@ def set_up_serial_cfg(
     :return:
     """
     update_global(CoreGlobalIds.USE_SERIAL, True)
-    if com_if_key == CoreComInterfaces.SERIAL_DLE.value and com_port == "":
-        LOGGER.warning("Invalid com port specified!")
+    if (com_if_key == CoreComInterfaces.SERIAL_DLE.value or com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value) \
+            and com_port == "":
+        LOGGER.warning("Invalid serial port specified!")
         com_port = determine_com_port(json_cfg_path=json_cfg_path)
     serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)
     serial_cfg_dict.update({SerialConfigIds.SERIAL_PORT: com_port})

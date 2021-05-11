@@ -223,7 +223,7 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, json_cfg_path: str):
     tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
     json_cfg_path = hook_obj.get_json_config_file_path()
     com_if =  hook_obj.assign_communication_interface(
-        com_if_id=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
+        com_if_key=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
     )
     """
     com_if = create_communication_interface_default(

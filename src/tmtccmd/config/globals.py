@@ -11,7 +11,7 @@ from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceL
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
 from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.com_if import default_serial_cfg_setup, default_tcpip_udp_cfg_setup
-from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys
+from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT
 
 LOGGER = get_logger()
 SERVICE_OP_CODE_DICT = dict()
@@ -25,10 +25,19 @@ def set_json_cfg_path(json_cfg_path: str):
     update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
 
 
+def set_glob_com_if_dict(custom_com_if_dict: ComIFDictT):
+    CoreComInterfacesDict.update(custom_com_if_dict)
+    update_global(CoreGlobalIds.COM_IF_DICT, CoreComInterfacesDict)
+
+
+def get_glob_com_if_dict() -> ComIFDictT:
+    return get_global(CoreGlobalIds.COM_IF_DICT)
+
+
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
-        com_if_id: str = CoreComInterfaces.DUMMY.value, display_mode="long",
+        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict: ComIFDictT = dict(), display_mode="long",
         tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
 ):
     update_global(CoreGlobalIds.APID, apid)
@@ -42,6 +51,7 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.PRINT_TO_FILE, print_to_file)
     update_global(CoreGlobalIds.SERIAL_CONFIG, dict())
     update_global(CoreGlobalIds.ETHERNET_CONFIG, dict())
+    set_glob_com_if_dict(custom_com_if_dict=custom_com_if_dict)
     pp = pprint.PrettyPrinter()
     update_global(CoreGlobalIds.PRETTY_PRINTER, pp)
     update_global(CoreGlobalIds.TM_LISTENER_HANDLE, None)
@@ -129,15 +139,6 @@ def set_default_globals_post_args_parsing(
         check_and_set_other_args(args=args)
     except AttributeError:
         LOGGER.exception("Passed arguments are missing components.")
-
-    # For a serial communication interface, there are some configuration values like
-    # baud rate and serial port which need to be set once but are expected to stay
-    # the same for a given machine. Therefore, we use a JSON file to store and extract
-    # those values
-    if com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
-            com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value or \
-            com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
-        default_serial_cfg_setup(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
 
     # Same as above, but for server address and server port
     if com_if_key == CoreComInterfaces.TCPIP_UDP:

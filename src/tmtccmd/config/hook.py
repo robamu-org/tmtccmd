@@ -62,7 +62,7 @@ class TmTcHookBase:
 
     @abstractmethod
     def assign_communication_interface(
-            self, com_if_id: str, tmtc_printer: TmTcPrinter
+            self, com_if_key: str, tmtc_printer: TmTcPrinter
     ) -> Union[CommunicationInterface, None]:
         """
         Assign the communication interface used by the TMTC commander to send and receive TMTC with.
@@ -71,7 +71,7 @@ class TmTcHookBase:
         """
         from tmtccmd.config.com_if import create_communication_interface_default
         return create_communication_interface_default(
-            com_if_id=com_if_id, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
+            com_if_key=com_if_key, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
 
     @abstractmethod

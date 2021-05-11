@@ -51,19 +51,19 @@ class TmTcHandler(BackendBase):
 
     def __init__(
             self, communication_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            init_mode: int, init_service: int, init_opcode: str = "0"
+            init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value, init_opcode: str = "0"
     ):
         self.mode = init_mode
         self.com_if_key = communication_if.get_id()
         self.com_if_active = False
-        self.service = init_service
-        self.op_code = init_opcode
+        self.__service = init_service
+        self.__op_code = init_opcode
 
         # This flag could be used later to command the TMTC Client with a front-end
         self.one_shot_operation = True
 
         self.communication_interface = communication_if
-        self.tmtc_printer = tmtc_printer
+        self.__tmtc_printer = tmtc_printer
         self.tm_listener = tm_listener
         self.exit_on_com_if_init_failure = True
 
@@ -72,6 +72,9 @@ class TmTcHandler(BackendBase):
 
     def get_com_if_id(self):
         return self.com_if_key
+
+    def get_printer(self) -> TmTcPrinter:
+        return self.__tmtc_printer
 
     def is_com_if_active(self):
         return self.com_if_active
@@ -89,14 +92,23 @@ class TmTcHandler(BackendBase):
         """
         self.mode = mode
 
+    def get_mode(self) -> int:
+        return self.mode
+
     def set_com_if(self, com_if: CommunicationInterface):
         self.com_if = com_if
 
-    def set_service(self, service: int):
-        self.service = service
+    def set_service(self, service: Union[str, int]):
+        self.__service = service
 
     def set_opcode(self, op_code: str):
-        self.op_code = op_code
+        self.__op_code = op_code
+
+    def get_service(self) -> Union[str, int]:
+        return self.__service
+
+    def get_opcode(self) -> str:
+        return self.__op_code
 
     @staticmethod
     def prepare_tmtc_handler_start(
@@ -176,7 +188,7 @@ class TmTcHandler(BackendBase):
         if self.mode == CoreModeList.LISTENER_MODE:
             if self.tm_listener.reply_event():
                 LOGGER.info("TmTcHandler: Packets received.")
-                self.tmtc_printer.print_telemetry_queue(self.tm_listener.retrieve_tm_packet_queue())
+                self.__tmtc_printer.print_telemetry_queue(self.tm_listener.retrieve_tm_packet_queue())
                 self.tm_listener.clear_tm_packet_queue()
                 self.tm_listener.clear_reply_event()
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
@@ -184,12 +196,12 @@ class TmTcHandler(BackendBase):
             service_queue = deque()
             service_queue_packer = ServiceQueuePacker()
             service_queue_packer.pack_service_queue_core(
-                service=self.service, service_queue=service_queue, op_code=self.op_code)
+                service=self.__service, service_queue=service_queue, op_code=self.__op_code)
             if not self.communication_interface.valid:
                 return
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
-                com_interface=self.communication_interface, tmtc_printer=self.tmtc_printer,
+                com_interface=self.communication_interface, tmtc_printer=self.__tmtc_printer,
                 tm_listener=self.tm_listener, tc_queue=service_queue
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()

@@ -22,7 +22,7 @@ def create_hook_mock() -> TmTcHookBase:
 def create_backend_mock() -> TmTcHandler:
     tmtc_printer = TmTcPrinter(display_mode="LONG", do_print_to_file=False, print_tc=True)
     com_if = create_communication_interface_default(
-        com_if_id=CoreComInterfaces.DUMMY, json_cfg_path="tmtc_config.json", tmtc_printer=tmtc_printer
+        com_if_key=CoreComInterfaces.DUMMY, json_cfg_path="tmtc_config.json", tmtc_printer=tmtc_printer
     )
     tm_listener = TmListener(
         com_interface=com_if, tm_timeout=3.0, tc_timeout_factor=3.0

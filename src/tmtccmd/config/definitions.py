@@ -99,6 +99,7 @@ class CoreGlobalIds(enum.IntEnum):
     OP_CODE = 145
     TM_TIMEOUT = 146
     SERVICE_OP_CODE_DICT = 147
+    COM_IF_DICT = 148
 
     # Miscellaneous
     DISPLAY_MODE = 150

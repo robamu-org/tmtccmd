@@ -197,4 +197,4 @@ def handle_empty_args(args) -> None:
     LOGGER.info("Setting sequential command mode..")
     args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
     LOGGER.info("Setting service 17 (ping command)..")
-    args.service = 17
+    args.__service = 17

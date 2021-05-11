@@ -15,7 +15,7 @@ import time
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
-    QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem
+    QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem, QMenu
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread, QRunnable
@@ -23,8 +23,9 @@ from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread, QRunnable
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.hook import TmTcHookBase
-from tmtccmd.config.definitions import CoreComInterfacesDict, CoreGlobalIds, CoreModeList
+from tmtccmd.config.definitions import CoreComInterfacesDict, CoreGlobalIds, CoreModeList, CoreComInterfaces
 from tmtccmd.config.globals import get_global_apid
+from tmtccmd.config.hook import get_global_hook_obj
 from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
@@ -58,6 +59,7 @@ class WorkerThread(QObject):
                     time.sleep(0.4)
             self.finished.emit()
         elif self.op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
+            self.tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
             # It is expected that the TMTC handler is in the according state to perform the operation
             self.tmtc_handler.perform_operation()
             self.finished.emit()
@@ -86,7 +88,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.service_list = []
         self.op_code_list = []
         self.com_if_list = []
-        self.current_com_if = "unspec"
+        self.last_com_if = CoreComInterfaces.UNSPECIFIED.value
+        self.current_com_if = CoreComInterfaces.UNSPECIFIED.value
         self.current_service = ""
         self.current_op_code = ""
         self.current_com_if_id = -1
@@ -94,7 +97,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.worker = None
         self.thread = None
         self.debug_mode = True
-        self.is_busy = False
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
 
@@ -112,6 +114,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.warning("Could not set logo, path invalid!")
 
     def __start_ui(self):
+        self.__create_menu_bar()
 
         win = QWidget(self)
         self.setCentralWidget(win)
@@ -152,21 +155,28 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
-        self.is_busy = True
+        # TODO: If it has change, we might need to disconnect from old one
+        # Build and assign new communication interface
+        hook_obj = get_global_hook_obj()
+        new_com_if = hook_obj.assign_communication_interface(
+            com_if_key=self.current_com_if, tmtc_printer=self.tmtc_handler.get_printer()
+        )
+        self.tmtc_handler.set_com_if(new_com_if)
         self.tmtc_handler.set_service(self.current_service)
         self.tmtc_handler.set_opcode(self.current_op_code)
         # TODO: Need to check whether COM IF has changed, build and reassign a new one it this is the case
         self.__start_qthread_task(
-            op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING, finish_callback=self.__finish_seq_cmd
+            op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING, finish_callback=self.__finish_seq_cmd_op
         )
 
     def __finish_seq_cmd_op(self):
         self.__set_send_button(True)
-        self.is_busy = False
 
     def __start_disconnect_button_op(self):
         LOGGER.info("Closing TM listener..")
         self.disconnect_button.setEnabled(False)
+        if self.current_com_if != self.last_com_if:
+            self.tmtc_handler.start_listener()
         if not self.connect_button.isEnabled():
             self.__start_qthread_task(
                 op_code=WorkerOperationsCodes.DISCONNECT, finish_callback=self.__finish_disconnect_button_op
@@ -179,6 +189,14 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.connect_button.setStyleSheet("background-color: lime")
         LOGGER.info("Disconnect successfull")
 
+    def __create_menu_bar(self):
+        menuBar = self.menuBar()
+        # Creating menus using a QMenu object
+        fileMenu = QMenu("&File", self)
+        menuBar.addMenu(fileMenu)
+        # Creating menus using a title
+        editMenu = menuBar.addMenu("&Edit")
+        helpMenu = menuBar.addMenu("&Help")
 
     def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
@@ -238,12 +256,22 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __set_up_com_if_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Communication Interface:"), row, 0, 1, 1)
         com_if_combo_box = QComboBox()
+        all_com_ifs = get_global(CoreGlobalIds.COM_IF_DICT)
+        index = 0
         # add all possible ComIFs to the comboBox
-        for com_if in CoreComInterfacesDict:
-            com_if_combo_box.addItem(com_if)
-        com_if_combo_box.setCurrentIndex(self.tmtc_handler.get_com_if_id())
+        for com_if_key, com_if_value in all_com_ifs.items():
+            com_if_combo_box.addItem(com_if_value)
+            self.com_if_list.append((com_if_key, com_if_value))
+            if self.tmtc_handler.get_com_if_id() == com_if_key:
+                com_if_combo_box.setCurrentIndex(index)
+            index += 1
         com_if_combo_box.currentIndexChanged.connect(self.__com_if_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)
+        row += 1
+
+        self.com_if_cfg_button = QPushButton()
+        self.com_if_cfg_button.setText("Configure")
+        grid.addWidget(self.com_if_cfg_button, row, 0, 1, 2)
         row += 1
 
         self.connect_button = QPushButton()
@@ -285,6 +313,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self.service_list.append(service_key)
             index += 1
         combo_box_services.setCurrentIndex(default_index)
+        self.current_service = self.service_list[default_index]
 
         combo_box_services.currentIndexChanged.connect(self.__service_index_changed)
         grid.addWidget(combo_box_services, row, 0, 1, 1)
@@ -292,11 +321,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         combo_box_op_codes = QComboBox()
         current_service = self.service_list[default_index]
         op_code_dict = service_op_code_dict[current_service][1]
-        for op_code_key, op_code_value in op_code_dict.items():
-            self.op_code_list.append(op_code_key)
-            combo_box_op_codes.addItem(op_code_value[0])
-
-        # TODO: Set up combo box for selected service. It also needs to be updated if another service is selected
+        if op_code_dict is not None:
+            for op_code_key, op_code_value in op_code_dict.items():
+                self.op_code_list.append(op_code_key)
+                combo_box_op_codes.addItem(op_code_value[0])
+            self.current_op_code = self.op_code_list[0]
+        # TODO: Combo box also needs to be updated if another service is selected
         grid.addWidget(combo_box_op_codes, row, 1, 1, 1)
         row += 1
         return row
@@ -376,9 +406,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         return self.__command_button.isEnabled()
 
     def __com_if_index_changed(self, index: int):
-        self.current_com_if = self.com_if_list[index]
+        self.current_com_if = self.com_if_list[index][0]
         if self.debug_mode:
-            LOGGER.info(f"Communication IF updated: {self.current_com_if}")
+            LOGGER.info(f"Communication IF updated: {self.com_if_list[index][1]}")
 
 
 class SingleCommandTable(QTableWidget):
