@@ -1,14 +1,14 @@
 import argparse
 import collections.abc
 import pprint
-from typing import Union, List
+from typing import Union, List, Dict
 
 from tmtccmd.utility.logger import get_logger
-from tmtccmd.utility.conf_util import check_args_in_enum, print_core_globals
+from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
 from tmtccmd.ecss.conf import PusVersion, set_default_apid, set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
-from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList, CoreServiceList, \
-    CoreModeStrings, CoreComInterfacesString
+from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
+    CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
 from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.com_if import default_serial_cfg_setup, default_tcpip_udp_cfg_setup
 from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys
@@ -28,7 +28,7 @@ def set_json_cfg_path(json_cfg_path: str):
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
-        com_if_id: int = CoreComInterfaces.DUMMY, display_mode="long",
+        com_if_id: str = CoreComInterfaces.DUMMY.value, display_mode="long",
         tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
 ):
     update_global(CoreGlobalIds.APID, apid)
@@ -59,7 +59,8 @@ def set_default_globals_post_args_parsing(
         json_cfg_path: str,
         custom_modes_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None,
         custom_services_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None,
-        custom_com_ifs_lists: Union[None, List[Union[collections.abc.Iterable, dict]]] = None):
+        custom_com_if_dict: Dict[str, any] = None
+):
     """
     This function takes the argument namespace as a parameter and determines
     a set of globals from the parsed arguments.
@@ -70,7 +71,7 @@ def set_default_globals_post_args_parsing(
     :param json_cfg_path:
     :param custom_modes_list:       List of collections or dictionaries containing custom modes
     :param custom_services_list:    List of collections or dictionaries containing custom services
-    :param custom_com_ifs_lists:    List of collections or dictionaries containing customcommunication interfaces
+    :param custom_com_if_dict:    List of collections or dictionaries containing customcommunication interfaces
     :return:
     """
 
@@ -86,21 +87,17 @@ def set_default_globals_post_args_parsing(
 
     # Determine communication interface from arguments. Must be contained in core comIF list
     try:
-        com_if_param = args.com_if
+        com_if_key = str(args.com_if)
     except AttributeError:
         LOGGER.warning("No communication interface specified")
         LOGGER.warning("Trying to set from existing configuration..")
-        com_if_param = "unspec"
-    if com_if_param == "unspec":
-        from tmtccmd.config.definitions import CoreComInterfacesString
-        LOGGER.info("Communication interface unspecified. "
-                    "Trying to read from JSON or prompting from user..")
-        com_if_param = determine_com_if(
-            integer_to_string_dict=CoreComInterfacesString, json_cfg_path=json_cfg_path
-        )
-    com_if_param = check_and_set_core_com_if_arg(
-        com_if_arg=com_if_param, custom_com_ifs_list=custom_com_ifs_lists
-    )
+        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
+    if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
+        all_com_ifs = CoreComInterfacesDict
+        if custom_com_if_dict is not None:
+            all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
+        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
+    update_global(CoreGlobalIds.COM_IF, com_if_key)
 
     display_mode_param = "long"
     if args.short_display_mode is not None:
@@ -138,13 +135,13 @@ def set_default_globals_post_args_parsing(
     # baud rate and serial port which need to be set once but are expected to stay
     # the same for a given machine. Therefore, we use a JSON file to store and extract
     # those values
-    if com_if_param == CoreComInterfaces.SERIAL_DLE or \
-            com_if_param == CoreComInterfaces.SERIAL_FIXED_FRAME or \
-            com_if_param == CoreComInterfaces.SERIAL_QEMU:
-        default_serial_cfg_setup(com_if=com_if_param, json_cfg_path=json_cfg_path)
+    if com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
+            com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value or \
+            com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
+        default_serial_cfg_setup(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
 
     # Same as above, but for server address and server port
-    if com_if_param == CoreComInterfaces.TCPIP_UDP:
+    if com_if_key == CoreComInterfaces.TCPIP_UDP:
         # TODO: Port and IP address can also be passed as CLI parameters.
         #      Use them here if applicable?
         default_tcpip_udp_cfg_setup(json_cfg_path=json_cfg_path)
@@ -183,11 +180,11 @@ def check_and_set_core_mode_arg(
     :param custom_modes_list:
     :return:
     """
-    in_enum, mode_value = check_args_in_enum(
+    in_enum, mode_value = check_args_in_dict(
         param=mode_arg, iterable=CoreModeList, warning_hint="mode integers"
     )
     if not in_enum:
-        in_enum, mode_value = check_args_in_enum(
+        in_enum, mode_value = check_args_in_dict(
             param=mode_arg, iterable=CoreModeStrings, warning_hint="mode strings"
         )
     if in_enum:
@@ -197,7 +194,7 @@ def check_and_set_core_mode_arg(
     mode_arg_invalid = False
     if custom_modes_list is not None:
         for custom_mode_entry in custom_modes_list:
-            in_enum, mode_value = check_args_in_enum(
+            in_enum, mode_value = check_args_in_dict(
                 param=mode_arg, iterable=custom_mode_entry, warning_hint="custom mode"
             )
             if in_enum:
@@ -214,47 +211,10 @@ def check_and_set_core_mode_arg(
     update_global(CoreGlobalIds.MODE, mode_value)
 
 
-def check_and_set_core_com_if_arg(
-        com_if_arg: any,
-        custom_com_ifs_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None
-) -> int:
-    in_enum, com_if_value = check_args_in_enum(
-        param=com_if_arg, iterable=CoreComInterfaces, warning_hint="communication interface"
-    )
-    if not in_enum:
-        in_enum, com_if_value = check_args_in_enum(
-            param=com_if_arg, iterable=CoreComInterfacesString,
-            warning_hint="communication interface"
-        )
-    if in_enum:
-        update_global(CoreGlobalIds.COM_IF, com_if_value)
-        return com_if_value
-    com_if_arg_invalid = False
-    if custom_com_ifs_list is not None:
-        for custom_com_ifs_entry in custom_com_ifs_list:
-            in_enum, com_if_value = check_args_in_enum(
-                param=com_if_arg, iterable=custom_com_ifs_entry,
-                warning_hint="custom communication interface"
-            )
-            if in_enum:
-                break
-        if not in_enum:
-            com_if_arg_invalid = True
-    else:
-        com_if_arg_invalid = True
-
-    if com_if_arg_invalid:
-        LOGGER.warning(f"Passed communication interface argument might be invalid, "
-                       f"setting to {CoreComInterfaces.DUMMY}")
-        com_if_value = CoreComInterfaces.DUMMY
-    update_global(CoreGlobalIds.COM_IF, com_if_value)
-    return com_if_value
-
-
 def check_and_set_core_service_arg(
         service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
-    in_enum, service_value = check_args_in_enum(
+    in_enum, service_value = check_args_in_dict(
         param=service_arg, iterable=CoreServiceList, warning_hint="service"
     )
     if in_enum:
@@ -264,7 +224,7 @@ def check_and_set_core_service_arg(
     service_arg_invalid = False
     if custom_service_list is not None:
         for custom_services_entry in custom_service_list:
-            in_enum, service_value = check_args_in_enum(
+            in_enum, service_value = check_args_in_dict(
                 param=service_arg, iterable=custom_services_entry, warning_hint="custom mode"
             )
             if in_enum:

@@ -19,7 +19,7 @@ class AnsiColors:
     RESET = "\x1b[0m"
 
 
-def check_args_in_enum(
+def check_args_in_dict(
         param: any, iterable: Union[collections.abc.Iterable, dict], warning_hint: str
 ) -> Tuple[bool, int]:
     """

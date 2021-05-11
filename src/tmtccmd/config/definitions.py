@@ -17,22 +17,22 @@ ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 ethernet_address_t = Tuple[str, int]
 
 
-class CoreComInterfaces(enum.IntEnum):
-    DUMMY = 0
-    SERIAL_DLE = 1
-    TCPIP_UDP = 2
-    SERIAL_FIXED_FRAME = 4
-    SERIAL_QEMU = 5
-    UNSPECIFIED = 0xffff
+class CoreComInterfaces(enum.Enum):
+    DUMMY = "dummy"
+    SERIAL_DLE = "ser_dle"
+    TCPIP_UDP = "udp"
+    SERIAL_FIXED_FRAME = "ser_fixed"
+    SERIAL_QEMU = "ser_qemu"
+    UNSPECIFIED = "unspec"
 
 
-CoreComInterfacesString = {
-    CoreComInterfaces.DUMMY: "dummy",
-    CoreComInterfaces.SERIAL_DLE: "ser_dle",
-    CoreComInterfaces.TCPIP_UDP: "udp",
-    CoreComInterfaces.SERIAL_FIXED_FRAME: "ser_fixed",
-    CoreComInterfaces.SERIAL_QEMU: "ser_qemu",
-    CoreComInterfaces.UNSPECIFIED: "unspec"
+CoreComInterfacesDict = {
+    CoreComInterfaces.DUMMY.value: ("Dummy Interface"),
+    CoreComInterfaces.SERIAL_DLE.value: ("Serial Interace with DLE encoding"),
+    CoreComInterfaces.TCPIP_UDP.value: ("TCP/IP with UDP datagrams"),
+    CoreComInterfaces.SERIAL_FIXED_FRAME.value: ("Serial Interface with fixed size frames"),
+    CoreComInterfaces.SERIAL_QEMU.value: ("Serial Interface using QEMU"),
+    CoreComInterfaces.UNSPECIFIED.value: ("Unspecified")
 }
 
 

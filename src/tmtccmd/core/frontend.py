@@ -23,7 +23,7 @@ from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread, QRunnable
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.hook import TmTcHookBase
-from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreModeList
+from tmtccmd.config.definitions import CoreComInterfacesDict, CoreGlobalIds, CoreModeList
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.utility.logger import get_logger
@@ -87,6 +87,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.op_code_list = []
         self.current_service = ""
         self.current_op_code = ""
+        self.current_com_if_id = -1
 
         self.worker = None
         self.thread = None

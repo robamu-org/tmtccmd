@@ -30,12 +30,12 @@ class ExampleHookClass(TmTcHookBase):
         from tmtccmd.config.globals import set_default_globals_post_args_parsing
         set_default_globals_post_args_parsing(args=args, json_cfg_path=json_cfg_path)
 
-    def assign_communication_interface(self, com_if: int, tmtc_printer: TmTcPrinter) -> \
+    def assign_communication_interface(self, com_if_id: str, tmtc_printer: TmTcPrinter) -> \
             Union[CommunicationInterface, None]:
         from tmtccmd.config.com_if import create_communication_interface_default
         LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(
-            com_if_id=com_if, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
+            com_if_id=com_if_id, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
         )
 
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

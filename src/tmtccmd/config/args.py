@@ -128,32 +128,26 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config.definitions import CoreComInterfacesString, CoreComInterfaces
+    from tmtccmd.config.definitions import CoreComInterfacesDict, CoreComInterfaces
     help_text = f"Core Communication Interface. If this is not specified, the commander core\n" \
                 f"will try to extract it from the JSON or prompt it from the user.\n"
     dummy_line = \
-        f"{CoreComInterfaces.DUMMY} or " \
-        f"{CoreComInterfacesString[CoreComInterfaces.DUMMY]}: Dummy Interface\n"
+        f"{CoreComInterfacesDict[CoreComInterfaces.DUMMY.value]}: Dummy Interface\n"
     udp_line = \
-        f"{CoreComInterfaces.TCPIP_UDP} or " \
-        f"{CoreComInterfacesString[CoreComInterfaces.TCPIP_UDP]}: " \
+        f"{CoreComInterfacesDict[CoreComInterfaces.TCPIP_UDP.value]}: " \
         f"UDP client\n"
     ser_dle_line = \
-        f"{CoreComInterfaces.SERIAL_DLE} or " \
-        f"{CoreComInterfacesString[CoreComInterfaces.SERIAL_DLE]}: " \
+        f"{CoreComInterfacesDict[CoreComInterfaces.SERIAL_DLE.value]}: " \
         f"Serial with DLE transport layer\n"
     ser_fixed_line = \
-        f"{CoreComInterfaces.SERIAL_FIXED_FRAME} or " \
-        f"{CoreComInterfacesString[CoreComInterfaces.SERIAL_FIXED_FRAME]}: " \
+        f"{CoreComInterfacesDict[CoreComInterfaces.SERIAL_FIXED_FRAME.value]}: " \
         f"Serial with fixed frames\n"
     ser_qemu_line = \
-        f"{CoreComInterfaces.SERIAL_QEMU} or " \
-        f"{CoreComInterfacesString[CoreComInterfaces.SERIAL_QEMU]}: " \
+        f"{CoreComInterfacesDict[CoreComInterfaces.SERIAL_QEMU.value]}: " \
         f"QEMU serial interface\n"
     help_text += dummy_line + ser_dle_line + udp_line + ser_fixed_line + ser_qemu_line
     arg_parser.add_argument(
-        '-c', '--com_if', type=str,
-        help=help_text, default=CoreComInterfacesString[CoreComInterfaces.UNSPECIFIED]
+        '-c', '--com_if', type=str, help=help_text, default=CoreComInterfaces.UNSPECIFIED.value
     )
 
 
