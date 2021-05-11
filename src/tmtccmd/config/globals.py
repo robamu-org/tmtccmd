@@ -88,7 +88,6 @@ def set_default_globals_post_args_parsing(
     all_com_ifs = CoreComInterfacesDict
     if custom_com_if_dict is not None:
         all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
-    # Determine communication interface from arguments. Must be contained in core comIF list
     try:
         com_if_key = str(args.com_if)
     except AttributeError:

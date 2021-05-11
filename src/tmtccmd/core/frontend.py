@@ -242,7 +242,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         for com_if in CoreComInterfacesDict:
             com_if_combo_box.addItem(com_if)
         com_if_combo_box.setCurrentIndex(self.tmtc_handler.get_com_if_id())
-        com_if_combo_box.currentIndexChanged.connect(com_if_index_changed)
+        com_if_combo_box.currentIndexChanged.connect(self.__com_if_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)
         row += 1
 
