@@ -136,12 +136,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row = self.__set_up_com_if_section(grid=grid, row=row)
         row = self.__add_vertical_separator(grid=grid, row=row)
 
-
         row = self.__set_up_service_op_code_section(grid=grid, row=row)
 
         self.__command_button = QPushButton()
         self.__command_button.setText("Send Command")
         self.__command_button.clicked.connect(self.__start_seq_cmd_op)
+        self.__command_button.setEnabled(False)
         grid.addWidget(self.__command_button, row, 0, 1, 2)
         row += 1
 
@@ -176,24 +176,26 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             )
             self.tmtc_handler.set_com_if(new_com_if)
         self.tmtc_handler.start_listener(False)
-        self.connect_button.setStyleSheet("background-color: green")
-        self.connect_button.setEnabled(False)
-        self.disconnect_button.setEnabled(True)
-        self.disconnect_button.setStyleSheet("background-color: orange")
+        self.__connect_button.setStyleSheet("background-color: green")
+        self.__connect_button.setEnabled(False)
+        self.__disconnect_button.setEnabled(True)
+        self.__command_button.setEnabled(True)
+        self.__disconnect_button.setStyleSheet("background-color: orange")
 
     def __start_disconnect_button_op(self):
         LOGGER.info("Closing TM listener..")
-        self.disconnect_button.setEnabled(False)
-        if not self.connect_button.isEnabled():
+        self.__disconnect_button.setEnabled(False)
+        self.__command_button.setEnabled(False)
+        if not self.__connect_button.isEnabled():
             self.__start_qthread_task(
                 op_code=WorkerOperationsCodes.DISCONNECT, finish_callback=self.__finish_disconnect_button_op
             )
 
     def __finish_disconnect_button_op(self):
-        self.connect_button.setEnabled(True)
-        self.disconnect_button.setEnabled(False)
-        self.disconnect_button.setStyleSheet("background-color: red")
-        self.connect_button.setStyleSheet("background-color: lime")
+        self.__connect_button.setEnabled(True)
+        self.__disconnect_button.setEnabled(False)
+        self.__disconnect_button.setStyleSheet("background-color: red")
+        self.__connect_button.setStyleSheet("background-color: lime")
         LOGGER.info("Disconnect successfull")
 
     def __create_menu_bar(self):
@@ -281,19 +283,19 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(self.com_if_cfg_button, row, 0, 1, 2)
         row += 1
 
-        self.connect_button = QPushButton()
-        self.connect_button.setText("Connect")
-        self.connect_button.setStyleSheet("background-color: lime")
-        self.connect_button.pressed.connect(self.__start_connect_button_action)
+        self.__connect_button = QPushButton()
+        self.__connect_button.setText("Connect")
+        self.__connect_button.setStyleSheet("background-color: lime")
+        self.__connect_button.pressed.connect(self.__start_connect_button_action)
 
-        self.disconnect_button = QPushButton()
-        self.disconnect_button.setText("Disconnect")
-        self.disconnect_button.setStyleSheet("background-color: orange")
-        self.disconnect_button.pressed.connect(self.__start_disconnect_button_op)
-        self.disconnect_button.setEnabled(False)
+        self.__disconnect_button = QPushButton()
+        self.__disconnect_button.setText("Disconnect")
+        self.__disconnect_button.setStyleSheet("background-color: orange")
+        self.__disconnect_button.pressed.connect(self.__start_disconnect_button_op)
+        self.__disconnect_button.setEnabled(False)
 
-        grid.addWidget(self.connect_button, row, 0, 1, 1)
-        grid.addWidget(self.disconnect_button, row, 1, 1, 1)
+        grid.addWidget(self.__connect_button, row, 0, 1, 1)
+        grid.addWidget(self.__disconnect_button, row, 1, 1, 1)
         row += 1
         return row
 
