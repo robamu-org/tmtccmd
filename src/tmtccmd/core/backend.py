@@ -76,6 +76,13 @@ class TmTcHandler(BackendBase):
     def get_printer(self) -> TmTcPrinter:
         return self.__tmtc_printer
 
+    def set_com_if(self, com_if: CommunicationInterface):
+        if not self.is_com_if_active():
+            self.__com_if = com_if
+            self.__tm_listener.set_com_if(self.__com_if)
+        else:
+            LOGGER.warning("Communication Interface is active and must be closed first before reassigning a new one")
+
     def is_com_if_active(self):
         return self.com_if_active
 
@@ -94,9 +101,6 @@ class TmTcHandler(BackendBase):
 
     def get_mode(self) -> int:
         return self.mode
-
-    def set_com_if(self, com_if: CommunicationInterface):
-        self.__com_if = com_if
 
     def set_service(self, service: Union[str, int]):
         self.__service = service

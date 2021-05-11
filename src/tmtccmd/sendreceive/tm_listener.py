@@ -76,6 +76,9 @@ class TmListener:
     def stop(self):
         self.event_listener_active.clear()
 
+    def set_com_if(self, com_if: CommunicationInterface):
+        self.__com_if = com_if
+
     def is_listener_active(self) -> bool:
         return self.listener_active
 
