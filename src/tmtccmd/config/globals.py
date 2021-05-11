@@ -85,6 +85,9 @@ def set_default_globals_post_args_parsing(
         mode_arg=mode_param, custom_modes_list=custom_modes_list
     )
 
+    all_com_ifs = CoreComInterfacesDict
+    if custom_com_if_dict is not None:
+        all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
     # Determine communication interface from arguments. Must be contained in core comIF list
     try:
         com_if_key = str(args.com_if)
@@ -93,9 +96,6 @@ def set_default_globals_post_args_parsing(
         LOGGER.warning("Trying to set from existing configuration..")
         com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
     if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
-        all_com_ifs = CoreComInterfacesDict
-        if custom_com_if_dict is not None:
-            all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
         com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
     update_global(CoreGlobalIds.COM_IF, com_if_key)
 

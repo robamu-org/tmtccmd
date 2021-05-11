@@ -85,6 +85,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.tmtc_handler.initialize()
         self.service_list = []
         self.op_code_list = []
+        self.com_if_list = []
+        self.current_com_if = "unspec"
         self.current_service = ""
         self.current_op_code = ""
         self.current_com_if_id = -1
@@ -237,8 +239,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(QLabel("Communication Interface:"), row, 0, 1, 1)
         com_if_combo_box = QComboBox()
         # add all possible ComIFs to the comboBox
-        for com_if in CoreComInterfaces:
-            com_if_combo_box.addItem(str(com_if))
+        for com_if in CoreComInterfacesDict:
+            com_if_combo_box.addItem(com_if)
         com_if_combo_box.setCurrentIndex(self.tmtc_handler.get_com_if_id())
         com_if_combo_box.currentIndexChanged.connect(com_if_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)
@@ -299,7 +301,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
-    def __set_up_pixmap(self):
+    def __set_up_pixmap(self, grid: QGridLayout, row: int) -> int:
         label = QLabel(self)
         label.setGeometry(720, 10, 100, 100)
         label.adjustSize()
@@ -315,6 +317,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         grid.addWidget(label, row, 0, 1, 2)
         row += 1
+        return row
 
     def __connect_button_action(self):
         LOGGER.info("Starting TM listener..")
@@ -372,6 +375,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __get_send_button(self):
         return self.__command_button.isEnabled()
 
+    def __com_if_index_changed(self, index: int):
+        self.current_com_if = self.com_if_list[index]
+        if self.debug_mode:
+            LOGGER.info(f"Communication IF updated: {self.current_com_if}")
+
 
 class SingleCommandTable(QTableWidget):
     def __init__(self):
@@ -386,11 +394,6 @@ class SingleCommandTable(QTableWidget):
         self.setItem(0, 0, QTableWidgetItem("17"))
         self.setItem(0, 1, QTableWidgetItem("1"))
         self.setItem(0, 2, QTableWidgetItem("20"))
-
-
-def com_if_index_changed(index: int):
-    update_global(CoreGlobalIds.COM_IF, CoreComInterfaces(index))
-    LOGGER.info(f"Communication IF updated: {CoreComInterfaces(index)}")
 
 
 def checkbox_print_hk_data(state: int):

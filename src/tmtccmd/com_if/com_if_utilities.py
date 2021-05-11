@@ -3,6 +3,7 @@ import json
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 from tmtccmd.config.definitions import ComIFDictT
+
 LOGGER = get_logger()
 
 
