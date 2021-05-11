@@ -2,11 +2,11 @@ import json
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
-
+from tmtccmd.config.definitions import ComIFDictT
 LOGGER = get_logger()
 
 
-def determine_com_if(com_if_dict: dict, json_cfg_path: str) -> str:
+def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
     do_prompt_com_if = False
     if not check_json_file(json_cfg_path=json_cfg_path):
         do_prompt_com_if = True

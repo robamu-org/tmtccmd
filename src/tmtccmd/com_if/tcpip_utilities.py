@@ -4,7 +4,7 @@ import struct
 import enum
 from typing import Union
 
-from tmtccmd.config.definitions import ethernet_address_t
+from tmtccmd.config.definitions import EthernetAddressT
 from tmtccmd.utility.json_handler import check_json_file
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.json_handler import JsonKeyNames
@@ -19,7 +19,7 @@ class TcpIpConfigIds(enum.Enum):
     RECV_MAX_SIZE = auto()
 
 
-def determine_udp_send_address(json_cfg_path: str) -> ethernet_address_t:
+def determine_udp_send_address(json_cfg_path: str) -> EthernetAddressT:
     address_tuple = ()
     reconfigure_ip_address = False
     if not check_json_file(json_cfg_path=json_cfg_path):
@@ -52,7 +52,7 @@ def determine_udp_send_address(json_cfg_path: str) -> ethernet_address_t:
     return address_tuple
 
 
-def determine_udp_recv_address(json_cfg_path: str) -> Union[None, ethernet_address_t]:
+def determine_udp_recv_address(json_cfg_path: str) -> Union[None, EthernetAddressT]:
     address_tuple = ()
     reconfigure_ip_address = False
     if not check_json_file(json_cfg_path=json_cfg_path):
@@ -97,7 +97,7 @@ def determine_udp_recv_address(json_cfg_path: str) -> Union[None, ethernet_addre
     return address_tuple
 
 
-def prompt_ip_address(type_str: str) -> ethernet_address_t:
+def prompt_ip_address(type_str: str) -> EthernetAddressT:
     address_tuple = ()
     while True:
         ip_address = input(

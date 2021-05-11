@@ -15,7 +15,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.config.definitions import ethernet_address_t
+from tmtccmd.config.definitions import EthernetAddressT
 
 LOGGER = get_logger()
 
@@ -31,8 +31,8 @@ class TcpIpUdpComIF(CommunicationInterface):
     Communication interface for UDP communication.
     """
     def __init__(self, tm_timeout: float, tc_timeout_factor: float,
-                 send_address: ethernet_address_t, max_recv_size: int,
-                 recv_addr: Union[None, ethernet_address_t] = None,
+                 send_address: EthernetAddressT, max_recv_size: int,
+                 recv_addr: Union[None, EthernetAddressT] = None,
                  tmtc_printer: Union[None, TmTcPrinter] = None,
                  init_mode: int = CoreModeList.LISTENER_MODE):
         """

@@ -4,6 +4,7 @@
 import enum
 from typing import Tuple, Dict, Union
 
+# Service Op Code Dictionary Types
 ServiceNameT = str
 ServiceInfoT = str
 OpCodeNameT = str
@@ -14,7 +15,12 @@ OpCodeEntryT = Dict[OpCodeNameT, Tuple[OpCodeInfoT, OpCodeOptionsT]]
 # It is possible to specify a service without any op codes
 ServiceDictValueT = Union[None, Tuple[ServiceInfoT, OpCodeEntryT]]
 ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
-ethernet_address_t = Tuple[str, int]
+
+# Com Interface Types
+ComIFValueT = Tuple[str, any]
+ComIFDictT = Dict[str, ComIFValueT]
+
+EthernetAddressT = Tuple[str, int]
 
 
 class CoreComInterfaces(enum.Enum):
