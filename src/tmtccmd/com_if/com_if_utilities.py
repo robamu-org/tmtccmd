@@ -7,27 +7,27 @@ LOGGER = get_logger()
 
 
 def determine_com_if(com_if_dict: dict, json_cfg_path: str) -> str:
-    prompt_com_if = False
+    do_prompt_com_if = False
     if not check_json_file(json_cfg_path=json_cfg_path):
-        prompt_com_if = True
-    if not prompt_com_if:
+        do_prompt_com_if = True
+    if not do_prompt_com_if:
         with open(json_cfg_path, "r") as read:
             com_if_string = ""
             try:
                 load_data = json.load(read)
                 com_if_string = load_data[JsonKeyNames.COM_IF.value]
             except KeyError:
-                prompt_com_if = True
+                do_prompt_com_if = True
             com_if_string = str(com_if_string)
-    if prompt_com_if:
-        com_if_string = prompt_com_if()
+    if do_prompt_com_if:
+        com_if_string = prompt_com_if(com_if_dict=com_if_dict)
         save_to_json = input("Do you want to store the communication interface? (y/n): ")
         if save_to_json.lower() in ['y', "yes", "1"]:
             store_com_if_json(com_if_string=com_if_string, json_cfg_path=json_cfg_path)
     return com_if_string
 
 
-def prompt_com_if() -> str:
+def prompt_com_if(com_if_dict: dict) -> str:
     while True:
         com_if_list = []
         for index, com_if_value in enumerate(com_if_dict.items()):
@@ -42,6 +42,7 @@ def prompt_com_if() -> str:
             print("Key invalid, try again.")
             continue
         com_if_string = com_if_list[com_if_key][0]
+        break
     return com_if_string
 
 
