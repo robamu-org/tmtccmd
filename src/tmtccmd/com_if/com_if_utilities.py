@@ -10,7 +10,6 @@ def determine_com_if(com_if_dict: dict, json_cfg_path: str) -> str:
     prompt_com_if = False
     if not check_json_file(json_cfg_path=json_cfg_path):
         prompt_com_if = True
-
     if not prompt_com_if:
         with open(json_cfg_path, "r") as read:
             com_if_string = ""
@@ -21,11 +20,14 @@ def determine_com_if(com_if_dict: dict, json_cfg_path: str) -> str:
                 prompt_com_if = True
             com_if_string = str(com_if_string)
     if prompt_com_if:
-        prompt_com_if(save_to_json=True)
+        com_if_string = prompt_com_if()
+        save_to_json = input("Do you want to store the communication interface? (y/n): ")
+        if save_to_json.lower() in ['y', "yes", "1"]:
+            store_com_if_json(com_if_string=com_if_string, json_cfg_path=json_cfg_path)
     return com_if_string
 
 
-def prompt_com_if(save_to_json: bool = True) -> str:
+def prompt_com_if() -> str:
     while True:
         com_if_list = []
         for index, com_if_value in enumerate(com_if_dict.items()):
@@ -40,16 +42,16 @@ def prompt_com_if(save_to_json: bool = True) -> str:
             print("Key invalid, try again.")
             continue
         com_if_string = com_if_list[com_if_key][0]
-        break
-    save_to_json = input("Do you want to store the communication interface? (y/n): ")
-    if save_to_json.lower() in ['y', "yes", "1"]:
-        with open(json_cfg_path, "r+") as file:
-            data = json.load(file)
-            data[JsonKeyNames.COM_IF.value] = com_if_string
-            file.seek(0)
-            json.dump(data, file, indent=4)
-        LOGGER.info(
-            "Communication interface was stored in the JSON file config/tmtcc_config.json"
-        )
-        LOGGER.info("Delete this file or edit it manually to edit the communication interface")
     return com_if_string
+
+
+def store_com_if_json(com_if_string: str, json_cfg_path: str):
+    with open(json_cfg_path, "r+") as file:
+        data = json.load(file)
+        data[JsonKeyNames.COM_IF.value] = com_if_string
+        file.seek(0)
+        json.dump(data, file, indent=4)
+    LOGGER.info(
+        f"Communication interface was stored in the JSON file {json_cfg_path}"
+    )
+    LOGGER.info("Delete this file or edit it manually to edit the communication interface")
