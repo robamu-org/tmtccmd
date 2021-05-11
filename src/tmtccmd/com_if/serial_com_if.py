@@ -112,7 +112,7 @@ class SerialComIF(CommunicationInterface):
             self.serial = serial.Serial(
                 port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout)
         except serial.SerialException:
-            LOGGER.error("SERIAL Port opening failure!")
+            LOGGER.error("Serial Port opening failure!")
             raise IOError
         """
         Needs to be called by application code once for DLE mode!

@@ -14,7 +14,6 @@ from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSend
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 from tmtccmd.pus_tc.packer import ServiceQueuePacker
 
 
@@ -134,12 +133,12 @@ class TmTcHandler(BackendBase):
         executed_handler.start_listener()
 
     def initialize(self):
-        from tmtccmd.core.globals_manager import get_global
+        from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
         """
         Perform initialization steps which might be necessary after class construction.
         This has to be called at some point before using the class!
         """
-        atexit.register(keyboard_interrupt_handler, com_interface=self.__com_if)
+        atexit.register(keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if)
 
     def start_listener(self, perform_op_immediately: bool = True):
         try:
