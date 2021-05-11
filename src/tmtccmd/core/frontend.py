@@ -12,10 +12,11 @@ import threading
 import os
 import sys
 import time
+import webbrowser
 from multiprocessing import Process
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
-    QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem, QMenu
+    QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem, QMenu, QAction, QMenuBar
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread, QRunnable
@@ -34,6 +35,33 @@ import tmtccmd.config as config_module
 
 
 LOGGER = get_logger()
+
+
+CONNECT_BTTN_STYLE = \
+    "background-color: #1fc600;" \
+    "border-style: inset;" \
+    "font: bold;" \
+    "padding: 6px;" \
+    "border-width: 2px;" \
+    "border-radius: 6px;"
+
+
+DISCONNECT_BTTN_STYLE = \
+    "background-color: orange;" \
+    "border-style: inset;" \
+    "font: bold;" \
+    "padding: 6px;" \
+    "border-width: 2px;" \
+    "border-radius: 6px;"
+
+
+COMMAND_BUTTON_STYLE = \
+    "background-color: #cdeefd;" \
+    "border-style: inset;" \
+    "font: bold;" \
+    "padding: 6px;" \
+    "border-width: 2px;" \
+    "border-radius: 6px;"
 
 
 class WorkerOperationsCodes(enum.IntEnum):
@@ -93,6 +121,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.current_service = ""
         self.current_op_code = ""
         self.current_com_if_id = -1
+        self.connected = False
 
         self.worker = None
         self.thread = None
@@ -115,9 +144,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __start_ui(self):
         self.__create_menu_bar()
-
         win = QWidget(self)
         self.setCentralWidget(win)
+
         grid = QGridLayout()
         win.setLayout(grid)
         row = 0
@@ -140,11 +169,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.__command_button = QPushButton()
         self.__command_button.setText("Send Command")
+        self.__command_button.setStyleSheet(
+            COMMAND_BUTTON_STYLE
+        )
         self.__command_button.clicked.connect(self.__start_seq_cmd_op)
         self.__command_button.setEnabled(False)
         grid.addWidget(self.__command_button, row, 0, 1, 2)
         row += 1
-
         self.show()
 
     def __start_seq_cmd_op(self):
@@ -166,46 +197,55 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __finish_seq_cmd_op(self):
         self.__set_send_button(True)
 
-    def __start_connect_button_action(self):
-        LOGGER.info("Starting TM listener..")
-        # Build and assign new communication interface
-        if self.current_com_if != self.last_com_if:
-            hook_obj = get_global_hook_obj()
-            new_com_if = hook_obj.assign_communication_interface(
-                com_if_key=self.current_com_if, tmtc_printer=self.tmtc_handler.get_printer()
+    def __connect_button_action(self):
+        if not self.connected:
+            LOGGER.info("Starting TM listener..")
+            # Build and assign new communication interface
+            if self.current_com_if != self.last_com_if:
+                hook_obj = get_global_hook_obj()
+                new_com_if = hook_obj.assign_communication_interface(
+                    com_if_key=self.current_com_if, tmtc_printer=self.tmtc_handler.get_printer()
+                )
+                self.tmtc_handler.set_com_if(new_com_if)
+            self.tmtc_handler.start_listener(False)
+            self.__connect_button.setStyleSheet(
+                DISCONNECT_BTTN_STYLE
             )
-            self.tmtc_handler.set_com_if(new_com_if)
-        self.tmtc_handler.start_listener(False)
-        self.__connect_button.setStyleSheet("background-color: green")
-        self.__connect_button.setEnabled(False)
-        self.__disconnect_button.setEnabled(True)
-        self.__command_button.setEnabled(True)
-        self.__disconnect_button.setStyleSheet("background-color: orange")
-
-    def __start_disconnect_button_op(self):
-        LOGGER.info("Closing TM listener..")
-        self.__disconnect_button.setEnabled(False)
-        self.__command_button.setEnabled(False)
-        if not self.__connect_button.isEnabled():
+            self.__command_button.setEnabled(True)
+            self.__connect_button.setText("Disconnect")
+            self.connected = True
+        else:
+            LOGGER.info("Closing TM listener..")
+            self.__command_button.setEnabled(False)
+            self.__connect_button.setEnabled(False)
             self.__start_qthread_task(
                 op_code=WorkerOperationsCodes.DISCONNECT, finish_callback=self.__finish_disconnect_button_op
             )
 
     def __finish_disconnect_button_op(self):
         self.__connect_button.setEnabled(True)
-        self.__disconnect_button.setEnabled(False)
-        self.__disconnect_button.setStyleSheet("background-color: red")
-        self.__connect_button.setStyleSheet("background-color: lime")
+        # self.__disconnect_button.setEnabled(False)
+        self.__connect_button.setStyleSheet(
+            CONNECT_BTTN_STYLE
+        )
+        self.__connect_button.setText("Connect")
         LOGGER.info("Disconnect successfull")
+        self.connected = False
 
     def __create_menu_bar(self):
-        menuBar = self.menuBar()
+        menu_bar = self.menuBar()
         # Creating menus using a QMenu object
-        fileMenu = QMenu("&File", self)
-        menuBar.addMenu(fileMenu)
+        file_menu = QMenu("&File", self)
+        menu_bar.addMenu(file_menu)
         # Creating menus using a title
-        editMenu = menuBar.addMenu("&Edit")
-        helpMenu = menuBar.addMenu("&Help")
+        help_menu = menu_bar.addMenu("&Help")
+
+        help_action = QAction("Help", self)
+        help_action.triggered.connect(self.__help_url)
+        help_menu.addAction(help_action)
+
+    def __help_url(self):
+        webbrowser.open('https://tmtccmd.readthedocs.io/en/latest/')
 
     def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
@@ -285,17 +325,23 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.__connect_button = QPushButton()
         self.__connect_button.setText("Connect")
-        self.__connect_button.setStyleSheet("background-color: lime")
-        self.__connect_button.pressed.connect(self.__start_connect_button_action)
+        self.__connect_button.setStyleSheet(
+            CONNECT_BTTN_STYLE
+        )
+        self.__connect_button.pressed.connect(self.__connect_button_action)
 
+        """
         self.__disconnect_button = QPushButton()
         self.__disconnect_button.setText("Disconnect")
-        self.__disconnect_button.setStyleSheet("background-color: orange")
+        self.__disconnect_button.setStyleSheet(
+            "background-color: orange"
+        )
         self.__disconnect_button.pressed.connect(self.__start_disconnect_button_op)
         self.__disconnect_button.setEnabled(False)
+        """
 
-        grid.addWidget(self.__connect_button, row, 0, 1, 1)
-        grid.addWidget(self.__disconnect_button, row, 1, 1, 1)
+        grid.addWidget(self.__connect_button, row, 0, 1, 2)
+        # grid.addWidget(self.__disconnect_button, row, 1, 1, 1)
         row += 1
         return row
 
