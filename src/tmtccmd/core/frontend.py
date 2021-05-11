@@ -460,25 +460,21 @@ class SingleCommandTable(QTableWidget):
 def checkbox_print_hk_data(state: int):
     update_global(CoreGlobalIds.PRINT_HK, state)
     LOGGER.info(["enabled", "disabled"][state == 0] + " printing of hk data")
-    # tmtcc_config.G_PRINT_HK_DATA = state == 0
 
 
 def checkbox_short_display_mode(state: int):
     update_global(CoreGlobalIds.DISPLAY_MODE, state)
     LOGGER.info(["enabled", "disabled"][state == 0] + " short display mode")
-    # tmtcc_config.G_DISPLAY_MODE = ["short", "long"][state == 0]
 
 
 def number_timeout(value: float):
     update_global(CoreGlobalIds.TM_TIMEOUT, value)
     LOGGER.info("PUS TM timeout changed to: " + str(value))
-    # tmtcc_config.G_TM_TIMEOUT = value
 
 
 def number_timeout_factor(value: float):
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, value)
     LOGGER.info("PUS TM timeout factor changed to: " + str(value))
-    # tmtcc_config.G_TC_SEND_TIMEOUT_FACTOR = value
 
 
 def ip_change_client(value):
