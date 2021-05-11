@@ -179,17 +179,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.show()
 
     def __start_seq_cmd_op(self):
-        # TODO: Use worker thread instead here. We need the event loop because right now, the maximum number
-        #       of concurrent send operations is one for now
         if self.debug_mode:
             LOGGER.info("Start Service Test Button pressed.")
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
-        # TODO: If it has change, we might need to disconnect from old one
         self.tmtc_handler.set_service(self.current_service)
         self.tmtc_handler.set_opcode(self.current_op_code)
-        # TODO: Need to check whether COM IF has changed, build and reassign a new one it this is the case
         self.__start_qthread_task(
             op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING, finish_callback=self.__finish_seq_cmd_op
         )
@@ -330,23 +326,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         )
         self.__connect_button.pressed.connect(self.__connect_button_action)
 
-        """
-        self.__disconnect_button = QPushButton()
-        self.__disconnect_button.setText("Disconnect")
-        self.__disconnect_button.setStyleSheet(
-            "background-color: orange"
-        )
-        self.__disconnect_button.pressed.connect(self.__start_disconnect_button_op)
-        self.__disconnect_button.setEnabled(False)
-        """
-
         grid.addWidget(self.__connect_button, row, 0, 1, 2)
-        # grid.addWidget(self.__disconnect_button, row, 1, 1, 1)
         row += 1
         return row
 
     def __set_up_service_op_code_section(self, grid: QGridLayout, row: int):
-        # service test mode gui
         grid.addWidget(QLabel("Service: "), row, 0, 1, 2)
         grid.addWidget(QLabel("Operation Code: "), row, 1, 1, 2)
         row += 1
