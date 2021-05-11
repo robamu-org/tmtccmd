@@ -156,12 +156,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             return
         self.__set_send_button(False)
         # TODO: If it has change, we might need to disconnect from old one
-        # Build and assign new communication interface
-        hook_obj = get_global_hook_obj()
-        new_com_if = hook_obj.assign_communication_interface(
-            com_if_key=self.current_com_if, tmtc_printer=self.tmtc_handler.get_printer()
-        )
-        self.tmtc_handler.set_com_if(new_com_if)
         self.tmtc_handler.set_service(self.current_service)
         self.tmtc_handler.set_opcode(self.current_op_code)
         # TODO: Need to check whether COM IF has changed, build and reassign a new one it this is the case
@@ -172,11 +166,24 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __finish_seq_cmd_op(self):
         self.__set_send_button(True)
 
+    def __start_connect_button_action(self):
+        LOGGER.info("Starting TM listener..")
+        # Build and assign new communication interface
+        if self.current_com_if != self.last_com_if:
+            hook_obj = get_global_hook_obj()
+            new_com_if = hook_obj.assign_communication_interface(
+                com_if_key=self.current_com_if, tmtc_printer=self.tmtc_handler.get_printer()
+            )
+            self.tmtc_handler.set_com_if(new_com_if)
+        self.tmtc_handler.start_listener(False)
+        self.connect_button.setStyleSheet("background-color: green")
+        self.connect_button.setEnabled(False)
+        self.disconnect_button.setEnabled(True)
+        self.disconnect_button.setStyleSheet("background-color: orange")
+
     def __start_disconnect_button_op(self):
         LOGGER.info("Closing TM listener..")
         self.disconnect_button.setEnabled(False)
-        if self.current_com_if != self.last_com_if:
-            self.tmtc_handler.start_listener()
         if not self.connect_button.isEnabled():
             self.__start_qthread_task(
                 op_code=WorkerOperationsCodes.DISCONNECT, finish_callback=self.__finish_disconnect_button_op
@@ -277,7 +284,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.connect_button = QPushButton()
         self.connect_button.setText("Connect")
         self.connect_button.setStyleSheet("background-color: lime")
-        self.connect_button.pressed.connect(self.__connect_button_action)
+        self.connect_button.pressed.connect(self.__start_connect_button_action)
 
         self.disconnect_button = QPushButton()
         self.disconnect_button.setText("Disconnect")
@@ -348,14 +355,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(label, row, 0, 1, 2)
         row += 1
         return row
-
-    def __connect_button_action(self):
-        LOGGER.info("Starting TM listener..")
-        self.tmtc_handler.start_listener(False)
-        self.connect_button.setStyleSheet("background-color: green")
-        self.connect_button.setEnabled(False)
-        self.disconnect_button.setEnabled(True)
-        self.disconnect_button.setStyleSheet("background-color: orange")
 
     def __start_qthread_task(self, op_code: WorkerOperationsCodes, finish_callback):
         self.thread = QThread()

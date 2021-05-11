@@ -23,13 +23,13 @@ class CommunicationInterface:
     Generic form of a communication interface to separate communication logic from
     the underlying interface.
     """
-    def __init__(self, tmtc_printer: TmTcPrinter, com_if_id: str):
+    def __init__(self, tmtc_printer: TmTcPrinter, com_if_key: str):
         self.tmtc_printer = tmtc_printer
         self.valid = True
-        self.com_if_id = com_if_id
+        self.com_if_key = com_if_key
 
     def get_id(self) -> str:
-        return self.com_if_id
+        return self.com_if_key
 
     @abstractmethod
     def initialize(self, args: any = None) -> any:

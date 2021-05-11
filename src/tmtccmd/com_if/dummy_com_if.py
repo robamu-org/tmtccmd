@@ -18,8 +18,8 @@ LOGGER = get_logger()
 
 
 class DummyComIF(CommunicationInterface):
-    def __init__(self, com_if_id: int, tmtc_printer: TmTcPrinter):
-        super().__init__(com_if_id=com_if_id, tmtc_printer=tmtc_printer)
+    def __init__(self, com_if_key: int, tmtc_printer: TmTcPrinter):
+        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
         self.dummy_handler = DummyHandler()
         self.service_sent = 0
         self.tc_ssc = 0

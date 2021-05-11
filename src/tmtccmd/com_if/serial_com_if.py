@@ -54,9 +54,10 @@ class SerialComIF(CommunicationInterface):
     """
     Communication Interface to use serial communication. This requires the PySerial library.
     """
-    def __init__(self, com_if_id: int, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int,
-                 serial_timeout: float,
-                 ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED):
+    def __init__(
+            self, com_if_key: str, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int, serial_timeout: float,
+            ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED
+    ):
         """
         Initiaze a serial communication handler.
         :param tmtc_printer: TMTC printer object. Can be used for diagnostic purposes, but main
@@ -66,7 +67,7 @@ class SerialComIF(CommunicationInterface):
         :param serial_timeout: Specify serial timeout
         :param ser_com_type: Specify how to handle serial reception
         """
-        super().__init__(com_if_id=com_if_id, tmtc_printer=tmtc_printer)
+        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
 
         self.com_port = com_port
         self.baud_rate = baud_rate

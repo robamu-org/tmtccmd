@@ -25,11 +25,11 @@ def create_backend_mock() -> TmTcHandler:
         com_if_key=CoreComInterfaces.DUMMY, json_cfg_path="tmtc_config.json", tmtc_printer=tmtc_printer
     )
     tm_listener = TmListener(
-        com_interface=com_if, tm_timeout=3.0, tc_timeout_factor=3.0
+        com_if=com_if, tm_timeout=3.0, tc_timeout_factor=3.0
     )
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
-        communication_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=CoreModeList.IDLE,
+        com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=CoreModeList.IDLE,
         init_service=17, init_opcode="0"
     )
     tmtc_backend.start_listener = MagicMock(return_value=0)

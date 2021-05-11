@@ -233,11 +233,11 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, json_cfg_path: str):
     tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
     tm_listener = TmListener(
-        com_interface=com_if, tm_timeout=tm_timeout, tc_timeout_factor=tc_send_timeout_factor
+        com_if=com_if, tm_timeout=tm_timeout, tc_timeout_factor=tc_send_timeout_factor
     )
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
-        communication_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=mode,
+        com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=mode,
         init_service=service, init_opcode=op_code
     )
     tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))

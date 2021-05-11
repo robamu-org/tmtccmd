@@ -32,17 +32,17 @@ class TmListener:
         LISTENER = 2,
         SEQUENCE = 3,
 
-    def __init__(self, com_interface: CommunicationInterface, tm_timeout: float,
+    def __init__(self, com_if: CommunicationInterface, tm_timeout: float,
                  tc_timeout_factor: float):
         """
         Initiate a TM listener
-        @param com_interface:   Type of communication interface, e.g. a serial or ethernet interface
+        @param com_if:   Type of communication interface, e.g. a serial or ethernet interface
         @param tm_timeout:      Timeout for the TM reception
         @param tc_timeout_factor:
         """
         self.__tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
-        self.com_interface = com_interface
+        self.__com_if = com_if
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
         self.listener_active = False
@@ -135,7 +135,7 @@ class TmListener:
         This function prints the telemetry sequence but does not return it.
         :return:
         """
-        data_available = self.com_interface.data_available(self.__tm_timeout)
+        data_available = self.__com_if.data_available(self.__tm_timeout)
         if data_available == 0:
             return False
         elif data_available > 0:
@@ -179,7 +179,7 @@ class TmListener:
         """
         The core operation listens for packets.
         """
-        packet_list = self.com_interface.receive_telemetry()
+        packet_list = self.__com_if.receive_telemetry()
         if len(packet_list) > 0:
             self.__event_reply_received.set()
             # deque is thread-safe for append and pops from opposite sides but I am not sure copy
@@ -219,9 +219,9 @@ class TmListener:
         elapsed_time = 0
         # LOGGER.info(f"TmListener: Listening for {self.__tm_timeout} seconds")
         while elapsed_time < self.__tm_timeout:
-            packets_available = self.com_interface.data_available(0.2)
+            packets_available = self.__com_if.data_available(0.2)
             if packets_available > 0:
-                tm_list = self.com_interface.receive_telemetry()
+                tm_list = self.__com_if.receive_telemetry()
                 # deque should be thread-safe to appends and pops from opposite sides, but
                 # I am not sure about the copy operation.
                 if self.lock_listener.acquire(True, timeout=1):

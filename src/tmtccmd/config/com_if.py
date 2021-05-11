@@ -55,7 +55,7 @@ def create_communication_interface_default(
                 dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
-            communication_interface = DummyComIF(com_if_id=com_if_key, tmtc_printer=tmtc_printer)
+            communication_interface = DummyComIF(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
         if not communication_interface.valid:
             LOGGER.warning("Invalid communication interface!")
             sys.exit()
@@ -113,7 +113,7 @@ def create_default_serial_interface(
         else:
             ser_com_type = SerialCommunicationType.FIXED_FRAME_BASED
         communication_interface = SerialComIF(
-            com_if_id=com_if_key, tmtc_printer=tmtc_printer, com_port=com_port, baud_rate=serial_baudrate,
+            com_if_key=com_if_key, tmtc_printer=tmtc_printer, com_port=com_port, baud_rate=serial_baudrate,
             serial_timeout=serial_timeout, ser_com_type=ser_com_type
         )
         if com_if_key == CoreComInterfaces.SERIAL_DLE:
