@@ -125,7 +125,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.worker = None
         self.thread = None
-        self.debug_mode = True
+        self.debug_mode = False
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
 
@@ -444,7 +444,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __service_index_changed(self, index: int):
         self.current_service = self.service_list[index]
         if self.debug_mode:
-            LOGGER.info(f"Service index changed: {self.current_service[index]}")
+            LOGGER.info(f"Service changed")
 
     def __set_send_button(self, state: bool):
         self.__command_button.setEnabled(state)
