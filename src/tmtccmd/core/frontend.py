@@ -324,7 +324,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__connect_button.setStyleSheet(
             CONNECT_BTTN_STYLE
         )
-        self.__connect_button.pressed.connect(self.__connect_button_action)
+        self.__connect_button.clicked.connect(self.__connect_button_action)
 
         grid.addWidget(self.__connect_button, row, 0, 1, 2)
         row += 1

@@ -30,11 +30,10 @@ class TcpIpUdpComIF(CommunicationInterface):
     """
     Communication interface for UDP communication.
     """
-    def __init__(self, tm_timeout: float, tc_timeout_factor: float,
-                 send_address: EthernetAddressT, max_recv_size: int,
-                 recv_addr: Union[None, EthernetAddressT] = None,
-                 tmtc_printer: Union[None, TmTcPrinter] = None,
-                 init_mode: int = CoreModeList.LISTENER_MODE):
+    def __init__(
+            self, com_if_key: str, tm_timeout: float, tc_timeout_factor: float, send_address: EthernetAddressT,
+            max_recv_size: int, recv_addr: Union[None, EthernetAddressT] = None,
+            tmtc_printer: Union[None, TmTcPrinter] = None, init_mode: int = CoreModeList.LISTENER_MODE):
         """
         Initialize a communication interface to send and receive UDP datagrams.
         :param tm_timeout:
@@ -44,7 +43,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         :param recv_addr:
         :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
         """
-        super().__init__(tmtc_printer)
+        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
         self.tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
         self.udp_socket = None
