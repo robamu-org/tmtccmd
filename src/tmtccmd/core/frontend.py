@@ -416,10 +416,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info("Service changed")
 
     def __op_code_index_changed(self, index: int):
-        print(index)
-        print(self._op_code_list)
         self._current_op_code = self._op_code_list[index]
-        print(self._current_op_code)
         if self.__debug_mode:
             LOGGER.info("Op Code changed")
 
