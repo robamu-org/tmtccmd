@@ -54,7 +54,7 @@ class TmTcHandler(BackendBase):
     ):
         self.mode = init_mode
         self.com_if_key = com_if.get_id()
-        self.com_if_active = False
+        self.__com_if_active = False
         self.__service = init_service
         self.__op_code = init_opcode
 
@@ -83,7 +83,7 @@ class TmTcHandler(BackendBase):
             LOGGER.warning("Communication Interface is active and must be closed first before reassigning a new one")
 
     def is_com_if_active(self):
-        return self.com_if_active
+        return self.__com_if_active
 
     def set_one_shot_or_loop_handling(self, enable: bool):
         """
@@ -144,7 +144,7 @@ class TmTcHandler(BackendBase):
         try:
             self.__com_if.open()
             self.__tm_listener.start()
-            self.com_if_active = True
+            self.__com_if_active = True
         except IOError:
             LOGGER.error("Communication Interface could not be opened!")
             LOGGER.info("TM listener will not be started")
@@ -155,14 +155,21 @@ class TmTcHandler(BackendBase):
         if perform_op_immediately:
             self.perform_operation()
 
-    def close_listener(self, join : bool = False, join_timeout_seconds: float = 1.0, close_com_if: bool = True):
-        if self.com_if_active:
+    def close_listener(self, join : bool = False, join_timeout_seconds: float = 1.0):
+        """
+        Closes the TM listener and the communication interface. This is started in a separarate thread because
+        the communication interface might still be busy. The completion can be checked with
+        :meth:`tmtccmd.core.backend.is_com_if_active`. Alternatively, waiting on completion is possible by specifying
+        the join argument and a timeout in floating point second.
+        :param join:
+        :param join_timeout_seconds:
+        :return:
+        """
+        if self.__com_if_active:
             close_thread = Thread(target=self.__com_if_closing)
             close_thread.start()
             if join:
                 close_thread.join(timeout=join_timeout_seconds)
-                if close_com_if:
-                    self.__com_if.close()
 
     def perform_operation(self):
         """
@@ -182,10 +189,10 @@ class TmTcHandler(BackendBase):
         while True:
             if not self.__tm_listener.is_listener_active():
                 self.__com_if.close()
-                self.com_if_active = False
+                self.__com_if_active = False
                 break
             else:
-                time.sleep(0.4)
+                time.sleep(0.2)
 
     def __handle_action(self):
         """

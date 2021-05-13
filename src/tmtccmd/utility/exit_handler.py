@@ -7,7 +7,7 @@ LOGGER = get_logger()
 
 
 def keyboard_interrupt_handler(tmtc_backend: TmTcHandler, com_interface: CommunicationInterface):
-    tmtc_backend.close_listener(join=True, join_timeout_seconds=1.0, close_com_if=True)
+    tmtc_backend.close_listener(join=True, join_timeout_seconds=1.0)
     LOGGER.info("Closing TMTC client")
 
 
