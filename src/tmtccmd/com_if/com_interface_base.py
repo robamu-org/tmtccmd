@@ -9,6 +9,7 @@ Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 :author:     R. Mueller
 """
 from abc import abstractmethod
+from typing import Callable
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus_tm.factory import PusTmListT
@@ -48,7 +49,7 @@ class CommunicationInterface:
     @abstractmethod
     def close(self, args: any = None) -> None:
         """
-        Closes the ComIF and releases any held resources (for example a Communication Port)
+        Closes the ComIF and releases any held resources (for example a Communication Port).
         :return:
         """
 

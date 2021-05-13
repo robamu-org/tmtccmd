@@ -71,6 +71,7 @@ class CoreComInterfaces(enum.Enum):
     DUMMY = "dummy"
     SERIAL_DLE = "ser_dle"
     TCPIP_UDP = "udp"
+    TCPIP_TCP = "tcp"
     SERIAL_FIXED_FRAME = "ser_fixed"
     SERIAL_QEMU = "ser_qemu"
     UNSPECIFIED = "unspec"
@@ -80,6 +81,7 @@ CoreComInterfacesDict = {
     CoreComInterfaces.DUMMY.value: ("Dummy Interface"),
     CoreComInterfaces.SERIAL_DLE.value: ("Serial Interace with DLE encoding"),
     CoreComInterfaces.TCPIP_UDP.value: ("TCP/IP with UDP datagrams"),
+    CoreComInterfaces.TCPIP_TCP.value: ("TCP/IP with TCP"),
     CoreComInterfaces.SERIAL_FIXED_FRAME.value: ("Serial Interface with fixed size frames"),
     CoreComInterfaces.SERIAL_QEMU.value: ("Serial Interface using QEMU"),
     CoreComInterfaces.UNSPECIFIED.value: ("Unspecified")
