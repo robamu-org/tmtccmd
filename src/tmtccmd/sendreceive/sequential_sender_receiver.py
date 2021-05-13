@@ -11,7 +11,7 @@ from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.pus_tc.definitions import TcQueueT
 
 LOGGER = get_logger()
@@ -21,16 +21,16 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
     """
     Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence
     """
-    def __init__(self, com_interface: CommunicationInterface, tmtc_printer: TmTcPrinter,
+    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
                  tm_listener: TmListener, tc_queue: TcQueueT):
         """
-        :param com_interface: CommunicationInterface object, passed on to CommandSenderReceiver
+        :param com_if: CommunicationInterface object, passed on to CommandSenderReceiver
         :param tm_listener: TmListener object which runs in the background and receives
                             all Telemetry
         :param tmtc_printer: TmTcPrinter object, passed on to CommandSenderReceiver
         for this time period
         """
-        super().__init__(com_interface=com_interface, tmtc_printer=tmtc_printer,
+        super().__init__(com_if=com_if, tmtc_printer=tmtc_printer,
                          tm_listener=tm_listener)
         self._tc_queue = tc_queue
         self.__all_replies_received = False
@@ -107,7 +107,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
             pus_packet, pus_packet_info = tc_queue_tuple
-            self._com_interface.send_telecommand(pus_packet, pus_packet_info)
+            self._com_if.send_telecommand(pus_packet, pus_packet_info)
             return True
         # queue empty.
         elif not self._tc_queue:

@@ -1,13 +1,14 @@
 import signal
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
 
-def keyboard_interrupt_handler(com_interface: CommunicationInterface):
+def keyboard_interrupt_handler(tmtc_backend: TmTcHandler, com_interface: CommunicationInterface):
+    tmtc_backend.close_listener(join=True, join_timeout_seconds=1.0)
     LOGGER.info("Closing TMTC client")
-    pass
 
 
 class GracefulKiller:

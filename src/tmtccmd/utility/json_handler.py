@@ -1,13 +1,13 @@
 import json
 import os
 import enum
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
 
 class JsonKeyNames(enum.Enum):
-    COM_IF = "COM_IF_STRING"
+    COM_IF = "COM_IF_KEY"
     TCPIP_UDP_DEST_IP_ADDRESS = "TCPIP_UDP_DEST_IP_ADDRESS"
     TCPIP_UDP_DEST_PORT = "TCPIP_UDP_DEST_PORT"
     TCPIP_UDP_RECV_IP_ADDRESS = "TCPIP_UDP_RECV_IP_ADDRESS"
@@ -38,7 +38,8 @@ def check_json_file(json_cfg_path: str) -> bool:
                 json.load(file)
             except json.decoder.JSONDecodeError:
                 LOGGER.warning("JSON decode error, file format might be invalid. Replacing JSON")
-                void_data = dict()
-                json.dump(void_data, file)
+                with open(json_cfg_path, "w") as file:
+                    void_data = dict()
+                    json.dump(void_data, file)
                 return False
     return True

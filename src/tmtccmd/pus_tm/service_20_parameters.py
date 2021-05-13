@@ -2,7 +2,7 @@ import os
 import struct
 
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 logger = get_logger()
 

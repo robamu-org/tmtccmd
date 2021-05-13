@@ -3,7 +3,7 @@ from typing import Union
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.config.globals import get_global_apid
 
 logger = get_logger()
@@ -57,6 +57,7 @@ def pack_float_vector_parameter_command(
 
 
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
+    # noinspection PyPep8
     """
     Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the number of columns
     and rows in the parameter.

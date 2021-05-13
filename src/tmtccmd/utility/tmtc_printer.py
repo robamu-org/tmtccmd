@@ -13,7 +13,7 @@ from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
 from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.pus_tm.factory import PusTmQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
@@ -148,7 +148,7 @@ class TmTcPrinter:
         :return:
         """
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
             self.__print_buffer = f"HK Data from Object ID {tm_packet.object_id:#010x} and " \
@@ -162,7 +162,7 @@ class TmTcPrinter:
         :return:
         """
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
             self.__print_buffer = f"HK Definition from Object ID {tm_packet.object_id:#010x} " \
@@ -282,19 +282,19 @@ class TmTcPrinter:
         """ Add a specific string to the current print buffer """
         self.__print_buffer += string_to_add
 
-    def add_print_buffer_to_file_buffer(self, add_cr_to_file_buffer: bool = False,
-                                        cr_before: bool = True):
+    def add_print_buffer_to_file_buffer(self, additional_newline: bool = False,
+                                        newline_before: bool = True):
         """
         Add to file buffer. Some options to optimize the output.
         """
         if self.do_print_to_file:
-            if add_cr_to_file_buffer:
-                if cr_before:
-                    self.__file_buffer += "\r\n" + self.__print_buffer + "\r\n"
+            if additional_newline:
+                if newline_before:
+                    self.__file_buffer += f"\n{self.__print_buffer}\n"
                 else:
-                    self.__file_buffer += self.__print_buffer + "\r\n\r\n"
+                    self.__file_buffer += f"{self.__print_buffer}\n\n"
             else:
-                self.__file_buffer += self.__print_buffer + "\r\n"
+                self.__file_buffer += f"{self.__print_buffer}\n"
 
     def add_print_buffer_to_buffer_list(self):
         """ Add the current print buffer to the buffer list """

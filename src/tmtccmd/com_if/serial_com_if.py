@@ -17,7 +17,7 @@ from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tm.factory import PusTelemetryFactory, PusTmListT
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 
@@ -54,9 +54,10 @@ class SerialComIF(CommunicationInterface):
     """
     Communication Interface to use serial communication. This requires the PySerial library.
     """
-    def __init__(self, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int,
-                 serial_timeout: float,
-                 ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED):
+    def __init__(
+            self, com_if_key: str, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int, serial_timeout: float,
+            ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED
+    ):
         """
         Initiaze a serial communication handler.
         :param tmtc_printer: TMTC printer object. Can be used for diagnostic purposes, but main
@@ -66,7 +67,7 @@ class SerialComIF(CommunicationInterface):
         :param serial_timeout: Specify serial timeout
         :param ser_com_type: Specify how to handle serial reception
         """
-        super().__init__(tmtc_printer)
+        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
 
         self.com_port = com_port
         self.baud_rate = baud_rate
@@ -111,7 +112,7 @@ class SerialComIF(CommunicationInterface):
             self.serial = serial.Serial(
                 port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout)
         except serial.SerialException:
-            LOGGER.error("SERIAL Port opening failure!")
+            LOGGER.error("Serial Port opening failure!")
             raise IOError
         """
         Needs to be called by application code once for DLE mode!

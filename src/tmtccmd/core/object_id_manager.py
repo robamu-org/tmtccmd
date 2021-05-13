@@ -1,7 +1,7 @@
 import struct
 from typing import Dict
 
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 

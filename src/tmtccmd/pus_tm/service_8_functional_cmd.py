@@ -4,7 +4,7 @@
 import struct
 
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
 
@@ -27,7 +27,7 @@ class Service8TM(PusTelemetry):
             self.specify_packet_info("Functional Commanding Reply")
         if call_srv8_hook:
             try:
-                from tmtccmd.core.hook_helper import get_global_hook_obj
+                from tmtccmd.config.hook import get_global_hook_obj
                 hook_obj = get_global_hook_obj()
                 self.custom_data_header, self.custom_data_content = \
                     hook_obj.handle_service_8_telemetry(

@@ -7,7 +7,7 @@ import time
 from typing import Union, Deque
 from collections import deque
 
-from tmtccmd.core.definitions import CoreGlobalIds
+from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -25,13 +25,13 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
     Wait intervals can be specified with wait time between the send bursts.
     This is generally done in the separate test classes in UnitTest
     """
-    def __init__(self, com_interface: CommunicationInterface, tmtc_printer: TmTcPrinter,
+    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
                  tc_queue: Deque, tm_listener: TmListener, wait_intervals: list,
                  wait_time: Union[float, list], print_tm: bool):
         """
         TCs are sent in burst when applicable. Wait intervals can be specified by supplying
         respective arguments
-        :param com_interface:
+        :param com_if:
         :param tmtc_printer:
         :param tc_queue:
         :param wait_intervals: List of pause intervals. For example [1,3] means that a wait_time
@@ -40,7 +40,7 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
         :param wait_time: List of wait times or uniform wait time as float
         :param print_tm:
         """
-        super().__init__(com_interface=com_interface, tmtc_printer=tmtc_printer,
+        super().__init__(com_if=com_if, tmtc_printer=tmtc_printer,
                          tm_listener=tm_listener, tc_queue=tc_queue)
         self.waitIntervals = wait_intervals
         self.waitTime = wait_time
@@ -87,7 +87,7 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
         if self.check_queue_entry(tc_queue_tuple):
             pus_packet, pus_packet_obj = tc_queue_tuple
             self.tc_info_queue.append(pus_packet_obj)
-            self._com_interface.send_telecommand(pus_packet, pus_packet_obj)
+            self._com_if.send_telecommand(pus_packet, pus_packet_obj)
             self.__handle_waiting()
 
     def __handle_waiting(self):

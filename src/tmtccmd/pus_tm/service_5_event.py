@@ -10,7 +10,7 @@ from tmtccmd.pus.service_list import PusServices
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.ecss.tm_creator import PusTelemetryCreator
 from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 
 LOGGER = get_logger()
@@ -42,7 +42,7 @@ class Service5TM(PusTelemetry):
         self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
         self.custom_service_5_print = ""
         if call_srv5_hook:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             self.custom_service_5_print = hook_obj.handle_service_5_event(
                 object_id=self._tm_data[2:6], event_id=self.event_id, param_1=self.param_1, param_2=self.param_2
@@ -64,7 +64,7 @@ class Service5TM(PusTelemetry):
 
     def handle_service_5_event(self, object_id: bytearray, event_id: int, param_1: int, param_2: int) -> str:
         try:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             custom_string = hook_obj.handle_service_5_event(
                     object_id=self.object_id, event_id=event_id, param_1=param_1, param_2=param_2

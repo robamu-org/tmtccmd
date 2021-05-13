@@ -8,7 +8,7 @@
 
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_3_base import Service3Base
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from typing import Type
 import struct
 
@@ -119,7 +119,7 @@ class Service3TM(Service3Base):
 
     def handle_filling_hk_arrays(self):
         try:
-            from tmtccmd.core.hook_helper import get_global_hook_obj
+            from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
             if self.custom_hk_handling:
                 (self.hk_header, self.hk_content, self.validity_buffer, self.number_of_parameters) \

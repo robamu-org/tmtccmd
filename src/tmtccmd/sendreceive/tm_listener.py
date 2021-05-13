@@ -10,7 +10,7 @@ import threading
 from collections import deque
 from enum import Enum
 
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.pus_tm.factory import PusTmQueueT
 
@@ -32,19 +32,21 @@ class TmListener:
         LISTENER = 2,
         SEQUENCE = 3,
 
-    def __init__(self, com_interface: CommunicationInterface, tm_timeout: float,
+    def __init__(self, com_if: CommunicationInterface, tm_timeout: float,
                  tc_timeout_factor: float):
         """
         Initiate a TM listener
-        @param com_interface:   Type of communication interface, e.g. a serial or ethernet interface
+        @param com_if:   Type of communication interface, e.g. a serial or ethernet interface
         @param tm_timeout:      Timeout for the TM reception
         @param tc_timeout_factor:
         """
         self.__tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
-        self.com_interface = com_interface
+        self.__com_if = com_if
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
+        self.listener_active = False
+
         # I don't think a listener is useful without the main program,
         # so we might just declare it daemonic.
         self.listener_thread = threading.Thread(target=self.__perform_operation, daemon=True)
@@ -60,19 +62,25 @@ class TmListener:
         # maybe we will just make the thread daemonic...
         # self.terminationEvent = threading.Event()
 
-        # Will be filled for the Unit Test
         self.__listener_mode = self.ListenerModes.LISTENER
         self.__tm_packet_queue = deque()
 
     def start(self):
         if not self.event_listener_active.is_set():
-            self.listener_thread.start()
             self.event_listener_active.set()
+            if not self.listener_thread.is_alive():
+                self.listener_thread.start()
         else:
             LOGGER.warning("TM listener is already active!")
 
     def stop(self):
         self.event_listener_active.clear()
+
+    def set_com_if(self, com_if: CommunicationInterface):
+        self.__com_if = com_if
+
+    def is_listener_active(self) -> bool:
+        return self.listener_active
 
     def set_timeouts(self, tm_timeout):
         self.__tm_timeout = tm_timeout
@@ -130,7 +138,7 @@ class TmListener:
         This function prints the telemetry sequence but does not return it.
         :return:
         """
-        data_available = self.com_interface.data_available(self.__tm_timeout)
+        data_available = self.__com_if.data_available(self.__tm_timeout)
         if data_available == 0:
             return False
         elif data_available > 0:
@@ -142,11 +150,14 @@ class TmListener:
 
     def __perform_operation(self):
         while True:
+            # This is running in a daemon thread so it will stop automatically if all other threads have closed
             if self.event_listener_active.is_set():
+                self.listener_active = True
                 self.__default_operation()
             else:
-                # Check every 200 ms whether connection is up again.
-                time.sleep(0.2)
+                self.listener_active = False
+                # Check every 300 ms whether connection is up again.
+                time.sleep(0.3)
 
     def __default_operation(self):
         """
@@ -171,7 +182,7 @@ class TmListener:
         """
         The core operation listens for packets.
         """
-        packet_list = self.com_interface.receive_telemetry()
+        packet_list = self.__com_if.receive_telemetry()
         if len(packet_list) > 0:
             self.__event_reply_received.set()
             # deque is thread-safe for append and pops from opposite sides but I am not sure copy
@@ -211,9 +222,9 @@ class TmListener:
         elapsed_time = 0
         # LOGGER.info(f"TmListener: Listening for {self.__tm_timeout} seconds")
         while elapsed_time < self.__tm_timeout:
-            packets_available = self.com_interface.data_available(0.2)
+            packets_available = self.__com_if.data_available(0.2)
             if packets_available > 0:
-                tm_list = self.com_interface.receive_telemetry()
+                tm_list = self.__com_if.receive_telemetry()
                 # deque should be thread-safe to appends and pops from opposite sides, but
                 # I am not sure about the copy operation.
                 if self.lock_listener.acquire(True, timeout=1):
@@ -227,7 +238,7 @@ class TmListener:
         # the timeout value can be set by special TC queue entries if wiretapping_packet handling
         # takes longer, but it is reset here to the global value
         from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.core.definitions import CoreGlobalIds
+        from tmtccmd.config.definitions import CoreGlobalIds
         if self.__tm_timeout is not get_global(CoreGlobalIds.TM_TIMEOUT):
             self.__tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         return True

@@ -27,10 +27,9 @@ class GlobalsManager:
         global_param = self.globals_dict.get(global_param_key)
         if global_param is None:
             try:
-                from tmtccmd.utility.tmtcc_logger import get_logger
+                from tmtccmd.utility.logger import get_logger
                 logger = get_logger()
-                logger.error(f"The key {global_param_key} for this  global does not exist in the dictionary!")
-
+                logger.warning(f"The key {global_param_key} for this global does not exist in the dictionary!")
             except ImportError:
                 print("Could not import LOGGER!")
             return None

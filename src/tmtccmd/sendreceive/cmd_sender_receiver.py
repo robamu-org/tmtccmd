@@ -14,9 +14,9 @@ if the first reply has not been received.
 import time
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.core.definitions import QueueCommands, CoreGlobalIds
+from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.tmtcc_logger import get_logger
+from tmtccmd.utility.logger import get_logger
 
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.pus_tc.definitions import TcQueueEntryT
@@ -32,19 +32,19 @@ class CommandSenderReceiver:
     This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
-    def __init__(self, com_interface: CommunicationInterface, tmtc_printer: TmTcPrinter,
+    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
                  tm_listener: TmListener):
 
         """
-        :param com_interface: CommunicationInterface object. Instantiate the desired one
+        :param com_if: CommunicationInterface object. Instantiate the desired one
         and pass it here
         :param tmtc_printer: TmTcPrinter object. Instantiate it and pass it here.
         """
         self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
 
-        if isinstance(com_interface, CommunicationInterface):
-            self._com_interface = com_interface
+        if isinstance(com_if, CommunicationInterface):
+            self._com_if = com_if
         else:
             LOGGER.error("CommandSenderReceiver: Invalid communication interface!")
             raise TypeError("CommandSenderReceiver: Invalid communication interface!")
@@ -202,7 +202,7 @@ class CommandSenderReceiver:
             from tmtccmd.core.globals_manager import get_global
             if get_global(CoreGlobalIds.RESEND_TC):
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
-                self._com_interface.send_telecommand(self._last_tc, self._last_tc_obj)
+                self._com_if.send_telecommand(self._last_tc, self._last_tc_obj)
                 self._timeout_counter = self._timeout_counter + 1
                 self._start_time = time.time()
             else:

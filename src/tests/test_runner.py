@@ -10,7 +10,7 @@ class TestTmtcRunner(TestCase):
         backend_mock = create_backend_mock()
         initialize_tmtc_commander(hook_object=hook_base)
         run_tmtc_commander(False, False, True, tmtc_backend=backend_mock)
-        backend_mock.start.assert_called_with()
+        backend_mock.start_listener.assert_called_with()
         backend_mock.initialize.assert_called_with()
 
         frontend_mock = create_frontend_mock()
@@ -20,7 +20,7 @@ class TestTmtcRunner(TestCase):
         frontend_mock.start.assert_called_once()
         qt_app = frontend_mock.start.call_args[0][0]
         self.assertTrue(qt_app is None)
-        default_backend = get_default_tmtc_backend()
+        default_backend = get_default_tmtc_backend(hook_obj=hook_base, json_cfg_path="tmtc_config.json")
         self.assertTrue(default_backend is not None)
 
     def test_errors(self):
