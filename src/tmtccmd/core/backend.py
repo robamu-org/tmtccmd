@@ -72,8 +72,14 @@ class TmTcHandler(BackendBase):
     def get_com_if_id(self):
         return self.com_if_key
 
+    def get_com_if(self) -> CommunicationInterface:
+        return self.__com_if
+
     def get_printer(self) -> TmTcPrinter:
         return self.__tmtc_printer
+
+    def get_listener(self):
+        return self.__tm_listener
 
     def set_com_if(self, com_if: CommunicationInterface):
         if not self.is_com_if_active():
