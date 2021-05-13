@@ -9,7 +9,8 @@ from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_r
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-
+from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
+from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF
 
 LOGGER = get_logger()
 
@@ -18,8 +19,6 @@ def create_communication_interface_default(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Union[CommunicationInterface, None]:
     from tmtccmd.com_if.dummy_com_if import DummyComIF
-    from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
-    from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
     """
     Return the desired communication interface object
@@ -49,9 +48,11 @@ def create_communication_interface_default(
             )
         else:
             communication_interface = DummyComIF(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+        if communication_interface is None:
+            return communication_interface
         if not communication_interface.valid:
             LOGGER.warning("Invalid communication interface!")
-            sys.exit()
+            return None
         communication_interface.initialize()
         return communication_interface
     except (IOError, OSError) as e:
@@ -94,9 +95,9 @@ def create_default_tcpip_interface(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Union[CommunicationInterface, None]:
     if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
-        default_tcpip_udp_cfg_setup(json_cfg_path=json_cfg_path)
+        default_tcpip_cfg_setup(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
-        default_tcpip_tcp_cfg_setup(json_cfg_path=json_cfg_path)
+        default_tcpip_cfg_setup(tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path)
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
     recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
@@ -113,9 +114,10 @@ def create_default_tcpip_interface(
         communication_interface = TcpIpTcpComIF(
             com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
             tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
-            send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
-            tmtc_printer=tmtc_printer, init_mode=init_mode
+            tm_polling_freqency=0.5, send_address=send_addr, max_recv_size=max_recv_size, tmtc_printer=tmtc_printer,
+            init_mode=init_mode
         )
+    return communication_interface
 
 
 def create_default_serial_interface(

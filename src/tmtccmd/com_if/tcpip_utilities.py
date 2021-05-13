@@ -13,9 +13,9 @@ LOGGER = get_logger()
 
 
 class TcpIpType(enum.Enum):
-    TCP = auto()
-    UDP = auto()
-    UDP_RECV = auto()
+    TCP = enum.auto()
+    UDP = enum.auto()
+    UDP_RECV = enum.auto()
 
 
 class TcpIpConfigIds(enum.Enum):
@@ -26,15 +26,15 @@ class TcpIpConfigIds(enum.Enum):
 
 
 def determine_udp_send_address(json_cfg_path: str) -> EthernetAddressT:
-    determine_tcpip_address(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
+    return determine_tcpip_address(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
 
 
 def determine_tcp_send_address(json_cfg_path: str) -> EthernetAddressT:
-    determine_tcpip_address(tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path)
+    return determine_tcpip_address(tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path)
 
 
 def determine_udp_recv_address(json_cfg_path: str) -> EthernetAddressT:
-    determine_tcpip_address(tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=json_cfg_path)
+    return determine_tcpip_address(tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=json_cfg_path)
 
 
 def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthernetAddressT:
@@ -44,12 +44,12 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> Ethern
         reconfigure_ip_address = True
 
     if tcpip_type == TcpIpType.TCP:
-        json_key_address = JsonKeyNames.TCPIP_TCP_DEST_PORT.value
-        json_key_port = JsonKeyNames.TCPIP_TCP_DEST_IP_ADDRESS.value
+        json_key_address = JsonKeyNames.TCPIP_TCP_DEST_IP_ADDRESS.value
+        json_key_port = JsonKeyNames.TCPIP_TCP_DEST_PORT.value
         info_string = "TCP destination"
     elif tcpip_type == TcpIpType.UDP:
-        json_key_address = JsonKeyNames.TCPIP_UDP_DEST_PORT.value
-        json_key_port = JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value
+        json_key_address = JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value
+        json_key_port = JsonKeyNames.TCPIP_UDP_DEST_PORT.value
         info_string = "UDP destination"
     elif tcpip_type == TcpIpType.UDP_RECV:
         json_key_address = JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value
@@ -63,10 +63,10 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> Ethern
         else:
             ip_address = load_data[json_key_address]
             port = int(load_data[json_key_port])
-        address_tuple = ip_address, port
+            address_tuple = ip_address, port
 
     if reconfigure_ip_address:
-        address_tuple = prompt_ip_address(type_str="UDP destination")
+        address_tuple = prompt_ip_address(type_str=info_string)
         save_to_json = input(f"Do you want to store the {info_string} configuration? [y/n]: ")
         if save_to_json.lower() in ['y', "yes"]:
             with open(json_cfg_path, "r+") as file:
