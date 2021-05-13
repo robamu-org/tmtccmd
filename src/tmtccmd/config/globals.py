@@ -240,6 +240,7 @@ def check_and_set_core_service_arg(
         service_value = CoreServiceList.SERVICE_17
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
 
+
 def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
     global SERVICE_OP_CODE_DICT
     if SERVICE_OP_CODE_DICT == dict():

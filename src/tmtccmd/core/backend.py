@@ -161,7 +161,7 @@ class TmTcHandler(BackendBase):
         if perform_op_immediately:
             self.perform_operation()
 
-    def close_listener(self, join : bool = False, join_timeout_seconds: float = 1.0):
+    def close_listener(self, join: bool = False, join_timeout_seconds: float = 1.0):
         """
         Closes the TM listener and the communication interface. This is started in a separarate thread because
         the communication interface might still be busy. The completion can be checked with

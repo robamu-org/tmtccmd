@@ -47,6 +47,7 @@ class CoreGlobalIds(enum.IntEnum):
 class OpCodeDictKeys(enum.IntEnum):
     TIMEOUT = CoreGlobalIds.TM_TIMEOUT
 
+
 # Service Op Code Dictionary Types
 ServiceNameT = str
 ServiceInfoT = str
