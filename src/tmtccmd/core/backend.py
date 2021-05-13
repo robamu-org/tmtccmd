@@ -155,10 +155,14 @@ class TmTcHandler(BackendBase):
         if perform_op_immediately:
             self.perform_operation()
 
-    def close_listener(self):
+    def close_listener(self, join : bool = False, join_timeout_seconds: float = 1.0, close_com_if: bool = True):
         if self.com_if_active:
             close_thread = Thread(target=self.__com_if_closing)
             close_thread.start()
+            if join:
+                close_thread.join(timeout=join_timeout_seconds)
+                if close_com_if:
+                    self.__com_if.close()
 
     def perform_operation(self):
         """
