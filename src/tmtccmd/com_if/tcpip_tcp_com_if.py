@@ -56,8 +56,10 @@ class TcpIpTcpComIF(CommunicationInterface):
 
         self.__last_connection_time = 0
         self.__tm_thread_kill_signal = threading.Event()
+        # Separate thread to request TM packets periodically if no TCs are being sent
         self.__tcp_conn_thread = threading.Thread(target=self.__tcp_tm_client, daemon=True)
         self.__tm_queue = deque()
+        # Only allow one connection to OBSW at a time for now by using this lock
         self.__socket_lock = threading.Lock()
 
     def __del__(self):
