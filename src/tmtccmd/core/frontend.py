@@ -108,24 +108,27 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(self, hook_obj: TmTcHookBase, tmtc_backend: TmTcHandler, app_name: str):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
-        self.tmtc_handler = tmtc_backend
-        self.app_name = app_name
-        self.hook_obj = hook_obj
+        self._tmtc_handler = tmtc_backend
+        self._app_name = app_name
+        self._hook_obj = hook_obj
 
-        self.tmtc_handler.initialize()
-        self.service_list = []
-        self.op_code_list = []
-        self.com_if_list = []
-        self.last_com_if = CoreComInterfaces.UNSPECIFIED.value
-        self.current_com_if = CoreComInterfaces.UNSPECIFIED.value
-        self.current_service = ""
-        self.current_op_code = ""
-        self.current_com_if_id = -1
-        self.connected = False
+        self._tmtc_handler.initialize()
+        self.service_op_code_dict = dict()
+        self._service_list = []
+        self._op_code_list = []
+        self._com_if_list = []
+        self._last_com_if = CoreComInterfaces.UNSPECIFIED.value
+        self._current_com_if = CoreComInterfaces.UNSPECIFIED.value
+        self._current_service = ""
+        self._current_op_code = ""
+        self._current_com_if_key = "unspec"
+        self.__connected = False
 
-        self.worker = None
-        self.thread = None
-        self.debug_mode = False
+        self.__worker = None
+        self.__thread = None
+        self.__debug_mode = False
+
+        self.__combo_box_op_codes: QComboBox = None
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
 
@@ -150,7 +153,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid = QGridLayout()
         win.setLayout(grid)
         row = 0
-        self.setWindowTitle(self.app_name)
+        self.setWindowTitle(self._app_name)
         self.setWindowIcon(QIcon(self.logo_path))
 
         add_pixmap = False
@@ -179,13 +182,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.show()
 
     def __start_seq_cmd_op(self):
-        if self.debug_mode:
+        if self.__debug_mode:
             LOGGER.info("Start Service Test Button pressed.")
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
-        self.tmtc_handler.set_service(self.current_service)
-        self.tmtc_handler.set_opcode(self.current_op_code)
+        self._tmtc_handler.set_service(self._current_service)
+        self._tmtc_handler.set_opcode(self._current_op_code)
         self.__start_qthread_task(
             op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING, finish_callback=self.__finish_seq_cmd_op
         )
@@ -194,22 +197,22 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__set_send_button(True)
 
     def __connect_button_action(self):
-        if not self.connected:
+        if not self.__connected:
             LOGGER.info("Starting TM listener..")
             # Build and assign new communication interface
-            if self.current_com_if != self.last_com_if:
+            if self._current_com_if != self._last_com_if:
                 hook_obj = get_global_hook_obj()
                 new_com_if = hook_obj.assign_communication_interface(
-                    com_if_key=self.current_com_if, tmtc_printer=self.tmtc_handler.get_printer()
+                    com_if_key=self._current_com_if, tmtc_printer=self._tmtc_handler.get_printer()
                 )
-                self.tmtc_handler.set_com_if(new_com_if)
-            self.tmtc_handler.start_listener(False)
+                self._tmtc_handler.set_com_if(new_com_if)
+            self._tmtc_handler.start_listener(False)
             self.__connect_button.setStyleSheet(
                 DISCONNECT_BTTN_STYLE
             )
             self.__command_button.setEnabled(True)
             self.__connect_button.setText("Disconnect")
-            self.connected = True
+            self.__connected = True
         else:
             LOGGER.info("Closing TM listener..")
             self.__command_button.setEnabled(False)
@@ -226,7 +229,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         )
         self.__connect_button.setText("Connect")
         LOGGER.info("Disconnect successfull")
-        self.connected = False
+        self.__connected = False
 
     def __create_menu_bar(self):
         menu_bar = self.menuBar()
@@ -306,8 +309,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         # add all possible ComIFs to the comboBox
         for com_if_key, com_if_value in all_com_ifs.items():
             com_if_combo_box.addItem(com_if_value)
-            self.com_if_list.append((com_if_key, com_if_value))
-            if self.tmtc_handler.get_com_if_id() == com_if_key:
+            self._com_if_list.append((com_if_key, com_if_value))
+            if self._tmtc_handler.get_com_if_id() == com_if_key:
                 com_if_combo_box.setCurrentIndex(index)
             index += 1
         com_if_combo_box.currentIndexChanged.connect(self.__com_if_index_changed)
@@ -337,36 +340,31 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         combo_box_services = QComboBox()
         default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-        service_op_code_dict = self.hook_obj.get_service_op_code_dictionary()
-        if service_op_code_dict is None:
+        self.service_op_code_dict = self._hook_obj.get_service_op_code_dictionary()
+        if self.service_op_code_dict is None:
             LOGGER.warning("Invalid service to operation code dictionary")
             LOGGER.warning("Setting default dictionary")
             from tmtccmd.config.globals import get_default_service_op_code_dict
-            service_op_code_dict = get_default_service_op_code_dict()
+            self.service_op_code_dict = get_default_service_op_code_dict()
         index = 0
         default_index = 0
-        for service_key, service_value in service_op_code_dict.items():
+        for service_key, service_value in self.service_op_code_dict.items():
             combo_box_services.addItem(service_value[0])
             if service_key == default_service:
                 default_index = index
-            self.service_list.append(service_key)
+            self._service_list.append(service_key)
             index += 1
         combo_box_services.setCurrentIndex(default_index)
-        self.current_service = self.service_list[default_index]
+        self._current_service = self._service_list[default_index]
 
         combo_box_services.currentIndexChanged.connect(self.__service_index_changed)
         grid.addWidget(combo_box_services, row, 0, 1, 1)
 
-        combo_box_op_codes = QComboBox()
-        current_service = self.service_list[default_index]
-        op_code_dict = service_op_code_dict[current_service][1]
-        if op_code_dict is not None:
-            for op_code_key, op_code_value in op_code_dict.items():
-                self.op_code_list.append(op_code_key)
-                combo_box_op_codes.addItem(op_code_value[0])
-            self.current_op_code = self.op_code_list[0]
+        self.__combo_box_op_codes = QComboBox()
+        self._current_service = self._service_list[default_index]
+        self.__update_op_code_combo_box()
         # TODO: Combo box also needs to be updated if another service is selected
-        grid.addWidget(combo_box_op_codes, row, 1, 1, 1)
+        grid.addWidget(self.__combo_box_op_codes, row, 1, 1, 1)
         row += 1
         return row
 
@@ -389,19 +387,19 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         return row
 
     def __start_qthread_task(self, op_code: WorkerOperationsCodes, finish_callback):
-        self.thread = QThread()
-        self.worker = WorkerThread(
-            op_code=op_code, tmtc_handler=self.tmtc_handler
+        self.__thread = QThread()
+        self.__worker = WorkerThread(
+            op_code=op_code, tmtc_handler=self._tmtc_handler
         )
-        self.worker.moveToThread(self.thread)
+        self.__worker.moveToThread(self.__thread)
 
-        self.thread.started.connect(self.worker.run_worker)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
+        self.__thread.started.connect(self.__worker.run_worker)
+        self.__worker.finished.connect(self.__thread.quit)
+        self.__worker.finished.connect(self.__worker.deleteLater)
+        self.__thread.finished.connect(self.__thread.deleteLater)
 
-        self.thread.finished.connect(finish_callback)
-        self.thread.start()
+        self.__thread.finished.connect(finish_callback)
+        self.__thread.start()
 
     def __add_vertical_separator(self, grid: QGridLayout, row: int):
         separator = QFrame()
@@ -410,25 +408,35 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
+    def __service_index_changed(self, index: int):
+        self._current_service = self._service_list[index]
+        self.__update_op_code_combo_box()
+        if self.__debug_mode:
+            LOGGER.info(f"Service changed")
+
+    def __update_op_code_combo_box(self):
+        self.__combo_box_op_codes.clear()
+        op_code_dict = self.service_op_code_dict[self._current_service][1]
+        if op_code_dict is not None:
+            for op_code_key, op_code_value in op_code_dict.items():
+                self._op_code_list.append(op_code_key)
+                self.__combo_box_op_codes.addItem(op_code_value[0])
+            self._current_op_code = self._op_code_list[0]
+
     def __checkbox_log_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_TO_FILE, state)
-        if self.debug_mode:
+        if self.__debug_mode:
             LOGGER.info(["Enabled", "Disabled"][state == 0] + " print to log.")
 
     def __checkbox_console_update(self, state: bool):
         update_global(CoreGlobalIds.PRINT_TM, state)
-        if self.debug_mode:
+        if self.__debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " console print")
 
     def __checkbox_print_raw_data_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_RAW_TM, state)
-        if self.debug_mode:
+        if self.__debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
-
-    def __service_index_changed(self, index: int):
-        self.current_service = self.service_list[index]
-        if self.debug_mode:
-            LOGGER.info(f"Service changed")
 
     def __set_send_button(self, state: bool):
         self.__command_button.setEnabled(state)
@@ -437,9 +445,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         return self.__command_button.isEnabled()
 
     def __com_if_index_changed(self, index: int):
-        self.current_com_if = self.com_if_list[index][0]
-        if self.debug_mode:
-            LOGGER.info(f"Communication IF updated: {self.com_if_list[index][1]}")
+        self._current_com_if = self._com_if_list[index][0]
+        if self.__debug_mode:
+            LOGGER.info(f"Communication IF updated: {self._com_if_list[index][1]}")
 
 
 class SingleCommandTable(QTableWidget):
