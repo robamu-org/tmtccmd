@@ -140,11 +140,6 @@ def set_default_globals_post_args_parsing(
     except AttributeError:
         LOGGER.exception("Passed arguments are missing components.")
 
-    # Same as above, but for server address and server port
-    if com_if_key == CoreComInterfaces.TCPIP_UDP:
-        # TODO: Port and IP address can also be passed as CLI parameters.
-        #      Use them here if applicable?
-        default_tcpip_udp_cfg_setup(json_cfg_path=json_cfg_path)
     if DEBUG_MODE:
         print_core_globals()
 
