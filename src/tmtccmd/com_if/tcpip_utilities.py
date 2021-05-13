@@ -181,7 +181,7 @@ def determine_recv_buffer_len(json_cfg_path: str, tcpip_type: TcpIpType):
         else:
             recv_max_size = load_data[json_key]
     if reconfigure_recv_buf_size:
-        recv_max_size = prompt_recv_buffer_len(udp=udp)
+        recv_max_size = prompt_recv_buffer_len(tcpip_type=tcpip_type)
         store_size = input("Do you store the maximum receive size configuration? [y/n]: ")
         if store_size.lower() in ["y", "yes", "1"]:
             with open(json_cfg_path, "r+") as file:
