@@ -244,27 +244,17 @@ def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
     global SERVICE_OP_CODE_DICT
     if SERVICE_OP_CODE_DICT == dict():
         service_op_code_dict = dict()
-        service_2_tuple = ("PUS Service 2 Raw CMD", None)
-        service_3_tuple = ("PUS Service 3 Housekeeping", None)
+
         op_code_dict_srv_5 = {
             "0": ("Event Test", {OpCodeDictKeys.TIMEOUT: 2.0}),
         }
         service_5_tuple = ("PUS Service 5 Event", op_code_dict_srv_5)
-        service_8_tuple = ("PUS Service 8 Functional CMD", None)
-        service_9_tuple = ("PUS Service 9 Time", None)
-        service_11_tuple = ("PUS Service 11 TC Scheduling", None)
         op_code_dict_srv_17 = {
             "0": ("Ping Test", {OpCodeDictKeys.TIMEOUT: 2.2}),
         }
         service_17_tuple = ("PUS Service 17 Test", op_code_dict_srv_17)
-        service_20_tuple = ("PUS Service 20 Parameters", None)
-        service_23_tuple = ("PUS Service 23 File MGMT", None)
 
-        service_op_code_dict[CoreServiceList.SERVICE_2.value] = service_2_tuple
-        service_op_code_dict[CoreServiceList.SERVICE_3.value] = service_3_tuple
         service_op_code_dict[CoreServiceList.SERVICE_5.value] = service_5_tuple
         service_op_code_dict[CoreServiceList.SERVICE_17.value] = service_17_tuple
-        service_op_code_dict[CoreServiceList.SERVICE_20.value] = service_20_tuple
-        service_op_code_dict[CoreServiceList.SERVICE_23.value] = service_23_tuple
         SERVICE_OP_CODE_DICT = service_op_code_dict
     return service_op_code_dict

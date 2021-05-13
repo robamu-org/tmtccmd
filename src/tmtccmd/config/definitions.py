@@ -4,13 +4,56 @@
 import enum
 from typing import Tuple, Dict, Union
 
+
+class CoreGlobalIds(enum.IntEnum):
+    """
+    Numbers from 128 to 200 are reserved for core globals
+    """
+    # Object handles
+    TMTC_HOOK = 128
+    COM_INTERFACE_HANDLE = 129
+    TM_LISTENER_HANDLE = 130
+    TMTC_PRINTER_HANDLE = 131
+    PRETTY_PRINTER = 132
+
+    # Parameters
+    JSON_CFG_PATH = 139
+    APID = 140
+    MODE = 141
+    CURRENT_SERVICE = 142
+    COM_IF = 144
+    OP_CODE = 145
+    TM_TIMEOUT = 146
+    SERVICE_OP_CODE_DICT = 147
+    COM_IF_DICT = 148
+
+    # Miscellaneous
+    DISPLAY_MODE = 150
+    USE_LISTENER_AFTER_OP = 151
+    PRINT_HK = 152
+    PRINT_TM = 153
+    PRINT_RAW_TM = 154
+    PRINT_TO_FILE = 155
+    RESEND_TC = 156
+    TC_SEND_TIMEOUT_FACTOR = 157
+
+    # Config dictionaries
+    USE_SERIAL = 160
+    SERIAL_CONFIG = 161
+    USE_ETHERNET = 162
+    ETHERNET_CONFIG = 163
+
+
+class OpCodeDictKeys(enum.IntEnum):
+    TIMEOUT = CoreGlobalIds.TM_TIMEOUT
+
 # Service Op Code Dictionary Types
 ServiceNameT = str
 ServiceInfoT = str
 OpCodeNameT = str
 OpCodeInfoT = str
 # Operation code options are optional. If none are supplied, default values are assumed
-OpCodeOptionsT = Union[None, Dict[str, any]]
+OpCodeOptionsT = Union[None, Dict[OpCodeDictKeys, any]]
 OpCodeEntryT = Dict[OpCodeNameT, Tuple[OpCodeInfoT, OpCodeOptionsT]]
 # It is possible to specify a service without any op codes
 ServiceDictValueT = Union[None, Tuple[ServiceInfoT, OpCodeEntryT]]
@@ -77,49 +120,6 @@ class CoreServiceList(enum.Enum):
     SERVICE_20 = "20"
     SERVICE_23 = "23"
     SERVICE_200 = "200"
-
-
-class CoreGlobalIds(enum.IntEnum):
-    """
-    Numbers from 128 to 200 are reserved for core globals
-    """
-    # Object handles
-    TMTC_HOOK = 128
-    COM_INTERFACE_HANDLE = 129
-    TM_LISTENER_HANDLE = 130
-    TMTC_PRINTER_HANDLE = 131
-    PRETTY_PRINTER = 132
-
-    # Parameters
-    JSON_CFG_PATH = 139
-    APID = 140
-    MODE = 141
-    CURRENT_SERVICE = 142
-    COM_IF = 144
-    OP_CODE = 145
-    TM_TIMEOUT = 146
-    SERVICE_OP_CODE_DICT = 147
-    COM_IF_DICT = 148
-
-    # Miscellaneous
-    DISPLAY_MODE = 150
-    USE_LISTENER_AFTER_OP = 151
-    PRINT_HK = 152
-    PRINT_TM = 153
-    PRINT_RAW_TM = 154
-    PRINT_TO_FILE = 155
-    RESEND_TC = 156
-    TC_SEND_TIMEOUT_FACTOR = 157
-
-    # Config dictionaries
-    USE_SERIAL = 160
-    SERIAL_CONFIG = 161
-    USE_ETHERNET = 162
-    ETHERNET_CONFIG = 163
-
-
-class OpCodeDictKeys(enum.IntEnum):
-    TIMEOUT = CoreGlobalIds.TM_TIMEOUT
 
 
 DEFAULT_APID = 0xef

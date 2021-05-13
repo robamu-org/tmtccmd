@@ -363,6 +363,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__combo_box_op_codes = QComboBox()
         self._current_service = self._service_list[default_index]
         self.__update_op_code_combo_box()
+        self.__combo_box_op_codes.currentIndexChanged.connect(self.__op_code_index_changed)
         # TODO: Combo box also needs to be updated if another service is selected
         grid.addWidget(self.__combo_box_op_codes, row, 1, 1, 1)
         row += 1
@@ -412,10 +413,19 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._current_service = self._service_list[index]
         self.__update_op_code_combo_box()
         if self.__debug_mode:
-            LOGGER.info(f"Service changed")
+            LOGGER.info("Service changed")
+
+    def __op_code_index_changed(self, index: int):
+        print(index)
+        print(self._op_code_list)
+        self._current_op_code = self._op_code_list[index]
+        print(self._current_op_code)
+        if self.__debug_mode:
+            LOGGER.info("Op Code changed")
 
     def __update_op_code_combo_box(self):
         self.__combo_box_op_codes.clear()
+        self._op_code_list = []
         op_code_dict = self.service_op_code_dict[self._current_service][1]
         if op_code_dict is not None:
             for op_code_key, op_code_value in op_code_dict.items():
