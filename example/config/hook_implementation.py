@@ -55,10 +55,12 @@ class ExampleHookClass(TmTcHookBase):
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
     def get_object_ids(self) -> Dict[bytes, list]:
-        pass
+        from tmtccmd.config.objects import get_core_object_ids
+        return get_core_object_ids()
 
     def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
-        pass
+        from tmtccmd.config.globals import get_default_service_op_code_dict
+        return get_default_service_op_code_dict()
 
     @staticmethod
     def handle_service_8_telemetry(

@@ -101,7 +101,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_8_telemetry(
-            object_id: bytearray, action_id: int, custom_data: bytearray
+            object_id: bytes, action_id: int, custom_data: bytearray
     ) -> Tuple[list, list]:
         """
         This function is called by the TMTC core if a Service 8 data reply (subservice 130)
@@ -122,7 +122,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_3_housekeeping(
-        object_id: bytearray, set_id: int, hk_data: bytearray, service3_packet: Service3Base
+        object_id: bytes, set_id: int, hk_data: bytearray, service3_packet: Service3Base
     ) -> Tuple[list, list, bytearray, int]:
         """
         This function is called when a Service 3 Housekeeping packet is received.
@@ -147,7 +147,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_5_event(
-        object_id: bytearray, event_id: int, param_1: int, param_2: int
+        object_id: bytes, event_id: int, param_1: int, param_2: int
     ) -> str:
         """
         This function is called when a Service 5 Event Packet is received. The user can specify a custom
