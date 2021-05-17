@@ -26,9 +26,9 @@ class ExampleHookClass(TmTcHookBase):
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
         set_default_globals_pre_args_parsing(gui=gui, apid=0xef)
 
-    def add_globals_post_args_parsing(self, args: argparse.Namespace, json_cfg_path: str = ""):
+    def add_globals_post_args_parsing(self, args: argparse.Namespace):
         from tmtccmd.config.globals import set_default_globals_post_args_parsing
-        set_default_globals_post_args_parsing(args=args, json_cfg_path=json_cfg_path)
+        set_default_globals_post_args_parsing(args=args, json_cfg_path=self.get_json_config_file_path())
 
     def assign_communication_interface(self, com_if_key: str, tmtc_printer: TmTcPrinter) -> \
             Union[CommunicationInterface, None]:
