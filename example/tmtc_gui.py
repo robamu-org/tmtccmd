@@ -9,7 +9,7 @@ from config.hook_implementation import ExampleHookClass
 def main():
     hook_obj = ExampleHookClass()
     initialize_tmtc_commander(hook_object=hook_obj)
-    run_tmtc_commander(use_gui=False )
+    run_tmtc_commander(use_gui=True, app_name="TMTC Commander Example")
 
 
 if __name__ == '__main__':
