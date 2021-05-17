@@ -79,14 +79,17 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__tcp_conn_thread.join(self.tm_polling_frequency)
 
     def send_data(self, data: bytearray):
-        with self.__socket_lock:
-            tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            tcp_socket.connect(self.send_address)
-            tcp_socket.sendto(data, self.send_address)
-            tcp_socket.shutdown(socket.SHUT_WR)
-            self.__receive_tm_packets(tcp_socket)
-            self.__last_connection_time = time.time()
-            tcp_socket.close()
+        try:
+            with self.__socket_lock:
+                tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                tcp_socket.connect(self.send_address)
+                tcp_socket.sendto(data, self.send_address)
+                tcp_socket.shutdown(socket.SHUT_WR)
+                self.__receive_tm_packets(tcp_socket)
+                self.__last_connection_time = time.time()
+                tcp_socket.close()
+        except ConnectionRefusedError:
+            LOGGER.warning("TCP connection attempt failed..")
 
     def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
         self.send_data(data=tc_packet)
@@ -100,11 +103,15 @@ class TcpIpTcpComIF(CommunicationInterface):
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
             if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
-                with self.__socket_lock:
-                    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    tcp_socket.connect(self.send_address)
-                    tcp_socket.shutdown(socket.SHUT_WR)
-                    self.__receive_tm_packets(tcp_socket=tcp_socket)
+                try:
+                    with self.__socket_lock:
+                        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        tcp_socket.connect(self.send_address)
+                        tcp_socket.shutdown(socket.SHUT_WR)
+                        self.__receive_tm_packets(tcp_socket=tcp_socket)
+                        self.__last_connection_time = time.time()
+                except ConnectionRefusedError:
+                    LOGGER.warning("TCP connection attempt failed..")
                     self.__last_connection_time = time.time()
             time.sleep(self.tm_polling_frequency / 2.0)
 

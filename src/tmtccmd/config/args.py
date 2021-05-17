@@ -195,9 +195,9 @@ def handle_unspecified_args(args) -> None:
         service_op_code_dict = hook_obj.get_service_op_code_dictionary()
         if args.service is None:
             # Try to get the service list from the hook base and prompt service from user
-            args.service = CoreServiceList.SERVICE_17.value
-        if args.com_if is None:
-            args.com_if = "0"
+            args.service = prompt_service(service_op_code_dict)
+        if args.op_code is None:
+            args.op_code = "0"
 
 
 def handle_empty_args(args) -> None:
@@ -207,9 +207,28 @@ def handle_empty_args(args) -> None:
     :param args:
     :return:
     """
-    LOGGER.info("No arguments specified. Setting dummy mode..")
-    args.com_if = CoreComInterfaces.DUMMY
-    LOGGER.info("Setting sequential command mode..")
-    args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
-    LOGGER.info("Setting service 17 (ping command)..")
-    args.__service = 17
+    LOGGER.info("No arguments specified..")
+    # args.com_if = CoreComInterfaces.DUMMY
+    # LOGGER.info("Setting sequential command mode..")
+    # args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
+    # LOGGER.info("Setting service 17 (ping command)..")
+    # args.__service = 17
+    handle_unspecified_args(args=args)
+
+
+def prompt_service(service_op_code_dict) -> str:
+    while True:
+        service_string = "Service".ljust(10)
+        info_string = "Information".ljust(30)
+        LOGGER.info(f"{service_string} | {info_string} ")
+        horiz_line = (40 + 5) * "-"
+        LOGGER.info(horiz_line)
+        for service_entry in service_op_code_dict.items():
+            adjusted_service_entry = service_entry[0].ljust(10)
+            LOGGER.info(f"{adjusted_service_entry} | {service_entry[1][0]}")
+        service_string = input("Please select a service by specifying the key: ")
+        if service_string in service_op_code_dict:
+            LOGGER.info(f"Select service: {service_string}")
+            return service_string
+        else:
+            LOGGER.info("Invalid key, try again")
