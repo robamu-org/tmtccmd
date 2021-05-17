@@ -2,7 +2,6 @@ import json
 import socket
 import struct
 import enum
-from typing import Union
 
 from tmtccmd.config.definitions import EthernetAddressT
 from tmtccmd.utility.json_handler import check_json_file
@@ -55,6 +54,10 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> Ethern
         json_key_address = JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value
         json_key_port = JsonKeyNames.TCPIP_UDP_RECV_PORT.value
         info_string = "UDP receive destination"
+    else:
+        json_key_address = JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value
+        json_key_port = JsonKeyNames.TCPIP_UDP_DEST_PORT.value
+        info_string = "UDP destination"
 
     with open(json_cfg_path, "r") as write:
         load_data = json.load(write)

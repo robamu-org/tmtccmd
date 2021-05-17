@@ -73,12 +73,15 @@ def set_tmtc_logger() -> logging.Logger:
 
 
 def set_up_coloredlogs_logger(logger: logging.Logger):
-    import coloredlogs
-    coloredlogs.install(
-        level='INFO', logger=logger, milliseconds=True,
-        fmt='%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
+    try:
+        import coloredlogs
+        coloredlogs.install(
+            level='INFO', logger=logger, milliseconds=True,
+            fmt='%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+    except ImportError:
+        print("Please install coloredlogs package first")
 
 
 def set_up_colorlog_logger(logger: logging.Logger):

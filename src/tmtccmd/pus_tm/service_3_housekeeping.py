@@ -40,7 +40,6 @@ class Service3TM(Service3Base):
         :param minimum_reply_size:
         :param minimum_structure_report_header_size:
         """
-        from tmtccmd.core.object_id_manager import get_object_id_info
         super().__init__(byte_array)
         if len(self._tm_data) < 8:
             warning = "Service3TM: handle_filling_definition_arrays: Invalid Service 3 packet," \
