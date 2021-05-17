@@ -194,6 +194,7 @@ def handle_unspecified_args(args) -> None:
         hook_obj = get_global_hook_obj()
         service_op_code_dict = hook_obj.get_service_op_code_dictionary()
         if args.service is None:
+            LOGGER.info("No service argument (-s) specified, prompting from user..")
             # Try to get the service list from the hook base and prompt service from user
             args.service = prompt_service(service_op_code_dict)
         if args.op_code is None:
