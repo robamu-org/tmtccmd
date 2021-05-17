@@ -74,6 +74,7 @@ def run_tmtc_commander(
     :param ansi_colors:         Enable ANSI color output for terminal
     :param tmtc_backend:
     :param tmtc_frontend:
+    :param app_name:            Name of application. Will be displayed in GUI
     :raises: ValueError if initialize_tmtc_commander was not called before
     :return:
     """

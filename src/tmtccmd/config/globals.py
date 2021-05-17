@@ -37,9 +37,11 @@ def get_glob_com_if_dict() -> ComIFDictT:
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
-        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict: ComIFDictT = dict(), display_mode="long",
+        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None, display_mode="long",
         tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
 ):
+    if custom_com_if_dict is None:
+        custom_com_if_dict = dict()
     update_global(CoreGlobalIds.APID, apid)
     set_default_apid(default_apid=apid)
     set_pus_tc_version(pus_tc_version)
@@ -49,6 +51,7 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)
     update_global(CoreGlobalIds.DISPLAY_MODE, display_mode)
     update_global(CoreGlobalIds.PRINT_TO_FILE, print_to_file)
+    update_global(CoreGlobalIds.CURRENT_SERVICE, CoreServiceList.SERVICE_17.value)
     update_global(CoreGlobalIds.SERIAL_CONFIG, dict())
     update_global(CoreGlobalIds.ETHERNET_CONFIG, dict())
     set_glob_com_if_dict(custom_com_if_dict=custom_com_if_dict)
