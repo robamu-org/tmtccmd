@@ -52,17 +52,22 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
 
     arg_parser.add_argument(
         '--tc_timeout_factor', type=float, help='TC Timeout Factor. Multiplied with '
-        'TM Timeout, TC sent again after this time period. Default: 3.5', default=3.5)
+        'TM Timeout, TC sent again after this time period. Default: 3.5', default=3.5
+    )
     arg_parser.add_argument(
         '-r', '--raw_data_print', help='Supply -r to print all raw TM data directly',
-        action='store_true')
+        action='store_true'
+    )
     arg_parser.add_argument(
-        '-d', '--short_display_mode', help='Supply -d to print short output', action='store_true')
+        '-d', '--short_display_mode', help='Supply -d to print short output', action='store_true'
+    )
     arg_parser.add_argument(
-        '--hk', dest='print_hk', help='Supply -k or --hk to print HK data', action='store_true')
+        '--hk', dest='print_hk', help='Supply -k or --hk to print HK data', action='store_true'
+    )
     arg_parser.add_argument(
         '--rs', dest="resend_tc", help='Specify whether TCs are sent again after timeout',
-        action='store_true')
+        action='store_true'
+    )
 
     if len(sys.argv) == 1:
         LOGGER.info("No input arguments specified. Run with -h to get list of arguments")
@@ -83,10 +88,10 @@ def parse_default_input_arguments(print_known_args: bool = False, print_unknown_
 
 
 def add_generic_arguments(arg_parser: argparse.ArgumentParser):
-    arg_parser.add_argument('-s', '--service', type=str, help='Service to test. Default: 17', default="17")
+    arg_parser.add_argument('-s', '--service', type=str, help='Service to test', default=None)
     arg_parser.add_argument(
-        '-o', '--op_code',
-        help='Operation code, which is passed to the TC packer functions', default=0
+        '-o', '--op_code', help='Operation code, which is passed to the TC packer functions',
+        default=None
     )
     arg_parser.add_argument(
         '-l', '--listener',
@@ -179,16 +184,26 @@ def handle_unspecified_args(args) -> None:
     :param args:
     :return: None
     """
+    from tmtccmd.config.definitions import CoreServiceList
+    from tmtccmd.config.hook import get_global_hook_obj
     if args.tm_timeout is None:
         args.tm_timeout = 5.0
     if args.mode is None:
         args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
+    if args.service is None or args.com_if is None:
+        hook_obj = get_global_hook_obj()
+        service_op_code_dict = hook_obj.get_service_op_code_dictionary()
+        if args.service is None:
+            # Try to get the service list from the hook base and prompt service from user
+            args.service = CoreServiceList.SERVICE_17.value
+        if args.com_if is None:
+            args.com_if = "0"
 
 
 def handle_empty_args(args) -> None:
     """
     If no args were supplied, request input from user directly.
-    TODO: This still needs to be extended.
+    TODO: This still needs to be extended. Use function for unspecified args here maybe?
     :param args:
     :return:
     """

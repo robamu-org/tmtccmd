@@ -163,7 +163,7 @@ class TmTcHookBase:
         return ""
 
 
-def get_global_hook_obj() -> TmTcHookBase:
+def get_global_hook_obj() -> Union[None, TmTcHookBase]:
     try:
         from tmtccmd.core.globals_manager import get_global
         from tmtccmd.config.definitions import CoreGlobalIds
@@ -176,5 +176,7 @@ def get_global_hook_obj() -> TmTcHookBase:
         return cast(TmTcHookBase, hook_obj_raw)
     except ImportError:
         LOGGER.exception("Issues importing modules to get global hook handle!")
+        return None
     except AttributeError:
         LOGGER.exception("Attribute error when trying to get global hook handle!")
+        return None
