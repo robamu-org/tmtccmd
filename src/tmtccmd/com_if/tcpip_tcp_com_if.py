@@ -32,15 +32,14 @@ class TcpIpTcpComIF(CommunicationInterface):
     Communication interface for UDP communication.
     """
     def __init__(
-            self, com_if_key: str, tm_polling_freqency: int, tm_timeout: float, tc_timeout_factor: float,
+            self, com_if_key: str, tm_polling_freqency: float, tm_timeout: float, tc_timeout_factor: float,
             send_address: EthernetAddressT, max_recv_size: int, max_packets_stored: int = 50,
             tmtc_printer: Union[None, TmTcPrinter] = None, init_mode: int = CoreModeList.LISTENER_MODE):
         """
         Initialize a communication interface to send and receive UDP datagrams.
-        :param tm_timeout:
-        :param tc_timeout_factor:
-        :param send_address:
-        :param max_recv_size:
+        :param com_if_key:
+        :param tm_polling_freqency:     Polling frequency in seconds
+        :param tm_timeout:              Timeout in seconds
         :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
         """
         super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
@@ -120,7 +119,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                 if self.__tm_queue.__len__() >= self.max_packets_stored:
                     LOGGER.warning("Number of packets in TCP queue too large. Overwriting old packets..")
                     self.__tm_queue.pop()
-                tm_packet = PusTelemetryFactory.create(bytes_recvd)
+                tm_packet = PusTelemetryFactory.create(bytearray(bytes_recvd))
                 self.__tm_queue.appendleft(tm_packet)
             elif bytes_recvd is None or len(bytes_recvd) == 0:
                 break

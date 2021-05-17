@@ -121,12 +121,14 @@ class TmTcHandler(BackendBase):
 
     @staticmethod
     def prepare_tmtc_handler_start(
-            init_com_if: int = CoreComInterfaces.DUMMY,
-            init_mode: int = CoreModeList.LISTENER_MODE,
-            init_service: int = CoreServiceList.SERVICE_17
+            com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
+            init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value, init_opcode: str = "0"
     ):
         from multiprocessing import Process
-        tmtc_handler = TmTcHandler(init_com_if, init_mode, init_service)
+        tmtc_handler = TmTcHandler(
+            com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=init_mode,
+            init_service=init_service, init_opcode=init_opcode
+        )
         tmtc_task = Process(target=TmTcHandler.start_handler, args=(tmtc_handler, ))
         return tmtc_task
 
