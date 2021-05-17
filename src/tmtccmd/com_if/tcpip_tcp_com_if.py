@@ -4,7 +4,6 @@
 :brief:     TCP communication interface
 :author:    R. Mueller
 """
-import select
 import socket
 import time
 import threading
@@ -42,7 +41,6 @@ class TcpIpTcpComIF(CommunicationInterface):
         :param tc_timeout_factor:
         :param send_address:
         :param max_recv_size:
-        :param recv_addr:
         :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
         """
         super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)

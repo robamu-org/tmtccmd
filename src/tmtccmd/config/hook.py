@@ -13,7 +13,6 @@ class TmTcHookBase:
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.ecss.tm import PusTelemetry
-    from tmtccmd.pus_tc.definitions import PusTelecommand
     from tmtccmd.pus_tc.definitions import TcQueueT
     from tmtccmd.com_if.com_interface_base import CommunicationInterface
     from tmtccmd.pus_tm.service_3_base import Service3Base
@@ -66,7 +65,7 @@ class TmTcHookBase:
     ) -> Union[CommunicationInterface, None]:
         """
         Assign the communication interface used by the TMTC commander to send and receive TMTC with.
-        :param com_if:          Integer representation of the communication interface to be created.
+        :param com_if_key:      String key of the communication interface to be created.
         :param tmtc_printer:    Printer utility instance.
         """
         from tmtccmd.config.com_if import create_communication_interface_default
@@ -76,7 +75,7 @@ class TmTcHookBase:
 
     @abstractmethod
     def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
-        from tmtccmd.config.definitions import get_default_service_op_code_dict
+        from tmtccmd.config.globals import get_default_service_op_code_dict
         return get_default_service_op_code_dict()
 
     @abstractmethod
