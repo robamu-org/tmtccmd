@@ -4,7 +4,7 @@ Argument parser modules for the TMTC commander core
 import argparse
 import sys
 
-from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces
+from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces, ServiceOpCodeDictT
 from tmtccmd.utility.logger import get_logger
 
 
@@ -190,15 +190,18 @@ def handle_unspecified_args(args) -> None:
         args.tm_timeout = 5.0
     if args.mode is None:
         args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
-    if args.service is None or args.com_if is None:
+    if args.service is None:
         hook_obj = get_global_hook_obj()
         service_op_code_dict = hook_obj.get_service_op_code_dictionary()
-        if args.service is None:
-            LOGGER.info("No service argument (-s) specified, prompting from user..")
-            # Try to get the service list from the hook base and prompt service from user
-            args.service = prompt_service(service_op_code_dict)
+        LOGGER.info("No service argument (-s) specified, prompting from user..")
+        # Try to get the service list from the hook base and prompt service from user
+        args.service = prompt_service(service_op_code_dict)
         if args.op_code is None:
-            args.op_code = "0"
+            current_service = args.service
+            args.op_code = prompt_op_code(service_op_code_dict=service_op_code_dict, service=current_service)
+    elif args.com_if is None:
+        current_service = args.service
+        args.op_code = prompt_op_code(service_op_code_dict=service_op_code_dict, service=current_service)
 
 
 def handle_empty_args(args) -> None:
@@ -209,15 +212,10 @@ def handle_empty_args(args) -> None:
     :return:
     """
     LOGGER.info("No arguments specified..")
-    # args.com_if = CoreComInterfaces.DUMMY
-    # LOGGER.info("Setting sequential command mode..")
-    # args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
-    # LOGGER.info("Setting service 17 (ping command)..")
-    # args.__service = 17
     handle_unspecified_args(args=args)
 
 
-def prompt_service(service_op_code_dict) -> str:
+def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
     while True:
         service_string = "Service".ljust(10)
         info_string = "Information".ljust(30)
@@ -229,7 +227,31 @@ def prompt_service(service_op_code_dict) -> str:
             LOGGER.info(f"{adjusted_service_entry} | {service_entry[1][0]}")
         service_string = input("Please select a service by specifying the key: ")
         if service_string in service_op_code_dict:
-            LOGGER.info(f"Select service: {service_string}")
+            LOGGER.info(f"Selected service: {service_string}")
             return service_string
         else:
-            LOGGER.info("Invalid key, try again")
+            LOGGER.warning("Invalid key, try again")
+
+
+def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> str:
+    while True:
+        op_code_string = "Operation Code".ljust(16)
+        info_string = "Information".ljust(16)
+        LOGGER.info(f"{op_code_string} | {info_string}")
+        horiz_line = (32 + 3) * "-"
+        LOGGER.info(horiz_line)
+        if service in service_op_code_dict:
+            op_code_dict = service_op_code_dict[service][1]
+            for op_code_entry in op_code_dict.items():
+                adjusted_op_code_entry = op_code_entry[0].ljust(16)
+                adjusted_op_code_info = op_code_entry[1][0].ljust(16)
+                LOGGER.info(f"{adjusted_op_code_entry} | {adjusted_op_code_info}")
+            op_code_string = input("Please select an operation code by specifying the key: ")
+            if op_code_string in op_code_dict:
+                LOGGER.info(f"Selected op code: {op_code_string}")
+                return op_code_string
+            else:
+                LOGGER.warning("Invalid key, try again")
+        else:
+            LOGGER.warning("Service not in dictionary. Setting default operation code 0")
+            return "0"
