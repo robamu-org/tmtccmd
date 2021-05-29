@@ -2,7 +2,7 @@
 @brief  Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple, Dict, Union
+from typing import Tuple, Dict, Optional
 
 
 class CoreGlobalIds(enum.IntEnum):
@@ -54,10 +54,10 @@ ServiceInfoT = str
 OpCodeNameT = str
 OpCodeInfoT = str
 # Operation code options are optional. If none are supplied, default values are assumed
-OpCodeOptionsT = Union[None, Dict[OpCodeDictKeys, any]]
+OpCodeOptionsT = Optional[Dict[OpCodeDictKeys, any]]
 OpCodeEntryT = Dict[OpCodeNameT, Tuple[OpCodeInfoT, OpCodeOptionsT]]
 # It is possible to specify a service without any op codes
-ServiceDictValueT = Union[None, Tuple[ServiceInfoT, OpCodeEntryT]]
+ServiceDictValueT = Optional[Tuple[ServiceInfoT, OpCodeEntryT]]
 ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 
 # Com Interface Types

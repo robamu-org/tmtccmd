@@ -66,12 +66,12 @@ def decode_dle(source_packet: bytearray) -> Tuple[DleErrorCodes, bytearray, int]
     Decodes a given DLE encoded data stream. This call only returns the first packet found.
     It might be necessary to call this function multiple times, depending on the third
     returnvalue
-
-    :return: Returns a tuple of three values.
-    1. DleErrorCode: If decoding has failed, this will not be DleErrorCodes.OK
-    2. Decoded bytearray: Decoded packet
-    3. Read length: Read length in the encoded stream. If this is smaller than the length of
-    the passed bytearray, the decoding function should be called again.
+    :return:
+    Returns a tuple of three values.
+        1. DleErrorCode: If decoding has failed, this will not be DleErrorCodes.OK
+        2. Decoded bytearray: Decoded packet
+        3. Read length: Read length in the encoded stream. If this is smaller than the length of
+           the passed bytearray, the decoding function should be called again.
     """
     encoded_index = 0
     source_len = len(source_packet)
