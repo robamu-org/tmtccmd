@@ -26,8 +26,7 @@ class TmTcHookBase:
 
     @abstractmethod
     def get_version(self) -> str:
-        """
-        The user can specify a custom version by overriding this function.
+        """The user can specify a custom version by overriding this function.
         :return:
         """
         from tmtccmd import VERSION_NAME, __version__
@@ -35,16 +34,15 @@ class TmTcHookBase:
 
     @abstractmethod
     def get_object_ids(self) -> Dict[bytes, list]:
-        """
-        The user can specify an object ID dictionary here mapping object ID bytearrays to a list. This list could
+        """The user can specify an object ID dictionary here mapping object ID bytearrays to a list. This list could
         contain containing the string representation or additional information about that object ID.
         """
         pass
 
     @abstractmethod
     def add_globals_pre_args_parsing(self, gui: bool = False):
-        """
-        Add all global variables prior to parsing the CLI arguments.
+        """Add all global variables prior to parsing the CLI arguments.
+
         :param gui: Set to true if the GUI mode is used
         :return:
         """
@@ -167,7 +165,7 @@ class TmTcHookBase:
     ) -> str:
         """This function is called when a Service 5 Event Packet is received. The user can specify a custom
         string here which will be printed to display additional information related to an event.
-        
+
         :param object_id: Byte representation of the object ID
         :param event_id: Two-byte event ID
         :param param_1: Four-byte Parameter 1
