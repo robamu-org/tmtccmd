@@ -102,13 +102,15 @@ class SpacePacketHeaderSerializer(SpacePacketCommonFields):
         )
 
     def pack(self) -> bytearray:
+        """Return the bytearray representation of the space packet header"""
         return self.header
 
 
 def get_sp_packet_id_bytes(
         version: int, packet_type: PacketTypes, secondary_header_flag: int, apid: int
 ) -> Tuple[int, int]:
-    """This function also includes the first three bits reserved for the version
+    """This function also includes the first three bits reserved for the version.
+
     :param version:
     :param packet_type:
     :param secondary_header_flag:
