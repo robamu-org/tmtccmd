@@ -51,8 +51,7 @@ class TmTcHookBase:
 
     @abstractmethod
     def get_json_config_file_path(self) -> str:
-        """
-        The user can specify a path and filename for the JSON configuration file by overriding this function.
+        """The user can specify a path and filename for the JSON configuration file by overriding this function.
 
         :return:
         """
@@ -61,7 +60,8 @@ class TmTcHookBase:
     @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
         """Add global variables prior after parsing the CLI arguments.
-        :param args:  Specify whether a GUI is used
+
+        :param args: Specify whether a GUI is used
         """
         from tmtccmd.config.globals import set_default_globals_post_args_parsing
         set_default_globals_post_args_parsing(args=args, json_cfg_path=self.get_json_config_file_path())
@@ -91,6 +91,11 @@ class TmTcHookBase:
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
+        """Perform custom mode operations
+        :param tmtc_backend:
+        :param mode:
+        :return:
+        """
         pass
 
     @abstractmethod
