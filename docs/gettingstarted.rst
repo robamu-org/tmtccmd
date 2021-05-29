@@ -3,7 +3,7 @@ Getting Started
 ===============
 
 The example provided in the ``example`` folder of the Python package is a good place to get started.
-You can run the ``tmtc_cli.py`` file to test the CLI interface or the ``tmtc_gui.py` file
+You can run the ``tmtc_cli.py`` file to test the CLI interface or the ``tmtc_gui.py`` file
 to test the GUI interface. The only working communication interface for the example applications is 
 the ``dummy`` interface.
 

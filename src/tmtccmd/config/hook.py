@@ -5,18 +5,17 @@ from typing import Union, Dict, Tuple
 
 from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
 from tmtccmd.utility.logger import get_logger
+from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.pus_tc.definitions import TcQueueT
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.pus_tm.service_3_base import Service3Base
 
 LOGGER = get_logger()
 
 
 class TmTcHookBase:
-    from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.utility.tmtc_printer import TmTcPrinter
-    from tmtccmd.ecss.tm import PusTelemetry
-    from tmtccmd.pus_tc.definitions import TcQueueT
-    from tmtccmd.com_if.com_interface_base import CommunicationInterface
-    from tmtccmd.pus_tm.service_3_base import Service3Base
-
     def __init__(self):
         pass
 
@@ -37,7 +36,8 @@ class TmTcHookBase:
     def add_globals_pre_args_parsing(self, gui: bool = False):
         """
         Add all global variables prior to parsing the CLI arguments.
-        :param gui:  Specify whether a GUI is used
+        :param gui: Set to true if the GUI mode is used
+        :return:
         """
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
@@ -112,7 +112,7 @@ class TmTcHookBase:
         :param object_id:   Object ID bytearray
         :param action_id:
         :param custom_data:
-        :return
+        :return:
         """
         LOGGER.info(
             "TmTcHookBase: No service 8 handling implemented yet in handle_service_8_telemetry "
@@ -134,7 +134,7 @@ class TmTcHookBase:
                                 4 byte set ID will be assumed and the remaining packet after
                                 the first 4 bytes will be passed here.
         :param service3_packet: Service 3 packet object
-        :return Expects a tuple, consisting of two lists, a bytearray and an integer
+        :return: Expects a tuple, consisting of two lists, a bytearray and an integer
         The first list contains the header columns, the second list the list with
         the corresponding values. The bytearray is the validity buffer, which is usually appended
         at the end of the housekeeping packet. The last value is the number of parameters.
