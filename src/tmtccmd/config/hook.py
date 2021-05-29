@@ -145,13 +145,13 @@ class TmTcHookBase:
         :param object_id: Byte representation of the object ID
         :param set_id: Unique set ID of the HK reply
         :param hk_data: HK data. For custom HK handling, whole HK data will be passed here. Otherwise, a 8 byte SID
-        consisting of the 4 byte object ID and 4 byte set ID will be assumed and the remaining packet after the first
-        4 bytes will be passed here.
+            consisting of the 4 byte object ID and 4 byte set ID will be assumed and the remaining packet after the first
+            4 bytes will be passed here.
         :param service3_packet: Service 3 packet object
         :return: Expects a tuple, consisting of two lists, a bytearray and an integer
-        The first list contains the header columns, the second list the list with
-        the corresponding values. The bytearray is the validity buffer, which is usually appended
-        at the end of the housekeeping packet. The last value is the number of parameters.
+            The first list contains the header columns, the second list the list with
+            the corresponding values. The bytearray is the validity buffer, which is usually appended
+            at the end of the housekeeping packet. The last value is the number of parameters.
         """
         LOGGER.info(
             "TmTcHookBase: No service 3 housekeeping data handling implemented yet in "
