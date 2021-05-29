@@ -25,8 +25,7 @@ def parse_input_arguments(
 
 
 def parse_default_input_arguments(print_known_args: bool = False, print_unknown_args: bool = False):
-    """
-    Parses all input arguments
+    """Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
     from tmtccmd.utility.conf_util import AnsiColors
@@ -163,10 +162,8 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def args_post_processing(args, unknown: list) -> None:
-    """
-    Handles the parsed arguments.
-    :param args: Namespace objects
-    (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
+    """Handles the parsed arguments.
+    :param args: Namespace objects (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
     :param unknown: List of unknown parameters.
     :return: None
     """
@@ -206,9 +203,7 @@ def handle_unspecified_args(args) -> None:
 
 
 def handle_empty_args(args) -> None:
-    """
-    If no args were supplied, request input from user directly.
-    TODO: This still needs to be extended. Use function for unspecified args here maybe?
+    """If no args were supplied, request input from user directly.
     :param args:
     :return:
     """
