@@ -176,8 +176,7 @@ def args_post_processing(args, unknown: list) -> None:
 
 
 def handle_unspecified_args(args) -> None:
-    """
-    If some arguments are unspecified, they are set here with (variable) default values.
+    """If some arguments are unspecified, they are set here with (variable) default values.
     :param args:
     :return: None
     """

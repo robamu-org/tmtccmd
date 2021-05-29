@@ -18,8 +18,8 @@ LOGGER = get_logger()
 def create_communication_interface_default(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Optional[CommunicationInterface]:
-    """
-    Return the desired communication interface object
+    """Return the desired communication interface object
+
     :param com_if_key:
     :param tmtc_printer:
     :param json_cfg_path:
@@ -65,8 +65,7 @@ def create_communication_interface_default(
 
 
 def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str):
-    """
-    Default setup for TCP/IP communication interfaces. This intantiates all required data in the globals
+    """Default setup for TCP/IP communication interfaces. This intantiates all required data in the globals
     manager so a TCP/IP communication interface can be built with :func:`create_default_tcpip_interface`
     :param tcpip_type:
     :param json_cfg_path:
@@ -93,8 +92,8 @@ def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str):
 
 
 def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
-    """
-    Default setup for serial interfaces
+    """Default setup for serial interfaces
+
     :param com_if_key:
     :param json_cfg_path:
     :return:
@@ -112,6 +111,7 @@ def create_default_tcpip_interface(
 ) -> Optional[CommunicationInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
+
     :param com_if_key:
     :param tmtc_printer:
     :param json_cfg_path:
@@ -148,6 +148,7 @@ def create_default_serial_interface(
 ) -> Optional[CommunicationInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
+
     :param com_if_key:
     :param tmtc_printer:
     :param json_cfg_path:

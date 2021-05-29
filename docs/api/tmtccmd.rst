@@ -8,8 +8,6 @@ Subpackages
    :maxdepth: 4
 
    tmtccmd.config
-
-..
    tmtccmd.com_if
    tmtccmd.config
    tmtccmd.core
@@ -29,6 +27,4 @@ tmtccmd.runner module
 .. automodule:: tmtccmd.runner
    :members:
    :undoc-members:
-
-..
    :show-inheritance:
