@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 :brief:     Core method called by entry point files to initiate the TMTC commander.
-            The commander is started by first running initialize_tmtc_commander and then
-            running run_tmtc_commander
+            The commander is started by first running `initialize_tmtc_commander` and then
+            running `run_tmtc_commander`
 :details:
 :manual:
 :author:     R. Mueller
