@@ -16,8 +16,7 @@ LOGGER = get_logger()
 
 
 class TmTcHookBase:
-    """
-    This hook allows users to adapt the TMTC commander core to the unique mission requirements.
+    """This hook allows users to adapt the TMTC commander core to the unique mission requirements.
     It is used by implementing all abstract functions and then passing the instance to the TMTC commander core.
     """
 
@@ -149,9 +148,9 @@ class TmTcHookBase:
 
         :param object_id: Byte representation of the object ID
         :param set_id: Unique set ID of the HK reply
-        :param hk_data: HK data. For custom HK handling, whole HK data will be passed here. Otherwise, a 8 byte SID
-            consisting of the 4 byte object ID and 4 byte set ID will be assumed and the remaining packet after the first
-            4 bytes will be passed here.
+        :param hk_data:     HK data. For custom HK handling, whole HK data will be passed here. Otherwise, a 8 byte SID
+                            consisting of the 4 byte object ID and 4 byte set ID will be assumed and the remaining
+                            packet after the first 4 bytes will be passed here.
         :param service3_packet: Service 3 packet object
         :return: Expects a tuple, consisting of two lists, a bytearray and an integer
             The first list contains the header columns, the second list the list with

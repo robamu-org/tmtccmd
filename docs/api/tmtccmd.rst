@@ -9,7 +9,7 @@ Subpackages
 
    tmtccmd.config
    tmtccmd.com_if
-   tmtccmd.config
+   tmtccmd.ccsds
    tmtccmd.core
    tmtccmd.ecss
    tmtccmd.pus

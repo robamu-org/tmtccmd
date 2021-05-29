@@ -5,6 +5,7 @@ from tmtccmd.pus.service_17_test import Srv17Subservices
 
 
 def pack_service17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
+    """Generate a simple ping PUS telecommand packet"""
     if apid == -1:
         apid = get_global_apid()
     return PusTelecommand(service=17, subservice=Srv17Subservices.PING_CMD, ssc=ssc, apid=apid)

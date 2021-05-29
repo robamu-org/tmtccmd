@@ -27,8 +27,7 @@ LOGGER = get_logger()
 
 
 def initialize_tmtc_commander(hook_object: TmTcHookBase):
-    """
-    This function needs to be called first before running the TMTC commander core. A hook
+    """This function needs to be called first before running the TMTC commander core. A hook
     object handle needs to be passed to this function. The user should implement an own hook class
     instance which in turn implemented TmTcHookBase. An instantiation of the hook object is then
     passed to the core. The hook object ecncapsulates the control of the user over the TMTC
@@ -57,10 +56,9 @@ def run_tmtc_commander(
         tmtc_frontend: Union[FrontendBase, None] = None,
         app_name: str = "TMTC Commander"
 ):
-    """
-    This is the primary function to run the TMTC commander. Users should call this function to
+    """This is the primary function to run the TMTC commander. Users should call this function to
     start the TMTC commander. Please note that assign_tmtc_commander_hooks needs to be called
-    before this function. Raises RuntimeError if initialize_tmtc_commander
+    before this function. Raises RuntimeError if `initialize_tmtc_commander`
     has not been called before calling this function.
 
     Example for a simple main function content to use the command line mode:
@@ -75,7 +73,7 @@ def run_tmtc_commander(
     :param tmtc_backend:
     :param tmtc_frontend:
     :param app_name:            Name of application. Will be displayed in GUI
-    :raises: ValueError if initialize_tmtc_commander was not called before
+    :raises: ValueError if `initialize_tmtc_commander` was not called before
     :return:
     """
     try:
