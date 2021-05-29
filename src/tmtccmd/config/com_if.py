@@ -110,8 +110,7 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
 def create_default_tcpip_interface(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Optional[CommunicationInterface]:
-    """
-    Create a default serial interface. Requires a certain set of global variables set up. See
+    """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
     :param com_if_key:
     :param tmtc_printer:
@@ -147,8 +146,7 @@ def create_default_tcpip_interface(
 def create_default_serial_interface(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
 ) -> Optional[CommunicationInterface]:
-    """
-    Create a default serial interface. Requires a certain set of global variables set up. See
+    """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
     :param com_if_key:
     :param tmtc_printer:
@@ -194,8 +192,7 @@ def set_up_serial_cfg(
         ser_com_type: SerialCommunicationType = SerialCommunicationType.DLE_ENCODING,
         ser_frame_size: int = 256, dle_queue_len: int = 25, dle_frame_size: int = 1024
 ):
-    """
-    Default configuration to set up serial communication. The serial port and the baud rate
+    """Default configuration to set up serial communication. The serial port and the baud rate
     will be determined from a JSON configuration file and prompted from the user. Sets up all global variables
     so that a serial communication interface can be built with :func:`create_default_serial_interface`
     :param json_cfg_path:
