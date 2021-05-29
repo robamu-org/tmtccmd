@@ -17,7 +17,7 @@ LOGGER = get_logger()
 
 def create_communication_interface_default(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
-) -> Union[CommunicationInterface, None]:
+) -> Optional[CommunicationInterface]:
     """
     Return the desired communication interface object
     :param com_if_key:

@@ -126,13 +126,12 @@ class TmTcHookBase:
     ) -> Tuple[list, list, bytearray, int]:
         """
         This function is called when a Service 3 Housekeeping packet is received.
-        :param object_id:       Integer representation of the found object ID. See
-                                the :func:`~tmtccmd.core.hook_base.set_object_ids function for more information
-        :param set_id:          Unique set ID of the HK reply
-        :param hk_data:         HK data. For custom HK handling, whole HK data will be passed here.
-                                Otherwise, a 8 byte SID conisting of the 4 byte object ID and
-                                4 byte set ID will be assumed and the remaining packet after
-                                the first 4 bytes will be passed here.
+        :param object_id: Integer representation of the found object ID.
+        See the:func:`tmtccmd.core.hook_base.set_object_ids` function for more information
+        :param set_id: Unique set ID of the HK reply
+        :param hk_data: HK data. For custom HK handling, whole HK data will be passed here. Otherwise, a 8 byte SID
+        consisting of the 4 byte object ID and 4 byte set ID will be assumed and the remaining packet after the first
+        4 bytes will be passed here.
         :param service3_packet: Service 3 packet object
         :return: Expects a tuple, consisting of two lists, a bytearray and an integer
         The first list contains the header columns, the second list the list with
@@ -153,7 +152,7 @@ class TmTcHookBase:
         This function is called when a Service 5 Event Packet is received. The user can specify a custom
         string here which will be printed to display additional information related to an event.
         :param object_id:       Integer representation of the found object ID. See
-                                the :func:`~tmtccmd.core.hook_base.set_object_ids function for more information
+                                the :func:`tmtccmd.core.hook_base.set_object_ids` function for more information
         :param event_id:        Two-byte event ID
         :param param_1:         Four-byte Parameter 1
         :param param_2:         Four-byte Parameter 2
