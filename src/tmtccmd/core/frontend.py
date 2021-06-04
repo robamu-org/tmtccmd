@@ -8,7 +8,6 @@
 @author         R. Mueller, P. Scheurenbrand, D. Nguyen
 """
 import enum
-import threading
 import os
 import sys
 import time
@@ -17,17 +16,14 @@ from multiprocessing import Process
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
     QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem, QMenu, QAction, QMenuBar
-from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QThread, QRunnable
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.hook import TmTcHookBase
-from tmtccmd.config.definitions import CoreComInterfacesDict, CoreGlobalIds, CoreModeList, CoreComInterfaces
-from tmtccmd.config.globals import get_global_apid
+from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces
 from tmtccmd.config.hook import get_global_hook_obj
-from tmtccmd.pus_tc.definitions import PusTelecommand
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds

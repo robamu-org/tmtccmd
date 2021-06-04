@@ -46,8 +46,7 @@ class PusTcDataFieldHeaderSerialize:
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 class PusTelecommand:
-    """
-    Class representation of a PUS telecommand. It can be used to pack a raw telecommand from
+    """Class representation of a PUS telecommand. It can be used to pack a raw telecommand from
     input parameters. The structure of a PUS telecommand is specified in ECSS-E-70-41A on p.42
     and is also shown below (bottom)
     """
@@ -60,18 +59,17 @@ class PusTelecommand:
             app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = 0b1,
             ack_flags: int = 0b1111, apid: int = -1
     ):
-        """
-        Initiate a PUS telecommand from the given parameters. The raw byte representation
+        """Initiate a PUS telecommand from the given parameters. The raw byte representation
         can then be retrieved with the pack() function.
-        :param service:         PUS service number
-        :param subservice:      PUS subservice number
-        :param apid:            Application Process ID as specified by CCSDS
-        :param ssc:             Source Sequence Count. Application should take care of incrementing
-                                this. Limited to 2 to the power of 14 by the number of bits in
-                                the header
-        :param app_data:        Application data in the Packet Data Field
-        :param source_id:       Source ID will be supplied as well. Can be used to distinguish
-                                different packet sources (e.g. different ground stations)
+
+        :param service: PUS service number
+        :param subservice: PUS subservice number
+        :param apid: Application Process ID as specified by CCSDS
+        :param ssc: Source Sequence Count. Application should take care of incrementing this.
+            Limited to 2 to the power of 14 by the number of bits in the header
+        :param app_data: Application data in the Packet Data Field
+        :param source_id: Source ID will be supplied as well. Can be used to distinguish
+            different packet sources (e.g. different ground stations)
         :param pus_tc_version:  PUS TC version. 1 for ECSS-E-70-41A
 
         """
@@ -102,31 +100,24 @@ class PusTelecommand:
         self.packed_data = bytearray()
 
     def __repr__(self):
-        """
-        Returns the representation of a class instance.
-        """
+        """Returns the representation of a class instance."""
         return f"{self.__class__.__name__}(service={self._data_field_header.service_type!r}, " \
                f"subservice={self._data_field_header.service_subtype!r}, " \
                f"ssc={self._space_packet_header.ssc!r}, apid={self.apid})"
 
     def __str__(self):
-        """
-        Returns string representation of a class instance.
-        """
+        """Returns string representation of a class instance."""
         return f"TC[{self._data_field_header.service_type}, " \
                f"{self._data_field_header.service_subtype}] with SSC {self._space_packet_header.ssc}"
 
     def get_total_length(self):
-        """
-        Length of full packet in bytes.
+        """Length of full packet in bytes.
         The header length is 6 bytes and the data length + 1 is the size of the data field.
         """
         return self.get_data_length(len(self.app_data)) + SPACE_PACKET_HEADER_SIZE + 1
 
     def pack(self) -> bytearray:
-        """
-        Serializes the TC data fields into a bytearray.
-        """
+        """Serializes the TC data fields into a bytearray."""
         self.packed_data = bytearray()
         self.packed_data.extend(self._space_packet_header.pack())
         self.packed_data.extend(self._data_field_header.pack())
@@ -140,8 +131,7 @@ class PusTelecommand:
 
     @staticmethod
     def get_data_length(app_data_len: int) -> int:
-        """
-        Retrieve size of TC packet in bytes.
+        """Retrieve size of TC packet in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet data field) - 1.
         The size of the TC packet is the size of the packet secondary header with
         source ID + the length of the application data + length of the CRC16 checksum - 1
@@ -154,8 +144,7 @@ class PusTelecommand:
             return 0
 
     def pack_command_tuple(self) -> Tuple[bytearray, PusTelecommand]:
-        """
-        Pack a tuple consisting of the raw packet as the first entry and the class representation
+        """Pack a tuple consisting of the raw packet as the first entry and the class representation
         as the second entry
         """
         command_tuple = (self.pack(), self)
@@ -180,8 +169,7 @@ class PusTelecommand:
         return self.app_data
 
     def print(self):
-        """
-        Print the raw command in a clean format.
+        """Print the raw command in a clean format.
         """
         packet = self.pack()
         print("Command in Hexadecimal: [", end="")
@@ -194,8 +182,7 @@ class PusTelecommand:
 
 
 def generate_packet_crc(tc_packet: bytearray) -> bytearray:
-    """
-    Removes current Packet Error Control, calculates new
+    """Removes current Packet Error Control, calculates new
     CRC16 checksum and adds it as correct Packet Error Control Code.
     Reference: ECSS-E70-41A p. 207-212
     """
@@ -207,8 +194,7 @@ def generate_packet_crc(tc_packet: bytearray) -> bytearray:
 
 
 def generate_crc(data: bytearray) -> bytearray:
-    """
-    Takes the application data, appends the CRC16 checksum and returns resulting bytearray
+    """Takes the application data, appends the CRC16 checksum and returns resulting bytearray
     """
     data_with_crc = bytearray()
     data_with_crc += data

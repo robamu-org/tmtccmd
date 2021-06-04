@@ -1,9 +1,8 @@
 """
-@file   tmtcc_ethernet_com_if.py
-@date   01.11.2019
-@brief  Ethernet Communication Interface
-
-@author R. Mueller
+:file:      tcpip_udp_com_if.py
+:date:      13.05.2021
+:brief:     UDP Communication Interface
+:author:    R. Mueller
 """
 import select
 import socket

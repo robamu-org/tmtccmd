@@ -15,15 +15,13 @@ This commander application was first developed by KSat for the
 software but has evolved into a more generic tool for satellite developers to perform TMTC 
 (Telemetry and Telecommand) handling and testing via different communication interfaces. 
 Currently, only the PUS standard is implemented as a packet standard. This tool can be used either 
-as a command line tool or as a GUI tool, but the GUI capabilities are still in an alpha state.
+as a command line tool or as a GUI tool. The GUI features require a PyQt5 installation.
 
 This client currently supports the following communication interfaces:
 
-1. TCP/IP with UDP packets
+1. TCP/IP with UDP and TCP
 2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
-
-A TCP implementation is planned.
 
 The TMTC commander also includes a Space Packet and a ECSS PUS packet stack. Some of these
 components might be moved to an own library soon, so they were decoupled from the rest 
@@ -96,4 +94,4 @@ python3 -m pip install -e .[gui]
 ```
 
 Omit the `-e` for a regular installation. Alternatively you can now install the package
-from PyPI with `python3 -m pip install -e tmtccmd`.
+from PyPI with `python3 -m pip install -e tmtccmd[gui]`.

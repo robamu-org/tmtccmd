@@ -7,17 +7,14 @@ LOGGER = get_logger()
 
 
 class ObjectIdManager:
-    """
-    Global object manager. This is a singleton class, only one global instance should be created.
-    The instance can be retrieved with the get_manager class method.
+    """Global object manager. This is a singleton class, only one global instance should be created.
+    The instance can be retrieved with the `get_manager` class method.
     """
     MANAGER_INSTANCE = None
 
     @classmethod
     def get_manager(cls):
-        """
-        Retrieve a handle to the global object ID manager.
-        """
+        """Retrieve a handle to the global object ID manager"""
         if cls.MANAGER_INSTANCE is None:
             cls.MANAGER_INSTANCE = ObjectIdManager()
         return cls.MANAGER_INSTANCE

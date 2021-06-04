@@ -19,9 +19,7 @@ PusTmTupleQueueT = Deque[PusTmTupleT]
 
 
 class PusTelemetryFactory(object):
-    """
-    Deserialize TM bytearrays into PUS TM Classes
-    """
+    """Deserialize TM bytearrays into PUS TM Classes"""
     @staticmethod
     def create(raw_tm_packet: bytearray) -> Union[PusTelemetry, None]:
         try:

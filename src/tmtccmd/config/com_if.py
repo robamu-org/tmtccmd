@@ -1,43 +1,37 @@
 import sys
-from typing import Union
+from typing import Optional
 
 from tmtccmd.config.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType, SerialComIF
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
-from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
+from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-
+from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
+from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF
 
 LOGGER = get_logger()
 
 
 def create_communication_interface_default(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
-) -> Union[CommunicationInterface, None]:
+) -> Optional[CommunicationInterface]:
+    """Return the desired communication interface object
+
+    :param com_if_key:
+    :param tmtc_printer:
+    :param json_cfg_path:
+    :return:
+    """
     from tmtccmd.com_if.dummy_com_if import DummyComIF
-    from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
-    """
-    Return the desired communication interface object
-    :param tmtc_printer: TmTcPrinter object.
-    :return: CommunicationInterface object
-    """
+
     try:
-        if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
-            default_tcpip_udp_cfg_setup(json_cfg_path=json_cfg_path)
-            ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-            send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
-            recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
-            max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
-            init_mode = get_global(CoreGlobalIds.MODE)
-            communication_interface = TcpIpUdpComIF(
-                com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
-                tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
-                send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
-                tmtc_printer=tmtc_printer, init_mode=init_mode
+        if com_if_key == CoreComInterfaces.TCPIP_UDP.value or com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+            communication_interface = create_default_tcpip_interface(
+                com_if_key=com_if_key, json_cfg_path=json_cfg_path, tmtc_printer=tmtc_printer
             )
         elif com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
                 com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
@@ -57,9 +51,11 @@ def create_communication_interface_default(
             )
         else:
             communication_interface = DummyComIF(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+        if communication_interface is None:
+            return communication_interface
         if not communication_interface.valid:
             LOGGER.warning("Invalid communication interface!")
-            sys.exit()
+            return None
         communication_interface.initialize()
         return communication_interface
     except (IOError, OSError) as e:
@@ -68,14 +64,26 @@ def create_communication_interface_default(
         sys.exit(1)
 
 
-def default_tcpip_udp_cfg_setup(json_cfg_path: str):
-    from tmtccmd.com_if.tcpip_utilities import determine_udp_send_address, \
-        determine_recv_buffer_len, determine_udp_recv_address
+def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str):
+    """Default setup for TCP/IP communication interfaces. This intantiates all required data in the globals
+    manager so a TCP/IP communication interface can be built with :func:`create_default_tcpip_interface`
+    :param tcpip_type:
+    :param json_cfg_path:
+    :return:
+    """
+    from tmtccmd.com_if.tcpip_utilities import determine_udp_send_address, determine_tcp_send_address, \
+        determine_recv_buffer_len
     update_global(CoreGlobalIds.USE_ETHERNET, True)
-    # This will either load the addresses from a JSON file or prompt them from the user.
-    send_tuple = determine_udp_send_address(json_cfg_path=json_cfg_path)
-    recv_tuple = determine_udp_recv_address(json_cfg_path=json_cfg_path)
-    max_recv_buf_size = determine_recv_buffer_len(json_cfg_path=json_cfg_path, udp=True)
+    recv_tuple = None
+    if tcpip_type == TcpIpType.UDP:
+        # This will either load the addresses from a JSON file or prompt them from the user.
+        send_tuple = determine_udp_send_address(json_cfg_path=json_cfg_path)
+        # Not used for now
+        # from tmtccmd.com_if.tcpip_utilities import determine_tcpip_address
+        # recv_tuple = determine_tcpip_address(tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=json_cfg_path)
+    elif tcpip_type == TcpIpType.TCP:
+        send_tuple = determine_tcp_send_address(json_cfg_path=json_cfg_path)
+    max_recv_buf_size = determine_recv_buffer_len(json_cfg_path=json_cfg_path, tcpip_type=tcpip_type)
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     ethernet_cfg_dict.update({TcpIpConfigIds.SEND_ADDRESS: send_tuple})
     ethernet_cfg_dict.update({TcpIpConfigIds.RECV_ADDRESS: recv_tuple})
@@ -84,6 +92,12 @@ def default_tcpip_udp_cfg_setup(json_cfg_path: str):
 
 
 def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
+    """Default setup for serial interfaces
+
+    :param com_if_key:
+    :param json_cfg_path:
+    :return:
+    """
     baud_rate = determine_baud_rate(json_cfg_path=json_cfg_path)
     if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
         serial_port = determine_com_port(json_cfg_path=json_cfg_path)
@@ -92,9 +106,54 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
     set_up_serial_cfg(json_cfg_path=json_cfg_path, com_if_key=com_if_key, baud_rate=baud_rate, com_port=serial_port)
 
 
+def create_default_tcpip_interface(
+        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
+) -> Optional[CommunicationInterface]:
+    """Create a default serial interface. Requires a certain set of global variables set up. See
+    :func:`default_tcpip_cfg_setup` for more details.
+
+    :param com_if_key:
+    :param tmtc_printer:
+    :param json_cfg_path:
+    :return:
+    """
+    if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
+        default_tcpip_cfg_setup(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
+    elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+        default_tcpip_cfg_setup(tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path)
+    ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
+    send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
+    recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
+    max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
+    init_mode = get_global(CoreGlobalIds.MODE)
+    if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
+        communication_interface = TcpIpUdpComIF(
+            com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
+            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
+            send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
+            tmtc_printer=tmtc_printer, init_mode=init_mode
+        )
+    elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+        communication_interface = TcpIpTcpComIF(
+            com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
+            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
+            tm_polling_freqency=0.5, send_address=send_addr, max_recv_size=max_recv_size, tmtc_printer=tmtc_printer,
+            init_mode=init_mode
+        )
+    return communication_interface
+
+
 def create_default_serial_interface(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
-) -> Union[CommunicationInterface, None]:
+) -> Optional[CommunicationInterface]:
+    """Create a default serial interface. Requires a certain set of global variables set up. See
+    :func:`set_up_serial_cfg` for more details.
+
+    :param com_if_key:
+    :param tmtc_printer:
+    :param json_cfg_path:
+    :return:
+    """
     try:
         # For a serial communication interface, there are some configuration values like
         # baud rate and serial port which need to be set once but are expected to stay
@@ -134,9 +193,9 @@ def set_up_serial_cfg(
         ser_com_type: SerialCommunicationType = SerialCommunicationType.DLE_ENCODING,
         ser_frame_size: int = 256, dle_queue_len: int = 25, dle_frame_size: int = 1024
 ):
-    """
-    Default configuration to set up serial communication. The serial port and the baud rate
-    will be determined from a JSON configuration file and prompted from the user
+    """Default configuration to set up serial communication. The serial port and the baud rate
+    will be determined from a JSON configuration file and prompted from the user. Sets up all global variables
+    so that a serial communication interface can be built with :func:`create_default_serial_interface`
     :param json_cfg_path:
     :param com_if_key:
     :param com_port:
