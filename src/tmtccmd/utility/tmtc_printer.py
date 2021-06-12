@@ -151,7 +151,7 @@ class TmTcPrinter:
         from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
-            self.__print_buffer = f"HK Data from Object ID {tm_packet.object_id:#010x} and " \
+            self.__print_buffer = f"HK Data from Object ID {tm_packet.get_object_id():#010x} and " \
                                   f"set ID {tm_packet.set_id}:"
             self.__print_hk(tm_packet)
             self.__print_validity_buffer(tm_packet)
@@ -165,7 +165,7 @@ class TmTcPrinter:
         from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
-            self.__print_buffer = f"HK Definition from Object ID {tm_packet.object_id:#010x} " \
+            self.__print_buffer = f"HK Definition from Object ID {tm_packet._object_id:#010x} " \
                                   f"and set ID {tm_packet.set_id}:"
             self.__print_hk(tm_packet)
 
