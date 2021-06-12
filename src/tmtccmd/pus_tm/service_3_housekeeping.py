@@ -50,7 +50,7 @@ class Service3TM(Service3Base):
         self.custom_hk_handling = custom_hk_handling
         self.hk_structure_report_header_size = minimum_structure_report_header_size
         self._object_id_bytes = self._tm_data[0:4]
-        self._object_id = struct.unpack('!I', self.object_id_bytes)[0]
+        self._object_id = struct.unpack('!I', self._object_id_bytes)[0]
         self._set_id = struct.unpack('!I', self._tm_data[4:8])[0]
 
         self.specify_packet_info("Housekeeping Packet")
