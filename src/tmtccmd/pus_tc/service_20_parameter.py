@@ -78,8 +78,7 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
 
 
 def pack_parameter_id(domain_id: int, unique_id: int, linear_index: int) -> bytearray:
-    """
-    Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.
+    """Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.
     The first byte of the parameter ID is the domain ID, the second byte is a unique ID and the last two bytes are a
     linear index if a parameter is not loaded from index 0.
     :param domain_id:       One byte domain ID
