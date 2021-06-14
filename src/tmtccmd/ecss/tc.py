@@ -32,7 +32,7 @@ class PusTcDataFieldHeaderSerialize:
         self.source_id = source_id
         self.pus_tc_version = pus_tc_version
         self.ack_flags = ack_flags
-        if(self.pus_tc_version == PusVersion.PUS_A):
+        if self.pus_tc_version == PusVersion.PUS_A:
             pus_version_num = 1
             self.pus_version_and_ack_byte = secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
         else:
@@ -111,8 +111,8 @@ class PusTelecommand:
             source_id=source_id, pus_tc_version=pus_tc_version
         )
         data_length = self.get_data_length(
-            secondary_header_len=self._data_field_header.get_header_size(), app_data_len=len(app_data),
-            pus_version=pus_tc_version
+            secondary_header_len=self._data_field_header.get_header_size(),
+            app_data_len=len(app_data),
         )
         self._space_packet_header = SpacePacketHeaderSerializer(
             apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
@@ -136,7 +136,10 @@ class PusTelecommand:
         """Length of full packet in bytes.
         The header length is 6 bytes and the data length + 1 is the size of the data field.
         """
-        return self.get_data_length(len(self.app_data)) + SPACE_PACKET_HEADER_SIZE + 1
+        return self.get_data_length(
+            secondary_header_len=self._data_field_header.get_header_size(),
+            app_data_len=len(self.app_data)
+        ) + SPACE_PACKET_HEADER_SIZE + 1
 
     def pack(self) -> bytearray:
         """Serializes the TC data fields into a bytearray."""
@@ -152,7 +155,7 @@ class PusTelecommand:
         return self.packed_data
 
     @staticmethod
-    def get_data_length(app_data_len: int, secondary_header_len: int, pus_version: PusVersion) -> int:
+    def get_data_length(app_data_len: int, secondary_header_len: int) -> int:
         """Retrieve size of TC packet in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet data field) - 1.
         The size of the TC packet is the size of the packet secondary header with
