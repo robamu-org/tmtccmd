@@ -25,14 +25,19 @@ except ImportError:
 class PusTcDataFieldHeaderSerialize:
     def __init__(
             self, service_type: int, service_subtype: int, source_id: int = 0,
-            pus_tc_version: int = 0b1, ack_flags: int = 0b1111
+            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag = 0
     ):
         self.service_type = service_type
         self.service_subtype = service_subtype
         self.source_id = source_id
         self.pus_tc_version = pus_tc_version
         self.ack_flags = ack_flags
-        self.pus_version_and_ack_byte = pus_tc_version << 4 | ack_flags
+        if(self.pus_tc_version == PusVersion.PUS_A):
+            pus_version_num = 1
+            self.pus_version_and_ack_byte = secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
+        else:
+            pus_version_num = 2
+            self.pus_version_and_ack_byte = pus_version_num << 4 | ack_flags
 
     def pack(self) -> bytearray:
         header_raw = bytearray()
