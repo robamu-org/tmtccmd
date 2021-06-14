@@ -12,7 +12,7 @@ from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
     PacketTypes, \
     SPACE_PACKET_HEADER_SIZE
-from tmtccmd.ecss.conf import get_default_apid, PusVersion
+from tmtccmd.ecss.conf import get_default_apid, PusVersion, get_pus_tc_version
 
 
 try:
@@ -67,7 +67,7 @@ class PusTelecommand:
 
     def __init__(
             self, service: int, subservice: int, ssc=0,
-            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = PusVersion.PUS_C,
+            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = PusVersion.UNKNOWN,
             ack_flags: int = 0b1111, apid: int = -1
     ):
         """Initiate a PUS telecommand from the given parameters. The raw byte representation
@@ -87,6 +87,8 @@ class PusTelecommand:
         if apid == -1:
             apid = get_default_apid()
         self.apid = apid
+        if pus_tc_version == PusVersion.UNKNOWN:
+            pus_tc_version = get_pus_tc_version()
         packet_type = PacketTypes.PACKET_TYPE_TC
         secondary_header_flag = 1
         if subservice > 255:
