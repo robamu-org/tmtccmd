@@ -137,14 +137,11 @@ class QEMUComIF(CommunicationInterface):
         self.usart.inject_timeout_error()
 
     def send(self, data: bytearray):
-        if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            data = tc_packet
-        elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            data = encode_dle(tc_packet)
+        if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+            data_encoded = encode_dle(data)
         else:
-            LOGGER.warning("This communication type was not implemented yet!")
-            return
-        self.send_data(data)
+            data_encoded = data
+        self.send_data(data_encoded)
 
     def send_data(self, data: bytearray):
         asyncio.run_coroutine_threadsafe(
