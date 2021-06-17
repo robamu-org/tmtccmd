@@ -97,7 +97,6 @@ def set_default_globals_post_args_parsing(
     mode_param = check_and_set_core_mode_arg(
         mode_arg=mode_param, custom_modes_list=custom_modes_list
     )
-
     all_com_ifs = CoreComInterfacesDict
     if custom_com_if_dict is not None:
         all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
@@ -110,6 +109,7 @@ def set_default_globals_post_args_parsing(
     if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
         com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
     update_global(CoreGlobalIds.COM_IF, com_if_key)
+    LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
 
     display_mode_param = "long"
     if args.short_display_mode is not None:

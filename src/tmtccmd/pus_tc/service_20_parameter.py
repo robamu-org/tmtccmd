@@ -58,8 +58,7 @@ def pack_float_vector_parameter_command(
 
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
     # noinspection PyPep8
-    """
-    Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the number of columns
+    """Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the number of columns
     and rows in the parameter.
     See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
     p.428 for more information.
@@ -78,8 +77,7 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
 
 
 def pack_parameter_id(domain_id: int, unique_id: int, linear_index: int) -> bytearray:
-    """
-    Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.
+    """Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.
     The first byte of the parameter ID is the domain ID, the second byte is a unique ID and the last two bytes are a
     linear index if a parameter is not loaded from index 0.
     :param domain_id:       One byte domain ID

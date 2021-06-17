@@ -12,7 +12,7 @@ from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
     PacketTypes, \
     SPACE_PACKET_HEADER_SIZE
-from tmtccmd.ecss.conf import get_default_apid
+from tmtccmd.ecss.conf import get_default_apid, PusVersion, get_pus_tc_version
 
 
 try:
@@ -25,22 +25,38 @@ except ImportError:
 class PusTcDataFieldHeaderSerialize:
     def __init__(
             self, service_type: int, service_subtype: int, source_id: int = 0,
-            pus_tc_version: int = 0b1, ack_flags: int = 0b1111
+            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag = 0
     ):
         self.service_type = service_type
         self.service_subtype = service_subtype
         self.source_id = source_id
         self.pus_tc_version = pus_tc_version
         self.ack_flags = ack_flags
-        self.pus_version_and_ack_byte = pus_tc_version << 4 | ack_flags
+        if self.pus_tc_version == PusVersion.PUS_A:
+            pus_version_num = 1
+            self.pus_version_and_ack_byte = secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
+        else:
+            pus_version_num = 2
+            self.pus_version_and_ack_byte = pus_version_num << 4 | ack_flags
 
     def pack(self) -> bytearray:
         header_raw = bytearray()
         header_raw.append(self.pus_version_and_ack_byte)
         header_raw.append(self.service_type)
         header_raw.append(self.service_subtype)
-        header_raw.append(self.source_id)
+        if self.pus_tc_version == PusVersion.PUS_C:
+            header_raw.append(self.source_id << 8 & 0xff)
+            header_raw.append(self.source_id & 0xff)
+        else:
+            # PUS A includes optional source ID field as well
+            header_raw.append(self.source_id)
         return header_raw
+
+    def get_header_size(self):
+        if self.pus_tc_version == PusVersion.PUS_A:
+            return 4
+        elif self.pus_tc_version == PusVersion.PUS_C:
+            return 5
 
 
 # pylint: disable=too-many-instance-attributes
@@ -56,7 +72,7 @@ class PusTelecommand:
 
     def __init__(
             self, service: int, subservice: int, ssc=0,
-            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = 0b1,
+            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = PusVersion.UNKNOWN,
             ack_flags: int = 0b1111, apid: int = -1
     ):
         """Initiate a PUS telecommand from the given parameters. The raw byte representation
@@ -76,6 +92,8 @@ class PusTelecommand:
         if apid == -1:
             apid = get_default_apid()
         self.apid = apid
+        if pus_tc_version == PusVersion.UNKNOWN:
+            pus_tc_version = get_pus_tc_version()
         packet_type = PacketTypes.PACKET_TYPE_TC
         secondary_header_flag = 1
         if subservice > 255:
@@ -88,13 +106,17 @@ class PusTelecommand:
         if ssc > pow(2, 14):
             print("SSC invalid, setting to 0")
             ssc = 0
-        self._space_packet_header = SpacePacketHeaderSerializer(
-            apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
-            data_length=self.get_data_length(len(app_data)), source_sequence_count=ssc
-        )
         self._data_field_header = PusTcDataFieldHeaderSerialize(
             service_type=service, service_subtype=subservice, ack_flags=ack_flags,
             source_id=source_id, pus_tc_version=pus_tc_version
+        )
+        data_length = self.get_data_length(
+            secondary_header_len=self._data_field_header.get_header_size(),
+            app_data_len=len(app_data),
+        )
+        self._space_packet_header = SpacePacketHeaderSerializer(
+            apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
+            data_length=data_length, source_sequence_count=ssc
         )
         self.app_data = app_data
         self.packed_data = bytearray()
@@ -114,7 +136,10 @@ class PusTelecommand:
         """Length of full packet in bytes.
         The header length is 6 bytes and the data length + 1 is the size of the data field.
         """
-        return self.get_data_length(len(self.app_data)) + SPACE_PACKET_HEADER_SIZE + 1
+        return self.get_data_length(
+            secondary_header_len=self._data_field_header.get_header_size(),
+            app_data_len=len(self.app_data)
+        ) + SPACE_PACKET_HEADER_SIZE + 1
 
     def pack(self) -> bytearray:
         """Serializes the TC data fields into a bytearray."""
@@ -130,14 +155,14 @@ class PusTelecommand:
         return self.packed_data
 
     @staticmethod
-    def get_data_length(app_data_len: int) -> int:
+    def get_data_length(app_data_len: int, secondary_header_len: int) -> int:
         """Retrieve size of TC packet in bytes.
         Formula according to PUS Standard: C = (Number of octets in packet data field) - 1.
         The size of the TC packet is the size of the packet secondary header with
         source ID + the length of the application data + length of the CRC16 checksum - 1
         """
         try:
-            data_length = 4 + app_data_len + 1
+            data_length = secondary_header_len + app_data_len + 1
             return data_length
         except TypeError:
             print("PusTelecommand: Invalid type of application data!")
