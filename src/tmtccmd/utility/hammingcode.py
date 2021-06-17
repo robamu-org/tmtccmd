@@ -107,7 +107,7 @@ def hamming_verify_256x(data: bytearray, original_hamming_code: bytearray) -> Ha
             LOGGER.info(f"Detected multi-bit error at data block starting at {current_data_idx}")
             return error_code
         elif error_code == HammingReturnCodes.ERROR_ECC:
-            LOGGER.info(f"Possible error in ECC code")
+            LOGGER.info('Possible error in ECC code')
             return error_code
         current_data_idx += 256
         current_hamming_idx += 3
@@ -142,9 +142,9 @@ def hamming_compute_256(data: bytearray) -> bytearray:
             Parity groups are formed by forcing a particular index bit to 0
             (even) or 1 (odd).
             Example on one byte:
-             
-            bits (dec)  7   6   5   4   3   2   1   0    
-                 (bin) 111 110 101 100 011 010 001 000    
+
+            bits (dec)  7   6   5   4   3   2   1   0
+                 (bin) 111 110 101 100 011 010 001 000
                                        '---'---'---'----------.
                                                               |
             groups P4' ooooooooooooooo eeeeeeeeeeeeeee P4     |
@@ -161,11 +161,11 @@ def hamming_compute_256(data: bytearray) -> bytearray:
                 ex: log2(4) = 2, bit2 of the index must be 0 (-> 0 1 2 3)
             and on all odd Px' if the log2(x)nth bit of its index is 1
                 ex: log2(2) = 1, bit1 of the index must be 1 (-> 0 1 4 5)
-             
+
             As such, we calculate all the possible Px and Px' values at the
             same time in two variables, evenLineCode and oddLineCode, such as
                  evenLineCode bits: P128  P64  P32  P16  P8  P4  P2  P1
-                 oddLineCode  bits: P128' P64' P32' P16' P8' P4' P2' P1' 
+                 oddLineCode  bits: P128' P64' P32' P16' P8' P4' P2' P1'
             """
             even_line_code ^= (255 - index)
             odd_line_code ^= index
@@ -306,5 +306,3 @@ def hamming_test():
     hamming_code = hamming_compute_256(test_data)
     print("Hamming code: " + str(hex(hamming_code[0])) + ", " + str(hex(hamming_code[1])) +
           ", " + str(hex(hamming_code[2])))
-
-

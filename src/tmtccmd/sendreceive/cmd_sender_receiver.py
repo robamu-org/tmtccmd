@@ -33,8 +33,9 @@ class CommandSenderReceiver:
     This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
-    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-                 tm_listener: TmListener):
+    def __init__(
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener
+    ):
 
         """
         :param com_if: CommunicationInterface object. Instantiate the desired one
@@ -136,12 +137,18 @@ class CommandSenderReceiver:
             return False
 
     @staticmethod
-    def check_queue_entry_static(tc_queue_entry: TcQueueEntryT):
-        """
-        TODO: static version which can be called without sendreceive classes
-        """
+    def check_queue_entry_static(tc_queue_entry: TcQueueEntryT) -> bool:
+        """Static method to check whether a queue entry is a valid telecommand"""
         queue_entry_first, queue_entry_second = tc_queue_entry
-        queue_entry_is_telecommand = False
+        if isinstance(queue_entry_first, str):
+            LOGGER.warning("Invalid telecommand. Queue entry is a string!")
+            return False
+        if isinstance(queue_entry_first, QueueCommands):
+            return False
+        elif isinstance(queue_entry_first, bytearray):
+            return True
+        else:
+            return False
 
     def check_queue_entry(self, tc_queue_entry: TcQueueEntryT) -> bool:
         """

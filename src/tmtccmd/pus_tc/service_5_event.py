@@ -45,4 +45,3 @@ def pack_generic_service5_test_into(tc_queue: TcQueueT, apid: int = -1):
     command = PusTelecommand(service=17, subservice=128, apid=apid, ssc=530)
     tc_queue.appendleft(command.pack_command_tuple())
     tc_queue.appendleft((QueueCommands.EXPORT_LOG, "log/tmtc_log_service5.txt"))
-

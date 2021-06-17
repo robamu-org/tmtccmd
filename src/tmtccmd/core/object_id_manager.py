@@ -1,4 +1,3 @@
-import struct
 from typing import Dict
 
 from tmtccmd.utility.logger import get_logger
@@ -13,7 +12,7 @@ def insert_object_id(object_id: bytes, object_id_info: list):
 
 def insert_object_ids(object_id_dict: Dict[bytes, list]):
     if object_id_dict is not None:
-         __OBJECT_ID_DICT.update(object_id_dict)
+        __OBJECT_ID_DICT.update(object_id_dict)
 
 
 def get_object_id_info(object_id: bytes):

@@ -9,9 +9,7 @@ Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 :author:     R. Mueller
 """
 from abc import abstractmethod
-from typing import Callable
 
-from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.pus_tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 

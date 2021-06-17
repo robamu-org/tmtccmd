@@ -10,7 +10,6 @@ from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
 from tmtccmd.com_if.com_if_utilities import determine_com_if
-from tmtccmd.config.com_if import default_serial_cfg_setup, default_tcpip_cfg_setup
 from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT
 
 LOGGER = get_logger()

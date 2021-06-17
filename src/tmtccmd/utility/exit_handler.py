@@ -21,6 +21,3 @@ class GracefulKiller:
     def exit_gracefully(self):
         self.kill_now = True
         print("I was killed")
-
-
-

@@ -9,12 +9,10 @@ import socket
 from typing import Union
 
 from tmtccmd.utility.logger import get_logger
-from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.pus_tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.config.definitions import EthernetAddressT
+from tmtccmd.config.definitions import EthernetAddressT, CoreModeList
 
 LOGGER = get_logger()
 
@@ -105,5 +103,3 @@ class TcpIpUdpComIF(CommunicationInterface):
         except ConnectionResetError:
             LOGGER.warning("Connection reset exception occured!")
             return []
-
-

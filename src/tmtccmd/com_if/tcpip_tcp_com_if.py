@@ -15,7 +15,6 @@ from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.pus_tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.config.definitions import EthernetAddressT
 
 LOGGER = get_logger()
@@ -116,8 +115,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                 if self.__tm_queue.__len__() >= self.max_packets_stored:
                     LOGGER.warning("Number of packets in TCP queue too large. Overwriting old packets..")
                     self.__tm_queue.pop()
-                tm_packet = PusTelemetryFactory.create(bytearray(bytes_recvd))
-                self.__tm_queue.appendleft(tm_packet)
+                self.__tm_queue.appendleft(bytearray(bytes_recvd))
             elif bytes_recvd is None or len(bytes_recvd) == 0:
                 break
 

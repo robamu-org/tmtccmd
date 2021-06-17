@@ -25,7 +25,7 @@ except ImportError:
 class PusTcDataFieldHeaderSerialize:
     def __init__(
             self, service_type: int, service_subtype: int, source_id: int = 0,
-            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag = 0
+            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag: int = 0
     ):
         self.service_type = service_type
         self.service_subtype = service_subtype

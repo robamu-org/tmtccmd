@@ -5,7 +5,7 @@ from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.com_if import create_communication_interface_default
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
-from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
+from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList
 from tmtccmd.core.frontend_base import FrontendBase
 
 

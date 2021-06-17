@@ -19,7 +19,6 @@ from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
-from tmtccmd.config.com_if import create_communication_interface_default
 from tmtccmd.utility.logger import set_tmtc_logger, get_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
@@ -153,13 +152,13 @@ def __set_up_tmtc_commander(
 
 def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool):
     if ansi_colors:
-        print(f"{AnsiColors.CYAN}-- Python TMTC Commander --{AnsiColors.RESET}")
+        print(f'{AnsiColors.CYAN}-- Python TMTC Commander --{AnsiColors.RESET}')
     if use_gui:
-        print(f"-- GUI mode --")
+        print('-- GUI mode --')
     else:
-        print(f"-- Command line mode --")
+        print('-- Command line mode --')
 
-    print(f"-- Software version {version_string} --")
+    print(f'-- Software version {version_string} --')
 
 
 def __handle_cli_args_and_globals():
@@ -167,7 +166,7 @@ def __handle_cli_args_and_globals():
     from tmtccmd.core.globals_manager import get_global
 
     hook_obj = cast(TmTcHookBase, get_global(CoreGlobalIds.TMTC_HOOK))
-    LOGGER.info("Setting up pre-globals..")
+    LOGGER.info('Setting up pre-globals..')
     hook_obj.add_globals_pre_args_parsing(False)
 
     LOGGER.info("Parsing input arguments..")
@@ -188,7 +187,6 @@ def __start_tmtc_commander_qt_gui(
     app = None
     if tmtc_frontend is None:
         from tmtccmd.core.frontend import TmTcFrontend
-        from tmtccmd.core.backend import TmTcHandler
         from tmtccmd.config.hook import get_global_hook_obj
         try:
             from PyQt5.QtWidgets import QApplication

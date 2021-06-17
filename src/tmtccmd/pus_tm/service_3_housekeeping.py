@@ -88,7 +88,7 @@ class Service3TM(Service3Base):
         num_params = self._tm_data[14]
         if len(self._tm_data) < self.hk_structure_report_header_size + num_params * 4:
             LOGGER.warning(
-                f"Service3TM: handle_filling_definition_arrays: Invalid structure report " 
+                f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
                 f"from {hex(self.object_id)}, is shorter than "
                 f"{self.hk_structure_report_header_size + num_params * 4}"
             )

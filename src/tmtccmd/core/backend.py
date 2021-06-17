@@ -6,10 +6,9 @@ from abc import abstractmethod
 from collections import deque
 from typing import Tuple, Union
 
-from tmtccmd.config.definitions import CoreComInterfaces, CoreGlobalIds, CoreServiceList, CoreModeList
+from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.sendreceive.single_command_sender_receiver import SingleCommandSenderReceiver
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -208,7 +207,6 @@ class TmTcHandler(BackendBase):
                 self.__tm_listener.clear_tm_packet_queue()
                 self.__tm_listener.clear_reply_event()
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
-            from tmtccmd.core.globals_manager import get_global
             service_queue = deque()
             service_queue_packer = ServiceQueuePacker()
             service_queue_packer.pack_service_queue_core(

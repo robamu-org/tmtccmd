@@ -1,7 +1,6 @@
 from typing import Callable
 from abc import abstractmethod
 from tmtccmd.utility.logger import get_logger
-from tmtccmd.ccsds.spacepacket import get_apid_from_raw_packet
 
 CcsdsCallbackT = Callable[[int, bytearray], None]
 
@@ -15,4 +14,3 @@ class CcsdsHandler:
     @abstractmethod
     def handle_ccsds_packet(self, packet: bytearray) -> any:
         pass
-

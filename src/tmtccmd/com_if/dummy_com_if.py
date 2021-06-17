@@ -84,21 +84,18 @@ class DummyHandler:
 
                 self.current_ssc += 1
                 tm_packet_raw = tm_packer.pack()
-                tm_packet = PusTelemetryFactory.create(tm_packet_raw)
-                self.next_telemetry_package.append(tm_packet)
+                self.next_telemetry_package.append(tm_packet_raw)
                 tm_packer = Service1TmPacked(
                     subservice=7, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
                     tc_ssc=self.last_tc_ssc
                 )
                 tm_packet_raw = tm_packer.pack()
-                tm_packet = PusTelemetryFactory.create(tm_packet_raw)
-                self.next_telemetry_package.append(tm_packet)
+                self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
                 tm_packer = Service17TmPacked(subservice=Srv17Subservices.PING_REPLY)
                 tm_packet_raw = tm_packer.pack()
-                tm_packet = PusTelemetryFactory.create(tm_packet_raw)
-                self.next_telemetry_package.append(tm_packet)
+                self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
     def receive_reply_package(self) -> PusTmListT:

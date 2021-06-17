@@ -4,7 +4,7 @@ Argument parser modules for the TMTC commander core
 import argparse
 import sys
 
-from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces, ServiceOpCodeDictT
+from tmtccmd.config.definitions import CoreModeList, ServiceOpCodeDictT
 from tmtccmd.utility.logger import get_logger
 
 
@@ -113,7 +113,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config.definitions import CoreModeList, CoreModeStrings
-    help_text = f"Core Modes. Default: seqcmd\n"
+    help_text = 'Core Modes. Default: seqcmd\n'
     seq_help = \
         f"{CoreModeList.SEQUENTIAL_CMD_MODE} or " \
         f"{CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]}: " \
@@ -133,8 +133,8 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config.definitions import CoreComInterfacesDict, CoreComInterfaces
-    help_text = f"Core Communication Interface. If this is not specified, the commander core\n" \
-                f"will try to extract it from the JSON or prompt it from the user.\n"
+    help_text = "Core Communication Interface. If this is not specified, the commander core\n" \
+                "will try to extract it from the JSON or prompt it from the user.\n"
     dummy_line = \
         f"{CoreComInterfacesDict[CoreComInterfaces.DUMMY.value]}: Dummy Interface\n"
     udp_line = \

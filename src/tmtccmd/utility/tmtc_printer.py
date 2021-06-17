@@ -52,7 +52,7 @@ class TmTcPrinter:
         """Print the telemetry queue which should contain lists of TM class instances."""
         for tm_list in tm_queue:
             for tm_packet in tm_list:
-                self.print_telemetry(packet)
+                self.print_telemetry(tm_packet)
 
     def print_telemetry(self, packet: PusTelemetry, print_raw_tm: bool = False):
         """This function handles printing telemetry

@@ -1,4 +1,3 @@
-import enum
 from typing import Union
 
 from tmtccmd.ecss.tc import PusTelecommand

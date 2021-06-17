@@ -27,7 +27,6 @@ import time
 from collections import deque
 from threading import Thread
 
-from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.pus_tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter

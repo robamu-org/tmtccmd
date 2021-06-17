@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from typing import Deque, List, Tuple, Optional
 from tmtccmd.ccsds.handler import CcsdsHandler
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_5_event import Service5TM
