@@ -118,6 +118,10 @@ class TmTcHookBase:
 
     # TODO: All of this will be moved to the dedicated PUS packet handler
 
+    @abstractmethod
+    def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> Optional[PusTelemetry]:
+        pass
+
     @staticmethod
     def handle_service_8_telemetry(
             object_id: bytes, action_id: int, custom_data: bytearray
