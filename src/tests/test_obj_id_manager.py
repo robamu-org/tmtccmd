@@ -1,7 +1,7 @@
 from unittest import TestCase
 from tmtccmd.core.object_id_manager import insert_object_id, get_object_id_info
 
-TEST_ID_0 = bytearray([0x00, 0x01, 0x02, 0x03])
+TEST_ID_0 = bytes([0x00, 0x01, 0x02, 0x03])
 
 
 class TestObjIdManager(TestCase):
