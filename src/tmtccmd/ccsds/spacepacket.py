@@ -151,3 +151,9 @@ def get_sp_space_packet_header(
     header.append((data_length & 0xFF00) >> 8)
     header.append(data_length & 0xFF)
     return header
+
+
+def get_apid_from_raw_packet(raw_packet: bytearray):
+    if len(raw_packet) < 6:
+        return 0
+    return ((raw_packet[0] & 0x7) << 8) | raw_packet[1]

@@ -9,10 +9,10 @@ from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.factory import PusTelemetryFactory
+from tmtccmd.pus_tm.handler import PusTelemetryFactory
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
 from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.pus_tm.factory import TelemetryQueueT
+from tmtccmd.pus_tm.handler import TelemetryQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
 from tmtccmd.utility.logger import get_logger
 

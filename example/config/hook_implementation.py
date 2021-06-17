@@ -50,7 +50,7 @@ class ExampleHookClass(TmTcHookBase):
         )
 
     def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> PusTelemetry:
-        from tmtccmd.pus_tm.factory import default_factory_hook
+        from tmtccmd.pus_tm.handler import default_factory_hook
         LOGGER.info("TM user factory hook was called")
         return default_factory_hook(raw_tm_packet=raw_tm_packet)
 

@@ -114,7 +114,7 @@ class TmTcHookBase:
         pass
 
     @staticmethod
-    def custom_args_parsing() -> Union[None, argparse.Namespace]:
+    def custom_args_parsing() -> Optional[argparse.Namespace]:
         """The user can implement args parsing here to override the default argument parsing for the CLI mode
         :return:
         """
