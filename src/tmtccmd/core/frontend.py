@@ -13,6 +13,7 @@ import sys
 import time
 import webbrowser
 from multiprocessing import Process
+from typing import Union
 
 from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
     QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem, QMenu, QAction, QMenuBar
@@ -124,7 +125,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__thread = None
         self.__debug_mode = False
 
-        self.__combo_box_op_codes: QComboBox = None
+        self.__combo_box_op_codes: Union[None, QComboBox] = None
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
 
@@ -239,7 +240,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         help_action.triggered.connect(self.__help_url)
         help_menu.addAction(help_action)
 
-    def __help_url(self):
+    @staticmethod
+    def __help_url():
         webbrowser.open('https://tmtccmd.readthedocs.io/en/latest/')
 
     def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
@@ -398,7 +400,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__thread.finished.connect(finish_callback)
         self.__thread.start()
 
-    def __add_vertical_separator(self, grid: QGridLayout, row: int):
+    @staticmethod
+    def __add_vertical_separator(grid: QGridLayout, row: int):
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         grid.addWidget(separator, row, 0, 1, 2)

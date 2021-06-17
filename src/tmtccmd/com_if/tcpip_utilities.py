@@ -129,6 +129,9 @@ def determine_recv_buffer_len(json_cfg_path: str, tcpip_type: TcpIpType):
         json_key = JsonKeyNames.TCPIP_UDP_RECV_MAX_SIZE.value
     elif tcpip_type == TcpIpType.TCP:
         json_key = JsonKeyNames.TCPIP_TCP_RECV_MAX_SIZE.value
+    else:
+        json_key = JsonKeyNames.TCPIP_UDP_RECV_MAX_SIZE.value
+
     if not check_json_file(json_cfg_path=json_cfg_path):
         reconfigure_recv_buf_size = True
     with open(json_cfg_path, "r") as write:

@@ -4,7 +4,7 @@ from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.com_if import create_communication_interface_default
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList, CoreServiceList
 from tmtccmd.core.frontend_base import FrontendBase
 
@@ -20,9 +20,9 @@ def create_hook_mock() -> TmTcHookBase:
 
 
 def create_backend_mock() -> TmTcHandler:
-    tmtc_printer = TmTcPrinter(display_mode="LONG", do_print_to_file=False, print_tc=True)
+    tmtc_printer = TmTcPrinter(display_mode=DisplayMode.LONG, do_print_to_file=False, print_tc=True)
     com_if = create_communication_interface_default(
-        com_if_key=CoreComInterfaces.DUMMY, json_cfg_path="tmtc_config.json", tmtc_printer=tmtc_printer
+        com_if_key=CoreComInterfaces.DUMMY.value, json_cfg_path="tmtc_config.json", tmtc_printer=tmtc_printer
     )
     tm_listener = TmListener(
         com_if=com_if, tm_timeout=3.0, tc_timeout_factor=3.0
