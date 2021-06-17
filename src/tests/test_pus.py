@@ -87,8 +87,12 @@ class TestTelecommand(TestCase):
         self.assertTrue(pus_17_telecommand_invalid.get_ssc() == 0)
 
         invalid_input = "hello"
-        self.assertTrue(pus_17_telecommand_invalid.get_data_length(invalid_input) == 0)
-        self.assertRaises(TypeError, pus_17_telecommand_invalid.get_data_length(invalid_input))
+        self.assertTrue(pus_17_telecommand_invalid.get_data_length(
+            app_data_len=invalid_input, secondary_header_len=0) == 0
+        )
+        self.assertRaises(TypeError, pus_17_telecommand_invalid.get_data_length(
+            app_data_len=invalid_input, secondary_header_len=0)
+        )
 
     def test_crc_16(self):
         pus_17_telecommand = PusTelecommand(service=17, subservice=1, ssc=25)
