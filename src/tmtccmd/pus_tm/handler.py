@@ -6,29 +6,21 @@ from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.pus_tm.service_1_verification import Service1TM
 from tmtccmd.pus_tm.service_17_test import Service17TM
 from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 LOGGER = get_logger()
-PusTmTupleT = Tuple[bytearray, PusTelemetry]
-
-TelemetryListT = List[bytearray]
-TelemetryQueueT = Deque[TelemetryListT]
-
-PusTmListT = List[PusTelemetry]
-PusTmQueueT = Deque[PusTmListT]
-
-PusTmListT = List[PusTelemetry]
-PusTmObjQeue = Deque[PusTelemetry]
-PusTmTupleQueueT = Deque[PusTmTupleT]
 
 
 class PusTmHandler(CcsdsHandler):
     """Deserialize TM bytearrays into PUS TM Classes"""
-    def __init__(self, apid: int):
+    def __init__(self, apid: int, tmtc_printer: TmTcPrinter):
         super().__init__(apid=apid)
+        self.tmtc_printer = tmtc_printer
 
-    @abstractmethod
     def handle_ccsds_packet(self, packet: bytearray):
-        return default_factory_hook(raw_tm_packet=packet)
+        """Default implementation only prints the packet"""
+        telemetry_packet = default_factory_hook(raw_tm_packet=packet)
+        self.tmtc_printer.print_telemetry(packet=telemetry_packet)
 
 
 def default_factory_hook(raw_tm_packet: bytearray) -> PusTelemetry:

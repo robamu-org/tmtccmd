@@ -12,7 +12,7 @@ from abc import abstractmethod
 from typing import Callable
 
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.pus_tm.handler import TelemetryListT
+from tmtccmd.pus_tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 

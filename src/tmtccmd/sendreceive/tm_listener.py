@@ -12,7 +12,7 @@ from enum import Enum
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tm.handler import TelemetryQueueT
+from tmtccmd.pus_tm.definitions import TelemetryQueueT
 
 LOGGER = get_logger()
 

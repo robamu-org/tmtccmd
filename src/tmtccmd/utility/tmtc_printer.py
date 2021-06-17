@@ -9,10 +9,9 @@ from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.handler import PusTelemetryFactory
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
 from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.pus_tm.handler import TelemetryQueueT
+from tmtccmd.pus_tm.definitions import TelemetryQueueT, PusTmListT
 from tmtccmd.pus_tm.service_3_base import Service3Base
 from tmtccmd.utility.logger import get_logger
 
@@ -49,11 +48,10 @@ class TmTcPrinter:
     def get_display_mode(self) -> DisplayMode:
         return self._display_mode
 
-    def print_telemetry_queue(self, tm_queue: TelemetryQueueT):
+    def print_telemetry_queue(self, tm_queue: PusTmListT):
         """Print the telemetry queue which should contain lists of TM class instances."""
         for tm_list in tm_queue:
             for tm_packet in tm_list:
-                packet = PusTelemetryFactory.create(tm_packet)
                 self.print_telemetry(packet)
 
     def print_telemetry(self, packet: PusTelemetry, print_raw_tm: bool = False):
