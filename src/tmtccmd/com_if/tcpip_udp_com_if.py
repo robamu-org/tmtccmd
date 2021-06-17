@@ -10,8 +10,8 @@ from typing import Union
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.config.definitions import CoreModeList
-from tmtccmd.com_if.com_interface_base import CommunicationInterface, TelemetryListT
-from tmtccmd.pus_tm.factory import PusTelemetryFactory
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.pus_tm.factory import PusTelemetryFactory, TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.config.definitions import EthernetAddressT
@@ -99,8 +99,6 @@ class TcpIpUdpComIF(CommunicationInterface):
             ready = self.data_available(poll_timeout)
             if ready:
                 data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
-                if tm_packet is None:
-                    return []
                 packet_list = [bytearray(data)]
                 return packet_list
             return []

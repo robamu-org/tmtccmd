@@ -28,8 +28,8 @@ from collections import deque
 from threading import Thread
 
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.com_if.com_interface_base import CommunicationInterface, TelemetryListT
-from tmtccmd.pus_tm.factory import PusTelemetryFactory
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.pus_tm.factory import PusTelemetryFactory, TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
 from tmtccmd.utility.logger import get_logger
