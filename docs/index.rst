@@ -15,11 +15,9 @@ to allow for easier adaption to other missions.
 
 This client currently supports the following communication interfaces:
 
-1. TCP/IP with UDP packets
+1. TCP/IP with UDP and TCP
 2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
-
-A TCP implementation is planned.
 
 Other pages (online)
 

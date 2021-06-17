@@ -10,9 +10,7 @@ class GlobalsManager:
 
     @classmethod
     def get_manager(cls):
-        """
-        Retrieve a handle to the global object ID manager.
-        """
+        """Retrieve a handle to the global object ID manager."""
         if cls.MANAGER_INSTANCE is None:
             cls.MANAGER_INSTANCE = GlobalsManager()
         return cls.MANAGER_INSTANCE
@@ -55,19 +53,16 @@ def update_global(global_param_id: int, parameter: any):
 
 
 def lock_global_pool(timeout_seconds: float = -1) -> bool:
-    """
-    Lock the global objects. This is important if the values are changed. Don't forget to unlock the pool
+    """Lock the global objects. This is important if the values are changed. Don't forget to unlock the pool
     after finishing work with the globals!
-    @param: timeout_seconds Attempt to lock for this many second. Default value -1 blocks permanently until lock is
+    :param timeout_seconds: Attempt to lock for this many second. Default value -1 blocks permanently until lock is
     released.
-    @return: Returns whether lock was locked or not.
+    :return: Returns whether lock was locked or not.
     """
     return GlobalsManager.get_manager().lock_global_pool(timeout_seconds)
 
 
 def unlock_global_pool():
-    """
-    Releases the lock so other objects can use the global pool as well.
-    """
+    """Releases the lock so other objects can use the global pool as well"""
     GlobalsManager.get_manager().unlock_global_pool()
 

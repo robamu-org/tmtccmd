@@ -22,12 +22,18 @@ via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 
 .. _`SOURCE`: https://www.ksat-stuttgart.de/en/our-missions/source/
 
+The application is configured by passing an instance of a special hook object to the commander core
+using the ``initialize_tmtc_commander`` function and then running the ``run_tmtc_commander``
+function which also allows to specify whether the CLI or the GUI functionality is used. It is
+recommended to implement the class ``TmTcHookBase`` for the hook object instantiation
+because this class contains all important functions as abstract functions.
+
 Features
 =========
 
 - `Packet Utilisation Standard (PUS)`_ TMTC stack to simplify the packaging of PUS telecommand
   packets and the analysis and deserialization of raw PUS telemetry
-- Common communication interfaces like a serial interface or a TCP/IP interface
+- Common communication interfaces like a serial interface or a TCP/IP interfaces
   to send and receive TMTC packets.
 - Listener mode to display incoming packets
 - Sequential mode which allows inserting telecommands into a queue
