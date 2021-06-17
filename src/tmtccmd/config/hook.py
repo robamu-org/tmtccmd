@@ -109,16 +109,14 @@ class TmTcHookBase:
         """
         pass
 
-    @abstractmethod
-    def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> Union[None, PusTelemetry]:
-        pass
-
     @staticmethod
     def custom_args_parsing() -> Optional[argparse.Namespace]:
         """The user can implement args parsing here to override the default argument parsing for the CLI mode
         :return:
         """
         return None
+
+    # TODO: All of this will be moved to the dedicated PUS packet handler
 
     @staticmethod
     def handle_service_8_telemetry(

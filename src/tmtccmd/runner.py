@@ -15,7 +15,7 @@ from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.config.definitions import CoreGlobalIds
-from tmtccmd.core.tm_handler import TmTypes, TmHandler, InternalTmHandler
+from tmtccmd.core.tm_handler import InternalTmHandler
 from tmtccmd.pus_tm.handler import PusTmHandler
 from tmtccmd.core.globals_manager import update_global, get_global, lock_global_pool, unlock_global_pool
 from tmtccmd.core.object_id_manager import insert_object_ids
