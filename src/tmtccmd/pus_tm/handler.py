@@ -1,4 +1,4 @@
-from tmtccmd.ccsds.handler import CcsdsHandler
+from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.pus_tm.service_1_verification import Service1TM
@@ -9,7 +9,7 @@ from tmtccmd.utility.tmtc_printer import TmTcPrinter
 LOGGER = get_logger()
 
 
-class PusTmHandler(CcsdsHandler):
+class PusTmHandler(CcsdsTmHandler):
     """Deserialize TM bytearrays into PUS TM Classes"""
     def __init__(self, apid: int, tmtc_printer: TmTcPrinter):
         super().__init__(apid=apid)

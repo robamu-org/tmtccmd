@@ -15,7 +15,9 @@ from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.config.definitions import CoreGlobalIds
-from tmtccmd.core.globals_manager import update_global, get_global
+from tmtccmd.core.tm_handler import TmTypes, TmHandler, InternalTmHandler
+from tmtccmd.pus_tm.handler import PusTmHandler
+from tmtccmd.core.globals_manager import update_global, get_global, lock_global_pool, unlock_global_pool
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
@@ -47,6 +49,19 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
         colorama.init()
 
     __assign_tmtc_commander_hooks(hook_object=hook_object)
+
+
+def add_pus_handler(pus_handler: PusTmHandler):
+    """
+    Add a handler for PUS packets which will be used to handle PUS packets with a certain APID.
+    :param pus_handler:
+    :return:
+    """
+    lock_global_pool()
+    tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
+    if tm_handler is None:
+        tm_handler = InternalTmHandler()
+    tm_handler.add_ccsds_handler(apid=pus_handler.get_apid(), handler_object=pus_handler)
 
 
 def run_tmtc_commander(

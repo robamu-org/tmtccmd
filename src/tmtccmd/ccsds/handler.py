@@ -1,5 +1,6 @@
 from typing import Callable
 from abc import abstractmethod
+from tmtccmd.core.tm_handler import TmHandler, TmTypes
 from tmtccmd.utility.logger import get_logger
 
 CcsdsCallbackT = Callable[[int, bytearray], None]
@@ -7,9 +8,13 @@ CcsdsCallbackT = Callable[[int, bytearray], None]
 LOGGER = get_logger()
 
 
-class CcsdsHandler:
+class CcsdsTmHandler(TmHandler):
     def __init__(self, apid: int):
-        self.apid = apid
+        super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
+        self._apid = apid
+
+    def get_apid(self):
+        return self._apid
 
     @abstractmethod
     def handle_ccsds_packet(self, packet: bytearray) -> any:
