@@ -11,9 +11,10 @@ PusRawTmList = List[bytearray]
 PusRawTmQueue = Deque[bytearray]
 PusTmTupleT = Tuple[bytearray, PusTelemetry]
 
-PusTmListT = List[PusTelemetry]
-PusTmQueueT = Deque[PusTmListT]
+TelemetryListT = List[bytearray]
+TelemetryQueueT = Deque[TelemetryListT]
 
+PusTmListT = List[PusTelemetry]
 PusTmObjQeue = Deque[PusTelemetry]
 PusTmTupleQueueT = Deque[PusTmTupleT]
 

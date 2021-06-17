@@ -20,8 +20,9 @@ from tmtccmd.utility.logger import get_logger
 
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.pus_tc.definitions import TcQueueEntryT
-from tmtccmd.pus_tm.factory import PusTmQueueT
+from tmtccmd.pus_tm.factory import TelemetryQueueT
 from tmtccmd.core.globals_manager import get_global
+from tmtccmd.ecss.tm import PusTelemetry
 
 LOGGER = get_logger()
 
@@ -210,11 +211,11 @@ class CommandSenderReceiver:
                 self._reply_received = True
         time.sleep(0.5)
 
-    def print_tm_queue(self, tm_queue: PusTmQueueT):
+    def print_tm_queue(self, tm_queue: TelemetryQueueT):
         while tm_queue:
             try:
                 tm_packet_list = tm_queue.pop()
                 for tm_packet in tm_packet_list:
-                    self._tmtc_printer.print_telemetry(tm_packet)
+                    self._tmtc_printer.print_telemetry(PusTelemetry(tm_packet))
             except AttributeError as e:
                 LOGGER.exception("CommandSenderReceiver Exception: Invalid queue entry. Traceback:", e)

@@ -28,7 +28,7 @@ from collections import deque
 from threading import Thread
 
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
+from tmtccmd.com_if.com_interface_base import CommunicationInterface, TelemetryListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
@@ -136,11 +136,7 @@ class QEMUComIF(CommunicationInterface):
         await self.usart.write(data)
         self.usart.inject_timeout_error()
 
-    def send_data(self, data: bytearray):
-        asyncio.run_coroutine_threadsafe(
-            self.send_data_async(data), self.loop).result()
-
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand = None):
+    def send(self, data: bytearray):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             data = tc_packet
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
@@ -148,26 +144,27 @@ class QEMUComIF(CommunicationInterface):
         else:
             LOGGER.warning("This communication type was not implemented yet!")
             return
-
         self.send_data(data)
 
-    def receive_telemetry(self, parameters=0) -> PusTmListT:
+    def send_data(self, data: bytearray):
+        asyncio.run_coroutine_threadsafe(
+            self.send_data_async(data), self.loop).result()
+
+    def receive(self, parameters=0) -> TelemetryListT:
         packet_list = []
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             if self.data_available():
                 data = self.usart.read(self.serial_frame_size, self.serial_timeout)
                 pus_data_list = SerialComIF.poll_pus_packets_fixed_frames(data)
                 for pus_packet in pus_data_list:
-                    packet = PusTelemetryFactory.create(pus_packet)
-                    packet_list.append(packet)
+                    packet_list.append(pus_packet)
 
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
                 dle_retval, decoded_packet, read_len = decode_dle(data)
                 if dle_retval == DleErrorCodes.OK:
-                    packet = PusTelemetryFactory.create(decoded_packet)
-                    packet_list.append(packet)
+                    packet_list.append(decoded_packet)
                 else:
                     LOGGER.warning("DLE decoder error!")
 

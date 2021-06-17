@@ -12,8 +12,8 @@ from typing import Union
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.config.definitions import CoreModeList
-from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
-from tmtccmd.pus_tm.factory import PusTelemetryFactory
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.pus_tm.factory import PusTelemetryFactory, TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.config.definitions import EthernetAddressT
@@ -75,7 +75,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__tm_thread_kill_signal.set()
         self.__tcp_conn_thread.join(self.tm_polling_frequency)
 
-    def send_data(self, data: bytearray):
+    def send(self, data: bytearray):
         try:
             with self.__socket_lock:
                 tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -88,10 +88,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         except ConnectionRefusedError:
             LOGGER.warning("TCP connection attempt failed..")
 
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
-        self.send_data(data=tc_packet)
-
-    def receive_telemetry(self, poll_timeout: float = 0) -> PusTmListT:
+    def receive(self, poll_timeout: float = 0) -> TelemetryListT:
         tm_packet_list = []
         while self.__tm_queue:
             tm_packet_list.append(self.__tm_queue.pop())

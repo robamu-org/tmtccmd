@@ -18,17 +18,13 @@ LOGGER = get_logger()
 
 
 class SequentialCommandSenderReceiver(CommandSenderReceiver):
-    """
-    Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence
-    """
+    """Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence"""
     def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
                  tm_listener: TmListener, tc_queue: TcQueueT):
         """
-        :param com_if: CommunicationInterface object, passed on to CommandSenderReceiver
-        :param tm_listener: TmListener object which runs in the background and receives
-                            all Telemetry
-        :param tmtc_printer: TmTcPrinter object, passed on to CommandSenderReceiver
-        for this time period
+        :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
+        :param tm_listener:     TmListener object which runs in the background and receives all Telemetry
+        :param tmtc_printer:    TmTcPrinter object, passed on to CommandSenderReceiver for this time period
         """
         super().__init__(com_if=com_if, tmtc_printer=tmtc_printer,
                          tm_listener=tm_listener)
@@ -37,8 +33,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         self.__mode_op_finished = False
 
     def send_queue_tc_and_receive_tm_sequentially(self):
-        """
-        Primary function which is called for sequential transfer.
+        """Primary function which is called for sequential transfer.
         :return:
         """
         self._tm_listener.set_listener_mode(TmListener.ListenerModes.SEQUENCE)
@@ -99,15 +94,12 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             self._check_for_timeout()
 
     def __send_next_telecommand(self) -> bool:
-        """
-        Returns whether an actual telecommand was sent.
-        @return:
-        """
+        """Sends the next telecommand and returns whether an actual telecommand was sent"""
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
             pus_packet, pus_packet_info = tc_queue_tuple
-            self._com_if.send_telecommand(pus_packet, pus_packet_info)
+            self._com_if.send(pus_packet)
             return True
         # queue empty.
         elif not self._tc_queue:

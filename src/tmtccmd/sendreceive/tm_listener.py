@@ -12,15 +12,13 @@ from enum import Enum
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tm.factory import PusTmQueueT
+from tmtccmd.pus_tm.factory import TelemetryQueueT
 
 LOGGER = get_logger()
 
 
 class TmListener:
-    """
-    @brief  Performs all TM listening operations.
-    @details
+    """Performs all TM listening operations.
     This listener to have a permanent means to receive data. A background thread is used
     to poll data with the provided communication interface. Dedicated sender and receiver object
     or any other software component can get the received packets from the internal deque container.
@@ -32,13 +30,13 @@ class TmListener:
         LISTENER = 2,
         SEQUENCE = 3,
 
-    def __init__(self, com_if: CommunicationInterface, tm_timeout: float,
-                 tc_timeout_factor: float):
-        """
-        Initiate a TM listener
-        @param com_if:   Type of communication interface, e.g. a serial or ethernet interface
-        @param tm_timeout:      Timeout for the TM reception
-        @param tc_timeout_factor:
+    def __init__(
+            self, com_if: CommunicationInterface, tm_timeout: float, tc_timeout_factor: float
+    ):
+        """Initiate a TM listener
+        :param com_if:              Type of communication interface, e.g. a serial or ethernet interface
+        :param tm_timeout:          Timeout for the TM reception
+        :param tc_timeout_factor:
         """
         self.__tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
@@ -100,9 +98,7 @@ class TmListener:
         self.__event_reply_received.clear()
 
     def tm_received(self):
-        """
-        This  function is used to check whether any data has been received
-        """
+        """This function is used to check whether any data has been received"""
         if self.__tm_packet_queue.__len__() > 0:
             return True
         else:
@@ -118,7 +114,7 @@ class TmListener:
             LOGGER.warning("TmListener: Blocked on lock acquisition for longer than 1 second!")
         return False
 
-    def retrieve_tm_packet_queue(self) -> PusTmQueueT:
+    def retrieve_tm_packet_queue(self) -> TelemetryQueueT:
         # We make sure that the queue is not manipulated while it is being copied.
         if self.lock_listener.acquire(True, timeout=1):
             tm_queue_copy = self.__tm_packet_queue.copy()
@@ -182,7 +178,7 @@ class TmListener:
         """
         The core operation listens for packets.
         """
-        packet_list = self.__com_if.receive_telemetry()
+        packet_list = self.__com_if.receive()
         if len(packet_list) > 0:
             self.__event_reply_received.set()
             # deque is thread-safe for append and pops from opposite sides but I am not sure copy
@@ -215,16 +211,14 @@ class TmListener:
             self.__perform_core_operation()
 
     def __read_telemetry_sequence(self):
-        """
-        @brief  Thread-safe implementation for reading a telemetry sequence.
-        """
+        """Thread-safe implementation for reading a telemetry sequence."""
         start_time = time.time()
         elapsed_time = 0
         # LOGGER.info(f"TmListener: Listening for {self.__tm_timeout} seconds")
         while elapsed_time < self.__tm_timeout:
             packets_available = self.__com_if.data_available(0.2)
             if packets_available > 0:
-                tm_list = self.__com_if.receive_telemetry()
+                tm_list = self.__com_if.receive()
                 # deque should be thread-safe to appends and pops from opposite sides, but
                 # I am not sure about the copy operation.
                 if self.lock_listener.acquire(True, timeout=1):
@@ -242,17 +236,3 @@ class TmListener:
         if self.__tm_timeout is not get_global(CoreGlobalIds.TM_TIMEOUT):
             self.__tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         return True
-
-    @staticmethod
-    def retrieve_info_queue_from_packet_queue(tm_queue: PusTmQueueT):
-        tm_queue_copy = tm_queue.copy()
-        """
-        while tm_queue_copy.__len__() != 0:
-            pus_packet_list = tm_queue_copy.pop()
-            for pus_packet in pus_packet_list:
-                pus_info_queue_to_fill.appendleft(pus_packet.pack_tm_information())
-        """
-
-
-
-

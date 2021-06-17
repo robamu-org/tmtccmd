@@ -9,9 +9,10 @@ from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
 from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.pus_tm.factory import PusTmQueueT
+from tmtccmd.pus_tm.factory import TelemetryQueueT
 from tmtccmd.pus_tm.service_3_base import Service3Base
 from tmtccmd.utility.logger import get_logger
 
@@ -25,9 +26,7 @@ class DisplayMode(enum.Enum):
 
 
 class TmTcPrinter:
-    """
-    This class handles printing to the command line and to files.
-    """
+    """This class handles printing to the command line and to files."""
     def __init__(self, display_mode: DisplayMode = DisplayMode.LONG, do_print_to_file: bool = True,
                  print_tc: bool = True):
         """
@@ -50,17 +49,15 @@ class TmTcPrinter:
     def get_display_mode(self) -> DisplayMode:
         return self._display_mode
 
-    def print_telemetry_queue(self, tm_queue: PusTmQueueT):
-        """
-        Print the telemetry queue which should contain lists of TM class instances.
-        """
+    def print_telemetry_queue(self, tm_queue: TelemetryQueueT):
+        """Print the telemetry queue which should contain lists of TM class instances."""
         for tm_list in tm_queue:
             for tm_packet in tm_list:
-                self.print_telemetry(tm_packet)
+                packet = PusTelemetryFactory.create(tm_packet)
+                self.print_telemetry(packet)
 
     def print_telemetry(self, packet: PusTelemetry, print_raw_tm: bool = False):
-        """
-        This function handles printing telemetry
+        """This function handles printing telemetry
         :param packet:          Object representation of TM packet to print. Must be a subclass of PusTelemetry.
         :param print_raw_tm:    Specify whether the TM packet is printed in a raw way.
         :return:
@@ -100,8 +97,7 @@ class TmTcPrinter:
         self.add_print_buffer_to_file_buffer()
 
     def __handle_long_tm_print(self, tm_packet: PusTelemetry):
-        """
-        Main function to print the most important information inside the telemetry
+        """Main function to print the most important information inside the telemetry
         :param tm_packet:
         :return:
         """
@@ -142,8 +138,7 @@ class TmTcPrinter:
             LOGGER.info(self.__print_buffer)
 
     def __handle_hk_print(self, tm_packet: Service3Base):
-        """
-        Prints HK _tm_data previously set by TM receiver
+        """Prints the passed housekeeping packet
         :param tm_packet:
         :return:
         """
@@ -151,8 +146,8 @@ class TmTcPrinter:
         from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
-            self.__print_buffer = f"HK Data from Object ID {tm_packet.object_id:#010x} and " \
-                                  f"set ID {tm_packet.set_id}:"
+            self.__print_buffer = \
+                f"HK Data from Object ID {tm_packet.get_object_id():#010x} and set ID {tm_packet.set_id}:"
             self.__print_hk(tm_packet)
             self.__print_validity_buffer(tm_packet)
 
@@ -165,8 +160,8 @@ class TmTcPrinter:
         from tmtccmd.config.definitions import CoreGlobalIds
         print_hk = get_global(CoreGlobalIds.PRINT_HK)
         if print_hk:
-            self.__print_buffer = f"HK Definition from Object ID {tm_packet.object_id:#010x} " \
-                                  f"and set ID {tm_packet.set_id}:"
+            self.__print_buffer = \
+                f"HK Definition from Object ID {tm_packet.get_object_id():#010x} and set ID {tm_packet.set_id}:"
             self.__print_hk(tm_packet)
 
     def __print_hk(self, tm_packet: Service3Base):

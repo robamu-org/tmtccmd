@@ -10,7 +10,7 @@ from typing import Union
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.config.definitions import CoreModeList
-from tmtccmd.com_if.com_interface_base import CommunicationInterface, PusTmListT
+from tmtccmd.com_if.com_interface_base import CommunicationInterface, TelemetryListT
 from tmtccmd.pus_tm.factory import PusTelemetryFactory
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.ecss.tc import PusTelecommand
@@ -26,21 +26,18 @@ UDP_SEND_WIRETAPPING_ENABLED = False
 # pylint: disable=arguments-differ
 # pylint: disable=too-many-arguments
 class TcpIpUdpComIF(CommunicationInterface):
-    """
-    Communication interface for UDP communication.
-    """
+    """Communication interface for UDP communication."""
     def __init__(
             self, com_if_key: str, tm_timeout: float, tc_timeout_factor: float, send_address: EthernetAddressT,
             max_recv_size: int, recv_addr: Union[None, EthernetAddressT] = None,
             tmtc_printer: Union[None, TmTcPrinter] = None, init_mode: int = CoreModeList.LISTENER_MODE):
-        """
-        Initialize a communication interface to send and receive UDP datagrams.
+        """Initialize a communication interface to send and receive UDP datagrams.
         :param tm_timeout:
         :param tc_timeout_factor:
         :param send_address:
         :param max_recv_size:
         :param recv_addr:
-        :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
+        :param tmtc_printer:        Printer instance, can be passed optionally to allow packet debugging
         """
         super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
         self.tm_timeout = tm_timeout
@@ -80,14 +77,11 @@ class TcpIpUdpComIF(CommunicationInterface):
         if self.udp_socket is not None:
             self.udp_socket.close()
 
-    def send_data(self, data: bytearray):
-        self.udp_socket.sendto(data, self.send_address)
-
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
+    def send(self, data: bytearray):
         if self.udp_socket is None:
             return
-        bytes_sent = self.udp_socket.sendto(tc_packet, self.send_address)
-        if bytes_sent != len(tc_packet):
+        bytes_sent = self.udp_socket.sendto(data, self.send_address)
+        if bytes_sent != len(data):
             LOGGER.warning("Not all bytes were sent!")
 
     def data_available(self, timeout: float = 0) -> bool:
@@ -98,17 +92,16 @@ class TcpIpUdpComIF(CommunicationInterface):
             return True
         return False
 
-    def receive_telemetry(self, poll_timeout: float = 0) -> PusTmListT:
+    def receive(self, poll_timeout: float = 0) -> TelemetryListT:
         if self.udp_socket is None:
             return []
         try:
             ready = self.data_available(poll_timeout)
             if ready:
                 data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
-                tm_packet = PusTelemetryFactory.create(bytearray(data))
                 if tm_packet is None:
                     return []
-                packet_list = [tm_packet]
+                packet_list = [bytearray(data)]
                 return packet_list
             return []
         except ConnectionResetError:
