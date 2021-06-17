@@ -9,8 +9,7 @@ from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
 class PusTelemetry:
-    """
-    Generic PUS telemetry class representation.
+    """Generic PUS telemetry class representation.
     It is instantiated by passing the raw pus telemetry packet (bytearray) to the constructor.
     It automatically deserializes the packet, exposing various packet fields via getter functions.
     PUS Telemetry structure according to ECSS-E-70-41A p.46. Also see structure below (bottom).
@@ -19,10 +18,9 @@ class PusTelemetry:
     PUS_TIMESTAMP_SIZE = CDS_SHORT_SIZE
 
     def __init__(self, raw_telemetry: bytearray = bytearray()):
-        """
-        Attempts to construct a generic PusTelemetry class given a raw bytearray.
+        """Attempts to construct a generic PusTelemetry class given a raw bytearray.
         Raises a ValueError if the format of the raw bytearray is invalid.
-        @param raw_telemetry:
+        :param raw_telemetry:
         """
         if raw_telemetry is None or raw_telemetry == bytearray():
             if raw_telemetry is None:
@@ -101,24 +99,21 @@ class PusTelemetry:
             print("PusTelemetry: Invalid CRC detected !")
 
     def specify_packet_info(self, print_info: str):
-        """
-        Caches a print information string for later printing
+        """Caches a print information string for later printing
         :param print_info:
         :return:
         """
         self.print_info = print_info
 
     def append_packet_info(self, print_info: str):
-        """
-        Similar to the function above, but appends to the existing information string.
+        """Similar to the function above, but appends to the existing information string.
         :param print_info:
         :return:
         """
         self.print_info = self.print_info + print_info
 
     def append_telemetry_content(self, content_list: list):
-        """
-        Default implementation adds the PUS header content to the list which can then be
+        """Default implementation adds the PUS header content to the list which can then be
         printed with a simple print() command. To add additional content, override this method
         (don't forget to still call this function with super() if the header is required)
         :param content_list: Header content will be appended to this list
@@ -132,8 +127,7 @@ class PusTelemetry:
             content_list.append("No")
 
     def append_telemetry_column_headers(self, header_list: list):
-        """
-        Default implementation adds the PUS header content header (confusing, I know)
+        """Default implementation adds the PUS header content header (confusing, I know)
         to the list which can then be  printed with a simple print() command.
         To add additional headers, override this method
         (don't forget to still call this function with super() if the header is required)
@@ -145,15 +139,13 @@ class PusTelemetry:
         header_list.append("Packet valid")
 
     def get_custom_printout(self) -> str:
-        """
-        Can be used to supply any additional custom printout.
+        """Can be used to supply any additional custom printout.
         :return: String which will be printed by TmTcPrinter class as well as logged if specified
         """
         return ""
 
     def get_raw_packet(self) -> bytearray:
-        """
-        Get the whole TM packet as a bytearray (raw)
+        """Get the whole TM packet as a bytearray (raw)
         :return: TM wiretapping_packet
         """
         return bytearray(self._packet_raw)
@@ -166,8 +158,7 @@ class PusTelemetry:
         return SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
 
     def get_ssc(self) -> int:
-        """
-        Get the source sequence count
+        """Get the source sequence count
         :return: Source Sequence Count (see below, or PUS documentation)
         """
         return self._space_packet_header.ssc
@@ -176,29 +167,22 @@ class PusTelemetry:
         return return_data_string(self._packet_raw, len(self._packet_raw))
 
     def print_full_packet_string(self):
-        """
-        Print the full TM packet in a clean format.
-        """
+        """Print the full TM packet in a clean format."""
         print(return_data_string(self._packet_raw, len(self._packet_raw)))
 
     def print_source_data(self):
-        """
-        Prints the TM source data in a clean format
+        """Prints the TM source data in a clean format
         :return:
         """
         print(return_data_string(self._tm_data, len(self._tm_data)))
 
     def return_source_data_string(self):
-        """
-        Returns the source data string
-        """
+        """Returns the source data string"""
         return return_data_string(self._tm_data, len(self._tm_data))
 
 
 class PusPacketDataFieldHeader:
-    """
-    Unpacks the PUS packet data field header. Currently only supports CDS short timestamps
-    """
+    """Unpacks the PUS packet data field header. Currently only supports CDS short timestamps"""
 
     def __init__(self, bytes_array: bytearray, pus_version: PusVersion):
         self.pus_version = pus_version
@@ -224,8 +208,7 @@ class PusPacketDataFieldHeader:
             self.time = PusCdsShortTimestamp(bytes_array[7: 7 + PusTelemetry.PUS_TIMESTAMP_SIZE])
 
     def append_data_field_header(self, content_list: list):
-        """
-        Append important data field header parameters to the passed content list.
+        """Append important data field header parameters to the passed content list.
         :param content_list:
         :return:
         """
@@ -235,8 +218,7 @@ class PusPacketDataFieldHeader:
         self.time.print_time(content_list)
 
     def append_data_field_header_column_header(self, header_list: list):
-        """
-        Append important data field header column headers to the passed list.
+        """Append important data field header column headers to the passed list.
         :param header_list:
         :return:
         """
@@ -253,11 +235,10 @@ class PusPacketDataFieldHeader:
 
 
 class PusCdsShortTimestamp:
-    """
-    Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,
+    """Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,
     and the size of the time stamp is expected to be seven bytes.
-    TODO: Implement more time formats
     """
+    # TODO: Implement more time formats
     CDS_ID = 4
     SECONDS_PER_DAY = 86400
     EPOCH = datetime.datetime.utcfromtimestamp(0)
@@ -279,9 +260,7 @@ class PusCdsShortTimestamp:
 
     @staticmethod
     def pack_current_time() -> bytearray:
-        """
-        Returns a seven byte CDS short timestamp
-        """
+        """Returns a seven byte CDS short timestamp"""
         timestamp = bytearray()
         p_field = (PusCdsShortTimestamp.CDS_ID << 4) + 0
         days = \
@@ -316,8 +295,7 @@ class PusCdsShortTimestamp:
 
 
 def return_data_string(byte_array: bytearray, length: int) -> str:
-    """
-    Returns the TM data in a clean printable string format
+    """Returns the TM data in a clean printable string format
     Prints payload data in default mode
     and prints the whole packet if full_packet = True is passed.
     :return:

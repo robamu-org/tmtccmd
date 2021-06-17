@@ -23,28 +23,22 @@ LOGGER = get_logger()
 class BackendBase:
     @abstractmethod
     def initialize(self):
-        """
-        Initialize the backend. Raise RuntimeError or ValueError on failure
-        """
+        """Initialize the backend. Raise RuntimeError or ValueError on failure"""
 
     @abstractmethod
     def start_listener(self):
-        """
-        Start the backend. Raise RuntimeError on failure
-        """
+        """Start the backend. Raise RuntimeError on failure"""
 
     @abstractmethod
     def set_mode(self, mode: int):
-        """
-        Set backend mode
+        """Set backend mode
         :param mode:
         :return:
         """
 
 
 class TmTcHandler(BackendBase):
-    """
-    This is the primary class which handles TMTC reception. This can be seen as the backend
+    """This is the primary class which handles TMTC reception. This can be seen as the backend
     in case a GUI or front-end is implemented.
     """
 

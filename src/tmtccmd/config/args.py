@@ -25,8 +25,7 @@ def parse_input_arguments(
 
 
 def parse_default_input_arguments(print_known_args: bool = False, print_unknown_args: bool = False):
-    """
-    Parses all input arguments
+    """Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
     from tmtccmd.utility.conf_util import AnsiColors
@@ -163,10 +162,8 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def args_post_processing(args, unknown: list) -> None:
-    """
-    Handles the parsed arguments.
-    :param args: Namespace objects
-    (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
+    """Handles the parsed arguments.
+    :param args: Namespace objects (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
     :param unknown: List of unknown parameters.
     :return: None
     """
@@ -179,8 +176,7 @@ def args_post_processing(args, unknown: list) -> None:
 
 
 def handle_unspecified_args(args) -> None:
-    """
-    If some arguments are unspecified, they are set here with (variable) default values.
+    """If some arguments are unspecified, they are set here with (variable) default values.
     :param args:
     :return: None
     """
@@ -206,9 +202,7 @@ def handle_unspecified_args(args) -> None:
 
 
 def handle_empty_args(args) -> None:
-    """
-    If no args were supplied, request input from user directly.
-    TODO: This still needs to be extended. Use function for unspecified args here maybe?
+    """If no args were supplied, request input from user directly.
     :param args:
     :return:
     """
@@ -217,15 +211,19 @@ def handle_empty_args(args) -> None:
 
 
 def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
+    service_adjustment = 10
+    info_adjustment = 30
+    horiz_line_num = service_adjustment + info_adjustment + 3
+    horiz_line = horiz_line_num * "-"
+    service_string = "Service".ljust(service_adjustment)
+    info_string = "Information".ljust(info_adjustment)
     while True:
-        service_string = "Service".ljust(10)
-        info_string = "Information".ljust(30)
-        LOGGER.info(f"{service_string} | {info_string} ")
-        horiz_line = (40 + 5) * "-"
+        LOGGER.info(f"{service_string} | {info_string}")
         LOGGER.info(horiz_line)
         for service_entry in service_op_code_dict.items():
-            adjusted_service_entry = service_entry[0].ljust(10)
-            LOGGER.info(f"{adjusted_service_entry} | {service_entry[1][0]}")
+            adjusted_service_entry = service_entry[0].ljust(service_adjustment)
+            adjusted_service_info = service_entry[1][0].ljust(info_adjustment)
+            LOGGER.info(f"{adjusted_service_entry} | {adjusted_service_info}")
         service_string = input("Please select a service by specifying the key: ")
         if service_string in service_op_code_dict:
             LOGGER.info(f"Selected service: {service_string}")
@@ -235,17 +233,20 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
 
 
 def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> str:
+    op_code_adjustment = 16
+    info_adjustment = 34
+    horz_line_num = op_code_adjustment + info_adjustment + 3
+    horiz_line = horz_line_num * "-"
+    op_code_string = "Operation Code".ljust(op_code_adjustment)
+    info_string = "Information".ljust(info_adjustment)
     while True:
-        op_code_string = "Operation Code".ljust(16)
-        info_string = "Information".ljust(16)
         LOGGER.info(f"{op_code_string} | {info_string}")
-        horiz_line = (32 + 3) * "-"
         LOGGER.info(horiz_line)
         if service in service_op_code_dict:
             op_code_dict = service_op_code_dict[service][1]
             for op_code_entry in op_code_dict.items():
-                adjusted_op_code_entry = op_code_entry[0].ljust(16)
-                adjusted_op_code_info = op_code_entry[1][0].ljust(16)
+                adjusted_op_code_entry = op_code_entry[0].ljust(op_code_adjustment)
+                adjusted_op_code_info = op_code_entry[1][0].ljust(info_adjustment)
                 LOGGER.info(f"{adjusted_op_code_entry} | {adjusted_op_code_info}")
             op_code_string = input("Please select an operation code by specifying the key: ")
             if op_code_string in op_code_dict:

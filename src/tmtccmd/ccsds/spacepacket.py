@@ -11,6 +11,7 @@ class PacketTypes(enum.IntEnum):
 
 
 class SpacePacketCommonFields:
+    """Encapsulates common fields in a SpacePacket"""
     def __init__(
             self, packet_type: PacketTypes, apid: int, source_sequence_count: int, data_length: int,
             version: int = 0b000, secondary_header_flag: int = 0b1, sequence_flags: int = 0b11
@@ -33,13 +34,11 @@ class SpacePacketCommonFields:
 
 # pylint: disable=too-many-instance-attributes
 class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
-    """
-    This class unnpacks the common spacepacket header, also see PUS structure below or
+    """This class unnpacks the common spacepacket header, also see PUS structure below or
     PUS documentation.
     """
     def __init__(self, pus_packet_raw: bytearray):
-        """
-        Deserializes space packet fields from raw bytearray
+        """Deserializes space packet fields from raw bytearray
         :param pus_packet_raw:
         """
         if len(pus_packet_raw) < SPACE_PACKET_HEADER_SIZE:
@@ -75,14 +74,13 @@ class SpacePacketHeaderSerializer(SpacePacketCommonFields):
             self, apid: int, packet_type: PacketTypes, data_length: int, source_sequence_count: int,
             secondary_header_flag: int = 0b1, version: int = 0b000, sequence_flags: int = 0b11
     ):
-        """
-        Serialize raw space packet header
-        :param packet_type:             0 for telemetry, 1 for telecommands
-        :param data_length:             Length of packet data field
+        """Serialize raw space packet header.
+        :param packet_type: 0 for telemetry, 1 for telecommands
+        :param data_length: Length of packet data field
         :param source_sequence_count:
         :param secondary_header_flag:
-        :param version:                 Shall be b000 for CCSDS Version 1 packets
-        :param sequence_flags:          0b11 for stand-alone packets
+        :param version: Shall be b000 for CCSDS Version 1 packets
+        :param sequence_flags: 0b11 for stand-alone packets
         :param apid:
         """
         self.packet_id_bytes = [0x00, 0x00]
@@ -104,14 +102,15 @@ class SpacePacketHeaderSerializer(SpacePacketCommonFields):
         )
 
     def pack(self) -> bytearray:
+        """Return the bytearray representation of the space packet header"""
         return self.header
 
 
 def get_sp_packet_id_bytes(
         version: int, packet_type: PacketTypes, secondary_header_flag: int, apid: int
 ) -> Tuple[int, int]:
-    """
-    This function also includes the first three bits reserved for the version
+    """This function also includes the first three bits reserved for the version.
+
     :param version:
     :param packet_type:
     :param secondary_header_flag:
