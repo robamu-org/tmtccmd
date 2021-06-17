@@ -5,10 +5,6 @@ import enum
 from typing import Tuple, Dict, Optional
 
 
-class TmTypes(enum.Enum):
-    CCSDS_SPACE_PACKETS = enum.auto()
-
-
 class CoreGlobalIds(enum.IntEnum):
     """
     Numbers from 128 to 200 are reserved for core globals
@@ -70,6 +66,15 @@ ComIFValueT = Tuple[str, any]
 ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
+
+
+class TmTypes(enum.Enum):
+    CCSDS_SPACE_PACKETS = enum.auto()
+
+
+class TmHandler:
+    def __init__(self, tm_type: TmTypes):
+        self.tm_type = tm_type
 
 
 class CoreComInterfaces(enum.Enum):

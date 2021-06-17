@@ -1,6 +1,6 @@
 from typing import Callable
 from abc import abstractmethod
-from tmtccmd.core.tm_handler import TmHandler, TmTypes
+from tmtccmd.config.definitions import TmHandler, TmTypes
 from tmtccmd.utility.logger import get_logger
 
 CcsdsCallbackT = Callable[[int, bytearray], None]

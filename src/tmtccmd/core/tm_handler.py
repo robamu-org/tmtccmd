@@ -1,12 +1,6 @@
 import enum
 from typing import cast
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.config.definitions import TmTypes
-
-
-class TmHandler:
-    def __init__(self, tm_type: TmTypes):
-        self.tm_type = tm_type
 
 
 class InternalTmHandler:
