@@ -49,9 +49,9 @@ class Service3TM(Service3Base):
         self.min_hk_reply_size = minimum_reply_size
         self.custom_hk_handling = custom_hk_handling
         self.hk_structure_report_header_size = minimum_structure_report_header_size
-        self.object_id_bytes = self._tm_data[0:4]
-        self.object_id = struct.unpack('!I', self.object_id_bytes)[0]
-        self.set_id = struct.unpack('!I', self._tm_data[4:8])[0]
+        self._object_id_bytes = self._tm_data[0:4]
+        self._object_id = struct.unpack('!I', self._object_id_bytes)[0]
+        self._set_id = struct.unpack('!I', self._tm_data[4:8])[0]
 
         self.specify_packet_info("Housekeeping Packet")
         self.param_length = 0
@@ -62,8 +62,8 @@ class Service3TM(Service3Base):
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(hex(self.object_id))
-        content_list.append(hex(self.set_id))
+        content_list.append(hex(self._object_id))
+        content_list.append(hex(self._set_id))
         content_list.append(int(self.param_length))
 
     def append_telemetry_column_headers(self, header_list: list):
@@ -76,7 +76,7 @@ class Service3TM(Service3Base):
         if len(self._tm_data) < self.hk_structure_report_header_size:
             LOGGER.warning(
                 f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {hex(self.object_id)}, is shorter "
+                f"from {hex(self._object_id)}, is shorter "
                 f"than {self.hk_structure_report_header_size}"
             )
             return
@@ -112,7 +112,7 @@ class Service3TM(Service3Base):
             valid_string = "Yes"
         else:
             valid_string = "No"
-        self.hk_content = [hex(self.object_id), self.set_id, status_string, valid_string,
+        self.hk_content = [hex(self.object_id), self._set_id, status_string, valid_string,
                            collection_interval_seconds, num_params]
         self.hk_content.extend(parameters)
 
@@ -130,7 +130,7 @@ class Service3TM(Service3Base):
                 (self.hk_header, self.hk_content, self.validity_buffer,
                  self.number_of_parameters) = \
                     hook_obj.handle_service_3_housekeeping(
-                        object_id=self.object_id_bytes, set_id=self.set_id, hk_data=self._tm_data[8:],
+                        object_id=self._object_id_bytes, set_id=self._set_id, hk_data=self._tm_data[8:],
                         service3_packet=self
                     )
         except ImportError:
