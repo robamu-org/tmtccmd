@@ -12,7 +12,7 @@ from abc import abstractmethod
 from typing import Callable
 
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.pus_tm.factory import PusTmListT
+from tmtccmd.pus_tm.factory import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 
@@ -54,24 +54,15 @@ class CommunicationInterface:
         """
 
     @abstractmethod
-    def send_data(self, data: bytearray):
+    def send(self, data: bytearray):
         """
         Send raw data
         """
 
     @abstractmethod
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand) -> None:
+    def receive(self, parameters: any = 0) -> TelemetryListT:
         """
-        Send telecommands.
-        :param tc_packet: TC wiretapping_packet to send
-        :param tc_packet_obj: TC packet object representation
-        :return: None for now
-        """
-
-    @abstractmethod
-    def receive_telemetry(self, parameters: any = 0) -> PusTmListT:
-        """
-        Returns a list of packets. The child class can use a separate thread to poll for
+        Returns a list of received packets. The child class can use a separate thread to poll for
         the packets or use some other mechanism and container like a deque to store packets
         to be returned here.
         :param parameters:
