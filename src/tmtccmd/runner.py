@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-:brief:     Core method called by entry point files to initiate the TMTC commander.
-            The commander is started by first running `initialize_tmtc_commander` and then
-            running `run_tmtc_commander`
+Core method called by entry point files to initiate the TMTC commander.
+The commander is started by first running `initialize_tmtc_commander` and then
+running `run_tmtc_commander`
 :details:
 :manual:
 :author:     R. Mueller
@@ -40,8 +40,8 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
         initialize_tmtccmd(hook_obj)
         run_tmtc_client(False)
 
-    :param hook_object:     Instantiation of a custom hook object. The TMTC core will call the various
-                            hook functions during program run-time.
+    :param hook_object:     Instantiation of a custom hook object. The TMTC core will call the
+                            various hook functions during program run-time.
     :raises: ValueError for an invalid hook object.
     """
     if os.name == 'nt':
@@ -119,8 +119,9 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
     # does not enforce this.
     if hook_object.get_version is None or hook_object.add_globals_pre_args_parsing is None \
             or hook_object.add_globals_post_args_parsing is None:
-        LOGGER.error("Passed hook base object handle is invalid. "
-                     "Abstract functions have to be implemented!")
+        LOGGER.error(
+            "Passed hook base object handle is invalid. Abstract functions have to be implemented!"
+        )
         raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
@@ -134,8 +135,7 @@ def __set_up_tmtc_commander(
         use_gui: bool, reduced_printout: bool, ansi_colors: bool = True,
         tmtc_backend: Union[BackendBase, None] = None
 ):
-    """
-    Set up the TMTC commander. Raise ValueError if a passed parameter is invalid.
+    """Set up the TMTC commander. Raise ValueError if a passed parameter is invalid.
     :param use_gui:
     :param reduced_printout:
     :param ansi_colors:
@@ -152,7 +152,8 @@ def __set_up_tmtc_commander(
     hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
     if hook_obj_raw is None:
         LOGGER.warning(
-            "No valid hook object found. initialize_tmtc_commander needs to be called first. Terminating.."
+            "No valid hook object found. initialize_tmtc_commander needs to be called first. "
+            "Terminating.."
         )
         raise ValueError
     hook_obj = cast(TmTcHookBase, hook_obj_raw)
@@ -214,9 +215,14 @@ def __start_tmtc_commander_qt_gui(
         app = QApplication([app_name])
         hook_obj = get_global_hook_obj()
         json_cfg_path = hook_obj.get_json_config_file_path()
+        tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
         # The global variables are set by the argument parser.
-        tmtc_backend = get_default_tmtc_backend(hook_obj=hook_obj, json_cfg_path=json_cfg_path)
-        tmtc_frontend = TmTcFrontend(hook_obj=hook_obj, tmtc_backend=tmtc_backend, app_name=app_name)
+        tmtc_backend = get_default_tmtc_backend(
+            hook_obj=hook_obj, tm_handler=tm_handler, json_cfg_path=json_cfg_path
+        )
+        tmtc_frontend = TmTcFrontend(
+            hook_obj=hook_obj, tmtc_backend=tmtc_backend, app_name=app_name
+        )
     tmtc_frontend.start(app)
 
 

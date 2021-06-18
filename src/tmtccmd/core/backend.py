@@ -43,8 +43,9 @@ class TmTcHandler(BackendBase):
     """
 
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            tm_handler: TmHandler, init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
+            tm_listener: TmListener, tm_handler: TmHandler, init_mode: int,
+            init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
             init_opcode: str = "0"
     ):
         self.mode = init_mode
@@ -61,13 +62,14 @@ class TmTcHandler(BackendBase):
         self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
-            self.__tm_handler = tm_handler
+            self.__tm_handler: CcsdsTmHandler = tm_handler
             for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
-                self.__tm_listener.subscribe_ccsds_tm_handler(apid_queue_len_tuple[0], apid_queue_len_tuple[1])
+                self.__tm_listener.subscribe_ccsds_tm_handler(
+                    apid_queue_len_tuple[0], apid_queue_len_tuple[1]
+                )
         self.exit_on_com_if_init_failure = True
 
-        self.single_command_package: Tuple[bytearray, Union[None, PusTelecommand]] = \
-            (bytearray(), None)
+        self.single_command_package: Tuple[bytearray, Optional[PusTelecommand]] = bytearray(), None
 
     def get_com_if_id(self):
         return self.com_if_key
@@ -86,7 +88,10 @@ class TmTcHandler(BackendBase):
             self.__com_if = com_if
             self.__tm_listener.set_com_if(self.__com_if)
         else:
-            LOGGER.warning("Communication Interface is active and must be closed first before reassigning a new one")
+            LOGGER.warning(
+                "Communication Interface is active and must be closed first before"
+                "reassigning a new one"
+            )
 
     def is_com_if_active(self):
         return self.__com_if_active
@@ -128,7 +133,8 @@ class TmTcHandler(BackendBase):
     @staticmethod
     def prepare_tmtc_handler_start(
             com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value, init_opcode: str = "0"
+            init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
+            init_opcode: str = "0"
     ):
         from multiprocessing import Process
         tmtc_handler = TmTcHandler(
@@ -170,11 +176,11 @@ class TmTcHandler(BackendBase):
             self.perform_operation()
 
     def close_listener(self, join: bool = False, join_timeout_seconds: float = 1.0):
-        """
-        Closes the TM listener and the communication interface. This is started in a separarate thread because
-        the communication interface might still be busy. The completion can be checked with
-        :meth:`tmtccmd.core.backend.is_com_if_active`. Alternatively, waiting on completion is possible by specifying
-        the join argument and a timeout in floating point second.
+        """Closes the TM listener and the communication interface. This is started in a separarate
+        thread because the communication interface might still be busy. The completion can be
+        checked with :meth:`tmtccmd.core.backend.is_com_if_active`. Alternatively, waiting on
+        completion is possible by specifying the join argument and a timeout in
+        floating point second.
         :param join:
         :param join_timeout_seconds:
         :return:
@@ -186,9 +192,7 @@ class TmTcHandler(BackendBase):
                 close_thread.join(timeout=join_timeout_seconds)
 
     def perform_operation(self):
-        """
-        Periodic operation
-        """
+        """Periodic operation"""
         try:
             self.__core_operation(self.one_shot_operation)
         except KeyboardInterrupt:
