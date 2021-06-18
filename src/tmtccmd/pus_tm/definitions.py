@@ -4,9 +4,6 @@ from tmtccmd.ecss.tm import PusTelemetry
 PusTmQueue = Deque[PusTelemetry]
 PusTmTupleT = Tuple[bytearray, PusTelemetry]
 
-TelemetryListT = List[bytearray]
-TelemetryQueueT = Deque[bytearray]
-
 PusTmListT = List[PusTelemetry]
 PusTmQueueT = Deque[PusTmListT]
 

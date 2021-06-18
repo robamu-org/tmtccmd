@@ -8,20 +8,21 @@ import sys
 import time
 import threading
 from collections import deque
-from typing import Dict, Deque, List
+from typing import Dict, Deque, List, Tuple
 from enum import Enum
 
+from tmtccmd.config.definitions import TelemetryQueueT, TelemetryListT
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.config.definitions import TmTypes
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tm.definitions import TelemetryQueueT, TelemetryListT
 from tmtccmd.utility.conf_util import acquire_timeout
 
 LOGGER = get_logger()
 
 INVALID_APID = -2
 UNKNOWN_TARGET_ID = -1
-QueueDictT = Dict[int, List[Deque, int]]
+QueueDictT = Dict[int, Tuple[TelemetryQueueT, int]]
+QueueListT = List[Tuple[int, TelemetryQueueT]]
 
 class TmListener:
     """Performs all TM listening operations.
@@ -57,7 +58,7 @@ class TmListener:
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
         self.listener_active = False
-        self.current_apid = self.INVALID_APID
+        self.current_apid = INVALID_APID
 
         # Listener is daemon and will exit automatically if all other threads are closed
         self.listener_thread = threading.Thread(target=self.__perform_operation, daemon=True)
@@ -134,12 +135,21 @@ class TmListener:
     def tm_packets_available(self):
         with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
             if acquired:
-                for queue_lists in self.__queue_dict:
+                for queue_lists in self.__queue_dict.values():
                     if queue_lists[self.QUEUE_DICT_QUEUE_IDX]:
                         return True
         return False
 
-    def retrieve_ccsds_tm_packet_queue(self, apid: int = -1) -> TelemetryQueueT:
+    def retrieve_tm_packet_queues(self, clear: bool) -> QueueListT:
+        queues = []
+        with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+            for key, queue_list in self.__queue_dict.items():
+                queues.append((key, queue_list[self.QUEUE_DICT_QUEUE_IDX]))
+            if clear:
+                self.clear_tm_packet_queues(lock=False)
+        return queues
+
+    def retrieve_ccsds_tm_packet_queue(self, apid: int = -1, clear: bool = False) -> TelemetryQueueT:
         """Retrieve the packet queue for a given APID. The TM listener will handle routing
         packets into the correct queue"""
         if apid == -1:
@@ -157,6 +167,8 @@ class TmListener:
                     f'{self.DEFAULT_LOCK_TIMEOUT} second!'
                 )
             tm_queue_copy = target_queue.copy()
+            if clear:
+                target_queue.clear()
         return tm_queue_copy
 
     def clear_ccsds_tm_packet_queue(self, apid: int):
@@ -173,6 +185,15 @@ class TmListener:
                     f'{self.DEFAULT_LOCK_TIMEOUT} second!'
                 )
             target_queue.clear()
+
+    def clear_tm_packet_queues(self, lock: bool):
+        locked = False
+        if lock:
+            locked = self.lock_listener.acquire(timeout=self.DEFAULT_LOCK_TIMEOUT)
+        for queue_list in self.__queue_dict.values():
+            queue_list[self.QUEUE_DICT_QUEUE_IDX].clear()
+        if locked:
+            self.lock_listener.release()
 
     def retrieve_unknown_target_queue(self):
         target_queue = self.__queue_dict.get(UNKNOWN_TARGET_ID)[self.QUEUE_DICT_QUEUE_IDX]
@@ -226,7 +247,6 @@ class TmListener:
         """The core operation listens for packets."""
         packet_list = self.__com_if.receive()
         if len(packet_list) > 0:
-            self.__event_reply_received.set()
             with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
                 if not acquired:
                     LOGGER.warning(
@@ -234,6 +254,8 @@ class TmListener:
                         f'{self.DEFAULT_LOCK_TIMEOUT} second!'
                     )
                 self.__route_packets(packet_list)
+            if not self.__event_reply_received.is_set():
+                self.__event_reply_received.set()
         else:
             time.sleep(0.4)
 
@@ -250,7 +272,8 @@ class TmListener:
             # Listen for one reply sequence.
             if self.check_for_one_telemetry_sequence():
                 # Set reply event, will be cleared by checkForFirstReply()
-                self.__event_reply_received.set()
+                if not self.__event_reply_received.is_set():
+                    self.__event_reply_received.set()
             time.sleep(0.2)
         elif self.__listener_mode == self.ListenerModes.MANUAL:
             self.__perform_core_operation()

@@ -6,7 +6,7 @@ __GLOBALS_LOCK = Lock()
 
 
 def get_global(global_param_id: int, lock: bool = False):
-    global __LOCK_TIMEOUT
+    global __LOCK_TIMEOUT, __GLOBALS_DICT
     if lock:
         __GLOBALS_LOCK.acquire(timeout=__LOCK_TIMEOUT)
     global_param = __GLOBALS_DICT.get(global_param_id)
@@ -16,7 +16,7 @@ def get_global(global_param_id: int, lock: bool = False):
 
 
 def update_global(global_param_id: int, parameter: any, lock: bool = False):
-    global __LOCK_TIMEOUT
+    global __LOCK_TIMEOUT, __GLOBALS_DICT
     if lock:
         __GLOBALS_LOCK.acquire(timeout=__LOCK_TIMEOUT)
     __GLOBALS_DICT[global_param_id] = parameter
@@ -25,7 +25,7 @@ def update_global(global_param_id: int, parameter: any, lock: bool = False):
 
 
 def lock_global_pool() -> bool:
-    global __LOCK_TIMEOUT
+    global __LOCK_TIMEOUT, __GLOBALS_LOCK
     """Lock the global objects. This is important if the values are changed. Don't forget to unlock the pool
     after finishing work with the globals!
     :param timeout_seconds: Attempt to lock for this many second. Default value -1 blocks permanently until lock is
@@ -36,6 +36,7 @@ def lock_global_pool() -> bool:
 
 
 def unlock_global_pool():
+    global __GLOBALS_LOCK
     """Releases the lock so other objects can use the global pool as well"""
     return __GLOBALS_LOCK.release()
 

@@ -18,9 +18,10 @@ from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.logger import get_logger
 
+from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.pus_tc.definitions import TcQueueEntryT
-from tmtccmd.pus_tm.definitions import TelemetryQueueT
+from tmtccmd.config.definitions import TelemetryQueueT
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.ecss.tm import PusTelemetry
 
@@ -34,7 +35,8 @@ class CommandSenderReceiver:
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
+            tm_handler: CcsdsTmHandler
     ):
 
         """
@@ -43,6 +45,7 @@ class CommandSenderReceiver:
         :param tmtc_printer: TmTcPrinter object. Instantiate it and pass it here.
         """
         self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
+        self._tm_handler = tm_handler
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
 
         if isinstance(com_if, CommunicationInterface):

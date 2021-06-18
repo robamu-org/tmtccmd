@@ -8,6 +8,7 @@ import sys
 import time
 
 from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
+from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -19,15 +20,18 @@ LOGGER = get_logger()
 
 class SequentialCommandSenderReceiver(CommandSenderReceiver):
     """Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence"""
-    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-                 tm_listener: TmListener, tc_queue: TcQueueT):
+    def __init__(
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_handler: CcsdsTmHandler,
+            apid: int, tm_listener: TmListener, tc_queue: TcQueueT):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
         :param tm_listener:     TmListener object which runs in the background and receives all Telemetry
         :param tmtc_printer:    TmTcPrinter object, passed on to CommandSenderReceiver for this time period
         """
-        super().__init__(com_if=com_if, tmtc_printer=tmtc_printer,
-                         tm_listener=tm_listener)
+        super().__init__(
+            com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, tm_handler=tm_handler
+        )
+        self._apid = apid
         self._tc_queue = tc_queue
         self.__all_replies_received = False
         self.__mode_op_finished = False
@@ -75,12 +79,16 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         if self._tm_listener.reply_event():
             self._reply_received = True
             self._tm_listener.clear_reply_event()
-            self.print_tm_queue(self._tm_listener.retrieve_tm_packet_queue())
-            self._tm_listener.clear_tm_packet_queue()
+            packet_queue = self._tm_listener.retrieve_ccsds_tm_packet_queue(
+                apid=self._apid, clear=True
+            )
+            self._tm_handler.handle_ccsds_packet_queue(apid=self._apid, packet_queue=packet_queue)
         # This makes reply reception more responsive
         elif self._tm_listener.tm_packets_available():
-            self.print_tm_queue(self._tm_listener.retrieve_tm_packet_queue())
-            self._tm_listener.clear_tm_packet_queue()
+            packet_queue = self._tm_listener.retrieve_ccsds_tm_packet_queue(
+                apid=self._apid, clear=True
+            )
+            self._tm_handler.handle_ccsds_packet_queue(apid=self._apid, packet_queue=packet_queue)
 
     def __check_next_tc_send(self):
         if self.wait_period_ongoing():

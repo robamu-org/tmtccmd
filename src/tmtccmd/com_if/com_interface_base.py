@@ -10,7 +10,7 @@ Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 """
 from abc import abstractmethod
 
-from tmtccmd.pus_tm.definitions import TelemetryListT
+from tmtccmd.config.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 

@@ -10,7 +10,7 @@ from typing import Union
 
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.pus_tm.definitions import TelemetryListT
+from tmtccmd.config.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT, CoreModeList
 

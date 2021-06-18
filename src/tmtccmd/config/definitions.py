@@ -2,8 +2,10 @@
 @brief  Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, List, Deque
 
+TelemetryListT = List[bytearray]
+TelemetryQueueT = Deque[bytearray]
 
 class CoreGlobalIds(enum.IntEnum):
     """
@@ -75,8 +77,10 @@ class TmTypes(enum.Enum):
 
 class TmHandler:
     def __init__(self, tm_type: TmTypes):
-        self.tm_type = tm_type
+        self._tm_type = tm_type
 
+    def get_type(self):
+        return self._tm_type
 
 class CoreComInterfaces(enum.Enum):
     DUMMY = "dummy"

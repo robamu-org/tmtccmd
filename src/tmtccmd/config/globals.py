@@ -59,7 +59,6 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.TM_LISTENER_HANDLE, None)
     update_global(CoreGlobalIds.COM_INTERFACE_HANDLE, None)
     update_global(CoreGlobalIds.TMTC_PRINTER_HANDLE, None)
-    update_global(CoreGlobalIds.TM_HANDLER_HANDLE, None)
     update_global(CoreGlobalIds.PRINT_RAW_TM, False)
     update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, True)
     update_global(CoreGlobalIds.RESEND_TC, False)

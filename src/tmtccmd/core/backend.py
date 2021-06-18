@@ -4,13 +4,14 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Tuple, Union
+from typing import Tuple, Union, cast
 
-from tmtccmd.config.definitions import CoreServiceList, CoreModeList
+from tmtccmd.config.definitions import CoreServiceList, CoreModeList, TmHandler, TmTypes
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener
+from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.pus_tc.packer import ServiceQueuePacker
@@ -43,13 +44,15 @@ class TmTcHandler(BackendBase):
 
     def __init__(
             self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value, init_opcode: str = "0"
+            tm_handler: TmHandler, init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
+            init_opcode: str = "0"
     ):
         self.mode = init_mode
         self.com_if_key = com_if.get_id()
         self.__com_if_active = False
         self.__service = init_service
         self.__op_code = init_opcode
+        self.__apid = 0
 
         # This flag could be used later to command the TMTC Client with a front-end
         self.one_shot_operation = True
@@ -57,6 +60,10 @@ class TmTcHandler(BackendBase):
         self.__com_if = com_if
         self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
+        if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
+            self.__tm_handler = tm_handler
+            for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
+                self.__tm_listener.subscribe_ccsds_tm_handler(apid_queue_len_tuple[0], apid_queue_len_tuple[1])
         self.exit_on_com_if_init_failure = True
 
         self.single_command_package: Tuple[bytearray, Union[None, PusTelecommand]] = \
@@ -111,6 +118,12 @@ class TmTcHandler(BackendBase):
 
     def get_opcode(self) -> str:
         return self.__op_code
+
+    def get_current_apid(self) -> int:
+        return self.__apid
+
+    def set_current_apid(self, apid: int):
+        self.__apid = apid
 
     @staticmethod
     def prepare_tmtc_handler_start(
@@ -196,15 +209,13 @@ class TmTcHandler(BackendBase):
                 time.sleep(0.2)
 
     def __handle_action(self):
-        """
-        Command handling.
-        """
-
+        """Command handling."""
         if self.mode == CoreModeList.LISTENER_MODE:
             if self.__tm_listener.reply_event():
                 LOGGER.info("TmTcHandler: Packets received.")
-                self.__tmtc_printer.print_telemetry_queue(self.__tm_listener.retrieve_tm_packet_queue())
-                self.__tm_listener.clear_tm_packet_queue()
+                packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
+                if len(packet_queues) > 0:
+                    self.__tm_handler.handle_packet_queues(packet_queue_list=packet_queues)
                 self.__tm_listener.clear_reply_event()
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
             service_queue = deque()
@@ -215,8 +226,8 @@ class TmTcHandler(BackendBase):
                 return
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
-                com_if=self.__com_if, tmtc_printer=self.__tmtc_printer,
-                tm_listener=self.__tm_listener, tc_queue=service_queue
+                com_if=self.__com_if, tmtc_printer=self.__tmtc_printer, tm_handler=self.__tm_handler,
+                tm_listener=self.__tm_listener, tc_queue=service_queue, apid=self.__apid
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
