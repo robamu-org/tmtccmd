@@ -1,5 +1,6 @@
 import collections.abc
 from typing import Tuple, Union
+from contextlib import contextmanager
 
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.config.definitions import CoreGlobalIds
@@ -78,3 +79,11 @@ def print_core_globals():
     com_if_param = get_global(CoreGlobalIds.COM_IF)
     print(f"Current globals | Mode(-m): {mode_param} | Service(-s): {service_param} | "
           f"ComIF(-c): {com_if_param}")
+
+
+@contextmanager
+def acquire_timeout(lock, timeout):
+    result = lock.acquire(timeout=timeout)
+    yield result
+    if result:
+        lock.release()

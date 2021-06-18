@@ -5,7 +5,7 @@ PusTmQueue = Deque[PusTelemetry]
 PusTmTupleT = Tuple[bytearray, PusTelemetry]
 
 TelemetryListT = List[bytearray]
-TelemetryQueueT = Deque[TelemetryListT]
+TelemetryQueueT = Deque[bytearray]
 
 PusTmListT = List[PusTelemetry]
 PusTmQueueT = Deque[PusTmListT]
