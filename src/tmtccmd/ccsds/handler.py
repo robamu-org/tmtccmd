@@ -11,7 +11,7 @@ LOGGER = get_logger()
 HandlerDictT = Dict[int, Tuple[CcsdsCallbackT, int]]
 
 class CcsdsTmHandler(TmHandler):
-    def __init__(self, tmtc_printer: Optional[TmTcPrinter]):
+    def __init__(self, tmtc_printer: Optional[TmTcPrinter]=None):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
         self._tmtc_printer = tmtc_printer
