@@ -68,8 +68,7 @@ class TmTcHandler(BackendBase):
                     apid_queue_len_tuple[0], apid_queue_len_tuple[1]
                 )
         self.exit_on_com_if_init_failure = True
-
-        self.single_command_package: Tuple[bytearray, Optional[PusTelecommand]] = bytearray(), None
+        self.single_command_package = bytearray(), None
 
     def get_com_if_id(self):
         return self.com_if_key
