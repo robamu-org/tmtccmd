@@ -243,9 +243,12 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, tm_handler: TmHandler, json
     display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
     print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
     tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
-    if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
-        tm_handler = cast(CcsdsTmHandler, tm_handler)
-        tm_handler.initialize(tmtc_printer=tmtc_printer)
+    if tm_handler is None:
+        LOGGER.warning("No TM Handler specified!")
+    else:
+        if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
+            tm_handler = cast(CcsdsTmHandler, tm_handler)
+            tm_handler.initialize(tmtc_printer=tmtc_printer)
     apid = get_global(CoreGlobalIds.APID)
 
     if json_cfg_path:
