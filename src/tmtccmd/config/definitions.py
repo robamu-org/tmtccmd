@@ -7,6 +7,7 @@ from typing import Tuple, Dict, Optional, List, Deque
 TelemetryListT = List[bytearray]
 TelemetryQueueT = Deque[bytearray]
 
+
 class CoreGlobalIds(enum.IntEnum):
     """
     Numbers from 128 to 200 are reserved for core globals
@@ -81,6 +82,7 @@ class TmHandler:
 
     def get_type(self):
         return self._tm_type
+
 
 class CoreComInterfaces(enum.Enum):
     DUMMY = "dummy"
