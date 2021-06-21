@@ -44,7 +44,7 @@ class TmListener:
 
     def __init__(
             self, com_if: CommunicationInterface, tm_timeout: float, tc_timeout_factor: float,
-            tm_type = TmTypes.CCSDS_SPACE_PACKETS
+            tm_type: TmTypes = TmTypes.CCSDS_SPACE_PACKETS
     ):
         """Initiate a TM listener
         :param com_if:              Type of communication interface, e.g. a serial or ethernet interface

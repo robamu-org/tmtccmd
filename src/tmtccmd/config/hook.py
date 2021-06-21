@@ -7,7 +7,6 @@ from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
 from tmtccmd.utility.logger import get_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.pus_tm.service_3_base import Service3Base

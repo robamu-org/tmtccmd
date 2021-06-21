@@ -1,5 +1,5 @@
 from typing import Callable, Dict, Optional, Tuple, List
-from abc import abstractmethod
+
 from tmtccmd.config.definitions import TmHandler, TmTypes, TelemetryQueueT
 from tmtccmd.sendreceive.tm_listener import QueueListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -12,7 +12,7 @@ HandlerDictT = Dict[int, Tuple[CcsdsCallbackT, int]]
 
 
 class CcsdsTmHandler(TmHandler):
-    def __init__(self, tmtc_printer: Optional[TmTcPrinter]=None):
+    def __init__(self, tmtc_printer: Optional[TmTcPrinter] = None):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
         self._tmtc_printer = tmtc_printer
@@ -35,13 +35,15 @@ class CcsdsTmHandler(TmHandler):
             handler_tuple = self._handler_dict.get(apid)
             if handler_tuple is not None:
                 ccsds_cb = handler_tuple[0]
-                self.handle_ccsds_packet_queue(apid=apid, packet_queue=queue_tuple[1], ccsds_cb=ccsds_cb)
+                self.handle_ccsds_packet_queue(
+                    apid=apid, packet_queue=queue_tuple[1], ccsds_cb=ccsds_cb
+                )
 
     def handle_ccsds_packet_queue(
-            self, apid: int, packet_queue: TelemetryQueueT, ccsds_cb: Optional[HandlerDictT] = None
+            self, apid: int, packet_queue: TelemetryQueueT,
+            ccsds_cb: Optional[HandlerDictT] = None
     ):
         for tm_packet in packet_queue:
             if ccsds_cb is None:
                 ccsds_cb = self._handler_dict[apid][0]
             ccsds_cb(apid, tm_packet, self._tmtc_printer)
-

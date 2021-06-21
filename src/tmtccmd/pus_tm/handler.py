@@ -1,5 +1,3 @@
-from abc import abstractmethod
-
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.config.globals import get_global, CoreGlobalIds
 from tmtccmd.pus_tm.service_5_event import Service5TM
@@ -11,20 +9,20 @@ from tmtccmd.utility.tmtc_printer import TmTcPrinter
 LOGGER = get_logger()
 
 
-def default_ccsds_packet_handler(self, apid: int, packet: bytearray):
+def default_ccsds_packet_handler(apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
     """Default implementation only prints the packet"""
-    telemetry_packet = default_factory_hook(raw_tm_packet=packet)
-    tmtc_printer = get_global(CoreGlobalIds.TMTC_PRINTER_HANDLE)
-    tmtc_printer.print_telemetry(packet=telemetry_packet)
+    default_factory_hook(raw_tm_packet=raw_tm_packet, tmtc_printer=tmtc_printer)
 
 
-def default_factory_hook(raw_tm_packet: bytearray) -> PusTelemetry:
+def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
     service_type = raw_tm_packet[7]
     if service_type == 1:
-        return Service1TM(raw_tm_packet)
+        tm_packet = Service1TM(raw_tm_packet)
     if service_type == 5:
-        return Service5TM(raw_tm_packet)
+        tm_packet = Service5TM(raw_tm_packet)
     if service_type == 17:
-        return Service17TM(raw_tm_packet)
-    LOGGER.info("The service " + str(service_type) + " is not implemented in the default TM Factory function")
-    return PusTelemetry(raw_tm_packet)
+        tm_packet = Service17TM(raw_tm_packet)
+    if tm_packet is None:
+        LOGGER.info(f'The service {service_type} is not implemented in Telemetry Factory')
+        tm_packet = PusTelemetry(raw_tm_packet)
+    tmtc_printer.print_telemetry(packet=tm_packet)
