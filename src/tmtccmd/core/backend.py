@@ -4,7 +4,7 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Tuple, Union, cast
+from typing import Tuple, Union, cast, Optional
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList, TmHandler, TmTypes
 from tmtccmd.utility.logger import get_logger
