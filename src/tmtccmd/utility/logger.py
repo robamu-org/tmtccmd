@@ -9,14 +9,14 @@ import sys
 TMTC_LOGGER_NAME = "TMTC Console Logger"
 TMTC_FILE_LOGGER_NAME = "TMTC File Logger"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"
-LOGGER_SET_UP = False
+__CONSOLE_LOGGER_SET_UP = False
+__FILE_LOGER_SET_UP = False
 
 
 # pylint: disable=arguments-differ
 # pylint: disable=too-few-public-methods
 class InfoFilter(logging.Filter):
-    """
-    Filter object, which is used so that only INFO and DEBUG messages are printed to stdout.
+    """Filter object, which is used so that only INFO and DEBUG messages are printed to stdout.
     """
     def filter(self, rec):
         if rec.levelno == logging.INFO:
@@ -25,8 +25,7 @@ class InfoFilter(logging.Filter):
 
 
 class DebugFilter(logging.Filter):
-    """
-    Filter object, which is used so that only DEBUG messages are printed to stdout.
+    """Filter object, which is used so that only DEBUG messages are printed to stdout.
     """
     def filter(self, rec):
         if rec.levelno == logging.DEBUG:
@@ -39,7 +38,7 @@ def set_tmtc_logger() -> logging.Logger:
     using the logger.
     :return:    Returns the instance of the global logger
     """
-    global LOGGER_SET_UP
+    global __CONSOLE_LOGGER_SET_UP
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     logger.setLevel(level=logging.DEBUG)
 
@@ -70,7 +69,7 @@ def set_tmtc_logger() -> logging.Logger:
     error_file_handler.setFormatter(file_format)
     logger.addHandler(error_file_handler)
 
-    LOGGER_SET_UP = True
+    __CONSOLE_LOGGER_SET_UP = True
     return logger
 
 
@@ -137,12 +136,11 @@ def set_up_colorlog_logger(logger: logging.Logger):
 
 
 def get_console_logger(set_up_logger: bool = False) -> logging.Logger:
-    global LOGGER_SET_UP
-    """
-    Get the global LOGGER instance.
+    global __CONSOLE_LOGGER_SET_UP
+    """Get the global console logger instance. Error logs will still be saved to an error file
     """
     logger = logging.getLogger(TMTC_LOGGER_NAME)
-    if set_up_logger and not LOGGER_SET_UP:
-        LOGGER_SET_UP = True
+    if set_up_logger and not __CONSOLE_LOGGER_SET_UP:
+        __CONSOLE_LOGGER_SET_UP = True
         set_tmtc_logger()
     return logger
