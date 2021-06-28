@@ -12,10 +12,10 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.utility.tmtc_printer import get_logger
+from tmtccmd.utility.tmtc_printer import get_console_logger
 
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):

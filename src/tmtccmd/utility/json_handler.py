@@ -1,9 +1,9 @@
 import json
 import os
 import enum
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class JsonKeyNames(enum.Enum):

@@ -11,10 +11,10 @@ from tmtccmd.pus_tm.definitions import PusTmListT
 from tmtccmd.pus_tm.service_1_verification import Service1TmPacked
 from tmtccmd.pus_tm.service_17_test import Service17TmPacked
 from tmtccmd.pus.service_17_test import Srv17Subservices
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class DummyComIF(CommunicationInterface):

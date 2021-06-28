@@ -3,11 +3,11 @@ from typing import Callable, Dict, Optional, Tuple, List
 from tmtccmd.config.definitions import TmHandler, TmTypes, TelemetryQueueT
 from tmtccmd.sendreceive.tm_listener import QueueListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
 CcsdsCallbackT = Callable[[int, bytearray, TmTcPrinter], None]
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 HandlerDictT = Dict[int, Tuple[CcsdsCallbackT, int]]
 
 

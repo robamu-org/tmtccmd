@@ -14,12 +14,12 @@ from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
 from tmtccmd.pus_tc.definitions import PusTcTupleT
 
 
-logger = get_logger()
+logger = get_console_logger()
 
 
 class SingleCommandSenderReceiver(CommandSenderReceiver):

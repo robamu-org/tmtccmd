@@ -12,12 +12,12 @@ from typing import Dict, List, Tuple
 from enum import Enum
 
 from tmtccmd.config.definitions import TelemetryQueueT, TelemetryListT
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.definitions import TmTypes
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.conf_util import acquire_timeout
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 INVALID_APID = -2
 UNKNOWN_TARGET_ID = -1
