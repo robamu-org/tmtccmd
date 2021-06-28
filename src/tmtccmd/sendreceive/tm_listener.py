@@ -47,7 +47,7 @@ class TmListener:
             self, com_if: CommunicationInterface, tm_timeout: float, tc_timeout_factor: float,
             tm_type: TmTypes = TmTypes.CCSDS_SPACE_PACKETS
     ):
-        """Initiate a TM listener
+        """Initiate a TM listener.
         :param com_if:              Type of communication interface, e.g. a serial or ethernet interface
         :param tm_timeout:          Timeout for the TM reception
         :param tc_timeout_factor:
@@ -155,7 +155,7 @@ class TmListener:
 
     def retrieve_ccsds_tm_packet_queue(self, apid: int = -1, clear: bool = False) -> TelemetryQueueT:
         """Retrieve the packet queue for a given APID. The TM listener will handle routing
-        packets into the correct queue"""
+        packets into the correct queue."""
         if apid == -1:
             apid = self.current_apid
         target_queue_list = self.__queue_dict.get(apid)
