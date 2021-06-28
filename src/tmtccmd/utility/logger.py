@@ -33,7 +33,7 @@ class DebugFilter(logging.Filter):
         return None
 
 
-def set_tmtc_logger() -> logging.Logger:
+def set_tmtc_console_logger() -> logging.Logger:
     """Sets the LOGGER object which will be used globally. This needs to be called before
     using the logger.
     :return:    Returns the instance of the global logger
@@ -142,5 +142,5 @@ def get_console_logger(set_up_logger: bool = False) -> logging.Logger:
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     if set_up_logger and not __CONSOLE_LOGGER_SET_UP:
         __CONSOLE_LOGGER_SET_UP = True
-        set_tmtc_logger()
+        set_tmtc_console_logger()
     return logger

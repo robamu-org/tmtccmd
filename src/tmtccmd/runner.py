@@ -21,7 +21,7 @@ from tmtccmd.core.globals_manager import update_global, get_global, lock_global_
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
-from tmtccmd.utility.logger import set_tmtc_logger, get_console_logger
+from tmtccmd.utility.logger import set_tmtc_console_logger, get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
 LOGGER = get_console_logger()
@@ -144,7 +144,7 @@ def __set_up_tmtc_commander(
     """
     from tmtccmd.config.hook import TmTcHookBase
     from typing import cast
-    set_tmtc_logger()
+    set_tmtc_console_logger()
 
     # First, we check whether a hook object was passed to the TMTC commander. This hook object
     # encapsulates control of the commnader core so it is required for proper functioning
