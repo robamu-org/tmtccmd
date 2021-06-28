@@ -16,6 +16,7 @@ def default_ccsds_packet_handler(apid: int, raw_tm_packet: bytearray, tmtc_print
 
 def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
     service_type = raw_tm_packet[7]
+    tm_packet = None
     if service_type == 1:
         tm_packet = Service1TM(raw_tm_packet)
     if service_type == 5:
