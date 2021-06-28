@@ -57,7 +57,8 @@ class TmTcPrinter:
 
     def print_telemetry(self, packet: PusTelemetry, print_raw_tm: bool = False):
         """This function handles printing telemetry
-        :param packet:          Object representation of TM packet to print. Must be a subclass of PusTelemetry.
+        :param packet:          Object representation of TM packet to print.
+                                Must be a subclass of PusTelemetry.
         :param print_raw_tm:    Specify whether the TM packet is printed in a raw way.
         :return:
         """
@@ -94,18 +95,52 @@ class TmTcPrinter:
         if hook_obj is None:
             LOGGER.warning('Hook object not set')
             return
-        service_3_handle = cast(Service3Base, packet)
-        hook_obj.handle_service_3_housekeeping(
-            object_id=service_3_handle.get_object_id_bytes(),
-            set_id=service_3_handle.get_set_id(),
-            hk_data=service_3_handle.get_tm_data()[8:]
-        )
+        srv3_packet = cast(Service3Base, packet)
+        if srv3_packet.has_custom_hk_handling():
+            (hk_header, hk_content, validity_buffer, num_vars) = \
+                hook_obj.handle_service_3_housekeeping(
+                object_id=0, set_id=srv3_packet.get_set_id(), hk_data=srv3_packet.get_tm_data(),
+                service3_packet=srv3_packet
+            )
+        else:
+            (hk_header, hk_content, validity_buffer, num_vars) = \
+                hook_obj.handle_service_3_housekeeping(
+                object_id=srv3_packet.get_object_id_bytes(), set_id=srv3_packet.get_set_id(),
+                hk_data=srv3_packet.get_tm_data()[8:], service3_packet=srv3_packet
+            )
         if packet.get_subservice() == 25 or packet.get_subservice() == 26:
-            self.__handle_hk_print(cast(Service3Base, packet))
+            self.handle_hk_print(
+                object_id=srv3_packet.get_object_id(), set_id=srv3_packet.get_set_id(),
+                hk_header=hk_header, hk_content=hk_content
+            )
         if packet.get_subservice() == 10 or packet.get_subservice() == 12:
-            self.__handle_hk_definition_print(cast(Service3Base, packet))
+            self.handle_hk_definition_print(
+                object_id=srv3_packet.get_object_id(), set_id=srv3_packet.get_set_id(),
+                srv3_packet=srv3_packet
+            )
 
-        self.__handle_hk_print(cast(Service3Base, packet))
+    def handle_hk_print(
+            self, object_id: int, set_id: int, hk_header: list, hk_content: list,
+            validity_buffer: bytearray, num_vars: int
+    ):
+        """Prints the passed housekeeping packet, if HK printout is enabled and also adds
+        it to the internal print buffer.
+        :param tm_packet:
+        :return:
+        """
+        from tmtccmd.core.globals_manager import get_global
+        from tmtccmd.config.definitions import CoreGlobalIds
+        self.__print_hk(hk_header=hk_header, hk_content=hk_content)
+        self.__print_validity_buffer(validity_buffer=validity_buffer, num_vars=num_vars)
+
+    def handle_hk_definition_print(self, object_id: int, set_id: int, srv3_packet: Service3Base):
+        """
+        :param tm_packet:
+        :return:
+        """
+        self.__print_buffer = f'HK Definition from Object ID {object_id:#010x} and set ID {set_id}:'
+        # TODO: Implement way to retrieve hk definitions list from service 3 packet
+
 
     def __handle_short_print(self, tm_packet: PusTelemetry):
         self.__print_buffer = "Received TM[" + str(tm_packet.get_service()) + "," + str(
@@ -154,34 +189,7 @@ class TmTcPrinter:
             self.__print_buffer = additional_printout
             LOGGER.info(self.__print_buffer)
 
-    def __handle_hk_print(self, tm_packet: Service3Base):
-        """Prints the passed housekeeping packet
-        :param tm_packet:
-        :return:
-        """
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.config.definitions import CoreGlobalIds
-        print_hk = get_global(CoreGlobalIds.PRINT_HK)
-        if print_hk:
-            self.__print_buffer = \
-                f"HK Data from Object ID {tm_packet.get_object_id():#010x} and set ID {tm_packet.set_id}:"
-            self.__print_hk(tm_packet)
-            self.__print_validity_buffer(tm_packet)
-
-    def __handle_hk_definition_print(self, tm_packet: Service3Base):
-        """
-        :param tm_packet:
-        :return:
-        """
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.config.definitions import CoreGlobalIds
-        print_hk = get_global(CoreGlobalIds.PRINT_HK)
-        if print_hk:
-            self.__print_buffer = \
-                f"HK Definition from Object ID {tm_packet.get_object_id():#010x} and set ID {tm_packet.set_id}:"
-            self.__print_hk(tm_packet)
-
-    def __print_hk(self, tm_packet: Service3Base):
+    def __print_hk(self, hk_header: list, hk_content: list):
         """
         :param tm_packet:
         :return:
@@ -191,17 +199,17 @@ class TmTcPrinter:
             return
         if len(tm_packet.hk_content) == 0:
             return
+        self.__print_buffer = f'HK Data from Object ID {object_id:#010x} and set ID {set_id}:'
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
+        self.__print_buffer = str(hk_header)
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
+        self.__print_buffer = str(hk_content)
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
 
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = str(tm_packet.hk_header)
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = str(tm_packet.hk_content)
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-
-    def __print_validity_buffer(self, tm_packet: Service3Base):
+    def __print_validity_buffer(self, validity_buffer: bytearray, num_vars: int):
         """
         :param tm_packet:
         :return:
@@ -212,10 +220,10 @@ class TmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
         self.__handle_validity_buffer_print(
-            tm_packet.validity_buffer, tm_packet.number_of_parameters
+            validity_buffer=validity_buffer, num_vars=num_vars
         )
 
-    def __handle_validity_buffer_print(self, validity_buffer: bytearray, number_of_parameters):
+    def __handle_validity_buffer_print(self, validity_buffer: bytearray, num_vars: int):
         """
         :param validity_buffer:
         :param number_of_parameters:
@@ -230,7 +238,7 @@ class TmTcPrinter:
                 else:
                     self.__print_buffer = self.__print_buffer + "No"
                 counter += 1
-                if counter == number_of_parameters:
+                if counter == num_vars:
                     self.__print_buffer = self.__print_buffer + "]"
                     break
                 self.__print_buffer = self.__print_buffer + ", "
