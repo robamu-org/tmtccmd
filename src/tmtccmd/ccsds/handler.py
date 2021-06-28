@@ -41,7 +41,7 @@ class CcsdsTmHandler(TmHandler):
 
     def handle_ccsds_packet_queue(
             self, apid: int, packet_queue: TelemetryQueueT,
-            ccsds_cb: Optional[HandlerDictT] = None
+            ccsds_cb: Optional[CcsdsCallbackT] = None
     ):
         for tm_packet in packet_queue:
             if ccsds_cb is None:
