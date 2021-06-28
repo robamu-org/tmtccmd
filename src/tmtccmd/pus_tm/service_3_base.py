@@ -29,3 +29,9 @@ class Service3Base(PusTelemetry):
 
     def has_custom_hk_handling(self) -> bool:
         return self._custom_hk_handling
+
+    def get_hk_definitions_list(self) -> Tuple[List, List]:
+        """Can be implemented by a child class to print definitions lists. The first list
+        should contain a header with parameter names, and the second list shall contain the
+        corresponding set IDs"""
+        return [], []

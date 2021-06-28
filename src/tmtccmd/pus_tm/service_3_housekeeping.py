@@ -42,9 +42,10 @@ class Service3TM(Service3Base):
         """
         super().__init__(raw_telemetry=byte_array, custom_hk_handling=custom_hk_handling)
         if len(self._tm_data) < 8:
-            warning = "Service3TM: handle_filling_definition_arrays: Invalid Service 3 packet," \
-                      " is too short!"
-            LOGGER.warning(warning)
+            LOGGER.warning(
+                "Service3TM: handle_filling_definition_arrays: Invalid Service 3 packet,"
+                "is too short!"
+            )
             return
         self.min_hk_reply_size = minimum_reply_size
         self.hk_structure_report_header_size = minimum_structure_report_header_size
@@ -54,10 +55,6 @@ class Service3TM(Service3Base):
 
         self.specify_packet_info("Housekeeping Packet")
         self.param_length = 0
-        if self.get_subservice() == 10 or self.get_subservice() == 12:
-            self.handle_filling_definition_arrays()
-        # if self.get_subservice() == 25 or self.get_subservice() == 26:
-        #    self.handle_filling_hk_arrays()
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
@@ -71,7 +68,7 @@ class Service3TM(Service3Base):
         header_list.append("Set ID")
         header_list.append("HK Data Size")
 
-    def handle_filling_definition_arrays(self):
+    def get_hk_definitions_list(self) -> Tuple[List, List]:
         if len(self._tm_data) < self.hk_structure_report_header_size:
             LOGGER.warning(
                 f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
@@ -79,8 +76,10 @@ class Service3TM(Service3Base):
                 f'than {self.hk_structure_report_header_size}'
             )
             return
-        self.hk_header = ["Object ID", "Set ID", "Report Status", "Is valid",
-                          "Collection Interval (s)", "Number Of IDs"]
+        definitions_header = [
+            "Object ID", "Set ID", "Report Status", "Is valid","Collection Interval (s)",
+            "Number Of IDs"
+        ]
         reporting_enabled = self._tm_data[8]
         set_valid = self._tm_data[9]
         collection_interval_seconds = struct.unpack('>f', self._tm_data[10:14])[0] / 1000.0
@@ -111,31 +110,10 @@ class Service3TM(Service3Base):
             valid_string = "Yes"
         else:
             valid_string = "No"
-        self.hk_content = [hex(self.get_object_id()), self._set_id, status_string, valid_string,
+        definitions_content = [hex(self.get_object_id()), self._set_id, status_string, valid_string,
                            collection_interval_seconds, num_params]
-        self.hk_content.extend(parameters)
+        definitions_content.extend(parameters)
+        return definitions_header, definitions_content
 
-    """
-        def handle_filling_hk_arrays(self):
-        try:
-            from tmtccmd.config.hook import get_global_hook_obj
-            hook_obj = get_global_hook_obj()
-            if self.custom_hk_handling:
-                (self.hk_header, self.hk_content, self.validity_buffer, self.number_of_parameters) \
-                    = hook_obj.handle_service_3_housekeeping(
-                        object_id=bytearray(), set_id=0, hk_data=self._tm_data[0:],
-                        service3_packet=self
-                    )
-            else:
-                (self.hk_header, self.hk_content, self.validity_buffer,
-                 self.number_of_parameters) = \
-                    hook_obj.handle_service_3_housekeeping(
-                        object_id=self._object_id_bytes, set_id=self._set_id, hk_data=self._tm_data[8:],
-                        service3_packet=self
-                    )
-        except ImportError:
-            LOGGER.warning("Service3TM: User HK handling file missing!")
-            return
-    """
 
 Service3TM: Type[PusTelemetry]
