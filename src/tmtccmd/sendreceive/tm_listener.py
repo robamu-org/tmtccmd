@@ -8,7 +8,7 @@ import sys
 import time
 import threading
 from collections import deque
-from typing import Dict, Deque, List, Tuple
+from typing import Dict, List, Tuple
 from enum import Enum
 
 from tmtccmd.config.definitions import TelemetryQueueT, TelemetryListT
@@ -23,6 +23,7 @@ INVALID_APID = -2
 UNKNOWN_TARGET_ID = -1
 QueueDictT = Dict[int, Tuple[TelemetryQueueT, int]]
 QueueListT = List[Tuple[int, TelemetryQueueT]]
+
 
 class TmListener:
     """Performs all TM listening operations.
@@ -143,6 +144,9 @@ class TmListener:
     def retrieve_tm_packet_queues(self, clear: bool) -> QueueListT:
         queues = []
         with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+            if not acquired:
+                LOGGER.error("Could not acquire lock!")
+            # Still continue
             for key, queue_list in self.__queue_dict.items():
                 queues.append((key, queue_list[self.QUEUE_DICT_QUEUE_IDX]))
             if clear:

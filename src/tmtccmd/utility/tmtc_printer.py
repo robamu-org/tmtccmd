@@ -145,7 +145,6 @@ class TmTcPrinter:
             header=def_header, content=def_list
         )
 
-
     def __handle_short_print(self, tm_packet: PusTelemetry):
         self.__print_buffer = "Received TM[" + str(tm_packet.get_service()) + "," + str(
             tm_packet.get_subservice()) + "]"
