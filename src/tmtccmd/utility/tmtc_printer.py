@@ -77,17 +77,35 @@ class TmTcPrinter:
         # Handle special packet types
         if packet.get_service() == 8 and packet.get_subservice() == 130:
             self.__handle_data_reply_packet(cast(Service8TM, packet))
-        if packet.get_service() == 3 and \
-                (packet.get_subservice() == 25 or packet.get_subservice() == 26):
-            self.__handle_hk_print(cast(Service3Base, packet))
-        if packet.get_service() == 3 and \
-                (packet.get_subservice() == 10 or packet.get_subservice() == 12):
-            self.__handle_hk_definition_print(cast(Service3Base, packet))
+        if packet.get_service() == 3:
+            self.handle_service_3_packet(packet=packet)
 
         if print_raw_tm:
             self.__print_buffer = f"TM Data:\n{self.return_data_string(packet.get_raw_packet())}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
+
+    def handle_service_3_packet(self, packet: PusTelemetry):
+        from tmtccmd.config.hook import get_global_hook_obj
+        if packet.get_service() != 3:
+            LOGGER.warning('This packet is not a service 3 packet!')
+            return
+        hook_obj = get_global_hook_obj()
+        if hook_obj is None:
+            LOGGER.warning('Hook object not set')
+            return
+        service_3_handle = cast(Service3Base, packet)
+        hook_obj.handle_service_3_housekeeping(
+            object_id=service_3_handle.get_object_id_bytes(),
+            set_id=service_3_handle.get_set_id(),
+            hk_data=service_3_handle.get_tm_data()[8:]
+        )
+        if packet.get_subservice() == 25 or packet.get_subservice() == 26:
+            self.__handle_hk_print(cast(Service3Base, packet))
+        if packet.get_subservice() == 10 or packet.get_subservice() == 12:
+            self.__handle_hk_definition_print(cast(Service3Base, packet))
+
+        self.__handle_hk_print(cast(Service3Base, packet))
 
     def __handle_short_print(self, tm_packet: PusTelemetry):
         self.__print_buffer = "Received TM[" + str(tm_packet.get_service()) + "," + str(

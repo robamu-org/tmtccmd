@@ -40,14 +40,13 @@ class Service3TM(Service3Base):
         :param minimum_reply_size:
         :param minimum_structure_report_header_size:
         """
-        super().__init__(byte_array)
+        super().__init__(raw_telemetry=byte_array, custom_hk_handling=custom_hk_handling)
         if len(self._tm_data) < 8:
             warning = "Service3TM: handle_filling_definition_arrays: Invalid Service 3 packet," \
                       " is too short!"
             LOGGER.warning(warning)
             return
         self.min_hk_reply_size = minimum_reply_size
-        self.custom_hk_handling = custom_hk_handling
         self.hk_structure_report_header_size = minimum_structure_report_header_size
         self._object_id_bytes = self._tm_data[0:4]
         self._object_id = struct.unpack('!I', self._object_id_bytes)[0]
@@ -57,8 +56,8 @@ class Service3TM(Service3Base):
         self.param_length = 0
         if self.get_subservice() == 10 or self.get_subservice() == 12:
             self.handle_filling_definition_arrays()
-        if self.get_subservice() == 25 or self.get_subservice() == 26:
-            self.handle_filling_hk_arrays()
+        # if self.get_subservice() == 25 or self.get_subservice() == 26:
+        #    self.handle_filling_hk_arrays()
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
@@ -75,9 +74,9 @@ class Service3TM(Service3Base):
     def handle_filling_definition_arrays(self):
         if len(self._tm_data) < self.hk_structure_report_header_size:
             LOGGER.warning(
-                f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {hex(self._object_id)}, is shorter "
-                f"than {self.hk_structure_report_header_size}"
+                f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
+                f'from {hex(self._object_id)}, is shorter '
+                f'than {self.hk_structure_report_header_size}'
             )
             return
         self.hk_header = ["Object ID", "Set ID", "Report Status", "Is valid",
@@ -88,9 +87,9 @@ class Service3TM(Service3Base):
         num_params = self._tm_data[14]
         if len(self._tm_data) < self.hk_structure_report_header_size + num_params * 4:
             LOGGER.warning(
-                f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {hex(self.object_id)}, is shorter than "
-                f"{self.hk_structure_report_header_size + num_params * 4}"
+                f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
+                f'from {hex(self.get_object_id())}, is shorter than '
+                f'{self.hk_structure_report_header_size + num_params * 4}'
             )
             return
 
@@ -112,11 +111,12 @@ class Service3TM(Service3Base):
             valid_string = "Yes"
         else:
             valid_string = "No"
-        self.hk_content = [hex(self.object_id), self._set_id, status_string, valid_string,
+        self.hk_content = [hex(self.get_object_id()), self._set_id, status_string, valid_string,
                            collection_interval_seconds, num_params]
         self.hk_content.extend(parameters)
 
-    def handle_filling_hk_arrays(self):
+    """
+        def handle_filling_hk_arrays(self):
         try:
             from tmtccmd.config.hook import get_global_hook_obj
             hook_obj = get_global_hook_obj()
@@ -136,6 +136,6 @@ class Service3TM(Service3Base):
         except ImportError:
             LOGGER.warning("Service3TM: User HK handling file missing!")
             return
-
+    """
 
 Service3TM: Type[PusTelemetry]
