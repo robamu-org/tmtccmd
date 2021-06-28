@@ -11,7 +11,6 @@ from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
 from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
 from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.config.definitions import TelemetryQueueT
 from tmtccmd.pus_tm.definitions import PusTmListT
 from tmtccmd.pus_tm.service_3_base import Service3Base, HkContentType
 from tmtccmd.utility.logger import get_logger
@@ -128,8 +127,6 @@ class TmTcPrinter:
         :param tm_packet:
         :return:
         """
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.config.definitions import CoreGlobalIds
         self.__print_hk(
             content_type=HkContentType.HK, object_id=object_id, set_id=set_id,
             header=hk_header, content=hk_content

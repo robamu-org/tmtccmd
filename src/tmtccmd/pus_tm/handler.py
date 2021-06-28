@@ -1,5 +1,4 @@
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.config.globals import get_global, CoreGlobalIds
 from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.pus_tm.service_1_verification import Service1TM
 from tmtccmd.pus_tm.service_17_test import Service17TM

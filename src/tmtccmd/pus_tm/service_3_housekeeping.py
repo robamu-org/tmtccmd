@@ -16,9 +16,7 @@ LOGGER = get_logger()
 
 
 class Service3TM(Service3Base):
-    """
-    @brief  This class encapsulates the format of Service 3 telemetry
-    @details
+    """This class encapsulates the format of Service 3 telemetry
     This class was written to handle Service 3 telemetry coming from the on-board software
     based on the Flight Software Framework (FSFW). A custom class can be defined, but should then
     implement Service3Base.
@@ -32,8 +30,7 @@ class Service3TM(Service3Base):
     def __init__(self, byte_array: bytearray, custom_hk_handling: bool = False,
                  minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
                  minimum_structure_report_header_size: int = STRUCTURE_REPORT_FIXED_HEADER_SIZE):
-        """
-        Service 3 packet class representation which can be built from a raw bytearray
+        """Service 3 packet class representation which can be built from a raw bytearray
         :param byte_array:
         :param custom_hk_handling:  Can be used if a custom HK format is used which does not
                                     use a 8 byte structure ID (SID).
@@ -77,7 +74,7 @@ class Service3TM(Service3Base):
             )
             return
         definitions_header = [
-            "Object ID", "Set ID", "Report Status", "Is valid","Collection Interval (s)",
+            "Object ID", "Set ID", "Report Status", "Is valid", "Collection Interval (s)",
             "Number Of IDs"
         ]
         reporting_enabled = self._tm_data[8]
@@ -110,8 +107,10 @@ class Service3TM(Service3Base):
             valid_string = "Yes"
         else:
             valid_string = "No"
-        definitions_content = [hex(self.get_object_id()), self._set_id, status_string, valid_string,
-                           collection_interval_seconds, num_params]
+        definitions_content = [
+            hex(self.get_object_id()), self._set_id, status_string, valid_string,
+            collection_interval_seconds, num_params
+        ]
         definitions_content.extend(parameters)
         return definitions_header, definitions_content
 
