@@ -13,7 +13,7 @@ from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
 from tmtccmd.pus_tm.service_5_event import Service5TM
 from tmtccmd.config.definitions import TelemetryQueueT
 from tmtccmd.pus_tm.definitions import PusTmListT
-from tmtccmd.pus_tm.service_3_base import Service3Base
+from tmtccmd.pus_tm.service_3_base import Service3Base, HkContentType
 from tmtccmd.utility.logger import get_logger
 
 LOGGER = get_logger()
@@ -130,7 +130,10 @@ class TmTcPrinter:
         """
         from tmtccmd.core.globals_manager import get_global
         from tmtccmd.config.definitions import CoreGlobalIds
-        self.__print_hk(hk_header=hk_header, hk_content=hk_content)
+        self.__print_hk(
+            content_type=HkContentType.HK, object_id=object_id, set_id=set_id,
+            header=hk_header, content=hk_content
+        )
         self.__print_validity_buffer(validity_buffer=validity_buffer, num_vars=num_vars)
 
     def handle_hk_definition_print(self, object_id: int, set_id: int, srv3_packet: Service3Base):
@@ -139,7 +142,11 @@ class TmTcPrinter:
         :return:
         """
         self.__print_buffer = f'HK Definition from Object ID {object_id:#010x} and set ID {set_id}:'
-        # TODO: Implement way to retrieve hk definitions list from service 3 packet
+        def_header, def_list = srv3_packet.get_hk_definitions_list()
+        self.__print_hk(
+            content_type=HkContentType.DEFINITIONS, object_id=object_id, set_id=set_id,
+            header=def_header, content=def_list
+        )
 
 
     def __handle_short_print(self, tm_packet: PusTelemetry):
@@ -189,23 +196,30 @@ class TmTcPrinter:
             self.__print_buffer = additional_printout
             LOGGER.info(self.__print_buffer)
 
-    def __print_hk(self, hk_header: list, hk_content: list):
+    def __print_hk(
+            self, content_type: HkContentType, object_id: int, set_id: int, header: list,
+            content: list
+    ):
         """
         :param tm_packet:
         :return:
         """
-        if not isinstance(tm_packet.hk_content, list):
-            LOGGER.error("Invalid HK content format! Needs to be list.")
+        if len(content) == 0 or len(header) == 0:
             return
-        if len(tm_packet.hk_content) == 0:
-            return
-        self.__print_buffer = f'HK Data from Object ID {object_id:#010x} and set ID {set_id}:'
+        if content_type == HkContentType.HK:
+            print_prefix = "Housekeeping data"
+        elif content_type == HkContentType.DEFINITIONS:
+            print_prefix = "Housekeeping definitions"
+        else:
+            print_prefix = "Unknown housekeeping data"
+        self.__print_buffer = \
+            f'{print_prefix} from Object ID {object_id:#010x} and set ID {set_id}:'
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = str(hk_header)
+        self.__print_buffer = str(header)
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = str(hk_content)
+        self.__print_buffer = str(content)
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
@@ -214,7 +228,7 @@ class TmTcPrinter:
         :param tm_packet:
         :return:
         """
-        if len(tm_packet.validity_buffer) == 0:
+        if len(validity_buffer) == 0:
             return
         self.__print_buffer = "Valid: "
         LOGGER.info(self.__print_buffer)
