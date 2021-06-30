@@ -70,7 +70,7 @@ class TmListener:
         self.__event_reply_received = threading.Event()
         # This Event is set by sender objects if all necessary operations are done
         # to transition back to listener mode
-        self.event_mode_op_finished = threading.Event()
+        self.__event_mode_op_finished = threading.Event()
 
         self.__listener_mode = self.ListenerModes.LISTENER
         self.__tm_type = tm_type
@@ -120,6 +120,10 @@ class TmListener:
 
     def clear_reply_event(self):
         self.__event_reply_received.clear()
+
+    def set_mode_op_finished(self):
+        if not self.__event_mode_op_finished.is_set():
+            self.__event_mode_op_finished.set()
 
     def ccsds_tm_received(self, apid: int = INVALID_APID):
         """This function is used to check whether any data has been received"""
@@ -232,14 +236,14 @@ class TmListener:
         if self.event_mode_change.is_set():
             self.event_mode_change.clear()
             start_time = time.time()
-            while not self.event_mode_op_finished.is_set():
+            while not self.__event_mode_op_finished.is_set():
                 elapsed_time = time.time() - start_time
                 if elapsed_time < TmListener.MODE_OPERATION_TIMEOUT:
                     self.__perform_mode_operation()
                 else:
                     LOGGER.warning("TmListener: Mode operation timeout occured!")
                     break
-            self.event_mode_op_finished.clear()
+            self.__event_mode_op_finished.clear()
             LOGGER.info("TmListener: Transitioning to listener mode.")
             self.__listener_mode = self.ListenerModes.LISTENER
 
@@ -260,13 +264,14 @@ class TmListener:
             time.sleep(0.4)
 
     def __perform_mode_operation(self):
-        """By setting the modeChangeEvent with set() and specifying the mode variable, the TmListener is instructed
-        to perform certain operations.
+        """The TmListener is instructed performs certain operations based on the current
+        listener mode.
         :return:
         """
         # Listener Mode
         if self.__listener_mode == self.ListenerModes.LISTENER:
-            self.event_mode_op_finished.set()
+            if not self.__event_mode_op_finished.is_set():
+                self.__event_mode_op_finished.set()
         # Single Command Mode
         elif self.__listener_mode == self.ListenerModes.SEQUENCE:
             # Listen for one reply sequence.

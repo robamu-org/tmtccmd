@@ -34,7 +34,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         self._apid = apid
         self._tc_queue = tc_queue
         self.__all_replies_received = False
-        self.__mode_op_finished = False
 
     def send_queue_tc_and_receive_tm_sequentially(self):
         """Primary function which is called for sequential transfer.
@@ -70,9 +69,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 self.__all_replies_received = True
                 break
             time.sleep(0.2)
-        if not self.__mode_op_finished:
-            self._tm_listener.event_mode_op_finished.set()
-            self.__mode_op_finished = True
+        self._tm_listener.set_mode_op_finished()
         LOGGER.info("SequentialSenderReceiver: All replies received!")
 
     def __check_for_reply(self):
