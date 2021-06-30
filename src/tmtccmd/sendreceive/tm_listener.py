@@ -152,7 +152,7 @@ class TmListener:
                 LOGGER.error("Could not acquire lock!")
             # Still continue
             for key, queue_list in self.__queue_dict.items():
-                queues.append((key, queue_list[self.QUEUE_DICT_QUEUE_IDX]))
+                queues.append((key, queue_list[self.QUEUE_DICT_QUEUE_IDX].copy()))
             if clear:
                 self.clear_tm_packet_queues(lock=False)
         return queues
@@ -225,7 +225,8 @@ class TmListener:
 
     def __perform_operation(self):
         while True:
-            # This is running in a daemon thread so it will stop automatically if all other threads have closed
+            # This is running in a daemon thread so it will stop automatically if all other
+            # threads have closed
             if self.event_listener_active.is_set():
                 self.listener_active = True
                 self.__default_operation()
@@ -278,6 +279,9 @@ class TmListener:
                 self.__event_mode_op_finished.set()
         # Single Command Mode
         elif self.__listener_mode == self.ListenerModes.SEQUENCE:
+            # This prevents the listener from listening from one more unnecessary cycle
+            if self.__event_mode_op_finished.is_set():
+                return
             # Listen for one reply sequence.
             if self.check_for_one_telemetry_sequence():
                 # Set reply event, will be cleared by checkForFirstReply()
@@ -315,23 +319,11 @@ class TmListener:
 
     def __route_packets(self, tm_packet_list: TelemetryListT):
         """Route given packets. For CCSDS packets, use APID to do this"""
-        from tmtccmd.ccsds.spacepacket import get_apid_from_raw_packet
         for tm_packet in tm_packet_list:
             if self.__tm_type == TmTypes.CCSDS_SPACE_PACKETS:
-                if len(tm_packet) < 6:
-                    LOGGER.warning('TM packet to small to be a CCSDS space packet')
-                else:
-                    apid = get_apid_from_raw_packet(raw_packet=tm_packet)
-                    target_queue_list = self.__queue_dict.get(apid)
-                    if target_queue_list is None:
-                        LOGGER.warning(f'No TM handler assigned for APID {apid}')
-                    else:
-                        target_queue = target_queue_list[self.QUEUE_DICT_QUEUE_IDX]
-                        if target_queue.__len__() > target_queue_list[self.QUEUE_DICT_MAX_LEN_IDX]:
-                            LOGGER.warning(f'Target queue for APID {apid} full. Removing oldest packet..')
-                            target_queue.pop()
-                        target_queue.appendleft(tm_packet)
-                        continue
+                packet_handled = self.__handle_ccsds_space_packet(tm_packet=tm_packet)
+                if packet_handled:
+                    continue
             # No queue was found
             LOGGER.warning('No target queue found, inserting into unknown target queue')
             unknown_target_list = self.__queue_dict[UNKNOWN_TARGET_ID]
@@ -340,3 +332,21 @@ class TmListener:
                 LOGGER.warning('Unknown target queue full. Removing oldest packet..')
                 unknown_target_queue.pop()
             unknown_target_queue.appendleft(tm_packet)
+
+    def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
+        from tmtccmd.ccsds.spacepacket import get_apid_from_raw_packet
+        if len(tm_packet) < 6:
+            LOGGER.warning('TM packet to small to be a CCSDS space packet')
+        else:
+            apid = get_apid_from_raw_packet(raw_packet=tm_packet)
+            target_queue_list = self.__queue_dict.get(apid)
+            if target_queue_list is None:
+                LOGGER.warning(f'No TM handler assigned for APID {apid}')
+            else:
+                target_queue = target_queue_list[self.QUEUE_DICT_QUEUE_IDX]
+                if target_queue.__len__() > target_queue_list[self.QUEUE_DICT_MAX_LEN_IDX]:
+                    LOGGER.warning(f'Target queue for APID {apid} full. Removing oldest packet..')
+                    target_queue.pop()
+                target_queue.appendleft(tm_packet)
+                return True
+        return False

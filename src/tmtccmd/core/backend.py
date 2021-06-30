@@ -216,7 +216,6 @@ class TmTcHandler(BackendBase):
             if self.__tm_listener.reply_event():
                 LOGGER.info("TmTcHandler: Packets received.")
                 packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
-                print(packet_queues)
                 if len(packet_queues) > 0:
                     self.__tm_handler.handle_packet_queues(packet_queue_list=packet_queues)
                 self.__tm_listener.clear_reply_event()
