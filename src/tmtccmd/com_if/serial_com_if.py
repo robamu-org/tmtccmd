@@ -158,7 +158,7 @@ class SerialComIF(CommunicationInterface):
             LOGGER.warning("This communication type was not implemented yet!")
         return packet_list
 
-    def data_available(self, timeout: float = 0) -> int:
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
         elapsed_time = 0
         start_time = time.time()
         sleep_time = timeout / 3.0

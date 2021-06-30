@@ -213,7 +213,7 @@ class TmListener:
         """Receive all telemetry for a specified time period.
         :return: True if a sequence was received
         """
-        data_available = self.__com_if.data_available(self.__tm_timeout)
+        data_available = self.__com_if.data_available(0)
         if data_available == 0:
             return False
         elif data_available > 0:
@@ -295,8 +295,11 @@ class TmListener:
         """Thread-safe implementation for reading a telemetry sequence."""
         start_time = time.time()
         elapsed_time = 0
-        # LOGGER.info(f"TmListener: Listening for {self.__tm_timeout} seconds")
         while elapsed_time < self.__tm_timeout:
+            # Fast responsiveness in sequential mode
+            if self.__event_mode_op_finished.is_set():
+                if self.__listener_mode == self.ListenerModes.SEQUENCE:
+                    return
             packets_available = self.__com_if.data_available(0.2)
             if packets_available > 0:
                 packet_list = self.__com_if.receive()
@@ -308,14 +311,14 @@ class TmListener:
                         )
                     self.__route_packets(packet_list)
             elapsed_time = time.time() - start_time
-            time.sleep(0.05)
+            if packets_available == 0:
+                time.sleep(0.1)
         # the timeout value can be set by special TC queue entries if wiretapping_packet handling
         # takes longer, but it is reset here to the global value
         from tmtccmd.core.globals_manager import get_global
         from tmtccmd.config.definitions import CoreGlobalIds
         if self.__tm_timeout is not get_global(CoreGlobalIds.TM_TIMEOUT):
             self.__tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
-        return True
 
     def __route_packets(self, tm_packet_list: TelemetryListT):
         """Route given packets. For CCSDS packets, use APID to do this"""

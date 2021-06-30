@@ -119,7 +119,7 @@ class TcpIpTcpComIF(CommunicationInterface):
             elif bytes_recvd is None or len(bytes_recvd) == 0:
                 break
 
-    def data_available(self, timeout: float = 0) -> bool:
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.__tm_queue:
             return True
         else:

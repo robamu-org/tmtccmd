@@ -82,7 +82,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         if bytes_sent != len(data):
             LOGGER.warning("Not all bytes were sent!")
 
-    def data_available(self, timeout: float = 0) -> bool:
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.udp_socket is None:
             return False
         ready = select.select([self.udp_socket], [], [], timeout)

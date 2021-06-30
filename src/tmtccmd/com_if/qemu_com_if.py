@@ -169,7 +169,7 @@ class QEMUComIF(CommunicationInterface):
 
         return packet_list
 
-    def data_available(self, timeout: any = 0) -> int:
+    def data_available(self, timeout: any = 0, parameters: any = 0) -> int:
         elapsed_time = 0
         start_time = time.time()
         sleep_time = timeout / 3.0

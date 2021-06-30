@@ -70,7 +70,7 @@ class CommunicationInterface:
         return packet_list
 
     @abstractmethod
-    def data_available(self, parameters: any) -> int:
+    def data_available(self, timeout: float, parameters: any) -> int:
         """
         Check whether TM data is available
         :param parameters: Can be an arbitrary parameter like a timeout

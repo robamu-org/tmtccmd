@@ -34,7 +34,7 @@ class DummyComIF(CommunicationInterface):
     def close(self, args: any = None) -> None:
         pass
 
-    def data_available(self, parameters):
+    def data_available(self, timeout: float = 0, parameters: any = 0):
         if self.dummy_handler.reply_pending:
             return True
         return False
