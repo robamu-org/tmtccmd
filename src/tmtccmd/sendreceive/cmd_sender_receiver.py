@@ -16,7 +16,7 @@ import time
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
@@ -25,7 +25,7 @@ from tmtccmd.config.definitions import TelemetryQueueT
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.ecss.tm import PusTelemetry
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 # pylint: disable=too-many-instance-attributes

@@ -1,8 +1,8 @@
 from tmtccmd.config.definitions import ServiceOpCodeDictT
 from tmtccmd.config.hook import TmTcHookBase
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class ExampleHookClass(TmTcHookBase):

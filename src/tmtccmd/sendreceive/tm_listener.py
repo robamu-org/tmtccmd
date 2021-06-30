@@ -8,21 +8,22 @@ import sys
 import time
 import threading
 from collections import deque
-from typing import Dict, Deque, List, Tuple
+from typing import Dict, List, Tuple
 from enum import Enum
 
 from tmtccmd.config.definitions import TelemetryQueueT, TelemetryListT
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.definitions import TmTypes
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.conf_util import acquire_timeout
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 INVALID_APID = -2
 UNKNOWN_TARGET_ID = -1
 QueueDictT = Dict[int, Tuple[TelemetryQueueT, int]]
 QueueListT = List[Tuple[int, TelemetryQueueT]]
+
 
 class TmListener:
     """Performs all TM listening operations.
@@ -46,7 +47,7 @@ class TmListener:
             self, com_if: CommunicationInterface, tm_timeout: float, tc_timeout_factor: float,
             tm_type: TmTypes = TmTypes.CCSDS_SPACE_PACKETS
     ):
-        """Initiate a TM listener
+        """Initiate a TM listener.
         :param com_if:              Type of communication interface, e.g. a serial or ethernet interface
         :param tm_timeout:          Timeout for the TM reception
         :param tc_timeout_factor:
@@ -147,6 +148,9 @@ class TmListener:
     def retrieve_tm_packet_queues(self, clear: bool) -> QueueListT:
         queues = []
         with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+            if not acquired:
+                LOGGER.error("Could not acquire lock!")
+            # Still continue
             for key, queue_list in self.__queue_dict.items():
                 queues.append((key, queue_list[self.QUEUE_DICT_QUEUE_IDX]))
             if clear:
@@ -155,7 +159,7 @@ class TmListener:
 
     def retrieve_ccsds_tm_packet_queue(self, apid: int = -1, clear: bool = False) -> TelemetryQueueT:
         """Retrieve the packet queue for a given APID. The TM listener will handle routing
-        packets into the correct queue"""
+        packets into the correct queue."""
         if apid == -1:
             apid = self.current_apid
         target_queue_list = self.__queue_dict.get(apid)

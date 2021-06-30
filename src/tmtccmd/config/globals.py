@@ -3,7 +3,7 @@ import collections.abc
 import pprint
 from typing import Union, List, Dict
 
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
 from tmtccmd.ecss.conf import PusVersion, set_default_apid, set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
@@ -12,7 +12,7 @@ from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceL
 from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 SERVICE_OP_CODE_DICT = dict()
 
 

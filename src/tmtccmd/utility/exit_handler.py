@@ -1,9 +1,9 @@
 import signal
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 def keyboard_interrupt_handler(tmtc_backend: TmTcHandler, com_interface: CommunicationInterface):
