@@ -1,10 +1,10 @@
 import json
 
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 from tmtccmd.config.definitions import ComIFDictT
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:

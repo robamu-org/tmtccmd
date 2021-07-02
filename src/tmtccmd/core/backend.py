@@ -4,11 +4,10 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Tuple, Union, cast, Optional
+from typing import Union
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList, TmHandler, TmTypes
-from tmtccmd.utility.logger import get_logger
-from tmtccmd.ecss.tc import PusTelecommand
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
@@ -17,7 +16,7 @@ from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tc.packer import ServiceQueuePacker
 
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class BackendBase:

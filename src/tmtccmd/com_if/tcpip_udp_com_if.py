@@ -8,13 +8,13 @@ import select
 import socket
 from typing import Union
 
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT, CoreModeList
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 UDP_RECV_WIRETAPPING_ENABLED = False
 UDP_SEND_WIRETAPPING_ENABLED = False
@@ -82,7 +82,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         if bytes_sent != len(data):
             LOGGER.warning("Not all bytes were sent!")
 
-    def data_available(self, timeout: float = 0) -> bool:
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.udp_socket is None:
             return False
         ready = select.select([self.udp_socket], [], [], timeout)

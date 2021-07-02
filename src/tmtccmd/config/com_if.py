@@ -7,12 +7,12 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.com_if.serial_com_if import SerialConfigIds, SerialCommunicationType, SerialComIF
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
 from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 def create_communication_interface_default(

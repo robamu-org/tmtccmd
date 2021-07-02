@@ -10,14 +10,14 @@ import threading
 from collections import deque
 from typing import Union
 
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 TCP_RECV_WIRETAPPING_ENABLED = False
 TCP_SEND_WIRETAPPING_ENABLED = False
@@ -119,7 +119,7 @@ class TcpIpTcpComIF(CommunicationInterface):
             elif bytes_recvd is None or len(bytes_recvd) == 0:
                 break
 
-    def data_available(self, timeout: float = 0) -> bool:
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.__tm_queue:
             return True
         else:

@@ -31,10 +31,10 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 SERIAL_FRAME_LENGTH = 256
 DLE_FRAME_LENGTH = 1500
 
@@ -169,7 +169,7 @@ class QEMUComIF(CommunicationInterface):
 
         return packet_list
 
-    def data_available(self, timeout: any = 0) -> int:
+    def data_available(self, timeout: any = 0, parameters: any = 0) -> int:
         elapsed_time = 0
         start_time = time.time()
         sleep_time = timeout / 3.0

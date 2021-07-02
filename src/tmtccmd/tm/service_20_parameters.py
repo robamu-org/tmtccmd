@@ -2,9 +2,9 @@ import os
 import struct
 
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
-logger = get_logger()
+logger = get_console_logger()
 
 
 class Service20TM(PusTelemetry):

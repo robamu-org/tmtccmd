@@ -11,10 +11,10 @@ from tmtccmd.tm.definitions import PusTmListT
 from tmtccmd.tm.service_1_verification import Service1TmPacked
 from tmtccmd.tm.service_17_test import Service17TmPacked
 from tmtccmd.pus.service_17_test import Srv17Subservices
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class DummyComIF(CommunicationInterface):
@@ -34,7 +34,7 @@ class DummyComIF(CommunicationInterface):
     def close(self, args: any = None) -> None:
         pass
 
-    def data_available(self, parameters):
+    def data_available(self, timeout: float = 0, parameters: any = 0):
         if self.dummy_handler.reply_pending:
             return True
         return False

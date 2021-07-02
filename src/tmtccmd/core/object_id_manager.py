@@ -1,8 +1,8 @@
 from typing import Dict
 
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 __OBJECT_ID_DICT = dict()
 
 
