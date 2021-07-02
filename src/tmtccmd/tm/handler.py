@@ -1,7 +1,7 @@
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.pus_tm.service_1_verification import Service1TM
-from tmtccmd.pus_tm.service_17_test import Service17TM
+from tmtccmd.tm.service_5_event import Service5TM
+from tmtccmd.tm.service_1_verification import Service1TM
+from tmtccmd.tm.service_17_test import Service17TM
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 

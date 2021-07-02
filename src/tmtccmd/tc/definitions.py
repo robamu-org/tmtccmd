@@ -1,8 +1,8 @@
 from typing import Tuple, Union, Deque
 from tmtccmd.config.definitions import QueueCommands
-from tmtccmd.ecss.tc import PusTcTupleT, PusTelecommand
+from tmtccmd.ecss.tc import PusTelecommand
 
 TcAuxiliaryTupleT = Tuple[QueueCommands, any]
-TcQueueEntryT = Union[TcAuxiliaryTupleT, PusTcTupleT]
 PusTcTupleT = Tuple[bytearray, Union[PusTelecommand]]
+TcQueueEntryT = Union[TcAuxiliaryTupleT, PusTcTupleT]
 TcQueueT = Deque[TcQueueEntryT]
