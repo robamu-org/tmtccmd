@@ -12,6 +12,7 @@ The first step is to import some important modules in the ``runner`` module.
 The example application for the CLI mode looks like this:
 
 .. highlight:: python
+
 	from tmtccmd.ccsds.handler import CcsdsTmHandler
 	from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander, add_ccsds_handler
 	from tmtccmd.tm.handler import default_ccsds_packet_handler
@@ -28,18 +29,18 @@ The example application for the CLI mode looks like this:
 		add_ccsds_handler(ccsds_handler)
 		run_tmtc_commander(use_gui=False)
 
-1. The ``ExampleHookClass`` is located inside the ``example/config`` folder and contains all
+#. The ``ExampleHookClass`` is located inside the ``example/config`` folder and contains all
 important hook implementations. 
-2. The hook instance is passed to the :py:meth:`tmtccmd.runner.initialize_tmtc_commander` method
+#. The hook instance is passed to the :py:meth:`tmtccmd.runner.initialize_tmtc_commander` method
 which takes care of internal initialization. 
-3. After that, a generic :py:class:`tmtccmd.ccsds.handler.CcsdsTmHandler` us 
+#. After that, a generic :py:class:`tmtccmd.ccsds.handler.CcsdsTmHandler` us 
 created, which can be used to handle PUS packets, which are a specific type of CCSDS packets.
 Here, it is assumed the so called Application Process Identifier or APID will be constant
 for all PUS packets.
-4. A telemetry handler is added to the CCSDS handler for handling PUS telemetry with that specific
+#. A telemetry handler is added to the CCSDS handler for handling PUS telemetry with that specific
 APID.
-5. The CCSDS Handler is added so it can be used by the TMTC commander core
-6. Finally, the application can be started with the :py:meth:`tmtccmd.runner.run_tmtc_commander`
+#. The CCSDS Handler is added so it can be used by the TMTC commander core
+#. Finally, the application can be started with the :py:meth:`tmtccmd.runner.run_tmtc_commander`
 call.
 
 Most of the TMTC commander configuration is done through the hook object instance. More information
