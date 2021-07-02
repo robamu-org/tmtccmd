@@ -4,5 +4,5 @@ from tmtccmd.ecss.tc import PusTcTupleT, PusTelecommand
 
 TcAuxiliaryTupleT = Tuple[QueueCommands, any]
 TcQueueEntryT = Union[TcAuxiliaryTupleT, PusTcTupleT]
-PusTcTupleT = Tuple[bytearray, PusTelecommand]
+PusTcTupleT = Tuple[bytearray, Union[PusTelecommand]]
 TcQueueT = Deque[TcQueueEntryT]
