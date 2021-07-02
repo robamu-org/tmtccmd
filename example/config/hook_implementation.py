@@ -10,6 +10,7 @@ from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.service_3_base import Service3Base
 
+from config.definitions import APID
 LOGGER = get_console_logger()
 
 
@@ -23,7 +24,7 @@ class ExampleHookClass(TmTcHookBase):
 
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-        set_default_globals_pre_args_parsing(gui=gui, apid=0xef)
+        set_default_globals_pre_args_parsing(gui=gui, apid=APID)
 
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
         from tmtccmd.config.globals import set_default_globals_post_args_parsing
