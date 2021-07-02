@@ -4,9 +4,6 @@
 import enum
 from typing import Tuple, Dict, Optional, List, Deque
 
-TelemetryListT = List[bytearray]
-TelemetryQueueT = Deque[bytearray]
-
 
 class CoreGlobalIds(enum.IntEnum):
     """

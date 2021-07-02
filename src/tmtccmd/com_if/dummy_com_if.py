@@ -7,7 +7,7 @@ from typing import cast
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.tm.definitions import PusTmListT
+from tmtccmd.config.definitions import TelemetryListT
 from tmtccmd.tm.service_1_verification import Service1TmPacked
 from tmtccmd.tm.service_17_test import Service17TmPacked
 from tmtccmd.pus.service_17_test import Srv17Subservices
@@ -21,7 +21,8 @@ class DummyComIF(CommunicationInterface):
     def __init__(self, com_if_key: str, tmtc_printer: TmTcPrinter):
         super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
         self.dummy_handler = DummyHandler()
-        self.service_sent = 0
+        self.last_service = 0
+        self.last_subservice = 0
         self.tc_ssc = 0
         self.tc_packet_id = 0
 
@@ -39,15 +40,12 @@ class DummyComIF(CommunicationInterface):
             return True
         return False
 
-    def send_data(self, data: bytearray):
-        pass
-
-    def receive_telemetry(self, parameters: any = 0) -> PusTmListT:
+    def receive(self, parameters: any = 0) -> TelemetryListT:
         return self.dummy_handler.receive_reply_package()
 
-    def send_telecommand(self, tc_packet: bytearray, tc_packet_obj: PusTelecommand = None):
-        if tc_packet_obj is not None:
-            self.dummy_handler.pass_telecommand(pus_tc=tc_packet_obj)
+    def send(self, data: bytearray):
+        if data is not None:
+            self.dummy_handler.pass_telecommand(data=data)
 
 
 class DummyHandler:
@@ -59,10 +57,13 @@ class DummyHandler:
         self.current_ssc = 0
         self.reply_pending = False
 
-    def pass_telecommand(self, pus_tc: PusTelecommand):
-        self.last_telecommand = pus_tc
-        self.last_tc_ssc = pus_tc.get_ssc()
-        self.last_tc_packet_id = pus_tc.get_packet_id()
+    def pass_telecommand(self, data: bytearray):
+        # TODO: Need TC deserializer for cleaner implementation
+        self.last_telecommand = data
+        self.last_tc_ssc = ((data[2] << 8) | data[3]) & 0x3fff
+        self.last_service = data[7]
+        self.last_subservice = data[8]
+        self.tc_packet_id = data[0] << 8 | data[1]
         self.reply_pending = True
         self.generate_reply_package()
 
@@ -74,9 +75,8 @@ class DummyHandler:
          - Generate the object representation which would otherwise be generated from the raw bytearray received
            from an external source
         """
-        telecommand = cast(PusTelecommand, self.last_telecommand)
-        if telecommand.get_service() == 17:
-            if telecommand.get_subservice() == 1:
+        if self.last_service == 17:
+            if self.last_subservice == 1:
                 tm_packer = Service1TmPacked(
                     subservice=1, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
                     tc_ssc=self.last_tc_ssc
@@ -98,7 +98,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-    def receive_reply_package(self) -> PusTmListT:
+    def receive_reply_package(self) -> TelemetryListT:
         if self.reply_pending:
             return_list = self.next_telemetry_package.copy()
             self.next_telemetry_package.clear()
