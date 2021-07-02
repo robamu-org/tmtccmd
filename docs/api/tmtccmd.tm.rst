@@ -12,6 +12,14 @@ tmtccmd.tm.definitions module
    :undoc-members:
    :show-inheritance:
 
+tmtccmd.tm.handler module
+----------------------------------
+
+.. automodule:: tmtccmd.tm.handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tmtccmd.tm.service\_17\_test module
 ----------------------------------------
 
