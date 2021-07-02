@@ -6,7 +6,9 @@ from abc import abstractmethod
 from collections import deque
 from typing import Union
 
-from tmtccmd.config.definitions import CoreServiceList, CoreModeList, TmHandler, TmTypes
+from tmtccmd.config.definitions import CoreServiceList, CoreModeList
+from tmtccmd.tm.definitions import TmTypes
+from tmtccmd.tm.handler import TmHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
 from tmtccmd.sendreceive.tm_listener import TmListener

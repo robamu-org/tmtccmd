@@ -7,7 +7,7 @@ from typing import cast
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.config.definitions import TelemetryListT
+from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.tm.service_1_verification import Service1TmPacked
 from tmtccmd.tm.service_17_test import Service17TmPacked
 from tmtccmd.pus.service_17_test import Srv17Subservices

@@ -28,7 +28,7 @@ from collections import deque
 from threading import Thread
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.config.definitions import TelemetryListT
+from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
 from tmtccmd.utility.logger import get_console_logger

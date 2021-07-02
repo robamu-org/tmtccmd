@@ -11,9 +11,8 @@ from collections import deque
 from typing import Dict, List, Tuple
 from enum import Enum
 
-from tmtccmd.config.definitions import TelemetryQueueT, TelemetryListT
+from tmtccmd.tm.definitions import TelemetryQueueT, TelemetryListT, TmTypes
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.config.definitions import TmTypes
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.conf_util import acquire_timeout
 

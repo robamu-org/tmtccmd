@@ -1,6 +1,7 @@
 from typing import Callable, Dict, Optional, Tuple, List
 
-from tmtccmd.config.definitions import TmHandler, TmTypes, TelemetryQueueT
+from tmtccmd.tm.handler import TmHandler
+from tmtccmd.tm.definitions import TelemetryQueueT, TmTypes
 from tmtccmd.sendreceive.tm_listener import QueueListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
