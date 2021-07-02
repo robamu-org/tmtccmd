@@ -1,20 +1,19 @@
+import argparse
+from typing import Union, Dict, Tuple
+
 from tmtccmd.config.definitions import ServiceOpCodeDictT
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.utility.logger import get_logger
+from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.tc.definitions import TcQueueT
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.tm.service_3_base import Service3Base
 
 LOGGER = get_logger()
 
 
 class ExampleHookClass(TmTcHookBase):
-    import argparse
-    from typing import Union, Dict, Tuple
-
-    from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.utility.tmtc_printer import TmTcPrinter
-    from tmtccmd.ecss.tm import PusTelemetry
-    from tmtccmd.tc.definitions import TcQueueT
-    from tmtccmd.com_if.com_interface_base import CommunicationInterface
-    from tmtccmd.tm.service_3_base import Service3Base
 
     def get_json_config_file_path(self) -> str:
         return "tmtc_config.json"
@@ -48,11 +47,6 @@ class ExampleHookClass(TmTcHookBase):
         default_service_queue_preparation(
             service=service, op_code=op_code, service_queue=service_queue
         )
-
-    def tm_user_factory_hook(self, raw_tm_packet: bytearray) -> PusTelemetry:
-        from tmtccmd.tm.handler import default_factory_hook
-        LOGGER.info("TM user factory hook was called")
-        return default_factory_hook(raw_tm_packet=raw_tm_packet)
 
     def get_object_ids(self) -> Dict[bytes, list]:
         from tmtccmd.config.objects import get_core_object_ids
