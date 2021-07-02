@@ -11,7 +11,7 @@ In general, the main function will only consist of a few calls to the ``tmtccmd`
 The first step is to import some important modules in the ``runner`` module.
 The example application for the CLI mode looks like this:
 
-.. highlight:: python
+::
 
 	from tmtccmd.ccsds.handler import CcsdsTmHandler
 	from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander, add_ccsds_handler
