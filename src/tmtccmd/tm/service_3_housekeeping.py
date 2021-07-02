@@ -7,7 +7,7 @@
 """
 
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.service_3_base import Service3Base
+from tmtccmd.tm.service_3_base import Service3Base
 from tmtccmd.utility.logger import get_logger
 from typing import Type
 import struct

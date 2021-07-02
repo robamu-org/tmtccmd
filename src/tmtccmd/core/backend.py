@@ -14,7 +14,7 @@ from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.pus_tc.packer import ServiceQueuePacker
+from tmtccmd.tc.packer import ServiceQueuePacker
 
 
 LOGGER = get_logger()

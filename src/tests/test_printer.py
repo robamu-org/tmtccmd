@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from tmtccmd.pus_tm.service_1_verification import Service1TmPacked, Service1TM
-from tmtccmd.pus_tm.service_5_event import Service5TM, Service5TmPacked, Severity
-from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
+from tmtccmd.tm.service_1_verification import Service1TmPacked, Service1TM
+from tmtccmd.tm.service_5_event import Service5TM, Service5TmPacked, Severity
+from tmtccmd.tc.service_17_test import pack_service17_ping_command
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.utility.logger import get_logger, set_tmtc_logger
 

@@ -20,7 +20,7 @@ from tmtccmd.utility.logger import get_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.pus_tc.definitions import TcQueueEntryT
+from tmtccmd.tc.definitions import TcQueueEntryT
 from tmtccmd.config.definitions import TelemetryQueueT
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.ecss.tm import PusTelemetry
