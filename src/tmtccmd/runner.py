@@ -53,8 +53,7 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
 
 
 def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
-    """
-    Add a handler for PUS packets which will be used to handle PUS packets with a certain APID.
+    """Add a handler for CCSDS space packets, for example PUS packets
     :param pus_handler:
     :return:
     """
@@ -72,23 +71,19 @@ def run_tmtc_commander(
         app_name: str = "TMTC Commander"
 ):
     """This is the primary function to run the TMTC commander. Users should call this function to
-    start the TMTC commander. Please note that assign_tmtc_commander_hooks needs to be called
-    before this function. Raises RuntimeError if `initialize_tmtc_commander`
+    start the TMTC commander. Please note that :py:func:`initialize_tmtc_commander` needs to be
+    called before this function. Raises RuntimeError if :py:func:`initialize_tmtc_commander`
     has not been called before calling this function.
-
-    Example for a simple main function content to use the command line mode:
-
-        hook_obj = MyCustomHookClass()
-        initialize_tmtccmd(hook_obj)
-        run_tmtc_client(False)
 
     :param use_gui:             Specify whether the GUI is used or not
     :param reduced_printout:    It is possible to reduce the initial printout with this flag
     :param ansi_colors:         Enable ANSI color output for terminal
-    :param tmtc_backend:
-    :param tmtc_frontend:
+    :param tmtc_backend:        Custom backend can be passed here. Otherwise, a default backend
+                                will be created
+    :param tmtc_frontend:       Custom frontend can be passed here. Otherwise, a default backend
+                                will be created
     :param app_name:            Name of application. Will be displayed in GUI
-    :raises: ValueError if `initialize_tmtc_commander` was not called before
+    :raises: ValueError if :py:func:`initialize_tmtc_commander` was not called before
     :return:
     """
     try:
