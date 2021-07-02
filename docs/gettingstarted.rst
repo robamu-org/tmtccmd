@@ -60,7 +60,7 @@ GUI
 Simply run the ``tmtc_gui.py`` application and connect to the Dummy communication interface.
 After that, you can send a ping command and see the generated replies.
 
- .. hook-func-label:
+.. _hook-func-label:
  
 Implementing the hook function
 ==============================

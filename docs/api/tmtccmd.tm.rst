@@ -12,14 +12,6 @@ tmtccmd.tm.definitions module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tm.factory module
-------------------------------
-
-.. automodule:: tmtccmd.tm.factory
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.tm.service\_17\_test module
 ----------------------------------------
 
