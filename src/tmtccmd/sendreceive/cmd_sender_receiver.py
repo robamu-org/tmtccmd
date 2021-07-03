@@ -16,14 +16,16 @@ import time
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 
+from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.pus_tc.definitions import TcQueueEntryT
-from tmtccmd.pus_tm.factory import PusTmQueueT
+from tmtccmd.tc.definitions import TcQueueEntryT
+from tmtccmd.tm.definitions import TelemetryQueueT
 from tmtccmd.core.globals_manager import get_global
+from tmtccmd.ecss.tm import PusTelemetry
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 # pylint: disable=too-many-instance-attributes
@@ -32,8 +34,10 @@ class CommandSenderReceiver:
     This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
-    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-                 tm_listener: TmListener):
+    def __init__(
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
+            tm_handler: CcsdsTmHandler
+    ):
 
         """
         :param com_if: CommunicationInterface object. Instantiate the desired one
@@ -41,6 +45,7 @@ class CommandSenderReceiver:
         :param tmtc_printer: TmTcPrinter object. Instantiate it and pass it here.
         """
         self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
+        self._tm_handler = tm_handler
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
 
         if isinstance(com_if, CommunicationInterface):
@@ -135,12 +140,18 @@ class CommandSenderReceiver:
             return False
 
     @staticmethod
-    def check_queue_entry_static(tc_queue_entry: TcQueueEntryT):
-        """
-        TODO: static version which can be called without sendreceive classes
-        """
+    def check_queue_entry_static(tc_queue_entry: TcQueueEntryT) -> bool:
+        """Static method to check whether a queue entry is a valid telecommand"""
         queue_entry_first, queue_entry_second = tc_queue_entry
-        queue_entry_is_telecommand = False
+        if isinstance(queue_entry_first, str):
+            LOGGER.warning("Invalid telecommand. Queue entry is a string!")
+            return False
+        if isinstance(queue_entry_first, QueueCommands):
+            return False
+        elif isinstance(queue_entry_first, bytearray):
+            return True
+        else:
+            return False
 
     def check_queue_entry(self, tc_queue_entry: TcQueueEntryT) -> bool:
         """
@@ -210,11 +221,11 @@ class CommandSenderReceiver:
                 self._reply_received = True
         time.sleep(0.5)
 
-    def print_tm_queue(self, tm_queue: PusTmQueueT):
+    def print_tm_queue(self, tm_queue: TelemetryQueueT):
         while tm_queue:
             try:
                 tm_packet_list = tm_queue.pop()
                 for tm_packet in tm_packet_list:
-                    self._tmtc_printer.print_telemetry(tm_packet)
+                    self._tmtc_printer.print_telemetry(PusTelemetry(tm_packet))
             except AttributeError as e:
                 LOGGER.exception("CommandSenderReceiver Exception: Invalid queue entry. Traceback:", e)

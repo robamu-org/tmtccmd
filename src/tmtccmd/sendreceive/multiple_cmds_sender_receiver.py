@@ -1,6 +1,5 @@
 """
-@brief   Used to send multiple TCs as bursts and listen for replies simultaneously.
-         Used by Module Tester
+Used to send multiple TCs as bursts and listen for replies simultaneously. Used by Module Tester
 """
 import sys
 import time
@@ -13,24 +12,21 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.utility.tmtc_printer import get_logger
+from tmtccmd.utility.tmtc_printer import get_console_logger
 
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
-    """
-    Difference to seqential sender: This class can send TCs in bursts.
+    """Difference to seqential sender: This class can send TCs in bursts.
     Wait intervals can be specified with wait time between the send bursts.
     This is generally done in the separate test classes in UnitTest
     """
     def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
                  tc_queue: Deque, tm_listener: TmListener, wait_intervals: list,
                  wait_time: Union[float, list], print_tm: bool):
-        """
-        TCs are sent in burst when applicable. Wait intervals can be specified by supplying
-        respective arguments
+        """TCs are sent in burst when applicable. Wait intervals can be specified by supplying respective arguments
         :param com_if:
         :param tmtc_printer:
         :param tc_queue:
@@ -110,11 +106,3 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
 
     def __clear_listener_tm_info_queue(self):
         self._tm_listener.clear_tm_packet_queue()
-
-
-
-
-
-
-
-

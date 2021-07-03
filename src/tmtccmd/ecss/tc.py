@@ -6,7 +6,7 @@ This module contains the PUS telecommand class representation to pack telecomman
 """
 from __future__ import annotations
 import sys
-from typing import Tuple
+from typing import Tuple, Union
 
 from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
@@ -25,7 +25,7 @@ except ImportError:
 class PusTcDataFieldHeaderSerialize:
     def __init__(
             self, service_type: int, service_subtype: int, source_id: int = 0,
-            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag = 0
+            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag: int = 0
     ):
         self.service_type = service_type
         self.service_subtype = service_subtype
@@ -228,9 +228,6 @@ def generate_crc(data: bytearray) -> bytearray:
     data_with_crc.append((crc & 0xFF00) >> 8)
     data_with_crc.append(crc & 0xFF)
     return data_with_crc
-
-
-PusTcTupleT = Tuple[bytearray, PusTelecommand]
 
 
 # pylint: disable=line-too-long

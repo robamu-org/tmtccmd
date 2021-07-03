@@ -1,7 +1,7 @@
 import enum
 import struct
 
-from tmtccmd.pus_tc.definitions import PusTelecommand
+from tmtccmd.tc.definitions import PusTelecommand
 from tmtccmd.config.globals import get_global_apid
 
 

@@ -37,8 +37,8 @@ ECSS & PUS Submodules
    api/tmtccmd.ccsds
    api/tmtccmd.ecss
    api/tmtccmd.pus
-   api/tmtccmd.pus_tc
-   api/tmtccmd.pus_tm
+   api/tmtccmd.tc
+   api/tmtccmd.tm
 
 Other Submodules
 =========================

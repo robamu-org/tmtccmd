@@ -10,11 +10,18 @@ class PacketTypes(enum.IntEnum):
     PACKET_TYPE_TC = 1
 
 
+class SequenceFlags(enum.IntEnum):
+    CONTINUATION_SEGMENT = 0b00,
+    FIRST_SEGMENT = 0b01,
+    LAST_SEGMENT = 0b10,
+    UNSEGMENTED = 0b11
+
+
 class SpacePacketCommonFields:
-    """Encapsulates common fields in a SpacePacket"""
+    """Encapsulates common fields in a SpacePacket. Packet reference: Blue Book CCSDS 133.0-B-2"""
     def __init__(
             self, packet_type: PacketTypes, apid: int, source_sequence_count: int, data_length: int,
-            version: int = 0b000, secondary_header_flag: int = 0b1, sequence_flags: int = 0b11
+            version: int = 0b000, secondary_header_flag: bool = True, sequence_flags: int = 0b11
     ):
         self.packet_type = packet_type
         self.apid = apid
@@ -72,15 +79,15 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
 class SpacePacketHeaderSerializer(SpacePacketCommonFields):
     def __init__(
             self, apid: int, packet_type: PacketTypes, data_length: int, source_sequence_count: int,
-            secondary_header_flag: int = 0b1, version: int = 0b000, sequence_flags: int = 0b11
+            secondary_header_flag: bool = True, version: int = 0b000, sequence_flags: int = SequenceFlags.UNSEGMENTED
     ):
         """Serialize raw space packet header.
         :param packet_type: 0 for telemetry, 1 for telecommands
         :param data_length: Length of packet data field
         :param source_sequence_count:
-        :param secondary_header_flag:
+        :param secondary_header_flag: Indicates presence of absence of a Secondary Header in the Space Packet
         :param version: Shall be b000 for CCSDS Version 1 packets
-        :param sequence_flags: 0b11 for stand-alone packets
+        :param sequence_flags: 0b11 for stand-alone packets (unsegmented user data)
         :param apid:
         """
         self.packet_id_bytes = [0x00, 0x00]
@@ -107,35 +114,39 @@ class SpacePacketHeaderSerializer(SpacePacketCommonFields):
 
 
 def get_sp_packet_id_bytes(
-        version: int, packet_type: PacketTypes, secondary_header_flag: int, apid: int
+        packet_type: PacketTypes, secondary_header_flag: True, apid: int, version: int = 0b000
 ) -> Tuple[int, int]:
     """This function also includes the first three bits reserved for the version.
 
-    :param version:
+    :param version: Version field of the packet ID. Defined to be 0b000 in the space packet standard
     :param packet_type:
-    :param secondary_header_flag:
-    :param apid:
+    :param secondary_header_flag: Indicates presence of absence of a Secondary Header in the Space Packet
+    :param apid: Application Process Identifier. Naming mechanism for managed data path, has 11 bits
     :return:
     """
     byte_one = \
         ((version << 5) & 0xE0) | ((packet_type & 0x01) << 4) | \
-        ((secondary_header_flag & 0x01) << 3) | ((apid & 0x700) >> 8)
+        ((int(secondary_header_flag) & 0x01) << 3) | ((apid & 0x700) >> 8)
     byte_two = apid & 0xFF
     return byte_one, byte_two
 
 
-def get_sp_packet_id_num(packet_type: PacketTypes, secondary_header_flag: int, apid: int) -> int:
-    return packet_type << 12 | secondary_header_flag << 11 | apid
+def get_sp_packet_id_num(packet_type: PacketTypes, secondary_header_flag: bool, apid: int) -> int:
+    """Get packet identification segment of packet primary header in integer format"""
+    return ((packet_type << 12 | int(secondary_header_flag) << 11 | apid) & 0x1fff)
 
 
-def get_sp_packet_sequence_control(sequence_flags: int, source_sequence_count: int) -> int:
+def get_sp_packet_sequence_control(sequence_flags: SequenceFlags, source_sequence_count: int) -> int:
+    """ """
     if sequence_flags > 3:
-        print("get_sp_packet_sequence_control: Sequence flag value larger than 0b11! "
-              "Setting to 0b11..")
-        sequence_flags = 0b11
+        print(
+            "get_sp_packet_sequence_control: Sequence flag value larger than 0b11! Setting to 0b11.."
+        )
+        sequence_flags = SequenceFlags.UNSEGMENTED
     if source_sequence_count > 0x3fff:
-        print("get_sp_packet_sequence_control: Source sequence count largen than 0x3fff. "
-              "Larger bits are cut off!")
+        print(
+            "get_sp_packet_sequence_control: Source sequence count largen than 0x3fff. Larger bits are cut off!"
+        )
     return (source_sequence_count & 0x3FFF) | (sequence_flags << 14)
 
 
@@ -151,3 +162,9 @@ def get_sp_space_packet_header(
     header.append((data_length & 0xFF00) >> 8)
     header.append(data_length & 0xFF)
     return header
+
+
+def get_apid_from_raw_packet(raw_packet: bytearray):
+    if len(raw_packet) < 6:
+        return 0
+    return ((raw_packet[0] & 0x7) << 8) | raw_packet[1]

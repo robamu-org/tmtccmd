@@ -2,10 +2,10 @@ import json
 
 import serial
 import serial.tools.list_ports
-from tmtccmd.utility.logger import get_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 
-LOGGER = get_logger()
+LOGGER = get_console_logger()
 
 
 def determine_baud_rate(json_cfg_path: str) -> int:

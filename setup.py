@@ -5,7 +5,7 @@ to allow editable installs https://packaging.python.org/tutorials/packaging-proj
 and provide extensibility
 """
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup
 except ImportError:
     from distutils.core import setup
 

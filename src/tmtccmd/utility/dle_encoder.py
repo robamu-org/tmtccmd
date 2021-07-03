@@ -22,12 +22,10 @@ class DleErrorCodes(enum.Enum):
 
 
 def encode_dle(source_packet: bytearray, add_stx_etx: bool = True) -> bytearray:
-    """
-    Encodes a given stream with DLE encoding.
-    :return:
-    Returns a tuple with 2 values.
-    1. DleErrorCode, which should be DleErrorCodes.OK for successful encoding
-    2. Encoded bytearray
+    """Encodes a given stream with DLE encoding.
+    :return: Returns a tuple with 2 values.
+        1. DleErrorCode, which should be DleErrorCodes.OK for successful encoding
+        2. Encoded bytearray
     """
     dest_stream = bytearray()
     source_len = len(source_packet)
@@ -47,7 +45,7 @@ def encode_dle(source_packet: bytearray, add_stx_etx: bool = True) -> bytearray:
             encoded stream, the transmission can be stopped at ETX.
             0x40 was chosen at random with special requirements:
             - Prevent going from one control char to another
-            - Prevent overflow for common characters 
+            - Prevent overflow for common characters
             """
             dest_stream.append(next_byte + 0x40)
         elif next_byte == DLE_CHAR:
@@ -101,4 +99,3 @@ def decode_dle(source_packet: bytearray) -> Tuple[DleErrorCodes, bytearray, int]
     else:
         encoded_index += 1
         return DleErrorCodes.OK, dest_stream, encoded_index
-

@@ -1,6 +1,6 @@
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.config.definitions import QueueCommands
-from tmtccmd.pus_tc.definitions import PusTelecommand, TcQueueT
+from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.pus.service_5_event import Srv5Subservices
 
 
@@ -45,4 +45,3 @@ def pack_generic_service5_test_into(tc_queue: TcQueueT, apid: int = -1):
     command = PusTelecommand(service=17, subservice=128, apid=apid, ssc=530)
     tc_queue.appendleft(command.pack_command_tuple())
     tc_queue.appendleft((QueueCommands.EXPORT_LOG, "log/tmtc_log_service5.txt"))
-
