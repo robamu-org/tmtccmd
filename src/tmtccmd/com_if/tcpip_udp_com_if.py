@@ -69,7 +69,7 @@ class TcpIpUdpComIF(CommunicationInterface):
             from tmtccmd.tc.service_17_test import pack_service17_ping_command
             # Send ping command immediately so the reception address is known for UDP
             ping_cmd = pack_service17_ping_command(ssc=0)
-            self.send_telecommand(ping_cmd.pack(), ping_cmd)
+            self.send(ping_cmd.pack())
 
     def close(self, args: any = None) -> None:
         if self.udp_socket is not None:
