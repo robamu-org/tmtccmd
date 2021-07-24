@@ -9,10 +9,10 @@ from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.service_8_functional_cmd import Service8TM
-from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.pus_tm.definitions import PusTmListT
-from tmtccmd.pus_tm.service_3_base import Service3Base, HkContentType
+from tmtccmd.tm.service_8_functional_cmd import Service8TM
+from tmtccmd.tm.service_5_event import Service5TM
+from tmtccmd.tm.definitions import PusTmListT
+from tmtccmd.tm.service_3_base import Service3Base, HkContentType
 from tmtccmd.utility.logger import get_console_logger
 
 LOGGER = get_console_logger()

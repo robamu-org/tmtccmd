@@ -6,7 +6,7 @@ This module contains the PUS telecommand class representation to pack telecomman
 """
 from __future__ import annotations
 import sys
-from typing import Tuple
+from typing import Tuple, Union
 
 from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
@@ -228,9 +228,6 @@ def generate_crc(data: bytearray) -> bytearray:
     data_with_crc.append((crc & 0xFF00) >> 8)
     data_with_crc.append(crc & 0xFF)
     return data_with_crc
-
-
-PusTcTupleT = Tuple[bytearray, PusTelecommand]
 
 
 # pylint: disable=line-too-long

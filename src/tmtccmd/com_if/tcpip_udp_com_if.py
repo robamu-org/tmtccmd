@@ -10,7 +10,7 @@ from typing import Union
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.config.definitions import TelemetryListT
+from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT, CoreModeList
 
@@ -66,10 +66,10 @@ class TcpIpUdpComIF(CommunicationInterface):
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
         if self.init_mode == CoreModeList.LISTENER_MODE:
-            from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
+            from tmtccmd.tc.service_17_test import pack_service17_ping_command
             # Send ping command immediately so the reception address is known for UDP
             ping_cmd = pack_service17_ping_command(ssc=0)
-            self.send_telecommand(ping_cmd.pack(), ping_cmd)
+            self.send(ping_cmd.pack())
 
     def close(self, args: any = None) -> None:
         if self.udp_socket is not None:

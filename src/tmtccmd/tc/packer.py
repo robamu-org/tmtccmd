@@ -7,11 +7,11 @@
 import sys
 from typing import Union
 
-from tmtccmd.pus_tc.definitions import TcQueueT
+from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.pus_tc.service_17_test import pack_service17_ping_command
-from tmtccmd.pus_tc.service_5_event import pack_generic_service5_test_into
+from tmtccmd.tc.service_17_test import pack_service17_ping_command
+from tmtccmd.tc.service_5_event import pack_generic_service5_test_into
 
 LOGGER = get_console_logger()
 

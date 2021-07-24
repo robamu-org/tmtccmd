@@ -5,12 +5,13 @@
 @details    Deserialize Housekeeping TM
 @author     R. Mueller
 """
+import struct
 
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.service_3_base import Service3Base
+from tmtccmd.tm.service_3_base import Service3Base
 from tmtccmd.utility.logger import get_console_logger
 from typing import Type, Tuple, List
-import struct
+
 
 LOGGER = get_console_logger()
 

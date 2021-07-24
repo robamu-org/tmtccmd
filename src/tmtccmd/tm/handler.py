@@ -1,11 +1,20 @@
+from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.pus_tm.service_5_event import Service5TM
-from tmtccmd.pus_tm.service_1_verification import Service1TM
-from tmtccmd.pus_tm.service_17_test import Service17TM
+from tmtccmd.tm.service_5_event import Service5TM
+from tmtccmd.tm.service_1_verification import Service1TM
+from tmtccmd.tm.service_17_test import Service17TM
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
 LOGGER = get_console_logger()
+
+
+class TmHandler:
+    def __init__(self, tm_type: TmTypes):
+        self._tm_type = tm_type
+
+    def get_type(self):
+        return self._tm_type
 
 
 def default_ccsds_packet_handler(apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):

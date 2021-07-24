@@ -20,6 +20,14 @@ tmtccmd.ccsds.spacepacket module
    :undoc-members:
    :show-inheritance:
 
+tmtccmd.ccsds.handler module
+--------------------------------
+
+.. automodule:: tmtccmd.ccsds.handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

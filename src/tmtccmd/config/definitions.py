@@ -4,9 +4,6 @@
 import enum
 from typing import Tuple, Dict, Optional, List, Deque
 
-TelemetryListT = List[bytearray]
-TelemetryQueueT = Deque[bytearray]
-
 
 class CoreGlobalIds(enum.IntEnum):
     """
@@ -69,19 +66,6 @@ ComIFValueT = Tuple[str, any]
 ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
-
-
-class TmTypes(enum.Enum):
-    NONE = enum.auto()
-    CCSDS_SPACE_PACKETS = enum.auto()
-
-
-class TmHandler:
-    def __init__(self, tm_type: TmTypes):
-        self._tm_type = tm_type
-
-    def get_type(self):
-        return self._tm_type
 
 
 class CoreComInterfaces(enum.Enum):

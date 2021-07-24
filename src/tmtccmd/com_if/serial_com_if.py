@@ -15,7 +15,7 @@ import serial.tools.list_ports
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.config.definitions import TelemetryListT
+from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
 
