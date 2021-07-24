@@ -178,7 +178,7 @@ def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool
     else:
         print('-- Command line mode --')
 
-    print(f'-- Software version {version_string} --')
+    print(f'-- tmtccmd version v{get_tmtccmd_version()} --')
 
 
 def __handle_cli_args_and_globals():
