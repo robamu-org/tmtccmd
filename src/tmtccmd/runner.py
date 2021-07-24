@@ -11,6 +11,7 @@ import sys
 import os
 from typing import Union
 
+from tmtccmd import __version__
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
@@ -25,6 +26,10 @@ from tmtccmd.utility.logger import set_tmtc_console_logger, get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
 LOGGER = get_console_logger()
+
+
+def get_tmtccmd_version() -> str:
+    return __version__
 
 
 def initialize_tmtc_commander(hook_object: TmTcHookBase):
