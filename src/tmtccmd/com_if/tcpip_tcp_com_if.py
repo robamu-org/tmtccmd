@@ -115,7 +115,8 @@ class TcpIpTcpComIF(CommunicationInterface):
                 LOGGER.warning("Acquiring queue lock failed!")
             while self.__tm_queue:
                 self.__analysis_queue.appendleft(self.__tm_queue.pop())
-        # It is possible that some packets are broken or multiple packets are read at once
+        # TCP is stream based, so there might be broken packets or multiple packets in one recv
+        # call. We parse the space packets contained in the stream here
         if self.com_type == TcpCommunicationType.SPACE_PACKETS:
             tm_packet_list = parse_space_packets(
                 analysis_queue=self.__analysis_queue, packet_id=self.space_packet_id,

@@ -204,26 +204,39 @@ def parse_space_packets(
         current_packet_id = \
             (concatenated_packets[current_idx] << 8) | concatenated_packets[current_idx + 1]
         if current_packet_id == packet_id:
-            next_packet_len_field = \
-                concatenated_packets[current_idx + 4] | concatenated_packets[current_idx + 5]
-            total_packet_len = get_total_packet_len_from_len_field(next_packet_len_field)
-            if total_packet_len > max_len:
-                print(
-                    f'parse_space_packets: Detected packet length larger than specified maximum'
-                    f'length {max_len}. Skipping header..'
-                )
-                # Packet too long. Throw away the header and advance index
-                current_idx += 6
-            # Might be part of packet. Put back into analysis queue as whole
-            elif total_packet_len > len(concatenated_packets):
-                analysis_queue.appendleft(concatenated_packets)
+            result, current_idx = __handle_packet_id_match(
+                concatenated_packets=concatenated_packets, analysis_queue=analysis_queue,
+                max_len=max_len, current_idx=current_idx, tm_list=tm_list
+            )
+            if result != 0:
                 break
-            else:
-                tm_list.append(
-                    concatenated_packets[current_idx: current_idx + total_packet_len]
-                )
-                current_idx += total_packet_len
         else:
             # Keep parsing until a packet ID is found
             current_idx += 1
     return tm_list
+
+
+def __handle_packet_id_match(
+        concatenated_packets: bytearray, analysis_queue: Deque[bytearray], max_len: int,
+        current_idx: int, tm_list: List[bytearray]
+) -> (int, int):
+    next_packet_len_field = \
+        concatenated_packets[current_idx + 4] | concatenated_packets[current_idx + 5]
+    total_packet_len = get_total_packet_len_from_len_field(next_packet_len_field)
+    if total_packet_len > max_len:
+        print(
+            f'parse_space_packets: Detected packet length larger than specified maximum'
+            f'length {max_len}. Skipping header..'
+        )
+        # Packet too long. Throw away the header and advance index
+        current_idx += 6
+    # Might be part of packet. Put back into analysis queue as whole
+    elif total_packet_len > len(concatenated_packets):
+        analysis_queue.appendleft(concatenated_packets)
+        return -1, current_idx
+    else:
+        tm_list.append(
+            concatenated_packets[current_idx: current_idx + total_packet_len]
+        )
+        current_idx += total_packet_len
+    return 0, current_idx
