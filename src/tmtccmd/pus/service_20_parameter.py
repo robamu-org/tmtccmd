@@ -65,3 +65,8 @@ class EcssPfcReal(enum.IntEnum):
     DOUBLE_PRECISION_IEEE = 2
     FLOAT_PRECISION_MIL_STD_4_OCTETS = 3
     DOUBLE_PRECISION_MIL_STD_6_OCTETS = 4
+
+
+class CustomSubservices(enum.IntEnum):
+    LOAD = 128,
+    DUMP = 129

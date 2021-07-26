@@ -12,8 +12,7 @@ def pack_boolean_parameter_command(
         object_id: bytearray, domain_id: int, unique_id: int, parameter: bool, ssc: int,
         apid: int = -1
 ) -> Union[PusTelecommand, None]:
-    """
-    Generic function to pack a telecommand to tweak a boolean parameter
+    """Generic function to pack a telecommand to tweak a boolean parameter
     :param object_id:
     :param domain_id:
     :param unique_id:
@@ -77,8 +76,8 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
 
 def pack_parameter_id(domain_id: int, unique_id: int, linear_index: int) -> bytearray:
     """Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.
-    The first byte of the parameter ID is the domain ID, the second byte is a unique ID and the last two bytes are a
-    linear index if a parameter is not loaded from index 0.
+    The first byte of the parameter ID is the domain ID, the second byte is a unique ID and the
+    last two bytes are a linear index if a parameter is not loaded from index 0.
     :param domain_id:       One byte domain ID
     :param unique_id:       One byte unique ID
     :param linear_index:    Two byte linear index.

@@ -11,6 +11,7 @@ import sys
 import os
 from typing import Union
 
+from tmtccmd import __version__
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
@@ -26,6 +27,10 @@ from tmtccmd.utility.logger import set_tmtc_console_logger, get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
 LOGGER = get_console_logger()
+
+
+def get_tmtccmd_version() -> str:
+    return __version__
 
 
 def initialize_tmtc_commander(hook_object: TmTcHookBase):
@@ -173,7 +178,7 @@ def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool
     else:
         print('-- Command line mode --')
 
-    print(f'-- Software version {version_string} --')
+    print(f'-- tmtccmd version v{get_tmtccmd_version()} --')
 
 
 def __handle_cli_args_and_globals():
