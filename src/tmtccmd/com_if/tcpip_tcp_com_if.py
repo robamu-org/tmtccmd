@@ -16,6 +16,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT
+from tmtccmd.utility.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()
 
@@ -27,15 +28,13 @@ TCP_SEND_WIRETAPPING_ENABLED = False
 # pylint: disable=arguments-differ
 # pylint: disable=too-many-arguments
 class TcpIpTcpComIF(CommunicationInterface):
-    """
-    Communication interface for UDP communication.
-    """
+    """Communication interface for TCP communication."""
+    DEFAULT_LOCK_TIMEOUT = 50
     def __init__(
             self, com_if_key: str, tm_polling_freqency: float, tm_timeout: float, tc_timeout_factor: float,
             send_address: EthernetAddressT, max_recv_size: int, max_packets_stored: int = 50,
             tmtc_printer: Union[None, TmTcPrinter] = None, init_mode: int = CoreModeList.LISTENER_MODE):
-        """
-        Initialize a communication interface to send and receive UDP datagrams.
+        """Initialize a communication interface to send and receive TMTC via TCP
         :param com_if_key:
         :param tm_polling_freqency:     Polling frequency in seconds
         :param tm_timeout:              Timeout in seconds
@@ -57,6 +56,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__tm_queue = deque()
         # Only allow one connection to OBSW at a time for now by using this lock
         self.__socket_lock = threading.Lock()
+        self.__queue_lock = threading.Lock()
 
     def __del__(self):
         try:
@@ -76,7 +76,10 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def send(self, data: bytearray):
         try:
-            with self.__socket_lock:
+            with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                    acquired:
+                if not acquired:
+                    LOGGER.warning("Acquiring socket lock failed!")
                 tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 tcp_socket.connect(self.send_address)
                 tcp_socket.sendto(data, self.send_address)
@@ -89,15 +92,22 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def receive(self, poll_timeout: float = 0) -> TelemetryListT:
         tm_packet_list = []
-        while self.__tm_queue:
-            tm_packet_list.append(self.__tm_queue.pop())
+        with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                acquired:
+            if not acquired:
+                LOGGER.warning("Acquiring queue lock failed!")
+            while self.__tm_queue:
+                tm_packet_list.append(self.__tm_queue.pop())
         return tm_packet_list
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
             if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
                 try:
-                    with self.__socket_lock:
+                    with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                            acquired:
+                        if not acquired:
+                            LOGGER.warning("Acquiring socket lock failed!")
                         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         tcp_socket.connect(self.send_address)
                         tcp_socket.shutdown(socket.SHUT_WR)
@@ -112,10 +122,16 @@ class TcpIpTcpComIF(CommunicationInterface):
         while True:
             bytes_recvd = tcp_socket.recv(self.max_recv_size)
             if len(bytes_recvd) > 0:
-                if self.__tm_queue.__len__() >= self.max_packets_stored:
-                    LOGGER.warning("Number of packets in TCP queue too large. Overwriting old packets..")
-                    self.__tm_queue.pop()
-                self.__tm_queue.appendleft(bytearray(bytes_recvd))
+                with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                        acquired:
+                    if not acquired:
+                        LOGGER.warning("Acquiring queue lock failed!")
+                    if self.__tm_queue.__len__() >= self.max_packets_stored:
+                        LOGGER.warning(
+                            "Number of packets in TCP queue too large. Overwriting old packets.."
+                        )
+                        self.__tm_queue.pop()
+                    self.__tm_queue.appendleft(bytearray(bytes_recvd))
             elif bytes_recvd is None or len(bytes_recvd) == 0:
                 break
 
