@@ -342,9 +342,9 @@ def return_data_string(byte_array: bytearray, length: int) -> str:
 #  ----------------Packet ID(16)----------------------|Packet Sequence Control (16)| Packet Length (16) | Data Field |
 # Version       | Type(1) |Data Field    |APID(11)    | SequenceFlags(2) |Sequence |                    | (Variable) |
 # Number(3)     |         |Header Flag(1)|            |                  |Count(14)|                    |            |
-#           0x18               |    0x73              |       0xc0       | 0x19    |   0x00  |   0x04   |            |
-#    000      1      0      000|  01110011            | 11  000000       | 00011001|00000000 | 0000100  |            |
-#     0   |   1   |  0     |    115(ASCII s)          | 3 |            25          |   0     |    4     |            |
+#           0x08               |    0x73              |       0xc0       | 0x19    |   0x00  |   0x04   |            |
+#    000      0      1      000|  01110011            | 11  000000       | 00011001|00000000 | 0000100  |            |
+#     0   |   0   |  1     |    115(ASCII s)          | 3 |            25          |   0     |    4     |            |
 #
 #   - Packet Length is an unsigned integer C = Number of Octets in Packet Data Field - 1
 #
