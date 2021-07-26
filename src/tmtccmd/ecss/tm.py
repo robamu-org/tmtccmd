@@ -44,7 +44,12 @@ class PusTelemetry:
             print("PusTelemetry: Passed packet too short!")
             raise ValueError
         if self.get_packet_size() != len(raw_telemetry):
-            print(f"PusTelemetry: Packet length field {self._space_packet_header.data_length} might be invalid!")
+            print(
+                f'PusTelemetry: Packet length field '
+                f'{self._space_packet_header.data_length} might be invalid!'
+            )
+            print(f'self.get_packet_size: {self.get_packet_size()}')
+            print(f'len(raw_telemetry): {len(raw_telemetry)}')
         self._tm_data = raw_telemetry[
             self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
         ]
