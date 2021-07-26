@@ -10,13 +10,14 @@ from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
-from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF
+from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF, TcpCommunicationType
 
 LOGGER = get_console_logger()
 
 
 def create_communication_interface_default(
-        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
+        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str,
+        space_packet_id: int = 0
 ) -> Optional[CommunicationInterface]:
     """Return the desired communication interface object
 
@@ -29,9 +30,11 @@ def create_communication_interface_default(
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
 
     try:
-        if com_if_key == CoreComInterfaces.TCPIP_UDP.value or com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+        if com_if_key == CoreComInterfaces.TCPIP_UDP.value or \
+                com_if_key == CoreComInterfaces.TCPIP_TCP.value:
             communication_interface = create_default_tcpip_interface(
-                com_if_key=com_if_key, json_cfg_path=json_cfg_path, tmtc_printer=tmtc_printer
+                com_if_key=com_if_key, json_cfg_path=json_cfg_path, tmtc_printer=tmtc_printer,
+                space_packet_id=space_packet_id
             )
         elif com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
                 com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
@@ -64,23 +67,21 @@ def create_communication_interface_default(
         sys.exit(1)
 
 
-def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str):
-    """Default setup for TCP/IP communication interfaces. This intantiates all required data in the globals
-    manager so a TCP/IP communication interface can be built with :func:`create_default_tcpip_interface`
+def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str, space_packet_id: int = 0):
+    """Default setup for TCP/IP communication interfaces. This intantiates all required data in the
+    globals manager so a TCP/IP communication interface can be built with
+    :func:`create_default_tcpip_interface`
     :param tcpip_type:
     :param json_cfg_path:
+    :param packet_id:       Required if the TCP com interface needs to parse space packets
     :return:
     """
-    from tmtccmd.com_if.tcpip_utilities import determine_udp_send_address, determine_tcp_send_address, \
-        determine_recv_buffer_len
+    from tmtccmd.com_if.tcpip_utilities import determine_udp_send_address, \
+        determine_tcp_send_address, determine_recv_buffer_len
     update_global(CoreGlobalIds.USE_ETHERNET, True)
     recv_tuple = None
     if tcpip_type == TcpIpType.UDP:
-        # This will either load the addresses from a JSON file or prompt them from the user.
         send_tuple = determine_udp_send_address(json_cfg_path=json_cfg_path)
-        # Not used for now
-        # from tmtccmd.com_if.tcpip_utilities import determine_tcpip_address
-        # recv_tuple = determine_tcpip_address(tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=json_cfg_path)
     elif tcpip_type == TcpIpType.TCP:
         send_tuple = determine_tcp_send_address(json_cfg_path=json_cfg_path)
     max_recv_buf_size = determine_recv_buffer_len(json_cfg_path=json_cfg_path, tcpip_type=tcpip_type)
@@ -88,6 +89,11 @@ def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str):
     ethernet_cfg_dict.update({TcpIpConfigIds.SEND_ADDRESS: send_tuple})
     ethernet_cfg_dict.update({TcpIpConfigIds.RECV_ADDRESS: recv_tuple})
     ethernet_cfg_dict.update({TcpIpConfigIds.RECV_MAX_SIZE: max_recv_buf_size})
+    if space_packet_id == 0 and tcpip_type == TcpIpType.TCP:
+        LOGGER.warning(
+            'TCP communication interface without any specified space packet ID might not work!'
+        )
+    ethernet_cfg_dict.update({TcpIpConfigIds.SPACE_PACKET_ID: space_packet_id})
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_cfg_dict)
 
 
@@ -103,11 +109,14 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
         serial_port = determine_com_port(json_cfg_path=json_cfg_path)
     else:
         serial_port = ""
-    set_up_serial_cfg(json_cfg_path=json_cfg_path, com_if_key=com_if_key, baud_rate=baud_rate, com_port=serial_port)
+    set_up_serial_cfg(
+        json_cfg_path=json_cfg_path, com_if_key=com_if_key, baud_rate=baud_rate,
+        com_port=serial_port
+    )
 
 
 def create_default_tcpip_interface(
-        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
+        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str, space_packet_id: int = 0
 ) -> Optional[CommunicationInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
@@ -118,14 +127,20 @@ def create_default_tcpip_interface(
     :return:
     """
     if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
-        default_tcpip_cfg_setup(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
+        default_tcpip_cfg_setup(
+            tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path
+        )
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
-        default_tcpip_cfg_setup(tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path)
+        default_tcpip_cfg_setup(
+            tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path,
+            space_packet_id=space_packet_id
+        )
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
     recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
     max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
     init_mode = get_global(CoreGlobalIds.MODE)
+    space_packet_id = ethernet_cfg_dict[TcpIpConfigIds.SPACE_PACKET_ID]
     if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
         communication_interface = TcpIpUdpComIF(
             com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
@@ -135,7 +150,8 @@ def create_default_tcpip_interface(
         )
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
         communication_interface = TcpIpTcpComIF(
-            com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
+            com_if_key=com_if_key, com_type=TcpCommunicationType.SPACE_PACKETS,
+            space_packet_id=space_packet_id, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
             tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             tm_polling_freqency=0.5, send_address=send_addr, max_recv_size=max_recv_size, tmtc_printer=tmtc_printer,
             init_mode=init_mode

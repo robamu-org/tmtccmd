@@ -4,7 +4,8 @@ import datetime
 
 from crcmod import crcmod
 
-from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
+from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE, \
+    get_total_packet_len_from_len_field
 from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
@@ -19,12 +20,12 @@ class PusTelemetry:
 
     def __init__(self, raw_telemetry: bytearray = bytearray()):
         """Attempts to construct a generic PusTelemetry class given a raw bytearray.
-        Raises a ValueError if the format of the raw bytearray is invalid.
+        :raise: ValueError if the format of the raw bytearray is invalid.
         :param raw_telemetry:
         """
         if raw_telemetry is None or raw_telemetry == bytearray():
             if raw_telemetry is None:
-                print("PusTelemetry: Given byte stream ivalid!")
+                print("PusTelemetry: Given byte stream invalid!")
             elif raw_telemetry == bytearray():
                 print("PusTelemetry: Given byte stream empty!")
             raise ValueError
@@ -32,9 +33,14 @@ class PusTelemetry:
         self._packet_raw = raw_telemetry
         self._space_packet_header = SpacePacketHeaderDeserializer(pus_packet_raw=raw_telemetry)
         self._valid = False
-        if self._space_packet_header.data_length + SPACE_PACKET_HEADER_SIZE + 1 > \
-                len(raw_telemetry):
-            print("PusTelemetry: Passed packet shorter than specified packet length in PUS header")
+        expected_packet_len = get_total_packet_len_from_len_field(
+            self._space_packet_header.data_length
+        )
+        if expected_packet_len > len(raw_telemetry):
+            print(
+                f'PusTelemetry: Passed packet with length {len(raw_telemetry)} '
+                f'shorter than specified packet length in PUS header {expected_packet_len}'
+            )
             raise ValueError
         self._data_field_header = PusPacketDataFieldHeader(
             raw_telemetry[SPACE_PACKET_HEADER_SIZE:], pus_version=self.pus_version
