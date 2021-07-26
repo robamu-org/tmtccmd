@@ -11,6 +11,8 @@ from tmtccmd.utility.json_handler import JsonKeyNames
 LOGGER = get_console_logger()
 
 
+DEFAULT_MAX_RECV_SIZE = 1500
+
 class TcpIpType(enum.Enum):
     TCP = enum.auto()
     UDP = enum.auto()
@@ -22,6 +24,8 @@ class TcpIpConfigIds(enum.Enum):
     SEND_ADDRESS = auto()
     RECV_ADDRESS = auto()
     RECV_MAX_SIZE = auto()
+    # Used by TCP to detect start of space packets
+    SPACE_PACKET_ID = auto()
 
 
 def determine_udp_send_address(json_cfg_path: str) -> EthernetAddressT:
@@ -158,7 +162,11 @@ def prompt_recv_buffer_len(tcpip_type: TcpIpType) -> int:
     else:
         type_str = "TCP"
     while True:
-        recv_max_size = input(f"Please enter maximum receive size for {type_str} packets: ")
+        recv_max_size = input(
+            f'Please enter maximum receive size for {type_str} packets [1500 default]:'
+        )
+        if not recv_max_size:
+            return DEFAULT_MAX_RECV_SIZE
         if not recv_max_size.isdigit():
             LOGGER.warning("Specified size is not a number.")
             continue

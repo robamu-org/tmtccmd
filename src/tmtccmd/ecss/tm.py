@@ -4,7 +4,8 @@ import datetime
 
 from crcmod import crcmod
 
-from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE
+from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE, \
+    get_total_packet_len_from_len_field
 from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
@@ -19,12 +20,12 @@ class PusTelemetry:
 
     def __init__(self, raw_telemetry: bytearray = bytearray()):
         """Attempts to construct a generic PusTelemetry class given a raw bytearray.
-        Raises a ValueError if the format of the raw bytearray is invalid.
+        :raise: ValueError if the format of the raw bytearray is invalid.
         :param raw_telemetry:
         """
         if raw_telemetry is None or raw_telemetry == bytearray():
             if raw_telemetry is None:
-                print("PusTelemetry: Given byte stream ivalid!")
+                print("PusTelemetry: Given byte stream invalid!")
             elif raw_telemetry == bytearray():
                 print("PusTelemetry: Given byte stream empty!")
             raise ValueError
@@ -32,9 +33,14 @@ class PusTelemetry:
         self._packet_raw = raw_telemetry
         self._space_packet_header = SpacePacketHeaderDeserializer(pus_packet_raw=raw_telemetry)
         self._valid = False
-        if self._space_packet_header.data_length + SPACE_PACKET_HEADER_SIZE + 1 > \
-                len(raw_telemetry):
-            print("PusTelemetry: Passed packet shorter than specified packet length in PUS header")
+        expected_packet_len = get_total_packet_len_from_len_field(
+            self._space_packet_header.data_length
+        )
+        if expected_packet_len > len(raw_telemetry):
+            print(
+                f'PusTelemetry: Passed packet with length {len(raw_telemetry)} '
+                f'shorter than specified packet length in PUS header {expected_packet_len}'
+            )
             raise ValueError
         self._data_field_header = PusPacketDataFieldHeader(
             raw_telemetry[SPACE_PACKET_HEADER_SIZE:], pus_version=self.pus_version
@@ -44,7 +50,12 @@ class PusTelemetry:
             print("PusTelemetry: Passed packet too short!")
             raise ValueError
         if self.get_packet_size() != len(raw_telemetry):
-            print(f"PusTelemetry: Packet length field {self._space_packet_header.data_length} might be invalid!")
+            print(
+                f'PusTelemetry: Packet length field '
+                f'{self._space_packet_header.data_length} might be invalid!'
+            )
+            print(f'self.get_packet_size: {self.get_packet_size()}')
+            print(f'len(raw_telemetry): {len(raw_telemetry)}')
         self._tm_data = raw_telemetry[
             self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
         ]
@@ -331,9 +342,9 @@ def return_data_string(byte_array: bytearray, length: int) -> str:
 #  ----------------Packet ID(16)----------------------|Packet Sequence Control (16)| Packet Length (16) | Data Field |
 # Version       | Type(1) |Data Field    |APID(11)    | SequenceFlags(2) |Sequence |                    | (Variable) |
 # Number(3)     |         |Header Flag(1)|            |                  |Count(14)|                    |            |
-#           0x18               |    0x73              |       0xc0       | 0x19    |   0x00  |   0x04   |            |
-#    000      1      0      000|  01110011            | 11  000000       | 00011001|00000000 | 0000100  |            |
-#     0   |   1   |  0     |    115(ASCII s)          | 3 |            25          |   0     |    4     |            |
+#           0x08               |    0x73              |       0xc0       | 0x19    |   0x00  |   0x04   |            |
+#    000      0      1      000|  01110011            | 11  000000       | 00011001|00000000 | 0000100  |            |
+#     0   |   0   |  1     |    115(ASCII s)          | 3 |            25          |   0     |    4     |            |
 #
 #   - Packet Length is an unsigned integer C = Number of Octets in Packet Data Field - 1
 #
