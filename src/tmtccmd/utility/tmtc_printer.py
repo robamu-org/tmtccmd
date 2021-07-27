@@ -154,28 +154,27 @@ class TmTcPrinter:
             LOGGER.warning('Hook object not set')
             return
         srv8_packet = cast(Service8TM, packet)
-        if srv8_packet.get_subservice() == Srv8Subservices.DATA_REPLY:
-            obj_id = srv8_packet.get_source_object_id_as_bytes()
-            action_id = srv8_packet.get_action_id()
-            header_list, content_list = hook_obj.handle_service_8_telemetry(
-                object_id=obj_id, action_id=action_id,
-                custom_data=srv8_packet.get_custom_data()
-            )
-            obj_id_dict = hook_obj.get_object_ids()
-            rep_str = obj_id_dict.get(obj_id)
-            if rep_str is None:
-                rep_str = "unknown object"
-            print_string = \
-                f'Service 8 data reply from {rep_str} with action ID {action_id}'
-            self.__print_buffer = print_string
-            LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
-            self.__print_buffer = header_list
-            LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
-            self.__print_buffer = content_list
-            LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
+        obj_id = srv8_packet.get_source_object_id_as_bytes()
+        action_id = srv8_packet.get_action_id()
+        header_list, content_list = hook_obj.handle_service_8_telemetry(
+            object_id=obj_id, action_id=action_id,
+            custom_data=srv8_packet.get_custom_data()
+        )
+        obj_id_dict = hook_obj.get_object_ids()
+        rep_str = obj_id_dict.get(obj_id)
+        if rep_str is None:
+            rep_str = "unknown object"
+        print_string = \
+            f'Service 8 data reply from {rep_str} with action ID {action_id}'
+        self.__print_buffer = print_string
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
+        self.__print_buffer = header_list
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
+        self.__print_buffer = content_list
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
 
     def handle_hk_print(
             self, object_id: int, set_id: int, hk_header: list, hk_content: list,
