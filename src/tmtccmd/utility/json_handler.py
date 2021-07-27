@@ -7,19 +7,19 @@ LOGGER = get_console_logger()
 
 
 class JsonKeyNames(enum.Enum):
-    COM_IF = "COM_IF_KEY"
-    TCPIP_UDP_DEST_IP_ADDRESS = "TCPIP_UDP_DEST_IP_ADDRESS"
-    TCPIP_UDP_DEST_PORT = "TCPIP_UDP_DEST_PORT"
-    TCPIP_UDP_RECV_IP_ADDRESS = "TCPIP_UDP_RECV_IP_ADDRESS"
-    TCPIP_UDP_RECV_PORT = "TCPIP_UDP_RECV_PORT"
-    TCPIP_UDP_RECV_MAX_SIZE = "TCPIP_UDP_RECV_MAX_SIZE"
+    COM_IF = "com_if"
+    TCPIP_UDP_DEST_IP_ADDRESS = "tcpip_udp_ip_addr"
+    TCPIP_UDP_DEST_PORT = "tcpip_udp_port"
+    TCPIP_UDP_RECV_IP_ADDRESS = "tcpip_udp_recv_addr"
+    TCPIP_UDP_RECV_PORT = "tcpip_udp_recv_port"
+    TCPIP_UDP_RECV_MAX_SIZE = "tcpip_udp_recv_max_size"
 
-    TCPIP_TCP_DEST_IP_ADDRESS = "TCPIP_TCP_DEST_IP_ADDRESS"
-    TCPIP_TCP_DEST_PORT = "TCPIP_TCP_DEST_PORT"
-    TCPIP_TCP_RECV_MAX_SIZE = "TCPIP_UDP_RECV_MAX_SIZE"
+    TCPIP_TCP_DEST_IP_ADDRESS = "tcpip_tcp_ip_addr"
+    TCPIP_TCP_DEST_PORT = "tcpip_tcp_port"
+    TCPIP_TCP_RECV_MAX_SIZE = "tcpip_tcp_recv_max_size"
 
-    SERIAL_BAUDRATE = "SERIAL_BAUDRATE"
-    SERIAL_PORT = "SERIAL_PORT"
+    SERIAL_BAUDRATE = "serial_baudrate"
+    SERIAL_PORT = "serial_port"
 
 
 def check_json_file(json_cfg_path: str) -> bool:

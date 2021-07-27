@@ -50,15 +50,6 @@ class TmTcHookBase:
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
 
     @abstractmethod
-    def get_json_config_file_path(self) -> str:
-        """The user can specify a path and filename for the JSON configuration file by overriding
-        this function.
-
-        :return:
-        """
-        return "tmtc_config.json"
-
-    @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
         """Add global variables prior after parsing the CLI arguments.
 
@@ -125,6 +116,14 @@ class TmTcHookBase:
         return None
 
     # TODO: All of this will be moved to the dedicated PUS packet handler
+
+    def get_json_config_file_path(self) -> str:
+        """The user can specify a path and filename for the JSON configuration file by overriding
+        this function.
+
+        :return:
+        """
+        return "tmtc_config.json"
 
     @staticmethod
     def handle_service_8_telemetry(

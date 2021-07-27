@@ -1,3 +1,5 @@
+"""Contains definitions and functions related to PUS Service 20 Telecommands.
+"""
 from typing import Union
 
 from tmtccmd.ecss.tc import PusTelecommand

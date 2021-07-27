@@ -1,7 +1,4 @@
-"""
-:file:      tmtc_printer.py
-:date:      04.05.2021
-:brief:     Class that performs all printing functionalities
+"""Contains classes and functions that perform all printing functionalities.
 """
 import os
 import enum
@@ -79,6 +76,10 @@ class TmTcPrinter:
             self.__handle_data_reply_packet(cast(Service8TM, packet))
         if packet.get_service() == 3:
             self.handle_service_3_packet(packet=packet)
+        if packet.get_service() == 5:
+            self.handle_service_5_packet(packet=packet)
+        if packet.get_service() == 8:
+            self.handle_service_8_packet(packet=packet)
 
         if print_raw_tm:
             self.__print_buffer = f"TM Data:\n{self.return_data_string(packet.get_raw_packet())}"
@@ -117,6 +118,9 @@ class TmTcPrinter:
                 object_id=srv3_packet.get_object_id(), set_id=srv3_packet.get_set_id(),
                 srv3_packet=srv3_packet
             )
+
+    def handle_service_8_packet(self):
+        pass
 
     def handle_hk_print(
             self, object_id: int, set_id: int, hk_header: list, hk_content: list,

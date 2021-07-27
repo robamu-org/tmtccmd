@@ -1,5 +1,4 @@
-"""
-@brief  Base class for Service 200 mode commanding reply handling.
+"""Base class for Service 200 mode commanding reply handling.
 """
 import struct
 

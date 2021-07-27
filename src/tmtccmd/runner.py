@@ -1,11 +1,7 @@
-#!/usr/bin/env python3
-"""
-Core method called by entry point files to initiate the TMTC commander.
-The commander is started by first running `initialize_tmtc_commander` and then
-running `run_tmtc_commander`
-:details:
-:manual:
-:author:     R. Mueller
+"""Contains core methods called by entry point files to initiate the TMTC commander.
+
+The commander is started by first running :py:func:`initialize_tmtc_commander` and then
+running :py:func:`run_tmtc_commander`
 """
 import sys
 import os
@@ -25,6 +21,7 @@ from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
 from tmtccmd.utility.logger import set_tmtc_console_logger, get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
+
 
 LOGGER = get_console_logger()
 
