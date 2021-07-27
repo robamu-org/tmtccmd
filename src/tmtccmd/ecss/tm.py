@@ -20,7 +20,7 @@ class PusTelemetry:
 
     def __init__(self, raw_telemetry: bytearray = bytearray()):
         """Attempts to construct a generic PusTelemetry class given a raw bytearray.
-        :raise: ValueError if the format of the raw bytearray is invalid.
+        :raises ValueError: if the format of the raw bytearray is invalid, for example the length
         :param raw_telemetry:
         """
         if raw_telemetry is None or raw_telemetry == bytearray():

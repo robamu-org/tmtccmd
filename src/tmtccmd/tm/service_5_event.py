@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-:file:      service_5_event.py
-:date:      30.12.2019
-:brief:     Deserialize PUS Event Report
-:author:    R. Mueller
+"""Contains classes and functions to deserialize PUS Service 5 Telemetry
 """
 import struct
 from tmtccmd.pus.service_list import PusServices
@@ -17,11 +13,10 @@ LOGGER = get_console_logger()
 
 
 class Service5TM(PusTelemetry):
-    def __init__(self, byte_array, call_srv5_hook: bool = True):
-        """
-        Deserialize a raw service 5 packet
+    def __init__(self, byte_array: bytearray):
+        """Deserialize a raw PUS Service 5 packet
         :param byte_array:      Raw bytearray to deserialize, containing the service 5 packet.
-        :param call_srv5_hook:  Calls the global hook function to retrieve a custom printout for Service 5 packets.
+        :raises ValueError: If the length of the raw telemetry is too short
         """
         super().__init__(raw_telemetry=byte_array)
         if self.get_service() != 5:
@@ -36,17 +31,14 @@ class Service5TM(PusTelemetry):
             self.append_packet_info(" Error Med Severity")
         elif self.get_subservice() == Srv5Subservices.HIGH_SEVERITY_EVENT:
             self.append_packet_info(" Error High Severity")
-        self.event_id = struct.unpack('>H', self._tm_data[0:2])[0]
-        self.object_id = struct.unpack('>I', self._tm_data[2:6])[0]
-        self.param_1 = struct.unpack('>I', self._tm_data[6:10])[0]
-        self.param_2 = struct.unpack('>I', self._tm_data[10:14])[0]
-        self.custom_service_5_print = ""
-        if call_srv5_hook:
-            from tmtccmd.config.hook import get_global_hook_obj
-            hook_obj = get_global_hook_obj()
-            self.custom_service_5_print = hook_obj.handle_service_5_event(
-                object_id=self._tm_data[2:6], event_id=self.event_id, param_1=self.param_1, param_2=self.param_2
-            )
+        tm_data = self.get_tm_data()
+        if len(tm_data) < 14:
+            LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
+            raise ValueError
+        self.event_id = struct.unpack('>H', tm_data[0:2])[0]
+        self.object_id = struct.unpack('>I', tm_data[2:6])[0]
+        self.param_1 = struct.unpack('>I', tm_data[6:10])[0]
+        self.param_2 = struct.unpack('>I', tm_data[10:14])[0]
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
@@ -61,18 +53,6 @@ class Service5TM(PusTelemetry):
         header_list.append("Reporter ID")
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
-
-    def handle_service_5_event(self, object_id: bytearray, event_id: int, param_1: int, param_2: int) -> str:
-        try:
-            from tmtccmd.config.hook import get_global_hook_obj
-            hook_obj = get_global_hook_obj()
-            custom_string = hook_obj.handle_service_5_event(
-                    object_id=self.object_id, event_id=event_id, param_1=param_1, param_2=param_2
-                )
-            return custom_string
-        except ImportError:
-            LOGGER.warning("Service 5 user data hook not supplied!")
-        return ""
 
     def get_custom_printout(self) -> str:
         return self.custom_service_5_print

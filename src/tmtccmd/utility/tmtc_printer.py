@@ -119,11 +119,38 @@ class TmTcPrinter:
                 srv3_packet=srv3_packet
             )
 
-    def handle_service_8_packet(self):
-        pass
-
     def handle_service_5_packet(self):
-        pass
+        from tmtccmd.config.hook import get_global_hook_obj
+        if packet.get_service() != 5:
+            LOGGER.warning('This packet is not a service 5 packet!')
+            return
+        hook_obj = get_global_hook_obj()
+        if hook_obj is None:
+            LOGGER.warning('Hook object not set')
+            return
+        srv5_packet = cast(Service5TM, packet)
+        custom_string = hook_obj.handle_service_5_event(
+            object_id=srv5_packet.get_reporter_id(), event_id=srv5_packet.get_event_id(),
+            param_1=srv5_packet.get_param_1(), param_2=srv5_packet.get_param_2()
+        )
+        self.__print_buffer = custom_string
+        LOGGER.info(self.__print_buffer)
+        self.add_print_buffer_to_file_buffer()
+
+    def handle_service_8_packet(self):
+        from tmtccmd.config.hook import get_global_hook_obj
+        if packet.get_service() != 8:
+            LOGGER.warning('This packet is not a service 8 packet!')
+            return
+        hook_obj = get_global_hook_obj()
+        if hook_obj is None:
+            LOGGER.warning('Hook object not set')
+            return
+        srv8_packet = cast(Service8TM, packet)
+        header_list, content_list = hook_obj.handle_service_8_telemetry(
+            object_id=srv8_packet.get_source_object_id_as_bytes(),
+            action_id=srv8_packet.get_action_id(), custom_data=srv8_packet.get_custom_data()
+        )
 
     def handle_hk_print(
             self, object_id: int, set_id: int, hk_header: list, hk_content: list,
@@ -288,7 +315,7 @@ class TmTcPrinter:
                 self.__print_buffer = f"{srv8_tm.custom_data_header}\n"
                 self.__print_buffer += f"{srv8_tm.custom_data_content}\n"
                 LOGGER.info(f"Service 8 data for object ID {srv8_tm.object_id_key} "
-                            f"and action ID {srv8_tm.source_action_id}:")
+                            f"and action ID {srv8_tm._action_id}:")
                 LOGGER.info(str(srv8_tm.custom_data_header))
                 LOGGER.info(str(srv8_tm.custom_data_content))
             self.add_print_buffer_to_file_buffer()
