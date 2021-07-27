@@ -48,24 +48,36 @@ def check_args_in_dict(
         LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
 
+    res_tuple = True, param
     if isinstance(iterable, dict):
         for idx, enum_value in iterable.items():
             if param == enum_value:
                 return True, idx
     else:
-        param_list = list()
-        for idx, enum_value in enumerate(iterable):
-            if isinstance(enum_value.value, str):
-                # Make this case insensitive
-                param_list.append(enum_value.value.lower())
-            else:
-                param_list.append(enum_value.value)
-        if param not in param_list:
-            if might_be_integer:
-                if int(param) in param_list:
-                    return True, int(param)
-            return False, 0
-    return True, param
+        res_tuple = __handle_iterable_non_dict(
+            param=param, iterable=iterable, might_be_integer=might_be_integer,
+            init_res_tuple=res_tuple
+        )
+    return res_tuple
+
+
+def __handle_iterable_non_dict(
+        param: any, iterable: collections.abc.Iterable, might_be_integer: bool,
+        init_res_tuple: Tuple[bool, any]
+) -> (bool, any):
+    param_list = list()
+    for idx, enum_value in enumerate(iterable):
+        if isinstance(enum_value.value, str):
+            # Make this case insensitive
+            param_list.append(enum_value.value.lower())
+        else:
+            param_list.append(enum_value.value)
+    if param not in param_list:
+        if might_be_integer:
+            if int(param) in param_list:
+                return True, int(param)
+        return False, 0
+    return init_res_tuple
 
 
 def print_core_globals():

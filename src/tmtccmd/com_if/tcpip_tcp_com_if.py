@@ -37,6 +37,7 @@ class TcpCommunicationType(enum.Enum):
 class TcpIpTcpComIF(CommunicationInterface):
     """Communication interface for TCP communication."""
     DEFAULT_LOCK_TIMEOUT = 50
+
     def __init__(
             self, com_if_key: str, com_type: TcpCommunicationType, space_packet_id: int,
             tm_polling_freqency: float, tm_timeout: float, tc_timeout_factor: float,
@@ -126,8 +127,6 @@ class TcpIpTcpComIF(CommunicationInterface):
             while self.__analysis_queue:
                 tm_packet_list.append(self.__analysis_queue.pop())
         return tm_packet_list
-
-
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():

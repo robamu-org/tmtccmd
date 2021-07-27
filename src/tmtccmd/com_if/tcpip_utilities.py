@@ -13,6 +13,7 @@ LOGGER = get_console_logger()
 
 DEFAULT_MAX_RECV_SIZE = 1500
 
+
 class TcpIpType(enum.Enum):
     TCP = enum.auto()
     UDP = enum.auto()

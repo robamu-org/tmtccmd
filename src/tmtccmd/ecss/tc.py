@@ -1,12 +1,8 @@
-"""
-@file   base.py
-@brief
-This module contains the PUS telecommand class representation to pack telecommands.
-@author R. Mueller
+"""This module contains the PUS telecommand class representation to pack telecommands.
 """
 from __future__ import annotations
 import sys
-from typing import Tuple, Union
+from typing import Tuple
 
 from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \

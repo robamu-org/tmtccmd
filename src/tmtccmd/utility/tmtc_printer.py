@@ -120,7 +120,7 @@ class TmTcPrinter:
                 srv3_packet=srv3_packet
             )
 
-    def handle_service_5_packet(self):
+    def handle_service_5_packet(self, packet: PusTelemetry):
         from tmtccmd.config.hook import get_global_hook_obj
         if packet.get_service() != 5:
             LOGGER.warning('This packet is not a service 5 packet!')
@@ -138,7 +138,7 @@ class TmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
-    def handle_service_8_packet(self):
+    def handle_service_8_packet(self, packet: PusTelemetry):
         from tmtccmd.config.hook import get_global_hook_obj
         if packet.get_service() != PusServices.SERVICE_8_FUNC_CMD:
             LOGGER.warning('This packet is not a service 8 packet!')
