@@ -122,6 +122,9 @@ class TmTcPrinter:
     def handle_service_8_packet(self):
         pass
 
+    def handle_service_5_packet(self):
+        pass
+
     def handle_hk_print(
             self, object_id: int, set_id: int, hk_header: list, hk_content: list,
             validity_buffer: bytearray, num_vars: int
