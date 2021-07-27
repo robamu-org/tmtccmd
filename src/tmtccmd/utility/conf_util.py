@@ -23,8 +23,7 @@ class AnsiColors:
 def check_args_in_dict(
         param: any, iterable: Union[collections.abc.Iterable, dict], warning_hint: str
 ) -> Tuple[bool, int]:
-    """
-    This functions checks whether the integer representation of a given parameter in
+    """This functions checks whether the integer representation of a given parameter in
     contained within the passed collections, for example an (integer) enumeration.
     Please note that if the passed parameter has a string representation but is a digit,
     this function will attempt to check whether the integer representation is contained
@@ -81,8 +80,7 @@ def __handle_iterable_non_dict(
 
 
 def print_core_globals():
-    """
-    Prints an imporant set of global parameters. Can be used for debugging function
+    """Prints an imporant set of global parameters. Can be used for debugging function
     or as an optional information output
     :return:
     """
@@ -95,6 +93,12 @@ def print_core_globals():
 
 @contextmanager
 def acquire_timeout(lock, timeout):
+    """Helper functions which allows to check result of the acquire operation while also
+    using the context manager.
+    :param lock:
+    :param timeout:
+    :return:
+    """
     result = lock.acquire(timeout=timeout)
     yield result
     if result:
