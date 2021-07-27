@@ -6,7 +6,9 @@ from typing import cast
 
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.pus.service_list import PusServices
 from tmtccmd.tm.service_8_functional_cmd import Service8TM
+from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.service_5_event import Service5TM
 from tmtccmd.tm.definitions import PusTmListT
 from tmtccmd.tm.service_3_base import Service3Base, HkContentType
@@ -62,7 +64,7 @@ class TmTcPrinter:
             LOGGER.warning("Passed packet is not instance of PusTelemetry!")
             return
 
-        if packet.get_service() == 5:
+        if packet.get_service() == PusServices.SERVICE_5_EVENT:
             self.__handle_event_packet(cast(Service5TM, packet))
 
         if self._display_mode == DisplayMode.SHORT:
@@ -72,13 +74,12 @@ class TmTcPrinter:
         self.__handle_wiretapping_packet(packet)
 
         # Handle special packet types
-        if packet.get_service() == 8 and packet.get_subservice() == 130:
-            self.__handle_data_reply_packet(cast(Service8TM, packet))
-        if packet.get_service() == 3:
+        if packet.get_service() == PusServices.SERVICE_3_HOUSEKEEPING:
             self.handle_service_3_packet(packet=packet)
-        if packet.get_service() == 5:
+        if packet.get_service() == PusServices.SERVICE_5_EVENT:
             self.handle_service_5_packet(packet=packet)
-        if packet.get_service() == 8:
+        if packet.get_service() == PusServices.SERVICE_8_FUNC_CMD and \
+                packet.get_subservice() == Srv8Subservices.DATA_REPLY:
             self.handle_service_8_packet(packet=packet)
 
         if print_raw_tm:
@@ -139,18 +140,42 @@ class TmTcPrinter:
 
     def handle_service_8_packet(self):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet.get_service() != 8:
+        if packet.get_service() != PusServices.SERVICE_8_FUNC_CMD:
             LOGGER.warning('This packet is not a service 8 packet!')
+            return
+        if packet.get_subservice() != Srv8Subservices.DATA_REPLY:
+            LOGGER.warning(
+                f'This packet is not data reply packet with '
+                f'subservice {Srv8Subservices.DATA_REPLY}!'
+            )
             return
         hook_obj = get_global_hook_obj()
         if hook_obj is None:
             LOGGER.warning('Hook object not set')
             return
         srv8_packet = cast(Service8TM, packet)
-        header_list, content_list = hook_obj.handle_service_8_telemetry(
-            object_id=srv8_packet.get_source_object_id_as_bytes(),
-            action_id=srv8_packet.get_action_id(), custom_data=srv8_packet.get_custom_data()
-        )
+        if srv8_packet.get_subservice() == Srv8Subservices.DATA_REPLY:
+            obj_id = srv8_packet.get_source_object_id_as_bytes()
+            action_id = srv8_packet.get_action_id()
+            header_list, content_list = hook_obj.handle_service_8_telemetry(
+                object_id=obj_id, action_id=action_id,
+                custom_data=srv8_packet.get_custom_data()
+            )
+            obj_id_dict = hook_obj.get_object_ids()
+            rep_str = obj_id_dict.get(obj_id)
+            if rep_str is None:
+                rep_str = "unknown object"
+            print_string = \
+                f'Service 8 data reply from {rep_str} with action ID {action_id}'
+            self.__print_buffer = print_string
+            LOGGER.info(self.__print_buffer)
+            self.add_print_buffer_to_file_buffer()
+            self.__print_buffer = header_list
+            LOGGER.info(self.__print_buffer)
+            self.add_print_buffer_to_file_buffer()
+            self.__print_buffer = content_list
+            LOGGER.info(self.__print_buffer)
+            self.add_print_buffer_to_file_buffer()
 
     def handle_hk_print(
             self, object_id: int, set_id: int, hk_header: list, hk_content: list,
@@ -296,32 +321,12 @@ class TmTcPrinter:
         """
         if wiretapping_packet.get_service() == 2 and (wiretapping_packet.get_subservice() == 131 or
                                                       wiretapping_packet.get_subservice() == 130):
-            self.__print_buffer = f"Wiretapping Packet or Raw Reply from TM [{wiretapping_packet.get_service()}," \
-                                  f"{wiretapping_packet.get_subservice()}]: "
+            self.__print_buffer = \
+                f"Wiretapping Packet or Raw Reply from TM [{wiretapping_packet.get_service()}," \
+                f"{wiretapping_packet.get_subservice()}]: "
             self.__print_buffer = self.__print_buffer + wiretapping_packet.return_source_data_string()
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
-
-    def __handle_data_reply_packet(self, srv8_tm: Service8TM):
-        """
-        Handles the PUS Service 8 data reply types.
-        :return:
-        """
-        try:
-            if srv8_tm.custom_data_content is [] or srv8_tm.custom_data_header is []:
-                self.__print_buffer = f"Service 8 Direct Command Reply TM[8,130] with TM data: " \
-                                      f"{srv8_tm.return_source_data_string()}"
-            else:
-                self.__print_buffer = f"{srv8_tm.custom_data_header}\n"
-                self.__print_buffer += f"{srv8_tm.custom_data_content}\n"
-                LOGGER.info(f"Service 8 data for object ID {srv8_tm.object_id_key} "
-                            f"and action ID {srv8_tm._action_id}:")
-                LOGGER.info(str(srv8_tm.custom_data_header))
-                LOGGER.info(str(srv8_tm.custom_data_content))
-            self.add_print_buffer_to_file_buffer()
-        except AttributeError:
-            LOGGER.warning("Service 8 packet format invalid, no custom_data_content or custom_data_header found!")
-            return
 
     def __handle_event_packet(self, srv_5_tm: Service5TM):
         printout = srv_5_tm.get_custom_printout()
