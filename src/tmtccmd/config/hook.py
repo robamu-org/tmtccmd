@@ -24,14 +24,6 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def get_version(self) -> str:
-        """The user can specify a custom version by overriding this function.
-        :return:
-        """
-        from tmtccmd import VERSION_NAME, __version__
-        return f"{VERSION_NAME} {__version__}"
-
-    @abstractmethod
     def get_object_ids(self) -> Dict[bytes, list]:
         """The user can specify an object ID dictionary here mapping object ID bytearrays to a
         list. This list could contain containing the string representation or additional
