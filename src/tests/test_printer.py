@@ -36,7 +36,7 @@ class TestPrinter(TestCase):
             severity=Severity.INFO, object_id=bytearray([0x01, 0x02, 0x03, 0x04]), event_id=22, param_1=32,
             param_2=82452
         )
-        service_5_tm = Service5TM(service_5_packed.pack(), call_srv5_hook=False)
+        service_5_tm = Service5TM(service_5_packed.pack())
         self.tmtc_printer.print_telemetry(packet=service_5_tm)
 
         service_17_command = pack_service17_ping_command(ssc=0, apid=42)

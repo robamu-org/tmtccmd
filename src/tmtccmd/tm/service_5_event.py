@@ -54,12 +54,6 @@ class Service5TM(PusTelemetry):
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
 
-    def get_custom_printout(self) -> str:
-        return self.custom_service_5_print
-
-    def set_custom_printout(self, custom_printout: str):
-        self.custom_service_5_print = custom_printout
-
     def get_reporter_id(self):
         return self.object_id
 
