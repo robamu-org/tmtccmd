@@ -1,14 +1,12 @@
 from unittest.mock import MagicMock
-from argparse import Namespace
+
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.config.com_if import create_communication_interface_default
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList
 from tmtccmd.core.frontend_base import FrontendBase
-from hook_obj_mock import create_hook_mock
 
 
 def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:

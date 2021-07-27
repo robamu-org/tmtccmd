@@ -1,15 +1,20 @@
 from abc import abstractmethod
 from typing import Dict, Union, Optional, Tuple
+from unittest.mock import MagicMock
 import argparse
 
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.com_if import CommunicationInterface
+from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.config.definitions import ServiceOpCodeDictT, CoreModeList
 from tmtccmd.tm.service_3_base import Service3Base
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.config.hook import TmTcHookBase
-from unittest.mock import MagicMock
+from tmtccmd.utility.logger import get_console_logger
+
+LOGGER = get_console_logger()
+
 
 def create_hook_mock() -> TmTcHookBase:
     """Create simple minimal hook mock using the MagicMock facilities by unittest
