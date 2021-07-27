@@ -8,16 +8,7 @@ from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList
 from tmtccmd.core.frontend_base import FrontendBase
-
-
-def create_hook_mock() -> TmTcHookBase:
-    tmtc_hook_base = TmTcHookBase()
-    tmtc_hook_base.add_globals_pre_args_parsing = MagicMock(return_value=0)
-    tmtc_hook_base.add_globals_post_args_parsing = MagicMock(return_value=0)
-    tmtc_hook_base.custom_args_parsing = MagicMock(
-        return_value=Namespace(service=17, mode=CoreModeList.IDLE)
-    )
-    return tmtc_hook_base
+from hook_obj_mock import create_hook_mock
 
 
 def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
@@ -30,8 +21,8 @@ def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
     )
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
-        com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=CoreModeList.IDLE,
-        init_service=17, init_opcode="0", tm_handler=tm_handler
+        com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener,
+        init_mode=CoreModeList.IDLE, init_service=17, init_opcode="0", tm_handler=tm_handler
     )
     tmtc_backend.start_listener = MagicMock(return_value=0)
     tmtc_backend.initialize = MagicMock(return_value=0)

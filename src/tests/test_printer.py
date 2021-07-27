@@ -1,10 +1,13 @@
 from unittest import TestCase
+from hook_obj_mock import create_hook_mock_with_srv_handlers
 
+from tmtccmd.runner import initialize_tmtc_commander
 from tmtccmd.tm.service_1_verification import Service1TmPacked, Service1TM
 from tmtccmd.tm.service_5_event import Service5TM, Service5TmPacked, Severity
 from tmtccmd.tc.service_17_test import pack_service17_ping_command
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.utility.logger import get_console_logger, set_tmtc_console_logger
+from tmtccmd.config.globals import update_global, CoreGlobalIds
 
 
 class TestPrinter(TestCase):
@@ -33,16 +36,31 @@ class TestPrinter(TestCase):
 
         self.tmtc_printer.set_display_mode(DisplayMode.LONG)
         service_5_packed = Service5TmPacked(
-            severity=Severity.INFO, object_id=bytearray([0x01, 0x02, 0x03, 0x04]), event_id=22, param_1=32,
-            param_2=82452
+            severity=Severity.INFO, object_id=bytearray([0x01, 0x02, 0x03, 0x04]), event_id=22,
+            param_1=32, param_2=82452
         )
+        hook_base = create_hook_mock_with_srv_handlers()
+        initialize_tmtc_commander(hook_object=hook_base)
+
         service_5_tm = Service5TM(service_5_packed.pack())
         self.tmtc_printer.print_telemetry(packet=service_5_tm)
 
+        hook_base.handle_service_5_event.assert_called_with(
+            object_id=bytearray([0x01, 0x02, 0x03, 0x04]), event_id=22, param_1=32, param_2=82452
+        )
+
         service_17_command = pack_service17_ping_command(ssc=0, apid=42)
-        self.tmtc_printer.print_telecommand(tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack())
+        self.tmtc_printer.print_telecommand(
+            tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack()
+        )
         self.tmtc_printer.set_display_mode(DisplayMode.SHORT)
-        self.tmtc_printer.print_telecommand(tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack())
+        self.tmtc_printer.print_telecommand(
+            tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack()
+        )
         self.tmtc_printer.set_display_mode(DisplayMode.LONG)
 
         self.tmtc_printer.clear_file_buffer()
+
+    def tearDown(self) -> None:
+        """Reset the hook object"""
+        update_global(CoreGlobalIds.TMTC_HOOK, None)

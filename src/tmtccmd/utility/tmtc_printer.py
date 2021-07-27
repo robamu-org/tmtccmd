@@ -131,7 +131,7 @@ class TmTcPrinter:
             return
         srv5_packet = cast(Service5TM, packet)
         custom_string = hook_obj.handle_service_5_event(
-            object_id=srv5_packet.get_reporter_id(), event_id=srv5_packet.get_event_id(),
+            object_id=srv5_packet.get_reporter_id_as_bytes(), event_id=srv5_packet.get_event_id(),
             param_1=srv5_packet.get_param_1(), param_2=srv5_packet.get_param_2()
         )
         self.__print_buffer = custom_string
