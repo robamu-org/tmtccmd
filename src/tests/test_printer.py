@@ -1,5 +1,5 @@
 from unittest import TestCase
-from hook_obj_mock import create_hook_mock_with_srv_handlers
+from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
 
 from tmtccmd.runner import initialize_tmtc_commander
 from tmtccmd.tm.service_1_verification import Service1TmPacked, Service1TM
