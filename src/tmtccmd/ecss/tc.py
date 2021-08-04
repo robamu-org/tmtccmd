@@ -21,7 +21,8 @@ except ImportError:
 class PusTcDataFieldHeaderSerialize:
     def __init__(
             self, service_type: int, service_subtype: int, source_id: int = 0,
-            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag: int = 0
+            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111,
+            secondary_header_flag: int = 0
     ):
         self.service_type = service_type
         self.service_subtype = service_subtype
@@ -30,7 +31,8 @@ class PusTcDataFieldHeaderSerialize:
         self.ack_flags = ack_flags
         if self.pus_tc_version == PusVersion.PUS_A:
             pus_version_num = 1
-            self.pus_version_and_ack_byte = secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
+            self.pus_version_and_ack_byte = \
+                secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
         else:
             pus_version_num = 2
             self.pus_version_and_ack_byte = pus_version_num << 4 | ack_flags
@@ -68,8 +70,8 @@ class PusTelecommand:
 
     def __init__(
             self, service: int, subservice: int, ssc=0,
-            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = PusVersion.UNKNOWN,
-            ack_flags: int = 0b1111, apid: int = -1
+            app_data: bytearray = bytearray([]), source_id: int = 0,
+            pus_tc_version: int = PusVersion.UNKNOWN, ack_flags: int = 0b1111, apid: int = -1
     ):
         """Initiate a PUS telecommand from the given parameters. The raw byte representation
         can then be retrieved with the pack() function.

@@ -1,12 +1,9 @@
-"""
-@brief      DLE Encoder Implementation
-@details
+"""DLE Encoder Implementation
 DLE encoding can be used to provide a simple transport layer for serial data.
 A give data stream is encoded by adding a STX char at the beginning and an ETX char at the end.
 All STX and ETX occurences in the packet are encoded as well so the receiver can simply look
 for STX and ETX occurences to identify packets.
 """
-
 import enum
 from typing import Tuple
 
@@ -38,8 +35,7 @@ def encode_dle(source_packet: bytearray, add_stx_etx: bool = True) -> bytearray:
         # STX, ETX and CR characters in the stream need to be escaped with DLE
         if next_byte == STX_CHAR or next_byte == ETX_CHAR or next_byte == CARRIAGE_RETURN:
             dest_stream.append(DLE_CHAR)
-            """
-            Escaped byte will be actual byte + 0x40. This prevents
+            """Escaped byte will be actual byte + 0x40. This prevents
             STX and ETX characters from appearing
             in the encoded data stream at all, so when polling an
             encoded stream, the transmission can be stopped at ETX.
@@ -60,8 +56,8 @@ def encode_dle(source_packet: bytearray, add_stx_etx: bool = True) -> bytearray:
 
 
 def decode_dle(source_packet: bytearray) -> Tuple[DleErrorCodes, bytearray, int]:
-    """
-    Decodes a given DLE encoded data stream. This call only returns the first packet found.
+    """Decodes a given DLE encoded data stream. This call only returns the first packet found.
+
     It might be necessary to call this function multiple times, depending on the third
     returnvalue
     :return:

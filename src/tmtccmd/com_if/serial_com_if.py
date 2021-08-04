@@ -1,8 +1,4 @@
-"""
-@file   tmtcc_serial_com_if.py
-@brief  SERIAL Communication Interface
-@author R. Mueller
-@date   01.11.2019
+"""Serial Communication Interface Implementation
 """
 import enum
 import threading
@@ -54,7 +50,8 @@ class SerialComIF(CommunicationInterface):
     Communication Interface to use serial communication. This requires the PySerial library.
     """
     def __init__(
-            self, com_if_key: str, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int, serial_timeout: float,
+            self, com_if_key: str, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int,
+            serial_timeout: float,
             ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED
     ):
         """
