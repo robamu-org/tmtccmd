@@ -16,26 +16,23 @@ LOGGER = get_console_logger()
 
 class ExampleHookClass(TmTcHookBase):
 
-    def get_json_config_file_path(self) -> str:
-        return "tmtc_config.json"
-
-    def get_version(self) -> str:
-        return "My Version String"
-
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
         set_default_globals_pre_args_parsing(gui=gui, apid=APID)
 
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
         from tmtccmd.config.globals import set_default_globals_post_args_parsing
-        set_default_globals_post_args_parsing(args=args, json_cfg_path=self.get_json_config_file_path())
+        set_default_globals_post_args_parsing(
+            args=args, json_cfg_path=self.get_json_config_file_path()
+        )
 
     def assign_communication_interface(self, com_if_key: str, tmtc_printer: TmTcPrinter) -> \
             Union[CommunicationInterface, None]:
         from tmtccmd.config.com_if import create_communication_interface_default
         LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(
-            com_if_key=com_if_key, tmtc_printer=tmtc_printer, json_cfg_path=self.get_json_config_file_path()
+            com_if_key=com_if_key, tmtc_printer=tmtc_printer,
+            json_cfg_path=self.get_json_config_file_path()
         )
 
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
@@ -67,4 +64,10 @@ class ExampleHookClass(TmTcHookBase):
     def handle_service_3_housekeeping(
         object_id: int, set_id: int, hk_data: bytearray, service3_packet: Service3Base
     ) -> Tuple[list, list, bytearray, int]:
+        pass
+
+    @staticmethod
+    def handle_service_5_event(
+        object_id: bytes, event_id: int, param_1: int, param_2: int
+    ) -> str:
         pass
