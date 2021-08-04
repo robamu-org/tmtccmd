@@ -43,14 +43,14 @@ class FileDirectivePduBase:
             trans_mode: TransmissionModes = None,
             crc_flag: CrcFlag = None,
             len_entity_id: LenInBytes = LenInBytes.NONE,
-            len_transaction_seq_num=LenInBytes.NONE,
+            len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
     ):
         if serialize:
             if directive_code is None:
                 LOGGER.warning('Some mandatory fields were not specified for serialization')
                 raise ValueError
         self.pdu_header = PduHeader(
-            serialize=serialize,pdu_type=PduType.FILE_DIRECTIVE, direction=direction,
+            serialize=serialize, pdu_type=PduType.FILE_DIRECTIVE, direction=direction,
             trans_mode=trans_mode, crc_flag=crc_flag, len_entity_id=len_entity_id,
             len_transaction_seq_num=len_transaction_seq_num
         )

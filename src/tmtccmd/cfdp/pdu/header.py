@@ -53,9 +53,9 @@ class PduHeader:
             trans_mode: TransmissionModes = None,
             crc_flag: CrcFlag = None,
             len_entity_id: LenInBytes = LenInBytes.NONE,
-            len_transaction_seq_num=LenInBytes.NONE,
-            seg_ctrl = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION,
-            segment_metadata_flag = SegmentMetadataFlag.NOT_PRESENT,
+            len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
+            seg_ctrl: SegmentationControl = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION,
+            segment_metadata_flag: SegmentMetadataFlag = SegmentMetadataFlag.NOT_PRESENT,
     ):
         """Constructor for PDU header
         :param serialize: Specify whether a packet will be serialized or deserialized

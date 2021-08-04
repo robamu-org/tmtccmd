@@ -160,16 +160,7 @@ class SerialComIF(CommunicationInterface):
         start_time = time.time()
         sleep_time = timeout / 3.0
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            if timeout > 0:
-                start_time = time.time()
-                elapsed_time = 0
-                while elapsed_time < timeout:
-                    if self.serial.inWaiting() > 0:
-                        return self.serial.inWaiting()
-                    elapsed_time = time.time() - start_time
-                    time.sleep(sleep_time)
-            if self.serial.inWaiting() > 0:
-                return self.serial.inWaiting()
+            return self.data_available_fixed_frame(timeout=timeout, sleep_time=sleep_time)
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             if timeout > 0:
                 while elapsed_time < timeout:
@@ -180,6 +171,18 @@ class SerialComIF(CommunicationInterface):
             if self.reception_buffer:
                 return self.reception_buffer.__len__()
         return 0
+
+    def data_available_fixed_frame(self, timeout: float, sleep_time: float):
+        if timeout > 0:
+            start_time = time.time()
+            elapsed_time = 0
+            while elapsed_time < timeout:
+                if self.serial.inWaiting() > 0:
+                    return self.serial.inWaiting()
+                elapsed_time = time.time() - start_time
+                time.sleep(sleep_time)
+        if self.serial.inWaiting() > 0:
+            return self.serial.inWaiting()
 
     def poll_dle_packets(self):
         while True and self.dle_polling_active_event.is_set():
