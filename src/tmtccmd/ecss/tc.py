@@ -4,6 +4,7 @@ from __future__ import annotations
 import sys
 from typing import Tuple
 
+from tmtccmd.ccsds.log import LOGGER
 from tmtccmd.ccsds.spacepacket import \
     SpacePacketHeaderSerializer, \
     PacketTypes, \
@@ -95,14 +96,14 @@ class PusTelecommand:
         packet_type = PacketTypes.PACKET_TYPE_TC
         secondary_header_flag = 1
         if subservice > 255:
-            print("Subservice value invalid. Setting to 0")
+            LOGGER.warning("Subservice value invalid. Setting to 0")
             subservice = 0
         if service > 255:
-            print("Service value invalid. Setting to 0")
+            LOGGER.warning("Service value invalid. Setting to 0")
             service = 0
         # SSC can have maximum of 14 bits
         if ssc > pow(2, 14):
-            print("SSC invalid, setting to 0")
+            LOGGER.warning("SSC invalid, setting to 0")
             ssc = 0
         self._data_field_header = PusTcDataFieldHeaderSerialize(
             service_type=service, service_subtype=subservice, ack_flags=ack_flags,
@@ -163,7 +164,7 @@ class PusTelecommand:
             data_length = secondary_header_len + app_data_len + 1
             return data_length
         except TypeError:
-            print("PusTelecommand: Invalid type of application data!")
+            LOGGER.warning("PusTelecommand: Invalid type of application data!")
             return 0
 
     def pack_command_tuple(self) -> Tuple[bytearray, PusTelecommand]:

@@ -7,6 +7,7 @@ class EofPdu():
         file_checksum: int,
         file_size: int,
         direction: Direction,
+        fault_location: TypeLengthValue,
         trans_mode: TransmissionModes,
         crc_flag: CrcFlag,
         condition_code: ConditionCode = ConditionCode.NO_ERROR,
