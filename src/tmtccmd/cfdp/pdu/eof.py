@@ -1,3 +1,5 @@
+import struct
+
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, ConditionCode
 from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
 from tmtccmd.cfdp.tlv import CfdpTlv
@@ -32,8 +34,18 @@ class EofPdu():
         self.file_size = file_size
         self.fault_location = fault_location
 
-    def pack(self):
-        pass
+    def pack(self) -> bytearray:
+        eof_pdu = bytearray()
+        eof_pdu.extend(self.pdu_file_directive.pack())
+        eof_pdu.append(self.pdu_file_directive.condition_code << 4)
+        eof_pdu.extend(struct.pack('!I', self.file_checksum))
+        if self.pdu_file_directive.pdu_header.large_file:
+            eof_pdu.extend(struct.pack('!Q', self.file_size))
+        else:
+            eof_pdu.extend(struct.pack('!I', self.file_size))
+        if self.fault_location is not None:
+            eof_pdu.extend(self.fault_location.pack())
+        return eof_pdu
 
     def unpack(self, raw_bytes: bytearray):
         self.pdu_file_directive.unpack(raw_bytes=raw_bytes)
