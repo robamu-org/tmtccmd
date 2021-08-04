@@ -1,3 +1,4 @@
+import enum
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.cfdp.conf import get_default_length_entity_id, \
@@ -76,7 +77,7 @@ class PduHeader:
         if len_transaction_seq_num is LenInBytes.NONE:
             self.len_transaction_seq_num = get_default_length_transaction_seq_num()
         else:
-            elf.len_transaction_seq_num = len_transaction_seq_num
+            self.len_transaction_seq_num = len_transaction_seq_num
         self.segment_metadata_flag = segment_metadata_flag
 
     def set_large_file_flag(self):

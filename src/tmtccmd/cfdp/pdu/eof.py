@@ -1,4 +1,7 @@
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, ConditionCode
+from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
+from tmtccmd.cfdp.tlv import CfdpTlv
+from tmtccmd.cfdp.conf import LenInBytes
 
 
 class EofPdu():
@@ -7,9 +10,9 @@ class EofPdu():
         file_checksum: int,
         file_size: int,
         direction: Direction,
-        fault_location: TypeLengthValue,
         trans_mode: TransmissionModes,
         crc_flag: CrcFlag,
+        fault_location: CfdpTlv = None,
         condition_code: ConditionCode = ConditionCode.NO_ERROR,
         len_entity_id: LenInBytes = LenInBytes.NONE,
         len_transaction_seq_num=LenInBytes.NONE,
