@@ -148,20 +148,23 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def __receive_tm_packets(self, tcp_socket: socket.socket):
         while True:
-            bytes_recvd = tcp_socket.recv(self.max_recv_size)
-            if len(bytes_recvd) > 0:
-                with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                        acquired:
-                    if not acquired:
-                        LOGGER.warning("Acquiring queue lock failed!")
-                    if self.__tm_queue.__len__() >= self.max_packets_stored:
-                        LOGGER.warning(
-                            "Number of packets in TCP queue too large. Overwriting old packets.."
-                        )
-                        self.__tm_queue.pop()
-                    self.__tm_queue.appendleft(bytearray(bytes_recvd))
-            elif bytes_recvd is None or len(bytes_recvd) == 0:
-                break
+            try:
+                bytes_recvd = tcp_socket.recv(self.max_recv_size)
+                if len(bytes_recvd) > 0:
+                    with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                            acquired:
+                        if not acquired:
+                            LOGGER.warning("Acquiring queue lock failed!")
+                        if self.__tm_queue.__len__() >= self.max_packets_stored:
+                            LOGGER.warning(
+                                "Number of packets in TCP queue too large. Overwriting old packets.."
+                            )
+                            self.__tm_queue.pop()
+                        self.__tm_queue.appendleft(bytearray(bytes_recvd))
+                elif bytes_recvd is None or len(bytes_recvd) == 0:
+                    break
+            except ConnectionResetError:
+                LOGGER.exception('ConnectionResetError. TCP server might not be up')
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.__tm_queue:
