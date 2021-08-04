@@ -46,6 +46,7 @@ class FileDirectivePduBase:
             len_transaction_seq_num=len_transaction_seq_num
         )
         self.directive_code = directive_code
+        self.condition_code = 0
 
     def pack(self) -> bytearray:
         data = bytearray()
