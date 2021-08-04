@@ -39,11 +39,12 @@ class CfdpTlv:
         self.length = length
         self.value = value
 
-    def pack(self):
+    def pack(self) -> bytearray:
         tlv_data = bytearray()
         tlv_data.append(self.type)
         tlv_data.append(self.length)
         tlv_data.extend(self.value)
+        return tlv_data
 
     def unpack(self, raw_bytes: bytearray):
         """Unpack a TLV field from a raw bytearray

@@ -7,6 +7,7 @@ from tmtccmd.cfdp.conf import LenInBytes
 class EofPdu():
     def __init__(
         self,
+        serialize: bool,
         file_checksum: int,
         file_size: int,
         direction: Direction,
@@ -18,6 +19,7 @@ class EofPdu():
         len_transaction_seq_num=LenInBytes.NONE,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
+            serialize=serialize,
             directive_code=DirectiveCodes.EOF_PDU,
             direction=direction,
             trans_mode=trans_mode,
@@ -28,7 +30,7 @@ class EofPdu():
         self.pdu_file_directive.condition_code = condition_code
         self.file_checksum = file_checksum
         self.file_size = file_size
-
+        self.fault_location = fault_location
 
     def pack(self):
         pass

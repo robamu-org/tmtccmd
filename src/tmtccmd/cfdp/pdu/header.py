@@ -46,14 +46,19 @@ class PduHeader:
     """This class encapsulates the fixed-format PDU header.
     For more, information, refer to CCSDS 727.0-B-5 p.75"""
     def __init__(
-            self, pdu_type: PduType, direction: Direction, trans_mode: TransmissionModes,
-            crc_flag: CrcFlag,
+            self,
+            serialize: bool,
+            pdu_type: PduType = None,
+            direction: Direction = None,
+            trans_mode: TransmissionModes = None,
+            crc_flag: CrcFlag = None,
             len_entity_id: LenInBytes = LenInBytes.NONE,
             len_transaction_seq_num=LenInBytes.NONE,
             seg_ctrl = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION,
             segment_metadata_flag = SegmentMetadataFlag.NOT_PRESENT,
     ):
         """Constructor for PDU header
+        :param serialize: Specify whether a packet will be serialized or deserialized
         :param pdu_type:
         :param direction:
         :param trans_mode:
@@ -62,7 +67,12 @@ class PduHeader:
         :param len_transaction_seq_num: If None is supplied, the default configuration will be used
         :param seg_ctrl:
         :param segment_metadata_flag:
+        :raise ValueError: If some field were not specified with serialize == True
         """
+        if serialize:
+            if pdu_type is None or direction is None or trans_mode is None or crc_flag is None:
+                LOGGER.warning('Some mandatory fields were not specified for serialization')
+                raise ValueError
         self.pdu_type = pdu_type
         self.direction = direction
         self.trans_mode = trans_mode

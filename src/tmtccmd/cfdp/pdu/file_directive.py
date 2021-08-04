@@ -35,17 +35,23 @@ class FileDirectivePduBase:
     All other file directive PDU classes implement this class
     """
     def __init__(
-            self, directive_code: DirectiveCodes,
+            self,
+            serialize: bool,
+            directive_code: DirectiveCodes = None,
             # PDU Header parameters
-            direction: Direction,
-            trans_mode: TransmissionModes,
-            crc_flag: CrcFlag,
+            direction: Direction = None,
+            trans_mode: TransmissionModes = None,
+            crc_flag: CrcFlag = None,
             len_entity_id: LenInBytes = LenInBytes.NONE,
             len_transaction_seq_num=LenInBytes.NONE,
     ):
+        if serialize:
+            if directive_code is None:
+                LOGGER.warning('Some mandatory fields were not specified for serialization')
+                raise ValueError
         self.pdu_header = PduHeader(
-            pdu_type=PduType.FILE_DIRECTIVE, direction=direction, trans_mode=trans_mode,
-            crc_flag=crc_flag, len_entity_id=len_entity_id,
+            serialize=serialize,pdu_type=PduType.FILE_DIRECTIVE, direction=direction,
+            trans_mode=trans_mode, crc_flag=crc_flag, len_entity_id=len_entity_id,
             len_transaction_seq_num=len_transaction_seq_num
         )
         self.directive_code = directive_code
