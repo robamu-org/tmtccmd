@@ -9,6 +9,12 @@ from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKE
 from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
+def get_service_from_raw_packet(raw_bytearray: bytearray) -> int:
+    # TODO: Actually, the size of a minimum PUS packet is larger than 7. Determine that size
+    if len(raw_bytearray) < 7:
+        raise ValueError
+
+
 class PusTelemetry:
     """Generic PUS telemetry class representation.
     It is instantiated by passing the raw pus telemetry packet (bytearray) to the constructor.
