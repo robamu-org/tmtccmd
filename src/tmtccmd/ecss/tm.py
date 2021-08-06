@@ -10,9 +10,15 @@ from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
 def get_service_from_raw_packet(raw_bytearray: bytearray) -> int:
-    # TODO: Actually, the size of a minimum PUS packet is larger than 7. Determine that size
-    if len(raw_bytearray) < 7:
+    """Determine the service ID from a raw packet, which can be used for packet deserialization.
+
+    It is assumed that the user already checked that the raw bytearray contains a PUS packet and
+    only basic sanity checks will be performed.
+    :raise ValueError: If raw bytearray is too short
+    """
+    if len(raw_bytearray) < 8:
         raise ValueError
+    return raw_bytearray[7]
 
 
 class PusTelemetry:
