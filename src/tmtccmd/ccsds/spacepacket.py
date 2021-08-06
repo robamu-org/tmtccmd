@@ -80,20 +80,23 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
 class SpacePacketHeaderSerializer(SpacePacketCommonFields):
     def __init__(
             self, apid: int, packet_type: PacketTypes, data_length: int, source_sequence_count: int,
-            secondary_header_flag: bool = True, version: int = 0b000, sequence_flags: int = SequenceFlags.UNSEGMENTED
+            secondary_header_flag: bool = True, version: int = 0b000,
+            sequence_flags: int = SequenceFlags.UNSEGMENTED
     ):
         """Serialize raw space packet header.
         :param packet_type: 0 for telemetry, 1 for telecommands
         :param data_length: Length of packet data field
         :param source_sequence_count:
-        :param secondary_header_flag: Indicates presence of absence of a Secondary Header in the Space Packet
+        :param secondary_header_flag: Indicates presence of absence of a
+        Secondary Header in the Space Packet
         :param version: Shall be b000 for CCSDS Version 1 packets
         :param sequence_flags: 0b11 for stand-alone packets (unsegmented user data)
         :param apid:
         """
         self.packet_id_bytes = [0x00, 0x00]
         self.packet_id_bytes[0], self.packet_id_bytes[1] = get_sp_packet_id_bytes(
-            version=version, packet_type=packet_type, secondary_header_flag=secondary_header_flag, apid=apid
+            version=version, packet_type=packet_type,
+            secondary_header_flag=secondary_header_flag, apid=apid
         )
         super().__init__(
             packet_type=packet_type,
@@ -121,7 +124,8 @@ def get_sp_packet_id_bytes(
 
     :param version: Version field of the packet ID. Defined to be 0b000 in the space packet standard
     :param packet_type:
-    :param secondary_header_flag: Indicates presence of absence of a Secondary Header in the Space Packet
+    :param secondary_header_flag: Indicates presence of absence of a Secondary Header
+    in the Space Packet
     :param apid: Application Process Identifier. Naming mechanism for managed data path, has 11 bits
     :return:
     """

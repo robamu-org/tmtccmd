@@ -56,8 +56,7 @@ class HammingReturnCodes(Enum):
 
 
 def hamming_compute_256x(data: bytearray) -> bytearray:
-    """
-    Computes 3-bytes hamming codes for a data block whose size is multiple of
+    """Computes 3-bytes hamming codes for a data block whose size is multiple of
     256 bytes. Each 256 bytes block gets its own code.
     :param data: Data to compute code for. Should be a multiple of 256 bytes, pad data with 0
     if necessary!
@@ -116,9 +115,8 @@ def hamming_verify_256x(data: bytearray, original_hamming_code: bytearray) -> Ha
 
 
 def hamming_compute_256(data: bytearray) -> bytearray:
-    """
-    Takes a bytearray with the size of 256 bytes and calculates the 22 parity bits for the hamming
-    code which will be returned as a three byte bytearray.
+    """Takes a bytearray with the size of 256 bytes and calculates the 22 parity bits for the
+    hamming code which will be returned as a three byte bytearray.
     :param data:
     :return:
     """
@@ -225,8 +223,7 @@ def hamming_compute_256(data: bytearray) -> bytearray:
 
 
 def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> HammingReturnCodes:
-    """
-    Verifies and corrects a 256-bytes block of data using the given 22-bits hamming code.
+    """Verifies and corrects a 256-bytes block of data using the given 22-bits hamming code.
     Returns 0 if there is no error, otherwise returns a HAMMING_ERROR code.
     :param data: 256 code block to verify
     :param original_hamming_code: Original 3 byte hamming code with 22 parity bits
@@ -294,9 +291,7 @@ def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> Ham
 
 
 def hamming_test():
-    """
-    Algorithm was verified with this  simple test.
-    @return:
+    """Algorithm was verified with this  simple test.
     """
     test_data = bytearray(256)
     for index in range(128):
