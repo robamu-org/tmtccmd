@@ -14,7 +14,7 @@ class EofPdu():
         file_size: int,
         direction: Direction,
         trans_mode: TransmissionModes,
-        crc_flag: CrcFlag,
+        crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         fault_location: CfdpTlv = None,
         condition_code: ConditionCode = ConditionCode.NO_ERROR,
         len_entity_id: LenInBytes = LenInBytes.NONE,

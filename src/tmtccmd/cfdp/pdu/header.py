@@ -2,7 +2,7 @@ import enum
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.cfdp.conf import get_default_length_entity_id, \
-    get_default_length_transaction_seq_num, LenInBytes
+    get_default_length_transaction_seq_num, LenInBytes, get_default_pdu_crc_mode
 
 
 LOGGER = get_console_logger()
@@ -26,6 +26,7 @@ class TransmissionModes(enum.IntEnum):
 class CrcFlag(enum.IntEnum):
     WITH_CRC = 0
     NO_CRC = 1
+    GLOBAL_CONFIG = 2
 
 
 class SegmentMetadataFlag(enum.IntEnum):
@@ -51,7 +52,7 @@ class PduHeader:
             pdu_type: PduType = None,
             direction: Direction = None,
             trans_mode: TransmissionModes = None,
-            crc_flag: CrcFlag = None,
+            crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
             len_entity_id: LenInBytes = LenInBytes.NONE,
             len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
             seg_ctrl: SegmentationControl = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION,
@@ -62,9 +63,9 @@ class PduHeader:
         :param pdu_type:
         :param direction:
         :param trans_mode:
-        :param crc_flag:
-        :param len_entity_id: If None is supplied, the default configuration will be used
-        :param len_transaction_seq_num: If None is supplied, the default configuration will be used
+        :param crc_flag: If not supplied, assign the default configuration
+        :param len_entity_id: If not suplied, the default configuration will be used
+        :param len_transaction_seq_num: If not supplied, the default configuration will be used
         :param seg_ctrl:
         :param segment_metadata_flag:
         :raise ValueError: If some field were not specified with serialize == True
@@ -76,7 +77,6 @@ class PduHeader:
         self.pdu_type = pdu_type
         self.direction = direction
         self.trans_mode = trans_mode
-        self.crc_flag = crc_flag
         self.large_file = False
         self.pdu_data_field_length = 0
         self.segmentation_control = seg_ctrl
@@ -88,6 +88,10 @@ class PduHeader:
             self.len_transaction_seq_num = get_default_length_transaction_seq_num()
         else:
             self.len_transaction_seq_num = len_transaction_seq_num
+        if crc_flag == CrcFlag.GLOBAL_CONFIG:
+            self.crc_flag = get_default_pdu_crc_mode()
+        else:
+            self.crc_flag = crc_flag
         self.segment_metadata_flag = segment_metadata_flag
 
     def set_large_file_flag(self):
