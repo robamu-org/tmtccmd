@@ -83,14 +83,14 @@ class FinishedPdu():
         if len(raw_packet) > current_idx:
             self.unpack_tlvs(raw_packet=raw_packet, start_idx=current_idx)
 
-
-    def unpack_tlvs(self, raw_packet: bytearray, start_idx: int):
+    def unpack_tlvs(self, raw_packet: bytearray, start_idx: int) -> int:
+        current_idx = start_idx
         while True:
             current_tlv = CfdpTlv(serialize=False)
             current_tlv.unpack(raw_bytes=raw_packet[current_idx])
             # This will always increment at least two, so we can't get stuck in the loop
             current_idx += current_tlv.get_total_length()
-            if current_idx > len(raw_packet) or current_idx == len(raw_packet):
+            if start_idx > len(raw_packet) or current_idx == len(raw_packet):
                 if current_idx > len(raw_packet):
                     LOGGER.warning(
                         'Parser Error when parsing TLVs in Finished PDU. Possibly invalid packet'
@@ -103,3 +103,4 @@ class FinishedPdu():
             else:
                 # Another TLV might follow, so this is a file store response
                 self.file_store_responses.append(current_tlv)
+        return current_idx
