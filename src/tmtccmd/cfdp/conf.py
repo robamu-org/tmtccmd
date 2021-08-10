@@ -1,4 +1,5 @@
 import enum
+from tmtccmd.ccsds.log import LOGGER
 
 
 class LenInBytes(enum.IntEnum):

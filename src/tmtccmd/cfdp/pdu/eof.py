@@ -1,4 +1,3 @@
-import enum
 import struct
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, \
@@ -7,6 +6,7 @@ from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
 from tmtccmd.cfdp.tlv import CfdpTlv
 from tmtccmd.cfdp.conf import LenInBytes, check_packet_length
 from tmtccmd.ccsds.log import LOGGER
+
 
 class EofPdu():
     MINIMAL_LENGTH = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1 + 4 + 4
@@ -83,4 +83,4 @@ class EofPdu():
             self.file_checksum = struct.unpack('!I', filesize_raw)[0]
         if len(raw_packet) > current_end_index:
             self.fault_location = CfdpTlv(serialize=False)
-            self.fault_location.unpack(raw_bytes=raw_packet[end_index:])
+            self.fault_location.unpack(raw_bytes=raw_packet[current_end_index:])

@@ -1,3 +1,5 @@
+import enum
+
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, Direction, \
     TransmissionModes, CrcFlag, ConditionCode
 from tmtccmd.cfdp.conf import LenInBytes

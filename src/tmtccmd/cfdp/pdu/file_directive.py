@@ -1,6 +1,6 @@
 import enum
 from tmtccmd.cfdp.pdu.header import PduHeader, PduType, Direction, CrcFlag, TransmissionModes
-from tmtccmd.cfdp.conf import LenInBytes
+from tmtccmd.cfdp.conf import LenInBytes, check_packet_length
 from tmtccmd.ccsds.log import LOGGER
 
 
@@ -74,7 +74,6 @@ class FileDirectivePduBase:
         :return:
         """
         self.pdu_header.unpack(raw_bytes=raw_packet)
-        if len(raw_bytes) < 5:
-            LOGGER.warning('Can not unpack less than five bytes into File Directive PDU')
+        if not check_packet_length(raw_packet_len=len(raw_packet), min_len=5):
             raise ValueError
         self.directive_code = raw_packet[4]
