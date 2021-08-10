@@ -48,3 +48,21 @@ def set_default_pdu_crc_mode(with_crc: bool):
 
 def get_default_pdu_crc_mode() -> bool:
     return __CFDP_DICT[CfdpConfKeys.WITH_CRC_CONFIG_ID]
+
+
+def check_packet_length(raw_packet_len: int, min_len: int, warn_on_fail: bool = True) -> bool:
+    """Check whether the length of a raw packet is shorter than a specified expectedminimum length.
+    By defaults, prints a warning if this is the case
+    :param raw_packet_len:
+    :param min_len:
+    :param warn_on_fail:
+    :return: Returns True if the raw packet is larger than the specified minimum length, False
+    otherwise
+    """
+    if raw_packet_len < min_len:
+        if warn_on_fail:
+            LOGGER.warning(
+                f'Detected packet length {raw_packet_len}, smaller than expected {min_len}'
+            )
+        return False
+    return True

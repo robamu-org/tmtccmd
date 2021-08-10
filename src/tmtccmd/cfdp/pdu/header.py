@@ -114,22 +114,22 @@ class PduHeader:
         )
         return header
 
-    def unpack(self, raw_bytes: bytearray):
+    def unpack(self, raw_packet: bytearray):
         """Unpack a raw bytearray into the PDU header oject representation
-        :param raw_bytes:
+        :param raw_packet:
         :raise ValueError: Passed bytearray is too short.
         :return:
         """
-        if len(raw_bytes) < 4:
+        if len(raw_packet) < 4:
             LOGGER.warning('Can not unpack less than four bytes into PDU header')
             raise ValueError
-        self.pdu_type = raw_bytes[0] & 0x10
-        self.direction = raw_bytes[0] & 0x08
-        self.trans_mode = raw_bytes[0] & 0x04
-        self.crc_flag = raw_bytes[0] & 0x02
-        self.large_file = raw_bytes[0] & 0x01
-        self.pdu_data_field_length = raw_bytes[1] << 8 | raw_bytes[2]
-        self.segmentation_control = raw_bytes[3] & 0x80
-        self.len_entity_id = raw_bytes[3] & 0x70
-        self.segment_metadata_flag = raw_bytes[3] & 0x08
-        self.len_transaction_seq_num = raw_bytes[3] & 0x01
+        self.pdu_type = raw_packet[0] & 0x10
+        self.direction = raw_packet[0] & 0x08
+        self.trans_mode = raw_packet[0] & 0x04
+        self.crc_flag = raw_packet[0] & 0x02
+        self.large_file = raw_packet[0] & 0x01
+        self.pdu_data_field_length = raw_packet[1] << 8 | raw_packet[2]
+        self.segmentation_control = raw_packet[3] & 0x80
+        self.len_entity_id = raw_packet[3] & 0x70
+        self.segment_metadata_flag = raw_packet[3] & 0x08
+        self.len_transaction_seq_num = raw_packet[3] & 0x01
