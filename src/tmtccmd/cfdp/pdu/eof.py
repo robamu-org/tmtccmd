@@ -53,7 +53,7 @@ class EofPdu():
         return eof_pdu
 
     def unpack(self, raw_packet: bytearray):
-        """Deserialize raw packet
+        """Deserialize raw EOF PDU packet
         :param raw_packet:
         :raise ValueError: If raw packet is too short
         :return:
@@ -62,25 +62,25 @@ class EofPdu():
         expected_min_len = self.MINIMAL_LENGTH
         if not check_packet_length(raw_packet_len=len(raw_packet), min_len=expected_min_len):
             raise ValueError
-        pdu_parameter_start = self.pdu_file_directive.get_len()
-        self.condition_code = raw_packet[pdu_parameter_start] & 0xf0
+        current_idx = self.pdu_file_directive.get_len()
+        self.condition_code = raw_packet[current_idx] & 0xf0
         expected_min_len = self.pdu_file_directive.get_len() + 5
-        checksum_raw = raw_packet[pdu_parameter_start + 1: pdu_parameter_start + 5]
+        current_idx += 1
+        checksum_raw = raw_packet[current_idx: current_idx + 4]
         self.file_checksum = struct.unpack('!I', checksum_raw)[0]
-        current_end_index = 0
+        current_idx += 4
         if self.pdu_file_directive.pdu_header.large_file:
-            expected_min_len += 4
-            if not check_packet_length(raw_packet_len=len(raw_packet), min_len=expected_min_len):
+            if not check_packet_length(raw_packet_len=len(raw_packet), min_len=current_idx + 8):
                 raise ValueError
             filesize_raw = checksum_raw = \
-                raw_packet[pdu_parameter_start + 5: pdu_parameter_start + 13]
-            current_end_index = pdu_parameter_start + 13
+                raw_packet[current_idx: current_idx + 8]
+            current_idx += 8
             self.file_checksum = struct.unpack('!Q', filesize_raw)[0]
         else:
             filesize_raw = checksum_raw = \
-                raw_packet[pdu_parameter_start + 5: pdu_parameter_start + 9]
-            current_end_index = pdu_parameter_start + 9
+                raw_packet[current_idx: current_idx + 4]
+            current_idx += 4
             self.file_checksum = struct.unpack('!I', filesize_raw)[0]
-        if len(raw_packet) > current_end_index:
+        if len(raw_packet) > current_idx:
             self.fault_location = CfdpTlv(serialize=False)
-            self.fault_location.unpack(raw_bytes=raw_packet[current_end_index:])
+            self.fault_location.unpack(raw_bytes=raw_packet[current_idx:])
