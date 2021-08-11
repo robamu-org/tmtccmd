@@ -2,7 +2,8 @@ import enum
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, Direction, \
     TransmissionModes, CrcFlag, ConditionCode
-from tmtccmd.cfdp.conf import LenInBytes, check_packet_length, LOGGER
+from tmtccmd.cfdp.definitions import LenInBytes
+from tmtccmd.cfdp.conf import check_packet_length, LOGGER
 from tmtccmd.cfdp.tlv import CfdpTlv
 from typing import List
 

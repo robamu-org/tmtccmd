@@ -1,8 +1,9 @@
 import enum
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.cfdp.conf import get_default_length_entity_id, \
-    get_default_length_transaction_seq_num, LenInBytes, get_default_pdu_crc_mode
+    get_default_length_transaction_seq_num, get_default_pdu_crc_mode
 
 
 LOGGER = get_console_logger()

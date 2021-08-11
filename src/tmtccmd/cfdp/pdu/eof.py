@@ -33,7 +33,6 @@ class EofPdu():
             len_entity_id=len_entity_id,
             len_transaction_seq_num=len_transaction_seq_num
         )
-        self.pdu_file_directive
         self.condition_code = condition_code
         self.file_checksum = file_checksum
         self.file_size = file_size
