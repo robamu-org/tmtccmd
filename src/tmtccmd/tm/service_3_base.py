@@ -22,6 +22,7 @@ class Service3Base(PusTelemetry):
         self._object_id_bytes = bytearray()
         self._object_id = 0
         self._set_id = 0
+        self._param_length = 0
         self._custom_hk_handling = custom_hk_handling
 
     def get_object_id(self) -> int:
