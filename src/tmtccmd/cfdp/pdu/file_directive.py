@@ -69,7 +69,7 @@ class FileDirectivePduBase:
         return data
 
     def unpack(self, raw_packet: bytearray):
-        """Unpack a raw bytearray into the File Directive DPU object representation
+        """Unpack a raw bytearray into the File Directive PDU object representation
         :param raw_bytes:
         :raise ValueError: Passed bytearray is too short.
         :return:
@@ -78,3 +78,12 @@ class FileDirectivePduBase:
         if not check_packet_length(raw_packet_len=len(raw_packet), min_len=5):
             raise ValueError
         self.directive_code = raw_packet[4]
+
+    def verify_file_len(self, file_size: int) -> bool:
+        if self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 64):
+            LOGGER.warning(f'File size {file_size} larger than 64 bit field')
+            raise False
+        elif not self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 32):
+            LOGGER.warning(f'File size {file_size} larger than 32 bit field')
+            raise False
+        return True
