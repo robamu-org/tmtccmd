@@ -190,12 +190,15 @@ def handle_unspecified_args(args) -> None:
         hook_obj = get_global_hook_obj()
         service_op_code_dict = hook_obj.get_service_op_code_dictionary()
     if args.service is None:
-        LOGGER.info("No service argument (-s) specified, prompting from user..")
-        # Try to get the service list from the hook base and prompt service from user
-        args.service = prompt_service(service_op_code_dict)
-        if args.op_code is None:
-            current_service = args.service
-            args.op_code = prompt_op_code(service_op_code_dict=service_op_code_dict, service=current_service)
+        if args.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
+            LOGGER.info("No service argument (-s) specified, prompting from user..")
+            # Try to get the service list from the hook base and prompt service from user
+            args.service = prompt_service(service_op_code_dict)
+            if args.op_code is None:
+                current_service = args.service
+                args.op_code = prompt_op_code(
+                    service_op_code_dict=service_op_code_dict, service=current_service
+                )
     elif args.op_code is None:
         current_service = args.service
         args.op_code = prompt_op_code(service_op_code_dict=service_op_code_dict, service=current_service)
