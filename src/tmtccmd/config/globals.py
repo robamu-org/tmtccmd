@@ -108,7 +108,10 @@ def set_default_globals_post_args_parsing(
     if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
         com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
     update_global(CoreGlobalIds.COM_IF, com_if_key)
-    LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
+    try:
+        LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
+    except KeyError as e:
+        LOGGER.error(f'Invalid communication interface key {com_if_key}')
 
     display_mode_param = "long"
     if args.short_display_mode is not None:

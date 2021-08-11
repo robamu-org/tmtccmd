@@ -9,6 +9,18 @@ from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKE
 from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
 
 
+def get_service_from_raw_packet(raw_bytearray: bytearray) -> int:
+    """Determine the service ID from a raw packet, which can be used for packet deserialization.
+
+    It is assumed that the user already checked that the raw bytearray contains a PUS packet and
+    only basic sanity checks will be performed.
+    :raise ValueError: If raw bytearray is too short
+    """
+    if len(raw_bytearray) < 8:
+        raise ValueError
+    return raw_bytearray[7]
+
+
 class PusTelemetry:
     """Generic PUS telemetry class representation.
     It is instantiated by passing the raw pus telemetry packet (bytearray) to the constructor.
