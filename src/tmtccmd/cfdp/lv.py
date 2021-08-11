@@ -1,3 +1,4 @@
+from tmtccmd.ccsds.log import LOGGER
 
 
 class CfdpLv:
