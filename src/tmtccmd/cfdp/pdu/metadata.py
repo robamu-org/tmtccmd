@@ -16,6 +16,8 @@ class MetadataPdu():
         closure_requested: bool,
         checksum_type: ChecksumTypes,
         file_size: int,
+        source_file_name: str,
+        dest_file_name: str,
         direction: Direction,
         trans_mode: TransmissionModes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,

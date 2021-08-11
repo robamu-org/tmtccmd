@@ -50,7 +50,7 @@ class CfdpTlv:
         return tlv_data
 
     def unpack(self, raw_bytes: bytearray):
-        """Unpack a TLV field from a raw bytearray
+        """Parses LV field at the start of the given bytearray
         :param raw_bytes:
         :raise ValueError: Invalid format of the raw bytearray or type field invalid
         :return:
