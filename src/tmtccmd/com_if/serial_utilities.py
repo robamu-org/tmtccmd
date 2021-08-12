@@ -4,7 +4,7 @@ from typing import TextIO
 import serial
 import serial.tools.list_ports
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
+from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames, save_to_json_with_prompt
 
 LOGGER = get_console_logger()
 
@@ -118,16 +118,16 @@ def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -
     try:
         hint = json_obj[JsonKeyNames.SERIAL_HINT.value]
     except KeyError:
-        reconfig_hint = __prompt_hint_handling(json_obj=json_obj)
+        reconfig_hint, hint = __prompt_hint_handling(json_obj=json_obj)
 
     com_port_found, com_port = find_com_port_from_hint(hint=hint)
     if com_port_found:
         LOGGER.info(f'Found {com_port} based on hint {hint}')
         if reconfig_hint:
-            if (save_to_json_with_prompt(
+            if save_to_json_with_prompt(
                     key=JsonKeyNames.SERIAL_PORT.value, value=com_port, name='serial port',
                     json_cfg_path=json_cfg_path, json_obj=json_obj
-            )):
+            ):
                 reconfig_com_port = False
     else:
         LOGGER.info('No COM port found based on hint..')
@@ -135,8 +135,9 @@ def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -
     return reconfig_com_port, com_port
 
 
-def __prompt_hint_handling(json_obj) -> bool:
+def __prompt_hint_handling(json_obj) -> (bool, str):
     reconfig_hint = False
+    hint = ''
     ports = serial.tools.list_ports.comports()
     prompt_hint = input(
         'No hint found in config JSON. Do you want to print the list of devices '
@@ -158,22 +159,20 @@ def __prompt_hint_handling(json_obj) -> bool:
                 break
             elif save_to_json in ['r']:
                 continue
-    return reconfig_hint
+    return reconfig_hint, hint
 
 
-def save_to_json_with_prompt(
-        key: str, value: any, name: str, json_cfg_path: str, json_obj: any
-) -> bool:
-    logger = get_console_logger()
-    save_to_json = input(
-        f'Do you want to store the {name} to the configuration file? (y/n): '
-    )
-    if save_to_json.lower() in ['y', 'yes']:
-        json_obj[key] = value
-        logger.info(f'The {name} was stored to the JSON file {json_cfg_path}')
-        logger.info('Delete this file or edit it manually to change it')
-        return True
-    return False
+def find_com_port_from_hint(hint: str) -> (bool, str):
+    """Find a COM port based on a hint string"""
+    if hint == '':
+        LOGGER.warning('Invalid hint, is empty..')
+        return False, ''
+    ports = serial.tools.list_ports.comports()
+    for port, desc, hwid in sorted(ports):
+        if hint in desc:
+            print(port)
+            return True, port
+    return False, ''
 
 
 def prompt_com_port() -> str:
@@ -196,17 +195,6 @@ def prompt_com_port() -> str:
             else:
                 break
     return com_port
-
-
-def find_com_port_from_hint(hint: str) -> (bool, str):
-    """Find a COM port based on a hint string"""
-    if hint == '':
-        return False, ''
-    ports = serial.tools.list_ports.comports()
-    for port, desc, hwid in sorted(ports):
-        if hint in desc:
-            return True, port
-    return False, ''
 
 
 def check_port_validity(com_port_to_check: str) -> bool:
