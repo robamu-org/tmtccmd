@@ -81,7 +81,7 @@ def determine_com_port(json_cfg_path: str) -> str:
                 data[JsonKeyNames.SERIAL_PORT.value] = com_port
                 file.seek(0)
                 json.dump(data, file, indent=4)
-            LOGGER.info('Serial port was stored to the JSON file config/tmtcc_config.json')
+            LOGGER.info(f'Serial port was stored to the JSON file {json_cfg_path}')
             LOGGER.info('Delete this file or edit it manually to change serial port')
     return com_port
 
