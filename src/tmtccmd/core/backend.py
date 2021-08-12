@@ -158,6 +158,8 @@ class TmTcHandler(BackendBase):
         Perform initialization steps which might be necessary after class construction.
         This has to be called at some point before using the class!
         """
+        if self.mode == CoreModeList.LISTENER_MODE:
+            LOGGER.info('Running in listener mode..')
         atexit.register(keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if)
 
     def start_listener(self, perform_op_immediately: bool = True):

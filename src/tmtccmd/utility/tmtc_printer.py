@@ -112,7 +112,8 @@ class TmTcPrinter:
         if packet.get_subservice() == 25 or packet.get_subservice() == 26:
             self.handle_hk_print(
                 object_id=srv3_packet.get_object_id(), set_id=srv3_packet.get_set_id(),
-                hk_header=hk_header, hk_content=hk_content
+                hk_header=hk_header, hk_content=hk_content, validity_buffer=validity_buffer,
+                num_vars=num_vars
             )
         if packet.get_subservice() == 10 or packet.get_subservice() == 12:
             self.handle_hk_definition_print(
@@ -254,12 +255,10 @@ class TmTcPrinter:
             self, content_type: HkContentType, object_id: int, set_id: int, header: list,
             content: list
     ):
-        """
+        """This function pretty prints HK packets with a given header and content list
         :param tm_packet:
         :return:
         """
-        if len(content) == 0 or len(header) == 0:
-            return
         if content_type == HkContentType.HK:
             print_prefix = "Housekeeping data"
         elif content_type == HkContentType.DEFINITIONS:
@@ -267,9 +266,14 @@ class TmTcPrinter:
         else:
             print_prefix = "Unknown housekeeping data"
         self.__print_buffer = \
-            f'{print_prefix} from Object ID {object_id:#010x} and set ID {set_id}:'
+            f'{print_prefix} from Object ID {object_id:#010x} with Set ID {set_id}'
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
+        if len(content) == 0 or len(header) == 0:
+            self.__print_buffer = 'Content and header list empty..'
+            LOGGER.info(self.__print_buffer)
+            self.add_print_buffer_to_file_buffer()
+            return
         self.__print_buffer = str(header)
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
