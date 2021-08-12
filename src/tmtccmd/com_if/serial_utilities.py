@@ -35,15 +35,14 @@ def determine_baud_rate(json_cfg_path: str) -> int:
                 break
             else:
                 print('Invalid baud rate specified, try again.')
-        save_to_json = input('Do you want to store baud rate to the configuration file? (y/n): ')
-        if save_to_json.lower() in ['y', 'yes', '1']:
-            with open(json_cfg_path, 'r+') as file:
-                data = json.load(file)
-                data[JsonKeyNames.SERIAL_BAUDRATE.value] = baud_rate
-                file.seek(0)
-                json.dump(data, file, indent=4)
-            LOGGER.info('Baud rate was stored to the JSON file config/tmtcc_config.json')
-            LOGGER.info('Delete this file or edit it manually to change the baud rate')
+        with open(json_cfg_path, 'r+') as json_file:
+            json_obj = json.load(fp=json_file)
+            if save_to_json_with_prompt(
+                key=JsonKeyNames.SERIAL_BAUDRATE.value, value=baud_rate,
+                json_cfg_path=json_cfg_path, json_obj=json_obj, name='baudrate'
+            ):
+                json_file.seek(0)
+                json.dump(json_obj, json_file, indent=4)
     return baud_rate
 
 
@@ -68,7 +67,6 @@ def __det_com_port_with_json_file(
     try_hint = False
     json_obj = json.load(json_file)
     com_port = ''
-
     if not reconfig_com_port:
         reconfig_com_port, try_hint, com_port = __try_com_port_load(json_obj=json_obj)
     if try_hint:
@@ -158,7 +156,7 @@ def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -
 
 
 def save_to_json_with_prompt(
-        key: str, value: str, name: str, json_cfg_path: str, json_obj: any
+        key: str, value: any, name: str, json_cfg_path: str, json_obj: any
 ) -> bool:
     logger = get_console_logger()
     save_to_json = input(
