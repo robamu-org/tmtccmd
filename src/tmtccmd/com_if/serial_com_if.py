@@ -201,7 +201,7 @@ class SerialComIF(CommunicationInterface):
                 data.append(byte[0])
                 data.extend(self.serial.read(self.serial.inWaiting()))
                 # It is assumed that all packets are DLE encoded, so throw it away for now.
-                LOGGER.info("Non DLE-Encoded data with length " + str(len(data) + 1) + " found..")
+                LOGGER.info(f'Non DLE-Encoded data with length {len(data) + 1} found..')
 
     @staticmethod
     def poll_pus_packets_fixed_frames(data: bytearray) -> list:
@@ -238,8 +238,9 @@ class SerialComIF(CommunicationInterface):
         # remaining_size = frame_size - start_index
 
         if next_packet_size > SERIAL_FRAME_LENGTH:
-            LOGGER.error("PUS Polling: Very large packet detected, "
-                         "packet splitting not implemented yet!")
+            LOGGER.error(
+                "PUS Polling: Very large packet detected, packet splitting not implemented yet!"
+            )
             LOGGER.error("Detected Size: " + str(next_packet_size))
             end_index = frame_size
             return end_index
