@@ -51,20 +51,23 @@ class Service3TM(Service3Base):
         self._object_id = struct.unpack('!I', self._object_id_bytes)[0]
         self._set_id = struct.unpack('!I', self._tm_data[4:8])[0]
 
+        if self.get_subservice() == 25 or self.get_subservice() == 26:
+            if not self.has_custom_hk_handling():
+                if len(self.get_tm_data()) > 8:
+                    self._param_length = len(self.get_tm_data()[8:])
         self.specify_packet_info("Housekeeping Packet")
-        self.param_length = 0
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
         content_list.append(hex(self._object_id))
         content_list.append(hex(self._set_id))
-        content_list.append(int(self.param_length))
+        content_list.append(int(self._param_length))
 
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)
         header_list.append("Object ID")
         header_list.append("Set ID")
-        header_list.append("HK Data Size")
+        header_list.append("HK data size")
 
     def get_hk_definitions_list(self) -> Tuple[List, List]:
         if len(self._tm_data) < self.hk_structure_report_header_size:

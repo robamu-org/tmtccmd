@@ -1,6 +1,7 @@
 import enum
 from tmtccmd.cfdp.pdu.header import PduHeader, PduType, Direction, CrcFlag, TransmissionModes
-from tmtccmd.cfdp.conf import LenInBytes
+from tmtccmd.cfdp.conf import check_packet_length
+from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.ccsds.log import LOGGER
 
 
@@ -15,6 +16,7 @@ class DirectiveCodes(enum.IntEnum):
 
 
 class ConditionCode(enum.IntEnum):
+    NO_CONDITION_FIELD = -1
     NO_ERROR = 0b0000
     POSITIVE_ACK_LIMIT_REACHED = 0b0001
     KEEP_ALIVE_LIMIT_REACHED = 0b0010
@@ -31,6 +33,7 @@ class ConditionCode(enum.IntEnum):
 
 
 class FileDirectivePduBase:
+    FILE_DIRECTIVE_PDU_LEN = 5
     """Base class for file directive PDUs encapsulating all its common components.
     All other file directive PDU classes implement this class
     """
@@ -55,7 +58,9 @@ class FileDirectivePduBase:
             len_transaction_seq_num=len_transaction_seq_num
         )
         self.directive_code = directive_code
-        self.condition_code = 0
+
+    def get_len(self) -> int:
+        return self.FILE_DIRECTIVE_PDU_LEN
 
     def pack(self) -> bytearray:
         data = bytearray()
@@ -63,14 +68,22 @@ class FileDirectivePduBase:
         data.append(self.directive_code)
         return data
 
-    def unpack(self, raw_bytes: bytearray):
-        """Unpack a raw bytearray into the File Directive DPU object representation
+    def unpack(self, raw_packet: bytearray):
+        """Unpack a raw bytearray into the File Directive PDU object representation
         :param raw_bytes:
         :raise ValueError: Passed bytearray is too short.
         :return:
         """
-        self.pdu_header.unpack(raw_bytes=raw_bytes)
-        if len(raw_bytes) < 5:
-            LOGGER.warning('Can not unpack less than five bytes into File Directive PDU')
+        self.pdu_header.unpack(raw_bytes=raw_packet)
+        if not check_packet_length(raw_packet_len=len(raw_packet), min_len=5):
             raise ValueError
-        self.directive_code = raw_bytes[4]
+        self.directive_code = raw_packet[4]
+
+    def verify_file_len(self, file_size: int) -> bool:
+        if self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 64):
+            LOGGER.warning(f'File size {file_size} larger than 64 bit field')
+            raise False
+        elif not self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 32):
+            LOGGER.warning(f'File size {file_size} larger than 32 bit field')
+            raise False
+        return True

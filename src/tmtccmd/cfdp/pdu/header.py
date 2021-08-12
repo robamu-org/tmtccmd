@@ -1,8 +1,9 @@
 import enum
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.cfdp.conf import get_default_length_entity_id, \
-    get_default_length_transaction_seq_num, LenInBytes
+    get_default_length_transaction_seq_num, get_default_pdu_crc_mode
 
 
 LOGGER = get_console_logger()
@@ -26,6 +27,7 @@ class TransmissionModes(enum.IntEnum):
 class CrcFlag(enum.IntEnum):
     WITH_CRC = 0
     NO_CRC = 1
+    GLOBAL_CONFIG = 2
 
 
 class SegmentMetadataFlag(enum.IntEnum):
@@ -51,7 +53,7 @@ class PduHeader:
             pdu_type: PduType = None,
             direction: Direction = None,
             trans_mode: TransmissionModes = None,
-            crc_flag: CrcFlag = None,
+            crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
             len_entity_id: LenInBytes = LenInBytes.NONE,
             len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
             seg_ctrl: SegmentationControl = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION,
@@ -62,9 +64,9 @@ class PduHeader:
         :param pdu_type:
         :param direction:
         :param trans_mode:
-        :param crc_flag:
-        :param len_entity_id: If None is supplied, the default configuration will be used
-        :param len_transaction_seq_num: If None is supplied, the default configuration will be used
+        :param crc_flag: If not supplied, assign the default configuration
+        :param len_entity_id: If not suplied, the default configuration will be used
+        :param len_transaction_seq_num: If not supplied, the default configuration will be used
         :param seg_ctrl:
         :param segment_metadata_flag:
         :raise ValueError: If some field were not specified with serialize == True
@@ -76,7 +78,6 @@ class PduHeader:
         self.pdu_type = pdu_type
         self.direction = direction
         self.trans_mode = trans_mode
-        self.crc_flag = crc_flag
         self.large_file = False
         self.pdu_data_field_length = 0
         self.segmentation_control = seg_ctrl
@@ -88,6 +89,10 @@ class PduHeader:
             self.len_transaction_seq_num = get_default_length_transaction_seq_num()
         else:
             self.len_transaction_seq_num = len_transaction_seq_num
+        if crc_flag == CrcFlag.GLOBAL_CONFIG:
+            self.crc_flag = get_default_pdu_crc_mode()
+        else:
+            self.crc_flag = crc_flag
         self.segment_metadata_flag = segment_metadata_flag
 
     def set_large_file_flag(self):
@@ -110,22 +115,22 @@ class PduHeader:
         )
         return header
 
-    def unpack(self, raw_bytes: bytearray):
+    def unpack(self, raw_packet: bytearray):
         """Unpack a raw bytearray into the PDU header oject representation
-        :param raw_bytes:
+        :param raw_packet:
         :raise ValueError: Passed bytearray is too short.
         :return:
         """
-        if len(raw_bytes) < 4:
+        if len(raw_packet) < 4:
             LOGGER.warning('Can not unpack less than four bytes into PDU header')
             raise ValueError
-        self.pdu_type = raw_bytes[0] & 0x10
-        self.direction = raw_bytes[0] & 0x08
-        self.trans_mode = raw_bytes[0] & 0x04
-        self.crc_flag = raw_bytes[0] & 0x02
-        self.large_file = raw_bytes[0] & 0x01
-        self.pdu_data_field_length = raw_bytes[1] << 8 | raw_bytes[2]
-        self.segmentation_control = raw_bytes[3] & 0x80
-        self.len_entity_id = raw_bytes[3] & 0x70
-        self.segment_metadata_flag = raw_bytes[3] & 0x08
-        self.len_transaction_seq_num = raw_bytes[3] & 0x01
+        self.pdu_type = raw_packet[0] & 0x10
+        self.direction = raw_packet[0] & 0x08
+        self.trans_mode = raw_packet[0] & 0x04
+        self.crc_flag = raw_packet[0] & 0x02
+        self.large_file = raw_packet[0] & 0x01
+        self.pdu_data_field_length = raw_packet[1] << 8 | raw_packet[2]
+        self.segmentation_control = raw_packet[3] & 0x80
+        self.len_entity_id = raw_packet[3] & 0x70
+        self.segment_metadata_flag = raw_packet[3] & 0x08
+        self.len_transaction_seq_num = raw_packet[3] & 0x01
