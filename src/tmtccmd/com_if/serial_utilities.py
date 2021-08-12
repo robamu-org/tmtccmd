@@ -114,7 +114,6 @@ def __try_com_port_load(json_obj) -> (bool, bool, str):
 
 def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -> (bool, str):
     reconfig_hint = False
-    hint = ''
     try:
         hint = json_obj[JsonKeyNames.SERIAL_HINT.value]
     except KeyError:

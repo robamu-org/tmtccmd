@@ -8,6 +8,7 @@ import socket
 import time
 import enum
 import threading
+import select
 from collections import deque
 from typing import Union
 
@@ -36,7 +37,8 @@ class TcpCommunicationType(enum.Enum):
 # pylint: disable=too-many-arguments
 class TcpIpTcpComIF(CommunicationInterface):
     """Communication interface for TCP communication."""
-    DEFAULT_LOCK_TIMEOUT = 50
+    DEFAULT_LOCK_TIMEOUT = 0.4
+    RECV_TIMEOUT = 0.2
 
     def __init__(
             self, com_if_key: str, com_type: TcpCommunicationType, space_packet_id: int,
@@ -135,7 +137,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                     with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
                             acquired:
                         if not acquired:
-                            LOGGER.warning("Acquiring socket lock failed!")
+                            LOGGER.warning("Acquiring socket lock in periodic handler failed!")
                         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                         tcp_socket.connect(self.send_address)
                         tcp_socket.shutdown(socket.SHUT_WR)
@@ -149,7 +151,14 @@ class TcpIpTcpComIF(CommunicationInterface):
     def __receive_tm_packets(self, tcp_socket: socket.socket):
         while True:
             try:
-                bytes_recvd = tcp_socket.recv(self.max_recv_size)
+                ready = select.select([tcp_socket], [], [], self.RECV_TIMEOUT)
+                if ready[0]:
+                    bytes_recvd = tcp_socket.recv(self.max_recv_size)
+                else:
+                    LOGGER.warning(
+                        'TCP reception timeout. Server side might not shut down connection!'
+                    )
+                    break
                 if len(bytes_recvd) > 0:
                     with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
                             acquired:

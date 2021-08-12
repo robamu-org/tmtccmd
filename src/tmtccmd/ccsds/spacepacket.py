@@ -190,7 +190,7 @@ def parse_space_packets(
     :param analysis_queue:
     :param packet_id:
     :param max_len:     Maximum allowed packet length
-    @return:
+    :return:
     """
     tm_list = []
     concatenated_packets = bytearray()
@@ -200,13 +200,21 @@ def parse_space_packets(
         # Put it all in one buffer
         concatenated_packets.extend(analysis_queue.pop())
     current_idx = 0
-    max_len = len(concatenated_packets)
+    if len(concatenated_packets) < 6:
+        return tm_list
     # Packet ID detected
-    while(True):
-        if current_idx > max_len - 6:
+    while True:
+        if current_idx > max_len - 6 or current_idx > len(concatenated_packets) - 1:
             break
-        current_packet_id = \
-            (concatenated_packets[current_idx] << 8) | concatenated_packets[current_idx + 1]
+        try:
+            current_packet_id = \
+                (concatenated_packets[current_idx] << 8) | concatenated_packets[current_idx + 1]
+        except IndexError:
+            LOGGER.warning(
+                f'Index error, current index {current_idx} larger than length of concatenated '
+                f'packets {len(concatenated_packets)}'
+            )
+            return tm_list
         if current_packet_id == packet_id:
             result, current_idx = __handle_packet_id_match(
                 concatenated_packets=concatenated_packets, analysis_queue=analysis_queue,
