@@ -1,4 +1,5 @@
 import json
+from typing import TextIO
 
 import serial
 import serial.tools.list_ports
