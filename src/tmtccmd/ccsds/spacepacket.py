@@ -1,7 +1,7 @@
 import enum
 from collections import deque
 from typing import Tuple, Deque, List
-
+from tmtccmd.ccsds.log import LOGGER
 
 SPACE_PACKET_HEADER_SIZE = 6
 
