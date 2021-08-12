@@ -20,6 +20,7 @@ class JsonKeyNames(enum.Enum):
 
     SERIAL_BAUDRATE = 'serial_baudrate'
     SERIAL_PORT = 'serial_port'
+    SERIAL_HINT = 'serial_hint'
 
 
 def check_json_file(json_cfg_path: str) -> bool:
