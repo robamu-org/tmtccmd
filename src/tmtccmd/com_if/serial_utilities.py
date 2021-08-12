@@ -170,7 +170,6 @@ def find_com_port_from_hint(hint: str) -> (bool, str):
     ports = serial.tools.list_ports.comports()
     for port, desc, hwid in sorted(ports):
         if hint in desc:
-            print(port)
             return True, port
     return False, ''
 
