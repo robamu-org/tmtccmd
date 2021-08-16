@@ -71,7 +71,8 @@ class MetadataPdu():
     def unpack(self, raw_packet: bytearray):
         self.pdu_file_directive.unpack(raw_packet=raw_packet)
         current_idx = self.pdu_file_directive.get_len()
-        if not check_packet_length(len(raw_packet), self.pdu_file_directive.get_len() + 5):
+        # Minimal length: 1 byte + FSS (4 byte) + 2 empty LV (1 byte)
+        if not check_packet_length(len(raw_packet), self.pdu_file_directive.get_len() + 7):
             raise ValueError
         self.closure_requested = raw_packet[current_idx] & 0x40
         self.checksum_type = raw_packet[current_idx] & 0x0f
@@ -79,4 +80,27 @@ class MetadataPdu():
         current_idx, self.file_size = self.pdu_file_directive.parse_fss_field(
             raw_packet=raw_packet, current_idx=current_idx
         )
-        pass
+        self.source_file_name_lv.unpack(raw_bytes=raw_packet[current_idx:])
+        current_idx += self.source_file_name_lv.get_len()
+        self.dest_file_name_lv.unpack(raw_bytes=raw_packet[current_idx:])
+        current_idx += self.dest_file_name_lv.get_len()
+        if current_idx < len(raw_packet):
+            self.parse_options(raw_packet=raw_packet, start_idx=current_idx)
+
+    def parse_options(self, raw_packet: bytearray, start_idx: int):
+        self.options = []
+        current_idx = start_idx
+        while True:
+            current_tlv = CfdpTlv(serialize=False)
+            current_tlv.unpack(raw_bytes=raw_packet[current_idx])
+            self.options.append(current_tlv)
+            # This will always increment at least two, so we can't get stuck in the loop
+            current_idx += current_tlv.get_total_length()
+            if current_idx > len(raw_packet):
+                LOGGER.warning(
+                    'Parser Error when parsing TLVs in Finished PDU. '
+                    'Possibly invalid packet'
+                )
+                break
+            elif current_idx == len(raw_packet):
+                break

@@ -18,6 +18,10 @@ class CfdpLv:
         self.len = len(value)
         self.value = value
 
+    def get_len(self):
+        """Returns length of full LV packet"""
+        return self.len + 1
+
     def pack(self):
         packet = bytearray()
         packet.append(self.len)

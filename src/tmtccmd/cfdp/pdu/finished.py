@@ -91,7 +91,7 @@ class FinishedPdu():
             current_tlv.unpack(raw_bytes=raw_packet[current_idx])
             # This will always increment at least two, so we can't get stuck in the loop
             current_idx += current_tlv.get_total_length()
-            if start_idx > len(raw_packet) or current_idx == len(raw_packet):
+            if current_idx > len(raw_packet) or current_idx == len(raw_packet):
                 if current_idx > len(raw_packet):
                     LOGGER.warning(
                         'Parser Error when parsing TLVs in Finished PDU. Possibly invalid packet'
