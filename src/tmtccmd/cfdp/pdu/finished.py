@@ -75,8 +75,6 @@ class FinishedPdu():
             packet.extend(self.fault_location.pack())
         return packet
 
-
-
     @classmethod
     def unpack(cls, raw_packet: bytearray) -> FinishedPdu:
         """Unpack a raw packet into a PDU object
@@ -86,7 +84,7 @@ class FinishedPdu():
         """
         finished_pdu = cls.__empty()
         finished_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        if not check_packet_length(raw_packet_len=len(raw_packet), min_len=self.MINIMAL_LEN):
+        if not check_packet_length(raw_packet_len=len(raw_packet), min_len=cls.MINIMAL_LEN):
             raise ValueError
         current_idx = finished_pdu.pdu_file_directive.get_len()
         first_param_byte = raw_packet[current_idx]
@@ -96,6 +94,7 @@ class FinishedPdu():
         current_idx += 1
         if len(raw_packet) > current_idx:
             finished_pdu.unpack_tlvs(raw_packet=raw_packet, start_idx=current_idx)
+        return finished_pdu
 
     def unpack_tlvs(self, raw_packet: bytearray, start_idx: int) -> int:
         current_idx = start_idx
