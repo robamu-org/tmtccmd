@@ -1,3 +1,4 @@
+from __future__ import annotations
 import enum
 import struct
 
@@ -20,7 +21,6 @@ class TransactionStatus(enum.IntEnum):
 class AckPdu():
     def __init__(
         self,
-        serialize: bool,
         directive_code_of_acked_pdu: DirectiveCodes,
         condition_code_of_acked_pdu: ConditionCode,
         transaction_status: TransactionStatus,
@@ -31,7 +31,6 @@ class AckPdu():
         len_transaction_seq_num=LenInBytes.NONE,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
-            serialize=serialize,
             directive_code=DirectiveCodes.ACK_PDU,
             direction=direction,
             trans_mode=trans_mode,
@@ -48,16 +47,29 @@ class AckPdu():
         self.condition_code_of_acked_pdu = condition_code_of_acked_pdu
         self.transaction_status = transaction_status
 
+    @classmethod
+    def __empty(cls) -> AckPdu:
+        return cls(
+            directive_code_of_acked_pdu=None,
+            condition_code_of_acked_pdu=None,
+            transaction_status=None,
+            direction=None,
+            trans_mode=None
+        )
+
     def pack(self):
         packet = self.pdu_file_directive.pack()
         packet.append((self.directive_code_of_acked_pdu << 4) | self.directive_subtype_code)
         packet.append((self.condition_code_of_acked_pdu << 4) | self.transaction_status)
 
-    def unpack(self, raw_packet: bytearray):
-        self.pdu_file_directive.unpack(raw_packet=raw_packet)
-        current_idx = self.pdu_file_directive.get_len()
-        self.directive_code_of_acked_pdu = raw_packet[current_idx] & 0xf0
-        self.directive_subtype_code = raw_packet[current_idx] & 0x0f
+    @classmethod
+    def unpack(cls, raw_packet: bytearray) -> AckPdu:
+        ack_packet = cls.__empty()
+        ack_packet.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
+        current_idx = ack_packet.pdu_file_directive.get_len()
+        ack_packet.directive_code_of_acked_pdu = raw_packet[current_idx] & 0xf0
+        ack_packet.directive_subtype_code = raw_packet[current_idx] & 0x0f
         current_idx += 1
-        self.condition_code_of_acked_pdu = raw_packet[current_idx] & 0xf0
-        self.transaction_status = raw_packet[current_idx] & 0x03
+        ack_packet.condition_code_of_acked_pdu = raw_packet[current_idx] & 0xf0
+        ack_packet.transaction_status = raw_packet[current_idx] & 0x03
+        return ack_packet

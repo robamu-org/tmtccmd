@@ -1,4 +1,6 @@
+from __future__ import annotations
 import enum
+
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.cfdp.definitions import LenInBytes
@@ -49,10 +51,9 @@ class PduHeader:
     For more, information, refer to CCSDS 727.0-B-5 p.75"""
     def __init__(
             self,
-            serialize: bool,
-            pdu_type: PduType = None,
-            direction: Direction = None,
-            trans_mode: TransmissionModes = None,
+            pdu_type: PduType,
+            direction: Direction,
+            trans_mode: TransmissionModes,
             crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
             len_entity_id: LenInBytes = LenInBytes.NONE,
             len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
@@ -71,10 +72,6 @@ class PduHeader:
         :param segment_metadata_flag:
         :raise ValueError: If some field were not specified with serialize == True
         """
-        if serialize:
-            if pdu_type is None or direction is None or trans_mode is None or crc_flag is None:
-                LOGGER.warning('Some mandatory fields were not specified for serialization')
-                raise ValueError
         self.pdu_type = pdu_type
         self.direction = direction
         self.trans_mode = trans_mode
@@ -115,7 +112,8 @@ class PduHeader:
         )
         return header
 
-    def unpack(self, raw_packet: bytearray):
+    @classmethod
+    def unpack(cls, raw_packet: bytearray) -> PduHeader:
         """Unpack a raw bytearray into the PDU header oject representation
         :param raw_packet:
         :raise ValueError: Passed bytearray is too short.
@@ -124,13 +122,26 @@ class PduHeader:
         if len(raw_packet) < 4:
             LOGGER.warning('Can not unpack less than four bytes into PDU header')
             raise ValueError
-        self.pdu_type = raw_packet[0] & 0x10
-        self.direction = raw_packet[0] & 0x08
-        self.trans_mode = raw_packet[0] & 0x04
-        self.crc_flag = raw_packet[0] & 0x02
-        self.large_file = raw_packet[0] & 0x01
-        self.pdu_data_field_length = raw_packet[1] << 8 | raw_packet[2]
-        self.segmentation_control = raw_packet[3] & 0x80
-        self.len_entity_id = raw_packet[3] & 0x70
-        self.segment_metadata_flag = raw_packet[3] & 0x08
-        self.len_transaction_seq_num = raw_packet[3] & 0x01
+        pdu_type = raw_packet[0] & 0x10
+        direction = raw_packet[0] & 0x08
+        trans_mode = raw_packet[0] & 0x04
+        crc_flag = raw_packet[0] & 0x02
+        large_file = raw_packet[0] & 0x01
+        pdu_data_field_length = raw_packet[1] << 8 | raw_packet[2]
+        segmentation_control = raw_packet[3] & 0x80
+        len_entity_id = raw_packet[3] & 0x70
+        segment_metadata_flag = raw_packet[3] & 0x08
+        len_transaction_seq_num = raw_packet[3] & 0x01
+
+        return cls(
+            pdu_type=pdu_type,
+            direction=direction,
+            trans_mode=trans_mode,
+            crc_flag=crc_flag,
+            large_file=large_file,
+            pdu_data_field_length=pdu_data_field_length,
+            segmentation_control=segmentation_control,
+            len_entity_id=len_entity_id,
+            segment_metadata_flag=segment_metadata_flag,
+            len_transaction_seq_num=len_transaction_seq_num
+        )

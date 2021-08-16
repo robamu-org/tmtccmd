@@ -1,3 +1,4 @@
+from __future__ import annotations
 import enum
 import struct
 
@@ -41,25 +42,32 @@ class FileDirectivePduBase:
     """
     def __init__(
             self,
-            serialize: bool,
-            directive_code: DirectiveCodes = None,
+            directive_code: DirectiveCodes,
             # PDU Header parameters
-            direction: Direction = None,
-            trans_mode: TransmissionModes = None,
-            crc_flag: CrcFlag = None,
+            direction: Direction,
+            trans_mode: TransmissionModes,
+            crc_flag: CrcFlag,
             len_entity_id: LenInBytes = LenInBytes.NONE,
             len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
     ):
-        if serialize:
-            if directive_code is None:
-                LOGGER.warning('Some mandatory fields were not specified for serialization')
-                raise ValueError
         self.pdu_header = PduHeader(
-            serialize=serialize, pdu_type=PduType.FILE_DIRECTIVE, direction=direction,
-            trans_mode=trans_mode, crc_flag=crc_flag, len_entity_id=len_entity_id,
+            pdu_type=PduType.FILE_DIRECTIVE,
+            direction=direction,
+            trans_mode=trans_mode,
+            crc_flag=crc_flag,
+            len_entity_id=len_entity_id,
             len_transaction_seq_num=len_transaction_seq_num
         )
         self.directive_code = directive_code
+
+    @classmethod
+    def __empty(cls) -> FileDirectivePduBase:
+        return cls(
+            directive_code=None,
+            direction=None,
+            trans_mode=None,
+            crc_flag=None
+        )
 
     def get_len(self) -> int:
         return self.FILE_DIRECTIVE_PDU_LEN
@@ -70,16 +78,19 @@ class FileDirectivePduBase:
         data.append(self.directive_code)
         return data
 
-    def unpack(self, raw_packet: bytearray):
+    @classmethod
+    def unpack(cls, raw_packet: bytearray) -> FileDirectivePduBase:
         """Unpack a raw bytearray into the File Directive PDU object representation
         :param raw_bytes:
         :raise ValueError: Passed bytearray is too short.
         :return:
         """
-        self.pdu_header.unpack(raw_bytes=raw_packet)
+        file_directive = cls.__empty()
+        file_directive.pdu_header = PduHeader.unpack(raw_packet=raw_packet)
         if not check_packet_length(raw_packet_len=len(raw_packet), min_len=5):
             raise ValueError
-        self.directive_code = raw_packet[4]
+        file_directive.directive_code = raw_packet[4]
+        return file_directive
 
     def verify_file_len(self, file_size: int) -> bool:
         if self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 64):

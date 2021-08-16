@@ -1,3 +1,4 @@
+from __future__ import annotations
 import struct
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, \
@@ -13,7 +14,6 @@ class EofPdu():
 
     def __init__(
         self,
-        serialize: bool,
         file_checksum: int,
         file_size: int,
         direction: Direction,
@@ -25,7 +25,6 @@ class EofPdu():
         len_transaction_seq_num=LenInBytes.NONE,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
-            serialize=serialize,
             directive_code=DirectiveCodes.EOF_PDU,
             direction=direction,
             trans_mode=trans_mode,
@@ -37,6 +36,15 @@ class EofPdu():
         self.file_checksum = file_checksum
         self.file_size = file_size
         self.fault_location = fault_location
+
+    @classmethod
+    def __empty(cls) -> EofPdu:
+        cls(
+            file_checksum=None,
+            file_size=None,
+            direction=None,
+            trans_mode=None
+        )
 
     def pack(self) -> bytearray:
         eof_pdu = bytearray()
@@ -51,26 +59,29 @@ class EofPdu():
             eof_pdu.extend(self.fault_location.pack())
         return eof_pdu
 
-    def unpack(self, raw_packet: bytearray):
+    @classmethod
+    def unpack(cls, raw_packet: bytearray) -> EofPdu:
         """Deserialize raw EOF PDU packet
         :param raw_packet:
         :raise ValueError: If raw packet is too short
         :return:
         """
-        self.pdu_file_directive.unpack(raw_packet=raw_packet)
-        expected_min_len = self.MINIMAL_LENGTH
+        eof_pdu = cls.__empty()
+        eof_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
+        expected_min_len = cls.MINIMAL_LENGTH
         if not check_packet_length(raw_packet_len=len(raw_packet), min_len=expected_min_len):
             raise ValueError
-        current_idx = self.pdu_file_directive.get_len()
-        self.condition_code = raw_packet[current_idx] & 0xf0
-        expected_min_len = self.pdu_file_directive.get_len() + 5
+        current_idx = eof_pdu.pdu_file_directive.get_len()
+        eof_pdu.condition_code = raw_packet[current_idx] & 0xf0
+        expected_min_len = eof_pdu.pdu_file_directive.get_len() + 5
         current_idx += 1
         checksum_raw = raw_packet[current_idx: current_idx + 4]
-        self.file_checksum = struct.unpack('!I', checksum_raw)[0]
+        eof_pdu.file_checksum = struct.unpack('!I', checksum_raw)[0]
         current_idx += 4
-        current_idx, self.file_size = self.pdu_file_directive.parse_fss_field(
+        current_idx, eof_pdu.file_size = eof_pdu.pdu_file_directive.parse_fss_field(
             raw_packet=raw_packet, current_idx=current_idx
         )
         if len(raw_packet) > current_idx:
-            self.fault_location = CfdpTlv(serialize=False)
-            self.fault_location.unpack(raw_bytes=raw_packet[current_idx:])
+            eof_pdu.fault_location = CfdpTlv(serialize=False)
+            eof_pdu.fault_location.unpack(raw_bytes=raw_packet[current_idx:])
+        return eof_pdu
