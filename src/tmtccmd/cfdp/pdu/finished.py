@@ -53,7 +53,7 @@ class FinishedPdu():
         self.file_delivery_status = file_delivery_status
         self.might_have_fault_location = False
         if self.condition_code != ConditionCode.NO_ERROR and \
-            self.condition_code != ConditionCode.UNSUPPORTED_CHECKSUM_TYPE:
+                self.condition_code != ConditionCode.UNSUPPORTED_CHECKSUM_TYPE:
             self.might_have_fault_location = True
 
     def pack(self) -> bytearray:
@@ -77,7 +77,7 @@ class FinishedPdu():
             raise ValueError
         current_idx = self.pdu_file_directive.get_len()
         first_param_byte = raw_packet[current_idx]
-        self.condition_code =  first_param_byte & 0xf0
+        self.condition_code = first_param_byte & 0xf0
         self.delivery_code = first_param_byte & 0x04
         self.file_delivery_status = first_param_byte & 0b11
         current_idx += 1

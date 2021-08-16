@@ -1,4 +1,6 @@
 import enum
+import struct
+
 from tmtccmd.cfdp.pdu.header import PduHeader, PduType, Direction, CrcFlag, TransmissionModes
 from tmtccmd.cfdp.conf import check_packet_length
 from tmtccmd.cfdp.definitions import LenInBytes

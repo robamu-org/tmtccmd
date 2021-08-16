@@ -1,10 +1,5 @@
+"""Dummy Communication Interface. Currently serves to provide an example without external hardware
 """
-:file:      dummy_com_if.py
-:date:      09.03.2020
-:brief:     Dummy Communication Interface. Currently serves to provide an example without external hardware
-"""
-from typing import cast
-
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.ecss.tc import PusTelecommand
 from tmtccmd.tm.definitions import TelemetryListT
