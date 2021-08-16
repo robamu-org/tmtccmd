@@ -68,18 +68,9 @@ class EofPdu():
         checksum_raw = raw_packet[current_idx: current_idx + 4]
         self.file_checksum = struct.unpack('!I', checksum_raw)[0]
         current_idx += 4
-        if self.pdu_file_directive.pdu_header.large_file:
-            if not check_packet_length(raw_packet_len=len(raw_packet), min_len=current_idx + 8):
-                raise ValueError
-            filesize_raw = checksum_raw = \
-                raw_packet[current_idx: current_idx + 8]
-            current_idx += 8
-            self.file_checksum = struct.unpack('!Q', filesize_raw)[0]
-        else:
-            filesize_raw = checksum_raw = \
-                raw_packet[current_idx: current_idx + 4]
-            current_idx += 4
-            self.file_checksum = struct.unpack('!I', filesize_raw)[0]
+        current_idx, self.file_size = self.pdu_file_directive.parse_fss_field(
+            raw_packet=raw_packet, current_idx=current_idx
+        )
         if len(raw_packet) > current_idx:
             self.fault_location = CfdpTlv(serialize=False)
             self.fault_location.unpack(raw_bytes=raw_packet[current_idx:])

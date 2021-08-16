@@ -87,3 +87,20 @@ class FileDirectivePduBase:
             LOGGER.warning(f'File size {file_size} larger than 32 bit field')
             raise False
         return True
+
+    def parse_fss_field(self, raw_packet: bytearray, current_idx: int) -> (int, int):
+        """Parse the FSS field, which has different size depending on the large file flag being
+        set or not. Returns the current index incremented and the parsed file size
+        :raise ValueError: Packet not large enough
+        """
+        if self.pdu_header.large_file:
+            if not check_packet_length(len(raw_packet), current_idx + 8 + 1):
+                raise ValueError
+            file_size = struct.unpack('!I', raw_packet[current_idx: current_idx + 8])
+            current_idx += 8
+        else:
+            if not check_packet_length(len(raw_packet), current_idx + 4 + 1):
+                raise ValueError
+            file_size = struct.unpack('!I', raw_packet[current_idx: current_idx + 4])
+            current_idx += 4
+        return current_idx, file_size

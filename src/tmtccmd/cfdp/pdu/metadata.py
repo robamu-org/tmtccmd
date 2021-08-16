@@ -69,4 +69,14 @@ class MetadataPdu():
             packet.extend(option.pack())
 
     def unpack(self, raw_packet: bytearray):
+        self.pdu_file_directive.unpack(raw_packet=raw_packet)
+        current_idx = self.pdu_file_directive.get_len()
+        if not check_packet_length(len(raw_packet), self.pdu_file_directive.get_len() + 5):
+            raise ValueError
+        self.closure_requested = raw_packet[current_idx] & 0x40
+        self.checksum_type = raw_packet[current_idx] & 0x0f
+        current_idx += 1
+        current_idx, self.file_size = self.pdu_file_directive.parse_fss_field(
+            raw_packet=raw_packet, current_idx=current_idx
+        )
         pass
