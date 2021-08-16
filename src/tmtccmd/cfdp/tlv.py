@@ -59,10 +59,10 @@ class CfdpTlv:
             LOGGER.warning('Invalid length for TLV field, less than 2')
             raise ValueError
         try:
-            self.type = TlvTypes(raw_bytes[0])
+            type = TlvTypes(raw_bytes[0])
         except ValueError:
             LOGGER.warning(
-                f'TLV field invalid, found value {self.type} is not a possible TLV parameter'
+                f'TLV field invalid, found value {type} is not a possible TLV parameter'
             )
             raise ValueError
         value = bytearray()

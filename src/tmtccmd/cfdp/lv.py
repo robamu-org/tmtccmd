@@ -31,7 +31,7 @@ class CfdpLv:
         :raise ValueError: Invalid length found
         """
         detected_len = raw_bytes[0]
-        if self.len > 255:
+        if detected_len > 255:
             LOGGER.warning('Length too large for LV field')
             raise ValueError
         return cls(

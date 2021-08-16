@@ -38,17 +38,13 @@ class MetadataPdu():
         self.closure_requested = closure_requested
         self.checksum_type = checksum_type
         self.file_size = file_size
-        source_file_name_as_bytes = source_file_name
-        if serialize:
-            source_file_name_as_bytes = source_file_name.encode('utf-8')
+        source_file_name_as_bytes = source_file_name.encode('utf-8')
         self.source_file_name_lv = CfdpLv(
-            serialize=serialize, value=source_file_name_as_bytes
+            value=source_file_name_as_bytes
         )
-        dest_file_name_as_bytes = dest_file_name
-        if serialize:
-            dest_file_name_as_bytes = dest_file_name.encode('utf-8')
+        dest_file_name_as_bytes = dest_file_name.encode('utf-8')
         self.dest_file_name_lv = CfdpLv(
-            serialize=serialize, value=dest_file_name_as_bytes
+            value=dest_file_name_as_bytes
         )
         self.options = options
 
@@ -58,8 +54,8 @@ class MetadataPdu():
             closure_requested=None,
             checksum_type=None,
             file_size=None,
-            source_file_name=None,
-            dest_file_name=None,
+            source_file_name="",
+            dest_file_name="",
             direction=None,
             trans_mode=None
         )
@@ -87,8 +83,8 @@ class MetadataPdu():
         # Minimal length: 1 byte + FSS (4 byte) + 2 empty LV (1 byte)
         if not check_packet_length(len(raw_packet), metadata_pdu.pdu_file_directive.get_len() + 7):
             raise ValueError
-        self.closure_requested = raw_packet[current_idx] & 0x40
-        self.checksum_type = raw_packet[current_idx] & 0x0f
+        metadata_pdu.closure_requested = raw_packet[current_idx] & 0x40
+        metadata_pdu.checksum_type = raw_packet[current_idx] & 0x0f
         current_idx += 1
         current_idx, metadata_pdu.file_size = metadata_pdu.pdu_file_directive.parse_fss_field(
             raw_packet=raw_packet, current_idx=current_idx
