@@ -35,6 +35,7 @@ ECSS & PUS Submodules
    :maxdepth: 4
 
    api/tmtccmd.ccsds
+   api/tmtccmd.cfdp
    api/tmtccmd.ecss
    api/tmtccmd.pus
    api/tmtccmd.tc
