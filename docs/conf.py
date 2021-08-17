@@ -13,6 +13,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../src'))
+import tmtccmd
 
 # -- Project information -----------------------------------------------------
 
@@ -21,8 +22,7 @@ copyright = '2021, Robin Mueller'
 author = 'Robin Mueller'
 
 # The full version, including alpha/beta/rc tags
-release = '1.5'
-
+version = release = tmtccmd.__version__
 
 # -- General configuration ---------------------------------------------------
 
