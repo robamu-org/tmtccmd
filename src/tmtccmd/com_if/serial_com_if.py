@@ -129,7 +129,7 @@ class SerialComIF(CommunicationInterface):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             encoded_data = data
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            encoded_data = encode_dle(data)
+            encoded_data = encode_dle(source_packet=data, add_stx_etx=True, encode_cr=True)
         else:
             LOGGER.warning("This communication type was not implemented yet!")
             return
@@ -146,7 +146,9 @@ class SerialComIF(CommunicationInterface):
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
-                dle_retval, decoded_packet, read_len = decode_dle(data)
+                dle_retval, decoded_packet, read_len = decode_dle(
+                    source_packet=data, decode_cr=True
+                )
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)
                 else:
