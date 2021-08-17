@@ -82,6 +82,7 @@ class SerialComIF(CommunicationInterface):
             self.dle_queue_len = 10
             self.dle_max_frame = 256
             self.dle_timeout = 0.01
+            self.dle_encode_cr = True
 
     def __del__(self):
         if self.serial is not None:
@@ -90,10 +91,13 @@ class SerialComIF(CommunicationInterface):
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
 
-    def set_dle_settings(self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float):
+    def set_dle_settings(
+            self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float, encode_cr: bool = True
+    ):
         self.dle_queue_len = dle_queue_len
         self.dle_max_frame = dle_max_frame
         self.dle_timeout = dle_timeout
+        self.dle_encode_cr = encode_cr
 
     def initialize(self, args: any = None) -> any:
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
@@ -129,7 +133,9 @@ class SerialComIF(CommunicationInterface):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             encoded_data = data
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            encoded_data = encode_dle(source_packet=data, add_stx_etx=True, encode_cr=True)
+            encoded_data = encode_dle(
+                source_packet=data, add_stx_etx=True, encode_cr=self.dle_encode_cr
+            )
         else:
             LOGGER.warning("This communication type was not implemented yet!")
             return
@@ -147,7 +153,7 @@ class SerialComIF(CommunicationInterface):
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
                 dle_retval, decoded_packet, read_len = decode_dle(
-                    source_packet=data, decode_cr=True
+                    source_packet=data, decode_cr=self.dle_encode_cr
                 )
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)
