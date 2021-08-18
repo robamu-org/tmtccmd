@@ -13,7 +13,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
+from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 
 LOGGER = get_console_logger()
@@ -69,12 +69,13 @@ class SerialComIF(CommunicationInterface):
         self.baud_rate = baud_rate
         self.serial_timeout = serial_timeout
         self.serial = None
-
+        self.encoder = None
         self.ser_com_type = ser_com_type
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             # Set to default value.
             self.serial_frame_size = 256
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+            self.encoder = DleEncoder()
             self.reception_thread = None
             self.reception_buffer = None
             self.dle_polling_active_event = None
@@ -82,6 +83,7 @@ class SerialComIF(CommunicationInterface):
             self.dle_queue_len = 10
             self.dle_max_frame = 256
             self.dle_timeout = 0.01
+            self.dle_encode_cr = True
 
     def __del__(self):
         if self.serial is not None:
@@ -90,10 +92,13 @@ class SerialComIF(CommunicationInterface):
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
 
-    def set_dle_settings(self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float):
+    def set_dle_settings(
+            self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float, encode_cr: bool = True
+    ):
         self.dle_queue_len = dle_queue_len
         self.dle_max_frame = dle_max_frame
         self.dle_timeout = dle_timeout
+        self.dle_encode_cr = encode_cr
 
     def initialize(self, args: any = None) -> any:
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
@@ -129,7 +134,9 @@ class SerialComIF(CommunicationInterface):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             encoded_data = data
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            encoded_data = encode_dle(data)
+            encoded_data = self.encoder.encode(
+                source_packet=data, add_stx_etx=True
+            )
         else:
             LOGGER.warning("This communication type was not implemented yet!")
             return
@@ -146,7 +153,9 @@ class SerialComIF(CommunicationInterface):
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
-                dle_retval, decoded_packet, read_len = decode_dle(data)
+                dle_retval, decoded_packet, read_len = self.encoder.decode(
+                    source_packet=data
+                )
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)
                 else:
