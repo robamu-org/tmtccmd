@@ -170,35 +170,42 @@ class QEMUComIF(CommunicationInterface):
 
         return packet_list
 
-    def data_available(self, timeout: any = 0, parameters: any = 0) -> int:
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
+        if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
+            return self.data_available_fixed_frame(timeout=timeout)
+        elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+            return self.data_available_dle(timeout=timeout)
+        return 0
+
+    def data_available_fixed_frame(self, timeout: float = 0) -> int:
         elapsed_time = 0
         start_time = time.time()
         sleep_time = timeout / 3.0
+        if timeout > 0:
+            while elapsed_time < timeout:
+                if self.usart.new_data_available():
+                    return self.usart.get_data_in_waiting()
 
-        if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            if timeout > 0:
-                while elapsed_time < timeout:
-                    if self.usart.new_data_available():
-                        return self.usart.get_data_in_waiting()
+                time.sleep(sleep_time)
+                elapsed_time = time.time() - start_time
+            return 0
+        if self.usart.new_data_available():
+            return self.usart.get_data_in_waiting()
+        return 0
 
-                    time.sleep(sleep_time)
-                    elapsed_time = time.time() - start_time
-
-            if self.usart.new_data_available():
-                return self.usart.get_data_in_waiting()
-
-        elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            if timeout > 0:
-                while elapsed_time < timeout:
-                    if self.reception_buffer:
-                        return len(self.reception_buffer)
-
-                    time.sleep(sleep_time)
-                    elapsed_time = time.time() - start_time
-
-            if self.reception_buffer:
-                return len(self.reception_buffer)
-
+    def data_availanle_dle(self, timeout: float = 0) -> int:
+        elapsed_time = 0
+        start_time = time.time()
+        sleep_time = timeout / 3.0
+        if timeout > 0:
+            while elapsed_time < timeout:
+                if self.reception_buffer:
+                    return len(self.reception_buffer)
+                time.sleep(sleep_time)
+                elapsed_time = time.time() - start_time
+            return 0
+        if self.reception_buffer:
+            return len(self.reception_buffer)
         return 0
 
     async def start_dle_polling(self):

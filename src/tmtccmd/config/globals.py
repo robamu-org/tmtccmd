@@ -87,31 +87,8 @@ def set_default_globals_post_args_parsing(
     :return:
     """
 
-    # Determine communication interface from arguments. Must be contained in core modes list
-    try:
-        mode_param = args.mode
-    except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
-        mode_param = CoreModeList.LISTENER_MODE
-    mode_param = check_and_set_core_mode_arg(
-        mode_arg=mode_param, custom_modes_list=custom_modes_list
-    )
-    all_com_ifs = CoreComInterfacesDict
-    if custom_com_if_dict is not None:
-        all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
-    try:
-        com_if_key = str(args.com_if)
-    except AttributeError:
-        LOGGER.warning("No communication interface specified")
-        LOGGER.warning("Trying to set from existing configuration..")
-        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
-    if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
-        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
-    update_global(CoreGlobalIds.COM_IF, com_if_key)
-    try:
-        LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
-    except KeyError as e:
-        LOGGER.error(f'Invalid communication interface key {com_if_key}')
+    handle_mode_arg(args=args, custom_modes_list=custom_modes_list)
+    handle_com_if_arg(args=args, json_cfg_path=json_cfg_path, custom_com_if_dict=custom_com_if_dict)
 
     display_mode_param = "long"
     if args.short_display_mode is not None:
@@ -147,6 +124,42 @@ def set_default_globals_post_args_parsing(
 
     if DEBUG_MODE:
         print_core_globals()
+
+
+def handle_mode_arg(
+        args, custom_modes_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None
+) -> int:
+    # Determine communication interface from arguments. Must be contained in core modes list
+    try:
+        mode_param = args.mode
+    except AttributeError:
+        LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
+        mode_param = CoreModeList.LISTENER_MODE
+    mode_param = check_and_set_core_mode_arg(
+        mode_arg=mode_param, custom_modes_list=custom_modes_list
+    )
+    update_global(CoreGlobalIds.MODE, mode_param)
+
+
+def handle_com_if_arg(
+        args, json_cfg_path: str, custom_com_if_dict: Dict[str, any] = None
+):
+    all_com_ifs = CoreComInterfacesDict
+    if custom_com_if_dict is not None:
+        all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
+    try:
+        com_if_key = str(args.com_if)
+    except AttributeError:
+        LOGGER.warning("No communication interface specified")
+        LOGGER.warning("Trying to set from existing configuration..")
+        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
+    if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
+        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
+    update_global(CoreGlobalIds.COM_IF, com_if_key)
+    try:
+        LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
+    except KeyError as e:
+        LOGGER.error(f'Invalid communication interface key {com_if_key}, error {e}')
 
 
 def check_and_set_other_args(args):

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import enum
 from tmtccmd.ccsds.log import LOGGER
 
@@ -18,8 +19,10 @@ class CfdpTlv:
     For more information, refer to CCSDS 727.0-B-5 p.77
     """
     def __init__(
-            self, serialize: bool, type: TlvTypes = None, length: int = None,
-            value: bytearray = None
+            self,
+            type: TlvTypes,
+            length: int,
+            value: bytearray
     ):
         """Constructor for TLV field.
         :param serialize: Specfiy whether a packet is serialized or deserialized. For serialize,
@@ -30,14 +33,10 @@ class CfdpTlv:
         :param value:
         :raise ValueError: Length invalid or value length not equal to specified length
         """
-        if serialize:
-            if type is None or length is None or value is None:
-                LOGGER.warning('All parameter have to be valid for serialization')
-                raise ValueError
-            if length > 255 or length < 0:
-                raise ValueError
-            if len(value) != length:
-                raise ValueError
+        if length > 255 or length < 0:
+            raise ValueError
+        if len(value) != length:
+            raise ValueError
         self.type = type
         self.length = length
         self.value = value
@@ -49,7 +48,8 @@ class CfdpTlv:
         tlv_data.extend(self.value)
         return tlv_data
 
-    def unpack(self, raw_bytes: bytearray):
+    @classmethod
+    def unpack(cls, raw_bytes: bytearray) -> CfdpTlv:
         """Parses LV field at the start of the given bytearray
         :param raw_bytes:
         :raise ValueError: Invalid format of the raw bytearray or type field invalid
@@ -59,15 +59,20 @@ class CfdpTlv:
             LOGGER.warning('Invalid length for TLV field, less than 2')
             raise ValueError
         try:
-            self.type = TlvTypes(raw_bytes[0])
+            type = TlvTypes(raw_bytes[0])
         except ValueError:
             LOGGER.warning(
-                f'TLV field invalid, found value {self.type} is not a possible TLV parameter'
+                f'TLV field invalid, found value {type} is not a possible TLV parameter'
             )
             raise ValueError
-        self.length = raw_bytes[1]
+        value = bytearray()
         if len(raw_bytes) > 2:
-            self.value = raw_bytes[2:]
+            value.extend(raw_bytes[2:])
+        return cls(
+            type=raw_bytes[0],
+            length=raw_bytes[1],
+            value=value
+        )
 
     def get_total_length(self) -> int:
         return self.MINIMAL_LEN + len(self.value)
