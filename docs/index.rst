@@ -24,7 +24,7 @@ Other pages (online)
 - `project page on GitHub`_
 - This page, when viewed online is at https://tmtccmd.readthedocs.io/en/latest/
 
-.. _`project page on GitHub`: https://github.com/rmspacefish/tmtccmd
+.. _`project page on GitHub`: https://github.com/robamu-org/tmtccmd
 
 Contents
 ========
