@@ -13,7 +13,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
+from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 
 LOGGER = get_console_logger()
@@ -69,12 +69,13 @@ class SerialComIF(CommunicationInterface):
         self.baud_rate = baud_rate
         self.serial_timeout = serial_timeout
         self.serial = None
-
+        self.encoder = None
         self.ser_com_type = ser_com_type
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             # Set to default value.
             self.serial_frame_size = 256
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+            self.encoder = DleEncoder()
             self.reception_thread = None
             self.reception_buffer = None
             self.dle_polling_active_event = None
@@ -133,8 +134,8 @@ class SerialComIF(CommunicationInterface):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             encoded_data = data
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            encoded_data = encode_dle(
-                source_packet=data, add_stx_etx=True, encode_cr=self.dle_encode_cr
+            encoded_data = self.encoder.encode(
+                source_packet=data, add_stx_etx=True
             )
         else:
             LOGGER.warning("This communication type was not implemented yet!")
@@ -152,8 +153,8 @@ class SerialComIF(CommunicationInterface):
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
-                dle_retval, decoded_packet, read_len = decode_dle(
-                    source_packet=data, decode_cr=self.dle_encode_cr
+                dle_retval, decoded_packet, read_len = self.encoder.decode(
+                    source_packet=data
                 )
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)

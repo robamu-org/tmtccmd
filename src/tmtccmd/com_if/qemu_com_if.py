@@ -32,7 +32,7 @@ from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.dle_encoder import encode_dle, decode_dle, STX_CHAR, ETX_CHAR, DleErrorCodes
+from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 LOGGER = get_console_logger()
 SERIAL_FRAME_LENGTH = 256
@@ -74,12 +74,13 @@ class QEMUComIF(CommunicationInterface):
         self.data = []
         self.background_loop_thread = None
         self.usart = None
-
+        self.encoder = None
         self.ser_com_type = ser_com_type
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             # Set to default value.
             self.serial_frame_size = 256
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+            self.encoder = DleEncoder()
             self.reception_buffer = None
             # Set to default value.
             self.dle_queue_len = 10
@@ -137,7 +138,7 @@ class QEMUComIF(CommunicationInterface):
 
     def send(self, data: bytearray):
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            data_encoded = encode_dle(data)
+            data_encoded = self.encoder.encode(data)
         else:
             data_encoded = data
         self.send_data(data_encoded)
@@ -158,7 +159,7 @@ class QEMUComIF(CommunicationInterface):
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
-                dle_retval, decoded_packet, read_len = decode_dle(data)
+                dle_retval, decoded_packet, read_len = self.encoder.decode(data)
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)
                 else:
