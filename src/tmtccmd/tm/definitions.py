@@ -1,6 +1,8 @@
 import enum
+import struct
 from typing import Deque, Tuple, List
 from tmtccmd.ecss.tm import PusTelemetry
+from tmtccmd.ccsds.log import LOGGER
 
 TelemetryListT = List[bytearray]
 TelemetryQueueT = Deque[bytearray]

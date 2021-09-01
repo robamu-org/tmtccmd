@@ -2,9 +2,7 @@
 """
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.tm.service_1_verification import Service1TmPacked
-from tmtccmd.tm.service_17_test import Service17TmPacked
+from tmtccmd.tm import TelemetryListT, Service1TM, Service17TM
 from tmtccmd.pus.service_17_test import Srv17Subservices
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -72,7 +70,7 @@ class DummyHandler:
         """
         if self.last_service == 17:
             if self.last_subservice == 1:
-                tm_packer = Service1TmPacked(
+                tm_packer = Service1TM(
                     subservice=1, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
                     tc_ssc=self.last_tc_ssc
                 )
@@ -80,7 +78,7 @@ class DummyHandler:
                 self.current_ssc += 1
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
-                tm_packer = Service1TmPacked(
+                tm_packer = Service1TM(
                     subservice=7, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
                     tc_ssc=self.last_tc_ssc
                 )
@@ -88,7 +86,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17TmPacked(subservice=Srv17Subservices.PING_REPLY)
+                tm_packer = Service17TM(subservice=Srv17Subservices.PING_REPLY)
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1

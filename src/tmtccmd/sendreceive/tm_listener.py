@@ -336,11 +336,11 @@ class TmListener:
             unknown_target_queue.appendleft(tm_packet)
 
     def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
-        from tmtccmd.ccsds.spacepacket import get_apid_from_raw_packet
+        from tmtccmd.ccsds.spacepacket import get_apid_from_raw_space_packet
         if len(tm_packet) < 6:
             LOGGER.warning('TM packet to small to be a CCSDS space packet')
         else:
-            apid = get_apid_from_raw_packet(raw_packet=tm_packet)
+            apid = get_apid_from_raw_space_packet(raw_packet=tm_packet)
             target_queue_list = self.__queue_dict.get(apid)
             if target_queue_list is None:
                 LOGGER.warning(f'No TM handler assigned for APID {apid}')

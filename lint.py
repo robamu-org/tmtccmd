@@ -11,12 +11,19 @@ def main():
     flake8_first_step_cmd = \
         f'flake8 . {additional_flags_both_steps} {additional_flags_first_step} {exclude_dirs_flag}'
     status = os.system(flake8_first_step_cmd)
-    if os.WEXITSTATUS(status) != 0:
-        print("Flake8 linter errors")
-        sys.exit(0)
+    if os.name == 'nt':
+        if status != 0:
+            print(f'Flake8 linter errors with status {status}')
+    else:
+        if os.WEXITSTATUS(status) != 0:
+            print(f'Flake8 linter errors with status {status}')
+            sys.exit(0)
+    additional_flags_second_step = \
+        '--exit-zero --max-complexity=10 --per-file-ignores="__init__.py:F401" ' \
+        '--max-line-length=127'
     flake8_second_step_cmd = \
-        f'flake8 . {additional_flags_both_steps} --exit-zero --max-complexity=10 ' \
-        f'--max-line-length=127 {exclude_dirs_flag}'
+        f'flake8 . {additional_flags_both_steps}  {additional_flags_second_step}' \
+        f' {exclude_dirs_flag}'
     os.system(flake8_second_step_cmd)
 
 

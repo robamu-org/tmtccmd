@@ -1,4 +1,6 @@
+from __future__ import annotations
 import enum
+
 from typing import Tuple, Deque, List
 from tmtccmd.ccsds.log import LOGGER
 
@@ -17,53 +19,84 @@ class SequenceFlags(enum.IntEnum):
     UNSEGMENTED = 0b11
 
 
-class SpacePacketCommonFields:
-    """Encapsulates common fields in a SpacePacket. Packet reference: Blue Book CCSDS 133.0-B-2"""
+class SpacePacketHeader:
+    """This class encapsulates the space packet header. Packet reference: Blue Book CCSDS 133.0-B-2
+    """
     def __init__(
             self, packet_type: PacketTypes, apid: int, source_sequence_count: int, data_length: int,
-            version: int = 0b000, secondary_header_flag: bool = True, sequence_flags: int = 0b11
+            packet_version: int = 0b000, secondary_header_flag: bool = True,
+            sequence_flags: int = 0b11
     ):
         self.packet_type = packet_type
         self.apid = apid
         self.ssc = source_sequence_count
         self.secondary_header_flag = secondary_header_flag
         self.sequence_flags = sequence_flags
-        self.psc = get_sp_packet_sequence_control(
+        self.psc = get_space_packet_sequence_control(
             sequence_flags=self.sequence_flags, source_sequence_count=self.ssc
         )
-        self.version = version
+        self.version = packet_version
         self.data_length = data_length
-        self.packet_id = get_sp_packet_id_num(
+        self.packet_id = get_space_packet_id_num(
             packet_type=self.packet_type, secondary_header_flag=self.secondary_header_flag,
             apid=self.apid
         )
 
+    @classmethod
+    def __empty(cls) -> SpacePacketHeader:
+        return SpacePacketHeader(
+            packet_type=PacketTypes.PACKET_TYPE_TC,
+            apid=0,
+            source_sequence_count=0,
+            data_length=0
+        )
 
-# pylint: disable=too-many-instance-attributes
-class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
-    """This class unnpacks the common spacepacket header, also see PUS structure below or
-    PUS documentation.
-    """
-    def __init__(self, pus_packet_raw: bytearray):
-        """Deserializes space packet fields from raw bytearray
-        :param pus_packet_raw:
+    def pack(self) -> bytearray:
+        """Serialize raw space packet header.
+        :param packet_type: 0 for telemetry, 1 for telecommands
+        :param data_length: Length of packet data field
+        :param source_sequence_count:
+        :param secondary_header_flag: Indicates presence of absence of a
+        Secondary Header in the Space Packet
+        :param version: Shall be b000 for CCSDS Version 1 packets
+        :param sequence_flags: 0b11 for stand-alone packets (unsegmented user data)
+        :param apid:
         """
-        if len(pus_packet_raw) < SPACE_PACKET_HEADER_SIZE:
-            print("SpacePacketHeaderDeserializer: Packet size smaller than PUS header size!")
+        header = bytearray()
+        header.append((self.packet_id & 0xff00) >> 8)
+        header.append(self.packet_id & 0xff)
+        header.append((self.psc & 0xff00) >> 8)
+        header.append(self.psc & 0xff)
+        header.append((self.data_length & 0xff00) >> 8)
+        header.append(self.data_length & 0xff)
+        return header
+
+    @classmethod
+    def unpack(cls, space_packet_raw: bytes) -> SpacePacketHeader:
+        """Unpack a raw space packet into the space packet header
+        :raise ValueError: Raw packet length invalid"""
+        if len(space_packet_raw) < SPACE_PACKET_HEADER_SIZE:
+            LOGGER.warning('Packet size smaller than PUS header size!')
             raise ValueError
-        packet_type_raw = pus_packet_raw[0] & 0x10
-        if packet_type_raw == 0:
+        packet_type = space_packet_raw[0] & 0x10
+        if packet_type == 0:
             packet_type = PacketTypes.PACKET_TYPE_TM
         else:
             packet_type = PacketTypes.PACKET_TYPE_TC
-        super().__init__(
-            version=pus_packet_raw[0] >> 5,
+        packet_version = space_packet_raw[0] >> 5
+        secondary_header_flag = (space_packet_raw[0] & 0x8) >> 3
+        apid = ((space_packet_raw[0] & 0x7) << 8) | space_packet_raw[1]
+        sequence_flags = (space_packet_raw[2] & 0xC0) >> 6
+        ssc = ((space_packet_raw[2] << 8) | space_packet_raw[3]) & 0x3fff
+        data_length = space_packet_raw[4] << 8 | space_packet_raw[5]
+        return SpacePacketHeader(
             packet_type=packet_type,
-            secondary_header_flag=(pus_packet_raw[0] & 0x8) >> 3,
-            apid=((pus_packet_raw[0] & 0x7) << 8) | pus_packet_raw[1],
-            sequence_flags=(pus_packet_raw[2] & 0xC0) >> 6,
-            source_sequence_count=((pus_packet_raw[2] & 0x3F) << 8) | pus_packet_raw[3],
-            data_length=pus_packet_raw[4] << 8 | pus_packet_raw[5]
+            apid=apid,
+            secondary_header_flag=secondary_header_flag,
+            packet_version=packet_version,
+            data_length=data_length,
+            sequence_flags=sequence_flags,
+            source_sequence_count=ssc
         )
 
     def append_space_packet_header_content(self, content_list: list):
@@ -76,47 +109,7 @@ class SpacePacketHeaderDeserializer(SpacePacketCommonFields):
         header_list.append("SSC")
 
 
-class SpacePacketHeaderSerializer(SpacePacketCommonFields):
-    def __init__(
-            self, apid: int, packet_type: PacketTypes, data_length: int, source_sequence_count: int,
-            secondary_header_flag: bool = True, version: int = 0b000,
-            sequence_flags: int = SequenceFlags.UNSEGMENTED
-    ):
-        """Serialize raw space packet header.
-        :param packet_type: 0 for telemetry, 1 for telecommands
-        :param data_length: Length of packet data field
-        :param source_sequence_count:
-        :param secondary_header_flag: Indicates presence of absence of a
-        Secondary Header in the Space Packet
-        :param version: Shall be b000 for CCSDS Version 1 packets
-        :param sequence_flags: 0b11 for stand-alone packets (unsegmented user data)
-        :param apid:
-        """
-        self.packet_id_bytes = [0x00, 0x00]
-        self.packet_id_bytes[0], self.packet_id_bytes[1] = get_sp_packet_id_bytes(
-            version=version, packet_type=packet_type,
-            secondary_header_flag=secondary_header_flag, apid=apid
-        )
-        super().__init__(
-            packet_type=packet_type,
-            source_sequence_count=source_sequence_count,
-            data_length=data_length,
-            secondary_header_flag=secondary_header_flag,
-            sequence_flags=sequence_flags,
-            version=version,
-            apid=apid
-        )
-        self.header = get_sp_space_packet_header(
-            packet_id_byte_one=self.packet_id_bytes[0], packet_id_byte_two=self.packet_id_bytes[1],
-            data_length=data_length, packet_sequence_control=self.psc
-        )
-
-    def pack(self) -> bytearray:
-        """Return the bytearray representation of the space packet header"""
-        return self.header
-
-
-def get_sp_packet_id_bytes(
+def get_space_packet_id_bytes(
         packet_type: PacketTypes, secondary_header_flag: True, apid: int, version: int = 0b000
 ) -> Tuple[int, int]:
     """This function also includes the first three bits reserved for the version.
@@ -135,12 +128,16 @@ def get_sp_packet_id_bytes(
     return byte_one, byte_two
 
 
-def get_sp_packet_id_num(packet_type: PacketTypes, secondary_header_flag: bool, apid: int) -> int:
+def get_space_packet_id_num(
+        packet_type: PacketTypes, secondary_header_flag: bool, apid: int
+) -> int:
     """Get packet identification segment of packet primary header in integer format"""
     return ((packet_type << 12 | int(secondary_header_flag) << 11 | apid) & 0x1fff)
 
 
-def get_sp_packet_sequence_control(sequence_flags: SequenceFlags, source_sequence_count: int) -> int:
+def get_space_packet_sequence_control(
+        sequence_flags: SequenceFlags, source_sequence_count: int
+) -> int:
     """ """
     if sequence_flags > 3:
         print(
@@ -154,7 +151,20 @@ def get_sp_packet_sequence_control(sequence_flags: SequenceFlags, source_sequenc
     return (source_sequence_count & 0x3FFF) | (sequence_flags << 14)
 
 
-def get_sp_space_packet_header(
+def get_space_packet_header(
+        packet_id: int, packet_sequence_control: int, data_length: int
+) -> bytearray:
+    header = bytearray()
+    header.append((packet_id & 0xff00) >> 8)
+    header.append(packet_id & 0xff)
+    header.append((packet_sequence_control & 0xff00) >> 8)
+    header.append(packet_sequence_control & 0xff)
+    header.append((data_length & 0xff00) >> 8)
+    header.append(data_length & 0xff)
+    return header
+
+
+def get_space_packet_header_from_packet_id_bytes(
         packet_id_byte_one: int, packet_id_byte_two: int, packet_sequence_control: int,
         data_length: int
 ) -> bytearray:
@@ -168,16 +178,16 @@ def get_sp_space_packet_header(
     return header
 
 
-def get_apid_from_raw_packet(raw_packet: bytearray):
+def get_apid_from_raw_space_packet(raw_packet: bytes) -> int:
     if len(raw_packet) < 6:
         return 0
     return ((raw_packet[0] & 0x7) << 8) | raw_packet[1]
 
 
-def get_total_packet_len_from_len_field(len_field: int):
+def get_total_space_packet_len_from_len_field(len_field: int):
     """Definition of length field is: C = (Octets in data field - 1).
     Therefore, octets in data field in len_field plus one. The total space packet length
-    is therefore len_field plus one plus the space packet header size"""
+    is therefore len_field plus one plus the space packet header size (6)"""
     return len_field + SPACE_PACKET_HEADER_SIZE + 1
 
 
@@ -233,7 +243,7 @@ def __handle_packet_id_match(
 ) -> (int, int):
     next_packet_len_field = \
         concatenated_packets[current_idx + 4] | concatenated_packets[current_idx + 5]
-    total_packet_len = get_total_packet_len_from_len_field(next_packet_len_field)
+    total_packet_len = get_total_space_packet_len_from_len_field(next_packet_len_field)
     if total_packet_len > max_len:
         print(
             f'parse_space_packets: Detected packet length larger than specified maximum'

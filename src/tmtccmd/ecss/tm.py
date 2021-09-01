@@ -1,15 +1,17 @@
-import math
-import time
-import datetime
+from __future__ import annotations
+from abc import abstractmethod
 
 from crcmod import crcmod
 
-from tmtccmd.ccsds.spacepacket import SpacePacketHeaderDeserializer, SPACE_PACKET_HEADER_SIZE, \
-    get_total_packet_len_from_len_field
-from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion
+from tmtccmd.ccsds.log import LOGGER
+from tmtccmd.ccsds.spacepacket import SpacePacketHeader, SPACE_PACKET_HEADER_SIZE, \
+    get_total_space_packet_len_from_len_field, PacketTypes
+from tmtccmd.ccsds.time import CdsShortTimestamp, read_p_field
+from tmtccmd.ecss.conf import get_pus_tm_version, PusVersion, get_tm_apid
+from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 
 
-def get_service_from_raw_packet(raw_bytearray: bytearray) -> int:
+def get_service_from_raw_pus_packet(raw_bytearray: bytearray) -> int:
     """Determine the service ID from a raw packet, which can be used for packet deserialization.
 
     It is assumed that the user already checked that the raw bytearray contains a PUS packet and
@@ -30,72 +32,131 @@ class PusTelemetry:
     CDS_SHORT_SIZE = 7
     PUS_TIMESTAMP_SIZE = CDS_SHORT_SIZE
 
-    def __init__(self, raw_telemetry: bytearray = bytearray()):
+    def __init__(
+            self, service_id: int, subservice_id: int, time: CdsShortTimestamp = None, ssc: int = 0,
+            source_data: bytearray = bytearray([]), apid: int = -1, message_counter: int = 0,
+            space_time_ref: int = 0b0000, destination_id: int = 0,
+            packet_version: int = 0b000, pus_version: PusVersion = PusVersion.UNKNOWN,
+            pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
+    ):
+        if apid == -1:
+            apid = get_tm_apid()
+        if pus_version == PusVersion.UNKNOWN:
+            pus_version = get_pus_tm_version()
+        if time is None:
+            time = CdsShortTimestamp.init_from_current_time()
+        # packet type for telemetry is 0 as specified in standard
+        # specified in standard
+        packet_type = PacketTypes.PACKET_TYPE_TM
+        self._source_data = source_data
+        data_length = self.get_source_data_length(
+            timestamp_len=PusTelemetry.PUS_TIMESTAMP_SIZE, pus_version=pus_version
+        )
+        self.space_packet_header = SpacePacketHeader(
+            apid=apid, packet_type=packet_type, secondary_header_flag=secondary_header_flag,
+            packet_version=packet_version, data_length=data_length, source_sequence_count=ssc
+        )
+        self.secondary_packet_header = PusTmSecondaryHeader(
+            pus_version=pus_version, service_id=service_id, subservice_id=subservice_id,
+            message_counter=message_counter, destination_id=destination_id,
+            spacecraft_time_ref=space_time_ref, time=time
+        )
+        self._valid = False
+        self.print_info = ''
+
+    @classmethod
+    def __empty(cls, pus_version: PusVersion = PusVersion.UNKNOWN) -> PusTelemetry:
+        return PusTelemetry(
+            service_id=0, subservice_id=0, time=CdsShortTimestamp.init_from_current_time()
+        )
+
+    def pack(self) -> bytearray:
+        """
+        Serializes the PUS telemetry into a raw packet.
+        """
+        tm_packet_raw = bytearray()
+        # PUS Header
+        tm_packet_raw.extend(self.space_packet_header.pack())
+        # PUS Source Data Field
+        tm_packet_raw.extend(self.secondary_packet_header.pack())
+        # Source Data
+        tm_packet_raw.extend(self._source_data)
+        # CRC16 checksum
+        crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xffff, xorOut=0x0000)
+        crc16 = crc_func(tm_packet_raw)
+        tm_packet_raw.append((crc16 & 0xff00) >> 8)
+        tm_packet_raw.append(crc16 & 0xff)
+        return tm_packet_raw
+
+    @classmethod
+    def unpack(
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+    ) -> PusTelemetry:
         """Attempts to construct a generic PusTelemetry class given a raw bytearray.
         :raises ValueError: if the format of the raw bytearray is invalid, for example the length
         :param raw_telemetry:
         """
-        if raw_telemetry is None or raw_telemetry == bytearray():
+        if raw_telemetry is None or len(raw_telemetry) == 0:
             if raw_telemetry is None:
-                print("PusTelemetry: Given byte stream invalid!")
-            elif raw_telemetry == bytearray():
-                print("PusTelemetry: Given byte stream empty!")
+                LOGGER.warning("Given byte stream invalid!")
+            elif len(raw_telemetry) == 0:
+                LOGGER.warning("Given byte stream empty!")
             raise ValueError
-        self.pus_version = get_pus_tm_version()
-        self._packet_raw = raw_telemetry
-        self._space_packet_header = SpacePacketHeaderDeserializer(pus_packet_raw=raw_telemetry)
-        self._valid = False
-        expected_packet_len = get_total_packet_len_from_len_field(
-            self._space_packet_header.data_length
+        pus_tm = cls.__empty(pus_version=pus_version)
+        pus_tm.space_packet_header = SpacePacketHeader.unpack(space_packet_raw=raw_telemetry)
+        expected_packet_len = get_total_space_packet_len_from_len_field(
+            pus_tm.space_packet_header.data_length
         )
         if expected_packet_len > len(raw_telemetry):
-            print(
+            LOGGER.warning(
                 f'PusTelemetry: Passed packet with length {len(raw_telemetry)} '
                 f'shorter than specified packet length in PUS header {expected_packet_len}'
             )
             raise ValueError
-        self._data_field_header = PusPacketDataFieldHeader(
-            raw_telemetry[SPACE_PACKET_HEADER_SIZE:], pus_version=self.pus_version
+        pus_tm.secondary_packet_header = PusTmSecondaryHeader.unpack(
+            header_start=raw_telemetry[SPACE_PACKET_HEADER_SIZE:],
+            pus_version=pus_version
         )
-        if self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE > \
-                len(raw_telemetry) - 2:
-            print("PusTelemetry: Passed packet too short!")
+        if len(raw_telemetry) - 2 < \
+                pus_tm.secondary_packet_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:
+            LOGGER.warning("Passed packet too short!")
             raise ValueError
-        if self.get_packet_size() != len(raw_telemetry):
-            print(
+        if pus_tm.get_packet_size() != len(raw_telemetry):
+            LOGGER.warning(
                 f'PusTelemetry: Packet length field '
-                f'{self._space_packet_header.data_length} might be invalid!'
+                f'{pus_tm.space_packet_header.data_length} might be invalid!'
             )
-            print(f'self.get_packet_size: {self.get_packet_size()}')
-            print(f'len(raw_telemetry): {len(raw_telemetry)}')
-        self._tm_data = raw_telemetry[
-            self._data_field_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
+            LOGGER.warning(f'self.get_packet_size: {pus_tm.get_packet_size()}')
+            LOGGER.warning(f'len(raw_telemetry): {len(raw_telemetry)}')
+        pus_tm._source_data = raw_telemetry[
+            pus_tm.secondary_packet_header.get_header_size() + SPACE_PACKET_HEADER_SIZE:-2
         ]
-        self._crc = \
+        pus_tm._crc = \
             raw_telemetry[len(raw_telemetry) - 2] << 8 | raw_telemetry[len(raw_telemetry) - 1]
-        self.print_info = ""
-        self.__perform_crc_check(raw_telemetry)
+        pus_tm.print_info = ""
+        pus_tm.__perform_crc_check(raw_telemetry)
+        return pus_tm
 
     def __str__(self):
-        return f"PUS TM[{self._data_field_header.service_type}," \
-               f"{self._data_field_header.service_subtype}] with subcounter " \
-               f"{self._data_field_header.subcounter}"
+        return f"PUS TM[{self.secondary_packet_header.service_id}," \
+               f"{self.secondary_packet_header.subservice_id}] with message counter " \
+               f"{self.secondary_packet_header.message_counter}"
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(service={self._data_field_header.service_subtype!r}, " \
-               f"subservice={self._data_field_header.service_subtype!r})"
+        return f"{self.__class__.__name__}(service={self.secondary_packet_header.service_id!r}, " \
+               f"subservice={self.secondary_packet_header.subservice_id!r})"
 
     def get_service(self):
         """
         :return: Service ID
         """
-        return self._data_field_header.service_type
+        return self.secondary_packet_header.service_id
 
     def get_subservice(self):
         """
         :return: Subservice ID
         """
-        return self._data_field_header.service_subtype
+        return self.secondary_packet_header.subservice_id
 
     def is_valid(self):
         return self._valid
@@ -104,22 +165,44 @@ class PusTelemetry:
         """
         :return: TM application data (raw)
         """
-        return self._tm_data
+        return self._source_data
 
-    def get_tc_packet_id(self):
-        return self._space_packet_header.packet_id
+    def get_packet_id(self):
+        return self.space_packet_header.packet_id
 
     def __perform_crc_check(self, raw_telemetry: bytearray):
         crc_func = crcmod.mkCrcFun(0x11021, rev=False, initCrc=0xFFFF, xorOut=0x0000)
         if len(raw_telemetry) < self.get_packet_size():
-            print("PusTelemetry: Invalid packet length")
+            LOGGER.warning('Invalid packet length')
             return
         data_to_check = raw_telemetry[0:self.get_packet_size()]
         crc = crc_func(data_to_check)
         if crc == 0:
             self._valid = True
         else:
-            print("PusTelemetry: Invalid CRC detected !")
+            LOGGER.warning('Invalid CRC detected !')
+
+    def get_source_data_length(self, timestamp_len: int, pus_version: PusVersion) -> int:
+        """Retrieve size of TM packet data header in bytes.
+
+        Formula according to PUS Standard: C = (Number of octets in packet source data field) - 1.
+        The size of the TM packet is the size of the packet secondary header with
+        the timestamp + the length of the application data + PUS timestamp size +
+        length of the CRC16 checksum - 1
+        """
+        try:
+            if pus_version == PusVersion.PUS_A:
+                data_length = \
+                    PusTmSecondaryHeader.HEADER_SIZE_WITHOUT_TIME_PUS_A + \
+                    timestamp_len + len(self._source_data) + 1
+            else:
+                data_length = \
+                    PusTmSecondaryHeader.HEADER_SIZE_WITHOUT_TIME_PUS_C + \
+                    timestamp_len + len(self._source_data) + 1
+            return data_length
+        except TypeError:
+            print("PusTelecommand: Invalid type of application data!")
+            return 0
 
     def specify_packet_info(self, print_info: str):
         """Caches a print information string for later printing
@@ -142,8 +225,8 @@ class PusTelemetry:
         :param content_list: Header content will be appended to this list
         :return:
         """
-        self._data_field_header.append_data_field_header(content_list=content_list)
-        self._space_packet_header.append_space_packet_header_content(content_list=content_list)
+        self.secondary_packet_header.append_data_field_header(content_list=content_list)
+        self.space_packet_header.append_space_packet_header_content(content_list=content_list)
         if self.is_valid():
             content_list.append("Yes")
         else:
@@ -157,8 +240,8 @@ class PusTelemetry:
         :param header_list: Header content will be appended to this list
         :return:
         """
-        self._data_field_header.append_data_field_header_column_header(header_list=header_list)
-        self._space_packet_header.append_space_packet_header_column_headers(header_list=header_list)
+        self.secondary_packet_header.append_data_field_header_column_header(header_list=header_list)
+        self.space_packet_header.append_space_packet_header_column_headers(header_list=header_list)
         header_list.append("Packet valid")
 
     def get_custom_printout(self) -> str:
@@ -167,78 +250,180 @@ class PusTelemetry:
         """
         return ""
 
-    def get_raw_packet(self) -> bytearray:
-        """Get the whole TM packet as a bytearray (raw)
-        :return: TM wiretapping_packet
-        """
-        return bytearray(self._packet_raw)
-
     def get_packet_size(self) -> int:
         """
         :return: Size of the TM packet based on the space packet header data length field.
         The space packet data field is the full length of data field minus one without the space packet header.
         """
-        return SPACE_PACKET_HEADER_SIZE + self._space_packet_header.data_length + 1
+        return SPACE_PACKET_HEADER_SIZE + self.space_packet_header.data_length + 1
+
+    def get_apid(self) -> int:
+        return self.space_packet_header.apid
 
     def get_ssc(self) -> int:
         """Get the source sequence count
         :return: Source Sequence Count (see below, or PUS documentation)
         """
-        return self._space_packet_header.ssc
+        return self.space_packet_header.ssc
 
     def return_full_packet_string(self):
-        return return_data_string(self._packet_raw, len(self._packet_raw))
+        packet_raw = self.pack()
+        return get_printable_data_string(packet_raw, len(packet_raw))
 
     def print_full_packet_string(self):
         """Print the full TM packet in a clean format."""
-        print(return_data_string(self._packet_raw, len(self._packet_raw)))
+        packet_raw = self.pack()
+        print(get_printable_data_string(packet_raw, len(packet_raw)))
 
     def print_source_data(self):
         """Prints the TM source data in a clean format
         :return:
         """
-        print(return_data_string(self._tm_data, len(self._tm_data)))
+        print(get_printable_data_string(self._source_data, len(self._source_data)))
 
     def return_source_data_string(self):
         """Returns the source data string"""
-        return return_data_string(self._tm_data, len(self._tm_data))
+        return get_printable_data_string(self._source_data, len(self._source_data))
 
 
-class PusPacketDataFieldHeader:
-    """Unpacks the PUS packet data field header. Currently only supports CDS short timestamps"""
+class PusTmSecondaryHeader:
+    """Unpacks the PUS telemetry packet secondary header.
 
-    def __init__(self, bytes_array: bytearray, pus_version: PusVersion):
+    Currently only supports CDS short timestamps"""
+    HEADER_SIZE_WITHOUT_TIME_PUS_A = 4
+    HEADER_SIZE_WITHOUT_TIME_PUS_C = 7
+
+    def __init__(
+            self, pus_version: PusVersion, service_id: int, subservice_id: int,
+            time: CdsShortTimestamp, message_counter: int, destination_id: int = 0,
+            spacecraft_time_ref: int = 0,
+    ):
+        """Create a PUS telemetry secondary header object.
+
+        :param pus_version:
+        :param service_id:
+        :param subservice_id:
+        :param message_counter: 8 bit counter for PUS A, 16 bit counter for PUS C
+        :param spacecraft_time_ref: Space time reference if PUS C is used
+        :param time: Time field
+        """
         self.pus_version = pus_version
-        if len(bytes_array) < self.get_header_size():
-            print(f"Invalid PUS data field header size, less than expected {self.get_header_size()} bytes")
-            return
-        if pus_version == PusVersion.PUS_A:
-            self.pus_version_number = (bytes_array[0] & 0x70) >> 4
+        self.spacecraft_time_ref = spacecraft_time_ref
+        if self.pus_version == PusVersion.PUS_A:
+            self.pus_version_number = 0
         else:
-            self.pus_version_number = (bytes_array[0] & 0xF0) >> 4
-            self.spacecraft_time_ref = bytes_array[0] & 0x0F
-        self.service_type = bytes_array[1]
-        self.service_subtype = bytes_array[2]
+            self.pus_version_number = 1
+        self.service_id = service_id
+        self.subservice_id = subservice_id
+        if (self.pus_version == PusVersion.PUS_A and message_counter > 255) or \
+                (self.pus_version == PusVersion.PUS_C and message_counter > 65536):
+            raise ValueError
+        self.message_counter = message_counter
+        self.destination_id = destination_id
+        self.time = time
+
+    @classmethod
+    def __empty(cls) -> PusTmSecondaryHeader:
+        return PusTmSecondaryHeader(
+            pus_version=PusVersion.PUS_C,
+            service_id=-1,
+            subservice_id=-1,
+            time=CdsShortTimestamp.init_from_current_time(),
+            message_counter=0
+        )
+
+    def pack(self) -> bytearray:
+        secondary_header = bytearray()
+        if self.pus_version == PusVersion.PUS_A:
+            secondary_header.append((self.pus_version_number & 0x07) << 4)
+        elif self.pus_version == PusVersion.PUS_C:
+            secondary_header.append(self.pus_version_number << 4 | self.spacecraft_time_ref)
+        secondary_header.append(self.service_id)
+        secondary_header.append(self.subservice_id)
+        if self.pus_version == PusVersion.PUS_A:
+            secondary_header.append(self.message_counter)
+        elif self.pus_version == PusVersion.PUS_C:
+            secondary_header.append((self.message_counter & 0xff00) >> 8)
+            secondary_header.append(self.message_counter & 0xff)
+            secondary_header.append((self.destination_id & 0xff00) >> 8)
+            secondary_header.append(self.destination_id & 0xff)
+        secondary_header.extend(self.time.pack())
+        return secondary_header
+
+    @classmethod
+    def unpack(cls, header_start: bytearray, pus_version: PusVersion) -> PusTmSecondaryHeader:
+        """Unpack the PUS TM secondary header from the raw packet starting at the header index.
+        The user still needs to specify the PUS version because the version field is parsed
+        differently depending on the PUS version.
+
+        :param header_start:
+        :param pus_version:
+        :raises ValueError: bytearray too short or PUS version missmatch.
+        :return:
+        """
+        if pus_version == PusVersion.UNKNOWN:
+            pus_version = get_pus_tm_version()
+        secondary_header = cls.__empty()
+        current_idx = 0
         if pus_version == PusVersion.PUS_A:
-            # TODO: This can be optional too, have option to ommit it?
-            self.subcounter = bytes_array[3]
-        else:
-            self.subcounter = bytes_array[3] << 8 | bytes_array[4]
-            self.destination_id = bytes_array[5] << 8 | bytes_array[6]
+            secondary_header.pus_version = PusVersion.PUS_A
+            secondary_header.pus_version_number = (header_start[current_idx] & 0x70) >> 4
+            if secondary_header.pus_version_number == 1:
+                LOGGER.warning(
+                    'PUS version field value 1 found where PUS A value (0) was expected!'
+                )
+                raise ValueError
+
+        elif pus_version == PusVersion.PUS_C:
+            secondary_header.pus_version = PusVersion.PUS_C
+            if secondary_header.pus_version_number == 0:
+                LOGGER.warning(
+                    'PUS version field value 0 found where PUS C value (1) was expected!'
+                )
+                raise ValueError
+            secondary_header.pus_version_number = (header_start[current_idx] & 0xF0) >> 4
+            secondary_header.spacecraft_time_ref = header_start[current_idx] & 0x0F
+        if len(header_start) < secondary_header.get_header_size():
+            LOGGER.warning(
+                f'Invalid PUS data field header size, '
+                f'less than expected {secondary_header.get_header_size()} bytes'
+            )
+            raise ValueError
+        current_idx += 1
+        secondary_header.service_id = header_start[current_idx]
+        current_idx += 1
+        secondary_header.subservice_id = header_start[current_idx]
+        current_idx += 1
         if pus_version == PusVersion.PUS_A:
-            self.time = PusCdsShortTimestamp(bytes_array[4: 4 + PusTelemetry.PUS_TIMESTAMP_SIZE])
+            secondary_header.message_counter = header_start[current_idx]
+            current_idx += 1
         else:
-            self.time = PusCdsShortTimestamp(bytes_array[7: 7 + PusTelemetry.PUS_TIMESTAMP_SIZE])
+            secondary_header.message_counter = \
+                header_start[current_idx] << 8 | header_start[current_idx + 1]
+            current_idx += 2
+        if pus_version == PusVersion.PUS_C:
+            secondary_header.destination_id = \
+                header_start[current_idx] << 8 | header_start[current_idx + 1]
+            current_idx += 2
+        # If other time formats are supported in the future, this information can be used
+        #  to unpack the correct time code
+        time_code_id = read_p_field(header_start[current_idx])
+        if time_code_id:
+            pass
+        secondary_header.time = CdsShortTimestamp.unpack(
+            time_field=header_start[current_idx: current_idx + PusTelemetry.PUS_TIMESTAMP_SIZE]
+        )
+        return secondary_header
 
     def append_data_field_header(self, content_list: list):
         """Append important data field header parameters to the passed content list.
         :param content_list:
         :return:
         """
-        content_list.append(str(self.service_type))
-        content_list.append(str(self.service_subtype))
-        content_list.append(str(self.subcounter))
-        self.time.print_time(content_list)
+        content_list.append(str(self.service_id))
+        content_list.append(str(self.subservice_id))
+        content_list.append(str(self.message_counter))
+        self.time.add_time_to_content_list(content_list=content_list)
 
     def append_data_field_header_column_header(self, header_list: list):
         """Append important data field header column headers to the passed list.
@@ -248,7 +433,7 @@ class PusPacketDataFieldHeader:
         header_list.append("Service")
         header_list.append("Subservice")
         header_list.append("Subcounter")
-        self.time.print_time_headers(header_list)
+        self.time.add_time_headers_to_header_list(header_list=header_list)
 
     def get_header_size(self):
         if self.pus_version == PusVersion.PUS_A:
@@ -257,67 +442,7 @@ class PusPacketDataFieldHeader:
             return PusTelemetry.PUS_TIMESTAMP_SIZE + 7
 
 
-class PusCdsShortTimestamp:
-    """Unpacks the time datafield of the TM packet. Right now, CDS Short timeformat is used,
-    and the size of the time stamp is expected to be seven bytes.
-    """
-    # TODO: Implement more time formats
-    CDS_ID = 4
-    SECONDS_PER_DAY = 86400
-    EPOCH = datetime.datetime.utcfromtimestamp(0)
-    DAYS_CCSDS_TO_UNIX = 4383
-    TIMESTAMP_SIZE = PusTelemetry.PUS_TIMESTAMP_SIZE
-
-    def __init__(self, byte_array: bytearray = bytearray([])):
-        if len(byte_array) > 0:
-            # pField = byte_array[0]
-            self.days = ((byte_array[1] << 8) | (byte_array[2])) - \
-                        PusCdsShortTimestamp.DAYS_CCSDS_TO_UNIX
-            self.seconds = self.days * (24 * 60 * 60)
-            s_day = ((byte_array[3] << 24) | (byte_array[4] << 16) |
-                     (byte_array[5]) << 8 | byte_array[6]) / 1000
-            self.seconds += s_day
-            self.time = self.seconds
-            self.time_string = \
-                datetime.datetime.utcfromtimestamp(self.time).strftime("%Y-%m-%d %H:%M:%S.%f")
-
-    @staticmethod
-    def pack_current_time() -> bytearray:
-        """Returns a seven byte CDS short timestamp"""
-        timestamp = bytearray()
-        p_field = (PusCdsShortTimestamp.CDS_ID << 4) + 0
-        days = \
-            (datetime.datetime.utcnow() - PusCdsShortTimestamp.EPOCH).days + \
-            PusCdsShortTimestamp.DAYS_CCSDS_TO_UNIX
-        days_h = (days & 0xFF00) >> 8
-        days_l = days & 0xFF
-        seconds = time.time()
-        fraction_ms = seconds - math.floor(seconds)
-        days_ms = int((seconds % PusCdsShortTimestamp.SECONDS_PER_DAY) * 1000 + fraction_ms)
-        days_ms_hh = (days_ms & 0xFF000000) >> 24
-        days_ms_h = (days_ms & 0xFF0000) >> 16
-        days_ms_l = (days_ms & 0xFF00) >> 8
-        days_ms_ll = (days_ms & 0xFF)
-        timestamp.append(p_field)
-        timestamp.append(days_h)
-        timestamp.append(days_l)
-        timestamp.append(days_ms_hh)
-        timestamp.append(days_ms_h)
-        timestamp.append(days_ms_l)
-        timestamp.append(days_ms_ll)
-        return timestamp
-
-    def print_time(self, content_list):
-        content_list.append(self.time)
-        content_list.append(self.time_string)
-
-    @staticmethod
-    def print_time_headers(header_list):
-        header_list.append("OBSWTime (s)")
-        header_list.append("Time")
-
-
-def return_data_string(byte_array: bytearray, length: int) -> str:
+def get_printable_data_string(byte_array: bytearray, length: int) -> str:
     """Returns the TM data in a clean printable string format
     Prints payload data in default mode
     and prints the whole packet if full_packet = True is passed.
@@ -332,7 +457,57 @@ def return_data_string(byte_array: bytearray, length: int) -> str:
     str_to_print += "]"
     return str_to_print
 
-# pylint: disable=line-too-long
+
+class PusTmBase(PusTmInterface):
+    def __init__(self, pus_tm: PusTelemetry):
+        self.pus_tm = pus_tm
+
+    @abstractmethod
+    def get_tm_data(self) -> bytearray:
+        return self.pus_tm.get_tm_data()
+
+    @abstractmethod
+    def get_service(self) -> int:
+        return self.pus_tm.get_service()
+
+    @abstractmethod
+    def get_subservice(self) -> int:
+        return self.pus_tm.get_subservice()
+
+
+class PusTmInfoBase(PusTmInfoInterface):
+    def __init__(self, pus_tm: PusTelemetry):
+        self.pus_tm = pus_tm
+
+    @abstractmethod
+    def get_print_info(self) -> str:
+        return self.pus_tm.print_info
+
+    @abstractmethod
+    def get_custom_printout(self) -> str:
+        return self.pus_tm.get_custom_printout()
+
+    @abstractmethod
+    def return_source_data_string(self) -> str:
+        return self.pus_tm.return_source_data_string()
+
+    @abstractmethod
+    def specify_packet_info(self, print_info: str):
+        self.pus_tm.print_info = print_info
+
+    @abstractmethod
+    def append_packet_info(self, info: str):
+        self.pus_tm.print_info += info
+
+    @abstractmethod
+    def append_telemetry_column_headers(self, header_list: list):
+        self.pus_tm.append_telemetry_column_headers(header_list=header_list)
+
+    @abstractmethod
+    def append_telemetry_content(self, content_list: list):
+        self.pus_tm.append_telemetry_content(content_list=content_list)
+
+
 # Structure of a PUS Packet :
 # A PUS packet consists of consecutive bits, the allocation and structure is standardised.
 # Extended information can be found in ECSS-E-70-41A  on p.46
