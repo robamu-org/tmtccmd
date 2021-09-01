@@ -47,7 +47,7 @@ def check_args_in_dict(
         LOGGER.warning(f"No {warning_hint} argument passed.")
         return False, 0
 
-    res_tuple = True, param
+    res_tuple = False, 0
     if isinstance(iterable, dict):
         for idx, enum_value in iterable.items():
             if param == enum_value:

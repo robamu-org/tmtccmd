@@ -1,7 +1,8 @@
 from unittest import TestCase
 from tmtccmd.config.globals import update_global, get_global, get_global_apid, set_default_apid, \
     set_json_cfg_path, get_json_cfg_path, set_glob_com_if_dict, get_glob_com_if_dict, \
-    set_default_globals_pre_args_parsing
+    set_default_globals_pre_args_parsing, check_and_set_core_mode_arg, CoreModeList, \
+    CoreGlobalIds
 
 class TestGlobalManager(TestCase):
 
@@ -31,3 +32,14 @@ class TestGlobalManager(TestCase):
         )
         self.assertTrue(get_global_apid() == 0x02)
         set_default_apid(current_apid)
+
+        result = check_and_set_core_mode_arg(mode_arg='udp')
+        self.assertTrue(result == CoreModeList.SEQUENTIAL_CMD_MODE)
+
+        result = check_and_set_core_mode_arg(mode_arg='listener')
+        self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.LISTENER_MODE)
+        self.assertTrue(result == CoreModeList.LISTENER_MODE)
+
+        result = check_and_set_core_mode_arg(mode_arg='seqcmd')
+        self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.SEQUENTIAL_CMD_MODE)
+        self.assertTrue(result == CoreModeList.SEQUENTIAL_CMD_MODE)

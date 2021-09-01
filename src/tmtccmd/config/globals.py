@@ -195,7 +195,7 @@ def check_and_set_core_mode_arg(
 
     :param mode_arg:
     :param custom_modes_list:
-    :return:
+    :return: Mode value which was set
     """
     in_enum, mode_value = check_args_in_dict(
         param=mode_arg, iterable=CoreModeList, warning_hint="mode integers"
@@ -222,10 +222,13 @@ def check_and_set_core_mode_arg(
         mode_arg_invalid = True
 
     if mode_arg_invalid:
-        LOGGER.warning(f"Passed mode argument might be invalid, "
-                       f"setting to {CoreModeList.SINGLE_CMD_MODE}")
-        mode_value = CoreModeList.SINGLE_CMD_MODE
+        LOGGER.warning(
+            f"Passed mode argument might be invalid, "
+            f"setting to {CoreModeList.SEQUENTIAL_CMD_MODE}"
+        )
+        mode_value = CoreModeList.SEQUENTIAL_CMD_MODE
     update_global(CoreGlobalIds.MODE, mode_value)
+    return mode_value
 
 
 def check_and_set_core_service_arg(
