@@ -5,7 +5,8 @@ from typing import Union, List, Dict
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
-from tmtccmd.ecss.conf import PusVersion, set_default_apid, set_pus_tc_version, set_pus_tm_version
+from tmtccmd.ecss.conf import PusVersion, set_default_apid, get_default_apid, \
+    set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
@@ -17,12 +18,14 @@ SERVICE_OP_CODE_DICT = dict()
 
 
 def get_global_apid() -> int:
-    return get_global(CoreGlobalIds.APID)
+    return get_default_apid()
 
 
 def set_json_cfg_path(json_cfg_path: str):
     update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
 
+def get_json_cfg_path() -> str:
+    return get_global(CoreGlobalIds.JSON_CFG_PATH)
 
 def set_glob_com_if_dict(custom_com_if_dict: ComIFDictT):
     CoreComInterfacesDict.update(custom_com_if_dict)
@@ -36,8 +39,9 @@ def get_glob_com_if_dict() -> ComIFDictT:
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
-        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None, display_mode="long",
-        tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
+        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None,
+        display_mode="long", tm_timeout: float = 4.0, print_to_file: bool = True,
+        tc_send_timeout_factor: float = 2.0
 ):
     if custom_com_if_dict is None:
         custom_com_if_dict = dict()
