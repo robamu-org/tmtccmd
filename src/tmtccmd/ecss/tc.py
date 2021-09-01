@@ -6,7 +6,7 @@ from typing import Tuple
 
 from tmtccmd.ccsds.log import LOGGER
 from tmtccmd.ccsds.spacepacket import \
-    SpacePacketHeaderSerializer, \
+    SpacePacketHeader, \
     PacketTypes, \
     SPACE_PACKET_HEADER_SIZE
 from tmtccmd.ecss.conf import get_default_apid, PusVersion, get_pus_tc_version
@@ -113,7 +113,7 @@ class PusTelecommand:
             secondary_header_len=self._data_field_header.get_header_size(),
             app_data_len=len(app_data),
         )
-        self._space_packet_header = SpacePacketHeaderSerializer(
+        self._space_packet_header = SpacePacketHeader(
             apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
             data_length=data_length, source_sequence_count=ssc
         )

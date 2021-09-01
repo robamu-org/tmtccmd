@@ -16,7 +16,7 @@ class NakPdu():
         trans_mode: TransmissionModes,
         start_of_scope: int,
         end_of_scope: int,
-        segment_requests: List[Tuple[int,int]],
+        segment_requests: List[Tuple[int, int]],
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         len_entity_id: LenInBytes = LenInBytes.NONE,
         len_transaction_seq_num=LenInBytes.NONE,
@@ -64,3 +64,4 @@ class NakPdu():
         nak_pdu = cls.__empty()
         nak_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
         current_idx = nak_pdu.pdu_file_directive.get_len()
+        # TODO: Implement

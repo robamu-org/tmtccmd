@@ -1,45 +1,81 @@
 # -*- coding: utf-8 -*-
 """Contains classes and functions to deserialize PUS Service 5 Telemetry
 """
+from __future__ import annotations
 import struct
+
 from tmtccmd.pus.service_list import PusServices
-from tmtccmd.ecss.tm import PusTelemetry
-from tmtccmd.ecss.tm_creator import PusTelemetryCreator
-from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
+from tmtccmd.ecss.tm import PusTelemetry, PusVersion, CdsShortTimestamp, PusTmInfoBase, PusTmBase
+from tmtccmd.pus.service_5_event import Srv5Subservices, Srv5Severity
 from tmtccmd.utility.logger import get_console_logger
 
 
 LOGGER = get_console_logger()
 
 
-class Service5TM(PusTelemetry):
-    def __init__(self, byte_array: bytearray):
-        """Deserialize a raw PUS Service 5 packet
-        :param byte_array:      Raw bytearray to deserialize, containing the service 5 packet.
-        :raises ValueError: If the length of the raw telemetry is too short
+class Service5TM(PusTmBase, PusTmInfoBase):
+    def __init__(
+            self, subservice_id: Srv5Subservices, event_id: int, object_id: bytearray,
+            param_1: int, param_2: int, time: CdsShortTimestamp = None,
+            ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
+            pus_version: PusVersion = PusVersion.UNKNOWN,
+            pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
+            space_time_ref: int = 0b0000, destination_id: int = 0
+    ):
+        """Create a Service 5 telemetry instance.
+        Use the unpack function to create an instance from a raw bytestream instead.
+        :param subservice_id: Subservice ID
+        :param time: CDS Short Timecode
+        :param object_id: 4 byte object ID
+        :raises ValueError: Invalid input arguments
         """
-        super().__init__(raw_telemetry=byte_array)
-        if self.get_service() != 5:
-            LOGGER.warning("This packet is not an event service packet!")
-
-        self.specify_packet_info("Event")
-        if self.get_subservice() == Srv5Subservices.INFO_EVENT:
-            self.append_packet_info(" Info")
-        elif self.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:
-            self.append_packet_info(" Error Low Severity")
-        elif self.get_subservice() == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
-            self.append_packet_info(" Error Med Severity")
-        elif self.get_subservice() == Srv5Subservices.HIGH_SEVERITY_EVENT:
-            self.append_packet_info(" Error High Severity")
-        tm_data = self.get_tm_data()
-        if len(tm_data) < 14:
-            LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
+        source_data = bytearray()
+        source_data.extend(struct.pack('!H', event_id))
+        if len(object_id) != 4:
+            LOGGER.warning('Object ID must be a bytrarray with length 4')
             raise ValueError
-        self._event_id = struct.unpack('>H', tm_data[0:2])[0]
-        self._object_id_as_bytes = tm_data[2:6]
-        self._object_id = struct.unpack('>I', self._object_id_as_bytes)[0]
-        self._param_1 = struct.unpack('>I', tm_data[6:10])[0]
-        self._param_2 = struct.unpack('>I', tm_data[10:14])[0]
+        source_data.extend(object_id)
+        source_data.extend(struct.pack('!I', param_1))
+        source_data.extend(struct.pack('!I', param_2))
+        pus_tm = PusTelemetry(
+            service_id=PusServices.SERVICE_5_EVENT,
+            subservice_id=subservice_id,
+            time=time,
+            ssc=ssc,
+            source_data=source_data,
+            apid=apid,
+            packet_version=packet_version,
+            pus_version=pus_version,
+            pus_tm_version=pus_tm_version,
+            ack=ack,
+            secondary_header_flag=secondary_header_flag,
+            space_time_ref=space_time_ref,
+            destination_id=destination_id
+        )
+        PusTmBase.__init__(self, pus_tm=pus_tm)
+        PusTmInfoBase.__init__(self, pus_tm=pus_tm)
+        self.__init_without_base(instance=self)
+
+    @classmethod
+    def __empty(cls) -> Service5TM:
+        return cls(
+            subservice_id=Srv5Subservices.INFO_EVENT,
+            event_id=0,
+            object_id=bytearray(4),
+            param_1=0,
+            param_2=0
+        )
+
+    @classmethod
+    def unpack(
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+    ) -> Service5TM:
+        service_5_tm = cls.__empty()
+        service_5_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, pus_version=pus_version
+        )
+        service_5_tm.__init_without_base(instance=service_5_tm)
+        return service_5_tm
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
@@ -70,27 +106,25 @@ class Service5TM(PusTelemetry):
     def get_param_2(self):
         return self._param_2
 
-
-class Service5TmPacked(PusTelemetryCreator):
-    """
-    Class representation for Service 5 TM creation.
-    """
-    def __init__(
-            self, severity: Severity, event_id: int, object_id: bytearray = bytearray(),
-            param_1: int = 0, param_2: int = 0, ssc: int = 0
-    ):
-        self.event_id = event_id
-        self.object_id = object_id
-        self.param_1 = param_1
-        self.param_2 = param_2
-        source_data = bytearray()
-        source_data.extend(struct.pack('!H', self.event_id))
-        source_data.extend(object_id)
-        source_data.extend(struct.pack('!I', self.param_1))
-        source_data.extend(struct.pack('!I', self.param_2))
-        super().__init__(
-            service=PusServices.SERVICE_5_EVENT, subservice=severity, ssc=ssc,
-            source_data=source_data)
-
-    def pack(self) -> bytearray:
-        return super().pack()
+    @staticmethod
+    def __init_without_base(instance: Service5TM):
+        if instance.get_service() != 5:
+            LOGGER.warning("This packet is not an event service packet!")
+        instance.specify_packet_info("Event")
+        if instance.get_subservice() == Srv5Subservices.INFO_EVENT:
+            instance.append_packet_info(" Info")
+        elif instance.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:
+            instance.append_packet_info(" Error Low Severity")
+        elif instance.get_subservice() == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
+            instance.append_packet_info(" Error Med Severity")
+        elif instance.get_subservice() == Srv5Subservices.HIGH_SEVERITY_EVENT:
+            instance.append_packet_info(" Error High Severity")
+        tm_data = instance.get_tm_data()
+        if len(tm_data) < 14:
+            LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
+            raise ValueError
+        instance._event_id = struct.unpack('>H', tm_data[0:2])[0]
+        instance._object_id_as_bytes = tm_data[2:6]
+        instance._object_id = struct.unpack('>I', instance._object_id_as_bytes)[0]
+        instance._param_1 = struct.unpack('>I', tm_data[6:10])[0]
+        instance._param_2 = struct.unpack('>I', tm_data[10:14])[0]
