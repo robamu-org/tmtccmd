@@ -13,6 +13,18 @@ class PusTmInterface:
         return bytearray()
 
     @abstractmethod
+    def is_valid(self) -> bool:
+        return False
+
+    @abstractmethod
+    def get_ssc(self) -> int:
+        return 0
+
+    @abstractmethod
+    def get_apid(self) -> int:
+        return 0
+
+    @abstractmethod
     def get_service(self) -> int:
         return -1
 

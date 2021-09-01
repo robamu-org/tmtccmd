@@ -463,8 +463,24 @@ class PusTmBase(PusTmInterface):
         self.pus_tm = pus_tm
 
     @abstractmethod
+    def pack(self) -> bytearray:
+        return self.pus_tm.pack()
+
+    @abstractmethod
     def get_tm_data(self) -> bytearray:
         return self.pus_tm.get_tm_data()
+
+    @abstractmethod
+    def get_ssc(self) -> int:
+        return self.pus_tm.get_ssc()
+
+    @abstractmethod
+    def is_valid(self):
+        return self.pus_tm.is_valid()
+
+    @abstractmethod
+    def get_apid(self) -> int:
+        return self.pus_tm.get_apid()
 
     @abstractmethod
     def get_service(self) -> int:

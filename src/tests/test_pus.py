@@ -39,17 +39,17 @@ class TestTelemetry(TestCase):
         self.assertTrue(pus_17_telemetry.get_subservice() == 1)
         self.assertTrue(pus_17_telemetry.get_ssc() == 36)
         self.assertTrue(pus_17_telemetry.get_tm_data() == bytearray())
-        self.assertTrue(pus_17_telemetry.is_valid())
+        self.assertTrue(pus_17_telemetry.pus_tm.is_valid())
         self.assertTrue(pus_17_telemetry.get_custom_printout() == "")
         self.assertTrue(pus_17_telemetry.return_source_data_string() == "[]")
-        pus_17_telemetry.print_source_data()
-        pus_17_telemetry.print_full_packet_string()
+        pus_17_telemetry.pus_tm.print_source_data()
+        pus_17_telemetry.pus_tm.print_full_packet_string()
         # This string changes depending on system time, so its complicated to test its validity
-        full_string = pus_17_telemetry.return_full_packet_string()
+        full_string = pus_17_telemetry.pus_tm.return_full_packet_string()
         print(full_string)
         print(pus_17_telemetry)
         print(repr(pus_17_telemetry))
-        self.assertTrue(pus_17_telemetry.get_packet_id() == 0x8 << 8 | 0xef)
+        self.assertTrue(pus_17_telemetry.pus_tm.get_packet_id() == 0x8 << 8 | 0xef)
 
     def test_list_functionality(self):
         pus_17_telecommand = Service17TM(
