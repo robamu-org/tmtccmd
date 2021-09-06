@@ -2,6 +2,7 @@
 """PUS Service 3 components
 """
 from __future__ import annotations
+from abc import abstractmethod
 import struct
 
 from tmtccmd.pus import ObjectId
@@ -45,12 +46,17 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         :param minimum_structure_report_header_size:
         """
         Service3Base.__init__(self, object_id=0, custom_hk_handling=custom_hk_handling)
+        source_data = bytearray()
+        source_data.extend(struct.pack('!I', self.get_object_id().get_id()))
+        source_data.extend(struct.pack('!I', self._set_id))
+        if subservice_id == 25 or subservice_id == 26:
+            source_data.extend(hk_data)
         pus_tm = PusTelemetry(
             service_id=3,
             subservice_id=subservice_id,
             time=time,
             ssc=ssc,
-            source_data=hk_data,
+            source_data=source_data,
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
@@ -65,12 +71,14 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         self.__init_without_base(
             instance=self, custom_hk_handling=custom_hk_handling,
             minimum_reply_size=minimum_reply_size,
-            minimum_structure_report_header_size=minimum_structure_report_header_size
+            minimum_structure_report_header_size=minimum_structure_report_header_size,
+            check_tm_data_size=False
         )
 
     @staticmethod
     def __init_without_base(
             instance: Service3TM, custom_hk_handling: bool,
+            check_tm_data_size: bool,
             minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
             minimum_structure_report_header_size: int = STRUCTURE_REPORT_FIXED_HEADER_SIZE
     ):
@@ -80,7 +88,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         tm_data = instance.get_tm_data()
         if len(tm_data) < 8:
             LOGGER.warning(
-                "Invalid Service 3 packet, is too short!"
+                f'Invalid Service 3 packet, is too short. Detected TM data length: {len(tm_data)}'
             )
             raise ValueError
         instance.min_hk_reply_size = minimum_reply_size
@@ -110,16 +118,19 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
         service_3_tm.__init_without_base(
-            instance=service_3_tm, custom_hk_handling=custom_hk_handling
+            instance=service_3_tm, custom_hk_handling=custom_hk_handling,
+            check_tm_data_size=True
         )
         return service_3_tm
 
+    @abstractmethod
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
         content_list.append(self.get_object_id().as_string())
         content_list.append(hex(self._set_id))
         content_list.append(int(self._param_length))
 
+    @abstractmethod
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)
         header_list.append("Object ID")

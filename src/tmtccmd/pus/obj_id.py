@@ -17,7 +17,7 @@ class ObjectId:
 
     def set_from_bytes(self, obj_id_as_bytes: bytearray):
         if len(obj_id_as_bytes) != 4:
-            LOGGER.warning('Invalid object ID length')
+            LOGGER.warning(f'Invalid object ID length {len(obj_id_as_bytes)}')
             raise ValueError
         self.id_as_bytes = obj_id_as_bytes
         self.object_id = struct.unpack('!I', self.id_as_bytes[:])[0]
