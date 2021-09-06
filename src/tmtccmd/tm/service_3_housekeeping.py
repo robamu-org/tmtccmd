@@ -36,7 +36,9 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
             space_time_ref: int = 0b0000, destination_id: int = 0
     ):
         """Service 3 packet class representation which can be built from a raw bytearray
-        :param byte_array:
+        :param subservice_id:
+        :param time:
+        :param hk_data:
         :param custom_hk_handling:  Can be used if a custom HK format is used which does not
                                     use a 8 byte structure ID (SID).
         :param minimum_reply_size:
@@ -93,7 +95,9 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service3TM:
         return cls(
-            subservice_id=-1
+            subservice_id=-1,
+            time=CdsShortTimestamp.init_from_current_time(),
+            hk_data=bytearray()
         )
 
     @classmethod
