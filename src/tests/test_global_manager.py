@@ -4,6 +4,7 @@ from tmtccmd.config.globals import update_global, get_global, get_global_apid, s
     set_default_globals_pre_args_parsing, check_and_set_core_mode_arg, CoreModeList, \
     CoreGlobalIds
 
+
 class TestGlobalManager(TestCase):
 
     def test_global_module(self):
@@ -21,11 +22,11 @@ class TestGlobalManager(TestCase):
         set_json_cfg_path(current_path)
 
         custom_com_if_dict = {
-            "test": "Test Interface"
+            "test": ("Test Interface", "")
         }
         set_glob_com_if_dict(custom_com_if_dict=custom_com_if_dict)
         com_if_dict = get_glob_com_if_dict()
-        self.assertTrue(com_if_dict["test"] == "Test Interface")
+        self.assertTrue(com_if_dict["test"][0] == "Test Interface")
 
         set_default_globals_pre_args_parsing(
             gui=False, apid=0x02

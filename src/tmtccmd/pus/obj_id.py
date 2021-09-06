@@ -7,6 +7,8 @@ LOGGER = get_console_logger()
 
 class ObjectId:
     def __init__(self, object_id: int):
+        self.object_id = object_id
+        self.id_as_bytes = bytearray()
         self.set(object_id=object_id)
 
     def set(self, object_id: int):
@@ -14,8 +16,8 @@ class ObjectId:
         self.id_as_bytes = struct.pack('!I', self.object_id)
 
     def set_from_bytes(self, obj_id_as_bytes: bytearray):
-        if len(obj_id_as_bytes != 4):
-            LOGGER.warning('Invalid object ID length')
+        if len(obj_id_as_bytes) != 4:
+            LOGGER.warning(f'Invalid object ID length {len(obj_id_as_bytes)}')
             raise ValueError
         self.id_as_bytes = obj_id_as_bytes
         self.object_id = struct.unpack('!I', self.id_as_bytes[:])[0]
