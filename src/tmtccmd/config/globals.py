@@ -24,8 +24,10 @@ def get_global_apid() -> int:
 def set_json_cfg_path(json_cfg_path: str):
     update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
 
+
 def get_json_cfg_path() -> str:
     return get_global(CoreGlobalIds.JSON_CFG_PATH)
+
 
 def set_glob_com_if_dict(custom_com_if_dict: ComIFDictT):
     CoreComInterfacesDict.update(custom_com_if_dict)
@@ -105,7 +107,10 @@ def set_default_globals_post_args_parsing(
     try:
         service_param = args.service
     except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the service (-s) argument. Setting test service ID (17)")
+        LOGGER.warning(
+            "Passed namespace does not contain the service (-s) argument. "
+            "Setting test service ID (17)"
+        )
         service_param = CoreServiceList.SERVICE_17.value
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_param)
     # Not used for now
@@ -263,9 +268,8 @@ def check_and_set_core_service_arg(
 
 def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
     global SERVICE_OP_CODE_DICT
-    if SERVICE_OP_CODE_DICT == dict():
-        service_op_code_dict = dict()
-
+    service_op_code_dict = SERVICE_OP_CODE_DICT
+    if service_op_code_dict == dict():
         op_code_dict_srv_5 = {
             "0": ("Event Test", {OpCodeDictKeys.TIMEOUT: 2.0}),
         }
@@ -277,5 +281,5 @@ def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
 
         service_op_code_dict[CoreServiceList.SERVICE_5.value] = service_5_tuple
         service_op_code_dict[CoreServiceList.SERVICE_17.value] = service_17_tuple
-        SERVICE_OP_CODE_DICT = service_op_code_dict
+        # SERVICE_OP_CODE_DICT = service_op_code_dict
     return service_op_code_dict
