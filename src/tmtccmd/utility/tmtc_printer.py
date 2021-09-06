@@ -9,7 +9,7 @@ from tmtccmd.tm import Service8TM, Service5TM
 from tmtccmd.pus.service_list import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
-from tmtccmd.tm.definitions import PusTmListT
+from tmtccmd.tm.definitions import PusIFQueueT
 from tmtccmd.tm.service_3_base import Service3Base, HkContentType
 from tmtccmd.utility.logger import get_console_logger
 
@@ -48,19 +48,19 @@ class TmTcPrinter:
     def get_display_mode(self) -> DisplayMode:
         return self._display_mode
 
-    def print_telemetry_queue(self, tm_queue: PusTmListT):
+    def print_telemetry_queue(self, tm_queue: PusIFQueueT):
         """Print the telemetry queue which should contain lists of TM class instances."""
         for tm_list in tm_queue:
             for tm_packet in tm_list:
-                self.print_telemetry(tm_packet)
+                self.print_telemetry(packet_if=tm_packet, info_if=tm_packet)
 
     def print_telemetry(
             self, packet_if: PusTmInterface, info_if: PusTmInfoInterface,
             print_raw_tm: bool = False
     ):
         """This function handles printing telemetry
-        :param packet:          Object representation of TM packet to print.
-                                Must be a subclass of PusTelemetry.
+        :param packet_if:       Core interface to work with PUS packets
+        :param info_if:         Core interface to get custom data from PUS packets
         :param print_raw_tm:    Specify whether the TM packet is printed in a raw way.
         :return:
         """
@@ -105,24 +105,24 @@ class TmTcPrinter:
         if srv3_packet.has_custom_hk_handling():
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
-                object_id=0, set_id=srv3_packet.get_set_id(), hk_data=srv3_packet.get_tm_data(),
-                service3_packet=srv3_packet
+                object_id=bytes(), set_id=srv3_packet.get_set_id(),
+                hk_data=packet_if.get_tm_data(), service3_packet=srv3_packet
             )
         else:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
-                object_id=srv3_packet.get_object_id_bytes(), set_id=srv3_packet.get_set_id(),
-                hk_data=srv3_packet.get_tm_data()[8:], service3_packet=srv3_packet
+                object_id=srv3_packet.get_object_id().as_bytes(), set_id=srv3_packet.get_set_id(),
+                hk_data=packet_if.get_tm_data()[8:], service3_packet=srv3_packet
             )
-        if srv3_packet.get_subservice() == 25 or srv3_packet.get_subservice() == 26:
+        if packet_if.get_subservice() == 25 or packet_if.get_subservice() == 26:
             self.handle_hk_print(
-                object_id=srv3_packet.get_object_id(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
                 hk_header=hk_header, hk_content=hk_content, validity_buffer=validity_buffer,
                 num_vars=num_vars
             )
-        if srv3_packet.get_subservice() == 10 or srv3_packet.get_subservice() == 12:
+        if packet_if.get_subservice() == 10 or packet_if.get_subservice() == 12:
             self.handle_hk_definition_print(
-                object_id=srv3_packet.get_object_id(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
                 srv3_packet=srv3_packet
             )
 
@@ -191,7 +191,12 @@ class TmTcPrinter:
     ):
         """Prints the passed housekeeping packet, if HK printout is enabled and also adds
         it to the internal print buffer.
-        :param tm_packet:
+        :param object_id:   Object ID in integer format
+        :param set_id:      Set ID in integer format
+        :param hk_header:   Header list
+        :param hk_content:  Content list
+        :param validity_buffer: Validity buffer bytearray
+        :param num_vars: The number of HK variables contained within the set
         :return:
         """
         self.__print_hk(
@@ -202,7 +207,9 @@ class TmTcPrinter:
 
     def handle_hk_definition_print(self, object_id: int, set_id: int, srv3_packet: Service3Base):
         """
-        :param tm_packet:
+        :param object_id:
+        :param set_id:
+        :param srv3_packet:
         :return:
         """
         self.__print_buffer = f'HK Definition from Object ID {object_id:#010x} and set ID {set_id}:'
@@ -220,7 +227,8 @@ class TmTcPrinter:
 
     def __handle_long_tm_print(self, packet_if: PusTmInterface, info_if: PusTmInfoInterface):
         """Main function to print the most important information inside the telemetry
-        :param tm_packet:
+        :param packet_if: Core packet interface
+        :param info_if: Information interface
         :return:
         """
         self.__print_buffer = "Received Telemetry: " + info_if.get_print_info()
@@ -245,7 +253,7 @@ class TmTcPrinter:
 
     def __handle_tm_content_print(self, info_if: PusTmInfoInterface):
         """
-        :param tm_packet:
+        :param info_if: Information interface
         :return:
         """
         content_list = []
@@ -265,7 +273,7 @@ class TmTcPrinter:
             content: list
     ):
         """This function pretty prints HK packets with a given header and content list
-        :param tm_packet:
+        :param content_type: Type of content for HK packet
         :return:
         """
         if content_type == HkContentType.HK:
@@ -290,9 +298,9 @@ class TmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
-    def __print_validity_buffer(self, validity_buffer: bytearray, num_vars: int):
+    def __print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
         """
-        :param tm_packet:
+        :param validity_buffer: Validity buffer in bytes format
         :return:
         """
         if len(validity_buffer) == 0:
@@ -304,10 +312,10 @@ class TmTcPrinter:
             validity_buffer=validity_buffer, num_vars=num_vars
         )
 
-    def __handle_validity_buffer_print(self, validity_buffer: bytearray, num_vars: int):
+    def __handle_validity_buffer_print(self, validity_buffer: bytes, num_vars: int):
         """
         :param validity_buffer:
-        :param number_of_parameters:
+        :param num_vars: Number of parameters
         :return:
         """
         self.__print_buffer = "["
@@ -328,7 +336,8 @@ class TmTcPrinter:
 
     def __handle_wiretapping_packet(self, packet_if: PusTmInterface, info_if: PusTmInfoInterface):
         """
-        :param wiretapping_packet:
+        :param packet_if: Core packet interface
+        :param info_if: Information interface
         :return:
         """
         if packet_if.get_service() == 2 and \
