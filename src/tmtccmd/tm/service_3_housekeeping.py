@@ -43,8 +43,8 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         :param minimum_structure_report_header_size:
         """
         Service3Base.__init__(self, object_id=0, custom_hk_handling=custom_hk_handling)
-        pus_tm = PusTelemetry.__init__(
-            service_id=5,
+        pus_tm = PusTelemetry(
+            service_id=3,
             subservice_id=subservice_id,
             time=time,
             ssc=ssc,
@@ -83,7 +83,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
             raise ValueError
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
-        instance.get_object_id().set_from_bytes(object_id=tm_data[0:4])
+        instance.get_object_id().set_from_bytes(obj_id_as_bytes=tm_data[0:4])
         instance._set_id = struct.unpack('!I', tm_data[4:8])[0]
         if instance.get_subservice() == 25 or instance.get_subservice() == 26:
             if len(tm_data) > 8:
@@ -105,7 +105,9 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         service_3_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
-        service_3_tm.__init_without_base(instance=service_3_tm)
+        service_3_tm.__init_without_base(
+            instance=service_3_tm, custom_hk_handling=custom_hk_handling
+        )
         return service_3_tm
 
     def append_telemetry_content(self, content_list: list):
@@ -121,28 +123,29 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         header_list.append("HK data size")
 
     def get_hk_definitions_list(self) -> Tuple[List, List]:
-        if len(self._tm_data) < self.hk_structure_report_header_size:
+        tm_data = self.get_tm_data()
+        if len(tm_data) < self.hk_structure_report_header_size:
             LOGGER.warning(
                 f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
                 f'from {self.get_object_id().as_string()}, is shorter '
                 f'than {self.hk_structure_report_header_size}'
             )
-            return
+            return [], []
         definitions_header = [
             "Object ID", "Set ID", "Report Status", "Is valid", "Collection Interval (s)",
             "Number Of IDs"
         ]
-        reporting_enabled = self._tm_data[8]
-        set_valid = self._tm_data[9]
-        collection_interval_seconds = struct.unpack('>f', self._tm_data[10:14])[0] / 1000.0
-        num_params = self._tm_data[14]
-        if len(self._tm_data) < self.hk_structure_report_header_size + num_params * 4:
+        reporting_enabled = tm_data[8]
+        set_valid = tm_data[9]
+        collection_interval_seconds = struct.unpack('!f', tm_data[10:14])[0] / 1000.0
+        num_params = tm_data[14]
+        if len(tm_data) < self.hk_structure_report_header_size + num_params * 4:
             LOGGER.warning(
                 f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
-                f'from {hex(self.get_object_id())}, is shorter than '
+                f'from {self.get_object_id().as_string()}, is shorter than '
                 f'{self.hk_structure_report_header_size + num_params * 4}'
             )
-            return
+            return [], []
 
         parameters = []
         counter = 1
@@ -150,8 +153,8 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
                 self.hk_structure_report_header_size,
                 self.hk_structure_report_header_size + 4 * num_params, 4
         ):
-            parameter = struct.unpack('>I', self._tm_data[array_index:array_index + 4])[0]
-            self.hk_header.append("Pool ID " + str(counter))
+            parameter = struct.unpack('!I', tm_data[array_index:array_index + 4])[0]
+            definitions_header.append("Pool ID " + str(counter))
             parameters.append(str(hex(parameter)))
             counter = counter + 1
         if reporting_enabled == 1:

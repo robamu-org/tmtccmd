@@ -138,7 +138,7 @@ class Service1TM(PusTmBase, PusTmInfoBase):
         elif self.get_subservice() == 5:
             self.is_step_reply = True
             self.pus_tm.append_packet_info(" : Step Success")
-            self.step_number = struct.unpack('>B', self._tm_data[4:5])[0]
+            self.step_number = struct.unpack('>B', self.get_tm_data()[4:5])[0]
         elif self.get_subservice() == 7:
             self.pus_tm.append_packet_info(" : Completion success")
         else:
