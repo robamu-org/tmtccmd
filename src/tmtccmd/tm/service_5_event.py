@@ -2,11 +2,13 @@
 """Contains classes and functions to deserialize PUS Service 5 Telemetry
 """
 from __future__ import annotations
+from abc import abstractmethod
 import struct
 
 from tmtccmd.pus.service_list import PusServices
 from tmtccmd.ecss.tm import PusTelemetry, PusVersion, CdsShortTimestamp, PusTmInfoBase, PusTmBase
 from tmtccmd.pus.service_5_event import Srv5Subservices, Srv5Severity
+from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.utility.logger import get_console_logger
 
 
@@ -29,14 +31,18 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         :param object_id: 4 byte object ID
         :raises ValueError: Invalid input arguments
         """
+        self._object_id = ObjectId(object_id=0)
+        self._event_id = event_id
+        self._param_1 = param_1
+        self._param_2 = param_2
         source_data = bytearray()
-        source_data.extend(struct.pack('!H', event_id))
+        source_data.extend(struct.pack('!H', self._event_id))
         if len(object_id) != 4:
             LOGGER.warning('Object ID must be a bytrarray with length 4')
             raise ValueError
         source_data.extend(object_id)
-        source_data.extend(struct.pack('!I', param_1))
-        source_data.extend(struct.pack('!I', param_2))
+        source_data.extend(struct.pack('!I', self._param_1))
+        source_data.extend(struct.pack('!I', self._param_2))
         pus_tm = PusTelemetry(
             service_id=PusServices.SERVICE_5_EVENT,
             subservice_id=subservice_id,
@@ -54,7 +60,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
-        self.__init_without_base(instance=self)
+        self.__init_without_base(instance=self, set_attrs_from_tm_data=False)
 
     @classmethod
     def __empty(cls) -> Service5TM:
@@ -77,13 +83,15 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         service_5_tm.__init_without_base(instance=service_5_tm)
         return service_5_tm
 
+    @abstractmethod
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
         content_list.append(str(self._event_id))
-        content_list.append(hex(self._object_id))
+        content_list.append(self._object_id.as_string())
         content_list.append(str(hex(self._param_1)) + ", " + str(self._param_1))
         content_list.append(str(hex(self._param_2)) + ", " + str(self._param_2))
 
+    @abstractmethod
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)
         header_list.append("Event ID")
@@ -92,10 +100,10 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         header_list.append("Parameter 2")
 
     def get_reporter_id_as_bytes(self) -> bytes:
-        return self._object_id_as_bytes
+        return self._object_id.as_bytes()
 
     def get_reporter_id(self) -> int:
-        return self._object_id
+        return self._object_id.get_id()
 
     def get_event_id(self):
         return self._event_id
@@ -107,7 +115,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         return self._param_2
 
     @staticmethod
-    def __init_without_base(instance: Service5TM):
+    def __init_without_base(instance: Service5TM, set_attrs_from_tm_data: bool = False):
         if instance.get_service() != 5:
             LOGGER.warning("This packet is not an event service packet!")
         instance.specify_packet_info("Event")
@@ -123,8 +131,8 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         if len(tm_data) < 14:
             LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
             raise ValueError
-        instance._event_id = struct.unpack('>H', tm_data[0:2])[0]
-        instance._object_id_as_bytes = tm_data[2:6]
-        instance._object_id = struct.unpack('>I', instance._object_id_as_bytes)[0]
-        instance._param_1 = struct.unpack('>I', tm_data[6:10])[0]
-        instance._param_2 = struct.unpack('>I', tm_data[10:14])[0]
+        if set_attrs_from_tm_data:
+            instance._event_id = struct.unpack('>H', tm_data[0:2])[0]
+            instance._object_id.set_from_bytes(tm_data[2:6])
+            instance._param_1 = struct.unpack('>I', tm_data[6:10])[0]
+            instance._param_2 = struct.unpack('>I', tm_data[10:14])[0]

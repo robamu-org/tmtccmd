@@ -48,7 +48,7 @@ class Service1TM(PusTmBase, PusTmInfoBase):
         self.step_number = 0
         self.error_param1 = 0
         self.error_param2 = 0
-        self.tc_packet_id = 0
+        self.tc_packet_id = tc_packet_id
         self.tc_psc = tc_psc
         self.tc_ssc = tc_psc & 0x3fff
 
