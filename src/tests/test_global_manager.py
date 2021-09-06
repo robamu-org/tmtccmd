@@ -26,7 +26,7 @@ class TestGlobalManager(TestCase):
         }
         set_glob_com_if_dict(custom_com_if_dict=custom_com_if_dict)
         com_if_dict = get_glob_com_if_dict()
-        self.assertTrue(com_if_dict["test"] == "Test Interface")
+        self.assertTrue(com_if_dict["test"][0] == "Test Interface")
 
         set_default_globals_pre_args_parsing(
             gui=False, apid=0x02
