@@ -31,7 +31,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         :param object_id: 4 byte object ID
         :raises ValueError: Invalid input arguments
         """
-        self._object_id = ObjectId(object_id=0)
+        self._object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
         self._event_id = event_id
         self._param_1 = param_1
         self._param_2 = param_2

@@ -49,7 +49,7 @@ class TestPrinter(TestCase):
         self.tmtc_printer.print_telemetry(packet_if=service_5_tm, info_if=service_5_tm)
 
         hook_base.handle_service_5_event.assert_called_with(
-            object_id=bytearray([0x01, 0x02, 0x03, 0x04]), event_id=22, param_1=32, param_2=82452
+            object_id=bytes([0x01, 0x02, 0x03, 0x04]), event_id=22, param_1=32, param_2=82452
         )
 
         service_17_command = pack_service17_ping_command(ssc=0, apid=42)
