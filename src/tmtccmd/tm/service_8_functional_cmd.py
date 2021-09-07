@@ -28,7 +28,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         self._action_id = action_id
         self._custom_data = custom_data
         source_data = bytearray()
-        source_data.extend(self._object_id.as_bytes())
+        source_data.extend(object_id)
         source_data.extend(struct.pack('!I', self._action_id))
         source_data.extend(self._custom_data)
         pus_tm = PusTelemetry(
@@ -58,8 +58,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
                 LOGGER.warning(f'Length of Service 8 TM data field {len(tm_data)} short than 8')
                 raise ValueError
             instance.specify_packet_info("Functional Data Reply")
-            instance._object_id_bytes = tm_data[0:4]
-            instance._object_id = struct.unpack('!I', instance._object_id_bytes)[0]
+            instance._object_id = ObjectId.from_bytes(obj_id_as_bytes=tm_data[0:4])
             instance._action_id = struct.unpack('!I', tm_data[4:8])[0]
             instance._custom_data = tm_data[8:]
         else:
