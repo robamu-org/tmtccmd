@@ -1,3 +1,5 @@
+"""Contains definitions and functions related to PUS Service 5 Telecommands.
+"""
 from tmtccmd.config.globals import get_global_apid
 from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT

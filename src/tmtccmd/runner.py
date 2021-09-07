@@ -1,11 +1,7 @@
-#!/usr/bin/env python3
-"""
-Core method called by entry point files to initiate the TMTC commander.
-The commander is started by first running `initialize_tmtc_commander` and then
-running `run_tmtc_commander`
-:details:
-:manual:
-:author:     R. Mueller
+"""Contains core methods called by entry point files to initiate the TMTC commander.
+
+The commander is started by first running :py:func:`initialize_tmtc_commander` and then
+running :py:func:`run_tmtc_commander`
 """
 import sys
 import os
@@ -25,6 +21,7 @@ from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
 from tmtccmd.utility.logger import set_tmtc_console_logger, get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
+
 
 LOGGER = get_console_logger()
 
@@ -88,7 +85,7 @@ def run_tmtc_commander(
     :param tmtc_frontend:       Custom frontend can be passed here. Otherwise, a default backend
                                 will be created
     :param app_name:            Name of application. Will be displayed in GUI
-    :raises: ValueError if :py:func:`initialize_tmtc_commander` was not called before
+    :raises RunTimeError:  if :py:func:`initialize_tmtc_commander` was not called before
     :return:
     """
     try:
@@ -118,7 +115,7 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
 
     # Check whether all required hook functions have bee implemented properly, Python
     # does not enforce this.
-    if hook_object.get_version is None or hook_object.add_globals_pre_args_parsing is None \
+    if hook_object.add_globals_pre_args_parsing is None \
             or hook_object.add_globals_post_args_parsing is None:
         LOGGER.error(
             "Passed hook base object handle is invalid. Abstract functions have to be implemented!"
@@ -160,7 +157,7 @@ def __set_up_tmtc_commander(
     hook_obj = cast(TmTcHookBase, hook_obj_raw)
 
     if not reduced_printout:
-        __handle_init_printout(use_gui, hook_obj.get_version(), ansi_colors)
+        __handle_init_printout(use_gui, ansi_colors)
 
     LOGGER.info("Starting TMTC Commander..")
 
@@ -170,7 +167,7 @@ def __set_up_tmtc_commander(
         __handle_cli_args_and_globals()
 
 
-def __handle_init_printout(use_gui: bool, version_string: str, ansi_colors: bool):
+def __handle_init_printout(use_gui: bool, ansi_colors: bool):
     if ansi_colors:
         print(f'{AnsiColors.CYAN}-- Python TMTC Commander --{AnsiColors.RESET}')
     if use_gui:

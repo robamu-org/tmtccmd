@@ -12,6 +12,7 @@ build
 *.egg-info
 
 /example/log
+/example/tmtc_config.json
 /log/
 /src/tests/log
 

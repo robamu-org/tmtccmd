@@ -1,7 +1,7 @@
 import enum
 
 
-class Severity(enum.IntEnum):
+class Srv5Severity(enum.IntEnum):
     INFO = 1
     LOW_SEVERITY = 2
     MEDIUM_SEVERITY = 3
@@ -9,9 +9,9 @@ class Severity(enum.IntEnum):
 
 
 class Srv5Subservices(enum.IntEnum):
-    INFO_EVENT = Severity.INFO,
-    LOW_SEVERITY_EVENT = Severity.LOW_SEVERITY,
-    MEDIUM_SEVERITY_EVENT = Severity.MEDIUM_SEVERITY,
-    HIGH_SEVERITY_EVENT = Severity.HIGH_SEVERITY,
+    INFO_EVENT = Srv5Severity.INFO,
+    LOW_SEVERITY_EVENT = Srv5Severity.LOW_SEVERITY,
+    MEDIUM_SEVERITY_EVENT = Srv5Severity.MEDIUM_SEVERITY,
+    HIGH_SEVERITY_EVENT = Srv5Severity.HIGH_SEVERITY,
     ENABLE_EVENT_REPORTING = 5,
     DISABLE_EVENT_REPORTING = 6

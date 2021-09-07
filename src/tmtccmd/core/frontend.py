@@ -425,8 +425,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         op_code_dict = self.service_op_code_dict[self._current_service][1]
         if op_code_dict is not None:
             for op_code_key, op_code_value in op_code_dict.items():
-                self._op_code_list.append(op_code_key)
-                self.__combo_box_op_codes.addItem(op_code_value[0])
+                try:
+                    self._op_code_list.append(op_code_key)
+                    self.__combo_box_op_codes.addItem(op_code_value[0])
+                except TypeError:
+                    LOGGER.warning(f'Invalid op code entry {op_code_value}, skipping..')
             self._current_op_code = self._op_code_list[0]
 
     def __checkbox_log_update(self, state: int):

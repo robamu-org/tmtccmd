@@ -24,20 +24,13 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def get_version(self) -> str:
-        """The user can specify a custom version by overriding this function.
-        :return:
-        """
-        from tmtccmd import VERSION_NAME, __version__
-        return f"{VERSION_NAME} {__version__}"
-
-    @abstractmethod
     def get_object_ids(self) -> Dict[bytes, list]:
+        from tmtccmd.config.objects import get_core_object_ids
         """The user can specify an object ID dictionary here mapping object ID bytearrays to a
         list. This list could contain containing the string representation or additional
         information about that object ID.
         """
-        pass
+        return get_core_object_ids()
 
     @abstractmethod
     def add_globals_pre_args_parsing(self, gui: bool = False):
@@ -48,15 +41,6 @@ class TmTcHookBase:
         """
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
-
-    @abstractmethod
-    def get_json_config_file_path(self) -> str:
-        """The user can specify a path and filename for the JSON configuration file by overriding
-        this function.
-
-        :return:
-        """
-        return "tmtc_config.json"
 
     @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
@@ -124,7 +108,13 @@ class TmTcHookBase:
         """
         return None
 
-    # TODO: All of this will be moved to the dedicated PUS packet handler
+    def get_json_config_file_path(self) -> str:
+        """The user can specify a path and filename for the JSON configuration file by overriding
+        this function.
+
+        :return:
+        """
+        return "tmtc_config.json"
 
     @staticmethod
     def handle_service_8_telemetry(

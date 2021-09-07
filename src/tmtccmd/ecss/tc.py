@@ -1,15 +1,12 @@
-"""
-@file   base.py
-@brief
-This module contains the PUS telecommand class representation to pack telecommands.
-@author R. Mueller
+"""This module contains the PUS telecommand class representation to pack telecommands.
 """
 from __future__ import annotations
 import sys
-from typing import Tuple, Union
+from typing import Tuple
 
+from tmtccmd.ccsds.log import LOGGER
 from tmtccmd.ccsds.spacepacket import \
-    SpacePacketHeaderSerializer, \
+    SpacePacketHeader, \
     PacketTypes, \
     SPACE_PACKET_HEADER_SIZE
 from tmtccmd.ecss.conf import get_default_apid, PusVersion, get_pus_tc_version
@@ -25,7 +22,8 @@ except ImportError:
 class PusTcDataFieldHeaderSerialize:
     def __init__(
             self, service_type: int, service_subtype: int, source_id: int = 0,
-            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111, secondary_header_flag: int = 0
+            pus_tc_version: PusVersion = PusVersion.PUS_C, ack_flags: int = 0b1111,
+            secondary_header_flag: int = 0
     ):
         self.service_type = service_type
         self.service_subtype = service_subtype
@@ -34,7 +32,8 @@ class PusTcDataFieldHeaderSerialize:
         self.ack_flags = ack_flags
         if self.pus_tc_version == PusVersion.PUS_A:
             pus_version_num = 1
-            self.pus_version_and_ack_byte = secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
+            self.pus_version_and_ack_byte = \
+                secondary_header_flag << 7 | pus_version_num << 4 | ack_flags
         else:
             pus_version_num = 2
             self.pus_version_and_ack_byte = pus_version_num << 4 | ack_flags
@@ -72,8 +71,8 @@ class PusTelecommand:
 
     def __init__(
             self, service: int, subservice: int, ssc=0,
-            app_data: bytearray = bytearray([]), source_id: int = 0, pus_tc_version: int = PusVersion.UNKNOWN,
-            ack_flags: int = 0b1111, apid: int = -1
+            app_data: bytearray = bytearray([]), source_id: int = 0,
+            pus_tc_version: int = PusVersion.UNKNOWN, ack_flags: int = 0b1111, apid: int = -1
     ):
         """Initiate a PUS telecommand from the given parameters. The raw byte representation
         can then be retrieved with the pack() function.
@@ -97,14 +96,14 @@ class PusTelecommand:
         packet_type = PacketTypes.PACKET_TYPE_TC
         secondary_header_flag = 1
         if subservice > 255:
-            print("Subservice value invalid. Setting to 0")
+            LOGGER.warning("Subservice value invalid. Setting to 0")
             subservice = 0
         if service > 255:
-            print("Service value invalid. Setting to 0")
+            LOGGER.warning("Service value invalid. Setting to 0")
             service = 0
         # SSC can have maximum of 14 bits
         if ssc > pow(2, 14):
-            print("SSC invalid, setting to 0")
+            LOGGER.warning("SSC invalid, setting to 0")
             ssc = 0
         self._data_field_header = PusTcDataFieldHeaderSerialize(
             service_type=service, service_subtype=subservice, ack_flags=ack_flags,
@@ -114,7 +113,7 @@ class PusTelecommand:
             secondary_header_len=self._data_field_header.get_header_size(),
             app_data_len=len(app_data),
         )
-        self._space_packet_header = SpacePacketHeaderSerializer(
+        self._space_packet_header = SpacePacketHeader(
             apid=apid, secondary_header_flag=secondary_header_flag, packet_type=packet_type,
             data_length=data_length, source_sequence_count=ssc
         )
@@ -165,7 +164,7 @@ class PusTelecommand:
             data_length = secondary_header_len + app_data_len + 1
             return data_length
         except TypeError:
-            print("PusTelecommand: Invalid type of application data!")
+            LOGGER.warning("PusTelecommand: Invalid type of application data!")
             return 0
 
     def pack_command_tuple(self) -> Tuple[bytearray, PusTelecommand]:

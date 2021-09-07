@@ -5,7 +5,8 @@ from typing import Union, List, Dict
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
-from tmtccmd.ecss.conf import PusVersion, set_default_apid, set_pus_tc_version, set_pus_tm_version
+from tmtccmd.ecss.conf import PusVersion, set_default_apid, get_default_apid, \
+    set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
@@ -17,11 +18,15 @@ SERVICE_OP_CODE_DICT = dict()
 
 
 def get_global_apid() -> int:
-    return get_global(CoreGlobalIds.APID)
+    return get_default_apid()
 
 
 def set_json_cfg_path(json_cfg_path: str):
     update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
+
+
+def get_json_cfg_path() -> str:
+    return get_global(CoreGlobalIds.JSON_CFG_PATH)
 
 
 def set_glob_com_if_dict(custom_com_if_dict: ComIFDictT):
@@ -36,8 +41,9 @@ def get_glob_com_if_dict() -> ComIFDictT:
 def set_default_globals_pre_args_parsing(
         gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
-        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None, display_mode="long",
-        tm_timeout: float = 4.0, print_to_file: bool = True, tc_send_timeout_factor: float = 2.0
+        com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None,
+        display_mode="long", tm_timeout: float = 4.0, print_to_file: bool = True,
+        tc_send_timeout_factor: float = 2.0
 ):
     if custom_com_if_dict is None:
         custom_com_if_dict = dict()
@@ -87,28 +93,8 @@ def set_default_globals_post_args_parsing(
     :return:
     """
 
-    # Determine communication interface from arguments. Must be contained in core modes list
-    try:
-        mode_param = args.mode
-    except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
-        mode_param = CoreModeList.LISTENER_MODE
-    mode_param = check_and_set_core_mode_arg(
-        mode_arg=mode_param, custom_modes_list=custom_modes_list
-    )
-    all_com_ifs = CoreComInterfacesDict
-    if custom_com_if_dict is not None:
-        all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
-    try:
-        com_if_key = str(args.com_if)
-    except AttributeError:
-        LOGGER.warning("No communication interface specified")
-        LOGGER.warning("Trying to set from existing configuration..")
-        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
-    if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
-        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
-    update_global(CoreGlobalIds.COM_IF, com_if_key)
-    LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
+    handle_mode_arg(args=args, custom_modes_list=custom_modes_list)
+    handle_com_if_arg(args=args, json_cfg_path=json_cfg_path, custom_com_if_dict=custom_com_if_dict)
 
     display_mode_param = "long"
     if args.short_display_mode is not None:
@@ -121,7 +107,10 @@ def set_default_globals_post_args_parsing(
     try:
         service_param = args.service
     except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the service (-s) argument. Setting test service ID (17)")
+        LOGGER.warning(
+            "Passed namespace does not contain the service (-s) argument. "
+            "Setting test service ID (17)"
+        )
         service_param = CoreServiceList.SERVICE_17.value
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_param)
     # Not used for now
@@ -144,6 +133,42 @@ def set_default_globals_post_args_parsing(
 
     if DEBUG_MODE:
         print_core_globals()
+
+
+def handle_mode_arg(
+        args, custom_modes_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None
+) -> int:
+    # Determine communication interface from arguments. Must be contained in core modes list
+    try:
+        mode_param = args.mode
+    except AttributeError:
+        LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
+        mode_param = CoreModeList.LISTENER_MODE
+    mode_param = check_and_set_core_mode_arg(
+        mode_arg=mode_param, custom_modes_list=custom_modes_list
+    )
+    update_global(CoreGlobalIds.MODE, mode_param)
+
+
+def handle_com_if_arg(
+        args, json_cfg_path: str, custom_com_if_dict: Dict[str, any] = None
+):
+    all_com_ifs = CoreComInterfacesDict
+    if custom_com_if_dict is not None:
+        all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
+    try:
+        com_if_key = str(args.com_if)
+    except AttributeError:
+        LOGGER.warning("No communication interface specified")
+        LOGGER.warning("Trying to set from existing configuration..")
+        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
+    if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
+        com_if_key = determine_com_if(com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path)
+    update_global(CoreGlobalIds.COM_IF, com_if_key)
+    try:
+        LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
+    except KeyError as e:
+        LOGGER.error(f'Invalid communication interface key {com_if_key}, error {e}')
 
 
 def check_and_set_other_args(args):
@@ -175,7 +200,7 @@ def check_and_set_core_mode_arg(
 
     :param mode_arg:
     :param custom_modes_list:
-    :return:
+    :return: Mode value which was set
     """
     in_enum, mode_value = check_args_in_dict(
         param=mode_arg, iterable=CoreModeList, warning_hint="mode integers"
@@ -202,10 +227,13 @@ def check_and_set_core_mode_arg(
         mode_arg_invalid = True
 
     if mode_arg_invalid:
-        LOGGER.warning(f"Passed mode argument might be invalid, "
-                       f"setting to {CoreModeList.SINGLE_CMD_MODE}")
-        mode_value = CoreModeList.SINGLE_CMD_MODE
+        LOGGER.warning(
+            f"Passed mode argument might be invalid, "
+            f"setting to {CoreModeList.SEQUENTIAL_CMD_MODE}"
+        )
+        mode_value = CoreModeList.SEQUENTIAL_CMD_MODE
     update_global(CoreGlobalIds.MODE, mode_value)
+    return mode_value
 
 
 def check_and_set_core_service_arg(
@@ -240,9 +268,8 @@ def check_and_set_core_service_arg(
 
 def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
     global SERVICE_OP_CODE_DICT
-    if SERVICE_OP_CODE_DICT == dict():
-        service_op_code_dict = dict()
-
+    service_op_code_dict = SERVICE_OP_CODE_DICT
+    if service_op_code_dict == dict():
         op_code_dict_srv_5 = {
             "0": ("Event Test", {OpCodeDictKeys.TIMEOUT: 2.0}),
         }
@@ -254,5 +281,5 @@ def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
 
         service_op_code_dict[CoreServiceList.SERVICE_5.value] = service_5_tuple
         service_op_code_dict[CoreServiceList.SERVICE_17.value] = service_17_tuple
-        SERVICE_OP_CODE_DICT = service_op_code_dict
+        # SERVICE_OP_CODE_DICT = service_op_code_dict
     return service_op_code_dict

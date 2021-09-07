@@ -13,6 +13,7 @@ LOGGER = get_console_logger()
 
 DEFAULT_MAX_RECV_SIZE = 1500
 
+
 class TcpIpType(enum.Enum):
     TCP = enum.auto()
     UDP = enum.auto()
@@ -163,7 +164,7 @@ def prompt_recv_buffer_len(tcpip_type: TcpIpType) -> int:
         type_str = "TCP"
     while True:
         recv_max_size = input(
-            f'Please enter maximum receive size for {type_str} packets [1500 default]:'
+            f'Please enter maximum receive size for {type_str} packets [1500 default]: '
         )
         if not recv_max_size:
             return DEFAULT_MAX_RECV_SIZE
