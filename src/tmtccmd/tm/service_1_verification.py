@@ -62,6 +62,13 @@ class Service1TM(PusTmBase, PusTmInfoBase):
     def unpack(
             cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
     ) -> Service1TM:
+        """Parse a service 1 telemetry packet
+
+        :param raw_telemetry:
+        :param pus_version:
+        :raises ValueError: Raw telemetry too short
+        :return:
+        """
         service_1_tm = cls.__empty()
         service_1_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
@@ -108,26 +115,37 @@ class Service1TM(PusTmBase, PusTmInfoBase):
             header_list.append("Step Number")
 
     def __handle_failure_verification(self):
+        """Handle parsing a verification failure packet, subservice ID 2, 4, 6 or 8
+        """
         self.specify_packet_info("Failure Verficiation")
         self.has_tc_error_code = True
         tm_data = self.get_tm_data()
-        if self.get_subservice() == 2:
+        subservice = self.get_subservice()
+        expected_len = 14
+        if subservice == 2:
             self.append_packet_info(" : Acceptance failure")
-        elif self.get_subservice() == 4:
+        elif subservice == 4:
             self.append_packet_info(" : Start failure")
-        elif self.get_subservice() == 6:
+        elif subservice == 6:
             self.is_step_reply = True
+            expected_len = 15
             self.append_packet_info(" : Step Failure")
-            self.step_number = struct.unpack('>B', tm_data[4:5])[0]
-            self.err_code = struct.unpack('>H', tm_data[5:7])[0]
-            self.error_param1 = struct.unpack('>I', tm_data[7:11])[0]
-            self.error_param2 = struct.unpack('>I', tm_data[11:15])[0]
-        elif self.get_subservice() == 8:
-            self.err_code = struct.unpack('>H', tm_data[4:6])[0]
-            self.error_param1 = struct.unpack('>I', tm_data[6:10])[0]
-            self.error_param2 = struct.unpack('>I', tm_data[10:14])[0]
+        elif subservice == 8:
+            self.append_packet_info(" : Completion Failure")
         else:
             LOGGER.error("Service1TM: Invalid subservice")
+        if len(tm_data) < expected_len:
+            LOGGER.warning(f'PUS TM[1,{subservice}] source data smaller than expected 15 bytes')
+            raise ValueError
+        current_idx = 4
+        if self.is_step_reply:
+            self.step_number = struct.unpack('>B', tm_data[current_idx: current_idx + 1])[0]
+            current_idx += 1
+        self.err_code = struct.unpack('>H', tm_data[current_idx: current_idx + 2])[0]
+        current_idx += 2
+        self.error_param1 = struct.unpack('>I', tm_data[current_idx: current_idx + 4])[0]
+        current_idx += 2
+        self.error_param2 = struct.unpack('>I', tm_data[current_idx: current_idx + 4])[0]
 
     def __handle_success_verification(self):
         self.pus_tm.specify_packet_info("Success Verification")

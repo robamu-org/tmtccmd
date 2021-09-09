@@ -170,7 +170,7 @@ class TmTcPrinter:
             custom_data=srv8_packet.get_custom_data()
         )
         obj_id_dict = hook_obj.get_object_ids()
-        rep_str = obj_id_dict.get(obj_id)
+        rep_str = obj_id_dict.get(bytes(obj_id))
         if rep_str is None:
             rep_str = "unknown object"
         print_string = \
