@@ -38,7 +38,7 @@ class TcpCommunicationType(enum.Enum):
 class TcpIpTcpComIF(CommunicationInterface):
     """Communication interface for TCP communication."""
     DEFAULT_LOCK_TIMEOUT = 0.4
-    RECV_TIMEOUT = 0.2
+    TM_LOOP_DELAY = 0.2
 
     def __init__(
             self, com_if_key: str, com_type: TcpCommunicationType, space_packet_id: int,
@@ -76,7 +76,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__tm_queue = deque()
         self.__analysis_queue = deque()
         # Only allow one connection to OBSW at a time for now by using this lock
-        self.__socket_lock = threading.Lock()
+        # self.__socket_lock = threading.Lock()
         self.__queue_lock = threading.Lock()
 
     def __del__(self):
@@ -101,16 +101,17 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def send(self, data: bytearray):
         try:
-            with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                    acquired:
-                if not acquired:
-                    LOGGER.warning("Acquiring socket lock failed!")
-                print("hello send")
-                self.__tcp_socket.sendto(data, self.send_address)
-                # self.__tcp_socket.shutdown(socket.SHUT_WR)
-                # self.__receive_tm_packets(self.__tcp_socket)
-                # self.__last_connection_time = time.time()
-                # tcp_socket.close()
+            # with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+            #        acquired:
+            #    if not acquired:
+            #        LOGGER.warning("Acquiring socket lock failed!")
+            #    print("hello send")
+            LOGGER.debug(f"sending packet with len {len(data)}")
+            self.__tcp_socket.sendto(data, self.send_address)
+            # self.__tcp_socket.shutdown(socket.SHUT_WR)
+            # self.__receive_tm_packets(self.__tcp_socket)
+            # self.__last_connection_time = time.time()
+            # tcp_socket.close()
         except ConnectionRefusedError:
             LOGGER.warning("TCP connection attempt failed..")
 
@@ -135,50 +136,43 @@ class TcpIpTcpComIF(CommunicationInterface):
         return tm_packet_list
 
     def __tcp_tm_client(self):
+        LOGGER.debug("hello")
         while True and not self.__tm_thread_kill_signal.is_set():
             # if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
             try:
-                with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                        acquired:
-                    if not acquired:
-                        LOGGER.warning("Acquiring socket lock in periodic handler failed!")
-                    # tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    # tcp_socket.connect(self.send_address)
-                    # tcp_socket.shutdown(socket.SHUT_WR)
-                    self.__receive_tm_packets(tcp_socket=self.__tcp_socket)
-                    # self.__last_connection_time = time.time()
+                LOGGER.debug("recv")
+                # with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                #        acquired:
+                #    if not acquired:
+                #        LOGGER.warning("Acquiring socket lock in periodic handler failed!")
+                # tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                # tcp_socket.connect(self.send_address)
+                # tcp_socket.shutdown(socket.SHUT_WR)
+                self.__receive_tm_packets()
+                # self.__last_connection_time = time.time()
             except ConnectionRefusedError:
                 LOGGER.warning("TCP connection attempt failed..")
                 self.__last_connection_time = time.time()
-            time.sleep(self.tm_polling_frequency / 2.0)
+            time.sleep(self.TM_LOOP_DELAY)
 
-    def __receive_tm_packets(self, tcp_socket: socket.socket):
-        while True:
-            try:
-                ready = select.select([tcp_socket], [], [], self.RECV_TIMEOUT)
-                if ready[0]:
-                    bytes_recvd = tcp_socket.recv(self.max_recv_size)
-                else:
-                    LOGGER.warning(
-                        'TCP reception timeout. Server side might not shut down connection!'
-                    )
-                    break
-                if len(bytes_recvd) > 0:
-                    with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                            acquired:
-                        if not acquired:
-                            LOGGER.warning("Acquiring queue lock failed!")
-                        if self.__tm_queue.__len__() >= self.max_packets_stored:
-                            LOGGER.warning(
-                                "Number of packets in TCP queue too large. "
-                                "Overwriting old packets.."
-                            )
-                            self.__tm_queue.pop()
-                        self.__tm_queue.appendleft(bytearray(bytes_recvd))
-                elif bytes_recvd is None or len(bytes_recvd) == 0:
-                    break
-            except ConnectionResetError:
-                LOGGER.exception('ConnectionResetError. TCP server might not be up')
+    def __receive_tm_packets(self):
+        try:
+            ready = select.select([self.__tcp_socket], [], [], 0)
+            if ready[0]:
+                bytes_recvd = self.__tcp_socket.recv(self.max_recv_size)
+                with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                        acquired:
+                    if not acquired:
+                        LOGGER.warning("Acquiring queue lock failed!")
+                    if self.__tm_queue.__len__() >= self.max_packets_stored:
+                        LOGGER.warning(
+                            "Number of packets in TCP queue too large. "
+                            "Overwriting old packets.."
+                        )
+                        self.__tm_queue.pop()
+                    self.__tm_queue.appendleft(bytearray(bytes_recvd))
+        except ConnectionResetError:
+            LOGGER.exception('ConnectionResetError. TCP server might not be up')
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.__tm_queue:
