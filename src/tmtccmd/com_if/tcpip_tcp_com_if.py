@@ -10,7 +10,7 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import Union
+from typing import Union, Optional
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.definitions import CoreModeList
@@ -68,6 +68,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.max_packets_stored = max_packets_stored
         self.init_mode = init_mode
 
+        self.__tcp_socket: Optional[socket.socket] = None
         self.__last_connection_time = 0
         self.__tm_thread_kill_signal = threading.Event()
         # Separate thread to request TM packets periodically if no TCs are being sent
@@ -86,6 +87,8 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def initialize(self, args: any = None) -> any:
         self.__tm_thread_kill_signal.clear()
+        self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__tcp_socket.connect(self.send_address)
 
     def open(self, args: any = None):
         self.__tcp_conn_thread.start()
@@ -93,6 +96,8 @@ class TcpIpTcpComIF(CommunicationInterface):
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
         self.__tcp_conn_thread.join(self.tm_polling_frequency)
+        self.__tcp_socket.shutdown(socket.SHUT_RDWR)
+        self.__tcp_socket.close()
 
     def send(self, data: bytearray):
         try:
@@ -100,13 +105,12 @@ class TcpIpTcpComIF(CommunicationInterface):
                     acquired:
                 if not acquired:
                     LOGGER.warning("Acquiring socket lock failed!")
-                tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                tcp_socket.connect(self.send_address)
-                tcp_socket.sendto(data, self.send_address)
-                tcp_socket.shutdown(socket.SHUT_WR)
-                self.__receive_tm_packets(tcp_socket)
-                self.__last_connection_time = time.time()
-                tcp_socket.close()
+                print("hello send")
+                self.__tcp_socket.sendto(data, self.send_address)
+                # self.__tcp_socket.shutdown(socket.SHUT_WR)
+                # self.__receive_tm_packets(self.__tcp_socket)
+                # self.__last_connection_time = time.time()
+                # tcp_socket.close()
         except ConnectionRefusedError:
             LOGGER.warning("TCP connection attempt failed..")
 
@@ -132,20 +136,20 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
-            if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
-                try:
-                    with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                            acquired:
-                        if not acquired:
-                            LOGGER.warning("Acquiring socket lock in periodic handler failed!")
-                        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        tcp_socket.connect(self.send_address)
-                        tcp_socket.shutdown(socket.SHUT_WR)
-                        self.__receive_tm_packets(tcp_socket=tcp_socket)
-                        self.__last_connection_time = time.time()
-                except ConnectionRefusedError:
-                    LOGGER.warning("TCP connection attempt failed..")
-                    self.__last_connection_time = time.time()
+            # if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
+            try:
+                with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
+                        acquired:
+                    if not acquired:
+                        LOGGER.warning("Acquiring socket lock in periodic handler failed!")
+                    # tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    # tcp_socket.connect(self.send_address)
+                    # tcp_socket.shutdown(socket.SHUT_WR)
+                    self.__receive_tm_packets(tcp_socket=self.__tcp_socket)
+                    # self.__last_connection_time = time.time()
+            except ConnectionRefusedError:
+                LOGGER.warning("TCP connection attempt failed..")
+                self.__last_connection_time = time.time()
             time.sleep(self.tm_polling_frequency / 2.0)
 
     def __receive_tm_packets(self, tcp_socket: socket.socket):
@@ -166,7 +170,8 @@ class TcpIpTcpComIF(CommunicationInterface):
                             LOGGER.warning("Acquiring queue lock failed!")
                         if self.__tm_queue.__len__() >= self.max_packets_stored:
                             LOGGER.warning(
-                                "Number of packets in TCP queue too large. Overwriting old packets.."
+                                "Number of packets in TCP queue too large. "
+                                "Overwriting old packets.."
                             )
                             self.__tm_queue.pop()
                         self.__tm_queue.appendleft(bytearray(bytes_recvd))
