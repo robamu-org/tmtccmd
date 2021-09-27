@@ -107,6 +107,7 @@ class TcpIpTcpComIF(CommunicationInterface):
             #        LOGGER.warning("Acquiring socket lock failed!")
             #    print("hello send")
             LOGGER.debug(f"sending packet with len {len(data)}")
+            # self.__tcp_socket.connect(self.send_address)
             self.__tcp_socket.sendto(data, self.send_address)
             # self.__tcp_socket.shutdown(socket.SHUT_WR)
             # self.__receive_tm_packets(self.__tcp_socket)
@@ -140,7 +141,6 @@ class TcpIpTcpComIF(CommunicationInterface):
         while True and not self.__tm_thread_kill_signal.is_set():
             # if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
             try:
-                LOGGER.debug("recv")
                 # with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
                 #        acquired:
                 #    if not acquired:
@@ -152,7 +152,6 @@ class TcpIpTcpComIF(CommunicationInterface):
                 # self.__last_connection_time = time.time()
             except ConnectionRefusedError:
                 LOGGER.warning("TCP connection attempt failed..")
-                self.__last_connection_time = time.time()
             time.sleep(self.TM_LOOP_DELAY)
 
     def __receive_tm_packets(self):
