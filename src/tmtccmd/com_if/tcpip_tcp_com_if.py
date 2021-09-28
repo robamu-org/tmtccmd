@@ -96,23 +96,16 @@ class TcpIpTcpComIF(CommunicationInterface):
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
         self.__tcp_conn_thread.join(self.tm_polling_frequency)
-        self.__tcp_socket.shutdown(socket.SHUT_RDWR)
+        try:
+            self.__tcp_socket.shutdown(socket.SHUT_RDWR)
+        except Exception as e:
+            # TODO: Find out proper exception name here
+            LOGGER.exception("TCP socket endpoint was already closed")
         self.__tcp_socket.close()
 
     def send(self, data: bytearray):
         try:
-            # with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-            #        acquired:
-            #    if not acquired:
-            #        LOGGER.warning("Acquiring socket lock failed!")
-            #    print("hello send")
-            LOGGER.debug(f"sending packet with len {len(data)}")
-            # self.__tcp_socket.connect(self.send_address)
             self.__tcp_socket.sendto(data, self.send_address)
-            # self.__tcp_socket.shutdown(socket.SHUT_WR)
-            # self.__receive_tm_packets(self.__tcp_socket)
-            # self.__last_connection_time = time.time()
-            # tcp_socket.close()
         except ConnectionRefusedError:
             LOGGER.warning("TCP connection attempt failed..")
 
@@ -137,19 +130,9 @@ class TcpIpTcpComIF(CommunicationInterface):
         return tm_packet_list
 
     def __tcp_tm_client(self):
-        LOGGER.debug("hello")
         while True and not self.__tm_thread_kill_signal.is_set():
-            # if time.time() - self.__last_connection_time >= self.tm_polling_frequency:
             try:
-                # with acquire_timeout(self.__socket_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                #        acquired:
-                #    if not acquired:
-                #        LOGGER.warning("Acquiring socket lock in periodic handler failed!")
-                # tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                # tcp_socket.connect(self.send_address)
-                # tcp_socket.shutdown(socket.SHUT_WR)
                 self.__receive_tm_packets()
-                # self.__last_connection_time = time.time()
             except ConnectionRefusedError:
                 LOGGER.warning("TCP connection attempt failed..")
             time.sleep(self.TM_LOOP_DELAY)
