@@ -9,7 +9,7 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class KeepAlivePdu():
-    """This is a file directive PDU"""
+    """Encapsulates the Keep Alive file directive PDU, see CCSDS 727.0-B-5 p.85"""
 
     def __init__(
         self,
@@ -18,8 +18,6 @@ class KeepAlivePdu():
         direction: Direction,
         trans_mode: TransmissionModes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-        len_transaction_seq_num=LenInBytes.GLOBAL,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.KEEP_ALIVE_PDU,

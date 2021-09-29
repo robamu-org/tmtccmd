@@ -10,7 +10,7 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class EofPdu():
-    """This is a file directive PDU"""
+    """Encapsulates the EOF file directive PDU, see CCSDS 727.0-B-5 p.79"""
     MINIMAL_LENGTH = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1 + 4 + 4
 
     def __init__(
@@ -19,19 +19,21 @@ class EofPdu():
         file_size: int,
         direction: Direction,
         trans_mode: TransmissionModes,
+        transaction_seq_num: bytes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
         fault_location: CfdpTlv = None,
         condition_code: ConditionCode = ConditionCode.NO_ERROR,
-        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-        len_transaction_seq_num=LenInBytes.GLOBAL,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.EOF_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.condition_code = condition_code
         self.file_checksum = file_checksum
@@ -44,7 +46,10 @@ class EofPdu():
             file_checksum=None,
             file_size=None,
             direction=None,
-            trans_mode=None
+            trans_mode=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None,
         )
 
     def pack(self) -> bytearray:

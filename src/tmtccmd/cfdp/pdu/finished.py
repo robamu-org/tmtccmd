@@ -22,7 +22,7 @@ class FileDeliveryStatus(enum.IntEnum):
 
 
 class FinishedPdu():
-    """This is a file directive PDU"""
+    """Encapsulates the Finished file directive PDU, see CCSDS 727.0-B-5 p.80"""
     MINIMAL_LEN = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1
 
     def __init__(
@@ -31,20 +31,23 @@ class FinishedPdu():
             delivery_code: DeliveryCode,
             file_delivery_status: FileDeliveryStatus,
             trans_mode: TransmissionModes,
+            transaction_seq_num: bytes,
+            crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
+            source_entity_id: bytes = bytes(),
+            dest_entity_id: bytes = bytes(),
             condition_code: ConditionCode = ConditionCode.NO_ERROR,
             file_store_responses: List[CfdpTlv] = [],
             fault_location: CfdpTlv = None,
-            crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-            len_entity_id: LenInBytes = LenInBytes.NONE,
-            len_transaction_seq_num: LenInBytes = LenInBytes.NONE
+
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.FINISHED_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.condition_code = condition_code
         self.delivery_code = delivery_code
@@ -63,7 +66,10 @@ class FinishedPdu():
             delivery_code=None,
             file_delivery_status=None,
             trans_mode=None,
-            condition_code=None
+            condition_code=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None,
         )
 
     def pack(self) -> bytearray:

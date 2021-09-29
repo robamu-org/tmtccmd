@@ -6,7 +6,8 @@ from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.cfdp.conf import get_default_length_entity_id, \
-    get_default_length_transaction_seq_num, get_default_pdu_crc_mode
+    get_default_length_transaction_seq_num, get_default_pdu_crc_mode, \
+    get_default_source_entity_id, get_default_dest_entity_id
 
 
 LOGGER = get_console_logger()
@@ -77,9 +78,9 @@ class PduHeader:
             direction: Direction,
             trans_mode: TransmissionModes,
             segment_metadata_flag: SegmentMetadataFlag,
-            source_entity_id: bytes,
             transaction_seq_num: bytes,
-            dest_entity_id: bytes,
+            source_entity_id: bytes = bytes(),
+            dest_entity_id: bytes = bytes(),
             crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
             seg_ctrl: SegmentationControl = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION,
     ):
@@ -90,12 +91,14 @@ class PduHeader:
         :param direction:
         :param trans_mode:
         :param segment_metadata_flag:
-        :param source_entity_id:
         :param transaction_seq_num:
-        :param dest_entity_id:
+        :param source_entity_id: If an empty bytearray is passed, the configured default value
+        in the CFDP conf module will be used
+        :param dest_entity_id: If an empty bytearray is passed, the configured default value
+        in the CFDP conf module will be used
         :param crc_flag: If not supplied, assign the default configuration
         :param seg_ctrl:
-        :raise ValueError: If some field are invalid
+        :raise ValueError: If some field are invalid or default values were unset
         """
         self.pdu_type = pdu_type
         self.direction = direction
@@ -105,6 +108,22 @@ class PduHeader:
         self.segmentation_control = seg_ctrl
 
         self.len_entity_id = 0
+        if source_entity_id == bytes():
+            source_entity_id = get_default_source_entity_id()
+            if source_entity_id == bytes():
+                LOGGER.warning(
+                    'Can not set default value for source entity ID '
+                    'because it has not been set yet'
+                )
+                raise ValueError
+        if dest_entity_id == bytes():
+            dest_entity_id = get_default_dest_entity_id()
+            if dest_entity_id == bytes():
+                LOGGER.warning(
+                    'Can not set default value for destination entity ID '
+                    'because it has not been set yet'
+                )
+                raise ValueError
         if source_entity_id is not None and dest_entity_id is not None:
             try:
                 self.len_entity_id = self.check_len_in_bytes(len(source_entity_id))
@@ -123,7 +142,6 @@ class PduHeader:
             except ValueError:
                 LOGGER.warning('Invalid length of transaction sequence number passed')
                 raise ValueError
-
         if crc_flag == CrcFlag.GLOBAL_CONFIG:
             self.crc_flag = get_default_pdu_crc_mode()
         else:

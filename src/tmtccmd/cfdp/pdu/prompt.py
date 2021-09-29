@@ -20,17 +20,17 @@ class PromptPdu():
         # PDU file directive arguments
         direction: Direction,
         trans_mode: TransmissionModes,
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-        len_transaction_seq_num: LenInBytes = LenInBytes.GLOBAL,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.PROMPT_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id,
         )
         self.response_required = reponse_required
 

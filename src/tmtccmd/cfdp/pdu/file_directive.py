@@ -47,15 +47,25 @@ class FileDirectivePduBase:
             # PDU Header parameters
             direction: Direction,
             trans_mode: TransmissionModes,
-            source_entity_id: bytes,
-            dest_entity_id: bytes,
             transaction_seq_num: bytes,
+            source_entity_id: bytes = bytes(),
+            dest_entity_id: bytes = bytes(),
             crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-            len_transaction_seq_num: LenInBytes = LenInBytes.GLOBAL,
-            len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-            # Not present because it is only relevant for non-file-directive PDUs
-            segment_metadata_flag: SegmentMetadataFlag = SegmentMetadataFlag.NOT_PRESENT
     ):
+        """Generic constructor for a file directive PDU. Most arguments are passed on the
+        to build the generic PDU header.
+
+        :param directive_code:
+        :param direction:
+        :param trans_mode:
+        :param transaction_seq_num:
+        :param source_entity_id: If an empty bytearray is passed, the configured default value
+        in the CFDP conf module will be used
+        :param dest_entity_id: If an empty bytearray is passed, the configured default value
+        in the CFDP conf module will be used
+        :param crc_flag:
+        :param segment_metadata_flag:
+        """
         self.pdu_header = PduHeader(
             pdu_type=PduType.FILE_DIRECTIVE,
             direction=direction,
@@ -64,7 +74,8 @@ class FileDirectivePduBase:
             source_entity_id=source_entity_id,
             dest_entity_id=dest_entity_id,
             transaction_seq_num=transaction_seq_num,
-            segment_metadata_flag=segment_metadata_flag
+            # This flag is not relevant for file directive PDUs
+            segment_metadata_flag=SegmentMetadataFlag.NOT_PRESENT
         )
         self.directive_code = directive_code
 

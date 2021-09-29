@@ -19,6 +19,8 @@ class TransactionStatus(enum.IntEnum):
 
 
 class AckPdu():
+    """Encapsulates the ACK file directive PDU, see CCSDS 727.0-B-5 p.81"""
+
     def __init__(
         self,
         directive_code_of_acked_pdu: DirectiveCodes,
@@ -26,17 +28,33 @@ class AckPdu():
         transaction_status: TransactionStatus,
         direction: Direction,
         trans_mode: TransmissionModes,
+        transaction_seq_num: bytes,
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.NONE,
-        len_transaction_seq_num=LenInBytes.NONE,
     ):
+        """Construct a ACK PDU object
+
+        :param directive_code_of_acked_pdu:
+        :param condition_code_of_acked_pdu:
+        :param transaction_status:
+        :param direction:
+        :param trans_mode:
+        :param transaction_seq_num:
+        :param source_entity_id: If an empty bytearray is passed, the configured default value
+        in the CFDP conf module will be used
+        :param dest_entity_id: If an empty bytearray is passed, the configured default value
+        in the CFDP conf module will be used
+        :param crc_flag:
+        """
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.ACK_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.directive_code_of_acked_pdu = directive_code_of_acked_pdu
         self.directive_subtype_code = 0
