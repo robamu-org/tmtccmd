@@ -13,7 +13,7 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class MetadataPdu():
-    """This is a file directive PDU"""
+    """Encapsulates the Keep Alive file directive PDU, see CCSDS 727.0-B-5 p.83"""
 
     def __init__(
         self,
@@ -24,18 +24,20 @@ class MetadataPdu():
         dest_file_name: str,
         direction: Direction,
         trans_mode: TransmissionModes,
+        transaction_seq_num: bytes,
         options: List[CfdpTlv] = [],
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-        len_transaction_seq_num=LenInBytes.GLOBAL,
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.METADATA_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.closure_requested = closure_requested
         self.checksum_type = checksum_type
@@ -59,7 +61,10 @@ class MetadataPdu():
             source_file_name="",
             dest_file_name="",
             direction=None,
-            trans_mode=None
+            trans_mode=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None
         )
 
     def pack(self):

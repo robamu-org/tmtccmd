@@ -77,9 +77,9 @@ class EofPdu():
         expected_min_len = cls.MINIMAL_LENGTH
         if not check_packet_length(raw_packet_len=len(raw_packet), min_len=expected_min_len):
             raise ValueError
-        current_idx = eof_pdu.pdu_file_directive.get_len()
+        current_idx = eof_pdu.pdu_file_directive.get_packet_len()
         eof_pdu.condition_code = raw_packet[current_idx] & 0xf0
-        expected_min_len = eof_pdu.pdu_file_directive.get_len() + 5
+        expected_min_len = current_idx + 5
         current_idx += 1
         checksum_raw = raw_packet[current_idx: current_idx + 4]
         eof_pdu.file_checksum = struct.unpack('!I', checksum_raw)[0]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import enum
+import struct
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, Direction, \
     TransmissionModes, CrcFlag, ConditionCode, SegmentMetadataFlag
@@ -34,18 +35,19 @@ class FileDataPdu():
         # PDU header arguments
         direction: Direction,
         trans_mode: TransmissionModes,
+        transaction_seq_num: bytes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-        len_transaction_seq_num: LenInBytes = LenInBytes.GLOBAL,
-
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
     ):
         self.pdu_header = PduHeader(
             segment_metadata_flag=segment_metadata_flag,
             crc_flag=crc_flag,
             direction=direction,
             trans_mode=trans_mode,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.record_continuation_state = record_continuation_state
         self.segment_metadata_length = len(segment_metadata)
@@ -65,7 +67,10 @@ class FileDataPdu():
             trans_mode=None,
             start_of_scope=None,
             end_of_scope=None,
-            segment_requests=None
+            segment_requests=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None
         )
 
     def pack(self) -> bytearray:
@@ -87,7 +92,27 @@ class FileDataPdu():
     def unpack(cls, raw_packet: bytearray) -> FileDataPdu:
         file_data_packet = cls.__empty()
         file_data_packet.pdu_header.unpack(raw_packet=raw_packet)
-        current_idx = file_data_packet.pdu_header
+        current_idx = file_data_packet.pdu_header.get_packet_len()
         if file_data_packet.pdu_header.segment_metadata_flag:
-            pass
+            file_data_packet.record_continuation_state = raw_packet[current_idx] & 0x80
+            file_data_packet.segment_metadata_length = raw_packet[current_idx] & 0x3f
+            current_idx += 1
+            if current_idx + file_data_packet.segment_metadata_length >= len(raw_packet):
+                LOGGER.warning('Packet too short for detected segment datalength size')
+                raise ValueError
+            file_data_packet.segment_metadata = \
+                raw_packet[current_idx: current_idx + file_data_packet.segment_metadata_length]
+        if not file_data_packet.pdu_header.large_file:
+            struct_arg_tuple = ('!I', 4)
+        else:
+            struct_arg_tuple = ('!Q', 8)
+        if current_idx + struct_arg_tuple[1] >= len(raw_packet):
+            LOGGER.warning('Packet too small to accomodate offset')
+            raise ValueError
+        file_data_packet.offset = struct.unpack(
+            struct_arg_tuple[0], raw_packet[current_idx: current_idx + struct_arg_tuple[1]]
+        )
+        current_idx += struct_arg_tuple[1]
+        if current_idx < len(raw_packet):
+            file_data_packet.file_data = raw_packet[current_idx:]
         return file_data_packet

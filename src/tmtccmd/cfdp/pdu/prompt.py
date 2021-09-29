@@ -12,7 +12,7 @@ class ResponseRequired(enum.IntEnum):
 
 
 class PromptPdu():
-    """This is a file directive PDU"""
+    """Encapsulates the Prompt file directive PDU, see CCSDS 727.0-B-5 p.84"""
 
     def __init__(
         self,
@@ -20,6 +20,7 @@ class PromptPdu():
         # PDU file directive arguments
         direction: Direction,
         trans_mode: TransmissionModes,
+        transaction_seq_num: bytes,
         source_entity_id: bytes = bytes(),
         dest_entity_id: bytes = bytes(),
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
@@ -29,6 +30,7 @@ class PromptPdu():
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
+            transaction_seq_num=transaction_seq_num,
             source_entity_id=source_entity_id,
             dest_entity_id=dest_entity_id,
         )
@@ -42,7 +44,10 @@ class PromptPdu():
             trans_mode=None,
             start_of_scope=None,
             end_of_scope=None,
-            segment_requests=None
+            segment_requests=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None
         )
 
     def pack(self) -> bytearray:
@@ -54,6 +59,6 @@ class PromptPdu():
     def unpack(cls, raw_packet: bytearray) -> PromptPdu:
         prompt_pdu = cls.__empty()
         prompt_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        current_idx = prompt_pdu.pdu_file_directive.get_len()
+        current_idx = prompt_pdu.pdu_file_directive.get_packet_len()
         prompt_pdu.response_required = raw_packet[current_idx] & 0x80
         return prompt_pdu

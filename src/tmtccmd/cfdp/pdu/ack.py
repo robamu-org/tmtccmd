@@ -84,7 +84,7 @@ class AckPdu():
     def unpack(cls, raw_packet: bytearray) -> AckPdu:
         ack_packet = cls.__empty()
         ack_packet.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        current_idx = ack_packet.pdu_file_directive.get_len()
+        current_idx = ack_packet.pdu_file_directive.get_packet_len()
         ack_packet.directive_code_of_acked_pdu = raw_packet[current_idx] & 0xf0
         ack_packet.directive_subtype_code = raw_packet[current_idx] & 0x0f
         current_idx += 1

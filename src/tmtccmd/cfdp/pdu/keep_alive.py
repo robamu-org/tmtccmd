@@ -17,15 +17,19 @@ class KeepAlivePdu():
         # PDU file directive arguments
         direction: Direction,
         trans_mode: TransmissionModes,
+        transaction_seq_num: bytes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.KEEP_ALIVE_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.progress = progress
 
@@ -37,7 +41,10 @@ class KeepAlivePdu():
             trans_mode=None,
             start_of_scope=None,
             end_of_scope=None,
-            segment_requests=None
+            segment_requests=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None
         )
 
     def pack(self) -> bytearray:
@@ -54,7 +61,7 @@ class KeepAlivePdu():
     def unpack(cls, raw_packet: bytearray) -> KeepAlivePdu:
         keep_alive_pdu = cls.__empty()
         keep_alive_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        current_idx = keep_alive_pdu.pdu_file_directive.get_len()
+        current_idx = keep_alive_pdu.pdu_file_directive.get_packet_len()
         if not keep_alive_pdu.pdu_file_directive.pdu_header.large_file:
             struct_arg_tuple = ('!I', 4)
         else:

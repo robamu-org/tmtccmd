@@ -11,7 +11,7 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class NakPdu():
-    """This is a file directive PDU"""
+    """Encapsulates the NAK file directive PDU, see CCSDS 727.0-B-5 p.84"""
 
     def __init__(
         self,
@@ -21,17 +21,19 @@ class NakPdu():
         direction: Direction,
         trans_mode: TransmissionModes,
         segment_requests: List[Tuple[int, int]],
+        transaction_seq_num: bytes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
-        len_transaction_seq_num=LenInBytes.GLOBAL,
+        source_entity_id: bytes = bytes(),
+        dest_entity_id: bytes = bytes(),
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.ACK_PDU,
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            transaction_seq_num=transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id
         )
         self.start_of_scope = start_of_scope
         self.end_of_scope = end_of_scope
@@ -44,7 +46,10 @@ class NakPdu():
             trans_mode=None,
             start_of_scope=None,
             end_of_scope=None,
-            segment_requests=None
+            segment_requests=None,
+            transaction_seq_num=None,
+            source_entity_id=None,
+            dest_entity_id=None
         )
 
     def pack(self) -> bytearray:
@@ -67,7 +72,7 @@ class NakPdu():
     def unpack(cls, raw_packet: bytearray) -> NakPdu:
         nak_pdu = cls.__empty()
         nak_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        current_idx = nak_pdu.pdu_file_directive.get_len()
+        current_idx = nak_pdu.pdu_file_directive.get_packet_len()
         if not nak_pdu.pdu_file_directive.pdu_header.large_file:
             struct_arg_tuple = ('!I', 4)
         else:

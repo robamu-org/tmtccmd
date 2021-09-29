@@ -45,7 +45,7 @@ def get_default_pdu_crc_mode() -> bool:
 
 
 def set_default_dest_entity_id(default_dest_id: bytes):
-    __CFDP_DICT[CfdpConfKeys.DEFAULT_DESTINATION_ENTITY_ID] = default_entity_id
+    __CFDP_DICT[CfdpConfKeys.DEFAULT_DESTINATION_ENTITY_ID] = default_dest_id
 
 
 def get_default_dest_entity_id() -> bytes:
