@@ -9,6 +9,8 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class KeepAlivePdu():
+    """This is a file directive PDU"""
+
     def __init__(
         self,
         progress: int,
@@ -16,8 +18,8 @@ class KeepAlivePdu():
         direction: Direction,
         trans_mode: TransmissionModes,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.NONE,
-        len_transaction_seq_num=LenInBytes.NONE,
+        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
+        len_transaction_seq_num=LenInBytes.GLOBAL,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.KEEP_ALIVE_PDU,

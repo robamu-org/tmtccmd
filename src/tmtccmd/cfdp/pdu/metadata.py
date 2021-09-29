@@ -13,6 +13,8 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class MetadataPdu():
+    """This is a file directive PDU"""
+
     def __init__(
         self,
         closure_requested: bool,
@@ -24,8 +26,8 @@ class MetadataPdu():
         trans_mode: TransmissionModes,
         options: List[CfdpTlv] = [],
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
-        len_entity_id: LenInBytes = LenInBytes.NONE,
-        len_transaction_seq_num=LenInBytes.NONE,
+        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
+        len_transaction_seq_num=LenInBytes.GLOBAL,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.METADATA_PDU,

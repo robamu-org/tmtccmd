@@ -22,6 +22,7 @@ class FileDeliveryStatus(enum.IntEnum):
 
 
 class FinishedPdu():
+    """This is a file directive PDU"""
     MINIMAL_LEN = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1
 
     def __init__(

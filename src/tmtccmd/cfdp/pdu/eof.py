@@ -10,6 +10,7 @@ from tmtccmd.ccsds.log import LOGGER
 
 
 class EofPdu():
+    """This is a file directive PDU"""
     MINIMAL_LENGTH = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1 + 4 + 4
 
     def __init__(
@@ -21,8 +22,8 @@ class EofPdu():
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         fault_location: CfdpTlv = None,
         condition_code: ConditionCode = ConditionCode.NO_ERROR,
-        len_entity_id: LenInBytes = LenInBytes.NONE,
-        len_transaction_seq_num=LenInBytes.NONE,
+        len_entity_id: LenInBytes = LenInBytes.GLOBAL,
+        len_transaction_seq_num=LenInBytes.GLOBAL,
     ):
         self.pdu_file_directive = FileDirectivePduBase(
             directive_code=DirectiveCodes.EOF_PDU,

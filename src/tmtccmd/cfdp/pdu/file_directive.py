@@ -2,7 +2,8 @@ from __future__ import annotations
 import enum
 import struct
 
-from tmtccmd.cfdp.pdu.header import PduHeader, PduType, Direction, CrcFlag, TransmissionModes
+from tmtccmd.cfdp.pdu.header import PduHeader, PduType, Direction, CrcFlag, TransmissionModes, \
+    SegmentMetadataFlag
 from tmtccmd.cfdp.conf import check_packet_length
 from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.ccsds.log import LOGGER
@@ -46,9 +47,14 @@ class FileDirectivePduBase:
             # PDU Header parameters
             direction: Direction,
             trans_mode: TransmissionModes,
-            crc_flag: CrcFlag,
-            len_entity_id: LenInBytes = LenInBytes.NONE,
-            len_transaction_seq_num: LenInBytes = LenInBytes.NONE,
+            source_entity_id: bytes,
+            dest_entity_id: bytes,
+            transaction_seq_num: bytes,
+            crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
+            len_transaction_seq_num: LenInBytes = LenInBytes.GLOBAL,
+            len_entity_id: LenInBytes = LenInBytes.GLOBAL,
+            # Not present because it is only relevant for non-file-directive PDUs
+            segment_metadata_flag: SegmentMetadataFlag = SegmentMetadataFlag.NOT_PRESENT
     ):
         self.pdu_header = PduHeader(
             pdu_type=PduType.FILE_DIRECTIVE,
@@ -56,7 +62,8 @@ class FileDirectivePduBase:
             trans_mode=trans_mode,
             crc_flag=crc_flag,
             len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num
+            len_transaction_seq_num=len_transaction_seq_num,
+            segment_metadata_flag=segment_metadata_flag
         )
         self.directive_code = directive_code
 
@@ -72,8 +79,11 @@ class FileDirectivePduBase:
             crc_flag=None
         )
 
-    def get_len(self) -> int:
-        return self.FILE_DIRECTIVE_PDU_LEN
+    def get_packet_len(self) -> int:
+        """Get length of the packet when packing it
+        :return:
+        """
+        return self.pdu_header.get_len() + 1
 
     def pack(self) -> bytearray:
         data = bytearray()
