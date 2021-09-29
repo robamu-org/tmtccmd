@@ -66,11 +66,11 @@ def get_transaction_seq_num_as_bytes(
 
 
 class PduHeader:
+    """This class encapsulates the fixed-format PDU header.
+    For more, information, refer to CCSDS 727.0-B-5 p.75"""
     VERSION_BITS = 0b0010_0000
     FIXED_LENGTH = 4
 
-    """This class encapsulates the fixed-format PDU header.
-    For more, information, refer to CCSDS 727.0-B-5 p.75"""
     def __init__(
             self,
             pdu_type: PduType,
@@ -107,8 +107,8 @@ class PduHeader:
         self.len_entity_id = 0
         if source_entity_id is not None and dest_entity_id is not None:
             try:
-                self.len_entity_id = LenInBytes(len(source_entity_id))
-                dest_id_check = LenInBytes(len(dest_entity_id))
+                self.len_entity_id = self.check_len_in_bytes(len(source_entity_id))
+                dest_id_check = self.check_len_in_bytes(len(dest_entity_id))
             except ValueError:
                 LOGGER.warning('Invalid length of entity IDs passed')
                 raise ValueError
@@ -119,7 +119,7 @@ class PduHeader:
         self.len_transaction_seq_num = 0
         if transaction_seq_num is not None:
             try:
-                self.len_transaction_seq_num = LenInBytes(len(transaction_seq_num))
+                self.len_transaction_seq_num = self.check_len_in_bytes(len(transaction_seq_num))
             except ValueError:
                 LOGGER.warning('Invalid length of transaction sequence number passed')
                 raise ValueError
@@ -176,7 +176,8 @@ class PduHeader:
 
     @classmethod
     def unpack(cls, raw_packet: bytearray) -> PduHeader:
-        """Unpack a raw bytearray into the PDU header oject representation
+        """Unpack a raw bytearray into the PDU header object representation
+
         :param raw_packet:
         :raise ValueError: Passed bytearray is too short.
         :return:
@@ -192,24 +193,31 @@ class PduHeader:
         pdu_header.large_file = raw_packet[0] & 0x01
         pdu_header.pdu_data_field_length = raw_packet[1] << 8 | raw_packet[2]
         pdu_header.segmentation_control = raw_packet[3] & 0x80
-        pdu_header.len_entity_id = raw_packet[3] & 0x70
+        pdu_header.len_entity_id = cls.check_len_in_bytes(raw_packet[3] & 0x70)
         pdu_header.segment_metadata_flag = raw_packet[3] & 0x08
-        pdu_header.len_transaction_seq_num = raw_packet[3] & 0x01
+        pdu_header.len_transaction_seq_num = cls.check_len_in_bytes(raw_packet[3] & 0x01)
         expected_remaining_len = 2 * len_entity_id + len_transaction_seq_num
         if len(raw_packet) - cls.FIXED_LENGTH < expected_remaining_len:
             LOGGER.warning('Raw packet too small for PDU header')
             raise ValueError
+        current_idx = 4
+        pdu_header.source_entity_id = \
+            raw_packet[current_idx: current_idx + pdu_header.len_entity_id]
+        current_idx += pdu_header.len_entity_id
+        pdu_header.transaction_seq_num = \
+            raw_packet[current_idx: current_idx + pdu_header.len_transaction_seq_num]
+        current_idx += pdu_header.len_transaction_seq_num
+        pdu_header.dest_entity_id = \
+            raw_packet[current_idx: current_idx + pdu_header.len_entity_id]
+        return pdu_header
 
-
-        return cls(
-            pdu_type=pdu_type,
-            direction=direction,
-            trans_mode=trans_mode,
-            crc_flag=crc_flag,
-            large_file=large_file,
-            pdu_data_field_length=pdu_data_field_length,
-            segmentation_control=segmentation_control,
-            len_entity_id=len_entity_id,
-            segment_metadata_flag=segment_metadata_flag,
-            len_transaction_seq_num=len_transaction_seq_num
-        )
+    @staticmethod
+    def check_len_in_bytes(detected_len: int) -> LenInBytes:
+        try:
+            len_in_bytes = LenInBytes(detected_len)
+        except ValueError:
+            LOGGER.warning(
+                'Unsupported length field detected. '
+                'Only 1, 2, 4 and 8 bytes are supported'
+            )
+            return ValueError
