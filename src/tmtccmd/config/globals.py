@@ -260,8 +260,10 @@ def check_and_set_core_service_arg(
         service_arg_invalid = True
 
     if service_arg_invalid:
-        LOGGER.warning(f"Passed service argument might be invalid, "
-                       f"setting to {CoreServiceList.SERVICE_17}")
+        LOGGER.warning(
+            f"Passed service argument might be invalid, "
+            f"setting to {CoreServiceList.SERVICE_17}"
+        )
         service_value = CoreServiceList.SERVICE_17
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
 
