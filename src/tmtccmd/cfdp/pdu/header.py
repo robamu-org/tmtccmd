@@ -92,8 +92,8 @@ class PduHeader:
             self.crc_flag = crc_flag
         self.segment_metadata_flag = segment_metadata_flag
 
-    def set_large_file_flag(self):
-        self.large_file = True
+    def set_large_file_flag(self, large: bool):
+        self.large_file = large
 
     def set_pdu_data_field_length(self, new_length: int):
         self.pdu_data_field_length = new_length

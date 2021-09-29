@@ -60,6 +60,9 @@ class FileDirectivePduBase:
         )
         self.directive_code = directive_code
 
+    def set_large_file_flag(self, large: bool):
+        self.pdu_header.set_large_file_flag(large=large)
+
     @classmethod
     def __empty(cls) -> FileDirectivePduBase:
         return cls(

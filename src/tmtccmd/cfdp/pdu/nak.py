@@ -13,10 +13,11 @@ from tmtccmd.ccsds.log import LOGGER
 class NakPdu():
     def __init__(
         self,
-        direction: Direction,
-        trans_mode: TransmissionModes,
         start_of_scope: int,
         end_of_scope: int,
+        # PDU file directive arguments
+        direction: Direction,
+        trans_mode: TransmissionModes,
         segment_requests: List[Tuple[int, int]],
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         len_entity_id: LenInBytes = LenInBytes.NONE,
