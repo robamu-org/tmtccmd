@@ -7,6 +7,7 @@ from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes
     ConditionCode
 from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
 from tmtccmd.cfdp.conf import LenInBytes
+from tmtccmd.ccsds.log import LOGGER
 
 
 class NakPdu():
@@ -64,4 +65,39 @@ class NakPdu():
         nak_pdu = cls.__empty()
         nak_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
         current_idx = nak_pdu.pdu_file_directive.get_len()
-        # TODO: Implement
+        if not nak_pdu.pdu_file_directive.pdu_header.large_file:
+            struct_arg_tuple = ('!I', 4)
+        else:
+            struct_arg_tuple = ('!Q', 8)
+        nak_pdu.start_of_scope = struct.unpack(
+            struct_arg_tuple[0], raw_packet[current_idx: current_idx + struct_arg_tuple[1]]
+        )
+        current_idx += struct_arg_tuple[1]
+        nak_pdu.end_of_scope = struct.unpack(
+            struct_arg_tuple[0], raw_packet[current_idx: current_idx + struct_arg_tuple[1]]
+        )
+        current_idx += struct_arg_tuple[1]
+        if current_idx < len(raw_packet):
+            packet_size_check = ((len(raw_packet) - current_idx) % (struct_arg_tuple[1] * 2))
+            if packet_size_check != 0:
+                if current_idx >= len(raw_packet):
+                    LOGGER.warning(
+                        f'Invalid size for remaining data, '
+                        f'which should be a multiple of {struct_arg_tuple[1] * 2}'
+                    )
+                    raise ValueError
+            nak_pdu.segment_requests = []
+            while current_idx < len(raw_packet):
+                tuple_entry = (0, 0)
+                tuple_entry[0] = (
+                    struct.unpack(
+                        struct_arg_tuple[0],
+                        raw_packet[current_idx: current_idx + struct_arg_tuple[1]])
+                )
+                current_idx += struct_arg_tuple[1]
+                tuple_entry[1] = (
+                    struct.unpack(
+                        struct_arg_tuple[0],
+                        raw_packet[current_idx: current_idx + struct_arg_tuple[1]])
+                )
+                nak_pdu.segment_requests.append(tuple_entry)
