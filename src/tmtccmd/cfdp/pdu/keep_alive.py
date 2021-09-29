@@ -54,8 +54,8 @@ class KeepAlivePdu():
     def unpack(cls, raw_packet: bytearray) -> KeepAlivePdu:
         keep_alive_pdu = cls.__empty()
         keep_alive_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        current_idx = prompt_pdu.pdu_file_directive.get_len()
-        if not nak_pdu.pdu_file_directive.pdu_header.large_file:
+        current_idx = keep_alive_pdu.pdu_file_directive.get_len()
+        if not keep_alive_pdu.pdu_file_directive.pdu_header.large_file:
             struct_arg_tuple = ('!I', 4)
         else:
             struct_arg_tuple = ('!Q', 8)
