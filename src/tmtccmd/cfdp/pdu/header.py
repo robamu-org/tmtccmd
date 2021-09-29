@@ -196,7 +196,7 @@ class PduHeader:
         pdu_header.len_entity_id = cls.check_len_in_bytes(raw_packet[3] & 0x70)
         pdu_header.segment_metadata_flag = raw_packet[3] & 0x08
         pdu_header.len_transaction_seq_num = cls.check_len_in_bytes(raw_packet[3] & 0x01)
-        expected_remaining_len = 2 * len_entity_id + len_transaction_seq_num
+        expected_remaining_len = 2 * pdu_header.len_entity_id + pdu_header.len_transaction_seq_num
         if len(raw_packet) - cls.FIXED_LENGTH < expected_remaining_len:
             LOGGER.warning('Raw packet too small for PDU header')
             raise ValueError
