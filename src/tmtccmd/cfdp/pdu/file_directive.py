@@ -61,8 +61,9 @@ class FileDirectivePduBase:
             direction=direction,
             trans_mode=trans_mode,
             crc_flag=crc_flag,
-            len_entity_id=len_entity_id,
-            len_transaction_seq_num=len_transaction_seq_num,
+            source_entity_id=source_entity_id,
+            dest_entity_id=dest_entity_id,
+            transaction_seq_num=transaction_seq_num,
             segment_metadata_flag=segment_metadata_flag
         )
         self.directive_code = directive_code
