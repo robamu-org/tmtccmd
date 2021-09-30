@@ -70,7 +70,7 @@ On Ubuntu, if `pip` is not installed yet, you can install it with
 sudo apt-get install python3-pip
 ```
 
-It is recommended to use Python 3.8.
+The minimum allowed Python version is 3.8.
 For developers, it is recommended to add this repostiory as a submodule
 with the following command:
 
