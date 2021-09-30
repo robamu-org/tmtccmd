@@ -104,25 +104,21 @@ class PduHeader:
         self.pdu_data_field_length = data_field_length
         self.segmentation_control = seg_ctrl
 
+        self.source_entity_id = source_entity_id
+        self.dest_entity_id = dest_entity_id
         self.len_entity_id = 0
         self.set_entity_ids(source_entity_id=source_entity_id, dest_entity_id=dest_entity_id)
 
+        self.transaction_seq_num = transaction_seq_num
         self.len_transaction_seq_num = 0
-        if transaction_seq_num is not None:
-            try:
-                self.len_transaction_seq_num = self.check_len_in_bytes(len(transaction_seq_num))
-            except ValueError:
-                LOGGER.warning('Invalid length of transaction sequence number passed')
-                raise ValueError
+        self.set_transaction_seq_num(transaction_seq_num=transaction_seq_num)
+
         self.large_file = large_file
         self.set_file_size(file_size=self.large_file)
         self.crc_flag = crc_flag
         self.set_crc_flag(crc_flag=crc_flag)
 
         self.segment_metadata_flag = segment_metadata_flag
-        self.source_entity_id = source_entity_id
-        self.transaction_seq_num = transaction_seq_num
-        self.dest_entity_id = dest_entity_id
 
     def set_entity_ids(self, source_entity_id: bytes, dest_entity_id: bytes):
         """Both IDs must be set at once because they must have the same length as well
@@ -138,8 +134,8 @@ class PduHeader:
                     'because it has not been set yet'
                 )
                 raise ValueError
-            self.source_entity_id = source_entity_id
-            self.dest_entity_id = dest_entity_id
+        self.source_entity_id = source_entity_id
+        self.dest_entity_id = dest_entity_id
         try:
             self.len_entity_id = self.check_len_in_bytes(len(source_entity_id))
             dest_id_check = self.check_len_in_bytes(len(dest_entity_id))
@@ -149,6 +145,15 @@ class PduHeader:
         if dest_id_check != self.len_entity_id:
             LOGGER.warning('Length of destination ID and source ID are not the same')
             raise ValueError
+
+    def set_transaction_seq_num(self, transaction_seq_num: bytes):
+        if transaction_seq_num is not None:
+            try:
+                self.len_transaction_seq_num = self.check_len_in_bytes(len(transaction_seq_num))
+            except ValueError:
+                LOGGER.warning('Invalid length of transaction sequence number passed')
+                raise ValueError
+        self.transaction_seq_num = transaction_seq_num
 
     def set_file_size(self, file_size: FileSize):
         if file_size == FileSize.GLOBAL_CONFIG:
@@ -162,10 +167,14 @@ class PduHeader:
         else:
             self.crc_flag = crc_flag
 
-    def set_large_file_flag(self, large: bool):
-        self.large_file = large
-
     def set_pdu_data_field_length(self, new_length: int):
+        """Set tHE PDU data field length
+        :param new_length:
+        :raises ValueError: Value too large
+        :return:
+        """
+        if new_length > pow(2, 16) - 1:
+            raise ValueError
         self.pdu_data_field_length = new_length
 
     def get_packet_len(self) -> int:
@@ -194,6 +203,8 @@ class PduHeader:
         return cls(
             pdu_type=PduType.FILE_DIRECTIVE,
             trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            source_entity_id=bytes([0]),
+            dest_entity_id=bytes([0]),
             segment_metadata_flag=SegmentMetadataFlag.NOT_PRESENT,
             transaction_seq_num=bytes([0])
         )
@@ -210,16 +221,16 @@ class PduHeader:
             LOGGER.warning('Can not unpack less than four bytes into PDU header')
             raise ValueError
         pdu_header = cls.__empty()
-        pdu_header.pdu_type = raw_packet[0] & 0x10
-        pdu_header.direction = raw_packet[0] & 0x08
-        pdu_header.trans_mode = raw_packet[0] & 0x04
-        pdu_header.crc_flag = raw_packet[0] & 0x02
+        pdu_header.pdu_type = (raw_packet[0] & 0x10) >> 4
+        pdu_header.direction = (raw_packet[0] & 0x08) >> 3
+        pdu_header.trans_mode = (raw_packet[0] & 0x04) >> 2
+        pdu_header.crc_flag = (raw_packet[0] & 0x02) >> 1
         pdu_header.large_file = raw_packet[0] & 0x01
         pdu_header.pdu_data_field_length = raw_packet[1] << 8 | raw_packet[2]
-        pdu_header.segmentation_control = raw_packet[3] & 0x80
-        pdu_header.len_entity_id = cls.check_len_in_bytes(raw_packet[3] & 0x70)
-        pdu_header.segment_metadata_flag = raw_packet[3] & 0x08
-        pdu_header.len_transaction_seq_num = cls.check_len_in_bytes(raw_packet[3] & 0x01)
+        pdu_header.segmentation_control = (raw_packet[3] & 0x80) >> 7
+        pdu_header.len_entity_id = cls.check_len_in_bytes((raw_packet[3] & 0x70) >> 4)
+        pdu_header.segment_metadata_flag = (raw_packet[3] & 0x08) >> 3
+        pdu_header.len_transaction_seq_num = cls.check_len_in_bytes(raw_packet[3] & 0x07)
         expected_remaining_len = 2 * pdu_header.len_entity_id + pdu_header.len_transaction_seq_num
         if len(raw_packet) - cls.FIXED_LENGTH < expected_remaining_len:
             LOGGER.warning('Raw packet too small for PDU header')
