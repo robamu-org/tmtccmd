@@ -98,7 +98,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__tcp_conn_thread.join(self.tm_polling_frequency)
         try:
             self.__tcp_socket.shutdown(socket.SHUT_RDWR)
-        except Exception as e:
+        except Exception:
             # TODO: Find out proper exception name here
             LOGGER.exception("TCP socket endpoint was already closed")
         self.__tcp_socket.close()

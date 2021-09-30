@@ -105,6 +105,25 @@ class PduHeader:
         self.segmentation_control = seg_ctrl
 
         self.len_entity_id = 0
+        self.__assign_entity_ids(source_entity_id=source_entity_id, dest_entity_id=dest_entity_id)
+
+        self.len_transaction_seq_num = 0
+        if transaction_seq_num is not None:
+            try:
+                self.len_transaction_seq_num = self.check_len_in_bytes(len(transaction_seq_num))
+            except ValueError:
+                LOGGER.warning('Invalid length of transaction sequence number passed')
+                raise ValueError
+        if crc_flag == CrcFlag.GLOBAL_CONFIG:
+            self.crc_flag = get_default_pdu_crc_mode()
+        else:
+            self.crc_flag = crc_flag
+        self.segment_metadata_flag = segment_metadata_flag
+        self.source_entity_id = source_entity_id
+        self.transaction_seq_num = transaction_seq_num
+        self.dest_entity_id = dest_entity_id
+
+    def __assign_entity_ids(self, source_entity_id: bytes, dest_entity_id: bytes):
         if source_entity_id == bytes():
             source_entity_id = get_default_source_entity_id()
             if source_entity_id == bytes():
@@ -131,22 +150,6 @@ class PduHeader:
             if dest_id_check != self.len_entity_id:
                 LOGGER.warning('Length of destination ID and source ID are not the same')
                 raise ValueError
-
-        self.len_transaction_seq_num = 0
-        if transaction_seq_num is not None:
-            try:
-                self.len_transaction_seq_num = self.check_len_in_bytes(len(transaction_seq_num))
-            except ValueError:
-                LOGGER.warning('Invalid length of transaction sequence number passed')
-                raise ValueError
-        if crc_flag == CrcFlag.GLOBAL_CONFIG:
-            self.crc_flag = get_default_pdu_crc_mode()
-        else:
-            self.crc_flag = crc_flag
-        self.segment_metadata_flag = segment_metadata_flag
-        self.source_entity_id = source_entity_id
-        self.transaction_seq_num = transaction_seq_num
-        self.dest_entity_id = dest_entity_id
 
     def set_large_file_flag(self, large: bool):
         self.large_file = large
