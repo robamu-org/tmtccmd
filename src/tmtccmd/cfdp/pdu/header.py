@@ -2,12 +2,10 @@ from __future__ import annotations
 import enum
 import struct
 
-from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.cfdp.definitions import LenInBytes
-from tmtccmd.cfdp.conf import get_default_length_entity_id, \
-    get_default_length_transaction_seq_num, get_default_pdu_crc_mode, \
-    get_default_source_entity_id, get_default_dest_entity_id
+from tmtccmd.cfdp.conf import get_default_pdu_crc_mode, get_default_source_entity_id, \
+    get_default_dest_entity_id
 
 
 LOGGER = get_console_logger()
@@ -56,13 +54,13 @@ def get_transaction_seq_num_as_bytes(
     :return:
     """
     if byte_length == LenInBytes.ONE_BYTE and transaction_seq_num < 255:
-        return bytes([transaction_seq_num])
+        return bytearray([transaction_seq_num])
     if byte_length == LenInBytes.TWO_BYTES and transaction_seq_num < pow(2, 16) - 1:
-        return struct.pack('!H', transaction_seq_num)
+        return bytearray(struct.pack('!H', transaction_seq_num))
     if byte_length == LenInBytes.FOUR_BYTES and transaction_seq_num < pow(2, 32) - 1:
-        return struct.pack('!I', transaction_seq_num)
+        return bytearray(struct.pack('!I', transaction_seq_num))
     if byte_length == LenInBytes.EIGHT_BYTES and transaction_seq_num < pow(2, 64) - 1:
-        return struct.pack('!Q', transaction_seq_num)
+        return bytearray(struct.pack('!Q', transaction_seq_num))
     raise ValueError
 
 
@@ -75,10 +73,10 @@ class PduHeader:
     def __init__(
             self,
             pdu_type: PduType,
-            direction: Direction,
             trans_mode: TransmissionModes,
             segment_metadata_flag: SegmentMetadataFlag,
             transaction_seq_num: bytes,
+            direction: Direction = Direction.TOWARDS_RECEIVER,
             source_entity_id: bytes = bytes(),
             dest_entity_id: bytes = bytes(),
             crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
@@ -86,7 +84,6 @@ class PduHeader:
     ):
         """Constructor for PDU header
 
-        :param serialize: Specify whether a packet will be serialized or deserialized
         :param pdu_type:
         :param direction:
         :param trans_mode:
@@ -175,21 +172,16 @@ class PduHeader:
         )
         header.extend(self.source_entity_id)
         header.extend(self.transaction_seq_num)
-        header.extend(self.destination_entity_id)
+        header.extend(self.dest_entity_id)
         return header
 
     @classmethod
     def __empty(cls) -> PduHeader:
         return cls(
-            source_entity_id=None,
-            segment_metadata_flag=None,
-            crc_flag=None,
-            trans_mode=None,
-            direction=None,
-            pdu_type=None,
-            seg_ctrl=None,
-            dest_entity_id=None,
-            transaction_seq_num=None
+            pdu_type=PduType.FILE_DIRECTIVE,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            segment_metadata_flag=SegmentMetadataFlag.NOT_PRESENT,
+            transaction_seq_num=bytes([0])
         )
 
     @classmethod
@@ -238,4 +230,5 @@ class PduHeader:
                 'Unsupported length field detected. '
                 'Only 1, 2, 4 and 8 bytes are supported'
             )
-            return ValueError
+            raise ValueError
+        return len_in_bytes
