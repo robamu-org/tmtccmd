@@ -2,17 +2,16 @@ from __future__ import annotations
 import struct
 from typing import List
 
-from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, \
-    ConditionCode
+from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes
 from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
 from tmtccmd.cfdp.tlv import CfdpTlv
 from tmtccmd.cfdp.lv import CfdpLv
-from tmtccmd.cfdp.definitions import LenInBytes, ChecksumTypes
+from tmtccmd.cfdp.definitions import ChecksumTypes
 from tmtccmd.cfdp.conf import check_packet_length
 from tmtccmd.ccsds.log import LOGGER
 
 
-class MetadataPdu():
+class MetadataPdu:
     """Encapsulates the Keep Alive file directive PDU, see CCSDS 727.0-B-5 p.83"""
 
     def __init__(
@@ -22,10 +21,10 @@ class MetadataPdu():
         file_size: int,
         source_file_name: str,
         dest_file_name: str,
-        direction: Direction,
         trans_mode: TransmissionModes,
         transaction_seq_num: bytes,
-        options: List[CfdpTlv] = [],
+        options: List[CfdpTlv] = None,
+        direction: Direction = Direction.TOWARDS_RECEIVER,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         source_entity_id: bytes = bytes(),
         dest_entity_id: bytes = bytes(),
@@ -50,28 +49,28 @@ class MetadataPdu():
         self.dest_file_name_lv = CfdpLv(
             value=dest_file_name_as_bytes
         )
-        self.options = options
+        if options is None:
+            self.options = []
+        else:
+            self.options = options
 
     @classmethod
     def __empty(cls) -> MetadataPdu:
-        cls(
-            closure_requested=None,
-            checksum_type=None,
-            file_size=None,
+        return cls(
+            closure_requested=False,
+            checksum_type=ChecksumTypes.MODULAR_LEGACY,
+            file_size=0,
             source_file_name="",
             dest_file_name="",
-            direction=None,
-            trans_mode=None,
-            transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            transaction_seq_num=bytes([0]),
         )
 
     def pack(self):
         if not self.pdu_file_directive.verify_file_len(self.file_size):
             raise ValueError
         packet = self.pdu_file_directive.pack()
-        current_idx = self.pdu_file_directive.get_len()
+        current_idx = self.pdu_file_directive.get_packet_len()
         packet.append((self.closure_requested << 6) | self.checksum_type)
         if self.pdu_file_directive.pdu_header.large_file:
             packet.extend(struct.pack('!Q', self.file_size))
@@ -86,9 +85,9 @@ class MetadataPdu():
     def unpack(cls, raw_packet: bytearray) -> MetadataPdu:
         metadata_pdu = cls.__empty()
         metadata_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
-        current_idx = metadata_pdu.pdu_file_directive.get_len()
+        current_idx = metadata_pdu.pdu_file_directive.get_packet_len()
         # Minimal length: 1 byte + FSS (4 byte) + 2 empty LV (1 byte)
-        if not check_packet_length(len(raw_packet), metadata_pdu.pdu_file_directive.get_len() + 7):
+        if not check_packet_length(len(raw_packet), current_idx + 7):
             raise ValueError
         metadata_pdu.closure_requested = raw_packet[current_idx] & 0x40
         metadata_pdu.checksum_type = raw_packet[current_idx] & 0x0f
@@ -108,8 +107,7 @@ class MetadataPdu():
         self.options = []
         current_idx = start_idx
         while True:
-            current_tlv = CfdpTlv(serialize=False)
-            current_tlv.unpack(raw_bytes=raw_packet[current_idx])
+            current_tlv = CfdpTlv.unpack(raw_bytes=raw_packet[current_idx:])
             self.options.append(current_tlv)
             # This will always increment at least two, so we can't get stuck in the loop
             current_idx += current_tlv.get_total_length()

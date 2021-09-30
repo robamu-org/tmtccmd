@@ -21,7 +21,7 @@ class FileDeliveryStatus(enum.IntEnum):
     FILE_STATUS_UNREPORTED = 3
 
 
-class FinishedPdu():
+class FinishedPdu:
     """Encapsulates the Finished file directive PDU, see CCSDS 727.0-B-5 p.80"""
     MINIMAL_LEN = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1
 
@@ -36,7 +36,7 @@ class FinishedPdu():
             source_entity_id: bytes = bytes(),
             dest_entity_id: bytes = bytes(),
             condition_code: ConditionCode = ConditionCode.NO_ERROR,
-            file_store_responses: List[CfdpTlv] = [],
+            file_store_responses: List[CfdpTlv] = None,
             fault_location: CfdpTlv = None,
 
     ):
@@ -51,7 +51,10 @@ class FinishedPdu():
         )
         self.condition_code = condition_code
         self.delivery_code = delivery_code
-        self.file_store_responses = file_store_responses
+        if file_store_responses is None:
+            self.file_store_responses = []
+        else:
+            self.file_store_responses = file_store_responses
         self.fault_location = fault_location
         self.file_delivery_status = file_delivery_status
         self.might_have_fault_location = False
@@ -61,15 +64,13 @@ class FinishedPdu():
 
     @classmethod
     def __empty(cls) -> FinishedPdu:
-        cls(
-            direction=None,
-            delivery_code=None,
-            file_delivery_status=None,
-            trans_mode=None,
-            condition_code=None,
-            transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None,
+        return cls(
+            direction=Direction.TOWARDS_RECEIVER,
+            delivery_code=DeliveryCode.DATA_INCOMPLETE,
+            file_delivery_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            condition_code=ConditionCode.NO_ERROR,
+            transaction_seq_num=bytes([0]),
         )
 
     def pack(self) -> bytearray:
@@ -93,7 +94,7 @@ class FinishedPdu():
         finished_pdu.pdu_file_directive = FileDirectivePduBase.unpack(raw_packet=raw_packet)
         if not check_packet_length(raw_packet_len=len(raw_packet), min_len=cls.MINIMAL_LEN):
             raise ValueError
-        current_idx = finished_pdu.pdu_file_directive.get_len()
+        current_idx = finished_pdu.pdu_file_directive.get_packet_len()
         first_param_byte = raw_packet[current_idx]
         finished_pdu.condition_code = first_param_byte & 0xf0
         finished_pdu.delivery_code = first_param_byte & 0x04
@@ -106,8 +107,7 @@ class FinishedPdu():
     def unpack_tlvs(self, raw_packet: bytearray, start_idx: int) -> int:
         current_idx = start_idx
         while True:
-            current_tlv = CfdpTlv(serialize=False)
-            current_tlv.unpack(raw_bytes=raw_packet[current_idx])
+            current_tlv = CfdpTlv.unpack(raw_bytes=raw_packet[current_idx:])
             # This will always increment at least two, so we can't get stuck in the loop
             current_idx += current_tlv.get_total_length()
             if current_idx > len(raw_packet) or current_idx == len(raw_packet):

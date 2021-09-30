@@ -1,13 +1,9 @@
 from __future__ import annotations
 import enum
-import struct
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, \
     ConditionCode
 from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
-from tmtccmd.cfdp.tlv import CfdpTlv
-from tmtccmd.cfdp.conf import LenInBytes, check_packet_length
-from tmtccmd.ccsds.log import LOGGER
 
 
 class TransactionStatus(enum.IntEnum):
@@ -18,7 +14,7 @@ class TransactionStatus(enum.IntEnum):
     UNRECOGNIZED = 0b11
 
 
-class AckPdu():
+class AckPdu:
     """Encapsulates the ACK file directive PDU, see CCSDS 727.0-B-5 p.81"""
 
     def __init__(
@@ -68,11 +64,12 @@ class AckPdu():
     @classmethod
     def __empty(cls) -> AckPdu:
         return cls(
-            directive_code_of_acked_pdu=None,
-            condition_code_of_acked_pdu=None,
-            transaction_status=None,
-            direction=None,
-            trans_mode=None
+            directive_code_of_acked_pdu=DirectiveCodes.NONE,
+            condition_code_of_acked_pdu=ConditionCode.NO_ERROR,
+            transaction_status=TransactionStatus.UNDEFINED,
+            direction=Direction.TOWARDS_SENDER,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            transaction_seq_num=bytes([0])
         )
 
     def pack(self):

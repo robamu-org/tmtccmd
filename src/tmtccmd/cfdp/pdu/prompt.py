@@ -18,9 +18,9 @@ class PromptPdu():
         self,
         reponse_required: ResponseRequired,
         # PDU file directive arguments
-        direction: Direction,
         trans_mode: TransmissionModes,
         transaction_seq_num: bytes,
+        direction: Direction = Direction.TOWARDS_RECEIVER,
         source_entity_id: bytes = bytes(),
         dest_entity_id: bytes = bytes(),
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
@@ -39,15 +39,9 @@ class PromptPdu():
     @classmethod
     def __empty(cls) -> PromptPdu:
         return cls(
-            reponse_required=None,
-            direction=None,
-            trans_mode=None,
-            start_of_scope=None,
-            end_of_scope=None,
-            segment_requests=None,
-            transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None
+            reponse_required=ResponseRequired.NAK,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            transaction_seq_num=bytes([0]),
         )
 
     def pack(self) -> bytearray:

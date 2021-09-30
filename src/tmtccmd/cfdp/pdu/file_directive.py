@@ -17,6 +17,7 @@ class DirectiveCodes(enum.IntEnum):
     NAK_PDU = 0x08
     PROMPT_PDU = 0x09
     KEEP_ALIVE_PDU = 0x0C
+    NONE = 0x0A
 
 
 class ConditionCode(enum.IntEnum):
@@ -45,9 +46,10 @@ class FileDirectivePduBase:
             self,
             directive_code: DirectiveCodes,
             # PDU Header parameters
-            direction: Direction,
             trans_mode: TransmissionModes,
             transaction_seq_num: bytes,
+            # Only used for PDU forwarding
+            direction: Direction = Direction.TOWARDS_RECEIVER,
             source_entity_id: bytes = bytes(),
             dest_entity_id: bytes = bytes(),
             crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,

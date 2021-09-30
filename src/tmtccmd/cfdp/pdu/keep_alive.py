@@ -3,21 +3,21 @@ from __future__ import annotations
 import struct
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, Direction, \
-    TransmissionModes, CrcFlag, ConditionCode
-from tmtccmd.cfdp.definitions import LenInBytes
+    TransmissionModes, CrcFlag
 from tmtccmd.ccsds.log import LOGGER
 
 
-class KeepAlivePdu():
+class KeepAlivePdu:
     """Encapsulates the Keep Alive file directive PDU, see CCSDS 727.0-B-5 p.85"""
 
     def __init__(
         self,
         progress: int,
         # PDU file directive arguments
-        direction: Direction,
+
         trans_mode: TransmissionModes,
         transaction_seq_num: bytes,
+        direction: Direction = Direction.TOWARDS_RECEIVER,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         source_entity_id: bytes = bytes(),
         dest_entity_id: bytes = bytes(),
@@ -36,15 +36,9 @@ class KeepAlivePdu():
     @classmethod
     def __empty(cls) -> KeepAlivePdu:
         return cls(
-            progress=None,
-            direction=None,
-            trans_mode=None,
-            start_of_scope=None,
-            end_of_scope=None,
-            segment_requests=None,
-            transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None
+            progress=0,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            transaction_seq_num=bytes([0]),
         )
 
     def pack(self) -> bytearray:

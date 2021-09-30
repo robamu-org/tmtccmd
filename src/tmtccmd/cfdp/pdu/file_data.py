@@ -23,7 +23,7 @@ class RecordContinuationState(enum.IntEnum):
     START_AND_END = 0b11
 
 
-class FileDataPdu():
+class FileDataPdu:
     def __init__(
         self,
         file_data: bytes,
@@ -84,7 +84,10 @@ class FileDataPdu():
                 raise ValueError
             file_data_pdu.append(self.record_continuation_state << 6 | self.segment_metadata_length)
             file_data_pdu.extend(self.segment_metadata)
-        file_data_pdu.extend(self.offset)
+        if not self.pdu_header.large_file:
+            file_data_pdu.extend(struct.pack('!I', self.offset))
+        else:
+            file_data_pdu.extend(struct.pack('!Q', self.offset))
         file_data_pdu.extend(self.file_data)
         return file_data_pdu
 

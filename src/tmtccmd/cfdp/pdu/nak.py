@@ -1,12 +1,9 @@
 from __future__ import annotations
-import enum
 import struct
 from typing import List, Tuple
 
-from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, \
-    ConditionCode
+from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes
 from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
-from tmtccmd.cfdp.conf import LenInBytes
 from tmtccmd.ccsds.log import LOGGER
 
 
@@ -42,14 +39,11 @@ class NakPdu():
     @classmethod
     def __empty(cls) -> NakPdu:
         return cls(
-            direction=None,
-            trans_mode=None,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
             start_of_scope=None,
             end_of_scope=None,
             segment_requests=None,
             transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None
         )
 
     def pack(self) -> bytearray:
@@ -67,6 +61,7 @@ class NakPdu():
             else:
                 nak_pdu.extend(struct.pack('!Q', segment_request[0]))
                 nak_pdu.extend(struct.pack('!Q', segment_request[1]))
+        return nak_pdu
 
     @classmethod
     def unpack(cls, raw_packet: bytearray) -> NakPdu:
@@ -96,16 +91,17 @@ class NakPdu():
                     raise ValueError
             nak_pdu.segment_requests = []
             while current_idx < len(raw_packet):
-                tuple_entry = (0, 0)
-                tuple_entry[0] = (
+                start_of_segment = (
                     struct.unpack(
                         struct_arg_tuple[0],
                         raw_packet[current_idx: current_idx + struct_arg_tuple[1]])
                 )
                 current_idx += struct_arg_tuple[1]
-                tuple_entry[1] = (
+                end_of_segment = (
                     struct.unpack(
                         struct_arg_tuple[0],
                         raw_packet[current_idx: current_idx + struct_arg_tuple[1]])
                 )
+                tuple_entry = (start_of_segment, end_of_segment)
                 nak_pdu.segment_requests.append(tuple_entry)
+        return nak_pdu

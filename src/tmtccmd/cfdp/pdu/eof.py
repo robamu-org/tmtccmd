@@ -5,11 +5,10 @@ from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes
     ConditionCode
 from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
 from tmtccmd.cfdp.tlv import CfdpTlv
-from tmtccmd.cfdp.conf import LenInBytes, check_packet_length
-from tmtccmd.ccsds.log import LOGGER
+from tmtccmd.cfdp.conf import check_packet_length
 
 
-class EofPdu():
+class EofPdu:
     """Encapsulates the EOF file directive PDU, see CCSDS 727.0-B-5 p.79"""
     MINIMAL_LENGTH = FileDirectivePduBase.FILE_DIRECTIVE_PDU_LEN + 1 + 4 + 4
 
@@ -42,14 +41,12 @@ class EofPdu():
 
     @classmethod
     def __empty(cls) -> EofPdu:
-        cls(
-            file_checksum=None,
-            file_size=None,
-            direction=None,
-            trans_mode=None,
-            transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None,
+        return cls(
+            file_checksum=0,
+            file_size=0,
+            direction=Direction.TOWARDS_SENDER,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            transaction_seq_num=bytes([0]),
         )
 
     def pack(self) -> bytearray:
@@ -88,6 +85,5 @@ class EofPdu():
             raw_packet=raw_packet, current_idx=current_idx
         )
         if len(raw_packet) > current_idx:
-            eof_pdu.fault_location = CfdpTlv(serialize=False)
-            eof_pdu.fault_location.unpack(raw_bytes=raw_packet[current_idx:])
+            eof_pdu.fault_location = CfdpTlv.unpack(raw_bytes=raw_packet[current_idx:])
         return eof_pdu

@@ -10,5 +10,12 @@ class LenInBytes(enum.IntEnum):
     NONE = 99
 
 
+# Checksum types according to the SANA Checksum Types registry
+# https://sanaregistry.org/r/checksum_identifiers/
 class ChecksumTypes(enum.IntEnum):
-    pass
+    # Modular legacy checksum
+    MODULAR = 0
+    CRC_32_PROXIMITY_1 = 1
+    CRC_32C = 2
+    CRC_32 = 3
+    NULL_CHECKSUM = 15
