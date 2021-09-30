@@ -21,7 +21,7 @@ __CFDP_DICT = {
 }
 
 
-def set_default_length_entity_id(new_len: int):
+def set_default_length_entity_id(new_len: LenInBytes):
     __CFDP_DICT[CfdpConfKeys.LEN_ENTITY_ID] = new_len
 
 
@@ -29,7 +29,7 @@ def get_default_length_entity_id() -> int:
     return __CFDP_DICT[CfdpConfKeys.LEN_ENTITY_ID]
 
 
-def set_default_length_transaction_seq_num(new_len: int):
+def set_default_length_transaction_seq_num(new_len: LenInBytes):
     __CFDP_DICT[CfdpConfKeys.LEN_TRANSACTION_SEQ_NUM] = new_len
 
 
@@ -62,7 +62,7 @@ def get_default_source_entity_id() -> bytes:
 
 
 def check_packet_length(raw_packet_len: int, min_len: int, warn_on_fail: bool = True) -> bool:
-    """Check whether the length of a raw packet is shorter than a specified expectedminimum length.
+    """Check whether the length of a raw packet is shorter than a specified expected minimum length.
     By defaults, prints a warning if this is the case
     :param raw_packet_len:
     :param min_len:

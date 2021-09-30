@@ -20,15 +20,12 @@ class CfdpTlv:
     """
     def __init__(
             self,
-            type: TlvTypes,
+            tlv_type: TlvTypes,
             length: int,
             value: bytearray
     ):
         """Constructor for TLV field.
-        :param serialize: Specfiy whether a packet is serialized or deserialized. For serialize,
-        all input parameter have to be valid. For deserialization, the parameter do not have
-        to be specified
-        :param type:
+        :param tlv_type:
         :param length:
         :param value:
         :raise ValueError: Length invalid or value length not equal to specified length
@@ -37,13 +34,13 @@ class CfdpTlv:
             raise ValueError
         if len(value) != length:
             raise ValueError
-        self.type = type
+        self.tlv_type = tlv_type
         self.length = length
         self.value = value
 
     def pack(self) -> bytearray:
         tlv_data = bytearray()
-        tlv_data.append(self.type)
+        tlv_data.append(self.tlv_type)
         tlv_data.append(self.length)
         tlv_data.extend(self.value)
         return tlv_data
@@ -59,17 +56,17 @@ class CfdpTlv:
             LOGGER.warning('Invalid length for TLV field, less than 2')
             raise ValueError
         try:
-            type = TlvTypes(raw_bytes[0])
+            tlv_type = TlvTypes(raw_bytes[0])
         except ValueError:
             LOGGER.warning(
-                f'TLV field invalid, found value {type} is not a possible TLV parameter'
+                f'TLV field invalid, found value {raw_bytes[0]} is not a possible TLV parameter'
             )
             raise ValueError
         value = bytearray()
         if len(raw_bytes) > 2:
             value.extend(raw_bytes[2:])
         return cls(
-            type=raw_bytes[0],
+            tlv_type=tlv_type,
             length=raw_bytes[1],
             value=value
         )
