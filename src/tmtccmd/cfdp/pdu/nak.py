@@ -7,7 +7,7 @@ from tmtccmd.cfdp.pdu.header import Direction, TransmissionModes, CrcFlag
 from tmtccmd.ccsds.log import LOGGER
 
 
-class NakPdu():
+class NakPdu:
     """Encapsulates the NAK file directive PDU, see CCSDS 727.0-B-5 p.84"""
 
     def __init__(

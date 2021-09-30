@@ -10,7 +10,7 @@ class ResponseRequired(enum.IntEnum):
     KEEP_ALIVE = 1
 
 
-class PromptPdu():
+class PromptPdu:
     """Encapsulates the Prompt file directive PDU, see CCSDS 727.0-B-5 p.84"""
 
     def __init__(
