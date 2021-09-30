@@ -22,12 +22,12 @@ class ParamStruct:
         self.row = 0,
         self.param: any = 0
 
-    def pack(self) -> bytearray:
-        pass
+    # def pack(self) -> bytearray:
+    #     pass
 
-    @classmethod
-    def unpack(cls, raw_param: bytearray) -> ParamStruct:
-        return cls()
+    # @classmethod
+    # def unpack(cls, raw_param: bytearray) -> ParamStruct:
+    #    return cls()
 
 
 class Service20TM(PusTmInfoBase, PusTmBase):
