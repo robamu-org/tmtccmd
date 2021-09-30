@@ -3,9 +3,8 @@ import enum
 import struct
 
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.cfdp.definitions import LenInBytes
-from tmtccmd.cfdp.conf import get_default_pdu_crc_mode, get_default_source_entity_id, \
-    get_default_dest_entity_id
+from tmtccmd.cfdp.definitions import LenInBytes, FileSize
+from tmtccmd.cfdp.conf import get_default_pdu_crc_mode, get_default_file_size, get_entity_ids
 
 
 LOGGER = get_console_logger()
@@ -17,8 +16,8 @@ class PduType(enum.IntEnum):
 
 
 class Direction(enum.IntEnum):
-    TOWARDS_SENDER = 0
-    TOWARDS_RECEIVER = 1
+    TOWARDS_RECEIVER = 0
+    TOWARDS_SENDER = 1
 
 
 class TransmissionModes(enum.IntEnum):
@@ -27,8 +26,8 @@ class TransmissionModes(enum.IntEnum):
 
 
 class CrcFlag(enum.IntEnum):
-    WITH_CRC = 0
-    NO_CRC = 1
+    NO_CRC = 0
+    WITH_CRC = 1
     GLOBAL_CONFIG = 2
 
 
@@ -76,6 +75,8 @@ class PduHeader:
             trans_mode: TransmissionModes,
             segment_metadata_flag: SegmentMetadataFlag,
             transaction_seq_num: bytes,
+            data_field_length: int = 0,
+            large_file: FileSize = FileSize.GLOBAL_CONFIG,
             direction: Direction = Direction.TOWARDS_RECEIVER,
             source_entity_id: bytes = bytes(),
             dest_entity_id: bytes = bytes(),
@@ -100,12 +101,11 @@ class PduHeader:
         self.pdu_type = pdu_type
         self.direction = direction
         self.trans_mode = trans_mode
-        self.large_file = False
-        self.pdu_data_field_length = 0
+        self.pdu_data_field_length = data_field_length
         self.segmentation_control = seg_ctrl
 
         self.len_entity_id = 0
-        self.__assign_entity_ids(source_entity_id=source_entity_id, dest_entity_id=dest_entity_id)
+        self.set_entity_ids(source_entity_id=source_entity_id, dest_entity_id=dest_entity_id)
 
         self.len_transaction_seq_num = 0
         if transaction_seq_num is not None:
@@ -114,42 +114,53 @@ class PduHeader:
             except ValueError:
                 LOGGER.warning('Invalid length of transaction sequence number passed')
                 raise ValueError
-        if crc_flag == CrcFlag.GLOBAL_CONFIG:
-            self.crc_flag = get_default_pdu_crc_mode()
-        else:
-            self.crc_flag = crc_flag
+        self.large_file = large_file
+        self.set_file_size(file_size=self.large_file)
+        self.crc_flag = crc_flag
+        self.set_crc_flag(crc_flag=crc_flag)
+
         self.segment_metadata_flag = segment_metadata_flag
         self.source_entity_id = source_entity_id
         self.transaction_seq_num = transaction_seq_num
         self.dest_entity_id = dest_entity_id
 
-    def __assign_entity_ids(self, source_entity_id: bytes, dest_entity_id: bytes):
-        if source_entity_id == bytes():
-            source_entity_id = get_default_source_entity_id()
-            if source_entity_id == bytes():
+    def set_entity_ids(self, source_entity_id: bytes, dest_entity_id: bytes):
+        """Both IDs must be set at once because they must have the same length as well
+        :param source_entity_id:
+        :param dest_entity_id:
+        :return:
+        """
+        if source_entity_id == bytes() or dest_entity_id == bytes():
+            source_entity_id, dest_entity_id = get_entity_ids()
+            if source_entity_id == bytes() or dest_entity_id == bytes():
                 LOGGER.warning(
-                    'Can not set default value for source entity ID '
+                    'Can not set default value for source entity ID or destination entity ID'
                     'because it has not been set yet'
                 )
                 raise ValueError
-        if dest_entity_id == bytes():
-            dest_entity_id = get_default_dest_entity_id()
-            if dest_entity_id == bytes():
-                LOGGER.warning(
-                    'Can not set default value for destination entity ID '
-                    'because it has not been set yet'
-                )
-                raise ValueError
-        if source_entity_id is not None and dest_entity_id is not None:
-            try:
-                self.len_entity_id = self.check_len_in_bytes(len(source_entity_id))
-                dest_id_check = self.check_len_in_bytes(len(dest_entity_id))
-            except ValueError:
-                LOGGER.warning('Invalid length of entity IDs passed')
-                raise ValueError
-            if dest_id_check != self.len_entity_id:
-                LOGGER.warning('Length of destination ID and source ID are not the same')
-                raise ValueError
+            self.source_entity_id = source_entity_id
+            self.dest_entity_id = dest_entity_id
+        try:
+            self.len_entity_id = self.check_len_in_bytes(len(source_entity_id))
+            dest_id_check = self.check_len_in_bytes(len(dest_entity_id))
+        except ValueError:
+            LOGGER.warning('Invalid length of entity IDs passed')
+            raise ValueError
+        if dest_id_check != self.len_entity_id:
+            LOGGER.warning('Length of destination ID and source ID are not the same')
+            raise ValueError
+
+    def set_file_size(self, file_size: FileSize):
+        if file_size == FileSize.GLOBAL_CONFIG:
+            self.large_file = get_default_file_size()
+        else:
+            self.large_file = file_size
+
+    def set_crc_flag(self, crc_flag: CrcFlag):
+        if crc_flag == CrcFlag.GLOBAL_CONFIG:
+            self.crc_flag = get_default_pdu_crc_mode()
+        else:
+            self.crc_flag = crc_flag
 
     def set_large_file_flag(self, large: bool):
         self.large_file = large

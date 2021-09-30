@@ -1,64 +1,45 @@
-import enum
-from tmtccmd.cfdp.definitions import LenInBytes
+from typing import TypedDict, Tuple
+from tmtccmd.cfdp.definitions import FileSize
 from tmtccmd.ccsds.log import LOGGER
 
 
-class CfdpConfKeys(enum.IntEnum):
-    DEFAULT_SOURCE_ENTITY_ID = 0,
-    DEFAULT_DESTINATION_ENTITY_ID = 1
-    LEN_ENTITY_ID = 2
-    LEN_TRANSACTION_SEQ_NUM = 3
-    WITH_CRC_CONFIG_ID = 4
+class CfdpDict(TypedDict):
+    source_dest_entity_ids: Tuple[bytes, bytes]
+    with_crc: bool
+    file_size: FileSize
 
 
 # TODO: Protect dict access with a dedicated lock for thread-safety
-__CFDP_DICT = {
-    CfdpConfKeys.LEN_ENTITY_ID: LenInBytes.FOUR_BYTES,
-    CfdpConfKeys.LEN_TRANSACTION_SEQ_NUM: LenInBytes.TWO_BYTES,
-    CfdpConfKeys.DEFAULT_SOURCE_ENTITY_ID: bytes(),
-    CfdpConfKeys.DEFAULT_DESTINATION_ENTITY_ID: bytes(),
-    CfdpConfKeys.CRC_CONFIG_ID: True
+__CFDP_DICT: CfdpDict = {
+    'source_dest_entity_ids': (bytes(), bytes()),
+    'with_crc': False,
+    'file_size': FileSize.NORMAL,
 }
 
 
-def set_default_length_entity_id(new_len: LenInBytes):
-    __CFDP_DICT[CfdpConfKeys.LEN_ENTITY_ID] = new_len
-
-
-def get_default_length_entity_id() -> int:
-    return __CFDP_DICT[CfdpConfKeys.LEN_ENTITY_ID]
-
-
-def set_default_length_transaction_seq_num(new_len: LenInBytes):
-    __CFDP_DICT[CfdpConfKeys.LEN_TRANSACTION_SEQ_NUM] = new_len
-
-
-def get_default_length_transaction_seq_num() -> int:
-    return __CFDP_DICT[CfdpConfKeys.LEN_TRANSACTION_SEQ_NUM]
-
-
 def set_default_pdu_crc_mode(with_crc: bool):
-    __CFDP_DICT[CfdpConfKeys.WITH_CRC_CONFIG_ID] = with_crc
+    __CFDP_DICT['with_crc'] = with_crc
 
 
 def get_default_pdu_crc_mode() -> bool:
-    return __CFDP_DICT[CfdpConfKeys.WITH_CRC_CONFIG_ID]
+    return __CFDP_DICT['with_crc']
 
 
-def set_default_dest_entity_id(default_dest_id: bytes):
-    __CFDP_DICT[CfdpConfKeys.DEFAULT_DESTINATION_ENTITY_ID] = default_dest_id
+def set_entity_ids(source_entity_id: bytes, dest_entity_id: bytes):
+    __CFDP_DICT['source_dest_entity_ids'] = (source_entity_id, dest_entity_id)
 
 
-def get_default_dest_entity_id() -> bytes:
-    return __CFDP_DICT[CfdpConfKeys.DEFAULT_DESTINATION_ENTITY_ID]
+def get_entity_ids() -> Tuple[bytes, bytes]:
+    """Return a tuple where the first entry is the source entity ID"""
+    return __CFDP_DICT['source_dest_entity_ids']
 
 
-def set_default_source_entity_id(default_source_id: bytes):
-    __CFDP_DICT[CfdpConfKeys.DEFAULT_SOURCE_ENTITY_ID] = default_source_id
+def set_default_file_size(file_size: FileSize):
+    __CFDP_DICT['file_size'] = file_size
 
 
-def get_default_source_entity_id() -> bytes:
-    return __CFDP_DICT[CfdpConfKeys.DEFAULT_SOURCE_ENTITY_ID]
+def get_default_file_size() -> FileSize:
+    return __CFDP_DICT['file_size']
 
 
 def check_packet_length(raw_packet_len: int, min_len: int, warn_on_fail: bool = True) -> bool:

@@ -1,6 +1,8 @@
 from unittest import TestCase
 from tmtccmd.cfdp.tlv import CfdpTlv, TlvTypes
 from tmtccmd.cfdp.lv import CfdpLv
+from tmtccmd.cfdp.pdu import PduHeader, PduType, TransmissionModes, Direction, \
+    SegmentMetadataFlag, CrcFlag, SegmentationControl, LenInBytes
 
 
 class TestCfdp(TestCase):
@@ -66,3 +68,67 @@ class TestCfdp(TestCase):
         # Too short to unpack
         faulty_lv = bytes([0])
         self.assertRaises(ValueError, CfdpTlv.unpack, faulty_lv)
+
+    def test_pdu_header(self):
+        pdu_header = PduHeader(
+            pdu_type=PduType.FILE_DIRECTIVE,
+            source_entity_id=bytes([0]),
+            dest_entity_id=bytes([0]),
+            trans_mode=TransmissionModes.ACKNOWLEDGED,
+            direction=Direction.TOWARDS_RECEIVER,
+            segment_metadata_flag=SegmentMetadataFlag.NOT_PRESENT,
+            transaction_seq_num=bytes([0]),
+            crc_flag=CrcFlag.NO_CRC,
+            seg_ctrl=SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
+        )
+        self.assertEqual(pdu_header.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(pdu_header.source_entity_id, bytes([0]))
+        self.assertEqual(pdu_header.len_entity_id, 1)
+        self.assertEqual(pdu_header.trans_mode, TransmissionModes.ACKNOWLEDGED)
+        self.assertEqual(pdu_header.direction, Direction.TOWARDS_RECEIVER)
+        self.assertEqual(pdu_header.segment_metadata_flag, SegmentMetadataFlag.NOT_PRESENT)
+        self.assertEqual(pdu_header.transaction_seq_num, bytes([0]))
+        self.assertEqual(pdu_header.len_transaction_seq_num, 1)
+        self.assertEqual(pdu_header.crc_flag, CrcFlag.NO_CRC)
+        self.assertEqual(
+            pdu_header.segmentation_control, SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
+        )
+        self.assertEqual(pdu_header.get_packet_len(), 7)
+        pdu_header_packed = pdu_header.pack()
+        self.assertEqual(len(pdu_header_packed), 7)
+        # Check version field
+        self.assertEqual((pdu_header_packed[0] & 0xe0) >> 5, 0b001)
+        # PDU type
+        self.assertEqual(pdu_header_packed[0] & 0x10 >> 4, 0)
+        # Direction
+        self.assertEqual(pdu_header_packed[0] & 0x08 >> 3, 0)
+        # Transmission Mode
+        self.assertEqual(pdu_header_packed[0] & 0x04 >> 2, 0)
+        # CRC flag
+        self.assertEqual(pdu_header_packed[0] & 0x02 >> 1, 0)
+        # Large file flag
+        self.assertEqual(pdu_header_packed[0] & 0x01, 0)
+        # Data field length
+        self.assertEqual(pdu_header_packed[1] << 8 | pdu_header_packed[2], 0)
+        # Segmentation Control
+        self.assertEqual(pdu_header_packed[3] & 0x80, 0)
+        # Length of entity IDs
+        self.assertEqual((pdu_header_packed[3] & 0x70) >> 4, LenInBytes.ONE_BYTE)
+        # Segment metadata flag
+        self.assertEqual((pdu_header_packed[3] & 0x08) >> 3, 0)
+        # Length of transaction sequence number
+        self.assertEqual(pdu_header_packed[3] & 0b111, LenInBytes.ONE_BYTE)
+        # Source entity ID
+        self.assertEqual(pdu_header_packed[4], 0)
+        # Transaction Sequence number
+        self.assertEqual(pdu_header_packed[5], 0)
+        # Destination ID
+        self.assertEqual(pdu_header_packed[6], 0)
+
+        pdu_header.pdu_type = PduType.FILE_DATA
+        pdu_header.set_entity_ids(source_entity_id=bytes([0, 0]), dest_entity_id=bytes([0, 1]))
+        pdu_header.trans_mode = TransmissionModes.UNACKNOWLEDGED
+        pdu_header.direction = Direction.TOWARDS_SENDER
+        pdu_header.crc_flag = CrcFlag.WITH_CRC
+        pdu_header.large_file = True
+
