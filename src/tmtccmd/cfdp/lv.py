@@ -15,24 +15,25 @@ class CfdpLv:
         self.len = len(value)
         self.value = value
 
-    def get_len(self):
+    def get_total_len(self):
         """Returns length of full LV packet"""
         return self.len + 1
 
-    def pack(self):
+    def pack(self) -> bytearray:
         packet = bytearray()
         packet.append(self.len)
         packet.extend(self.value)
+        return packet
 
     @classmethod
-    def unpack(cls, raw_bytes: bytearray) -> CfdpLv:
+    def unpack(cls, raw_bytes: bytes) -> CfdpLv:
         """Parses LV field at the start of the given bytearray
         :raise ValueError: Invalid length found
         """
         detected_len = raw_bytes[0]
-        if detected_len > 255:
-            LOGGER.warning('Length too large for LV field')
+        if 1 + detected_len > len(raw_bytes):
+            LOGGER.warning('Detected length exceeds size of passed bytearray')
             raise ValueError
         return cls(
-            value=raw_bytes[1:]
+            value=raw_bytes[1:1 + detected_len]
         )
