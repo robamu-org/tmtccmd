@@ -66,7 +66,6 @@ class FileDirectivePduBase:
         :param dest_entity_id: If an empty bytearray is passed, the configured default value
         in the CFDP conf module will be used
         :param crc_flag:
-        :param segment_metadata_flag:
         """
         self.pdu_header = PduHeader(
             pdu_type=PduType.FILE_DIRECTIVE,
@@ -87,17 +86,17 @@ class FileDirectivePduBase:
     @classmethod
     def __empty(cls) -> FileDirectivePduBase:
         return cls(
-            directive_code=None,
-            direction=None,
-            trans_mode=None,
-            crc_flag=None
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            crc_flag=CrcFlag.NO_CRC,
+            directive_code=DirectiveCodes.NONE,
+            transaction_seq_num=bytes([0])
         )
 
     def get_packet_len(self) -> int:
         """Get length of the packet when packing it
         :return:
         """
-        return self.pdu_header.get_len() + 1
+        return self.pdu_header.get_packet_len() + 1
 
     def pack(self) -> bytearray:
         data = bytearray()
@@ -108,7 +107,7 @@ class FileDirectivePduBase:
     @classmethod
     def unpack(cls, raw_packet: bytearray) -> FileDirectivePduBase:
         """Unpack a raw bytearray into the File Directive PDU object representation
-        :param raw_bytes:
+        :param raw_packet: Unpack PDU file directive base
         :raise ValueError: Passed bytearray is too short.
         :return:
         """
@@ -120,10 +119,10 @@ class FileDirectivePduBase:
         return file_directive
 
     def verify_file_len(self, file_size: int) -> bool:
-        if self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 64):
+        if self.pdu_header.large_file and file_size > pow(2, 64):
             LOGGER.warning(f'File size {file_size} larger than 64 bit field')
             raise False
-        elif not self.pdu_file_directive.pdu_header.large_file and file_size > pow(2, 32):
+        elif not self.pdu_header.large_file and file_size > pow(2, 32):
             LOGGER.warning(f'File size {file_size} larger than 32 bit field')
             raise False
         return True

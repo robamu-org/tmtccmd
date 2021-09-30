@@ -2,10 +2,9 @@ from __future__ import annotations
 import enum
 import struct
 
-from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, Direction, \
-    TransmissionModes, CrcFlag, ConditionCode, SegmentMetadataFlag
+from tmtccmd.cfdp.pdu.file_directive import Direction, TransmissionModes, CrcFlag, \
+    SegmentMetadataFlag, PduType
 from tmtccmd.cfdp.pdu.header import PduHeader
-from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.ccsds.log import LOGGER
 
 
@@ -33,9 +32,9 @@ class FileDataPdu:
         segment_metadata: bytes,
         offset: int,
         # PDU header arguments
-        direction: Direction,
         trans_mode: TransmissionModes,
         transaction_seq_num: bytes,
+        direction: Direction = Direction.TOWARDS_RECEIVER,
         crc_flag: CrcFlag = CrcFlag.GLOBAL_CONFIG,
         source_entity_id: bytes = bytes(),
         dest_entity_id: bytes = bytes(),
@@ -47,7 +46,8 @@ class FileDataPdu:
             trans_mode=trans_mode,
             transaction_seq_num=transaction_seq_num,
             source_entity_id=source_entity_id,
-            dest_entity_id=dest_entity_id
+            dest_entity_id=dest_entity_id,
+            pdu_type=PduType.FILE_DATA
         )
         self.record_continuation_state = record_continuation_state
         self.segment_metadata_length = len(segment_metadata)
@@ -58,19 +58,14 @@ class FileDataPdu:
     @classmethod
     def __empty(cls) -> FileDataPdu:
         return cls(
-            file_data=None,
-            segment_metadata_flag=None,
-            segment_metadata=None,
-            record_continuation_state=None,
-            offset=None,
-            direction=None,
-            trans_mode=None,
-            start_of_scope=None,
-            end_of_scope=None,
-            segment_requests=None,
-            transaction_seq_num=None,
-            source_entity_id=None,
-            dest_entity_id=None
+            file_data=bytes(),
+            segment_metadata_flag=SegmentMetadataFlag.NOT_PRESENT,
+            segment_metadata=bytes(),
+            record_continuation_state=RecordContinuationState.START_AND_END,
+            offset=0,
+            direction=Direction.TOWARDS_RECEIVER,
+            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            transaction_seq_num=bytes([0]),
         )
 
     def pack(self) -> bytearray:
