@@ -2,8 +2,7 @@ from __future__ import annotations
 import enum
 
 from tmtccmd.cfdp.pdu.file_directive import FileDirectivePduBase, DirectiveCodes, Direction, \
-    TransmissionModes, CrcFlag, ConditionCode
-from tmtccmd.cfdp.definitions import LenInBytes
+    TransmissionModes, CrcFlag
 
 
 class ResponseRequired(enum.IntEnum):

@@ -462,31 +462,24 @@ class PusTmBase(PusTmInterface):
     def __init__(self, pus_tm: PusTelemetry):
         self.pus_tm = pus_tm
 
-    @abstractmethod
     def pack(self) -> bytearray:
         return self.pus_tm.pack()
 
-    @abstractmethod
     def get_tm_data(self) -> bytearray:
         return self.pus_tm.get_tm_data()
 
-    @abstractmethod
     def get_ssc(self) -> int:
         return self.pus_tm.get_ssc()
 
-    @abstractmethod
     def is_valid(self):
         return self.pus_tm.is_valid()
 
-    @abstractmethod
     def get_apid(self) -> int:
         return self.pus_tm.get_apid()
 
-    @abstractmethod
     def get_service(self) -> int:
         return self.pus_tm.get_service()
 
-    @abstractmethod
     def get_subservice(self) -> int:
         return self.pus_tm.get_subservice()
 
@@ -495,31 +488,24 @@ class PusTmInfoBase(PusTmInfoInterface):
     def __init__(self, pus_tm: PusTelemetry):
         self.pus_tm = pus_tm
 
-    @abstractmethod
     def get_print_info(self) -> str:
         return self.pus_tm.print_info
 
-    @abstractmethod
     def get_custom_printout(self) -> str:
         return self.pus_tm.get_custom_printout()
 
-    @abstractmethod
     def return_source_data_string(self) -> str:
         return self.pus_tm.return_source_data_string()
 
-    @abstractmethod
     def specify_packet_info(self, print_info: str):
         self.pus_tm.print_info = print_info
 
-    @abstractmethod
     def append_packet_info(self, info: str):
         self.pus_tm.print_info += info
 
-    @abstractmethod
     def append_telemetry_column_headers(self, header_list: list):
         self.pus_tm.append_telemetry_column_headers(header_list=header_list)
 
-    @abstractmethod
     def append_telemetry_content(self, content_list: list):
         self.pus_tm.append_telemetry_content(content_list=content_list)
 

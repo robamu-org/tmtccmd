@@ -3,6 +3,7 @@ import os
 import struct
 
 from tmtccmd.pus.service_list import PusServices
+from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.ecss.tm import PusTelemetry, PusTmBase, PusTmInfoBase, PusVersion, CdsShortTimestamp
 from tmtccmd.utility.logger import get_console_logger
 
@@ -27,6 +28,7 @@ class ParamStruct:
     @classmethod
     def unpack(cls, raw_param: bytearray) -> ParamStruct:
         return cls()
+
 
 class Service20TM(PusTmInfoBase, PusTmBase):
     def __init__(
@@ -54,9 +56,15 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             destination_id=destination_id
         )
 
-        self.object_id = object_id
+        self.object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
         self.param_struct = ParamStruct()
+        self.param_struct.param_id = param_id
+        self.param_struct.domain_id = domain_id
+        self.param_struct.unique_id = unique_id
+        self.param_struct.linear_index = linear_index
         self.__init_without_base(instance=self)
+        PusTmBase.__init__(self, pus_tm=pus_tm)
+        PusTmInfoBase.__init__(self, pus_tm=pus_tm)
         self.specify_packet_info("Parameter Service Reply")
 
     @staticmethod
@@ -101,7 +109,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
         return cls(
             subservice_id=-1,
             object_id=bytearray(4),
-            param_id=0,
+            param_id=bytearray(),
             domain_id=0,
             unique_id=0,
             linear_index=0
@@ -120,7 +128,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(hex(self.object_id))
+        content_list.append(self.object_id.as_string())
 
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)
@@ -138,16 +146,19 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             header_list.append("CCSDS Type")
             header_list.append("Columns")
             header_list.append("Rows")
-            # TODO: For more complex parameters like vectors or matrices, special handling would be nice
+            # TODO: For more complex parameters like vectors or matrices,
+            #       special handling would be nice
             header_list.append("Parameter")
 
-            content_list.append(self.domain_id)
-            content_list.append(self.unique_id)
-            content_list.append(self.linear_index)
-            content_list.append("PTC: " + str(self.type_ptc) + " | PFC: " + str(self.type_pfc))
-            content_list.append(self.column)
-            content_list.append(self.row)
-            content_list.append(self.param)
+            content_list.append(self.param_struct.domain_id)
+            content_list.append(self.param_struct.unique_id)
+            content_list.append(self.param_struct.linear_index)
+            content_list.append(
+                f"PTC: {self.param_struct.type_ptc} | PFC: {self.param_struct.type_pfc}"
+            )
+            content_list.append(self.param_struct.column)
+            content_list.append(self.param_struct.row)
+            content_list.append(self.param_struct.param)
 
             custom_printout += f"{header_list}{os.linesep}"
             custom_printout += f"{content_list}"

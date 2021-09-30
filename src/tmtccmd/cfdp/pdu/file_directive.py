@@ -5,7 +5,6 @@ import struct
 from tmtccmd.cfdp.pdu.header import PduHeader, PduType, Direction, CrcFlag, TransmissionModes, \
     SegmentMetadataFlag
 from tmtccmd.cfdp.conf import check_packet_length
-from tmtccmd.cfdp.definitions import LenInBytes
 from tmtccmd.ccsds.log import LOGGER
 
 

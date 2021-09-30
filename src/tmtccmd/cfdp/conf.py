@@ -10,6 +10,7 @@ class CfdpConfKeys(enum.IntEnum):
     LEN_TRANSACTION_SEQ_NUM = 3
     WITH_CRC_CONFIG_ID = 4
 
+
 # TODO: Protect dict access with a dedicated lock for thread-safety
 __CFDP_DICT = {
     CfdpConfKeys.LEN_ENTITY_ID: LenInBytes.FOUR_BYTES,
