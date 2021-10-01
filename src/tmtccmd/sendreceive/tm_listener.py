@@ -77,7 +77,7 @@ class TmListener:
         self.__listener_mode = self.ListenerModes.LISTENER
         self.__tm_type = tm_type
         self.__queue_dict: QueueDictT = dict({
-            UNKNOWN_TARGET_ID: [deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN]
+            UNKNOWN_TARGET_ID: (deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN)
         })
 
     def start(self):
@@ -93,7 +93,7 @@ class TmListener:
 
     def subscribe_ccsds_tm_handler(self, apid: int, queue_max_len: int):
         if self.__tm_type == TmTypes.CCSDS_SPACE_PACKETS:
-            self.__queue_dict[apid] = [deque(), queue_max_len]
+            self.__queue_dict[apid] = (deque(), queue_max_len)
         else:
             LOGGER.warning("This function only support CCSDS space packet handling")
 
@@ -214,7 +214,7 @@ class TmListener:
         """Receive all telemetry for a specified time period.
         :return: True if a sequence was received
         """
-        data_available = self.__com_if.data_available(parameters=None)
+        data_available = self.__com_if.data_available(timeout=0, parameters=None)
         if data_available == 0:
             return False
         elif data_available > 0:
