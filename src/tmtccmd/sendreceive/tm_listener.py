@@ -11,6 +11,8 @@ from collections import deque
 from typing import Dict, List, Tuple
 from enum import Enum
 
+from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
+
 from tmtccmd.tm.definitions import TelemetryQueueT, TelemetryListT, TmTypes
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -336,7 +338,6 @@ class TmListener:
             unknown_target_queue.appendleft(tm_packet)
 
     def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
-        from tmtccmd.ccsds.spacepacket import get_apid_from_raw_space_packet
         if len(tm_packet) < 6:
             LOGGER.warning('TM packet to small to be a CCSDS space packet')
         else:
