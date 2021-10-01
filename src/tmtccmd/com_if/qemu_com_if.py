@@ -193,7 +193,7 @@ class QEMUComIF(CommunicationInterface):
             return self.usart.get_data_in_waiting()
         return 0
 
-    def data_availanle_dle(self, timeout: float = 0) -> int:
+    def data_available_dle(self, timeout: float = 0) -> int:
         elapsed_time = 0
         start_time = time.time()
         sleep_time = timeout / 3.0
@@ -533,7 +533,7 @@ class Usart:
         finally:
             end = self.datab.find(expected)
             if end == -1:
-                end = self.datab.len()
+                end = len(self.datab)
             else:
                 end += len(expected)
 

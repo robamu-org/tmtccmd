@@ -191,7 +191,7 @@ class TmListener:
                     f'TmListener: Blocked on lock acquisition for longer than'
                     f'{self.DEFAULT_LOCK_TIMEOUT} second!'
                 )
-            target_queue.clear()
+            target_queue[0].clear()
 
     def clear_tm_packet_queues(self, lock: bool):
         locked = False
@@ -212,7 +212,7 @@ class TmListener:
         """Receive all telemetry for a specified time period.
         :return: True if a sequence was received
         """
-        data_available = self.__com_if.data_available(0)
+        data_available = self.__com_if.data_available(parameters=None)
         if data_available == 0:
             return False
         elif data_available > 0:
@@ -299,7 +299,7 @@ class TmListener:
             if self.__event_mode_op_finished.is_set():
                 if self.__listener_mode == self.ListenerModes.SEQUENCE:
                     return
-            packets_available = self.__com_if.data_available(0.2)
+            packets_available = self.__com_if.data_available(timeout=0.2, parameters=None)
             if packets_available > 0:
                 packet_list = self.__com_if.receive()
                 with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:

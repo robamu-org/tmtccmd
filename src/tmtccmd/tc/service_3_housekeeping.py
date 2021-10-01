@@ -3,7 +3,7 @@
 import enum
 import struct
 
-from tmtccmd.ecss.tc import PusTelecommand
+from spacepackets.ecss.tc import PusTelecommand
 
 
 class Srv3Subservice(enum.IntEnum):

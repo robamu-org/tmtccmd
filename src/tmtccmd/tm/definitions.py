@@ -1,6 +1,6 @@
 import enum
 from typing import Deque, Tuple, List, Union
-from tmtccmd.ecss.tm import PusTelemetry
+from spacepackets.ecss.tm import PusTelemetry
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 
 TelemetryListT = List[bytearray]

@@ -1,7 +1,8 @@
 """Base class for implementation of PUS Service 2 handling.
 """
 from __future__ import annotations
-from tmtccmd.ecss.tm import PusTmInfoBase, PusTmBase, CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Service2TM(PusTmInfoBase, PusTmBase):

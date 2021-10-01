@@ -1,7 +1,7 @@
 """Dummy Communication Interface. Currently serves to provide an example without external hardware
 """
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.ecss.tc import PusTelecommand
+from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.tm import TelemetryListT, Service1TM, Service17TM
 from tmtccmd.pus.service_17_test import Srv17Subservices
 from tmtccmd.utility.logger import get_console_logger
