@@ -5,8 +5,8 @@ from __future__ import annotations
 from abc import abstractmethod
 import struct
 
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.tm import Service3Base
 from tmtccmd.utility.logger import get_console_logger
 from typing import Tuple, List

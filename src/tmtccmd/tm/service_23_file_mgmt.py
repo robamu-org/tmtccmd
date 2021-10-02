@@ -2,8 +2,8 @@ from __future__ import annotations
 import struct
 
 from tmtccmd.pus.service_list import PusServices
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
 
 LOGGER = get_console_logger()
@@ -35,7 +35,7 @@ class Service23TM(PusTmInfoBase, PusTmBase):
         self.object_id = object_id
         self.data_start_idx = 0
         self.file_info = FileInfo(file_name=file_name, repo_path=repo_path)
-        pus_tm = PusTelemetryExtended(
+        pus_tm = PusTelemetry(
             service_id=PusServices.SERVICE_23_FILE_MGMT,
             subservice_id=subservice_id,
             time=time,

@@ -7,7 +7,7 @@ import struct
 
 from tmtccmd.pus.service_list import PusServices
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices, Srv5Severity
 from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.utility.logger import get_console_logger
@@ -44,7 +44,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         source_data.extend(object_id)
         source_data.extend(struct.pack('!I', self._param_1))
         source_data.extend(struct.pack('!I', self._param_2))
-        pus_tm = PusTelemetryExtended(
+        pus_tm = PusTelemetry(
             service_id=PusServices.SERVICE_5_EVENT,
             subservice_id=subservice_id,
             time=time,

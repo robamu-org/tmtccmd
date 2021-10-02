@@ -1,20 +1,21 @@
 import enum
 from typing import Deque, Tuple, List, Union
-from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface, PusTelemetryExtended
+from spacepackets.ecss.tm import PusTelemetry
+from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 
 TelemetryListT = List[bytearray]
 TelemetryQueueT = Deque[bytearray]
 
-PusTmQueue = Deque[PusTelemetryExtended]
-PusTmTupleT = Tuple[bytearray, PusTelemetryExtended]
+PusTmQueue = Deque[PusTelemetry]
+PusTmTupleT = Tuple[bytearray, PusTelemetry]
 
-PusTmListT = List[PusTelemetryExtended]
+PusTmListT = List[PusTelemetry]
 PusTmQueueT = Deque[PusTmListT]
 PusIFListT = List[Union[PusTmInfoInterface, PusTmInterface]]
 PusIFQueueT = Deque[PusIFListT]
 
-PusTmListT = List[PusTelemetryExtended]
-PusTmObjQeue = Deque[PusTelemetryExtended]
+PusTmListT = List[PusTelemetry]
+PusTmObjQeue = Deque[PusTelemetry]
 PusTmTupleQueueT = Deque[PusTmTupleT]
 
 
