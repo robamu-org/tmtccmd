@@ -11,6 +11,8 @@ from collections import deque
 from typing import Dict, List, Tuple
 from enum import Enum
 
+from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
+
 from tmtccmd.tm.definitions import TelemetryQueueT, TelemetryListT, TmTypes
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -75,7 +77,7 @@ class TmListener:
         self.__listener_mode = self.ListenerModes.LISTENER
         self.__tm_type = tm_type
         self.__queue_dict: QueueDictT = dict({
-            UNKNOWN_TARGET_ID: [deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN]
+            UNKNOWN_TARGET_ID: (deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN)
         })
 
     def start(self):
@@ -91,7 +93,7 @@ class TmListener:
 
     def subscribe_ccsds_tm_handler(self, apid: int, queue_max_len: int):
         if self.__tm_type == TmTypes.CCSDS_SPACE_PACKETS:
-            self.__queue_dict[apid] = [deque(), queue_max_len]
+            self.__queue_dict[apid] = (deque(), queue_max_len)
         else:
             LOGGER.warning("This function only support CCSDS space packet handling")
 
@@ -191,7 +193,7 @@ class TmListener:
                     f'TmListener: Blocked on lock acquisition for longer than'
                     f'{self.DEFAULT_LOCK_TIMEOUT} second!'
                 )
-            target_queue.clear()
+            target_queue[0].clear()
 
     def clear_tm_packet_queues(self, lock: bool):
         locked = False
@@ -212,7 +214,7 @@ class TmListener:
         """Receive all telemetry for a specified time period.
         :return: True if a sequence was received
         """
-        data_available = self.__com_if.data_available(0)
+        data_available = self.__com_if.data_available(timeout=0, parameters=None)
         if data_available == 0:
             return False
         elif data_available > 0:
@@ -299,7 +301,7 @@ class TmListener:
             if self.__event_mode_op_finished.is_set():
                 if self.__listener_mode == self.ListenerModes.SEQUENCE:
                     return
-            packets_available = self.__com_if.data_available(0.2)
+            packets_available = self.__com_if.data_available(timeout=0.2, parameters=None)
             if packets_available > 0:
                 packet_list = self.__com_if.receive()
                 with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
@@ -336,7 +338,6 @@ class TmListener:
             unknown_target_queue.appendleft(tm_packet)
 
     def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
-        from tmtccmd.ccsds.spacepacket import get_apid_from_raw_space_packet
         if len(tm_packet) < 6:
             LOGGER.warning('TM packet to small to be a CCSDS space packet')
         else:

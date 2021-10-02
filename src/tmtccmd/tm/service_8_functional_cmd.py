@@ -3,7 +3,8 @@
 from __future__ import annotations
 import struct
 
-from tmtccmd.ecss.tm import PusTelemetry, CdsShortTimestamp, PusTmInfoBase, PusTmBase, PusVersion
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.pus import ObjectId
 from tmtccmd.utility.logger import get_console_logger
 

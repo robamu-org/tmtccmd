@@ -5,7 +5,7 @@ from typing import Union, List, Dict
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
-from tmtccmd.ecss.conf import PusVersion, set_default_apid, get_default_apid, \
+from spacepackets.ecss.conf import PusVersion, set_default_apid, get_default_apid, \
     set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
@@ -148,6 +148,7 @@ def handle_mode_arg(
         mode_arg=mode_param, custom_modes_list=custom_modes_list
     )
     update_global(CoreGlobalIds.MODE, mode_param)
+    return mode_param
 
 
 def handle_com_if_arg(

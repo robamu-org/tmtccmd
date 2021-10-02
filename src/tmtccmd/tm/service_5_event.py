@@ -6,7 +6,8 @@ from abc import abstractmethod
 import struct
 
 from tmtccmd.pus.service_list import PusServices
-from tmtccmd.ecss.tm import PusTelemetry, PusVersion, CdsShortTimestamp, PusTmInfoBase, PusTmBase
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.pus.service_5_event import Srv5Subservices, Srv5Severity
 from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.utility.logger import get_console_logger

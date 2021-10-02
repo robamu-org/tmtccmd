@@ -12,6 +12,8 @@ import select
 from collections import deque
 from typing import Union, Optional
 
+from spacepackets.ccsds.spacepacket import parse_space_packets
+
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -19,7 +21,6 @@ from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT
 from tmtccmd.utility.conf_util import acquire_timeout
-from tmtccmd.ccsds.spacepacket import parse_space_packets
 
 LOGGER = get_console_logger()
 
@@ -95,12 +96,12 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
-        self.__tcp_conn_thread.join(self.tm_polling_frequency)
+        if self.__tcp_conn_thread.is_alive():
+            self.__tcp_conn_thread.join(self.tm_polling_frequency)
         try:
             self.__tcp_socket.shutdown(socket.SHUT_RDWR)
-        except Exception as e:
-            # TODO: Find out proper exception name here
-            LOGGER.exception("TCP socket endpoint was already closed")
+        except OSError:
+            LOGGER.warning("TCP socket endpoint was already closed or not connected")
         self.__tcp_socket.close()
 
     def send(self, data: bytearray):

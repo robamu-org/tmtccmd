@@ -4,7 +4,7 @@ import os
 import enum
 from typing import cast
 
-from tmtccmd.ecss.tc import PusTelecommand
+from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.tm import Service8TM, Service5TM
 from tmtccmd.pus.service_list import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
