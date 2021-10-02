@@ -95,12 +95,12 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
-        self.__tcp_conn_thread.join(self.tm_polling_frequency)
+        if self.__tcp_conn_thread.is_alive():
+            self.__tcp_conn_thread.join(self.tm_polling_frequency)
         try:
             self.__tcp_socket.shutdown(socket.SHUT_RDWR)
-        except Exception:
-            # TODO: Find out proper exception name here
-            LOGGER.exception("TCP socket endpoint was already closed")
+        except OSError:
+            LOGGER.warning("TCP socket endpoint was already closed or not connected")
         self.__tcp_socket.close()
 
     def send(self, data: bytearray):
