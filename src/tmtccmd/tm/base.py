@@ -133,7 +133,7 @@ class PusTmInfoBase(PusTmInfoInterface):
 
     def append_telemetry_column_headers(self, header_list: list):
         """Default implementation adds the PUS header content header (confusing, I know)
-        to the list which can then be  printed with a simple print() command.
+        to the list which can then be printed with a simple print() command.
         To add additional headers, override this method. Any child class should
         call this function as well if header information is required.
 
