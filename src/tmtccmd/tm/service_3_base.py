@@ -2,7 +2,6 @@ from typing import Tuple, List
 import enum
 
 from tmtccmd.pus import ObjectId
-from tmtccmd.ecss.tm import PusTelemetry
 
 
 class HkContentType(enum.Enum):

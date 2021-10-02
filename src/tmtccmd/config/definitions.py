@@ -1,5 +1,4 @@
-"""
-@brief  Definitions for the TMTC commander core
+"""Definitions for the TMTC commander core
 """
 import enum
 from typing import Tuple, Dict, Optional

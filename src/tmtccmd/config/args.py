@@ -127,7 +127,8 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"GUI mode\n"
     help_text += seq_help + listener_help + gui_help
     arg_parser.add_argument(
-        '-m', '--mode', type=str, help=help_text, default="seqcmd"
+        '-m', '--mode', type=str, help=help_text,
+        default=CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
     )
 
 
@@ -181,16 +182,17 @@ def handle_unspecified_args(args) -> None:
     :return: None
     """
     from tmtccmd.config.hook import get_global_hook_obj
+    from tmtccmd.config.definitions import CoreModeStrings
     if args.tm_timeout is None:
         args.tm_timeout = 5.0
     if args.mode is None:
-        args.mode = CoreModeList.SEQUENTIAL_CMD_MODE
+        args.mode = CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
     service_op_code_dict = dict()
     if args.service is None or args.op_code is None:
         hook_obj = get_global_hook_obj()
         service_op_code_dict = hook_obj.get_service_op_code_dictionary()
     if args.service is None:
-        if args.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
+        if args.mode == CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]:
             LOGGER.info("No service argument (-s) specified, prompting from user..")
             # Try to get the service list from the hook base and prompt service from user
             args.service = prompt_service(service_op_code_dict)
@@ -214,7 +216,7 @@ def handle_empty_args(args) -> None:
 
 
 def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
-    service_adjustment = 10
+    service_adjustment = 20
     info_adjustment = 30
     horiz_line_num = service_adjustment + info_adjustment + 3
     horiz_line = horiz_line_num * "-"

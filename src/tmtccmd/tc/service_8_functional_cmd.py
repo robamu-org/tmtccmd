@@ -11,7 +11,7 @@ class Srv8Subservices(enum.IntEnum):
 
 
 def generate_action_command(
-        object_id: bytearray, action_id: int, app_data: bytearray = bytearray([]),
+        object_id: bytes, action_id: int, app_data: bytes = bytes(),
         ssc: int = 0, apid: int = -1
 ) -> PusTelecommand:
     if apid == -1:

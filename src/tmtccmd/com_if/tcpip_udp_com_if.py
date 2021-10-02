@@ -26,9 +26,12 @@ UDP_SEND_WIRETAPPING_ENABLED = False
 class TcpIpUdpComIF(CommunicationInterface):
     """Communication interface for UDP communication."""
     def __init__(
-            self, com_if_key: str, tm_timeout: float, tc_timeout_factor: float, send_address: EthernetAddressT,
-            max_recv_size: int, recv_addr: Union[None, EthernetAddressT] = None,
-            tmtc_printer: Union[None, TmTcPrinter] = None, init_mode: int = CoreModeList.LISTENER_MODE):
+            self, com_if_key: str, tm_timeout: float, tc_timeout_factor: float,
+            send_address: EthernetAddressT, max_recv_size: int,
+            recv_addr: Union[None, EthernetAddressT] = None,
+            tmtc_printer: Union[None, TmTcPrinter] = None,
+            init_mode: int = CoreModeList.LISTENER_MODE
+    ):
         """Initialize a communication interface to send and receive UDP datagrams.
         :param tm_timeout:
         :param tc_timeout_factor:
