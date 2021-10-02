@@ -22,7 +22,7 @@ class Service1TM(PusTmBase, PusTmInfoBase):
             self, subservice_id: int, time: CdsShortTimestamp = None,
             tc_packet_id: int = 0, tc_psc: int = 0, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
             ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
@@ -62,7 +62,7 @@ class Service1TM(PusTmBase, PusTmInfoBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service1TM:
         """Parse a service 1 telemetry packet
 

@@ -8,7 +8,7 @@ class Service17TM(PusTmBase, PusTmInfoBase):
     def __init__(
             self, subservice_id: int, time: CdsShortTimestamp = None, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
             ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
@@ -39,7 +39,7 @@ class Service17TM(PusTmBase, PusTmInfoBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service17TM:
         service_17_tm = cls.__empty()
         service_17_tm.pus_tm = PusTelemetry.unpack(
