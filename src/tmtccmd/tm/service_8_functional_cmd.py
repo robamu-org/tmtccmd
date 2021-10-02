@@ -3,8 +3,8 @@
 from __future__ import annotations
 import struct
 
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 from tmtccmd.pus import ObjectId
 from tmtccmd.utility.logger import get_console_logger
 
@@ -32,7 +32,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         source_data.extend(object_id)
         source_data.extend(struct.pack('!I', self._action_id))
         source_data.extend(self._custom_data)
-        pus_tm = PusTelemetry(
+        pus_tm = PusTelemetryExtended(
             service_id=5,
             subservice_id=subservice_id,
             time=time,

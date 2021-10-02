@@ -5,8 +5,8 @@ from __future__ import annotations
 from abc import abstractmethod
 import struct
 
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 from tmtccmd.tm import Service3Base
 from tmtccmd.utility.logger import get_console_logger
 from typing import Tuple, List
@@ -51,7 +51,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         source_data.extend(struct.pack('!I', self._set_id))
         if subservice_id == 25 or subservice_id == 26:
             source_data.extend(hk_data)
-        pus_tm = PusTelemetry(
+        pus_tm = PusTelemetryExtended(
             service_id=3,
             subservice_id=subservice_id,
             time=time,

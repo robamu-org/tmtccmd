@@ -4,8 +4,8 @@ from __future__ import annotations
 import struct
 
 from tmtccmd.pus.service_list import PusServices
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 
 
 class Service200TM(PusTmBase, PusTmInfoBase):
@@ -25,7 +25,7 @@ class Service200TM(PusTmBase, PusTmInfoBase):
         elif subservice_id == 6 or subservice_id == 8:
             source_data.extend(struct.pack('!I', mode))
             source_data.append(submode)
-        pus_tm = PusTelemetry(
+        pus_tm = PusTelemetryExtended(
             service_id=PusServices.SERVICE_200_MODE,
             subservice_id=subservice_id,
             time=time,

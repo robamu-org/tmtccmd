@@ -7,9 +7,9 @@ import struct
 from typing import Deque
 
 from spacepackets.ccsds.time import CdsShortTimestamp
-from spacepackets.ecss.tm import PusTelemetry, PusVersion
+from spacepackets.ecss.tm import PusVersion
 
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 from tmtccmd.utility.logger import get_console_logger
 
 LOGGER = get_console_logger()
@@ -26,7 +26,7 @@ class Service1TM(PusTmBase, PusTmInfoBase):
             ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
-        pus_tm = PusTelemetry(
+        pus_tm = PusTelemetryExtended(
             service_id=1,
             subservice_id=subservice_id,
             time=time,

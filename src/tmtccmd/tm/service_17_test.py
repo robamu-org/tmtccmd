@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tmtccmd.pus.service_list import PusServices
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 
 
 class Service17TM(PusTmBase, PusTmInfoBase):
@@ -12,7 +12,7 @@ class Service17TM(PusTmBase, PusTmInfoBase):
             ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
-        pus_tm = PusTelemetry(
+        pus_tm = PusTelemetryExtended(
             service_id=PusServices.SERVICE_17_TEST,
             subservice_id=subservice_id,
             time=time,

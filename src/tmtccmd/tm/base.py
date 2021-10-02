@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from typing import Optional
 
-from spacepackets.ecss.tm import PusTelemetry
+from spacepackets.ecss.tm import PusTelemetry, PusVersion
+from spacepackets.ccsds.time import CdsShortTimestamp
 
 
 class PusTmInterface:
@@ -65,8 +66,45 @@ class PusTmInfoInterface:
         pass
 
 
+class PusTelemetryExtended(PusTelemetry):
+    def __init__(
+            self, service_id: int, subservice_id: int, time: CdsShortTimestamp = None, ssc: int = 0,
+            source_data: bytearray = bytearray([]), apid: int = -1, message_counter: int = 0,
+            space_time_ref: int = 0b0000, destination_id: int = 0,
+            packet_version: int = 0b000, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+            pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
+    ):
+        super().__init__(
+            service_id=service_id, subservice_id=subservice_id, time=time, ssc=ssc,
+            source_data=source_data, apid=apid, message_counter=message_counter,
+            space_time_ref=space_time_ref, destination_id=destination_id,
+            packet_version=packet_version, pus_version=pus_version, pus_tm_version=pus_tm_version,
+            ack=ack, secondary_header_flag=secondary_header_flag
+        )
+
+    def append_data_field_header(self, content_list: list):
+        """Append important data field header parameters to the passed content list.
+        :param content_list:
+        :return:
+        """
+        content_list.append(str(self.service_id))
+        content_list.append(str(self.subservice_id))
+        content_list.append(str(self.message_counter))
+        self.time.add_time_to_content_list(content_list=content_list)
+
+    def append_data_field_header_column_header(self, header_list: list):
+        """Append important data field header column headers to the passed list.
+        :param header_list:
+        :return:
+        """
+        header_list.append("Service")
+        header_list.append("Subservice")
+        header_list.append("Subcounter")
+        self.time.add_time_headers_to_header_list(header_list=header_list)
+
+
 class PusTmBase(PusTmInterface):
-    def __init__(self, pus_tm: PusTelemetry):
+    def __init__(self, pus_tm: PusTelemetryExtended):
         self.pus_tm = pus_tm
 
     def pack(self) -> bytearray:
@@ -92,7 +130,7 @@ class PusTmBase(PusTmInterface):
 
 
 class PusTmInfoBase(PusTmInfoInterface):
-    def __init__(self, pus_tm: PusTelemetry):
+    def __init__(self, pus_tm: PusTelemetryExtended):
         self.pus_tm = pus_tm
 
     def get_print_info(self) -> str:
