@@ -5,11 +5,11 @@ from __future__ import annotations
 from abc import abstractmethod
 import struct
 
-from tmtccmd.pus import ObjectId
-from tmtccmd.ecss.tm import PusTelemetry, PusTmInfoBase, PusTmBase, CdsShortTimestamp, PusVersion
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.tm import Service3Base
 from tmtccmd.utility.logger import get_console_logger
-from typing import Type, Tuple, List
+from typing import Tuple, List
 
 
 LOGGER = get_console_logger()

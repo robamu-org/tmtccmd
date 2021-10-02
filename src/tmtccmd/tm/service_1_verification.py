@@ -6,8 +6,10 @@ from abc import abstractmethod
 import struct
 from typing import Deque
 
-from tmtccmd.ecss.tm import PusTelemetry, PusVersion, PusTmInfoBase, PusTmBase
-from tmtccmd.ccsds.time import CdsShortTimestamp
+from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss.tm import PusTelemetry, PusVersion
+
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
 
 LOGGER = get_console_logger()

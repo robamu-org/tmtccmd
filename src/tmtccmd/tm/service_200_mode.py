@@ -4,7 +4,8 @@ from __future__ import annotations
 import struct
 
 from tmtccmd.pus.service_list import PusServices
-from tmtccmd.ecss.tm import PusTelemetry, PusTmBase, PusTmInfoBase, PusVersion, CdsShortTimestamp
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Service200TM(PusTmBase, PusTmInfoBase):
