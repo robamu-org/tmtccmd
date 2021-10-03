@@ -3,8 +3,8 @@ import os
 import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.definitions import PusServices
 
-from tmtccmd.pus.service_list import PusServices
 from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger

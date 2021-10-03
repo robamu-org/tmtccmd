@@ -3,8 +3,8 @@ import enum
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.service_17_test import Service17TM
+from spacepackets.ecss.definitions import PusServices
 
-from tmtccmd.pus.service_list import PusServices
 from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.config.globals import get_global_apid
