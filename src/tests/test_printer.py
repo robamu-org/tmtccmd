@@ -4,7 +4,7 @@ from tmtccmd.runner import initialize_tmtc_commander
 from tmtccmd.tm import Service1TM, Service5TM
 from tmtccmd.tm.service_5_event import Srv5Subservices
 from spacepackets.ccsds.time import CdsShortTimestamp
-from tmtccmd.tc.service_17_test import pack_service17_ping_command
+from tmtccmd.pus.service_17_test import pack_service17_ping_command
 from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
 from tmtccmd.utility.logger import get_console_logger, set_tmtc_console_logger
 from tmtccmd.config.globals import update_global, CoreGlobalIds

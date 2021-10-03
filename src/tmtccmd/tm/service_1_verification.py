@@ -150,17 +150,17 @@ class Service1TM(PusTmBase, PusTmInfoBase):
         self.error_param2 = struct.unpack('>I', tm_data[current_idx: current_idx + 4])[0]
 
     def __handle_success_verification(self):
-        self.pus_tm.specify_packet_info("Success Verification")
+        self.specify_packet_info("Success Verification")
         if self.get_subservice() == 1:
-            self.pus_tm.append_packet_info(" : Acceptance success")
+            self.append_packet_info(" : Acceptance success")
         elif self.get_subservice() == 3:
-            self.pus_tm.append_packet_info(" : Start success")
+            self.append_packet_info(" : Start success")
         elif self.get_subservice() == 5:
             self.is_step_reply = True
-            self.pus_tm.append_packet_info(" : Step Success")
+            self.append_packet_info(" : Step Success")
             self.step_number = struct.unpack('>B', self.get_tm_data()[4:5])[0]
         elif self.get_subservice() == 7:
-            self.pus_tm.append_packet_info(" : Completion success")
+            self.append_packet_info(" : Completion success")
         else:
             LOGGER.error("Service1TM: Invalid subservice")
 

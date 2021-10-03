@@ -2,8 +2,8 @@
 """
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.tm import TelemetryListT, Service1TM, Service17TM
-from tmtccmd.pus.service_17_test import Srv17Subservices
+from tmtccmd.tm import TelemetryListT, Service1TM
+from tmtccmd.pus.service_17_test import Srv17Subservices, Service17TMExtended
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 
@@ -86,7 +86,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17TM(subservice=Srv17Subservices.PING_REPLY)
+                tm_packer = Service17TMExtended(subservice=Srv17Subservices.PING_REPLY)
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1

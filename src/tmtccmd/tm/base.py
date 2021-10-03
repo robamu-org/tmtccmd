@@ -95,9 +95,10 @@ class PusTmBase(PusTmInterface):
 class PusTmInfoBase(PusTmInfoInterface):
     def __init__(self, pus_tm: PusTelemetry):
         self.pus_tm = pus_tm
+        self._print_info = ''
 
     def get_print_info(self) -> str:
-        return self.pus_tm.print_info
+        return self._print_info
 
     def get_custom_printout(self) -> str:
         return self.pus_tm.get_custom_printout()
@@ -106,10 +107,10 @@ class PusTmInfoBase(PusTmInfoInterface):
         return self.pus_tm.return_source_data_string()
 
     def specify_packet_info(self, print_info: str):
-        self.pus_tm.print_info = print_info
+        self._print_info = print_info
 
     def append_packet_info(self, info: str):
-        self.pus_tm.print_info += info
+        self._print_info += info
 
     def append_telemetry_content(self, content_list: list):
         """Default implementation adds the PUS header content to the list which can then be
