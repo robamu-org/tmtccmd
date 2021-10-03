@@ -2,9 +2,9 @@
 """
 from __future__ import annotations
 import struct
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
 from tmtccmd.pus.service_list import PusServices
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 
 
