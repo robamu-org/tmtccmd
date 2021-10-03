@@ -118,7 +118,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     def __init_without_base(instance: Service5TM, set_attrs_from_tm_data: bool = False):
         if instance.get_service() != 5:
             LOGGER.warning("This packet is not an event service packet!")
-        instance.specify_packet_info("Event")
+        instance.set_packet_info("Event")
         if instance.get_subservice() == Srv5Subservices.INFO_EVENT:
             instance.append_packet_info(" Info")
         elif instance.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:

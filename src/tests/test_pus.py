@@ -37,11 +37,11 @@ class TestTelemetry(TestCase):
         self.assertTrue(pus_17_telemetry.get_tm_data() == bytearray())
         self.assertTrue(pus_17_telemetry.pus_tm.is_valid())
         self.assertTrue(pus_17_telemetry.get_custom_printout() == "")
-        self.assertTrue(pus_17_telemetry.return_source_data_string() == "[]")
+        self.assertTrue(pus_17_telemetry.get_source_data_string() == "[]")
         pus_17_telemetry.pus_tm.print_source_data()
         pus_17_telemetry.pus_tm.print_full_packet_string()
         # This string changes depending on system time, so its complicated to test its validity
-        full_string = pus_17_telemetry.pus_tm.return_full_packet_string()
+        full_string = pus_17_telemetry.pus_tm.get_full_packet_string()
         print(full_string)
         print(pus_17_telemetry)
         print(repr(pus_17_telemetry))

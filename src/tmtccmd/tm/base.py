@@ -46,11 +46,11 @@ class PusTmInfoInterface:
         return ''
 
     @abstractmethod
-    def return_source_data_string(self) -> str:
+    def get_source_data_string(self) -> str:
         return ''
 
     @abstractmethod
-    def specify_packet_info(self, print_info: str):
+    def set_packet_info(self, print_info: str):
         pass
 
     @abstractmethod
@@ -107,10 +107,10 @@ class PusTmInfoBase(PusTmInfoInterface):
     def set_custom_printout(self, custom_string: str):
         self._custom_printout = custom_string
 
-    def return_source_data_string(self) -> str:
-        return self.pus_tm.return_source_data_string()
+    def get_source_data_string(self) -> str:
+        return self.pus_tm.get_source_data_string()
 
-    def specify_packet_info(self, print_info: str):
+    def set_packet_info(self, print_info: str):
         self._print_info = print_info
 
     def append_packet_info(self, info: str):
