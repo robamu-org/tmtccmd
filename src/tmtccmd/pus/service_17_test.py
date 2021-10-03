@@ -4,10 +4,10 @@ import enum
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.service_17_test import Service17TM
 from spacepackets.ecss.definitions import PusServices
+from spacepackets.ecss.conf import get_default_tc_apid
 
 from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
-from tmtccmd.config.globals import get_global_apid
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 class Srv17Subservices(enum.IntEnum):
@@ -20,8 +20,8 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
     def __init__(
             self, subservice_id: int, time: CdsShortTimestamp = None, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
-            ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, ack: int = 0b1111,
+            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
         Service17TM.__init__(self,
@@ -32,7 +32,6 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
@@ -63,7 +62,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
 def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
     """Generate a simple ping PUS telecommand packet"""
     if apid == -1:
-        apid = get_global_apid()
+        apid = get_default_tc_apid()
     return PusTelecommand(service=17, subservice=Srv17Subservices.PING_CMD, ssc=ssc, apid=apid)
 
 

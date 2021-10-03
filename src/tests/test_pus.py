@@ -3,9 +3,9 @@ from unittest import TestCase
 
 from spacepackets.ccsds.spacepacket import get_space_packet_sequence_control
 from spacepackets.ccsds.time import CdsShortTimestamp
-from spacepackets.ecss.conf import get_pus_tm_version, PusVersion
+from spacepackets.ecss.conf import get_pus_tm_version, PusVersion, set_default_tm_apid
 
-from tmtccmd.pus.service_17_test import Service17TM
+from tmtccmd.pus.service_17_test import Service17TMExtended
 
 
 class TestTelemetry(TestCase):
@@ -14,21 +14,21 @@ class TestTelemetry(TestCase):
         self.assertTrue(psc & 0xc000 == 0xc000)
 
     def test_generic_pus_c(self):
-        pus_17_telemetry = Service17TM(
-            subservice_id=1, ssc=36, time=CdsShortTimestamp.init_from_current_time()
+        pus_17_telemetry = Service17TMExtended(
+            subservice_id=1, ssc=36, time=CdsShortTimestamp.init_from_current_time(),
+            apid=0xef
         )
         pus_17_raw = pus_17_telemetry.pack()
 
         pus_17_telemetry = None
 
         def tm_func(raw_telemetry: bytearray):
-            return Service17TM.unpack(raw_telemetry=raw_telemetry)
+            return Service17TMExtended.unpack(raw_telemetry=raw_telemetry)
 
         self.assertRaises(ValueError, tm_func, bytearray())
         self.assertRaises(ValueError, tm_func, None)
 
-        pus_17_telemetry = Service17TM.unpack(raw_telemetry=pus_17_raw)
-
+        pus_17_telemetry = Service17TMExtended.unpack(raw_telemetry=pus_17_raw)
         self.assertTrue(get_pus_tm_version() == PusVersion.PUS_C)
         self.assertTrue(pus_17_telemetry.get_service() == 17)
         self.assertTrue(pus_17_telemetry.get_apid() == 0xef)
@@ -48,11 +48,11 @@ class TestTelemetry(TestCase):
         self.assertTrue(pus_17_telemetry.pus_tm.get_packet_id() == 0x8 << 8 | 0xef)
 
     def test_list_functionality(self):
-        pus_17_telecommand = Service17TM(
+        pus_17_telecommand = Service17TMExtended(
             subservice_id=1, ssc=36, time=CdsShortTimestamp.init_from_current_time()
         )
         pus_17_raw = pus_17_telecommand.pack()
-        pus_17_telemetry = Service17TM.unpack(raw_telemetry=pus_17_raw)
+        pus_17_telemetry = Service17TMExtended.unpack(raw_telemetry=pus_17_raw)
 
         header_list = []
         content_list = []

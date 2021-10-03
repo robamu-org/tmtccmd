@@ -7,6 +7,8 @@ import sys
 import os
 from typing import Union
 
+from spacepackets.ecss.conf import get_default_tc_apid
+
 from tmtccmd import __version__
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.core.backend import BackendBase
@@ -247,7 +249,7 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, tm_handler: TmHandler, json
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             tm_handler = cast(CcsdsTmHandler, tm_handler)
             tm_handler.initialize(tmtc_printer=tmtc_printer)
-    apid = get_global(CoreGlobalIds.APID)
+    apid = get_default_tc_apid()
 
     if json_cfg_path:
         pass

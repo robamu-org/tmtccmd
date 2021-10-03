@@ -21,7 +21,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             self, subservice_id: Srv5Subservices, event_id: int, object_id: bytearray,
             param_1: int, param_2: int, time: CdsShortTimestamp = None,
             ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.UNKNOWN,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
             pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
             space_time_ref: int = 0b0000, destination_id: int = 0
     ):
@@ -53,7 +53,6 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,

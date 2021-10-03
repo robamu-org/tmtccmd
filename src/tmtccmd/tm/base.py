@@ -95,13 +95,17 @@ class PusTmBase(PusTmInterface):
 class PusTmInfoBase(PusTmInfoInterface):
     def __init__(self, pus_tm: PusTelemetry):
         self.pus_tm = pus_tm
+        self._custom_printout = ''
         self._print_info = ''
 
     def get_print_info(self) -> str:
         return self._print_info
 
     def get_custom_printout(self) -> str:
-        return self.pus_tm.get_custom_printout()
+        return self._custom_printout
+
+    def set_custom_printout(self, custom_string: str):
+        self._custom_printout = custom_string
 
     def return_source_data_string(self) -> str:
         return self.pus_tm.return_source_data_string()

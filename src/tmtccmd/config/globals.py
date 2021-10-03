@@ -5,7 +5,7 @@ from typing import Union, List, Dict
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
-from spacepackets.ecss.conf import PusVersion, set_default_apid, get_default_apid, \
+from spacepackets.ecss.conf import PusVersion, set_default_tc_apid, set_default_tm_apid, \
     set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
@@ -15,10 +15,6 @@ from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDic
 
 LOGGER = get_console_logger()
 SERVICE_OP_CODE_DICT = dict()
-
-
-def get_global_apid() -> int:
-    return get_default_apid()
 
 
 def set_json_cfg_path(json_cfg_path: str):
@@ -39,7 +35,7 @@ def get_glob_com_if_dict() -> ComIFDictT:
 
 
 def set_default_globals_pre_args_parsing(
-        gui: bool, apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
+        gui: bool, tc_apid: int, tm_apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
         com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None,
         display_mode="long", tm_timeout: float = 4.0, print_to_file: bool = True,
@@ -47,8 +43,8 @@ def set_default_globals_pre_args_parsing(
 ):
     if custom_com_if_dict is None:
         custom_com_if_dict = dict()
-    update_global(CoreGlobalIds.APID, apid)
-    set_default_apid(default_apid=apid)
+    set_default_tc_apid(tc_apid=tc_apid)
+    set_default_tm_apid(tm_apid=tm_apid)
     set_pus_tc_version(pus_tc_version)
     set_pus_tm_version(pus_tm_version)
     update_global(CoreGlobalIds.COM_IF, com_if_id)
