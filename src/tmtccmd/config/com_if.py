@@ -99,7 +99,7 @@ def default_tcpip_cfg_setup(
         LOGGER.warning(
             'TCP communication interface without any specified space packet ID might not work!'
         )
-    ethernet_cfg_dict.update({TcpIpConfigIds.SPACE_PACKET_ID: space_packet_id})
+    ethernet_cfg_dict.update({TcpIpConfigIds.SPACE_PACKET_ID: space_packet_ids})
     update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_cfg_dict)
 
 
