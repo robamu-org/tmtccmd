@@ -1,5 +1,5 @@
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from tmtccmd.config.definitions import CoreGlobalIds, CoreComInterfaces
 from tmtccmd.core.globals_manager import get_global, update_global
@@ -17,7 +17,7 @@ LOGGER = get_console_logger()
 
 def create_communication_interface_default(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str,
-        space_packet_id: int = 0
+        space_packet_ids: Tuple[int] = (0,)
 ) -> Optional[CommunicationInterface]:
     """Return the desired communication interface object
 
@@ -36,7 +36,7 @@ def create_communication_interface_default(
                 com_if_key == CoreComInterfaces.TCPIP_TCP.value:
             communication_interface = create_default_tcpip_interface(
                 com_if_key=com_if_key, json_cfg_path=json_cfg_path, tmtc_printer=tmtc_printer,
-                space_packet_id=space_packet_id
+                space_packet_ids=space_packet_ids
             )
         elif com_if_key == CoreComInterfaces.SERIAL_DLE.value or \
                 com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
@@ -69,7 +69,9 @@ def create_communication_interface_default(
         sys.exit(1)
 
 
-def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str, space_packet_id: int = 0):
+def default_tcpip_cfg_setup(
+        tcpip_type: TcpIpType, json_cfg_path: str, space_packet_ids: Tuple[int] = (0,)
+):
     """Default setup for TCP/IP communication interfaces. This intantiates all required data in the
     globals manager so a TCP/IP communication interface can be built with
     :func:`create_default_tcpip_interface`
@@ -93,7 +95,7 @@ def default_tcpip_cfg_setup(tcpip_type: TcpIpType, json_cfg_path: str, space_pac
     ethernet_cfg_dict.update({TcpIpConfigIds.SEND_ADDRESS: send_tuple})
     ethernet_cfg_dict.update({TcpIpConfigIds.RECV_ADDRESS: recv_tuple})
     ethernet_cfg_dict.update({TcpIpConfigIds.RECV_MAX_SIZE: max_recv_buf_size})
-    if space_packet_id == 0 and tcpip_type == TcpIpType.TCP:
+    if space_packet_ids == (0,) and tcpip_type == TcpIpType.TCP:
         LOGGER.warning(
             'TCP communication interface without any specified space packet ID might not work!'
         )
@@ -117,7 +119,8 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
 
 
 def create_default_tcpip_interface(
-        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str, space_packet_id: int = 0
+        com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str,
+        space_packet_ids: Tuple[int] = (0,)
 ) -> Optional[CommunicationInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
@@ -125,7 +128,7 @@ def create_default_tcpip_interface(
     :param com_if_key:
     :param tmtc_printer:
     :param json_cfg_path:
-    :param space_packet_id: Two byte packet ID which is used by TCP to parse space packets
+    :param space_packet_ids: Two byte packet IDs which is used by TCP to parse space packets
     :return:
     """
     communication_interface = None
@@ -136,7 +139,7 @@ def create_default_tcpip_interface(
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
         default_tcpip_cfg_setup(
             tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path,
-            space_packet_id=space_packet_id
+            space_packet_ids=space_packet_ids
         )
     ethernet_cfg_dict = get_global(CoreGlobalIds.ETHERNET_CONFIG)
     send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
@@ -154,7 +157,7 @@ def create_default_tcpip_interface(
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
         communication_interface = TcpIpTcpComIF(
             com_if_key=com_if_key, com_type=TcpCommunicationType.SPACE_PACKETS,
-            space_packet_id=space_packet_id, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
+            space_packet_ids=space_packet_ids, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
             tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             tm_polling_freqency=0.5, send_address=send_addr, max_recv_size=max_recv_size,
             tmtc_printer=tmtc_printer, init_mode=init_mode
