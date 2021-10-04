@@ -10,9 +10,6 @@ from tmtccmd.pus.service_17_test import Service17TMExtended
 
 
 class TestTelemetry(TestCase):
-    def test_space_packet_functions(self):
-        psc = get_space_packet_sequence_control(sequence_flags=0b111, source_sequence_count=42)
-        self.assertTrue(psc & 0xc000 == 0xc000)
 
     def test_generic_pus_c(self):
         pus_17_telemetry = Service17TMExtended(
