@@ -3,6 +3,7 @@ from typing import Optional
 
 from spacepackets.ecss.tm import PusTelemetry, PusVersion
 from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.util import PrintFormats
 
 
 class PusTmInterface:
@@ -107,8 +108,8 @@ class PusTmInfoBase(PusTmInfoInterface):
     def set_custom_printout(self, custom_string: str):
         self._custom_printout = custom_string
 
-    def get_source_data_string(self) -> str:
-        return self.pus_tm.get_source_data_string()
+    def get_source_data_string(self, print_format: PrintFormats = PrintFormats.HEX) -> str:
+        return self.pus_tm.get_source_data_string(print_format=print_format)
 
     def set_packet_info(self, print_info: str):
         self._print_info = print_info

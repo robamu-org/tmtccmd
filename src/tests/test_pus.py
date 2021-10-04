@@ -4,6 +4,7 @@ from unittest import TestCase
 from spacepackets.ccsds.spacepacket import get_space_packet_sequence_control
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.conf import get_pus_tm_version, PusVersion, set_default_tm_apid
+from spacepackets.util import PrintFormats
 
 from tmtccmd.pus.service_17_test import Service17TMExtended
 
@@ -37,11 +38,11 @@ class TestTelemetry(TestCase):
         self.assertTrue(pus_17_telemetry.get_tm_data() == bytearray())
         self.assertTrue(pus_17_telemetry.pus_tm.is_valid())
         self.assertTrue(pus_17_telemetry.get_custom_printout() == "")
-        self.assertTrue(pus_17_telemetry.get_source_data_string() == "[]")
-        pus_17_telemetry.pus_tm.print_source_data()
-        pus_17_telemetry.pus_tm.print_full_packet_string()
+        self.assertTrue(pus_17_telemetry.get_source_data_string() == "hex []")
+        pus_17_telemetry.pus_tm.print_source_data(print_format=PrintFormats.HEX)
+        pus_17_telemetry.pus_tm.print_full_packet_string(print_format=PrintFormats.HEX)
         # This string changes depending on system time, so its complicated to test its validity
-        full_string = pus_17_telemetry.pus_tm.get_full_packet_string()
+        full_string = pus_17_telemetry.pus_tm.get_full_packet_string(print_format=PrintFormats.HEX)
         print(full_string)
         print(pus_17_telemetry)
         print(repr(pus_17_telemetry))
