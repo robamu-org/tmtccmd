@@ -120,7 +120,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         """Handle parsing a verification failure packet, subservice ID 2, 4, 6 or 8
         """
         super()._handle_failure_verification()
-        self.specify_packet_info("Failure Verficiation")
+        self.set_packet_info("Failure Verficiation")
         subservice = self.pus_tm.get_subservice()
         if subservice == 2:
             self.append_packet_info(" : Acceptance failure")
@@ -133,7 +133,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
 
     def _handle_success_verification(self):
         super()._handle_success_verification()
-        self.specify_packet_info("Success Verification")
+        self.set_packet_info('Success Verification')
         if self.get_subservice() == 1:
             self.append_packet_info(" : Acceptance success")
         elif self.get_subservice() == 3:
