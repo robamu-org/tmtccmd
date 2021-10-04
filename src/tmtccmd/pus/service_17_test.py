@@ -24,7 +24,8 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
             secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
-        Service17TM.__init__(self,
+        Service17TM.__init__(
+            self,
             subservice_id=subservice_id,
             time=time,
             ssc=ssc,
@@ -68,7 +69,7 @@ def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
 
 def pack_generic_service17_test(init_ssc: int, tc_queue: TcQueueT, apid: int = -1) -> int:
     if apid == -1:
-        apid = get_global_apid()
+        apid = get_default_tc_apid()
     new_ssc = init_ssc
     tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17"))
     # ping test

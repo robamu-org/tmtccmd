@@ -17,7 +17,7 @@ def pack_enable_event_reporting_command(ssc: int, apid: int = -1):
 
 def pack_disable_event_reporting_command(ssc: int, apid: int = -1):
     if apid == -1:
-        apid = get_global_apid()
+        apid = get_default_tc_apid()
     return PusTelecommand(
         service=5, subservice=Srv5Subservices.DISABLE_EVENT_REPORTING, ssc=ssc, apid=apid
     )
@@ -25,7 +25,7 @@ def pack_disable_event_reporting_command(ssc: int, apid: int = -1):
 
 def pack_generic_service5_test_into(tc_queue: TcQueueT, apid: int = -1):
     if apid == -1:
-        apid = get_global_apid()
+        apid = get_default_tc_apid()
     tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 5"))
     # invalid subservice
     tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 5: Invalid subservice"))
