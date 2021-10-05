@@ -1,11 +1,11 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
 from typing import Union
-
+from spacepackets.ecss.conf import get_default_tc_apid
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.config.globals import get_global_apid
+
 
 logger = get_console_logger()
 
@@ -24,7 +24,7 @@ def pack_boolean_parameter_command(
     @return:
     """
     if apid == -1:
-        apid = get_global_apid()
+        apid = get_default_tc_apid()
 
     parameter_id = bytearray(4)
     parameter_id[0] = domain_id

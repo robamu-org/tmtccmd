@@ -5,7 +5,7 @@ import struct
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
 from tmtccmd.pus.definitions import CustomPusServices
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Service200TM(PusTmBase, PusTmInfoBase):
@@ -25,7 +25,7 @@ class Service200TM(PusTmBase, PusTmInfoBase):
         elif subservice_id == 6 or subservice_id == 8:
             source_data.extend(struct.pack('!I', mode))
             source_data.append(submode)
-        pus_tm = PusTelemetryExtended(
+        pus_tm = PusTelemetry(
             service_id=CustomPusServices.SERVICE_200_MODE,
             subservice_id=subservice_id,
             time=time,
@@ -34,7 +34,6 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
@@ -42,7 +41,7 @@ class Service200TM(PusTmBase, PusTmInfoBase):
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
-        self.specify_packet_info("Mode Reply")
+        self.set_packet_info("Mode Reply")
 
         self.is_cant_reach_mode_reply = False
         self.is_mode_reply = False
