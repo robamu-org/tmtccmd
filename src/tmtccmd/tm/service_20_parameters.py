@@ -2,9 +2,10 @@ from __future__ import annotations
 import os
 import struct
 
-from tmtccmd.pus.service_list import PusServices
-from tmtccmd.pus.obj_id import ObjectId
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.definitions import PusServices
+
+from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
 
@@ -118,7 +119,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service20TM:
         service_20_tm = cls.__empty()
         service_20_tm.pus_tm = PusTelemetry.unpack(

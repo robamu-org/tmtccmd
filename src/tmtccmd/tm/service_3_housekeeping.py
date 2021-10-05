@@ -7,7 +7,7 @@ import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.tm import Service3Base
+from tmtccmd.tm.service_3_base import Service3Base
 from tmtccmd.utility.logger import get_console_logger
 from typing import Tuple, List
 
@@ -111,7 +111,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
             cls, raw_telemetry: bytearray, custom_hk_handling: bool,
-            pus_version: PusVersion = PusVersion.UNKNOWN,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service3TM:
         service_3_tm = cls.__empty()
         service_3_tm.pus_tm = PusTelemetry.unpack(

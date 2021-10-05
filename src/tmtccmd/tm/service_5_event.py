@@ -5,9 +5,9 @@ from __future__ import annotations
 from abc import abstractmethod
 import struct
 
-from tmtccmd.pus.service_list import PusServices
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from spacepackets.ecss.definitions import PusServices
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices, Srv5Severity
 from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.utility.logger import get_console_logger
@@ -21,7 +21,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             self, subservice_id: Srv5Subservices, event_id: int, object_id: bytearray,
             param_1: int, param_2: int, time: CdsShortTimestamp = None,
             ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.UNKNOWN,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
             pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
             space_time_ref: int = 0b0000, destination_id: int = 0
     ):
@@ -53,7 +53,6 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
@@ -75,7 +74,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service5TM:
         service_5_tm = cls.__empty()
         service_5_tm.pus_tm = PusTelemetry.unpack(
@@ -119,7 +118,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     def __init_without_base(instance: Service5TM, set_attrs_from_tm_data: bool = False):
         if instance.get_service() != 5:
             LOGGER.warning("This packet is not an event service packet!")
-        instance.specify_packet_info("Event")
+        instance.set_packet_info("Event")
         if instance.get_subservice() == Srv5Subservices.INFO_EVENT:
             instance.append_packet_info(" Info")
         elif instance.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:

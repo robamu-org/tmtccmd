@@ -2,6 +2,7 @@
 """
 from __future__ import annotations
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
@@ -40,7 +41,7 @@ class Service2TM(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service2TM:
         service_2_tm = cls.__empty()
         service_2_tm.pus_tm = PusTelemetry.unpack(
