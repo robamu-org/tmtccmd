@@ -5,6 +5,8 @@ import enum
 from typing import cast
 
 from spacepackets.ecss.tc import PusTelecommand
+from spacepackets.util import get_printable_data_string, PrintFormats
+
 from tmtccmd.tm.service_8_functional_cmd import Service8TM
 from tmtccmd.tm.service_5_event import Service5TM
 from spacepackets.ecss.definitions import PusServices
@@ -24,7 +26,8 @@ class DisplayMode(enum.Enum):
 
 
 class TmTcPrinter:
-    """This class handles printing to the command line and to files."""
+    """This class handles printing to the command line and to files.
+    TODO: Introduce file logger"""
     def __init__(
             self, display_mode: DisplayMode = DisplayMode.LONG, do_print_to_file: bool = True,
             print_tc: bool = True
@@ -89,7 +92,10 @@ class TmTcPrinter:
             self.handle_service_8_packet(packet_if=packet_if)
 
         if print_raw_tm:
-            self.__print_buffer = f"TM Data:\n{self.return_data_string(packet_if.pack())}"
+            tm_data_string = get_printable_data_string(
+                print_format= PrintFormats.HEX, data=packet_if.pack()
+            )
+            self.__print_buffer = f"TM Data:\n{tm_data_string}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
@@ -447,9 +453,12 @@ class TmTcPrinter:
         shift_number = position + (6 - 2 * (position - 1))
         return (byte >> shift_number) & 1
 
-    def print_telecommand(self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytearray()):
+    def print_telecommand(
+            self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytes()
+    ):
         """
-        This function handles the printing of Telecommands. It assumed the packets are sent shortly before or after.
+        This function handles the printing of Telecommands. It assumed the packets are sent
+        shortly before or after.
         :param tc_packet_obj:
         :param tc_packet_raw:
         :return:
@@ -470,8 +479,8 @@ class TmTcPrinter:
         :return:
         """
         self.__print_buffer = \
-            f"Sent TC[{tc_packet_obj.get_service()}, {tc_packet_obj.get_subservice()}] with SSC " \
-            f"{tc_packet_obj.get_ssc()}"
+            f"Sent TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] with SSC " \
+            f"{tc_packet_obj.ssc}"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
@@ -481,35 +490,24 @@ class TmTcPrinter:
         :param tc_packet_obj:
         :return:
         """
+        data_print = get_printable_data_string(
+            print_format=PrintFormats.HEX, data=tc_packet_obj.app_data
+        )
         try:
             self.__print_buffer = \
-                f"Telecommand TC[{tc_packet_obj.get_service()}, {tc_packet_obj.get_subservice()}] " \
-                f"with SSC {tc_packet_obj.get_ssc()} sent with data " \
-                f"{self.return_data_string(tc_packet_obj.get_app_data())}"
+                f"Telecommand TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] " \
+                f"with SSC {tc_packet_obj.ssc} sent with data " \
+                f"{data_print}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
         except TypeError as error:
             LOGGER.error("TMTC Printer: Type Error! Traceback: %s", error)
 
-    def print_data(self, byte_array: bytearray):
+    @staticmethod
+    def print_data(data: bytes):
         """
-        :param byte_array:
+        :param data: Data to print
         :return: None
         """
-        string = self.return_data_string(byte_array)
+        string = get_printable_data_string(print_format=PrintFormats.HEX, data=data)
         LOGGER.info(string)
-
-    @staticmethod
-    def return_data_string(byte_array: bytearray) -> str:
-        """
-        Converts a bytearray to string format for printing
-        :param byte_array:
-        :return:
-        """
-        str_to_print = "["
-        for byte in byte_array:
-            str_to_print += str(hex(byte)) + " , "
-        str_to_print = str_to_print.rstrip(' ')
-        str_to_print = str_to_print.rstrip(',')
-        str_to_print += ']'
-        return str_to_print

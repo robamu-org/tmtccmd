@@ -1,5 +1,6 @@
 from __future__ import annotations
 import enum
+import sys
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.service_17_test import Service17TM
