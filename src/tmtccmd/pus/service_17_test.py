@@ -10,6 +10,7 @@ from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
+
 class Srv17Subservices(enum.IntEnum):
     PING_CMD = 1,
     PING_REPLY = 2,
@@ -40,8 +41,8 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         )
         PusTmBase.__init__(self, pus_tm=self.pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
-        if self.get_subservice() == Srv17Subservices.PING_REPLY:
-            self.specify_packet_info("Ping Reply")
+        if self.subservice == Srv17Subservices.PING_REPLY:
+            self.set_packet_info("Ping Reply")
 
     @classmethod
     def __empty(cls) -> Service17TMExtended:

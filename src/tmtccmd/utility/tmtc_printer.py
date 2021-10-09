@@ -70,7 +70,7 @@ class TmTcPrinter:
             LOGGER.warning("Passed packet does not implement necessary interfaces!")
             return
 
-        if packet_if.get_service() == PusServices.SERVICE_5_EVENT:
+        if packet_if.service == PusServices.SERVICE_5_EVENT:
             self.__handle_event_packet(cast(Service5TM, packet_if))
 
         if self._display_mode == DisplayMode.SHORT:
@@ -80,12 +80,12 @@ class TmTcPrinter:
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
         # Handle special packet types
-        if packet_if.get_service() == PusServices.SERVICE_3_HOUSEKEEPING:
+        if packet_if.service == PusServices.SERVICE_3_HOUSEKEEPING:
             self.handle_service_3_packet(packet_if=packet_if)
-        if packet_if.get_service() == PusServices.SERVICE_5_EVENT:
+        if packet_if.service == PusServices.SERVICE_5_EVENT:
             self.handle_service_5_packet(packet_if=packet_if)
-        if packet_if.get_service() == PusServices.SERVICE_8_FUNC_CMD and \
-                packet_if.get_subservice() == Srv8Subservices.DATA_REPLY:
+        if packet_if.service == PusServices.SERVICE_8_FUNC_CMD and \
+                packet_if.subservice == Srv8Subservices.DATA_REPLY:
             self.handle_service_8_packet(packet_if=packet_if)
 
         if print_raw_tm:
@@ -95,7 +95,7 @@ class TmTcPrinter:
 
     def handle_service_3_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet_if.get_service() != 3:
+        if packet_if.service != 3:
             LOGGER.warning('This packet is not a service 3 packet!')
             return
         hook_obj = get_global_hook_obj()
@@ -107,21 +107,21 @@ class TmTcPrinter:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
                 object_id=bytes(), set_id=srv3_packet.get_set_id(),
-                hk_data=packet_if.get_tm_data(), service3_packet=srv3_packet
+                hk_data=packet_if.tm_data, service3_packet=srv3_packet
             )
         else:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
                 object_id=srv3_packet.get_object_id().as_bytes(), set_id=srv3_packet.get_set_id(),
-                hk_data=packet_if.get_tm_data()[8:], service3_packet=srv3_packet
+                hk_data=packet_if.tm_data[8:], service3_packet=srv3_packet
             )
-        if packet_if.get_subservice() == 25 or packet_if.get_subservice() == 26:
+        if packet_if.subservice == 25 or packet_if.subservice == 26:
             self.handle_hk_print(
                 object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
                 hk_header=hk_header, hk_content=hk_content, validity_buffer=validity_buffer,
                 num_vars=num_vars
             )
-        if packet_if.get_subservice() == 10 or packet_if.get_subservice() == 12:
+        if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(
                 object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
                 srv3_packet=srv3_packet
@@ -129,7 +129,7 @@ class TmTcPrinter:
 
     def handle_service_5_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet_if.get_service() != 5:
+        if packet_if.service != 5:
             LOGGER.warning('This packet is not a service 5 packet!')
             return
         hook_obj = get_global_hook_obj()
@@ -147,10 +147,10 @@ class TmTcPrinter:
 
     def handle_service_8_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet_if.get_service() != PusServices.SERVICE_8_FUNC_CMD:
+        if packet_if.service != PusServices.SERVICE_8_FUNC_CMD:
             LOGGER.warning('This packet is not a service 8 packet!')
             return
-        if packet_if.get_subservice() != Srv8Subservices.DATA_REPLY:
+        if packet_if.subservice != Srv8Subservices.DATA_REPLY:
             LOGGER.warning(
                 f'This packet is not data reply packet with '
                 f'subservice {Srv8Subservices.DATA_REPLY}!'
@@ -221,8 +221,8 @@ class TmTcPrinter:
         )
 
     def __handle_short_print(self, packet_if: PusTmInterface):
-        self.__print_buffer = "Received TM[" + str(packet_if.get_service()) + "," + str(
-            packet_if.get_subservice()) + "]"
+        self.__print_buffer = "Received TM[" + str(packet_if.service) + "," + str(
+            packet_if.subservice) + "]"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
@@ -242,7 +242,7 @@ class TmTcPrinter:
         except TypeError as error:
             LOGGER.warning(
                 f"Type Error when trying to print TM Packet "
-                f"[{packet_if.get_service()} , {packet_if.get_subservice()}]")
+                f"[{packet_if.service} , {packet_if.subservice}]")
             LOGGER.warning(error)
 
     def __handle_column_header_print(self, info_if: PusTmInfoInterface):
@@ -341,14 +341,14 @@ class TmTcPrinter:
         :param info_if: Information interface
         :return:
         """
-        if packet_if.get_service() == 2 and \
-                (packet_if.get_subservice() == 131
-                 or packet_if.get_subservice() == 130):
+        if packet_if.service == 2 and \
+                (packet_if.subservice == 131
+                 or packet_if.subservice == 130):
             self.__print_buffer = \
-                f"Wiretapping Packet or Raw Reply from TM [{packet_if.get_service()}," \
-                f"{packet_if.get_subservice()}]: "
+                f"Wiretapping Packet or Raw Reply from TM [{packet_if.service}," \
+                f"{packet_if.subservice}]: "
             self.__print_buffer = \
-                self.__print_buffer + info_if.return_source_data_string()
+                self.__print_buffer + info_if.get_source_data_string()
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 

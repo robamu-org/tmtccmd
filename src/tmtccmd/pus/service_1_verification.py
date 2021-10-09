@@ -75,14 +75,14 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         service_1_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
-        tm_data = service_1_tm.get_tm_data()
+        tm_data = service_1_tm.tm_data
         if len(tm_data) < 4:
             LOGGER.warning("TM data less than 4 bytes!")
             raise ValueError
         service_1_tm.tc_packet_id = tm_data[0] << 8 | tm_data[1]
         service_1_tm.tc_psc = tm_data[2] << 8 | tm_data[3]
         service_1_tm.tc_ssc = service_1_tm.tc_psc & 0x3fff
-        if service_1_tm.get_subservice() % 2 == 0:
+        if service_1_tm.subservice % 2 == 0:
             service_1_tm._handle_failure_verification()
         else:
             service_1_tm._handle_success_verification()
@@ -121,7 +121,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         """
         super()._handle_failure_verification()
         self.set_packet_info("Failure Verficiation")
-        subservice = self.pus_tm.get_subservice()
+        subservice = self.pus_tm.subservice
         if subservice == 2:
             self.append_packet_info(" : Acceptance failure")
         elif subservice == 4:
@@ -134,13 +134,13 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     def _handle_success_verification(self):
         super()._handle_success_verification()
         self.set_packet_info('Success Verification')
-        if self.get_subservice() == 1:
+        if self.subservice == 1:
             self.append_packet_info(" : Acceptance success")
-        elif self.get_subservice() == 3:
+        elif self.subservice == 3:
             self.append_packet_info(" : Start success")
-        elif self.get_subservice() == 5:
+        elif self.subservice == 5:
             self.append_packet_info(" : Step Success")
-        elif self.get_subservice() == 7:
+        elif self.subservice == 7:
             self.append_packet_info(" : Completion success")
 
     def get_tc_ssc(self):

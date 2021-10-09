@@ -116,18 +116,18 @@ class Service5TM(PusTmBase, PusTmInfoBase):
 
     @staticmethod
     def __init_without_base(instance: Service5TM, set_attrs_from_tm_data: bool = False):
-        if instance.get_service() != 5:
+        if instance.service != 5:
             LOGGER.warning("This packet is not an event service packet!")
         instance.set_packet_info("Event")
-        if instance.get_subservice() == Srv5Subservices.INFO_EVENT:
+        if instance.subservice == Srv5Subservices.INFO_EVENT:
             instance.append_packet_info(" Info")
-        elif instance.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:
+        elif instance.subservice == Srv5Subservices.LOW_SEVERITY_EVENT:
             instance.append_packet_info(" Error Low Severity")
-        elif instance.get_subservice() == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
+        elif instance.subservice == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
             instance.append_packet_info(" Error Med Severity")
-        elif instance.get_subservice() == Srv5Subservices.HIGH_SEVERITY_EVENT:
+        elif instance.subservice == Srv5Subservices.HIGH_SEVERITY_EVENT:
             instance.append_packet_info(" Error High Severity")
-        tm_data = instance.get_tm_data()
+        tm_data = instance.tm_data
         if len(tm_data) < 14:
             LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
             raise ValueError
