@@ -82,19 +82,19 @@ class PusTmBase(PusTmInterface):
 
     @property
     def tm_data(self) -> bytearray:
-        return self.pus_tm.get_tm_data()
+        return self.pus_tm.tm_data
 
     @property
     def ssc(self) -> int:
-        return self.pus_tm.get_ssc()
+        return self.pus_tm.ssc
 
     @property
     def valid(self):
-        return self.pus_tm.is_valid()
+        return self.pus_tm.valid
 
     @property
     def apid(self) -> int:
-        return self.pus_tm.get_apid()
+        return self.pus_tm.apid
 
     @property
     def service(self) -> int:
@@ -144,7 +144,7 @@ class PusTmInfoBase(PusTmInfoInterface):
         content_list.append(f'{self.pus_tm.secondary_packet_header.time.return_time_string()}')
         content_list.append(f'0x{self.pus_tm.space_packet_header.apid:02x}')
         content_list.append(f'{self.pus_tm.space_packet_header.ssc}')
-        if self.pus_tm.is_valid():
+        if self.pus_tm.valid:
             content_list.append("Yes")
         else:
             content_list.append("No")

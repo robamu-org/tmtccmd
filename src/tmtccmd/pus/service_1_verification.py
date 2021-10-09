@@ -23,7 +23,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             self, subservice_id: int, time: CdsShortTimestamp = None,
             tc_packet_id: int = 0, tc_psc: int = 0, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, ack: int = 0b1111,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
             secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
@@ -36,7 +36,6 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id
