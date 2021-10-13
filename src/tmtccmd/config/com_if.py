@@ -63,9 +63,15 @@ def create_communication_interface_default(
             return None
         communication_interface.initialize()
         return communication_interface
-    except (IOError, OSError) as e:
-        LOGGER.error("Error setting up communication interface")
-        print(e)
+    except ConnectionRefusedError:
+        LOGGER.exception(f'TCP/IP connection refused')
+        if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
+            LOGGER.warning('Make sure that a UDP server is running')
+        if com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+            LOGGER.warning('Make sure that a TCP server is running')
+        sys.exit(1)
+    except (IOError, OSError):
+        LOGGER.exception(f'Error setting up communication interface')
         sys.exit(1)
 
 

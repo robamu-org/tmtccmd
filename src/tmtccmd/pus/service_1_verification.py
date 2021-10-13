@@ -20,44 +20,33 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
     """
     def __init__(
-            self, subservice_id: int, time: CdsShortTimestamp = None,
+            self, subservice: int, time: CdsShortTimestamp = None,
             tc_packet_id: int = 0, tc_psc: int = 0, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, ack: int = 0b1111,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
             secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
-        pus_tm = PusTelemetry(
-            service_id=1,
-            subservice_id=subservice_id,
+        Service1TM.__init__(
+            self,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id
         )
-        PusTmBase.__init__(self, pus_tm=pus_tm)
-        PusTmInfoBase.__init__(self, pus_tm=pus_tm)
-        self.has_tc_error_code = False
-        self.is_step_reply = False
-        # Failure Reports with error code
-        self.err_code = 0
-        self.step_number = 0
-        self.error_param1 = 0
-        self.error_param2 = 0
-        self.tc_packet_id = tc_packet_id
-        self.tc_psc = tc_psc
-        self.tc_ssc = tc_psc & 0x3fff
+        PusTmBase.__init__(self, pus_tm=self.pus_tm)
+        PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
 
     @classmethod
     def __empty(cls) -> Service1TMExtended:
         return cls(
-            subservice_id=0
+            subservice=0
         )
 
     @classmethod
@@ -75,14 +64,14 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         service_1_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
-        tm_data = service_1_tm.get_tm_data()
+        tm_data = service_1_tm.tm_data
         if len(tm_data) < 4:
             LOGGER.warning("TM data less than 4 bytes!")
             raise ValueError
         service_1_tm.tc_packet_id = tm_data[0] << 8 | tm_data[1]
         service_1_tm.tc_psc = tm_data[2] << 8 | tm_data[3]
         service_1_tm.tc_ssc = service_1_tm.tc_psc & 0x3fff
-        if service_1_tm.get_subservice() % 2 == 0:
+        if service_1_tm.subservice % 2 == 0:
             service_1_tm._handle_failure_verification()
         else:
             service_1_tm._handle_success_verification()
@@ -121,7 +110,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         """
         super()._handle_failure_verification()
         self.set_packet_info("Failure Verficiation")
-        subservice = self.pus_tm.get_subservice()
+        subservice = self.pus_tm.subservice
         if subservice == 2:
             self.append_packet_info(" : Acceptance failure")
         elif subservice == 4:
@@ -134,31 +123,14 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     def _handle_success_verification(self):
         super()._handle_success_verification()
         self.set_packet_info('Success Verification')
-        if self.get_subservice() == 1:
+        if self.subservice == 1:
             self.append_packet_info(" : Acceptance success")
-        elif self.get_subservice() == 3:
+        elif self.subservice == 3:
             self.append_packet_info(" : Start success")
-        elif self.get_subservice() == 5:
+        elif self.subservice == 5:
             self.append_packet_info(" : Step Success")
-        elif self.get_subservice() == 7:
+        elif self.subservice == 7:
             self.append_packet_info(" : Completion success")
-
-    def get_tc_ssc(self):
-        return self.tc_ssc
-
-    def get_error_code(self):
-        if self.has_tc_error_code:
-            return self.err_code
-        else:
-            LOGGER.warning("Service1Tm: get_error_code: This is not a failure packet, returning 0")
-            return 0
-
-    def get_step_number(self):
-        if self.is_step_reply:
-            return self.step_number
-        else:
-            LOGGER.warning("Service1Tm: get_step_number: This is not a step reply, returning 0")
-            return 0
 
 
 PusVerifQueue = Deque[Service1TM]

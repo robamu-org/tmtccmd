@@ -23,19 +23,24 @@ class Service3Base:
         self._param_length = 0
         self._custom_hk_handling = custom_hk_handling
 
-    def get_object_id(self) -> ObjectId:
+    @property
+    def object_id(self) -> ObjectId:
         return self._object_id
 
-    def get_set_id(self) -> int:
+    @property
+    def set_id(self) -> int:
         return self._set_id
 
+    @property
     def has_custom_hk_handling(self) -> bool:
         return self._custom_hk_handling
 
-    def set_custom_hk_handling(self, custom_hk_handling: bool):
-        self._custom_hk_handling = custom_hk_handling
+    @has_custom_hk_handling.setter
+    def has_custom_hk_handling(self, has_custom_hk_handling: bool):
+        self._custom_hk_handling = has_custom_hk_handling
 
-    def get_hk_definitions_list(self) -> Tuple[List, List]:
+    @property
+    def hk_definitions_list(self) -> Tuple[List, List]:
         """Can be implemented by a child class to print definitions lists. The first list
         should contain a header with parameter names, and the second list shall contain the
         corresponding set IDs"""

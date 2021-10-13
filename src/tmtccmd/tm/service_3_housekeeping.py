@@ -32,8 +32,8 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
             custom_hk_handling: bool = False, ssc: int = 0, apid: int = -1,
             minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
             minimum_structure_report_header_size: int = STRUCTURE_REPORT_FIXED_HEADER_SIZE,
-            packet_version: int = 0b000, pus_version: PusVersion = PusVersion.UNKNOWN,
-            pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
+            packet_version: int = 0b000, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+            pus_tm_version: int = 0b0001, secondary_header_flag: bool = True,
             space_time_ref: int = 0b0000, destination_id: int = 0
     ):
         """Service 3 packet class representation which can be built from a raw bytearray
@@ -47,21 +47,19 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         """
         Service3Base.__init__(self, object_id=0, custom_hk_handling=custom_hk_handling)
         source_data = bytearray()
-        source_data.extend(struct.pack('!I', self.get_object_id().get_id()))
-        source_data.extend(struct.pack('!I', self._set_id))
+        source_data.extend(struct.pack('!I', self.object_id.id))
+        source_data.extend(struct.pack('!I', self.set_id))
         if subservice_id == 25 or subservice_id == 26:
             source_data.extend(hk_data)
         pus_tm = PusTelemetry(
-            service_id=3,
-            subservice_id=subservice_id,
+            service=3,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id
@@ -82,10 +80,10 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
             minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
             minimum_structure_report_header_size: int = STRUCTURE_REPORT_FIXED_HEADER_SIZE
     ):
-        instance.set_custom_hk_handling(custom_hk_handling=custom_hk_handling)
-        if instance.has_custom_hk_handling():
+        instance.custom_hk_handling=custom_hk_handling
+        if instance.custom_hk_handling:
             return
-        tm_data = instance.get_tm_data()
+        tm_data = instance.tm_data
         if len(tm_data) < 8:
             LOGGER.warning(
                 f'Invalid Service 3 packet, is too short. Detected TM data length: {len(tm_data)}'
@@ -93,12 +91,12 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
             raise ValueError
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
-        instance.get_object_id().set_from_bytes(obj_id_as_bytes=tm_data[0:4])
-        instance._set_id = struct.unpack('!I', tm_data[4:8])[0]
-        if instance.get_subservice() == 25 or instance.get_subservice() == 26:
+        instance.object_id.id = tm_data[0:4]
+        instanceset_id = struct.unpack('!I', tm_data[4:8])[0]
+        if instance.subservice == 25 or instance.subservice == 26:
             if len(tm_data) > 8:
                 instance._param_length = len(tm_data[8:])
-        instance.specify_packet_info("Housekeeping Packet")
+        instance.set_packet_info("Housekeeping Packet")
 
     @classmethod
     def __empty(cls) -> Service3TM:
@@ -126,8 +124,8 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
     @abstractmethod
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(self.get_object_id().as_string())
-        content_list.append(hex(self._set_id))
+        content_list.append(self.object_id.as_string)
+        content_list.append(hex(self.set_id))
         content_list.append(int(self._param_length))
 
     @abstractmethod
@@ -138,11 +136,11 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         header_list.append("HK data size")
 
     def get_hk_definitions_list(self) -> Tuple[List, List]:
-        tm_data = self.get_tm_data()
+        tm_data = self.tm_data
         if len(tm_data) < self.hk_structure_report_header_size:
             LOGGER.warning(
                 f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
-                f'from {self.get_object_id().as_string()}, is shorter '
+                f'from {self.object_id.as_string}, is shorter '
                 f'than {self.hk_structure_report_header_size}'
             )
             return [], []
@@ -157,7 +155,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         if len(tm_data) < self.hk_structure_report_header_size + num_params * 4:
             LOGGER.warning(
                 f'Service3TM: handle_filling_definition_arrays: Invalid structure report '
-                f'from {self.get_object_id().as_string()}, is shorter than '
+                f'from {self.object_id.as_string}, is shorter than '
                 f'{self.hk_structure_report_header_size + num_params * 4}'
             )
             return [], []
@@ -181,7 +179,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         else:
             valid_string = "No"
         definitions_content = [
-            self.get_object_id().as_string(), self._set_id, status_string, valid_string,
+            self.object_id.as_string, self._set_id, status_string, valid_string,
             collection_interval_seconds, num_params
         ]
         definitions_content.extend(parameters)
