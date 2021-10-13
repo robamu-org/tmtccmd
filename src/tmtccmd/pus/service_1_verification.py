@@ -56,7 +56,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     @classmethod
     def __empty(cls) -> Service1TMExtended:
         return cls(
-            subservice_id=0
+            subservice=0
         )
 
     @classmethod

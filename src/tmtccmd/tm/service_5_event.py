@@ -64,7 +64,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service5TM:
         return cls(
-            subservice_id=Srv5Subservices.INFO_EVENT,
+            subservice=Srv5Subservices.INFO_EVENT,
             event_id=0,
             object_id=bytearray(4),
             param_1=0,
