@@ -25,9 +25,9 @@ class Service200TM(PusTmBase, PusTmInfoBase):
         elif subservice_id == 6 or subservice_id == 8:
             source_data.extend(struct.pack('!I', mode))
             source_data.append(submode)
-        pus_tm = PusTelemetryExtended(
-            service_id=CustomPusServices.SERVICE_200_MODE,
-            subservice_id=subservice_id,
+        pus_tm = PusTelemetry(
+            service_=CustomPusServices.SERVICE_200_MODE,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,
