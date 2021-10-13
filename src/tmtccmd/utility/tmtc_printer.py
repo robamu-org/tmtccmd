@@ -112,7 +112,7 @@ class TmTcPrinter:
         if srv3_packet.custom_hk_handling:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
-                object_id=bytes(), set_id=srv3_packet.get_set_id(),
+                object_id=bytes(), set_id=srv3_packet.set_id,
                 hk_data=packet_if.tm_data, service3_packet=srv3_packet
             )
         else:
@@ -129,7 +129,7 @@ class TmTcPrinter:
             )
         if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(
-                object_id=srv3_packet.object_id.get_id(), set_id=srv3_packet.set_id,
+                object_id=srv3_packet.object_id.id, set_id=srv3_packet.set_id,
                 srv3_packet=srv3_packet
             )
 
@@ -144,8 +144,8 @@ class TmTcPrinter:
             return
         srv5_packet = cast(Service5TM, packet_if)
         custom_string = hook_obj.handle_service_5_event(
-            object_id=srv5_packet.get_reporter_id_as_bytes(), event_id=srv5_packet.get_event_id(),
-            param_1=srv5_packet.get_param_1(), param_2=srv5_packet.get_param_2()
+            object_id=srv5_packet.reporter_id_as_bytes, event_id=srv5_packet.event_id,
+            param_1=srv5_packet.param_1, param_2=srv5_packet.param_2
         )
         self.__print_buffer = custom_string
         LOGGER.info(self.__print_buffer)
@@ -170,11 +170,11 @@ class TmTcPrinter:
         if srv8_packet is None:
             LOGGER.warning('Service 8 object is not instance of Service8TM')
             return
-        obj_id = srv8_packet.get_source_object_id_as_bytes()
-        action_id = srv8_packet.get_action_id()
+        obj_id = srv8_packet.source_object_id_as_bytes
+        action_id = srv8_packet.action_id
         header_list, content_list = hook_obj.handle_service_8_telemetry(
             object_id=obj_id, action_id=action_id,
-            custom_data=srv8_packet.get_custom_data()
+            custom_data=srv8_packet.custom_data
         )
         obj_id_dict = hook_obj.get_object_ids()
         rep_str = obj_id_dict.get(bytes(obj_id))

@@ -86,7 +86,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
         content_list.append(str(self._event_id))
-        content_list.append(self._object_id.as_string())
+        content_list.append(self._object_id.as_string)
         content_list.append(str(hex(self._param_1)) + ", " + str(self._param_1))
         content_list.append(str(hex(self._param_2)) + ", " + str(self._param_2))
 
@@ -98,19 +98,24 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
 
-    def get_reporter_id_as_bytes(self) -> bytes:
-        return self._object_id.as_bytes()
+    @property
+    def reporter_id(self) -> int:
+        return self._object_id.id
 
-    def get_reporter_id(self) -> int:
-        return self._object_id.get_id()
+    @property
+    def reporter_id_as_bytes(self) -> bytes:
+        return self._object_id.as_bytes
 
-    def get_event_id(self):
+    @property
+    def event_id(self):
         return self._event_id
 
-    def get_param_1(self):
+    @property
+    def param_1(self):
         return self._param_1
 
-    def get_param_2(self):
+    @property
+    def param_2(self):
         return self._param_2
 
     @staticmethod
