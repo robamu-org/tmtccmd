@@ -20,14 +20,14 @@ class Srv17Subservices(enum.IntEnum):
 
 class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
     def __init__(
-            self, subservice_id: int, time: CdsShortTimestamp = None, ssc: int = 0,
+            self, subservice: int, time: CdsShortTimestamp = None, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
             pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, secondary_header_flag: bool = True,
             space_time_ref: int = 0b0000, destination_id: int = 0
     ):
         Service17TM.__init__(
             self,
-            subservice_id=subservice_id,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,
@@ -46,7 +46,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
     @classmethod
     def __empty(cls) -> Service17TMExtended:
         return cls(
-            subservice_id=0
+            subservice=0
         )
 
     @classmethod

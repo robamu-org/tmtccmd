@@ -18,7 +18,7 @@ class ExampleHookClass(TmTcHookBase):
 
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-        set_default_globals_pre_args_parsing(gui=gui, apid=APID)
+        set_default_globals_pre_args_parsing(gui=gui, tc_apid=APID, tm_apid=APID)
 
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
         from tmtccmd.config.globals import set_default_globals_post_args_parsing

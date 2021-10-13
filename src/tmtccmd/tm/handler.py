@@ -26,7 +26,7 @@ def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
     service_type = raw_tm_packet[7]
     tm_packet = None
     if service_type == 1:
-        tm_packet = Service1TM.unpack(raw_telemetry=raw_tm_packet)
+        tm_packet = Service17TMExtended.unpack(raw_telemetry=raw_tm_packet)
     if service_type == 5:
         tm_packet = Service5TM.unpack(raw_telemetry=raw_tm_packet)
     if service_type == 17:
