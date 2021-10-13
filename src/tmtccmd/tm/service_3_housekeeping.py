@@ -52,8 +52,8 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         if subservice_id == 25 or subservice_id == 26:
             source_data.extend(hk_data)
         pus_tm = PusTelemetry(
-            service_id=3,
-            subservice_id=subservice_id,
+            service=3,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,

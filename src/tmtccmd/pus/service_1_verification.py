@@ -28,8 +28,8 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             destination_id: int = 0
     ):
         pus_tm = PusTelemetry(
-            service_id=1,
-            subservice_id=subservice_id,
+            service=1,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,

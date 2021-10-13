@@ -43,8 +43,8 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             destination_id: int = 0
     ):
         pus_tm = PusTelemetry(
-            service_id=PusServices.SERVICE_20_PARAMETER,
-            subservice_id=subservice_id,
+            service=PusServices.SERVICE_20_PARAMETER,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,

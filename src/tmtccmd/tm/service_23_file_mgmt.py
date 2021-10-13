@@ -37,8 +37,8 @@ class Service23TM(PusTmInfoBase, PusTmBase):
         self.data_start_idx = 0
         self.file_info = FileInfo(file_name=file_name, repo_path=repo_path)
         pus_tm = PusTelemetry(
-            service_id=PusServices.SERVICE_23_FILE_MGMT,
-            subservice_id=subservice_id,
+            service=PusServices.SERVICE_23_FILE_MGMT,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,
