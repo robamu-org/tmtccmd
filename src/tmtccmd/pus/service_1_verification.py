@@ -20,7 +20,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
     """
     def __init__(
-            self, subservice_id: int, time: CdsShortTimestamp = None,
+            self, subservice: int, time: CdsShortTimestamp = None,
             tc_packet_id: int = 0, tc_psc: int = 0, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
             pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
@@ -28,8 +28,8 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             destination_id: int = 0
     ):
         pus_tm = PusTelemetry(
-            service_id=1,
-            subservice_id=subservice_id,
+            service=1,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,

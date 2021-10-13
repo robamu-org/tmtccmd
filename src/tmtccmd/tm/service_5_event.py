@@ -18,7 +18,7 @@ LOGGER = get_console_logger()
 
 class Service5TM(PusTmBase, PusTmInfoBase):
     def __init__(
-            self, subservice_id: Srv5Subservices, event_id: int, object_id: bytearray,
+            self, subservice: Srv5Subservices, event_id: int, object_id: bytearray,
             param_1: int, param_2: int, time: CdsShortTimestamp = None,
             ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
             pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
@@ -45,8 +45,8 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         source_data.extend(struct.pack('!I', self._param_1))
         source_data.extend(struct.pack('!I', self._param_2))
         pus_tm = PusTelemetry(
-            service_id=PusServices.SERVICE_5_EVENT,
-            subservice_id=subservice_id,
+            service=PusServices.SERVICE_5_EVENT,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,
