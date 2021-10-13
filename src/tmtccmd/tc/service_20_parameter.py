@@ -1,9 +1,7 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
 from typing import Union
-
 from spacepackets.ecss.conf import get_default_tc_apid
-
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
 from tmtccmd.utility.logger import get_console_logger

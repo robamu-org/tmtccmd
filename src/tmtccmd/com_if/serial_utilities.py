@@ -94,15 +94,19 @@ def __try_com_port_load(json_obj) -> (bool, bool, str):
         LOGGER.info(f'Loaded COM port {com_port} from JSON configuration file')
         if not check_port_validity(com_port):
             while True:
+                LOGGER.info(
+                    'COM port from configuration file not contained within serial port list'
+                )
                 reconfigure = input(
-                    'COM port from configuration file not contained within serial'
-                    'port list. Reconfigure serial port or try to determine from hint? '
+                    'Reconfigure serial port or try to determine from hint? '
                     '[r (reconfigure) / h (hint) / c(cancel)]: '
                 )
                 if reconfigure.lower() in ['r']:
                     reconfig_com_port = True
+                    break
                 elif reconfigure.lower() in ['h']:
                     try_hint = True
+                    break
                 elif reconfigure.lower() in ['c']:
                     return com_port
                 else:
@@ -143,10 +147,10 @@ def __prompt_hint_handling(json_obj) -> (bool, str):
         'and then specify a hint based on it? [y/n]: '
     )
     if prompt_hint.lower() in ['y', 'yes', '1']:
-        LOGGER.info('Found serial devices:')
-        for port, desc, hwid in sorted(ports):
-            print('{}: {} [{}]'.format(port, desc, hwid))
         while True:
+            LOGGER.info('Found serial devices:')
+            for port, desc, hwid in sorted(ports):
+                print('{}: {} [{}]'.format(port, desc, hwid))
             hint = input('Specify hint: ')
             save_to_json = input(
                 'Do you want to store the hint to the configuration file or '

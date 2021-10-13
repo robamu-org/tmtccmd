@@ -85,9 +85,9 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         if self.has_tc_error_code:
             if self.is_step_reply:
                 content_list.append(str(self.step_number))
-            content_list.append(str(hex(self.err_code)))
-            content_list.append(str(hex(self.error_param1)) + ", " + str(self.error_param1))
-            content_list.append(str(hex(self.error_param2)) + ", " + str(self.error_param2))
+            content_list.append(str(hex(self.error_code)))
+            content_list.append(f'hex {self.error_param_1:04x} dec {self.error_param_1}')
+            content_list.append(f'hex {self.error_param_2:04x} dec {self.error_param_2}')
         elif self.is_step_reply:
             content_list.append(str(self.step_number))
 

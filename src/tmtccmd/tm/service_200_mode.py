@@ -14,8 +14,8 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             return_value: int = 0, mode: int = 0, submode: int = 0,
             time: CdsShortTimestamp = None, ssc: int = 0, source_data: bytearray = bytearray([]),
             apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
-            ack: int = 0b1111, secondary_header_flag: bool = True,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
+            secondary_header_flag: bool = True,
             space_time_ref: int = 0b0000, destination_id: int = 0
     ):
         source_data = bytearray()
@@ -26,7 +26,7 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             source_data.extend(struct.pack('!I', mode))
             source_data.append(submode)
         pus_tm = PusTelemetry(
-            service_=CustomPusServices.SERVICE_200_MODE,
+            service=CustomPusServices.SERVICE_200_MODE,
             subservice=subservice_id,
             time=time,
             ssc=ssc,
@@ -34,15 +34,13 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
-        self.specify_packet_info("Mode Reply")
+        self.set_packet_info("Mode Reply")
 
         self.is_cant_reach_mode_reply = False
         self.is_mode_reply = False
@@ -54,17 +52,17 @@ class Service200TM(PusTmBase, PusTmInfoBase):
 
     @staticmethod
     def __init_without_base(instance: Service200TM):
-        tm_data = instance.get_tm_data()
+        tm_data = instance.tm_data
         instance.object_id = tm_data[0:4]
-        if instance.get_subservice() == 7:
+        if instance.subservice == 7:
             instance.append_packet_info(": Can't reach mode")
             instance.is_cant_reach_mode_reply = True
             instance.return_value = tm_data[4] << 8 | tm_data[5]
-        elif instance.get_subservice() == 6 or instance.get_subservice() == 8:
+        elif instance.subservice == 6 or instance.subservice== 8:
             instance.is_mode_reply = True
-            if instance.get_subservice() == 8:
+            if instance.subservice == 8:
                 instance.append_packet_info(": Wrong Mode")
-            elif instance.get_subservice() == 6:
+            elif instance.subservice == 6:
                 instance.append_packet_info(": Mode reached")
             instance.mode = struct.unpack('!I', tm_data[4:8])[0]
             instance.submode = tm_data[8]
