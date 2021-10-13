@@ -75,7 +75,7 @@ class PusTmBase(PusTmInterface):
         return self.pus_tm.pack()
 
     def get_tm_data(self) -> bytearray:
-        return self.pus_tm.get_tm_data()
+        return self.pus_tm.tm_data
 
     def get_ssc(self) -> int:
         return self.pus_tm.get_ssc()

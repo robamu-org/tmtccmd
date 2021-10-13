@@ -5,7 +5,7 @@ import struct
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
 from tmtccmd.pus.definitions import CustomPusServices
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Service200TM(PusTmBase, PusTmInfoBase):
