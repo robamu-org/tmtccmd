@@ -5,8 +5,11 @@ import enum
 from typing import cast
 
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.tm import Service8TM, Service5TM
-from tmtccmd.pus.service_list import PusServices
+from spacepackets.util import get_printable_data_string, PrintFormats
+
+from tmtccmd.tm.service_8_functional_cmd import Service8TM
+from tmtccmd.tm.service_5_event import Service5TM
+from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.definitions import PusIFQueueT
@@ -23,7 +26,8 @@ class DisplayMode(enum.Enum):
 
 
 class TmTcPrinter:
-    """This class handles printing to the command line and to files."""
+    """This class handles printing to the command line and to files.
+    TODO: Introduce file logger"""
     def __init__(
             self, display_mode: DisplayMode = DisplayMode.LONG, do_print_to_file: bool = True,
             print_tc: bool = True
@@ -69,7 +73,7 @@ class TmTcPrinter:
             LOGGER.warning("Passed packet does not implement necessary interfaces!")
             return
 
-        if packet_if.get_service() == PusServices.SERVICE_5_EVENT:
+        if packet_if.service == PusServices.SERVICE_5_EVENT:
             self.__handle_event_packet(cast(Service5TM, packet_if))
 
         if self._display_mode == DisplayMode.SHORT:
@@ -79,22 +83,25 @@ class TmTcPrinter:
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
         # Handle special packet types
-        if packet_if.get_service() == PusServices.SERVICE_3_HOUSEKEEPING:
+        if packet_if.service == PusServices.SERVICE_3_HOUSEKEEPING:
             self.handle_service_3_packet(packet_if=packet_if)
-        if packet_if.get_service() == PusServices.SERVICE_5_EVENT:
+        if packet_if.service == PusServices.SERVICE_5_EVENT:
             self.handle_service_5_packet(packet_if=packet_if)
-        if packet_if.get_service() == PusServices.SERVICE_8_FUNC_CMD and \
-                packet_if.get_subservice() == Srv8Subservices.DATA_REPLY:
+        if packet_if.service == PusServices.SERVICE_8_FUNC_CMD and \
+                packet_if.subservice == Srv8Subservices.DATA_REPLY:
             self.handle_service_8_packet(packet_if=packet_if)
 
         if print_raw_tm:
-            self.__print_buffer = f"TM Data:\n{self.return_data_string(packet_if.pack())}"
+            tm_data_string = get_printable_data_string(
+                print_format= PrintFormats.HEX, data=packet_if.pack()
+            )
+            self.__print_buffer = f"TM Data:\n{tm_data_string}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
     def handle_service_3_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet_if.get_service() != 3:
+        if packet_if.service != 3:
             LOGGER.warning('This packet is not a service 3 packet!')
             return
         hook_obj = get_global_hook_obj()
@@ -102,33 +109,33 @@ class TmTcPrinter:
             LOGGER.warning('Hook object not set')
             return
         srv3_packet = cast(Service3Base, packet_if)
-        if srv3_packet.has_custom_hk_handling():
+        if srv3_packet.custom_hk_handling:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
-                object_id=bytes(), set_id=srv3_packet.get_set_id(),
-                hk_data=packet_if.get_tm_data(), service3_packet=srv3_packet
+                object_id=bytes(), set_id=srv3_packet.set_id,
+                hk_data=packet_if.tm_data, service3_packet=srv3_packet
             )
         else:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
-                object_id=srv3_packet.get_object_id().as_bytes(), set_id=srv3_packet.get_set_id(),
-                hk_data=packet_if.get_tm_data()[8:], service3_packet=srv3_packet
+                object_id=srv3_packet.object_id.as_bytes, set_id=srv3_packet.set_id,
+                hk_data=packet_if.tm_data[8:], service3_packet=srv3_packet
             )
-        if packet_if.get_subservice() == 25 or packet_if.get_subservice() == 26:
+        if packet_if.subservice == 25 or packet_if.subservice == 26:
             self.handle_hk_print(
-                object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.object_id.as_int, set_id=srv3_packet.set_id,
                 hk_header=hk_header, hk_content=hk_content, validity_buffer=validity_buffer,
                 num_vars=num_vars
             )
-        if packet_if.get_subservice() == 10 or packet_if.get_subservice() == 12:
+        if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(
-                object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.object_id.id, set_id=srv3_packet.set_id,
                 srv3_packet=srv3_packet
             )
 
     def handle_service_5_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet_if.get_service() != 5:
+        if packet_if.service != 5:
             LOGGER.warning('This packet is not a service 5 packet!')
             return
         hook_obj = get_global_hook_obj()
@@ -137,8 +144,8 @@ class TmTcPrinter:
             return
         srv5_packet = cast(Service5TM, packet_if)
         custom_string = hook_obj.handle_service_5_event(
-            object_id=srv5_packet.get_reporter_id_as_bytes(), event_id=srv5_packet.get_event_id(),
-            param_1=srv5_packet.get_param_1(), param_2=srv5_packet.get_param_2()
+            object_id=srv5_packet.reporter_id_as_bytes, event_id=srv5_packet.event_id,
+            param_1=srv5_packet.param_1, param_2=srv5_packet.param_2
         )
         self.__print_buffer = custom_string
         LOGGER.info(self.__print_buffer)
@@ -146,10 +153,10 @@ class TmTcPrinter:
 
     def handle_service_8_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
-        if packet_if.get_service() != PusServices.SERVICE_8_FUNC_CMD:
+        if packet_if.service != PusServices.SERVICE_8_FUNC_CMD:
             LOGGER.warning('This packet is not a service 8 packet!')
             return
-        if packet_if.get_subservice() != Srv8Subservices.DATA_REPLY:
+        if packet_if.subservice != Srv8Subservices.DATA_REPLY:
             LOGGER.warning(
                 f'This packet is not data reply packet with '
                 f'subservice {Srv8Subservices.DATA_REPLY}!'
@@ -163,11 +170,11 @@ class TmTcPrinter:
         if srv8_packet is None:
             LOGGER.warning('Service 8 object is not instance of Service8TM')
             return
-        obj_id = srv8_packet.get_source_object_id_as_bytes()
-        action_id = srv8_packet.get_action_id()
+        obj_id = srv8_packet.source_object_id_as_bytes
+        action_id = srv8_packet.action_id
         header_list, content_list = hook_obj.handle_service_8_telemetry(
             object_id=obj_id, action_id=action_id,
-            custom_data=srv8_packet.get_custom_data()
+            custom_data=srv8_packet.custom_data
         )
         obj_id_dict = hook_obj.get_object_ids()
         rep_str = obj_id_dict.get(bytes(obj_id))
@@ -220,8 +227,8 @@ class TmTcPrinter:
         )
 
     def __handle_short_print(self, packet_if: PusTmInterface):
-        self.__print_buffer = "Received TM[" + str(packet_if.get_service()) + "," + str(
-            packet_if.get_subservice()) + "]"
+        self.__print_buffer = "Received TM[" + str(packet_if.service) + "," + str(
+            packet_if.subservice) + "]"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
@@ -239,10 +246,10 @@ class TmTcPrinter:
             self.__handle_tm_content_print(info_if=info_if)
             self.__handle_additional_printout(info_if=info_if)
         except TypeError as error:
-            LOGGER.warning(
+            LOGGER.exception(
                 f"Type Error when trying to print TM Packet "
-                f"[{packet_if.get_service()} , {packet_if.get_subservice()}]")
-            LOGGER.warning(error)
+                f"[{packet_if.service} , {packet_if.subservice}]"
+            )
 
     def __handle_column_header_print(self, info_if: PusTmInfoInterface):
         header_list = []
@@ -340,14 +347,14 @@ class TmTcPrinter:
         :param info_if: Information interface
         :return:
         """
-        if packet_if.get_service() == 2 and \
-                (packet_if.get_subservice() == 131
-                 or packet_if.get_subservice() == 130):
+        if packet_if.service == 2 and \
+                (packet_if.subservice == 131
+                 or packet_if.subservice == 130):
             self.__print_buffer = \
-                f"Wiretapping Packet or Raw Reply from TM [{packet_if.get_service()}," \
-                f"{packet_if.get_subservice()}]: "
+                f"Wiretapping Packet or Raw Reply from TM [{packet_if.service}," \
+                f"{packet_if.subservice}]: "
             self.__print_buffer = \
-                self.__print_buffer + info_if.return_source_data_string()
+                self.__print_buffer + info_if.get_source_data_string()
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
@@ -446,9 +453,12 @@ class TmTcPrinter:
         shift_number = position + (6 - 2 * (position - 1))
         return (byte >> shift_number) & 1
 
-    def print_telecommand(self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytearray()):
+    def print_telecommand(
+            self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytes()
+    ):
         """
-        This function handles the printing of Telecommands. It assumed the packets are sent shortly before or after.
+        This function handles the printing of Telecommands. It assumed the packets are sent
+        shortly before or after.
         :param tc_packet_obj:
         :param tc_packet_raw:
         :return:
@@ -469,8 +479,8 @@ class TmTcPrinter:
         :return:
         """
         self.__print_buffer = \
-            f"Sent TC[{tc_packet_obj.get_service()}, {tc_packet_obj.get_subservice()}] with SSC " \
-            f"{tc_packet_obj.get_ssc()}"
+            f"Sent TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] with SSC " \
+            f"{tc_packet_obj.ssc}"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
@@ -480,35 +490,24 @@ class TmTcPrinter:
         :param tc_packet_obj:
         :return:
         """
+        data_print = get_printable_data_string(
+            print_format=PrintFormats.HEX, data=tc_packet_obj.app_data
+        )
         try:
             self.__print_buffer = \
-                f"Telecommand TC[{tc_packet_obj.get_service()}, {tc_packet_obj.get_subservice()}] " \
-                f"with SSC {tc_packet_obj.get_ssc()} sent with data " \
-                f"{self.return_data_string(tc_packet_obj.get_app_data())}"
+                f"Telecommand TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] " \
+                f"with SSC {tc_packet_obj.ssc} sent with data " \
+                f"{data_print}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
         except TypeError as error:
             LOGGER.error("TMTC Printer: Type Error! Traceback: %s", error)
 
-    def print_data(self, byte_array: bytearray):
+    @staticmethod
+    def print_data(data: bytes):
         """
-        :param byte_array:
+        :param data: Data to print
         :return: None
         """
-        string = self.return_data_string(byte_array)
+        string = get_printable_data_string(print_format=PrintFormats.HEX, data=data)
         LOGGER.info(string)
-
-    @staticmethod
-    def return_data_string(byte_array: bytearray) -> str:
-        """
-        Converts a bytearray to string format for printing
-        :param byte_array:
-        :return:
-        """
-        str_to_print = "["
-        for byte in byte_array:
-            str_to_print += str(hex(byte)) + " , "
-        str_to_print = str_to_print.rstrip(' ')
-        str_to_print = str_to_print.rstrip(',')
-        str_to_print += ']'
-        return str_to_print

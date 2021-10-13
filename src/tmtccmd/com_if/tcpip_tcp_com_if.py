@@ -10,7 +10,7 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 
 from spacepackets.ccsds.spacepacket import parse_space_packets
 
@@ -42,7 +42,7 @@ class TcpIpTcpComIF(CommunicationInterface):
     TM_LOOP_DELAY = 0.2
 
     def __init__(
-            self, com_if_key: str, com_type: TcpCommunicationType, space_packet_id: int,
+            self, com_if_key: str, com_type: TcpCommunicationType, space_packet_ids: Tuple[int],
             tm_polling_freqency: float, tm_timeout: float, tc_timeout_factor: float,
             send_address: EthernetAddressT, max_recv_size: int,
             max_packets_stored: int = 50,
@@ -52,8 +52,8 @@ class TcpIpTcpComIF(CommunicationInterface):
         :param com_if_key:
         :param com_type:                Communication Type. By default, it is assumed that
                                         space packets are sent via TCP
-        :param space_packet_id:         16 bit packet header for space packet headers. It is used
-                                        to detect the start of a header.
+        :param space_packet_ids:        16 bit packet header for space packet headers. Used to
+                                        detect the start of PUS packets
         :param tm_polling_freqency:     Polling frequency in seconds
         :param tm_timeout:              Timeout in seconds
         :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
@@ -61,7 +61,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
         self.tm_timeout = tm_timeout
         self.com_type = com_type
-        self.space_packet_id = space_packet_id
+        self.space_packet_ids = space_packet_ids
         self.tc_timeout_factor = tc_timeout_factor
         self.tm_polling_frequency = tm_polling_freqency
         self.send_address = send_address
@@ -122,8 +122,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         # call. We parse the space packets contained in the stream here
         if self.com_type == TcpCommunicationType.SPACE_PACKETS:
             tm_packet_list = parse_space_packets(
-                analysis_queue=self.__analysis_queue, packet_id=self.space_packet_id,
-                max_len=self.max_recv_size
+                analysis_queue=self.__analysis_queue, packet_ids=self.space_packet_ids
             )
         else:
             while self.__analysis_queue:

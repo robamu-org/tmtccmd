@@ -69,7 +69,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
         if self.init_mode == CoreModeList.LISTENER_MODE:
-            from tmtccmd.tc.service_17_test import pack_service17_ping_command
+            from tmtccmd.pus.service_17_test import pack_service17_ping_command
             # Send ping command immediately so the reception address is known for UDP
             ping_cmd = pack_service17_ping_command(ssc=0)
             self.send(ping_cmd.pack())

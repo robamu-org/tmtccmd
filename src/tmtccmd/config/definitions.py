@@ -18,7 +18,6 @@ class CoreGlobalIds(enum.IntEnum):
 
     # Parameters
     JSON_CFG_PATH = 139
-    APID = 140
     MODE = 141
     CURRENT_SERVICE = 142
     COM_IF = 144

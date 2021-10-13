@@ -2,7 +2,7 @@ import enum
 import struct
 
 from tmtccmd.tc.definitions import PusTelecommand
-from tmtccmd.config.globals import get_global_apid
+from spacepackets.ecss.conf import get_default_tc_apid
 
 
 class Srv8Subservices(enum.IntEnum):
@@ -15,7 +15,7 @@ def generate_action_command(
         ssc: int = 0, apid: int = -1
 ) -> PusTelecommand:
     if apid == -1:
-        apid = get_global_apid()
+        apid = get_default_tc_apid()
     data_to_pack = bytearray(object_id)
     data_to_pack += make_action_id(action_id) + app_data
     return PusTelecommand(

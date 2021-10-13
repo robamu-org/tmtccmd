@@ -242,10 +242,10 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
     info_adjustment = 34
     horz_line_num = op_code_adjustment + info_adjustment + 3
     horiz_line = horz_line_num * "-"
-    op_code_string = "Operation Code".ljust(op_code_adjustment)
+    op_code_info_str = "Operation Code".ljust(op_code_adjustment)
     info_string = "Information".ljust(info_adjustment)
     while True:
-        LOGGER.info(f"{op_code_string} | {info_string}")
+        LOGGER.info(f"{op_code_info_str} | {info_string}")
         LOGGER.info(horiz_line)
         if service in service_op_code_dict:
             op_code_dict = service_op_code_dict[service][1]
