@@ -13,7 +13,7 @@ class TestTelemetry(TestCase):
 
     def test_generic_pus_c(self):
         pus_17_telemetry = Service17TMExtended(
-            subservice_id=1, ssc=36, time=CdsShortTimestamp.init_from_current_time(),
+            subservice=1, ssc=36, time=CdsShortTimestamp.init_from_current_time(),
             apid=0xef
         )
         pus_17_raw = pus_17_telemetry.pack()
@@ -47,7 +47,7 @@ class TestTelemetry(TestCase):
 
     def test_list_functionality(self):
         pus_17_telecommand = Service17TMExtended(
-            subservice_id=1, ssc=36, time=CdsShortTimestamp.init_from_current_time()
+            subservice=1, ssc=36, time=CdsShortTimestamp.init_from_current_time()
         )
         pus_17_raw = pus_17_telecommand.pack()
         pus_17_telemetry = Service17TMExtended.unpack(raw_telemetry=pus_17_raw)

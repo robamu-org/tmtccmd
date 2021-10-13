@@ -27,8 +27,8 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
-        pus_tm = PusTelemetry(
-            service=1,
+        Service1TM.__init__(
+            self,
             subservice=subservice,
             time=time,
             ssc=ssc,
@@ -40,18 +40,8 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             space_time_ref=space_time_ref,
             destination_id=destination_id
         )
-        PusTmBase.__init__(self, pus_tm=pus_tm)
-        PusTmInfoBase.__init__(self, pus_tm=pus_tm)
-        self.has_tc_error_code = False
-        self.is_step_reply = False
-        # Failure Reports with error code
-        self.err_code = 0
-        self.step_number = 0
-        self.error_param1 = 0
-        self.error_param2 = 0
-        self.tc_packet_id = tc_packet_id
-        self.tc_psc = tc_psc
-        self.tc_ssc = tc_psc & 0x3fff
+        PusTmBase.__init__(self, pus_tm=self.pus_tm)
+        PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
 
     @classmethod
     def __empty(cls) -> Service1TMExtended:
@@ -141,23 +131,6 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             self.append_packet_info(" : Step Success")
         elif self.subservice == 7:
             self.append_packet_info(" : Completion success")
-
-    def get_tc_ssc(self):
-        return self.tc_ssc
-
-    def get_error_code(self):
-        if self.has_tc_error_code:
-            return self.err_code
-        else:
-            LOGGER.warning("Service1Tm: get_error_code: This is not a failure packet, returning 0")
-            return 0
-
-    def get_step_number(self):
-        if self.is_step_reply:
-            return self.step_number
-        else:
-            LOGGER.warning("Service1Tm: get_step_number: This is not a step reply, returning 0")
-            return 0
 
 
 PusVerifQueue = Deque[Service1TM]
