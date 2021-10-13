@@ -1,5 +1,6 @@
 from __future__ import annotations
 import enum
+import sys
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.service_17_test import Service17TM
@@ -10,6 +11,7 @@ from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
+
 class Srv17Subservices(enum.IntEnum):
     PING_CMD = 1,
     PING_REPLY = 2,
@@ -18,35 +20,33 @@ class Srv17Subservices(enum.IntEnum):
 
 class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
     def __init__(
-            self, subservice_id: int, time: CdsShortTimestamp = None, ssc: int = 0,
+            self, subservice: int, time: CdsShortTimestamp = None, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, ack: int = 0b1111,
-            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
-            destination_id: int = 0
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, secondary_header_flag: bool = True,
+            space_time_ref: int = 0b0000, destination_id: int = 0
     ):
         Service17TM.__init__(
             self,
-            subservice_id=subservice_id,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id
         )
         PusTmBase.__init__(self, pus_tm=self.pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
-        if self.get_subservice() == Srv17Subservices.PING_REPLY:
-            self.specify_packet_info("Ping Reply")
+        if self.subservice == Srv17Subservices.PING_REPLY:
+            self.set_packet_info("Ping Reply")
 
     @classmethod
     def __empty(cls) -> Service17TMExtended:
         return cls(
-            subservice_id=0
+            subservice=0
         )
 
     @classmethod

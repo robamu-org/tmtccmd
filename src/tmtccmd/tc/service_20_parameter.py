@@ -6,7 +6,6 @@ from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
 from tmtccmd.utility.logger import get_console_logger
 
-
 logger = get_console_logger()
 
 

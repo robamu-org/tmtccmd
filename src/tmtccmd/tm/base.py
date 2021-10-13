@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Optional
 
 from spacepackets.ecss.tm import PusTelemetry, PusVersion
@@ -10,31 +10,37 @@ class PusTmInterface:
 
     @abstractmethod
     def pack(self) -> bytearray:
-        return bytearray()
+        raise NotImplementedError
 
+    @property
     @abstractmethod
-    def get_tm_data(self) -> bytearray:
-        return bytearray()
+    def tm_data(self) -> bytearray:
+        raise NotImplementedError
 
+    @property
     @abstractmethod
-    def is_valid(self) -> bool:
-        return False
+    def valid(self) -> bool:
+        raise NotImplementedError
 
+    @property
     @abstractmethod
-    def get_ssc(self) -> int:
-        return 0
+    def ssc(self) -> int:
+        raise NotImplementedError
 
+    @property
     @abstractmethod
-    def get_apid(self) -> int:
-        return 0
+    def apid(self) -> int:
+        raise NotImplementedError
 
+    @property
     @abstractmethod
-    def get_service(self) -> int:
-        return -1
+    def service(self) -> int:
+        raise NotImplementedError
 
+    @property
     @abstractmethod
-    def get_subservice(self) -> int:
-        return -1
+    def subservice(self) -> int:
+        raise NotImplementedError
 
 
 class PusTmInfoInterface:
@@ -74,23 +80,29 @@ class PusTmBase(PusTmInterface):
     def pack(self) -> bytearray:
         return self.pus_tm.pack()
 
-    def get_tm_data(self) -> bytearray:
-        return self.pus_tm.get_tm_data()
+    @property
+    def tm_data(self) -> bytearray:
+        return self.pus_tm.tm_data
 
-    def get_ssc(self) -> int:
-        return self.pus_tm.get_ssc()
+    @property
+    def ssc(self) -> int:
+        return self.pus_tm.ssc
 
-    def is_valid(self):
-        return self.pus_tm.is_valid()
+    @property
+    def valid(self):
+        return self.pus_tm.valid
 
-    def get_apid(self) -> int:
-        return self.pus_tm.get_apid()
+    @property
+    def apid(self) -> int:
+        return self.pus_tm.apid
 
-    def get_service(self) -> int:
-        return self.pus_tm.get_service()
+    @property
+    def service(self) -> int:
+        return self.pus_tm.service
 
-    def get_subservice(self) -> int:
-        return self.pus_tm.get_subservice()
+    @property
+    def subservice(self) -> int:
+        return self.pus_tm.subservice
 
 
 class PusTmInfoBase(PusTmInfoInterface):
@@ -125,14 +137,14 @@ class PusTmInfoBase(PusTmInfoInterface):
         :param content_list: Header content will be appended to this list
         :return:
         """
-        content_list.append(f'{self.pus_tm.get_service()}')
-        content_list.append(f'{self.pus_tm.get_subservice()}')
+        content_list.append(f'{self.pus_tm.service}')
+        content_list.append(f'{self.pus_tm.subservice}')
         content_list.append(f'{self.pus_tm.secondary_packet_header.message_counter}')
         content_list.append(f'{self.pus_tm.secondary_packet_header.time.return_unix_seconds()}')
         content_list.append(f'{self.pus_tm.secondary_packet_header.time.return_time_string()}')
         content_list.append(f'0x{self.pus_tm.space_packet_header.apid:02x}')
         content_list.append(f'{self.pus_tm.space_packet_header.ssc}')
-        if self.pus_tm.is_valid():
+        if self.pus_tm.valid:
             content_list.append("Yes")
         else:
             content_list.append("No")

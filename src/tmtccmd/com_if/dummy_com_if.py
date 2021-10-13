@@ -1,7 +1,9 @@
 """Dummy Communication Interface. Currently serves to provide an example without external hardware
 """
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from spacepackets.ecss.tc import PusTelecommand
+from spacepackets.ccsds.spacepacket import get_space_packet_sequence_control, SequenceFlags
+
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.pus.service_1_verification import Service1TMExtended
 from tmtccmd.pus.service_17_test import Srv17Subservices, Service17TMExtended
@@ -71,9 +73,13 @@ class DummyHandler:
         """
         if self.last_service == 17:
             if self.last_subservice == 1:
+                tc_psc = get_space_packet_sequence_control(
+                    sequence_flags=SequenceFlags.UNSEGMENTED,
+                    source_sequence_count=self.last_tc_ssc
+                )
                 tm_packer = Service1TMExtended(
                     subservice=1, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
-                    tc_ssc=self.last_tc_ssc
+                    tc_psc=tc_psc
                 )
 
                 self.current_ssc += 1
@@ -81,7 +87,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 tm_packer = Service1TMExtended(
                     subservice=7, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
-                    tc_ssc=self.last_tc_ssc
+                    tc_psc=tc_psc
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)

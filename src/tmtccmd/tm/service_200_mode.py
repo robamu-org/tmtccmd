@@ -26,8 +26,8 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             source_data.extend(struct.pack('!I', mode))
             source_data.append(submode)
         pus_tm = PusTelemetry(
-            service_id=CustomPusServices.SERVICE_200_MODE,
-            subservice_id=subservice_id,
+            service_=CustomPusServices.SERVICE_200_MODE,
+            subservice=subservice_id,
             time=time,
             ssc=ssc,
             source_data=source_data,
