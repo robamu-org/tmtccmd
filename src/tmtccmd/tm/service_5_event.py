@@ -18,7 +18,7 @@ LOGGER = get_console_logger()
 
 class Service5TM(PusTmBase, PusTmInfoBase):
     def __init__(
-            self, subservice_id: Srv5Subservices, event_id: int, object_id: bytearray,
+            self, subservice: Srv5Subservices, event_id: int, object_id: bytearray,
             param_1: int, param_2: int, time: CdsShortTimestamp = None,
             ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
             pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
@@ -27,7 +27,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     ):
         """Create a Service 5 telemetry instance.
         Use the unpack function to create an instance from a raw bytestream instead.
-        :param subservice_id: Subservice ID
+        :param subservice: Subservice ID
         :param time: CDS Short Timecode
         :param object_id: 4 byte object ID
         :raises ValueError: Invalid input arguments
@@ -46,7 +46,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         source_data.extend(struct.pack('!I', self._param_2))
         pus_tm = PusTelemetry(
             service=PusServices.SERVICE_5_EVENT,
-            subservice=subservice_id,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,
@@ -64,7 +64,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service5TM:
         return cls(
-            subservice_id=Srv5Subservices.INFO_EVENT,
+            subservice=Srv5Subservices.INFO_EVENT,
             event_id=0,
             object_id=bytearray(4),
             param_1=0,
@@ -86,7 +86,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
         content_list.append(str(self._event_id))
-        content_list.append(self._object_id.as_string())
+        content_list.append(self._object_id.as_string)
         content_list.append(str(hex(self._param_1)) + ", " + str(self._param_1))
         content_list.append(str(hex(self._param_2)) + ", " + str(self._param_2))
 
@@ -98,19 +98,24 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
 
-    def get_reporter_id_as_bytes(self) -> bytes:
-        return self._object_id.as_bytes()
+    @property
+    def reporter_id(self) -> int:
+        return self._object_id.id
 
-    def get_reporter_id(self) -> int:
-        return self._object_id.get_id()
+    @property
+    def reporter_id_as_bytes(self) -> bytes:
+        return self._object_id.as_bytes
 
-    def get_event_id(self):
+    @property
+    def event_id(self):
         return self._event_id
 
-    def get_param_1(self):
+    @property
+    def param_1(self):
         return self._param_1
 
-    def get_param_2(self):
+    @property
+    def param_2(self):
         return self._param_2
 
     @staticmethod

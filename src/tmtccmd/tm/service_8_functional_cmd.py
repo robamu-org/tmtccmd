@@ -90,14 +90,18 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         header_list.append("Object ID")
         header_list.append("Action ID")
 
-    def get_source_object_id_as_bytes(self) -> bytes:
-        return self._object_id.as_bytes()
+    @property
+    def source_object_id_as_bytes(self) -> bytes:
+        return self._object_id.as_bytes
 
-    def get_source_object_id(self) -> int:
-        return self._object_id.get_id()
+    @property
+    def source_object_id(self) -> int:
+        return self._object_id.as_int
 
-    def get_action_id(self) -> int:
+    @property
+    def action_id(self) -> int:
         return self._action_id
 
-    def get_custom_data(self) -> bytearray:
+    @property
+    def custom_data(self) -> bytearray:
         return self._custom_data

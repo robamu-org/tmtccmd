@@ -1,8 +1,8 @@
 VERSION_NAME = "tmtccmd"
 VERSION_MAJOR = 1
-VERSION_MINOR = 9
-VERSION_REVISION = 1
+VERSION_MINOR = 10
+VERSION_REVISION = 0
 
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
-__version__ = "1.9.1"
+__version__ = "1.10.0"

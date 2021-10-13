@@ -27,7 +27,7 @@ class TestPrinter(TestCase):
         self.tmtc_printer.set_display_mode(DisplayMode.LONG)
 
         service_1_tm = Service1TMExtended(
-            subservice_id=1, time=CdsShortTimestamp.init_from_current_time()
+            subservice=1, time=CdsShortTimestamp.init_from_current_time()
         )
         service_1_packed = service_1_tm.pack()
         self.tmtc_printer.print_telemetry(packet_if=service_1_tm, info_if=service_1_tm)
@@ -37,7 +37,7 @@ class TestPrinter(TestCase):
         self.tmtc_printer.set_display_mode(DisplayMode.SHORT)
         self.tmtc_printer.print_telemetry(packet_if=service_1_tm, info_if=service_1_tm)
         service_1_tm = Service1TMExtended(
-            subservice_id=2, time=CdsShortTimestamp.init_from_current_time()
+            subservice=2, time=CdsShortTimestamp.init_from_current_time()
         )
         service_1_packed = service_1_tm.pack()
         self.tmtc_printer.print_telemetry(
@@ -46,7 +46,7 @@ class TestPrinter(TestCase):
 
         self.tmtc_printer.set_display_mode(DisplayMode.LONG)
         service_5_tm = Service5TM(
-            subservice_id=Srv5Subservices.INFO_EVENT, object_id=bytearray([0x01, 0x02, 0x03, 0x04]),
+            subservice=Srv5Subservices.INFO_EVENT, object_id=bytearray([0x01, 0x02, 0x03, 0x04]),
             event_id=22, param_1=32, param_2=82452, time=CdsShortTimestamp.init_from_current_time()
         )
         hook_base = create_hook_mock_with_srv_handlers()
