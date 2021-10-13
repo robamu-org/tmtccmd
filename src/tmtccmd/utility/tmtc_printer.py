@@ -109,7 +109,7 @@ class TmTcPrinter:
             LOGGER.warning('Hook object not set')
             return
         srv3_packet = cast(Service3Base, packet_if)
-        if srv3_packet.has_custom_hk_handling():
+        if srv3_packet.custom_hk_handling:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
                 object_id=bytes(), set_id=srv3_packet.get_set_id(),
@@ -118,18 +118,18 @@ class TmTcPrinter:
         else:
             (hk_header, hk_content, validity_buffer, num_vars) = \
                 hook_obj.handle_service_3_housekeeping(
-                object_id=srv3_packet.get_object_id().as_bytes(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.object_id.as_bytes, set_id=srv3_packet.set_id,
                 hk_data=packet_if.tm_data[8:], service3_packet=srv3_packet
             )
         if packet_if.subservice == 25 or packet_if.subservice == 26:
             self.handle_hk_print(
-                object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.object_id.as_int, set_id=srv3_packet.set_id,
                 hk_header=hk_header, hk_content=hk_content, validity_buffer=validity_buffer,
                 num_vars=num_vars
             )
         if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(
-                object_id=srv3_packet.get_object_id().get_id(), set_id=srv3_packet.get_set_id(),
+                object_id=srv3_packet.object_id.get_id(), set_id=srv3_packet.set_id,
                 srv3_packet=srv3_packet
             )
 
@@ -246,10 +246,10 @@ class TmTcPrinter:
             self.__handle_tm_content_print(info_if=info_if)
             self.__handle_additional_printout(info_if=info_if)
         except TypeError as error:
-            LOGGER.warning(
+            LOGGER.exception(
                 f"Type Error when trying to print TM Packet "
-                f"[{packet_if.service} , {packet_if.subservice}]")
-            LOGGER.warning(error)
+                f"[{packet_if.service} , {packet_if.subservice}]"
+            )
 
     def __handle_column_header_print(self, info_if: PusTmInfoInterface):
         header_list = []

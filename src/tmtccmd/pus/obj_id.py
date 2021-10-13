@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 import struct
 from tmtccmd.utility.logger import get_console_logger
 
@@ -7,32 +8,40 @@ LOGGER = get_console_logger()
 
 class ObjectId:
     def __init__(self, object_id: int):
-        self.object_id = object_id
-        self.id_as_bytes = bytearray()
-        self.set(object_id=object_id)
-
-    def set(self, object_id: int):
-        self.object_id = object_id
-        self.id_as_bytes = struct.pack('!I', self.object_id)
-
-    def set_from_bytes(self, obj_id_as_bytes: bytearray):
-        if len(obj_id_as_bytes) != 4:
-            LOGGER.warning(f'Invalid object ID length {len(obj_id_as_bytes)}')
-            raise ValueError
-        self.id_as_bytes = obj_id_as_bytes
-        self.object_id = struct.unpack('!I', self.id_as_bytes[:])[0]
+        self.id = object_id
 
     @classmethod
     def from_bytes(cls, obj_id_as_bytes: bytearray) -> ObjectId:
         obj_id = ObjectId(object_id=0)
-        obj_id.set_from_bytes(obj_id_as_bytes=obj_id_as_bytes)
+        obj_id.id=obj_id_as_bytes
         return obj_id
 
-    def get_id(self) -> int:
-        return self.object_id
+    @property
+    def id(self) -> int:
+        return self._object_id
 
+    @id.setter
+    def id(self, new_id: Union[int, bytearray]):
+        if isinstance(new_id, int):
+            self._object_id = new_id
+            self._id_as_bytes = struct.pack('!I', self._object_id)
+        elif isinstance(new_id, bytearray):
+            if len(new_id) != 4:
+                LOGGER.warning(f'Invalid object ID length {len(new_id)}')
+                raise ValueError
+            self._id_as_bytes = new_id
+            self._object_id = struct.unpack('!I', self._id_as_bytes[:])[0]
+        else:
+            raise ValueError
+
+    @property
+    def as_int(self) -> int:
+        return self._object_id
+
+    @property
     def as_bytes(self) -> bytes:
-        return self.id_as_bytes
+        return self._id_as_bytes
 
+    @property
     def as_string(self) -> str:
-        return f'0x{self.object_id:08x}'
+        return f'0x{self._object_id:08x}'
