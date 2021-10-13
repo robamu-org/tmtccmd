@@ -4,9 +4,10 @@ import os
 import enum
 from typing import cast
 
-from tmtccmd.ecss.tc import PusTelecommand
-from tmtccmd.tm import Service8TM, Service5TM
-from tmtccmd.pus.service_list import PusServices
+from spacepackets.ecss.tc import PusTelecommand
+from tmtccmd.tm.service_8_functional_cmd import Service8TM
+from tmtccmd.tm.service_5_event import Service5TM
+from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.definitions import PusIFQueueT

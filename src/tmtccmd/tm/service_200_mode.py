@@ -2,9 +2,10 @@
 """
 from __future__ import annotations
 import struct
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
-from tmtccmd.pus.service_list import PusServices
-from tmtccmd.ecss.tm import PusTelemetry, PusTmBase, PusTmInfoBase, PusVersion, CdsShortTimestamp
+from tmtccmd.pus.definitions import CustomPusServices
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetryExtended
 
 
 class Service200TM(PusTmBase, PusTmInfoBase):
@@ -24,8 +25,8 @@ class Service200TM(PusTmBase, PusTmInfoBase):
         elif subservice_id == 6 or subservice_id == 8:
             source_data.extend(struct.pack('!I', mode))
             source_data.append(submode)
-        pus_tm = PusTelemetry(
-            service_id=PusServices.SERVICE_200_MODE,
+        pus_tm = PusTelemetryExtended(
+            service_id=CustomPusServices.SERVICE_200_MODE,
             subservice_id=subservice_id,
             time=time,
             ssc=ssc,
@@ -76,7 +77,7 @@ class Service200TM(PusTmBase, PusTmInfoBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service200TM:
         service_200_tm = cls.__empty()
         service_200_tm.pus_tm = PusTelemetry.unpack(

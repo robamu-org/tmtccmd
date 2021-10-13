@@ -1,7 +1,9 @@
 """Base class for implementation of PUS Service 2 handling.
 """
 from __future__ import annotations
-from tmtccmd.ecss.tm import PusTmInfoBase, PusTmBase, CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Service2TM(PusTmInfoBase, PusTmBase):
@@ -39,7 +41,7 @@ class Service2TM(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
     ) -> Service2TM:
         service_2_tm = cls.__empty()
         service_2_tm.pus_tm = PusTelemetry.unpack(

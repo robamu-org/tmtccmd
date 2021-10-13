@@ -21,9 +21,7 @@ from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.tc.definitions import TcQueueEntryT
-from tmtccmd.tm.definitions import TelemetryQueueT
 from tmtccmd.core.globals_manager import get_global
-from tmtccmd.ecss.tm import PusTelemetry
 
 LOGGER = get_console_logger()
 
@@ -35,8 +33,8 @@ class CommandSenderReceiver:
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            tm_handler: CcsdsTmHandler
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
+            tm_listener: TmListener, tm_handler: CcsdsTmHandler, apid: int
     ):
 
         """
@@ -47,6 +45,7 @@ class CommandSenderReceiver:
         self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_handler = tm_handler
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
+        self._apid = apid
 
         if isinstance(com_if, CommunicationInterface):
             self._com_if = com_if
@@ -213,7 +212,7 @@ class CommandSenderReceiver:
             from tmtccmd.core.globals_manager import get_global
             if get_global(CoreGlobalIds.RESEND_TC):
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
-                self._com_if.send_telecommand(self._last_tc, self._last_tc_obj)
+                self._com_if.send(self._last_tc)
                 self._timeout_counter = self._timeout_counter + 1
                 self._start_time = time.time()
             else:
@@ -221,11 +220,13 @@ class CommandSenderReceiver:
                 self._reply_received = True
         time.sleep(0.5)
 
-    def print_tm_queue(self, tm_queue: TelemetryQueueT):
-        while tm_queue:
-            try:
-                tm_packet_list = tm_queue.pop()
-                for tm_packet in tm_packet_list:
-                    self._tmtc_printer.print_telemetry(PusTelemetry(tm_packet))
-            except AttributeError as e:
-                LOGGER.exception("CommandSenderReceiver Exception: Invalid queue entry. Traceback:", e)
+    # TODO: Move to TMTC printer to decouple this module?
+    # def print_tm_queue(self, tm_queue: TelemetryQueueT):
+    #    while tm_queue:
+    #        try:
+    #            tm_packet_list = tm_queue.pop()
+    #            for tm_packet in tm_packet_list:
+    #                telemetry = PusTelemetry(tm_packet)
+    #                self._tmtc_printer.print_telemetry()
+    #        except AttributeError as e:
+    #            LOGGER.exception("CommandSenderReceiver Exception: Invalid queue entry. Traceback:", e)

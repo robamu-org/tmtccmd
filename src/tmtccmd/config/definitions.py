@@ -1,5 +1,4 @@
-"""
-@brief  Definitions for the TMTC commander core
+"""Definitions for the TMTC commander core
 """
 import enum
 from typing import Tuple, Dict, Optional
@@ -19,7 +18,6 @@ class CoreGlobalIds(enum.IntEnum):
 
     # Parameters
     JSON_CFG_PATH = 139
-    APID = 140
     MODE = 141
     CURRENT_SERVICE = 142
     COM_IF = 144

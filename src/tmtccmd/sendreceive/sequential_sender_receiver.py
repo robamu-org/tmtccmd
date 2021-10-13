@@ -21,17 +21,19 @@ LOGGER = get_console_logger()
 class SequentialCommandSenderReceiver(CommandSenderReceiver):
     """Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence"""
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_handler: CcsdsTmHandler,
-            apid: int, tm_listener: TmListener, tc_queue: TcQueueT):
+            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
+            tm_handler: CcsdsTmHandler, apid: int, tm_listener: TmListener, tc_queue: TcQueueT):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
-        :param tm_listener:     TmListener object which runs in the background and receives all Telemetry
-        :param tmtc_printer:    TmTcPrinter object, passed on to CommandSenderReceiver for this time period
+        :param tm_listener:     TmListener object which runs in the background and receives
+                                all Telemetry
+        :param tmtc_printer:    TmTcPrinter object, passed on to CommandSenderReceiver for
+                                this time period
         """
         super().__init__(
-            com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, tm_handler=tm_handler
+            com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener,
+            tm_handler=tm_handler, apid=apid
         )
-        self._apid = apid
         self._tc_queue = tc_queue
         self.__all_replies_received = False
 

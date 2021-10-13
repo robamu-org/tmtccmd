@@ -6,22 +6,25 @@ from abc import abstractmethod
 import struct
 from typing import Deque
 
-from tmtccmd.ecss.tm import PusTelemetry, PusVersion, PusTmInfoBase, PusTmBase
-from tmtccmd.ccsds.time import CdsShortTimestamp
+from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss.tm import PusVersion, PusTelemetry
+from spacepackets.ecss.service_1_verification import Service1TM
+
+from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
 
 LOGGER = get_console_logger()
 
 
-class Service1TM(PusTmBase, PusTmInfoBase):
+class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
     """
     def __init__(
             self, subservice_id: int, time: CdsShortTimestamp = None,
             tc_packet_id: int = 0, tc_psc: int = 0, ssc: int = 0,
             source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.UNKNOWN, pus_tm_version: int = 0b0001,
-            ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
+            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, ack: int = 0b1111,
+            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
             destination_id: int = 0
     ):
         pus_tm = PusTelemetry(
@@ -33,7 +36,6 @@ class Service1TM(PusTmBase, PusTmInfoBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
@@ -53,15 +55,15 @@ class Service1TM(PusTmBase, PusTmInfoBase):
         self.tc_ssc = tc_psc & 0x3fff
 
     @classmethod
-    def __empty(cls):
+    def __empty(cls) -> Service1TMExtended:
         return cls(
             subservice_id=0
         )
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.UNKNOWN
-    ) -> Service1TM:
+            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+    ) -> Service1TMExtended:
         """Parse a service 1 telemetry packet
 
         :param raw_telemetry:
@@ -81,9 +83,9 @@ class Service1TM(PusTmBase, PusTmInfoBase):
         service_1_tm.tc_psc = tm_data[2] << 8 | tm_data[3]
         service_1_tm.tc_ssc = service_1_tm.tc_psc & 0x3fff
         if service_1_tm.get_subservice() % 2 == 0:
-            service_1_tm.__handle_failure_verification()
+            service_1_tm._handle_failure_verification()
         else:
-            service_1_tm.__handle_success_verification()
+            service_1_tm._handle_success_verification()
         return service_1_tm
 
     @abstractmethod
@@ -114,53 +116,32 @@ class Service1TM(PusTmBase, PusTmInfoBase):
         elif self.is_step_reply:
             header_list.append("Step Number")
 
-    def __handle_failure_verification(self):
+    def _handle_failure_verification(self):
         """Handle parsing a verification failure packet, subservice ID 2, 4, 6 or 8
         """
-        self.specify_packet_info("Failure Verficiation")
-        self.has_tc_error_code = True
-        tm_data = self.get_tm_data()
-        subservice = self.get_subservice()
-        expected_len = 14
+        super()._handle_failure_verification()
+        self.set_packet_info("Failure Verficiation")
+        subservice = self.pus_tm.get_subservice()
         if subservice == 2:
             self.append_packet_info(" : Acceptance failure")
         elif subservice == 4:
             self.append_packet_info(" : Start failure")
         elif subservice == 6:
-            self.is_step_reply = True
-            expected_len = 15
             self.append_packet_info(" : Step Failure")
         elif subservice == 8:
             self.append_packet_info(" : Completion Failure")
-        else:
-            LOGGER.error("Service1TM: Invalid subservice")
-        if len(tm_data) < expected_len:
-            LOGGER.warning(f'PUS TM[1,{subservice}] source data smaller than expected 15 bytes')
-            raise ValueError
-        current_idx = 4
-        if self.is_step_reply:
-            self.step_number = struct.unpack('>B', tm_data[current_idx: current_idx + 1])[0]
-            current_idx += 1
-        self.err_code = struct.unpack('>H', tm_data[current_idx: current_idx + 2])[0]
-        current_idx += 2
-        self.error_param1 = struct.unpack('>I', tm_data[current_idx: current_idx + 4])[0]
-        current_idx += 2
-        self.error_param2 = struct.unpack('>I', tm_data[current_idx: current_idx + 4])[0]
 
-    def __handle_success_verification(self):
-        self.pus_tm.specify_packet_info("Success Verification")
+    def _handle_success_verification(self):
+        super()._handle_success_verification()
+        self.set_packet_info('Success Verification')
         if self.get_subservice() == 1:
-            self.pus_tm.append_packet_info(" : Acceptance success")
+            self.append_packet_info(" : Acceptance success")
         elif self.get_subservice() == 3:
-            self.pus_tm.append_packet_info(" : Start success")
+            self.append_packet_info(" : Start success")
         elif self.get_subservice() == 5:
-            self.is_step_reply = True
-            self.pus_tm.append_packet_info(" : Step Success")
-            self.step_number = struct.unpack('>B', self.get_tm_data()[4:5])[0]
+            self.append_packet_info(" : Step Success")
         elif self.get_subservice() == 7:
-            self.pus_tm.append_packet_info(" : Completion success")
-        else:
-            LOGGER.error("Service1TM: Invalid subservice")
+            self.append_packet_info(" : Completion success")
 
     def get_tc_ssc(self):
         return self.tc_ssc

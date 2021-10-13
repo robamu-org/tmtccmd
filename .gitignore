@@ -13,7 +13,7 @@ build
 
 /example/log
 /example/tmtc_config.json
-/log/
+/src/log
 /src/tests/log
 
 .idea
