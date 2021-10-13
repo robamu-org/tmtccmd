@@ -18,12 +18,12 @@ LOGGER = get_console_logger()
 
 class Service5TM(PusTmBase, PusTmInfoBase):
     def __init__(
-            self, subservice_id: Srv5Subservices, event_id: int, object_id: bytearray,
+            self, subservice: Srv5Subservices, event_id: int, object_id: bytearray,
             param_1: int, param_2: int, time: CdsShortTimestamp = None,
             ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
             pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-            pus_tm_version: int = 0b0001, ack: int = 0b1111, secondary_header_flag: bool = True,
-            space_time_ref: int = 0b0000, destination_id: int = 0
+            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
+            destination_id: int = 0
     ):
         """Create a Service 5 telemetry instance.
         Use the unpack function to create an instance from a raw bytestream instead.
@@ -45,15 +45,14 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         source_data.extend(struct.pack('!I', self._param_1))
         source_data.extend(struct.pack('!I', self._param_2))
         pus_tm = PusTelemetry(
-            service_id=PusServices.SERVICE_5_EVENT,
-            subservice_id=subservice_id,
+            service=PusServices.SERVICE_5_EVENT,
+            subservice=subservice,
             time=time,
             ssc=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id
@@ -65,7 +64,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service5TM:
         return cls(
-            subservice_id=Srv5Subservices.INFO_EVENT,
+            subservice=Srv5Subservices.INFO_EVENT,
             event_id=0,
             object_id=bytearray(4),
             param_1=0,
@@ -116,18 +115,18 @@ class Service5TM(PusTmBase, PusTmInfoBase):
 
     @staticmethod
     def __init_without_base(instance: Service5TM, set_attrs_from_tm_data: bool = False):
-        if instance.get_service() != 5:
+        if instance.service != 5:
             LOGGER.warning("This packet is not an event service packet!")
         instance.set_packet_info("Event")
-        if instance.get_subservice() == Srv5Subservices.INFO_EVENT:
+        if instance.subservice == Srv5Subservices.INFO_EVENT:
             instance.append_packet_info(" Info")
-        elif instance.get_subservice() == Srv5Subservices.LOW_SEVERITY_EVENT:
+        elif instance.subservice == Srv5Subservices.LOW_SEVERITY_EVENT:
             instance.append_packet_info(" Error Low Severity")
-        elif instance.get_subservice() == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
+        elif instance.subservice == Srv5Subservices.MEDIUM_SEVERITY_EVENT:
             instance.append_packet_info(" Error Med Severity")
-        elif instance.get_subservice() == Srv5Subservices.HIGH_SEVERITY_EVENT:
+        elif instance.subservice == Srv5Subservices.HIGH_SEVERITY_EVENT:
             instance.append_packet_info(" Error High Severity")
-        tm_data = instance.get_tm_data()
+        tm_data = instance.tm_data
         if len(tm_data) < 14:
             LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
             raise ValueError

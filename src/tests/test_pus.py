@@ -28,12 +28,12 @@ class TestTelemetry(TestCase):
 
         pus_17_telemetry = Service17TMExtended.unpack(raw_telemetry=pus_17_raw)
         self.assertTrue(get_pus_tm_version() == PusVersion.PUS_C)
-        self.assertTrue(pus_17_telemetry.get_service() == 17)
-        self.assertTrue(pus_17_telemetry.get_apid() == 0xef)
-        self.assertTrue(pus_17_telemetry.get_subservice() == 1)
-        self.assertTrue(pus_17_telemetry.get_ssc() == 36)
-        self.assertTrue(pus_17_telemetry.get_tm_data() == bytearray())
-        self.assertTrue(pus_17_telemetry.pus_tm.is_valid())
+        self.assertTrue(pus_17_telemetry.service == 17)
+        self.assertTrue(pus_17_telemetry.apid == 0xef)
+        self.assertTrue(pus_17_telemetry.subservice == 1)
+        self.assertTrue(pus_17_telemetry.ssc == 36)
+        self.assertTrue(pus_17_telemetry.tm_data == bytearray())
+        self.assertTrue(pus_17_telemetry.pus_tm.valid)
         self.assertTrue(pus_17_telemetry.get_custom_printout() == "")
         self.assertTrue(pus_17_telemetry.get_source_data_string() == "hex []")
         pus_17_telemetry.pus_tm.print_source_data(print_format=PrintFormats.HEX)
@@ -43,7 +43,7 @@ class TestTelemetry(TestCase):
         print(full_string)
         print(pus_17_telemetry)
         print(repr(pus_17_telemetry))
-        self.assertTrue(pus_17_telemetry.pus_tm.get_packet_id() == 0x8 << 8 | 0xef)
+        self.assertTrue(pus_17_telemetry.pus_tm.packet_id == 0x8 << 8 | 0xef)
 
     def test_list_functionality(self):
         pus_17_telecommand = Service17TMExtended(
