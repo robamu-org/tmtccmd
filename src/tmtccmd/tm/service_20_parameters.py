@@ -24,13 +24,6 @@ class ParamStruct:
         self.row = 0,
         self.param: any = 0
 
-    # def pack(self) -> bytearray:
-    #     pass
-
-    # @classmethod
-    # def unpack(cls, raw_param: bytearray) -> ParamStruct:
-    #    return cls()
-
 
 class Service20TM(PusTmInfoBase, PusTmBase):
     def __init__(
@@ -86,7 +79,6 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             instance.param_struct.type_pfc = tm_data[9]
             instance.param_struct.column = tm_data[10]
             instance.param_struct.row = tm_data[11]
-            # TODO: Maybe this should be moved to the ParamStruct class instead
             if data_size > 12:
                 if instance.param_struct.type_ptc == 3 and instance.param_struct.type_pfc == 14:
                     instance.param_struct.param = struct.unpack('!I', tm_data[12:16])[0]
