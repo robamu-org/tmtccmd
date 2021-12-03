@@ -1,7 +1,7 @@
 """Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple, Dict, Optional
+from typing import Tuple, Dict, Optional, List, Union
 
 
 class CoreGlobalIds(enum.IntEnum):
@@ -50,7 +50,7 @@ class OpCodeDictKeys(enum.IntEnum):
 # Service Op Code Dictionary Types
 ServiceNameT = str
 ServiceInfoT = str
-OpCodeNameT = str
+OpCodeNameT = Union[str, List[str]]
 OpCodeInfoT = str
 # Operation code options are optional. If none are supplied, default values are assumed
 OpCodeOptionsT = Optional[Dict[OpCodeDictKeys, any]]
