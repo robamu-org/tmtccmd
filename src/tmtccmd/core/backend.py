@@ -239,6 +239,13 @@ class TmTcHandler(BackendBase):
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
+        elif self.mode == CoreModeList.CFDP_MODE:
+            # Handle replies. These will be passed to the CFDP handler automatically
+            if self.__tm_listener.reply_event():
+                packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
+                if len(packet_queues) > 0:
+                    self.__tm_handler.handle_packet_queues(packet_queue_list=packet_queues)
+                self.__tm_listener.clear_reply_event()
         else:
             try:
                 from tmtccmd.config.hook import get_global_hook_obj

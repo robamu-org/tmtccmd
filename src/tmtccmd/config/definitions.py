@@ -100,7 +100,8 @@ class QueueCommands(enum.Enum):
 class CoreModeList(enum.IntEnum):
     SEQUENTIAL_CMD_MODE = 0
     LISTENER_MODE = 1
-    GUI_MODE = 2
+    CFDP_MODE = 2
+    GUI_MODE = 3
     IDLE = 5
     PROMPT_MODE = 6
 
@@ -108,6 +109,7 @@ class CoreModeList(enum.IntEnum):
 CoreModeStrings = {
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
+    CoreModeList.CFDP_MODE: "cfdp",
     CoreModeList.GUI_MODE: "gui"
 }
 
