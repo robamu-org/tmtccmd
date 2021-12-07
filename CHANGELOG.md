@@ -11,3 +11,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v1.11.0]
 
 - New API to build service/opcode dictionary
+- Applied consistent formatting with `black` tool
