@@ -17,25 +17,18 @@ class CoreGlobalIds(enum.IntEnum):
     TMTC_BACKEND = 134
     PRETTY_PRINTER = 135
 
-    # Parameters
+    # Core Parameters
     JSON_CFG_PATH = 139
+    COM_IF_DICT = 140
     MODE = 141
-    CURRENT_SERVICE = 142
-    COM_IF = 144
-    OP_CODE = 145
-    TM_TIMEOUT = 146
-    SERVICE_OP_CODE_DICT = 147
-    COM_IF_DICT = 148
+    COM_IF = 142
+    SEQ_CMD_CFG = 143
+
+    # CFDP
+    CFDP_DIRECTION = 149
 
     # Miscellaneous
-    DISPLAY_MODE = 150
-    USE_LISTENER_AFTER_OP = 151
-    PRINT_HK = 152
-    PRINT_TM = 153
-    PRINT_RAW_TM = 154
     PRINT_TO_FILE = 155
-    RESEND_TC = 156
-    TC_SEND_TIMEOUT_FACTOR = 157
 
     # Config dictionaries
     USE_SERIAL = 160
@@ -45,7 +38,7 @@ class CoreGlobalIds(enum.IntEnum):
 
 
 class OpCodeDictKeys(enum.IntEnum):
-    TIMEOUT = CoreGlobalIds.TM_TIMEOUT
+    TIMEOUT = 0
 
 
 # Service Op Code Dictionary Types
@@ -125,6 +118,20 @@ class CoreServiceList(enum.Enum):
     SERVICE_20 = "20"
     SERVICE_23 = "23"
     SERVICE_200 = "200"
+
+
+class SeqTransferCfg:
+    service = CoreServiceList.SERVICE_17
+    op_code = '0'
+    tm_timeout = 2.0
+    tc_send_timeout_factor = 2.5
+    resend_tc = False
+    print_hk = False
+    print_tm = True
+    print_raw_tm = True
+    display_mode = 'long'
+    service_op_code_dict = dict()
+    listener_after_op = False
 
 
 DEFAULT_APID = 0xef

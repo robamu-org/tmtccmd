@@ -1,16 +1,4 @@
-"""
-Program: obsw_module_test.py
-Date: 01.11.2019
-Description: All functions related to TmTc Sending and Receiving, used by UDP client
-
-Manual:
-Set up the UDP client as specified in the header comment and use the unit testing mode
-
-A separate thread is used to listen for replies and send a new telecommand
-if the first reply has not been received.
-
-@author: R. Mueller
-"""
+"""cmd_sender_receiver.py"""
 import time
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -28,24 +16,25 @@ LOGGER = get_console_logger()
 
 # pylint: disable=too-many-instance-attributes
 class CommandSenderReceiver:
-    """
-    This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
+    """This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
     def __init__(
             self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-            tm_listener: TmListener, tm_handler: CcsdsTmHandler, apid: int
+            tm_listener: TmListener, tm_handler: CcsdsTmHandler, apid: int,
+            tm_timeout: float = 2.5, tc_send_timeout_factor: float = 2.5,
+            resend_tc: bool = False
     ):
-
         """
         :param com_if: CommunicationInterface object. Instantiate the desired one
         and pass it here
         :param tmtc_printer: TmTcPrinter object. Instantiate it and pass it here.
         """
-        self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
+        self._tm_timeout = tm_timeout
         self._tm_handler = tm_handler
-        self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
+        self._tc_send_timeout_factor = tc_send_timeout_factor
         self._apid = apid
+        self.resend_tc = resend_tc
 
         if isinstance(com_if, CommunicationInterface):
             self._com_if = com_if
@@ -81,27 +70,22 @@ class CommandSenderReceiver:
         self._wait_period = 0
         self._wait_start = 0
 
-    def set_tm_timeout(self, tm_timeout: float = -1):
+    def set_tm_timeout(self, tm_timeout: float):
         """
         Set the TM timeout. Usually, the global value set by the args parser is set,
         but the TM timeout can be reset (e.g. for slower architectures)
         :param tm_timeout: New TM timeout value as a float value in seconds
         :return:
         """
-        if tm_timeout == -1:
-            tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_timeout = tm_timeout
 
-    def set_tc_send_timeout_factor(
-            self, new_factor: float = -1):
+    def set_tc_send_timeout_factor(self, new_factor: float):
         """
         Set the TC resend timeout factor. After self._tm_timeout * new_factor seconds,
         a telecommand will be resent again.
         :param new_factor: Factor as a float number
         :return:
         """
-        if new_factor == -1:
-            new_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._tc_send_timeout_factor = new_factor
 
     def _check_for_first_reply(self) -> None:
@@ -209,8 +193,7 @@ class CommandSenderReceiver:
         if self._start_time != 0:
             self._elapsed_time = time.time() - self._start_time
         if self._elapsed_time >= self._tm_timeout * self._tc_send_timeout_factor:
-            from tmtccmd.core.globals_manager import get_global
-            if get_global(CoreGlobalIds.RESEND_TC):
+            if self.resend_tc:
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
                 self._com_if.send(self._last_tc)
                 self._timeout_counter = self._timeout_counter + 1
@@ -219,14 +202,3 @@ class CommandSenderReceiver:
                 # todo: we could also stop sending and clear the TC queue
                 self._reply_received = True
         time.sleep(0.5)
-
-    # TODO: Move to TMTC printer to decouple this module?
-    # def print_tm_queue(self, tm_queue: TelemetryQueueT):
-    #    while tm_queue:
-    #        try:
-    #            tm_packet_list = tm_queue.pop()
-    #            for tm_packet in tm_packet_list:
-    #                telemetry = PusTelemetry(tm_packet)
-    #                self._tmtc_printer.print_telemetry()
-    #        except AttributeError as e:
-    #            LOGGER.exception("CommandSenderReceiver Exception: Invalid queue entry. Traceback:", e)

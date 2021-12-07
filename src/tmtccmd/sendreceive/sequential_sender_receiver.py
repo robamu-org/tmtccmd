@@ -22,7 +22,9 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
     """Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence"""
     def __init__(
             self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-            tm_handler: CcsdsTmHandler, apid: int, tm_listener: TmListener, tc_queue: TcQueueT):
+            tm_handler: CcsdsTmHandler, apid: int, tm_listener: TmListener, tc_queue: TcQueueT,
+            tm_timeout: float = 2.5, tc_send_timeout_factor: float = 2.5
+    ):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
         :param tm_listener:     TmListener object which runs in the background and receives
@@ -32,7 +34,8 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         """
         super().__init__(
             com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener,
-            tm_handler=tm_handler, apid=apid
+            tm_handler=tm_handler, apid=apid, tm_timeout=tm_timeout,
+            tc_send_timeout_factor=tc_send_timeout_factor
         )
         self._tc_queue = tc_queue
         self.__all_replies_received = False

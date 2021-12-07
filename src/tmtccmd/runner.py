@@ -197,7 +197,6 @@ def __handle_cli_args_and_globals():
 
 
 def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
-    __get_backend_init_variables()
     tmtc_backend.initialize()
     tmtc_backend.start_listener()
 
@@ -228,21 +227,17 @@ def __start_tmtc_commander_qt_gui(
     tmtc_frontend.start(app)
 
 
-def __get_backend_init_variables():
-    service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-    op_code = get_global(CoreGlobalIds.OP_CODE)
-    com_if = get_global(CoreGlobalIds.COM_IF)
-    mode = get_global(CoreGlobalIds.MODE)
-    return service, op_code, com_if, mode
-
-
 def get_default_tmtc_backend(hook_obj: TmTcHookBase, tm_handler: TmHandler, json_cfg_path: str):
     from tmtccmd.core.backend import TmTcHandler
+    from tmtccmd.config.globals import get_seq_cmd_cfg
     from tmtccmd.utility.tmtc_printer import TmTcPrinter
     from tmtccmd.sendreceive.tm_listener import TmListener
     from typing import cast
-    service, op_code, com_if_id, mode = __get_backend_init_variables()
-    display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
+    seq_cmd_cfg = get_seq_cmd_cfg()
+    service, op_code = seq_cmd_cfg.service, seq_cmd_cfg.op_code
+    com_if = get_global(CoreGlobalIds.COM_IF)
+    mode = get_global(CoreGlobalIds.MODE)
+    display_mode = seq_cmd_cfg.display_mode
     print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
     tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
     if tm_handler is None:
@@ -258,8 +253,8 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, tm_handler: TmHandler, json
     com_if = hook_obj.assign_communication_interface(
         com_if_key=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
     )
-    tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
-    tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
+    tc_send_timeout_factor = seq_cmd_cfg.tc_send_timeout_factor
+    tm_timeout = seq_cmd_cfg.tm_timeout
     tm_listener = TmListener(
         com_if=com_if, tm_timeout=tm_timeout, tc_timeout_factor=tc_send_timeout_factor
     )
@@ -269,5 +264,5 @@ def get_default_tmtc_backend(hook_obj: TmTcHookBase, tm_handler: TmHandler, json
         init_service=service, init_opcode=op_code, tm_handler=tm_handler
     )
     tmtc_backend.set_current_apid(apid=apid)
-    tmtc_backend.set_one_shot_or_loop_handling(get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP))
+    tmtc_backend.set_one_shot_or_loop_handling(seq_cmd_cfg.listener_after_op)
     return tmtc_backend

@@ -24,8 +24,7 @@ def create_communication_interface_default(
     :param com_if_key:
     :param tmtc_printer:
     :param json_cfg_path:
-    TODO: List of packet IDs?
-    :param space_packet_id: Can be used by communication interfaces as a start marker (e.g. TCP)
+    :param space_packet_ids: Can be used by communication interfaces as a start marker (e.g. TCP)
     :return:
     """
     from tmtccmd.com_if.dummy_com_if import DummyComIF
@@ -83,7 +82,7 @@ def default_tcpip_cfg_setup(
     :func:`create_default_tcpip_interface`
     :param tcpip_type:
     :param json_cfg_path:
-    :param space_packet_id:       Required if the TCP com interface needs to parse space packets
+    :param space_packet_ids:       Required if the TCP com interface needs to parse space packets
     :return:
     """
     from tmtccmd.com_if.tcpip_utilities import determine_udp_send_address, \
@@ -128,6 +127,7 @@ def create_default_tcpip_interface(
         com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str,
         space_packet_ids: Tuple[int] = (0,)
 ) -> Optional[CommunicationInterface]:
+    from tmtccmd.config.globals import get_seq_cmd_cfg
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
 
@@ -152,19 +152,20 @@ def create_default_tcpip_interface(
     recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
     max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
     init_mode = get_global(CoreGlobalIds.MODE)
+    seq_cmd_cfg = get_seq_cmd_cfg()
     space_packet_id = ethernet_cfg_dict[TcpIpConfigIds.SPACE_PACKET_ID]
     if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
         communication_interface = TcpIpUdpComIF(
-            com_if_key=com_if_key, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
-            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
+            com_if_key=com_if_key, tm_timeout=seq_cmd_cfg.tm_timeout,
+            tc_timeout_factor=seq_cmd_cfg.tc_send_timeout_factor,
             send_address=send_addr, recv_addr=recv_addr, max_recv_size=max_recv_size,
             tmtc_printer=tmtc_printer, init_mode=init_mode
         )
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
         communication_interface = TcpIpTcpComIF(
             com_if_key=com_if_key, com_type=TcpCommunicationType.SPACE_PACKETS,
-            space_packet_ids=space_packet_ids, tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
-            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
+            space_packet_ids=space_packet_ids, tm_timeout=seq_cmd_cfg.tm_timeout,
+            tc_timeout_factor=seq_cmd_cfg.tc_send_timeout_factor,
             tm_polling_freqency=0.5, send_address=send_addr, max_recv_size=max_recv_size,
             tmtc_printer=tmtc_printer, init_mode=init_mode
         )

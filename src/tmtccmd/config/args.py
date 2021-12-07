@@ -98,6 +98,28 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         action='store_false'
     )
     arg_parser.add_argument(
+        '-f', '--file',
+        help='Specify file to send for CFDP put request operation'
+    )
+    arg_parser.add_argument(
+        '--sf', '--source_file',
+        help='Source file for CFDP transactions'
+    )
+    arg_parser.add_argument(
+        '--df', '--dest_file',
+        help='Destination file for CFDP transactions'
+    )
+    arg_parser.add_argument(
+        '--tr', '--towards_receiver',
+        action='store_true', help='CFDP transaction direction. If no direction information is '
+                                  'specified, default to send towards sender'
+    )
+    arg_parser.add_argument(
+        '--ts', '--towards_sender',
+        action='store_true', help='CFDP transaction direction. If no direction information is '
+                                  'specified, default to send towards sender'
+    )
+    arg_parser.add_argument(
         '-t', '--tm_timeout', type=float, help='TM Timeout when listening to verification sequence.'
         ' Default: 5 seconds', default=5.0
     )
@@ -118,6 +140,10 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeList.SEQUENTIAL_CMD_MODE} or " \
         f"{CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]}: " \
         f"Sequential Command Mode\n"
+    cfdp_help = \
+        f"{CoreModeList.CFDP_MODE} or " \
+        f"{CoreModeStrings[CoreModeList.CFDP_MODE]}: " \
+        f"GUI mode\n"
     listener_help = \
         f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: " \
         f"Listener Mode\n"
@@ -125,7 +151,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeList.GUI_MODE} or " \
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: " \
         f"GUI mode\n"
-    help_text += seq_help + listener_help + gui_help
+    help_text += seq_help + cfdp_help + listener_help + gui_help
     arg_parser.add_argument(
         '-m', '--mode', type=str, help=help_text,
         default=CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
@@ -203,7 +229,9 @@ def handle_unspecified_args(args) -> None:
                 )
     elif args.op_code is None:
         current_service = args.service
-        args.op_code = prompt_op_code(service_op_code_dict=service_op_code_dict, service=current_service)
+        args.op_code = prompt_op_code(
+            service_op_code_dict=service_op_code_dict, service=current_service
+        )
 
 
 def handle_empty_args(args) -> None:

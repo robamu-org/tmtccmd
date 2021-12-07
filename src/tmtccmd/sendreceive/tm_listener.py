@@ -316,10 +316,11 @@ class TmListener:
                 time.sleep(0.1)
         # the timeout value can be set by special TC queue entries if wiretapping_packet handling
         # takes longer, but it is reset here to the global value
-        from tmtccmd.core.globals_manager import get_global
+        from tmtccmd.config.globals import get_seq_cmd_cfg
         from tmtccmd.config.definitions import CoreGlobalIds
-        if self.__tm_timeout is not get_global(CoreGlobalIds.TM_TIMEOUT):
-            self.__tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
+        seq_cmd_cfg = get_seq_cmd_cfg()
+        if self.__tm_timeout is not seq_cmd_cfg.tm_timeout:
+            self.__tm_timeout = seq_cmd_cfg.tm_timeout
 
     def __route_packets(self, tm_packet_list: TelemetryListT):
         """Route given packets. For CCSDS packets, use APID to do this"""

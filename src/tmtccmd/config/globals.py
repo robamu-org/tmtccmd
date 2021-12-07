@@ -9,13 +9,23 @@ from spacepackets.ecss.conf import PusVersion, set_default_tc_apid, set_default_
     set_pus_tc_version, set_pus_tm_version
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
-    CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
+    CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces, SeqTransferCfg
 from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT, \
     ServiceDictValueT, OpCodeEntryT, OpCodeInfoT, OpCodeOptionsT, OpCodeNameT
 
+from spacepackets.cfdp.definitions import Direction
+
 LOGGER = get_console_logger()
 SERVICE_OP_CODE_DICT = dict()
+
+
+def set_seq_cmd_cfg(seq_cmd_cfg: SeqTransferCfg):
+    update_global(CoreGlobalIds.SEQ_CMD_CFG, seq_cmd_cfg)
+
+
+def get_seq_cmd_cfg() -> SeqTransferCfg:
+    return get_global(CoreGlobalIds.SEQ_CMD_CFG)
 
 
 def set_json_cfg_path(json_cfg_path: str):
@@ -39,7 +49,7 @@ def set_default_globals_pre_args_parsing(
         gui: bool, tc_apid: int, tm_apid: int, pus_tc_version: PusVersion = PusVersion.PUS_C,
         pus_tm_version: PusVersion = PusVersion.PUS_C,
         com_if_id: str = CoreComInterfaces.DUMMY.value, custom_com_if_dict=None,
-        display_mode="long", tm_timeout: float = 4.0, print_to_file: bool = True,
+        display_mode='long', tm_timeout: float = 4.0, print_to_file: bool = True,
         tc_send_timeout_factor: float = 2.0
 ):
     if custom_com_if_dict is None:
@@ -48,12 +58,9 @@ def set_default_globals_pre_args_parsing(
     set_default_tm_apid(tm_apid=tm_apid)
     set_pus_tc_version(pus_tc_version)
     set_pus_tm_version(pus_tm_version)
+
     update_global(CoreGlobalIds.COM_IF, com_if_id)
-    update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, tc_send_timeout_factor)
-    update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)
-    update_global(CoreGlobalIds.DISPLAY_MODE, display_mode)
     update_global(CoreGlobalIds.PRINT_TO_FILE, print_to_file)
-    update_global(CoreGlobalIds.CURRENT_SERVICE, CoreServiceList.SERVICE_17.value)
     update_global(CoreGlobalIds.SERIAL_CONFIG, dict())
     update_global(CoreGlobalIds.ETHERNET_CONFIG, dict())
     set_glob_com_if_dict(custom_com_if_dict=custom_com_if_dict)
@@ -62,10 +69,18 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.TM_LISTENER_HANDLE, None)
     update_global(CoreGlobalIds.COM_INTERFACE_HANDLE, None)
     update_global(CoreGlobalIds.TMTC_PRINTER_HANDLE, None)
-    update_global(CoreGlobalIds.PRINT_RAW_TM, False)
-    update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, True)
-    update_global(CoreGlobalIds.RESEND_TC, False)
-    update_global(CoreGlobalIds.OP_CODE, "0")
+
+    seq_cmd_cfg = SeqTransferCfg()
+    seq_cmd_cfg.display_mode = display_mode
+    seq_cmd_cfg.op_code = '0'
+    seq_cmd_cfg.resend_tc = False
+    seq_cmd_cfg.print_raw_tm = False
+    seq_cmd_cfg.listener_after_op = True
+    seq_cmd_cfg.tc_send_timeout_factor = tc_send_timeout_factor
+    seq_cmd_cfg.tm_timeout = tm_timeout
+    seq_cmd_cfg.service = CoreServiceList.SERVICE_17.value
+    set_seq_cmd_cfg(seq_cmd_cfg=seq_cmd_cfg)
+
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
@@ -86,7 +101,8 @@ def set_default_globals_post_args_parsing(
     :param json_cfg_path:
     :param custom_modes_list: List of collections or dictionaries containing custom modes
     :param custom_services_list: List of collections or dictionaries containing custom services
-    :param custom_com_if_dict: List of collections or dictionaries containing customcommunication interfaces
+    :param custom_com_if_dict: List of collections or dictionaries containing custom communication
+        interfaces
     :return:
     """
 
@@ -99,7 +115,20 @@ def set_default_globals_post_args_parsing(
             display_mode_param = "short"
         else:
             display_mode_param = "long"
-    update_global(CoreGlobalIds.DISPLAY_MODE, display_mode_param)
+    seq_cmd_cfg = get_seq_cmd_cfg()
+    seq_cmd_cfg.display_mode = display_mode_param
+    if args.mode == 'cfdp':
+        if not args.ts and not args.tr:
+            LOGGER.info('No CFDP direction specified. Assuming direction towards sender')
+            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_SENDER)
+        elif args.ts and args.tr:
+            LOGGER.warning('CFDP direction: Both towards sender and towards receiver were specified')
+            LOGGER.warning('Assuming direction towards towards sender')
+            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_SENDER)
+        elif args.ts:
+            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_SENDER)
+        elif args.tr:
+            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_RECEIVER)
 
     try:
         service_param = args.service
@@ -109,7 +138,7 @@ def set_default_globals_post_args_parsing(
             "Setting test service ID (17)"
         )
         service_param = CoreServiceList.SERVICE_17.value
-    update_global(CoreGlobalIds.CURRENT_SERVICE, service_param)
+    seq_cmd_cfg.service = service_param
     # Not used for now
     """
     check_and_set_core_service_arg(
@@ -121,8 +150,9 @@ def set_default_globals_post_args_parsing(
         op_code = 0
     else:
         op_code = str(args.op_code).lower()
-    update_global(CoreGlobalIds.OP_CODE, op_code)
+    seq_cmd_cfg.op_code = op_code
 
+    set_seq_cmd_cfg(seq_cmd_cfg=seq_cmd_cfg)
     try:
         check_and_set_other_args(args=args)
     except AttributeError:
@@ -170,21 +200,22 @@ def handle_com_if_arg(
 
 
 def check_and_set_other_args(args):
+    seq_cmd_cfg = get_seq_cmd_cfg()
     if args.listener is not None:
-        update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)
+        seq_cmd_cfg.listener_after_op = args.listener
     if args.tm_timeout is not None:
-        update_global(CoreGlobalIds.TM_TIMEOUT, args.tm_timeout)
+        seq_cmd_cfg.tm_timeout = args.tm_timeout
     if args.print_hk is not None:
-        update_global(CoreGlobalIds.PRINT_HK, args.print_hk)
+        seq_cmd_cfg.print_hk = args.print_hk
     if args.print_tm is not None:
-        update_global(CoreGlobalIds.PRINT_TM, args.print_tm)
+        seq_cmd_cfg.print_hk = args.print_tm
     if args.raw_data_print is not None:
-        update_global(CoreGlobalIds.PRINT_RAW_TM, args.raw_data_print)
+        seq_cmd_cfg.print_raw_tm = args.raw_data_print
     if args.print_log is not None:
         update_global(CoreGlobalIds.PRINT_TO_FILE, args.print_log)
     if args.resend_tc is not None:
-        update_global(CoreGlobalIds.RESEND_TC, args.resend_tc)
-    update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 3)
+        seq_cmd_cfg.resend_tc = args.resend_tc
+    set_seq_cmd_cfg(seq_cmd_cfg=seq_cmd_cfg)
 
 
 def check_and_set_core_mode_arg(
@@ -237,11 +268,13 @@ def check_and_set_core_mode_arg(
 def check_and_set_core_service_arg(
         service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
+    seq_cmd_cfg = get_seq_cmd_cfg()
     in_enum, service_value = check_args_in_dict(
         param=service_arg, iterable=CoreServiceList, warning_hint="service"
     )
     if in_enum:
-        update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
+        seq_cmd_cfg.service = service_value
+        set_seq_cmd_cfg(seq_cmd_cfg=seq_cmd_cfg)
         return
 
     service_arg_invalid = False
@@ -263,7 +296,8 @@ def check_and_set_core_service_arg(
             f"setting to {CoreServiceList.SERVICE_17}"
         )
         service_value = CoreServiceList.SERVICE_17
-    update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
+    seq_cmd_cfg.service = service_value
+    set_seq_cmd_cfg(seq_cmd_cfg=seq_cmd_cfg)
 
 
 def get_default_service_op_code_dict() -> ServiceOpCodeDictT:

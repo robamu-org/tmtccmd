@@ -234,8 +234,9 @@ class TmTcHandler(BackendBase):
                 return
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
-                com_if=self.__com_if, tmtc_printer=self.__tmtc_printer, tm_handler=self.__tm_handler,
-                tm_listener=self.__tm_listener, tc_queue=service_queue, apid=self.__apid
+                com_if=self.__com_if, tmtc_printer=self.__tmtc_printer,
+                tm_handler=self.__tm_handler, tm_listener=self.__tm_listener,
+                tc_queue=service_queue, apid=self.__apid
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
