@@ -17,6 +17,7 @@ class Service3Base:
     if a custom class is defined, the user should implement this class and fill the fields
     in the TM handling hook if printout of the HK field and validity checking is desired.
     """
+
     def __init__(self, object_id: int, custom_hk_handling: bool = False):
         self._object_id = ObjectId(object_id=object_id)
         self._set_id = 0

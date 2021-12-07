@@ -65,8 +65,13 @@ class QEMUComIF(CommunicationInterface):
     """
     Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the TMTC software
     """
-    def __init__(self, tmtc_printer: TmTcPrinter, serial_timeout: float,
-                 ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED):
+
+    def __init__(
+        self,
+        tmtc_printer: TmTcPrinter,
+        serial_timeout: float,
+        ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
+    ):
         super().__init__(tmtc_printer)
         self.serial_timeout = serial_timeout
         self.loop = asyncio.get_event_loop()
@@ -93,7 +98,9 @@ class QEMUComIF(CommunicationInterface):
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
 
-    def set_dle_settings(self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float):
+    def set_dle_settings(
+        self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float
+    ):
         self.dle_queue_len = dle_queue_len
         self.dle_max_frame = dle_max_frame
         self.dle_timeout = dle_timeout
@@ -104,13 +111,15 @@ class QEMUComIF(CommunicationInterface):
         """
         if not self.loop.is_running():
             self.background_loop_thread = Thread(
-                target=start_background_loop, args=(self.loop,), daemon=True)
+                target=start_background_loop, args=(self.loop,), daemon=True
+            )
 
     def open(self, args: any = None) -> None:
         self.background_loop_thread.start_listener()
         try:
             self.usart = asyncio.run_coroutine_threadsafe(
-                Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop).result()
+                Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop
+            ).result()
             asyncio.run_coroutine_threadsafe(self.usart.open(), self.loop).result()
         except NotImplementedError:
             LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
@@ -144,8 +153,7 @@ class QEMUComIF(CommunicationInterface):
         self.send_data(data_encoded)
 
     def send_data(self, data: bytearray):
-        asyncio.run_coroutine_threadsafe(
-            self.send_data_async(data), self.loop).result()
+        asyncio.run_coroutine_threadsafe(self.send_data_async(data), self.loop).result()
 
     def receive(self, parameters=0) -> TelemetryListT:
         packet_list = []
@@ -219,21 +227,26 @@ class QEMUComIF(CommunicationInterface):
             data.append(rcvd[0])
 
             if data[0] == STX_CHAR:
-                data.extend(await self.usart.read_until_async(
-                        bytes([ETX_CHAR]), DLE_FRAME_LENGTH, self.serial_timeout))
+                data.extend(
+                    await self.usart.read_until_async(
+                        bytes([ETX_CHAR]), DLE_FRAME_LENGTH, self.serial_timeout
+                    )
+                )
 
                 # check for success
                 if data[-1] == ETX_CHAR:
                     self.reception_buffer.appendleft(data)
                     continue
 
-            else:   # not a start byte: flush input buffer
+            else:  # not a start byte: flush input buffer
                 data.extend(self.usart.read(self.usart.get_data_in_waiting()))
 
             # handle erroneous data
             print(data)
             # It is assumed that all packets are DLE encoded, so throw it away for now.
-            LOGGER.info("Non DLE-Encoded data with length " + str(len(data) + 1) + " found..")
+            LOGGER.info(
+                "Non DLE-Encoded data with length " + str(len(data) + 1) + " found.."
+            )
 
 
 class QmpException(Exception):
@@ -246,6 +259,7 @@ class QmpException(Exception):
 
 class QmpConnection:
     """A connection to a QEMU_SERIAL machine via QMP"""
+
     def __init__(self, addr=QEMU_ADDR_QMP):
         self.transport = None
         self.addr = addr
@@ -386,16 +400,18 @@ class DataFrame:
         return bytes([self.seq, self.cat, self.id, len(data)]) + bytes(data)
 
     def __repr__(self):
-        return f"{{ seq: 0x{self.seq:02x}, cat: 0x{self.cat:02x}," \
-               f" id: 0x{self.id:02x}, data: {self.data} }}"
+        return (
+            f"{{ seq: 0x{self.seq:02x}, cat: 0x{self.cat:02x},"
+            f" id: 0x{self.id:02x}, data: {self.data} }}"
+        )
 
 
 def parse_dataframes(buf):
     """Parse a variable number of DataFrames from the given byte buffer"""
 
     while len(buf) >= 4 and len(buf) >= 4 + buf[3]:
-        frame = DataFrame(buf[0], buf[1], buf[2], buf[4: 4 + buf[3]])
-        buf = buf[4 + buf[3]:]
+        frame = DataFrame(buf[0], buf[1], buf[2], buf[4 : 4 + buf[3]])
+        buf = buf[4 + buf[3] :]
         yield buf, frame
 
     return buf, None
@@ -413,6 +429,7 @@ class Usart:
     @staticmethod
     async def create_async(addr):
         return Usart(addr)
+
     """Connection to emulate a USART device for a given QEMU_SERIAL/At91 instance"""
 
     def __init__(self, addr):
@@ -501,7 +518,7 @@ class Usart:
         try:
             await asyncio.wait_for(self.__read_async(n), timeout)
         except asyncio.TimeoutError:
-            pass    # ignore timeouts, return data received up to now
+            pass  # ignore timeouts, return data received up to now
         finally:
             m = min(len(self.datab), n)
             data, self.datab = self.datab[:m], self.datab[m:]
@@ -529,7 +546,7 @@ class Usart:
         try:
             await asyncio.wait_for(self.__read_until_async(expected, size), timeout)
         except asyncio.TimeoutError:
-            pass    # ignore timeouts, return data received up to now
+            pass  # ignore timeouts, return data received up to now
         finally:
             end = self.datab.find(expected)
             if end == -1:
@@ -543,7 +560,7 @@ class Usart:
 
     def read(self, n):
         """Wait for 'n' bytes to be received from the USART
-            timeout in seconds"""
+        timeout in seconds"""
 
         try:
             while len(self.datab) < n:

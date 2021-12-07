@@ -1,13 +1,16 @@
 from unittest import TestCase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander, get_default_tmtc_backend
+from tmtccmd.runner import (
+    run_tmtc_commander,
+    initialize_tmtc_commander,
+    get_default_tmtc_backend,
+)
 
 from tests.backend_mock import create_backend_mock, create_frontend_mock
 from tests.hook_obj_mock import create_hook_mock
 
 
 class TestTmtcRunner(TestCase):
-
     def test_tmtc_runner(self):
         hook_base = create_hook_mock()
         tm_handler = CcsdsTmHandler(tmtc_printer=None)
@@ -30,12 +33,6 @@ class TestTmtcRunner(TestCase):
         self.assertTrue(default_backend is not None)
 
     def test_errors(self):
-        self.assertRaises(
-            ValueError, initialize_tmtc_commander, None
-        )
-        self.assertRaises(
-            TypeError, run_tmtc_commander
-        )
-        self.assertRaises(
-            RuntimeError, run_tmtc_commander, False
-        )
+        self.assertRaises(ValueError, initialize_tmtc_commander, None)
+        self.assertRaises(TypeError, run_tmtc_commander)
+        self.assertRaises(RuntimeError, run_tmtc_commander, False)

@@ -12,5 +12,5 @@ def main():
     run_tmtc_commander(use_gui=True, app_name="TMTC Commander Example")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

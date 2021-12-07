@@ -13,17 +13,24 @@ from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Srv17Subservices(enum.IntEnum):
-    PING_CMD = 1,
-    PING_REPLY = 2,
+    PING_CMD = (1,)
+    PING_REPLY = (2,)
     GEN_EVENT = 128
 
 
 class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
     def __init__(
-            self, subservice: int, time: CdsShortTimestamp = None, ssc: int = 0,
-            source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, secondary_header_flag: bool = True,
-            space_time_ref: int = 0b0000, destination_id: int = 0
+        self,
+        subservice: int,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         Service17TM.__init__(
             self,
@@ -36,7 +43,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
             pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmBase.__init__(self, pus_tm=self.pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
@@ -45,13 +52,13 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
 
     @classmethod
     def __empty(cls) -> Service17TMExtended:
-        return cls(
-            subservice=0
-        )
+        return cls(subservice=0)
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service17TMExtended:
         service_17_tm = cls.__empty()
         service_17_tm.pus_tm = PusTelemetry.unpack(
@@ -64,10 +71,14 @@ def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
     """Generate a simple ping PUS telecommand packet"""
     if apid == -1:
         apid = get_default_tc_apid()
-    return PusTelecommand(service=17, subservice=Srv17Subservices.PING_CMD, ssc=ssc, apid=apid)
+    return PusTelecommand(
+        service=17, subservice=Srv17Subservices.PING_CMD, ssc=ssc, apid=apid
+    )
 
 
-def pack_generic_service17_test(init_ssc: int, tc_queue: TcQueueT, apid: int = -1) -> int:
+def pack_generic_service17_test(
+    init_ssc: int, tc_queue: TcQueueT, apid: int = -1
+) -> int:
     if apid == -1:
         apid = get_default_tc_apid()
     new_ssc = init_ssc

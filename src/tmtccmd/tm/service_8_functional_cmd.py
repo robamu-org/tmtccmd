@@ -13,12 +13,22 @@ LOGGER = get_console_logger()
 
 class Service8TM(PusTmBase, PusTmInfoBase):
     def __init__(
-            self, subservice_id: int, object_id: bytearray, action_id: int,
-            custom_data: bytearray, time: CdsShortTimestamp = None, ssc: int = 0,
-            source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
-            ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
-            destination_id: int = 0
+        self,
+        subservice_id: int,
+        object_id: bytearray,
+        action_id: int,
+        custom_data: bytearray,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        pus_tm_version: int = 0b0001,
+        ack: int = 0b1111,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         """This class can be used to deserialize service 8 packets.
         :param raw_telemetry:      Raw bytearray which will be deserialized
@@ -30,7 +40,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         self._custom_data = custom_data
         source_data = bytearray()
         source_data.extend(object_id)
-        source_data.extend(struct.pack('!I', self._action_id))
+        source_data.extend(struct.pack("!I", self._action_id))
         source_data.extend(self._custom_data)
         pus_tm = PusTelemetry(
             service_id=5,
@@ -45,7 +55,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
@@ -56,11 +66,13 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         if instance.get_subservice() == 130:
             tm_data = instance.get_tm_data()
             if len(tm_data) < 8:
-                LOGGER.warning(f'Length of Service 8 TM data field {len(tm_data)} short than 8')
+                LOGGER.warning(
+                    f"Length of Service 8 TM data field {len(tm_data)} short than 8"
+                )
                 raise ValueError
             instance.specify_packet_info("Functional Data Reply")
             instance._object_id = ObjectId.from_bytes(obj_id_as_bytes=tm_data[0:4])
-            instance._action_id = struct.unpack('!I', tm_data[4:8])[0]
+            instance._action_id = struct.unpack("!I", tm_data[4:8])[0]
             instance._custom_data = tm_data[8:]
         else:
             instance.specify_packet_info("Unknown functional commanding reply")
@@ -68,11 +80,18 @@ class Service8TM(PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service8TM:
         return cls(
-            subservice_id=-1, object_id=bytearray(4), action_id=0, custom_data=bytearray()
+            subservice_id=-1,
+            object_id=bytearray(4),
+            action_id=0,
+            custom_data=bytearray(),
         )
 
     @classmethod
-    def unpack(cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG):
+    def unpack(
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+    ):
         service_8_tm = cls.__empty()
         service_8_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
