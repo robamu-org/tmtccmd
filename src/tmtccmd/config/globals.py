@@ -12,7 +12,7 @@ from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceL
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces, SeqTransferCfg
 from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT, \
-    ServiceDictValueT, OpCodeEntryT, OpCodeInfoT, OpCodeOptionsT, OpCodeNameT
+    OpCodeEntryT, OpCodeOptionsT, OpCodeNameT
 
 from spacepackets.cfdp.definitions import Direction
 
@@ -315,7 +315,6 @@ def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
 
         service_op_code_dict[CoreServiceList.SERVICE_5.value] = service_5_tuple
         service_op_code_dict[CoreServiceList.SERVICE_17.value] = service_17_tuple
-        # SERVICE_OP_CODE_DICT = service_op_code_dict
     return service_op_code_dict
 
 
