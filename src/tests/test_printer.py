@@ -14,7 +14,6 @@ from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
 
 
 class TestPrinter(TestCase):
-
     def setUp(self):
         self.tmtc_printer = TmTcPrinter()
         self.logger = get_console_logger()
@@ -46,8 +45,12 @@ class TestPrinter(TestCase):
 
         self.tmtc_printer.set_display_mode(DisplayMode.LONG)
         service_5_tm = Service5TM(
-            subservice=Srv5Subservices.INFO_EVENT, object_id=bytearray([0x01, 0x02, 0x03, 0x04]),
-            event_id=22, param_1=32, param_2=82452, time=CdsShortTimestamp.init_from_current_time()
+            subservice=Srv5Subservices.INFO_EVENT,
+            object_id=bytearray([0x01, 0x02, 0x03, 0x04]),
+            event_id=22,
+            param_1=32,
+            param_2=82452,
+            time=CdsShortTimestamp.init_from_current_time(),
         )
         hook_base = create_hook_mock_with_srv_handlers()
         initialize_tmtc_commander(hook_object=hook_base)
@@ -56,7 +59,10 @@ class TestPrinter(TestCase):
         self.tmtc_printer.print_telemetry(packet_if=service_5_tm, info_if=service_5_tm)
 
         hook_base.handle_service_5_event.assert_called_with(
-            object_id=bytes([0x01, 0x02, 0x03, 0x04]), event_id=22, param_1=32, param_2=82452
+            object_id=bytes([0x01, 0x02, 0x03, 0x04]),
+            event_id=22,
+            param_1=32,
+            param_2=82452,
         )
 
         service_17_command = pack_service_17_ping_command(ssc=0, apid=42)

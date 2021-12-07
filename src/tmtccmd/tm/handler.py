@@ -17,7 +17,9 @@ class TmHandler:
         return self._tm_type
 
 
-def default_ccsds_packet_handler(apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
+def default_ccsds_packet_handler(
+    apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter
+):
     """Default implementation only prints the packet"""
     default_factory_hook(raw_tm_packet=raw_tm_packet, tmtc_printer=tmtc_printer)
 
@@ -32,6 +34,8 @@ def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
     if service_type == 17:
         tm_packet = Service17TMExtended.unpack(raw_telemetry=raw_tm_packet)
     if tm_packet is None:
-        LOGGER.info(f'The service {service_type} is not implemented in Telemetry Factory')
+        LOGGER.info(
+            f"The service {service_type} is not implemented in Telemetry Factory"
+        )
         tm_packet = PusTelemetry.unpack(raw_telemetry=raw_tm_packet)
     tmtc_printer.print_telemetry(packet_if=tm_packet, info_if=tm_packet)

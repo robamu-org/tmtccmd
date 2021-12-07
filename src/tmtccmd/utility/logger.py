@@ -16,8 +16,8 @@ __FILE_LOGER_SET_UP = False
 # pylint: disable=arguments-differ
 # pylint: disable=too-few-public-methods
 class InfoFilter(logging.Filter):
-    """Filter object, which is used so that only INFO and DEBUG messages are printed to stdout.
-    """
+    """Filter object, which is used so that only INFO and DEBUG messages are printed to stdout."""
+
     def filter(self, rec):
         if rec.levelno == logging.INFO:
             return rec.levelno
@@ -25,8 +25,8 @@ class InfoFilter(logging.Filter):
 
 
 class DebugFilter(logging.Filter):
-    """Filter object, which is used so that only DEBUG messages are printed to stdout.
-    """
+    """Filter object, which is used so that only DEBUG messages are printed to stdout."""
+
     def filter(self, rec):
         if rec.levelno == logging.DEBUG:
             return rec.levelno
@@ -49,8 +49,8 @@ def set_tmtc_console_logger() -> logging.Logger:
     # set_up_coloredlogs_logger(logger=logger)
 
     file_format = logging.Formatter(
-        fmt='%(levelname)-8s: %(asctime)s.%(msecs)03d | [%(filename)s:%(lineno)d] | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d | [%(filename)s:%(lineno)d] | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     console_error_handler = logging.StreamHandler(stream=sys.stderr)
@@ -58,12 +58,12 @@ def set_tmtc_console_logger() -> logging.Logger:
 
     try:
         error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding='utf-8', mode='w'
+            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
         )
     except FileNotFoundError:
         os.mkdir("log")
         error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding='utf-8', mode='w'
+            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
         )
     error_file_handler.setLevel(level=logging.WARNING)
     error_file_handler.setFormatter(file_format)
@@ -76,10 +76,13 @@ def set_tmtc_console_logger() -> logging.Logger:
 def set_up_coloredlogs_logger(logger: logging.Logger):
     try:
         import coloredlogs
+
         coloredlogs.install(
-            level='INFO', logger=logger, milliseconds=True,
-            fmt='%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            level="INFO",
+            logger=logger,
+            milliseconds=True,
+            fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
     except ImportError:
         print("Please install coloredlogs package first")
@@ -87,20 +90,21 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
 
 def set_up_colorlog_logger(logger: logging.Logger):
     from colorlog import ColoredFormatter, StreamHandler
+
     generic_format = ColoredFormatter(
-        fmt='%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     fault_format = ColoredFormatter(
-        fmt='%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d '
-            '[%(filename)s:%(lineno)d] %(reset)s%(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d "
+        "[%(filename)s:%(lineno)d] %(reset)s%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     file_format = logging.Formatter(
-        fmt='%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     console_info_handler = StreamHandler(stream=sys.stdout)
@@ -116,12 +120,12 @@ def set_up_colorlog_logger(logger: logging.Logger):
 
     try:
         error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding='utf-8', mode='w'
+            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
         )
     except FileNotFoundError:
         os.mkdir("log")
         error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding='utf-8', mode='w'
+            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
         )
 
     error_file_handler.setLevel(level=logging.WARNING)

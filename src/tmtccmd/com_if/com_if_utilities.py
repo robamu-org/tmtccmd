@@ -22,8 +22,10 @@ def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
             com_if_string = str(com_if_string)
     if do_prompt_com_if:
         com_if_string = prompt_com_if(com_if_dict=com_if_dict)
-        save_to_json = input("Do you want to store the communication interface? (y/n): ")
-        if save_to_json.lower() in ['y', "yes", "1"]:
+        save_to_json = input(
+            "Do you want to store the communication interface? (y/n): "
+        )
+        if save_to_json.lower() in ["y", "yes", "1"]:
             store_com_if_json(com_if_string=com_if_string, json_cfg_path=json_cfg_path)
     return com_if_string
 
@@ -53,7 +55,7 @@ def store_com_if_json(com_if_string: str, json_cfg_path: str):
         data[JsonKeyNames.COM_IF.value] = com_if_string
         file.seek(0)
         json.dump(data, file, indent=4)
+    LOGGER.info(f"Communication interface was stored in the JSON file {json_cfg_path}")
     LOGGER.info(
-        f"Communication interface was stored in the JSON file {json_cfg_path}"
+        "Delete this file or edit it manually to edit the communication interface"
     )
-    LOGGER.info("Delete this file or edit it manually to edit the communication interface")

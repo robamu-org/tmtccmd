@@ -14,26 +14,35 @@ LOGGER = get_console_logger()
 
 class ParamStruct:
     def __init__(self):
-        self.param_id = 0,
-        self.domain_id = 0,
-        self.unique_id = 0,
-        self.linear_index = 0,
+        self.param_id = (0,)
+        self.domain_id = (0,)
+        self.unique_id = (0,)
+        self.linear_index = (0,)
         self.type_ptc = 0
         self.type_pfc = 0
-        self.column = 0,
-        self.row = 0,
+        self.column = (0,)
+        self.row = (0,)
         self.param: any = 0
 
 
 class Service20TM(PusTmInfoBase, PusTmBase):
     def __init__(
-            self, subservice_id: int, object_id: bytearray, param_id: bytearray,
-            domain_id: int, unique_id: int, linear_index: int,
-            time: CdsShortTimestamp = None, ssc: int = 0,
-            source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
-            destination_id: int = 0
+        self,
+        subservice_id: int,
+        object_id: bytearray,
+        param_id: bytearray,
+        domain_id: int,
+        unique_id: int,
+        linear_index: int,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         pus_tm = PusTelemetry(
             service=PusServices.SERVICE_20_PARAMETER,
@@ -46,7 +55,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
 
         self.object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
@@ -67,7 +76,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             return
         data_size = len(tm_data)
         instance.object_id = ObjectId.from_bytes(obj_id_as_bytes=tm_data[0:4])
-        instance.param_struct.param_id = struct.unpack('!I', tm_data[4:8])[0]
+        instance.param_struct.param_id = struct.unpack("!I", tm_data[4:8])[0]
         instance.param_struct.domain_id = tm_data[4]
         instance.param_struct.unique_id = tm_data[5]
         instance.param_struct.linear_index = tm_data[6] << 8 | tm_data[7]
@@ -80,12 +89,21 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             instance.param_struct.column = tm_data[10]
             instance.param_struct.row = tm_data[11]
             if data_size > 12:
-                if instance.param_struct.type_ptc == 3 and instance.param_struct.type_pfc == 14:
-                    instance.param_struct.param = struct.unpack('!I', tm_data[12:16])[0]
-                if instance.param_struct.type_ptc == 4 and instance.param_struct.type_pfc == 14:
-                    instance.param_struct.param = struct.unpack('!i', tm_data[12:16])[0]
-                if instance.param_struct.type_ptc == 5 and instance.param_struct.type_pfc == 1:
-                    instance.param_struct.param = struct.unpack('!f', tm_data[12:16])[0]
+                if (
+                    instance.param_struct.type_ptc == 3
+                    and instance.param_struct.type_pfc == 14
+                ):
+                    instance.param_struct.param = struct.unpack("!I", tm_data[12:16])[0]
+                if (
+                    instance.param_struct.type_ptc == 4
+                    and instance.param_struct.type_pfc == 14
+                ):
+                    instance.param_struct.param = struct.unpack("!i", tm_data[12:16])[0]
+                if (
+                    instance.param_struct.type_ptc == 5
+                    and instance.param_struct.type_pfc == 1
+                ):
+                    instance.param_struct.param = struct.unpack("!f", tm_data[12:16])[0]
             else:
                 LOGGER.info(
                     "Error when receiving Pus Service 20 TM: subservice is not 130"
@@ -99,12 +117,14 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             param_id=bytearray(),
             domain_id=0,
             unique_id=0,
-            linear_index=0
+            linear_index=0,
         )
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service20TM:
         service_20_tm = cls.__empty()
         service_20_tm.pus_tm = PusTelemetry.unpack(
@@ -113,7 +133,9 @@ class Service20TM(PusTmInfoBase, PusTmBase):
         if len(service_20_tm.pus_tm.tm_data) < 4:
             LOGGER.warning("Invalid data length, less than 4")
         elif len(service_20_tm.pus_tm.tm_data) < 8:
-            LOGGER.warning("Invalid data length, less than 8 (Object ID and Parameter ID)")
+            LOGGER.warning(
+                "Invalid data length, less than 8 (Object ID and Parameter ID)"
+            )
         service_20_tm.__init_without_base(instance=service_20_tm)
         return service_20_tm
 

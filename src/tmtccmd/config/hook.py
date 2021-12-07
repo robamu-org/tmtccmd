@@ -26,6 +26,7 @@ class TmTcHookBase:
     @abstractmethod
     def get_object_ids(self) -> Dict[bytes, list]:
         from tmtccmd.config.objects import get_core_object_ids
+
         """The user can specify an object ID dictionary here mapping object ID bytearrays to a
         list. This list could contain containing the string representation or additional
         information about that object ID.
@@ -40,6 +41,7 @@ class TmTcHookBase:
         :return:
         """
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
+
         set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
 
     @abstractmethod
@@ -49,13 +51,14 @@ class TmTcHookBase:
         :param args: Specify whether a GUI is used
         """
         from tmtccmd.config.globals import set_default_globals_post_args_parsing
+
         set_default_globals_post_args_parsing(
             args=args, json_cfg_path=self.get_json_config_file_path()
         )
 
     @abstractmethod
     def assign_communication_interface(
-            self, com_if_key: str, tmtc_printer: TmTcPrinter
+        self, com_if_key: str, tmtc_printer: TmTcPrinter
     ) -> Optional[CommunicationInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
@@ -64,9 +67,11 @@ class TmTcHookBase:
         :param tmtc_printer:    Printer utility instance.
         """
         from tmtccmd.config.com_if import create_communication_interface_default
+
         return create_communication_interface_default(
-            com_if_key=com_if_key, tmtc_printer=tmtc_printer,
-            json_cfg_path=self.get_json_config_file_path()
+            com_if_key=com_if_key,
+            tmtc_printer=tmtc_printer,
+            json_cfg_path=self.get_json_config_file_path(),
         )
 
     @abstractmethod
@@ -77,6 +82,7 @@ class TmTcHookBase:
         :return:
         """
         from tmtccmd.config.globals import get_default_service_op_code_dict
+
         return get_default_service_op_code_dict()
 
     @abstractmethod
@@ -89,7 +95,9 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def pack_service_queue(self, service: Union[int, str], op_code: str, service_queue: TcQueueT):
+    def pack_service_queue(
+        self, service: Union[int, str], op_code: str, service_queue: TcQueueT
+    ):
         """Overriding this function allows the user to package a telecommand queue for a given
         service and operation code combination.
 
@@ -118,7 +126,7 @@ class TmTcHookBase:
 
     @staticmethod
     def handle_service_8_telemetry(
-            object_id: bytes, action_id: int, custom_data: bytearray
+        object_id: bytes, action_id: int, custom_data: bytearray
     ) -> Tuple[list, list]:
         """This function is called by the TMTC core to handle Service 8 packets
         The user can return a tuple of two lists, where the first list
@@ -186,6 +194,7 @@ def get_global_hook_obj() -> Optional[TmTcHookBase]:
         from tmtccmd.config.definitions import CoreGlobalIds
 
         from typing import cast
+
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
         if hook_obj_raw is None:
             LOGGER.error("Hook object is invalid!")

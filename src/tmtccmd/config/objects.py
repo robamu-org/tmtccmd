@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-INVALID_ID = bytes([0xff, 0xff, 0xff, 0xff])
+INVALID_ID = bytes([0xFF, 0xFF, 0xFF, 0xFF])
 
 
 def get_core_object_ids() -> Dict[bytes, list]:
