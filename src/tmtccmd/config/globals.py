@@ -11,7 +11,8 @@ from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces
 from tmtccmd.com_if.com_if_utilities import determine_com_if
-from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT
+from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT, \
+    ServiceDictValueT, OpCodeEntryT, OpCodeInfoT, OpCodeOptionsT, OpCodeNameT
 
 LOGGER = get_console_logger()
 SERVICE_OP_CODE_DICT = dict()
@@ -282,3 +283,18 @@ def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
         service_op_code_dict[CoreServiceList.SERVICE_17.value] = service_17_tuple
         # SERVICE_OP_CODE_DICT = service_op_code_dict
     return service_op_code_dict
+
+
+def add_op_code_entry(
+        op_code_dict: OpCodeEntryT, keys: OpCodeNameT, info: str,
+        options: OpCodeOptionsT = None
+):
+    if isinstance(keys, str):
+        keys = [keys]
+    op_code_dict.update(OpCodeEntryT.fromkeys(keys, (info, options)))
+
+
+def add_service_op_code_entry(
+        srv_op_code_dict: ServiceOpCodeDictT, name: str, info: str, op_code_entry: OpCodeEntryT
+):
+    srv_op_code_dict.update({name: (info, op_code_entry)})
