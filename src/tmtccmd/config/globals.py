@@ -11,6 +11,7 @@ from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreServiceList, \
     CoreModeStrings, CoreComInterfacesDict, CoreComInterfaces, SeqTransferCfg
 from tmtccmd.com_if.com_if_utilities import determine_com_if
+from tmtccmd.config.cfdp import CfdpCfg
 from tmtccmd.config.definitions import DEBUG_MODE, ServiceOpCodeDictT, OpCodeDictKeys, ComIFDictT, \
     OpCodeEntryT, OpCodeOptionsT, OpCodeNameT
 
@@ -26,6 +27,14 @@ def set_seq_cmd_cfg(seq_cmd_cfg: SeqTransferCfg):
 
 def get_seq_cmd_cfg() -> SeqTransferCfg:
     return get_global(CoreGlobalIds.SEQ_CMD_CFG)
+
+
+def set_cfdp_cfg(cfdp_cfg: CfdpCfg):
+    update_global(CoreGlobalIds.CFDP_CFG, cfdp_cfg)
+
+
+def get_cfdp_cfg() -> CfdpCfg:
+    return get_global(CoreGlobalIds.CFDP_CFG)
 
 
 def set_json_cfg_path(json_cfg_path: str):
@@ -118,17 +127,17 @@ def set_default_globals_post_args_parsing(
     seq_cmd_cfg = get_seq_cmd_cfg()
     seq_cmd_cfg.display_mode = display_mode_param
     if args.mode == 'cfdp':
+        cfdp_cfg = get_cfdp_cfg()
+        direction = Direction.TOWARDS_SENDER
         if not args.ts and not args.tr:
             LOGGER.info('No CFDP direction specified. Assuming direction towards sender')
-            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_SENDER)
         elif args.ts and args.tr:
             LOGGER.warning('CFDP direction: Both towards sender and towards receiver were specified')
             LOGGER.warning('Assuming direction towards towards sender')
-            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_SENDER)
-        elif args.ts:
-            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_SENDER)
         elif args.tr:
-            update_global(CoreGlobalIds.CFDP_DIRECTION, Direction.TOWARDS_RECEIVER)
+            direction = Direction.TOWARDS_RECEIVER
+        cfdp_cfg.direction = direction
+        set_cfdp_cfg(cfdp_cfg=cfdp_cfg)
 
     try:
         service_param = args.service

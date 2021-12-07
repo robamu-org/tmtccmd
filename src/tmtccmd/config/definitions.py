@@ -25,7 +25,7 @@ class CoreGlobalIds(enum.IntEnum):
     SEQ_CMD_CFG = 143
 
     # CFDP
-    CFDP_DIRECTION = 149
+    CFDP_CFG = 150
 
     # Miscellaneous
     PRINT_TO_FILE = 155
