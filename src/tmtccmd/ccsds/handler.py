@@ -1,6 +1,7 @@
 from typing import Callable, Dict, Optional, Tuple, List
 
 from tmtccmd.tm.handler import TmHandler
+from tmtccmd.cfdp.handler import CfdpHandler
 from tmtccmd.tm.definitions import TelemetryQueueT, TmTypes
 from tmtccmd.sendreceive.tm_listener import QueueListT
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -32,6 +33,9 @@ class CcsdsTmHandler(TmHandler):
         :return:
         """
         self._handler_dict[apid] = pus_tm_handler, max_queue_len
+
+    def add_cfdp_handler(self, apid: int, cfdp_handler: CfdpHandler, max_queue_len: int):
+        self._handler_dict[apid] = cfdp_handler.pass_packet, max_queue_len
 
     def get_apid_queue_len_list(self) -> List[Tuple[int, int]]:
         list = []

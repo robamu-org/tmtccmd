@@ -1,6 +1,7 @@
 import atexit
 import time
 import sys
+from typing import cast
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
@@ -63,7 +64,7 @@ class TmTcHandler(BackendBase):
         self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
-            self.__tm_handler: CcsdsTmHandler = tm_handler
+            self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
             for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
                 self.__tm_listener.subscribe_ccsds_tm_handler(
                     apid_queue_len_tuple[0], apid_queue_len_tuple[1]
@@ -133,13 +134,14 @@ class TmTcHandler(BackendBase):
     @staticmethod
     def prepare_tmtc_handler_start(
             com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            init_mode: int, init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
+            init_mode: int, tm_handler: TmHandler,
+            init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
             init_opcode: str = "0"
     ):
         from multiprocessing import Process
         tmtc_handler = TmTcHandler(
             com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=init_mode,
-            init_service=init_service, init_opcode=init_opcode
+            init_service=init_service, init_opcode=init_opcode, tm_handler=tm_handler
         )
         tmtc_task = Process(target=TmTcHandler.start_handler, args=(tmtc_handler, ))
         return tmtc_task
@@ -259,3 +261,8 @@ class TmTcHandler(BackendBase):
                     time.sleep(1)
         else:
             self.__handle_action()
+
+
+def get_tmtc_backend() -> BackendBase:
+    from tmtccmd.config.globals import get_global, CoreGlobalIds
+    return get_global(CoreGlobalIds.TMTC_BACKEND)

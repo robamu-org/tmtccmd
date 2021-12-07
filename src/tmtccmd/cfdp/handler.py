@@ -3,10 +3,13 @@ import enum
 import os
 
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
 from spacepackets.cfdp.conf import PduConfig
 from spacepackets.cfdp.definitions import TransmissionModes, ChecksumTypes
+
+LOGGER = get_console_logger()
 
 
 class CfdpClass(enum.Enum):
@@ -14,10 +17,22 @@ class CfdpClass(enum.Enum):
     RELIABLE_CL2 = 1
 
 
+class CfdpUserBase:
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def transaction_indication(self):
+        LOGGER.info("Received transaction indication")
+
+
 class CfdpHandler:
-    def __init__(self, com_if: CommunicationInterface, cfdp_type: CfdpClass):
+    def __init__(
+            self, com_if: CommunicationInterface, cfdp_type: CfdpClass, cfdp_user: CfdpUserBase
+    ):
         self.cfdp_type = cfdp_type
         self.com_if = com_if
+        self.cfdp_user = cfdp_user
         self.__busy = False
         pass
 
@@ -50,10 +65,6 @@ class CfdpHandler:
         )
         data = metadata_pdu.pack()
         self.com_if.send(data=data)
-
-    @abc.abstractmethod
-    def transaction_indication(self):
-        pass
 
     def __is_busy(self) -> bool:
         return self.__busy

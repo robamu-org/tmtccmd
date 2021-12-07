@@ -58,7 +58,7 @@ def initialize_tmtc_commander(hook_object: TmTcHookBase):
 
 def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
     """Add a handler for CCSDS space packets, for example PUS packets
-    :param pus_handler:
+    :param ccsds_handler: Handler for CCSDS packets
     :return:
     """
     lock_global_pool()
@@ -102,12 +102,14 @@ def run_tmtc_commander(
     else:
         if tmtc_backend is None:
             from tmtccmd.config.hook import get_global_hook_obj
+            from tmtccmd.config.globals import get_global, update_global
             hook_obj = get_global_hook_obj()
             json_cfg_path = hook_obj.get_json_config_file_path()
             tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
             tmtc_backend = get_default_tmtc_backend(
                 hook_obj=hook_obj, tm_handler=tm_handler, json_cfg_path=json_cfg_path
             )
+            update_global(CoreGlobalIds.TMTC_BACKEND, tmtc_backend)
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
 

@@ -14,7 +14,8 @@ class CoreGlobalIds(enum.IntEnum):
     TM_LISTENER_HANDLE = 130
     TMTC_PRINTER_HANDLE = 131
     TM_HANDLER_HANDLE = 132
-    PRETTY_PRINTER = 133
+    TMTC_BACKEND = 134
+    PRETTY_PRINTER = 135
 
     # Parameters
     JSON_CFG_PATH = 139
