@@ -7,7 +7,6 @@ from spacepackets.util import PrintFormats
 
 
 class PusTmInterface:
-
     @abstractmethod
     def pack(self) -> bytearray:
         raise NotImplementedError
@@ -46,15 +45,15 @@ class PusTmInterface:
 class PusTmInfoInterface:
     @abstractmethod
     def get_print_info(self) -> str:
-        return ''
+        return ""
 
     @abstractmethod
     def get_custom_printout(self) -> str:
-        return ''
+        return ""
 
     @abstractmethod
     def get_source_data_string(self) -> str:
-        return ''
+        return ""
 
     @abstractmethod
     def set_packet_info(self, print_info: str):
@@ -108,8 +107,8 @@ class PusTmBase(PusTmInterface):
 class PusTmInfoBase(PusTmInfoInterface):
     def __init__(self, pus_tm: PusTelemetry):
         self.pus_tm = pus_tm
-        self._custom_printout = ''
-        self._print_info = ''
+        self._custom_printout = ""
+        self._print_info = ""
 
     def get_print_info(self) -> str:
         return self._print_info
@@ -120,7 +119,9 @@ class PusTmInfoBase(PusTmInfoInterface):
     def set_custom_printout(self, custom_string: str):
         self._custom_printout = custom_string
 
-    def get_source_data_string(self, print_format: PrintFormats = PrintFormats.HEX) -> str:
+    def get_source_data_string(
+        self, print_format: PrintFormats = PrintFormats.HEX
+    ) -> str:
         return self.pus_tm.get_source_data_string(print_format=print_format)
 
     def set_packet_info(self, print_info: str):
@@ -137,13 +138,17 @@ class PusTmInfoBase(PusTmInfoInterface):
         :param content_list: Header content will be appended to this list
         :return:
         """
-        content_list.append(f'{self.pus_tm.service}')
-        content_list.append(f'{self.pus_tm.subservice}')
-        content_list.append(f'{self.pus_tm.secondary_packet_header.message_counter}')
-        content_list.append(f'{self.pus_tm.secondary_packet_header.time.return_unix_seconds()}')
-        content_list.append(f'{self.pus_tm.secondary_packet_header.time.return_time_string()}')
-        content_list.append(f'0x{self.pus_tm.space_packet_header.apid:02x}')
-        content_list.append(f'{self.pus_tm.space_packet_header.ssc}')
+        content_list.append(f"{self.pus_tm.service}")
+        content_list.append(f"{self.pus_tm.subservice}")
+        content_list.append(f"{self.pus_tm.secondary_packet_header.message_counter}")
+        content_list.append(
+            f"{self.pus_tm.secondary_packet_header.time.return_unix_seconds()}"
+        )
+        content_list.append(
+            f"{self.pus_tm.secondary_packet_header.time.return_time_string()}"
+        )
+        content_list.append(f"0x{self.pus_tm.space_packet_header.apid:02x}")
+        content_list.append(f"{self.pus_tm.space_packet_header.ssc}")
         if self.pus_tm.valid:
             content_list.append("Yes")
         else:

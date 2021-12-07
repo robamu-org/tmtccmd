@@ -19,11 +19,17 @@ class CommandSenderReceiver:
     """This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
+
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-            tm_listener: TmListener, tm_handler: CcsdsTmHandler, apid: int,
-            tm_timeout: float = 2.5, tc_send_timeout_factor: float = 2.5,
-            resend_tc: bool = False
+        self,
+        com_if: CommunicationInterface,
+        tmtc_printer: TmTcPrinter,
+        tm_listener: TmListener,
+        tm_handler: CcsdsTmHandler,
+        apid: int,
+        tm_timeout: float = 2.5,
+        tc_send_timeout_factor: float = 2.5,
+        resend_tc: bool = False,
     ):
         """
         :param com_if: CommunicationInterface object. Instantiate the desired one
@@ -100,8 +106,11 @@ class CommandSenderReceiver:
         else:
             self._check_for_timeout()
 
-    def wait_period_ongoing(self, sleep_rest_of_wait_period: bool = False,
-                            set_reply_rcvd_to_true: bool = True):
+    def wait_period_ongoing(
+        self,
+        sleep_rest_of_wait_period: bool = False,
+        set_reply_rcvd_to_true: bool = True,
+    ):
         if sleep_rest_of_wait_period:
             # wait rest of wait time
             sleep_time = self._wait_start + self._wait_period - time.time()

@@ -16,6 +16,7 @@ HandlerDictT = Dict[int, Tuple[CcsdsCallbackT, int]]
 class CcsdsTmHandler(TmHandler):
     """Generic CCSDS handler class. The user can create an instance of this class to handle
     CCSDS packets with different APIDs"""
+
     def __init__(self, tmtc_printer: Optional[TmTcPrinter] = None):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
@@ -24,7 +25,9 @@ class CcsdsTmHandler(TmHandler):
     def initialize(self, tmtc_printer: TmTcPrinter):
         self._tmtc_printer = tmtc_printer
 
-    def add_tm_handler(self, apid: int, pus_tm_handler: CcsdsCallbackT, max_queue_len: int):
+    def add_tm_handler(
+        self, apid: int, pus_tm_handler: CcsdsCallbackT, max_queue_len: int
+    ):
         """Add a TM handler for a certain APID. The handler is a callback function which
         will be called if telemetry with that APID arrives
         :param apid:            CCSDS Application Process ID
@@ -34,7 +37,9 @@ class CcsdsTmHandler(TmHandler):
         """
         self._handler_dict[apid] = pus_tm_handler, max_queue_len
 
-    def add_cfdp_handler(self, apid: int, cfdp_handler: CfdpHandler, max_queue_len: int):
+    def add_cfdp_handler(
+        self, apid: int, cfdp_handler: CfdpHandler, max_queue_len: int
+    ):
         self._handler_dict[apid] = cfdp_handler.pass_packet, max_queue_len
 
     def get_apid_queue_len_list(self) -> List[Tuple[int, int]]:
@@ -54,8 +59,10 @@ class CcsdsTmHandler(TmHandler):
                 )
 
     def handle_ccsds_packet_queue(
-            self, apid: int, packet_queue: TelemetryQueueT,
-            ccsds_cb: Optional[CcsdsCallbackT] = None
+        self,
+        apid: int,
+        packet_queue: TelemetryQueueT,
+        ccsds_cb: Optional[CcsdsCallbackT] = None,
     ):
         for tm_packet in packet_queue:
             if ccsds_cb is None:

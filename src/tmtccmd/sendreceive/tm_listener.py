@@ -32,6 +32,7 @@ class TmListener:
     to poll data with the provided communication interface. Dedicated sender and receiver object
     or any other software component can get the received packets from the internal deque container.
     """
+
     MODE_OPERATION_TIMEOUT = 300
     DEFAULT_UNKNOWN_QUEUE_MAX_LEN = 50
     QUEUE_DICT_QUEUE_IDX = 0
@@ -40,13 +41,16 @@ class TmListener:
     DEFAULT_LOCK_TIMEOUT = 0.5
 
     class ListenerModes(Enum):
-        MANUAL = 1,
-        LISTENER = 2,
-        SEQUENCE = 3,
+        MANUAL = (1,)
+        LISTENER = (2,)
+        SEQUENCE = (3,)
 
     def __init__(
-            self, com_if: CommunicationInterface, tm_timeout: float, tc_timeout_factor: float,
-            tm_type: TmTypes = TmTypes.CCSDS_SPACE_PACKETS
+        self,
+        com_if: CommunicationInterface,
+        tm_timeout: float,
+        tc_timeout_factor: float,
+        tm_type: TmTypes = TmTypes.CCSDS_SPACE_PACKETS,
     ):
         """Initiate a TM listener.
         :param com_if:              Type of communication interface, e.g. a serial or ethernet interface
@@ -63,7 +67,9 @@ class TmListener:
         self.current_apid = INVALID_APID
 
         # Listener is daemon and will exit automatically if all other threads are closed
-        self.listener_thread = threading.Thread(target=self.__perform_operation, daemon=True)
+        self.listener_thread = threading.Thread(
+            target=self.__perform_operation, daemon=True
+        )
         self.lock_listener = threading.Lock()
         # This Event is set by sender objects to perform mode operations
         self.event_mode_change = threading.Event()
@@ -76,9 +82,9 @@ class TmListener:
 
         self.__listener_mode = self.ListenerModes.LISTENER
         self.__tm_type = tm_type
-        self.__queue_dict: QueueDictT = dict({
-            UNKNOWN_TARGET_ID: (deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN)
-        })
+        self.__queue_dict: QueueDictT = dict(
+            {UNKNOWN_TARGET_ID: (deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN)}
+        )
 
     def start(self):
         if not self.event_listener_active.is_set():
@@ -131,7 +137,7 @@ class TmListener:
         """This function is used to check whether any data has been received"""
         queue_dict_list = self.__queue_dict.get(apid)
         if queue_dict_list is None:
-            LOGGER.warning(f'No queue available for APID {apid}')
+            LOGGER.warning(f"No queue available for APID {apid}")
         queue_dict = queue_dict_list[self.QUEUE_DICT_QUEUE_IDX]
         if queue_dict.__len__() > 0:
             return True
@@ -139,7 +145,9 @@ class TmListener:
             return False
 
     def tm_packets_available(self):
-        with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+        with acquire_timeout(
+            self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+        ) as acquired:
             if acquired:
                 for queue_lists in self.__queue_dict.values():
                     if queue_lists[self.QUEUE_DICT_QUEUE_IDX]:
@@ -148,7 +156,9 @@ class TmListener:
 
     def retrieve_tm_packet_queues(self, clear: bool) -> QueueListT:
         queues = []
-        with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+        with acquire_timeout(
+            self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+        ) as acquired:
             if not acquired:
                 LOGGER.error("Could not acquire lock!")
             # Still continue
@@ -158,22 +168,26 @@ class TmListener:
                 self.clear_tm_packet_queues(lock=False)
         return queues
 
-    def retrieve_ccsds_tm_packet_queue(self, apid: int = -1, clear: bool = False) -> TelemetryQueueT:
+    def retrieve_ccsds_tm_packet_queue(
+        self, apid: int = -1, clear: bool = False
+    ) -> TelemetryQueueT:
         """Retrieve the packet queue for a given APID. The TM listener will handle routing
         packets into the correct queue."""
         if apid == -1:
             apid = self.current_apid
         target_queue_list = self.__queue_dict.get(apid)
         if target_queue_list is None:
-            LOGGER.warning(f'No queue available for APID {apid}')
+            LOGGER.warning(f"No queue available for APID {apid}")
             return deque()
         target_queue = target_queue_list[self.QUEUE_DICT_QUEUE_IDX]
         # We make sure that the queue is not manipulated while it is being copied.
-        with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+        with acquire_timeout(
+            self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+        ) as acquired:
             if not acquired:
                 LOGGER.warning(
-                    f'TmListener: Blocked on lock acquisition for longer than'
-                    f'{self.DEFAULT_LOCK_TIMEOUT} second!'
+                    f"TmListener: Blocked on lock acquisition for longer than"
+                    f"{self.DEFAULT_LOCK_TIMEOUT} second!"
                 )
             tm_queue_copy = target_queue.copy()
             if clear:
@@ -185,13 +199,15 @@ class TmListener:
             apid = self.current_apid
         target_queue = self.__queue_dict.get(apid)
         if target_queue is None:
-            LOGGER.warning(f'No queue available for APID {apid}')
+            LOGGER.warning(f"No queue available for APID {apid}")
             return
-        with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+        with acquire_timeout(
+            self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+        ) as acquired:
             if not acquired:
                 LOGGER.warning(
-                    f'TmListener: Blocked on lock acquisition for longer than'
-                    f'{self.DEFAULT_LOCK_TIMEOUT} second!'
+                    f"TmListener: Blocked on lock acquisition for longer than"
+                    f"{self.DEFAULT_LOCK_TIMEOUT} second!"
                 )
             target_queue[0].clear()
 
@@ -205,8 +221,12 @@ class TmListener:
             self.lock_listener.release()
 
     def retrieve_unknown_target_queue(self):
-        target_queue = self.__queue_dict.get(UNKNOWN_TARGET_ID)[self.QUEUE_DICT_QUEUE_IDX]
-        with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+        target_queue = self.__queue_dict.get(UNKNOWN_TARGET_ID)[
+            self.QUEUE_DICT_QUEUE_IDX
+        ]
+        with acquire_timeout(
+            self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+        ) as acquired:
             if acquired:
                 return target_queue.copy()
 
@@ -257,11 +277,13 @@ class TmListener:
         """The core operation listens for packets."""
         packet_list = self.__com_if.receive()
         if len(packet_list) > 0:
-            with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+            with acquire_timeout(
+                self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+            ) as acquired:
                 if not acquired:
                     LOGGER.warning(
-                        f'TmListener: Blocked on lock acquisition for longer than'
-                        f'{self.DEFAULT_LOCK_TIMEOUT} second!'
+                        f"TmListener: Blocked on lock acquisition for longer than"
+                        f"{self.DEFAULT_LOCK_TIMEOUT} second!"
                     )
                 self.__route_packets(packet_list)
             if not self.__event_reply_received.is_set():
@@ -301,14 +323,18 @@ class TmListener:
             if self.__event_mode_op_finished.is_set():
                 if self.__listener_mode == self.ListenerModes.SEQUENCE:
                     return
-            packets_available = self.__com_if.data_available(timeout=0.2, parameters=None)
+            packets_available = self.__com_if.data_available(
+                timeout=0.2, parameters=None
+            )
             if packets_available > 0:
                 packet_list = self.__com_if.receive()
-                with acquire_timeout(self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT) as acquired:
+                with acquire_timeout(
+                    self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
+                ) as acquired:
                     if not acquired:
                         LOGGER.warning(
-                            f'TmListener: Blocked on lock acquisition for longer than'
-                            f'{self.DEFAULT_LOCK_TIMEOUT} second!'
+                            f"TmListener: Blocked on lock acquisition for longer than"
+                            f"{self.DEFAULT_LOCK_TIMEOUT} second!"
                         )
                     self.__route_packets(packet_list)
             elapsed_time = time.time() - start_time
@@ -318,6 +344,7 @@ class TmListener:
         # takes longer, but it is reset here to the global value
         from tmtccmd.config.globals import get_seq_cmd_cfg
         from tmtccmd.config.definitions import CoreGlobalIds
+
         seq_cmd_cfg = get_seq_cmd_cfg()
         if self.__tm_timeout is not seq_cmd_cfg.tm_timeout:
             self.__tm_timeout = seq_cmd_cfg.tm_timeout
@@ -330,26 +357,34 @@ class TmListener:
                 if packet_handled:
                     continue
             # No queue was found
-            LOGGER.warning('No target queue found, inserting into unknown target queue')
+            LOGGER.warning("No target queue found, inserting into unknown target queue")
             unknown_target_list = self.__queue_dict[UNKNOWN_TARGET_ID]
             unknown_target_queue = unknown_target_list[self.QUEUE_DICT_QUEUE_IDX]
-            if unknown_target_queue.__len__() > unknown_target_list[self.QUEUE_DICT_MAX_LEN_IDX]:
-                LOGGER.warning('Unknown target queue full. Removing oldest packet..')
+            if (
+                unknown_target_queue.__len__()
+                > unknown_target_list[self.QUEUE_DICT_MAX_LEN_IDX]
+            ):
+                LOGGER.warning("Unknown target queue full. Removing oldest packet..")
                 unknown_target_queue.pop()
             unknown_target_queue.appendleft(tm_packet)
 
     def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
         if len(tm_packet) < 6:
-            LOGGER.warning('TM packet to small to be a CCSDS space packet')
+            LOGGER.warning("TM packet to small to be a CCSDS space packet")
         else:
             apid = get_apid_from_raw_space_packet(raw_packet=tm_packet)
             target_queue_list = self.__queue_dict.get(apid)
             if target_queue_list is None:
-                LOGGER.warning(f'No TM handler assigned for APID {apid}')
+                LOGGER.warning(f"No TM handler assigned for APID {apid}")
             else:
                 target_queue = target_queue_list[self.QUEUE_DICT_QUEUE_IDX]
-                if target_queue.__len__() > target_queue_list[self.QUEUE_DICT_MAX_LEN_IDX]:
-                    LOGGER.warning(f'Target queue for APID {apid} full. Removing oldest packet..')
+                if (
+                    target_queue.__len__()
+                    > target_queue_list[self.QUEUE_DICT_MAX_LEN_IDX]
+                ):
+                    LOGGER.warning(
+                        f"Target queue for APID {apid} full. Removing oldest packet.."
+                    )
                     target_queue.pop()
                 target_queue.appendleft(tm_packet)
                 return True

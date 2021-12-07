@@ -10,8 +10,12 @@ logger = get_console_logger()
 
 
 def pack_boolean_parameter_command(
-        object_id: bytearray, domain_id: int, unique_id: int, parameter: bool, ssc: int,
-        apid: int = -1
+    object_id: bytearray,
+    domain_id: int,
+    unique_id: int,
+    parameter: bool,
+    ssc: int,
+    apid: int = -1,
 ) -> Union[PusTelecommand, None]:
     """Generic function to pack a telecommand to tweak a boolean parameter
     :param object_id:
@@ -45,12 +49,18 @@ def pack_boolean_parameter_command(
     data_to_pack.append(rows)
     data_to_pack.append(columns)
     data_to_pack.append(parameter)
-    return PusTelecommand(service=20, subservice=128, ssc=ssc, app_data=data_to_pack, apid=apid)
+    return PusTelecommand(
+        service=20, subservice=128, ssc=ssc, app_data=data_to_pack, apid=apid
+    )
 
 
 def pack_float_vector_parameter_command(
-        object_id: bytearray, domain_id: int, unique_id: int, parameter: bytearray, ssc: int,
-        apid: int = -1
+    object_id: bytearray,
+    domain_id: int,
+    unique_id: int,
+    parameter: bytearray,
+    ssc: int,
+    apid: int = -1,
 ):
     pass
 
@@ -86,6 +96,6 @@ def pack_parameter_id(domain_id: int, unique_id: int, linear_index: int) -> byte
     parameter_id = bytearray(4)
     parameter_id[0] = domain_id
     parameter_id[1] = unique_id
-    parameter_id[2] = linear_index >> 8 & 0xff
-    parameter_id[3] = linear_index & 0xff
+    parameter_id[2] = linear_index >> 8 & 0xFF
+    parameter_id[3] = linear_index & 0xFF
     return parameter_id

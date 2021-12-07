@@ -14,7 +14,7 @@ LOGGER = get_console_logger()
 
 
 class CfdpClass(enum.Enum):
-    UNRELIABLE_CL1 = 0,
+    UNRELIABLE_CL1 = (0,)
     RELIABLE_CL2 = 1
 
 
@@ -29,8 +29,10 @@ class CfdpUserBase:
 
 class CfdpHandler:
     def __init__(
-            self, com_if: Optional[CommunicationInterface], cfdp_type: Optional[CfdpClass],
-            cfdp_user: Type[CfdpUserBase]
+        self,
+        com_if: Optional[CommunicationInterface],
+        cfdp_type: Optional[CfdpClass],
+        cfdp_user: Type[CfdpUserBase],
     ):
         self.cfdp_type = cfdp_type
         self.com_if = com_if
@@ -49,7 +51,9 @@ class CfdpHandler:
     def state_machine(self):
         pass
 
-    def pass_packet(self, apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
+    def pass_packet(
+        self, apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter
+    ):
         pass
 
     def put_request(self, cfdp_type: CfdpClass):
@@ -60,8 +64,12 @@ class CfdpHandler:
             self.cfdp_type = cfdp_type
 
     def send_metadata_pdu(
-            self, pdu_conf: PduConfig, file_repository: str, file_name: str, dest_repository: str,
-            dest_name: str
+        self,
+        pdu_conf: PduConfig,
+        file_repository: str,
+        file_name: str,
+        dest_repository: str,
+        dest_name: str,
     ):
         if self.cfdp_type == CfdpClass.RELIABLE_CL2:
             pdu_conf.trans_mode = TransmissionModes.ACKNOWLEDGED
@@ -70,8 +78,12 @@ class CfdpHandler:
         source_file = os.path.join(file_repository, file_name)
         dest_file = os.path.join(dest_repository, dest_name)
         metadata_pdu = MetadataPdu(
-            pdu_conf=pdu_conf, file_size=0, source_file_name=source_file, dest_file_name=dest_file,
-            checksum_type=ChecksumTypes.NULL_CHECKSUM, closure_requested=False
+            pdu_conf=pdu_conf,
+            file_size=0,
+            source_file_name=source_file,
+            dest_file_name=dest_file,
+            checksum_type=ChecksumTypes.NULL_CHECKSUM,
+            closure_requested=False,
         )
         data = metadata_pdu.pack()
         self.com_if.send(data=data)

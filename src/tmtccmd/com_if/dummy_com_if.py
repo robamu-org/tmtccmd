@@ -1,7 +1,10 @@
 """Dummy Communication Interface. Currently serves to provide an example without external hardware
 """
 from spacepackets.ecss.tc import PusTelecommand
-from spacepackets.ccsds.spacepacket import get_space_packet_sequence_control, SequenceFlags
+from spacepackets.ccsds.spacepacket import (
+    get_space_packet_sequence_control,
+    SequenceFlags,
+)
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm import TelemetryListT
@@ -56,7 +59,7 @@ class DummyHandler:
     def pass_telecommand(self, data: bytearray):
         # TODO: Need TC deserializer for cleaner implementation
         self.last_telecommand = data
-        self.last_tc_ssc = ((data[2] << 8) | data[3]) & 0x3fff
+        self.last_tc_ssc = ((data[2] << 8) | data[3]) & 0x3FFF
         self.last_service = data[7]
         self.last_subservice = data[8]
         self.tc_packet_id = data[0] << 8 | data[1]
@@ -75,19 +78,23 @@ class DummyHandler:
             if self.last_subservice == 1:
                 tc_psc = get_space_packet_sequence_control(
                     sequence_flags=SequenceFlags.UNSEGMENTED,
-                    source_sequence_count=self.last_tc_ssc
+                    source_sequence_count=self.last_tc_ssc,
                 )
                 tm_packer = Service1TMExtended(
-                    subservice=1, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
-                    tc_psc=tc_psc
+                    subservice=1,
+                    ssc=self.current_ssc,
+                    tc_packet_id=self.last_tc_packet_id,
+                    tc_psc=tc_psc,
                 )
 
                 self.current_ssc += 1
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 tm_packer = Service1TMExtended(
-                    subservice=7, ssc=self.current_ssc, tc_packet_id=self.last_tc_packet_id,
-                    tc_psc=tc_psc
+                    subservice=7,
+                    ssc=self.current_ssc,
+                    tc_packet_id=self.last_tc_packet_id,
+                    tc_psc=tc_psc,
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)

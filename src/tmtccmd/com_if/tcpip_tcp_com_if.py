@@ -30,6 +30,7 @@ TCP_SEND_WIRETAPPING_ENABLED = False
 
 class TcpCommunicationType(enum.Enum):
     """Parse for space packets in the TCP stream, using the space packet header"""
+
     SPACE_PACKETS = 0
 
 
@@ -38,16 +39,24 @@ class TcpCommunicationType(enum.Enum):
 # pylint: disable=too-many-arguments
 class TcpIpTcpComIF(CommunicationInterface):
     """Communication interface for TCP communication."""
+
     DEFAULT_LOCK_TIMEOUT = 0.4
     TM_LOOP_DELAY = 0.2
 
     def __init__(
-            self, com_if_key: str, com_type: TcpCommunicationType, space_packet_ids: Tuple[int],
-            tm_polling_freqency: float, tm_timeout: float, tc_timeout_factor: float,
-            send_address: EthernetAddressT, max_recv_size: int,
-            max_packets_stored: int = 50,
-            tmtc_printer: Union[None, TmTcPrinter] = None,
-            init_mode: int = CoreModeList.LISTENER_MODE):
+        self,
+        com_if_key: str,
+        com_type: TcpCommunicationType,
+        space_packet_ids: Tuple[int],
+        tm_polling_freqency: float,
+        tm_timeout: float,
+        tc_timeout_factor: float,
+        send_address: EthernetAddressT,
+        max_recv_size: int,
+        max_packets_stored: int = 50,
+        tmtc_printer: Union[None, TmTcPrinter] = None,
+        init_mode: int = CoreModeList.LISTENER_MODE,
+    ):
         """Initialize a communication interface to send and receive TMTC via TCP
         :param com_if_key:
         :param com_type:                Communication Type. By default, it is assumed that
@@ -73,7 +82,9 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__last_connection_time = 0
         self.__tm_thread_kill_signal = threading.Event()
         # Separate thread to request TM packets periodically if no TCs are being sent
-        self.__tcp_conn_thread = threading.Thread(target=self.__tcp_tm_client, daemon=True)
+        self.__tcp_conn_thread = threading.Thread(
+            target=self.__tcp_tm_client, daemon=True
+        )
         self.__tm_queue = deque()
         self.__analysis_queue = deque()
         # Only allow one connection to OBSW at a time for now by using this lock
@@ -112,8 +123,9 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def receive(self, poll_timeout: float = 0) -> TelemetryListT:
         tm_packet_list = []
-        with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                acquired:
+        with acquire_timeout(
+            self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT
+        ) as acquired:
             if not acquired:
                 LOGGER.warning("Acquiring queue lock failed!")
             while self.__tm_queue:
@@ -142,8 +154,9 @@ class TcpIpTcpComIF(CommunicationInterface):
             ready = select.select([self.__tcp_socket], [], [], 0)
             if ready[0]:
                 bytes_recvd = self.__tcp_socket.recv(self.max_recv_size)
-                with acquire_timeout(self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT) as \
-                        acquired:
+                with acquire_timeout(
+                    self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT
+                ) as acquired:
                     if not acquired:
                         LOGGER.warning("Acquiring queue lock failed!")
                     if self.__tm_queue.__len__() >= self.max_packets_stored:
@@ -154,7 +167,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                         self.__tm_queue.pop()
                     self.__tm_queue.appendleft(bytearray(bytes_recvd))
         except ConnectionResetError:
-            LOGGER.exception('ConnectionResetError. TCP server might not be up')
+            LOGGER.exception("ConnectionResetError. TCP server might not be up")
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.__tm_queue:

@@ -17,15 +17,22 @@ LOGGER = get_console_logger()
 
 
 class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
-    """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
-    """
+    """Service 1 TM class representation. Can be used to deserialize raw service 1 packets."""
+
     def __init__(
-            self, subservice: int, time: CdsShortTimestamp = None,
-            tc_packet_id: int = 0, tc_psc: int = 0, ssc: int = 0,
-            source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
-            destination_id: int = 0
+        self,
+        subservice: int,
+        time: CdsShortTimestamp = None,
+        tc_packet_id: int = 0,
+        tc_psc: int = 0,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         Service1TM.__init__(
             self,
@@ -38,20 +45,20 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmBase.__init__(self, pus_tm=self.pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
 
     @classmethod
     def __empty(cls) -> Service1TMExtended:
-        return cls(
-            subservice=0
-        )
+        return cls(subservice=0)
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service1TMExtended:
         """Parse a service 1 telemetry packet
 
@@ -70,7 +77,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             raise ValueError
         service_1_tm.tc_packet_id = tm_data[0] << 8 | tm_data[1]
         service_1_tm.tc_psc = tm_data[2] << 8 | tm_data[3]
-        service_1_tm.tc_ssc = service_1_tm.tc_psc & 0x3fff
+        service_1_tm.tc_ssc = service_1_tm.tc_psc & 0x3FFF
         if service_1_tm.subservice % 2 == 0:
             service_1_tm._handle_failure_verification()
         else:
@@ -86,8 +93,12 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             if self.is_step_reply:
                 content_list.append(str(self.step_number))
             content_list.append(str(hex(self.error_code)))
-            content_list.append(f'hex {self.error_param_1:04x} dec {self.error_param_1}')
-            content_list.append(f'hex {self.error_param_2:04x} dec {self.error_param_2}')
+            content_list.append(
+                f"hex {self.error_param_1:04x} dec {self.error_param_1}"
+            )
+            content_list.append(
+                f"hex {self.error_param_2:04x} dec {self.error_param_2}"
+            )
         elif self.is_step_reply:
             content_list.append(str(self.step_number))
 
@@ -106,8 +117,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             header_list.append("Step Number")
 
     def _handle_failure_verification(self):
-        """Handle parsing a verification failure packet, subservice ID 2, 4, 6 or 8
-        """
+        """Handle parsing a verification failure packet, subservice ID 2, 4, 6 or 8"""
         super()._handle_failure_verification()
         self.set_packet_info("Failure Verficiation")
         subservice = self.pus_tm.subservice
@@ -122,7 +132,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
 
     def _handle_success_verification(self):
         super()._handle_success_verification()
-        self.set_packet_info('Success Verification')
+        self.set_packet_info("Success Verification")
         if self.subservice == 1:
             self.append_packet_info(" : Acceptance success")
         elif self.subservice == 3:

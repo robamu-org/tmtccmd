@@ -21,6 +21,7 @@ class CommunicationInterface:
     """Generic form of a communication interface to separate communication logic from
     the underlying interface.
     """
+
     def __init__(self, tmtc_printer: TmTcPrinter, com_if_key: str):
         self.tmtc_printer = tmtc_printer
         self.valid = True

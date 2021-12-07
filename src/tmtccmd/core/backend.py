@@ -11,7 +11,9 @@ from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
 from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
+from tmtccmd.sendreceive.sequential_sender_receiver import (
+    SequentialCommandSenderReceiver,
+)
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -45,10 +47,14 @@ class TmTcHandler(BackendBase):
     """
 
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-            tm_listener: TmListener, tm_handler: TmHandler, init_mode: int,
-            init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
-            init_opcode: str = "0"
+        self,
+        com_if: CommunicationInterface,
+        tmtc_printer: TmTcPrinter,
+        tm_listener: TmListener,
+        tm_handler: TmHandler,
+        init_mode: int,
+        init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
+        init_opcode: str = "0",
     ):
         self.mode = init_mode
         self.com_if_key = com_if.get_id()
@@ -133,17 +139,26 @@ class TmTcHandler(BackendBase):
 
     @staticmethod
     def prepare_tmtc_handler_start(
-            com_if: CommunicationInterface, tmtc_printer: TmTcPrinter, tm_listener: TmListener,
-            init_mode: int, tm_handler: TmHandler,
-            init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
-            init_opcode: str = "0"
+        com_if: CommunicationInterface,
+        tmtc_printer: TmTcPrinter,
+        tm_listener: TmListener,
+        init_mode: int,
+        tm_handler: TmHandler,
+        init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
+        init_opcode: str = "0",
     ):
         from multiprocessing import Process
+
         tmtc_handler = TmTcHandler(
-            com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, init_mode=init_mode,
-            init_service=init_service, init_opcode=init_opcode, tm_handler=tm_handler
+            com_if=com_if,
+            tmtc_printer=tmtc_printer,
+            tm_listener=tm_listener,
+            init_mode=init_mode,
+            init_service=init_service,
+            init_opcode=init_opcode,
+            tm_handler=tm_handler,
         )
-        tmtc_task = Process(target=TmTcHandler.start_handler, args=(tmtc_handler, ))
+        tmtc_task = Process(target=TmTcHandler.start_handler, args=(tmtc_handler,))
         return tmtc_task
 
     @staticmethod
@@ -156,13 +171,16 @@ class TmTcHandler(BackendBase):
 
     def initialize(self):
         from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
+
         """
         Perform initialization steps which might be necessary after class construction.
         This has to be called at some point before using the class!
         """
         if self.mode == CoreModeList.LISTENER_MODE:
-            LOGGER.info('Running in listener mode..')
-        atexit.register(keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if)
+            LOGGER.info("Running in listener mode..")
+        atexit.register(
+            keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if
+        )
 
     def start_listener(self, perform_op_immediately: bool = True):
         try:
@@ -223,20 +241,28 @@ class TmTcHandler(BackendBase):
                 LOGGER.info("TmTcHandler: Packets received.")
                 packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
                 if len(packet_queues) > 0:
-                    self.__tm_handler.handle_packet_queues(packet_queue_list=packet_queues)
+                    self.__tm_handler.handle_packet_queues(
+                        packet_queue_list=packet_queues
+                    )
                 self.__tm_listener.clear_reply_event()
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
             service_queue = deque()
             service_queue_packer = ServiceQueuePacker()
             service_queue_packer.pack_service_queue_core(
-                service=self.__service, service_queue=service_queue, op_code=self.__op_code)
+                service=self.__service,
+                service_queue=service_queue,
+                op_code=self.__op_code,
+            )
             if not self.__com_if.valid:
                 return
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
-                com_if=self.__com_if, tmtc_printer=self.__tmtc_printer,
-                tm_handler=self.__tm_handler, tm_listener=self.__tm_listener,
-                tc_queue=service_queue, apid=self.__apid
+                com_if=self.__com_if,
+                tmtc_printer=self.__tmtc_printer,
+                tm_handler=self.__tm_handler,
+                tm_listener=self.__tm_listener,
+                tc_queue=service_queue,
+                apid=self.__apid,
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
@@ -245,11 +271,14 @@ class TmTcHandler(BackendBase):
             if self.__tm_listener.reply_event():
                 packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
                 if len(packet_queues) > 0:
-                    self.__tm_handler.handle_packet_queues(packet_queue_list=packet_queues)
+                    self.__tm_handler.handle_packet_queues(
+                        packet_queue_list=packet_queues
+                    )
                 self.__tm_listener.clear_reply_event()
         else:
             try:
                 from tmtccmd.config.hook import get_global_hook_obj
+
                 hook_obj = get_global_hook_obj()
                 hook_obj.perform_mode_operation(mode=self.mode, tmtc_backend=self)
             except ImportError as error:
@@ -273,4 +302,5 @@ class TmTcHandler(BackendBase):
 
 def get_tmtc_backend() -> BackendBase:
     from tmtccmd.config.globals import get_global, CoreGlobalIds
+
     return get_global(CoreGlobalIds.TMTC_BACKEND)

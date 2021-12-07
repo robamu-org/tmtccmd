@@ -44,11 +44,11 @@ LOGGER = get_console_logger()
 
 class HammingReturnCodes(Enum):
     # No bit flips
-    CODE_OKAY = 0,
+    CODE_OKAY = (0,)
     # Single bit flip which can be corrected
-    ERROR_SINGLE_BIT = 1,
+    ERROR_SINGLE_BIT = (1,)
     # Error in the hamming code
-    ERROR_ECC = 2,
+    ERROR_ECC = (2,)
     # Multi bit error which can not be corrected
     ERROR_MULTI_BIT = 3
     # Invalid input
@@ -64,28 +64,36 @@ def hamming_compute_256x(data: bytearray) -> bytearray:
     is invalid.
     """
     if len(data) % 256 != 0:
-        LOGGER.error("hamming_compute_256: Invalid input, datablock is not a multiple of "
-                     "256 bytes!")
+        LOGGER.error(
+            "hamming_compute_256: Invalid input, datablock is not a multiple of "
+            "256 bytes!"
+        )
         return bytearray()
 
     remaining_size = len(data)
     hamming_code = bytearray()
     current_idx = 0
     while remaining_size > 0:
-        hamming_code.extend(hamming_compute_256(data[current_idx: current_idx + 256]))
+        hamming_code.extend(hamming_compute_256(data[current_idx : current_idx + 256]))
         remaining_size -= 256
         current_idx += 256
     return hamming_code
 
 
-def hamming_verify_256x(data: bytearray, original_hamming_code: bytearray) -> HammingReturnCodes:
+def hamming_verify_256x(
+    data: bytearray, original_hamming_code: bytearray
+) -> HammingReturnCodes:
     if len(data) % 256 != 0:
-        LOGGER.error("hamming_compute_256: Invalid input, datablock is not a multiple of "
-                     "256 bytes!")
+        LOGGER.error(
+            "hamming_compute_256: Invalid input, datablock is not a multiple of "
+            "256 bytes!"
+        )
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != len(data) / 256 * 3:
-        LOGGER.error("hamming_compute_256: Invalid input, original hamming code does not have the"
-                     "correct size!")
+        LOGGER.error(
+            "hamming_compute_256: Invalid input, original hamming code does not have the"
+            "correct size!"
+        )
         return HammingReturnCodes.OTHER_ERROR
 
     remaining_size = len(data)
@@ -93,20 +101,25 @@ def hamming_verify_256x(data: bytearray, original_hamming_code: bytearray) -> Ha
     current_hamming_idx = 0
     error_code = HammingReturnCodes.CODE_OKAY
     while remaining_size > 0:
-        current_data = bytearray(data[current_data_idx:current_data_idx + 256])
+        current_data = bytearray(data[current_data_idx : current_data_idx + 256])
         error_code = hamming_verify_256(
-            current_data, original_hamming_code[current_hamming_idx:current_hamming_idx + 3]
+            current_data,
+            original_hamming_code[current_hamming_idx : current_hamming_idx + 3],
         )
         if error_code == HammingReturnCodes.ERROR_SINGLE_BIT:
             # Assign corrected data
-            data[current_data_idx:current_data_idx + 256] = current_data
-            LOGGER.info(f"Corrected single bit error at data block starting at {current_data_idx}")
+            data[current_data_idx : current_data_idx + 256] = current_data
+            LOGGER.info(
+                f"Corrected single bit error at data block starting at {current_data_idx}"
+            )
             error_code = HammingReturnCodes.ERROR_SINGLE_BIT
         elif error_code == HammingReturnCodes.ERROR_MULTI_BIT:
-            LOGGER.info(f"Detected multi-bit error at data block starting at {current_data_idx}")
+            LOGGER.info(
+                f"Detected multi-bit error at data block starting at {current_data_idx}"
+            )
             return error_code
         elif error_code == HammingReturnCodes.ERROR_ECC:
-            LOGGER.info('Possible error in ECC code')
+            LOGGER.info("Possible error in ECC code")
             return error_code
         current_data_idx += 256
         current_hamming_idx += 3
@@ -122,8 +135,10 @@ def hamming_compute_256(data: bytearray) -> bytearray:
     """
     hamming_code = bytearray(3)
     if len(data) != 256:
-        LOGGER.error("hamming_compute_256: Invalid input, data does not have "
-                     "a length of 256 bytes!")
+        LOGGER.error(
+            "hamming_compute_256: Invalid input, data does not have "
+            "a length of 256 bytes!"
+        )
         return hamming_code
 
     # Xor all bytes together to get the column sum;
@@ -135,7 +150,7 @@ def hamming_compute_256(data: bytearray) -> bytearray:
     odd_column_code = 0
     for index, byte in enumerate(data):
         column_sum ^= byte
-        if (bin(byte).count('1') & 1) == 1:
+        if (bin(byte).count("1") & 1) == 1:
             """
             Parity groups are formed by forcing a particular index bit to 0
             (even) or 1 (odd).
@@ -165,7 +180,7 @@ def hamming_compute_256(data: bytearray) -> bytearray:
                  evenLineCode bits: P128  P64  P32  P16  P8  P4  P2  P1
                  oddLineCode  bits: P128' P64' P32' P16' P8' P4' P2' P1'
             """
-            even_line_code ^= (255 - index)
+            even_line_code ^= 255 - index
             odd_line_code ^= index
 
     # At this point, we have the line parities, and the column sum.
@@ -222,7 +237,9 @@ def hamming_compute_256(data: bytearray) -> bytearray:
     return hamming_code
 
 
-def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> HammingReturnCodes:
+def hamming_verify_256(
+    data: bytearray, original_hamming_code: bytearray
+) -> HammingReturnCodes:
     """Verifies and corrects a 256-bytes block of data using the given 22-bits hamming code.
     Returns 0 if there is no error, otherwise returns a HAMMING_ERROR code.
     :param data: 256 code block to verify
@@ -235,12 +252,16 @@ def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> Ham
         - 3 if there was a multi bit error which can not be corrected
     """
     if len(data) != 256:
-        LOGGER.error("hamming_compute_256: Invalid input, data does not have "
-                     "a length of 256 bytes!")
+        LOGGER.error(
+            "hamming_compute_256: Invalid input, data does not have "
+            "a length of 256 bytes!"
+        )
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != 3:
-        LOGGER.error("hamming_compute_256: Invalid input, hamming code does not have "
-                     "a length of 3 bytes!")
+        LOGGER.error(
+            "hamming_compute_256: Invalid input, hamming code does not have "
+            "a length of 3 bytes!"
+        )
         return HammingReturnCodes.OTHER_ERROR
 
     # Calculate new code
@@ -257,9 +278,11 @@ def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> Ham
         return HammingReturnCodes.CODE_OKAY
 
     # If there is a single bit error, there are 11 bits set to 1
-    hamming_bit_count = \
-        bin(correction_code[0]).count('1') + bin(correction_code[1]).count('1') + \
-        bin(correction_code[2]).count('1')
+    hamming_bit_count = (
+        bin(correction_code[0]).count("1")
+        + bin(correction_code[1]).count("1")
+        + bin(correction_code[2]).count("1")
+    )
     if hamming_bit_count == 11:
         # Get byte and bit indexes
         byte_idx = correction_code[0] & 0x80
@@ -279,7 +302,7 @@ def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> Ham
         # Correct bit
         print_string = "Correcting byte " + str(byte_idx) + " at bit " + str(bit_idx)
         LOGGER.info(print_string)
-        data[byte_idx] ^= (1 << bit_idx)
+        data[byte_idx] ^= 1 << bit_idx
         return HammingReturnCodes.ERROR_SINGLE_BIT
 
     # Check whether ECC has been corrupted
@@ -291,13 +314,18 @@ def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> Ham
 
 
 def hamming_test():
-    """Algorithm was verified with this  simple test.
-    """
+    """Algorithm was verified with this  simple test."""
     test_data = bytearray(256)
     for index in range(128):
         test_data[index] = index
     for index in range(128):
         test_data[index + 128] = 128 - index
     hamming_code = hamming_compute_256(test_data)
-    print("Hamming code: " + str(hex(hamming_code[0])) + ", " + str(hex(hamming_code[1])) +
-          ", " + str(hex(hamming_code[2])))
+    print(
+        "Hamming code: "
+        + str(hex(hamming_code[0]))
+        + ", "
+        + str(hex(hamming_code[1]))
+        + ", "
+        + str(hex(hamming_code[2]))
+    )

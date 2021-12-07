@@ -8,6 +8,7 @@ class CoreGlobalIds(enum.IntEnum):
     """
     Numbers from 128 to 200 are reserved for core globals
     """
+
     # Object handles
     TMTC_HOOK = 128
     COM_INTERFACE_HANDLE = 129
@@ -77,7 +78,7 @@ CoreComInterfacesDict = {
     CoreComInterfaces.TCPIP_TCP.value: "TCP/IP with TCP",
     CoreComInterfaces.SERIAL_FIXED_FRAME.value: "Serial Interface with fixed size frames",
     CoreComInterfaces.SERIAL_QEMU.value: "Serial Interface using QEMU",
-    CoreComInterfaces.UNSPECIFIED.value: "Unspecified"
+    CoreComInterfaces.UNSPECIFIED.value: "Unspecified",
 }
 
 
@@ -103,7 +104,7 @@ CoreModeStrings = {
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
     CoreModeList.CFDP_MODE: "cfdp",
-    CoreModeList.GUI_MODE: "gui"
+    CoreModeList.GUI_MODE: "gui",
 }
 
 
@@ -122,17 +123,17 @@ class CoreServiceList(enum.Enum):
 
 class SeqTransferCfg:
     service = CoreServiceList.SERVICE_17
-    op_code = '0'
+    op_code = "0"
     tm_timeout = 2.0
     tc_send_timeout_factor = 2.5
     resend_tc = False
     print_hk = False
     print_tm = True
     print_raw_tm = True
-    display_mode = 'long'
+    display_mode = "long"
     service_op_code_dict = dict()
     listener_after_op = False
 
 
-DEFAULT_APID = 0xef
+DEFAULT_APID = 0xEF
 DEBUG_MODE = False
