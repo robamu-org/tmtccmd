@@ -1,6 +1,7 @@
 import abc
 import enum
 import os
+from typing import Optional, Type
 
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
@@ -28,13 +29,22 @@ class CfdpUserBase:
 
 class CfdpHandler:
     def __init__(
-            self, com_if: CommunicationInterface, cfdp_type: CfdpClass, cfdp_user: CfdpUserBase
+            self, com_if: Optional[CommunicationInterface], cfdp_type: Optional[CfdpClass],
+            cfdp_user: Type[CfdpUserBase]
     ):
         self.cfdp_type = cfdp_type
         self.com_if = com_if
         self.cfdp_user = cfdp_user
         self.__busy = False
         pass
+
+    @property
+    def com_if(self):
+        return self.__com_if
+
+    @com_if.setter
+    def com_if(self, com_if: CommunicationInterface):
+        self.__com_if = com_if
 
     def state_machine(self):
         pass
