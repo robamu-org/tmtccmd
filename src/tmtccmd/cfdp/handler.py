@@ -1,8 +1,9 @@
-import abc
 import enum
 import os
+import abc
 from typing import Optional, Type
 
+from .filestore import VirtualFilestore
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -13,18 +14,40 @@ from spacepackets.cfdp.definitions import TransmissionModes, ChecksumTypes
 LOGGER = get_console_logger()
 
 
+class CfdpRequest(enum.Enum):
+    PUT = 0
+    REPORT = 1
+    CANCEL = 2
+    SUSPEND = 3
+    RESUME = 4
+
+
+class CfdpIndication(enum.Enum):
+    TRANSACTION = 0
+    EOF = 1
+    FINISHED = 2
+    METADATA = 3
+    FILE_SEGMENT_RECV = 4
+    REPORT = 5
+    SUSPENDED = 6
+    RESUMED = 7
+    FAULT = 8
+    ABANDONED = 9
+    EOF_RECV = 10
+
+
 class CfdpClass(enum.Enum):
-    UNRELIABLE_CL1 = (0,)
+    UNRELIABLE_CL1 = 0
     RELIABLE_CL2 = 1
 
 
 class CfdpUserBase:
-    def __init__(self):
-        pass
+    def __init__(self, vfs: Type[VirtualFilestore]):
+        self.vfs = vfs
 
     @abc.abstractmethod
-    def transaction_indication(self):
-        LOGGER.info("Received transaction indication")
+    def transaction_indication(self, code: CfdpIndication):
+        LOGGER.info(f"Received transaction indication {code}")
 
 
 class CfdpHandler:

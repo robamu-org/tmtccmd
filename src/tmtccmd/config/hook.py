@@ -43,7 +43,9 @@ class TmTcHookBase:
         """
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 
-        set_default_globals_pre_args_parsing(gui=gui, tc_apid=DEFAULT_APID, tm_apid=DEFAULT_APID)
+        set_default_globals_pre_args_parsing(
+            gui=gui, tc_apid=DEFAULT_APID, tm_apid=DEFAULT_APID
+        )
 
     @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):

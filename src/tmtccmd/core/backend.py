@@ -5,9 +5,10 @@ from typing import cast
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Union
+from typing import Union, Optional
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
+from tmtccmd.cfdp.handler import CfdpHandler
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
 from tmtccmd.utility.logger import get_console_logger
@@ -69,6 +70,7 @@ class TmTcHandler(BackendBase):
         self.__com_if = com_if
         self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
+        self.__cfdp_handler: Optional[CfdpHandler] = None
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
             for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
@@ -77,6 +79,9 @@ class TmTcHandler(BackendBase):
                 )
         self.exit_on_com_if_init_failure = True
         self.single_command_package = bytearray(), None
+
+    def set_cfdp_handler(self, cfdp_handler: CfdpHandler):
+        self.__cfdp_handler = cfdp_handler
 
     def get_com_if_id(self):
         return self.com_if_key
@@ -267,6 +272,14 @@ class TmTcHandler(BackendBase):
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
         elif self.mode == CoreModeList.CFDP_MODE:
+            if self.__cfdp_handler is None:
+                LOGGER.warning(
+                    "TMTC commander is in CFDP mode but no CFDP handler has been set. "
+                    "Transitioning to listener mode"
+                )
+                self.mode = CoreModeList.LISTENER_MODE
+                return
+            self.__cfdp_handler.state_machine()
             # Handle replies. These will be passed to the CFDP handler automatically
             if self.__tm_listener.reply_event():
                 packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)

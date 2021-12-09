@@ -52,7 +52,10 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         self.__all_replies_received = False
 
     def send_queue_tc_and_receive_tm_sequentially(self):
-        """Primary function which is called for sequential transfer.
+        """Primary function which is called for sequential transfer. Please note that this function
+        will only return once the whole TC queue has been handled and might block for a prolonged
+        period
+
         :return:
         """
         self._tm_listener.set_listener_mode(TmListener.ListenerModes.SEQUENCE)

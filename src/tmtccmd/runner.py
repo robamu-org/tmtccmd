@@ -17,10 +17,7 @@ from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.core.globals_manager import (
-    update_global,
-    get_global
-)
+from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.cfdp.handler import CfdpHandler
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
@@ -273,14 +270,17 @@ def get_default_tmtc_backend(
 
     if json_cfg_path:
         pass
-    com_if = hook_obj.assign_communication_interface(
-        com_if_key=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
-    )
+    # Convert string to communication interface object
+    if isinstance(str, com_if):
+        com_if = hook_obj.assign_communication_interface(
+            com_if_key=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
+        )
     tc_send_timeout_factor = seq_cmd_cfg.tc_send_timeout_factor
     tm_timeout = seq_cmd_cfg.tm_timeout
     tm_listener = TmListener(
         com_if=com_if, tm_timeout=tm_timeout, tc_timeout_factor=tc_send_timeout_factor
     )
+    cfdp_handler = get_global(CoreGlobalIds.CFDP_HANDLER_HANDLE)
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
         com_if=com_if,
@@ -292,5 +292,6 @@ def get_default_tmtc_backend(
         tm_handler=tm_handler,
     )
     tmtc_backend.set_current_apid(apid=apid)
+    tmtc_backend.set_cfdp_handler(cfdp_handler=cfdp_handler)
     tmtc_backend.set_one_shot_or_loop_handling(seq_cmd_cfg.listener_after_op)
     return tmtc_backend
