@@ -1,40 +1,38 @@
-"""
-:brief:      Hamming Code Implementation
-:details:
+"""Hamming Code Implementation
 Hamming codes belong to the family of linear error correcting codes.
 Documentation: https://en.wikipedia.org/wiki/Hamming_code
 They can be used to identify up to two bit errors and correct one bit error per 256 byte block.
-
-Translated from ATMEL C library.
-/* ----------------------------------------------------------------------------
- *         ATMEL Microcontroller Software Support
- * ----------------------------------------------------------------------------
- * Copyright (c) 2008, Atmel Corporation
- *
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * - Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the disclaimer below.
- *
- * Atmel's name may not be used to endorse or promote products derived from
- * this software without specific prior written permission.
- *
- * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
- * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ----------------------------------------------------------------------------
- */
 """
+
+# Translated from ATMEL C library.
+# /* ----------------------------------------------------------------------------
+# *         ATMEL Microcontroller Software Support
+# * ----------------------------------------------------------------------------
+# * Copyright (c) 2008, Atmel Corporation
+# *
+# * All rights reserved.
+# *
+# * Redistribution and use in source and binary forms, with or without
+# * modification, are permitted provided that the following conditions are met:
+# *
+# * - Redistributions of source code must retain the above copyright notice,
+# * this list of conditions and the disclaimer below.
+# *
+# * Atmel's name may not be used to endorse or promote products derived from
+# * this software without specific prior written permission.
+# *
+# * DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
+# * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+# * DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
+# * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+# * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# * ----------------------------------------------------------------------------
+# */
 from enum import Enum
 
 from tmtccmd.utility.logger import get_console_logger
@@ -58,10 +56,11 @@ class HammingReturnCodes(Enum):
 def hamming_compute_256x(data: bytearray) -> bytearray:
     """Computes 3-bytes hamming codes for a data block whose size is multiple of
     256 bytes. Each 256 bytes block gets its own code.
+
     :param data: Data to compute code for. Should be a multiple of 256 bytes, pad data with 0
-    if necessary!
+        if necessary!
     :return: bytearray of hamming codes with the size (3 / 256 * size). Empty bytearray if input
-    is invalid.
+        is invalid.
     """
     if len(data) % 256 != 0:
         LOGGER.error(
@@ -130,6 +129,7 @@ def hamming_verify_256x(
 def hamming_compute_256(data: bytearray) -> bytearray:
     """Takes a bytearray with the size of 256 bytes and calculates the 22 parity bits for the
     hamming code which will be returned as a three byte bytearray.
+
     :param data:
     :return:
     """
@@ -242,14 +242,15 @@ def hamming_verify_256(
 ) -> HammingReturnCodes:
     """Verifies and corrects a 256-bytes block of data using the given 22-bits hamming code.
     Returns 0 if there is no error, otherwise returns a HAMMING_ERROR code.
+
     :param data: 256 code block to verify
     :param original_hamming_code: Original 3 byte hamming code with 22 parity bits
     :return: See HammingReturnCodes enums.
-        - -1 for invalid input
-        - 0 if there are no errors.
-        - 1 if there is a single bit error which has been corrected
-        - 2 if the hamming code has been corrupted
-        - 3 if there was a multi bit error which can not be corrected
+     - -1 for invalid input
+     - 0 if there are no errors.
+     - 1 if there is a single bit error which has been corrected
+     - 2 if the hamming code has been corrupted
+     - 3 if there was a multi bit error which can not be corrected
     """
     if len(data) != 256:
         LOGGER.error(

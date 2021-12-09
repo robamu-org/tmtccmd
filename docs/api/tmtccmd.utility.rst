@@ -12,14 +12,6 @@ tmtccmd.utility.conf\_util module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.dle\_encoder module
------------------------------------
-
-.. automodule:: tmtccmd.utility.dle_encoder
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.utility.exit\_handler module
 ------------------------------------
 

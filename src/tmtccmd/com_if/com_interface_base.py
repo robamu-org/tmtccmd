@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-:file:      tmtcc_com_interface_base.py
-:data:      01.11.2019
-:details:
-Generic Communication Interface. Defines the syntax of the communication functions.
+"""Generic Communication Interface. Defines the syntax of the communication functions.
 Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
-
-:author:     R. Mueller
 """
 from abc import abstractmethod
 

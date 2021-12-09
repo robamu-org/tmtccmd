@@ -36,7 +36,6 @@ ECSS & PUS Submodules
 
    api/tmtccmd.ccsds
    api/tmtccmd.cfdp
-   api/tmtccmd.ecss
    api/tmtccmd.pus
    api/tmtccmd.tc
    api/tmtccmd.tm

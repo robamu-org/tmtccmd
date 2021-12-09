@@ -20,14 +20,6 @@ tmtccmd.tc.packer module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tc.service\_17\_test module
-----------------------------------------
-
-.. automodule:: tmtccmd.tc.service_17_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.tc.service\_200\_mode module
 -----------------------------------------
 

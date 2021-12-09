@@ -20,22 +20,6 @@ tmtccmd.tm.handler module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tm.service\_17\_test module
-----------------------------------------
-
-.. automodule:: tmtccmd.tm.service_17_test
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.tm.service\_1\_verification module
------------------------------------------------
-
-.. automodule:: tmtccmd.tm.service_1_verification
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.tm.service\_200\_mode module
 -----------------------------------------
 
