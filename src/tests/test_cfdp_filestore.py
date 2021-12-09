@@ -12,6 +12,9 @@ TEST_LIST_DIR_NAME = "/tmp/list-dir-test.txt"
 
 
 class TestCfdpHostFilestore(TestCase):
+    def setUp(self):
+        self.setUpPyfakefs()
+
     def test_filestore(self):
         filestore = HostFilestore()
         if os.path.exists(TEST_FILE_NAME_0):
