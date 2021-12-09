@@ -42,3 +42,18 @@ class HostFilestore(VirtualFilestore):
 
     def delete_file(self, file_path: str):
         pass
+
+    def rename_file(self, _old_file_path: str, _new_file_path: str):
+        pass
+
+    def append_file(self, _file_path: str, _data: bytes):
+        pass
+
+    def replace_file(self, _replaced_file: str, _new_file: str):
+        pass
+
+    def create_directory(self, _dir_name: str):
+        pass
+
+    def list_directory(self, _dir_name: str, _recursive: bool):
+        pass
