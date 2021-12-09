@@ -1,6 +1,6 @@
 import os.path
 import shutil
-from unittest import TestCase
+from pyfakefs.fake_filesystem_unittest import TestCase
 from tmtccmd.cfdp.filestore import HostFilestore, FilestoreResult
 
 
