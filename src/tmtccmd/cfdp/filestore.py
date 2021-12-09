@@ -82,7 +82,12 @@ class HostFilestore(VirtualFilestore):
         self, file_path: str, offset: int, data: bytes
     ) -> FilestoreResponseStatusCode:
         """Primary function used to perform the CFDP Copy Procedure. This will also create a new
-        file as long as no other file with the same name exists"""
+        file as long as no other file with the same name exists
+
+        :return:
+         - FilestoreResponseStatusCode.APPEND_FROM_DATA_FILE_NOT_EXISTS: File does not exist yet
+         - FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET: Invalid offset
+        """
         if not os.path.exists(file_path):
             return FilestoreResponseStatusCode.APPEND_FROM_DATA_FILE_NOT_EXISTS
         file = open(file_path, "r+b")
