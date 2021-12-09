@@ -32,7 +32,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Run tests and generate coverage data
       run: |
-        python3 -m pip install coverage pytest
+        python3 -m pip install coverage pytest pyfakefs
         coverage run -m pytest
 
     - name: Upload coverage to Codecov
