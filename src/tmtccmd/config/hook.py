@@ -4,6 +4,7 @@ from abc import abstractmethod
 from typing import Dict, Tuple, Optional, Union
 
 from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
+from tmtccmd.cfdp.handler import CfdpHandler
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -42,7 +43,7 @@ class TmTcHookBase:
         """
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 
-        set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
+        set_default_globals_pre_args_parsing(gui=gui, tc_apid=DEFAULT_APID, tm_apid=DEFAULT_APID)
 
     @abstractmethod
     def add_globals_post_args_parsing(self, args: argparse.Namespace):
@@ -123,6 +124,10 @@ class TmTcHookBase:
         :return:
         """
         return "tmtc_config.json"
+
+    @staticmethod
+    def get_cfdp_handler() -> Optional[CfdpHandler]:
+        return None
 
     @staticmethod
     def handle_service_8_telemetry(

@@ -19,10 +19,9 @@ from tmtccmd.tm.handler import TmHandler
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.core.globals_manager import (
     update_global,
-    get_global,
-    lock_global_pool,
-    unlock_global_pool,
+    get_global
 )
+from tmtccmd.cfdp.handler import CfdpHandler
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
@@ -67,11 +66,11 @@ def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
     :param ccsds_handler: Handler for CCSDS packets
     :return:
     """
-    lock_global_pool()
-    tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
-    if tm_handler is None:
-        update_global(CoreGlobalIds.TM_HANDLER_HANDLE, ccsds_handler)
-    unlock_global_pool()
+    update_global(CoreGlobalIds.TM_HANDLER_HANDLE, ccsds_handler)
+
+
+def add_cfdp_handler(cfdp_handler: CfdpHandler):
+    update_global(CoreGlobalIds.CFDP_HANDLER_HANDLE, cfdp_handler)
 
 
 def run_tmtc_commander(
