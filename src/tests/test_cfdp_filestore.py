@@ -41,7 +41,9 @@ class TestCfdpHostFilestore(TestCase):
         self.assertTrue(res == FilestoreResult.DELETE_FILE_DOES_NOT_EXIST)
 
         filestore.create_file(TEST_FILE_NAME_0)
-        res = filestore.rename_file(old_file_path=TEST_FILE_NAME_0, new_file_path=TEST_FILE_NAME_1)
+        res = filestore.rename_file(
+            old_file_path=TEST_FILE_NAME_0, new_file_path=TEST_FILE_NAME_1
+        )
         self.assertTrue(res == FilestoreResult.RENAME_SUCCESS)
         self.assertTrue(os.path.exists(TEST_FILE_NAME_1))
         self.assertFalse(os.path.exists(TEST_FILE_NAME_0))

@@ -160,9 +160,13 @@ class HostFilestore(VirtualFilestore):
             LOGGER.warning(f"{replaced_file} is a directory")
             return FilestoreResponseStatusCode.REPLACE_NOT_ALLOWED
         if not os.path.exists(replaced_file):
-            return FilestoreResponseStatusCode.REPLACE_FILE_NAME_ONE_TO_BE_REPLACED_DOES_NOT_EXIST
+            return (
+                FilestoreResponseStatusCode.REPLACE_FILE_NAME_ONE_TO_BE_REPLACED_DOES_NOT_EXIST
+            )
         if not os.path.exists(source_file):
-            return FilestoreResponseStatusCode.REPLACE_FILE_NAME_TWO_REPLACE_SOURCE_NOT_EXIST
+            return (
+                FilestoreResponseStatusCode.REPLACE_FILE_NAME_TWO_REPLACE_SOURCE_NOT_EXIST
+            )
         os.replace(replaced_file, source_file)
 
     def remove_directory(
@@ -212,12 +216,14 @@ class HostFilestore(VirtualFilestore):
         elif platform.system() == "Windows":
             cmd = "dir"
         else:
-            LOGGER.warning(f"Unknown OS {platform.system()}, do not know how to list directory")
+            LOGGER.warning(
+                f"Unknown OS {platform.system()}, do not know how to list directory"
+            )
             return FilestoreResponseStatusCode.NOT_PERFORMED
         file.write(f"Contents of directory {dir_name} generated with '{cmd}':\n")
         file.close()
         curr_path = os.getcwd()
         os.chdir(dir_name)
-        os.system(f'{cmd} >> {file_name}')
+        os.system(f"{cmd} >> {file_name}")
         os.chdir(curr_path)
         return FilestoreResponseStatusCode.SUCCESS
