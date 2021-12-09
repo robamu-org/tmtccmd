@@ -14,7 +14,7 @@ FilestoreResult = FilestoreResponseStatusCode
 
 class VirtualFilestore:
     @abc.abstractmethod
-    def copy_procecdure_handler(
+    def append_data_to_file(
         self, file_path: str, offset: int, data: bytes
     ) -> FilestoreResponseStatusCode:
         """This is not used as part of a filestore request, it is used to build up the received
@@ -79,24 +79,17 @@ class HostFilestore(VirtualFilestore):
         pass
 
     @abc.abstractmethod
-    def copy_procecdure_handler(
+    def append_data_to_file(
         self, file_path: str, offset: int, data: bytes
     ) -> FilestoreResponseStatusCode:
-        """This is not used as part of a filestore request, it is used to build up the received
-        file"""
-        if os.path.exists(file_path) and offset == 0:
-            LOGGER.warning(
-                "Offset is 0 and file already exists. Rejecting copy procedure"
-            )
-            return FilestoreResponseStatusCode.COPY_PROC_OFFSET_ZERO_FILE_EXISTS
-        elif not os.path.exists(file_path):
-            file = open(file_path, "wb")
-            file_size = os.path.getsize(file_path)
-        else:
-            file = open(file_path, "r+b")
-            file_size = os.path.getsize(file_path)
+        """Primary function used to perform the CFDP Copy Procedure. This will also create a new
+        file as long as no other file with the same name exists"""
+        if not os.path.exists(file_path):
+            return FilestoreResponseStatusCode.APPEND_FROM_DATA_FILE_NOT_EXISTS
+        file = open(file_path, "r+b")
+        file_size = os.path.getsize(file_path)
         if offset > file_size:
-            return FilestoreResponseStatusCode.NOT_PERFORMED
+            return FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET
         file.seek(offset=offset)
         file.write(data)
         file.close()
