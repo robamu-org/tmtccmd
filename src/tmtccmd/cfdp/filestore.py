@@ -1,7 +1,6 @@
 import abc
 import os
 import shutil
-import datetime
 import platform
 
 from tmtccmd.utility.logger import get_console_logger
