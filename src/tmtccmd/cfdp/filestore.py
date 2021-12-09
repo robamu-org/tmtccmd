@@ -9,6 +9,8 @@ from spacepackets.cfdp.tlv import FilestoreResponseStatusCode
 
 LOGGER = get_console_logger()
 
+FilestoreResult = FilestoreResponseStatusCode
+
 
 class VirtualFilestore:
     @abc.abstractmethod
@@ -66,13 +68,16 @@ class VirtualFilestore:
 
     @abc.abstractmethod
     def list_directory(
-        self, _dir_name: str, _recursive: bool
+        self, _dir_name: str, _file_name: str, _recursive: bool = False
     ) -> FilestoreResponseStatusCode:
         LOGGER.warning("Listing directory not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
 
 class HostFilestore(VirtualFilestore):
+    def __init__(self):
+        pass
+
     @abc.abstractmethod
     def copy_procecdure_handler(
         self, file_path: str, offset: int, data: bytes
@@ -94,14 +99,17 @@ class HostFilestore(VirtualFilestore):
             return FilestoreResponseStatusCode.NOT_PERFORMED
         file.seek(offset=offset)
         file.write(data)
+        file.close()
         return FilestoreResponseStatusCode.SUCCESS
 
     def create_file(self, file_path: str) -> FilestoreResponseStatusCode:
+        """Returns CREATE_NOT_ALLOWED if the file already exists"""
         if os.path.exists(file_path):
             LOGGER.warning("File already exists")
-            return FilestoreResponseStatusCode.CREATE_NOT_PERFORMED
+            return FilestoreResponseStatusCode.CREATE_NOT_ALLOWED
         try:
-            open(file_path, "x")
+            file = open(file_path, "x")
+            file.close()
             return FilestoreResponseStatusCode.CREATE_SUCCESS
         except OSError:
             LOGGER.exception(f"Creating file {file_path} failed")
@@ -112,6 +120,7 @@ class HostFilestore(VirtualFilestore):
             return FilestoreResponseStatusCode.DELETE_FILE_DOES_NOT_EXIST
         try:
             os.remove(file_path)
+            return FilestoreResponseStatusCode.DELETE_SUCCESS
         except IsADirectoryError:
             LOGGER.exception(f"{file_path} is a directory")
             return FilestoreResponseStatusCode.DELETE_NOT_ALLOWED
@@ -124,11 +133,10 @@ class HostFilestore(VirtualFilestore):
             return FilestoreResponseStatusCode.RENAME_NOT_PERFORMED
         if not os.path.exists(old_file_path):
             return FilestoreResponseStatusCode.RENAME_OLD_FILE_DOES_NOT_EXIST
-        try:
-            os.rename(old_file_path, new_file_path)
-        except FileExistsError:
-            LOGGER.exception(f"{new_file_path} already exists")
+        if os.path.exists(new_file_path):
             return FilestoreResponseStatusCode.RENAME_NEW_FILE_DOES_EXIST
+        os.rename(old_file_path, new_file_path)
+        return FilestoreResponseStatusCode.RENAME_SUCCESS
 
     def append_file(
         self, source_file: str, appended_on_source: str
@@ -141,6 +149,8 @@ class HostFilestore(VirtualFilestore):
             file_one = open(source_file, "ab")
             file_two = open(appended_on_source, "rb")
             file_one.write(file_two.read())
+            file_one.close()
+            file_two.close()
             return FilestoreResponseStatusCode.APPEND_SUCCESS
         except IOError:
             LOGGER.exception(f"Appending {appended_on_source} on {source_file} failed")
@@ -185,20 +195,32 @@ class HostFilestore(VirtualFilestore):
         return FilestoreResponseStatusCode.CREATE_DIR_SUCCESS
 
     def list_directory(
-        self, dir_name: str, recursive: bool = False
+        self, dir_name: str, file_name: str, recursive: bool = False
     ) -> FilestoreResponseStatusCode:
-        now = datetime.datetime.now()
-        date_time = now.strftime("%d%m%Y_%H%M%S")
+        """List a directory
+
+        :param dir_name: Name of directory to list
+        :param file_name: The list will be written into this target file
+        :param recursive:
+        :return:
+        """
         # Create a unique name by using the current time
-        res_name = "list_" + dir_name + "_" + date_time + ".txt"
-        if os.path.exists(res_name):
+        if os.path.exists(file_name):
             # This really should not happen
             LOGGER.warning("Duplicate file name for listing directory")
             return FilestoreResponseStatusCode.NOT_PERFORMED
-        file = open(res_name, "w")
-        file.write(f"Contents of directory {dir_name}\n")
+        file = open(file_name, "w")
         if platform.system() == "Linux" or platform.system() == "Darwin":
-            os.system(f'll >> {res_name}')
+            cmd = "ls -al"
         elif platform.system() == "Windows":
-            os.system(f'dir >> {res_name}')
+            cmd = "dir"
+        else:
+            LOGGER.warning(f"Unknown OS {platform.system()}, do not know how to list directory")
+            return FilestoreResponseStatusCode.NOT_PERFORMED
+        file.write(f"Contents of directory {dir_name} generated with '{cmd}':\n")
+        file.close()
+        curr_path = os.getcwd()
+        os.chdir(dir_name)
+        os.system(f'{cmd} >> {file_name}')
+        os.chdir(curr_path)
         return FilestoreResponseStatusCode.SUCCESS
