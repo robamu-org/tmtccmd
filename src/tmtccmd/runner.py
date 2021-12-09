@@ -271,7 +271,7 @@ def get_default_tmtc_backend(
     if json_cfg_path:
         pass
     # Convert string to communication interface object
-    if isinstance(str, com_if):
+    if isinstance(com_if, str):
         com_if = hook_obj.assign_communication_interface(
             com_if_key=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
         )
