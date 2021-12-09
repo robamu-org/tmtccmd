@@ -97,7 +97,8 @@ class WorkerThread(QObject):
             self.finished.emit()
         elif self.op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
             self.tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
-            # It is expected that the TMTC handler is in the according state to perform the operation
+            # It is expected that the TMTC handler is in the according state to perform
+            # the operation
             self.tmtc_handler.perform_operation()
             self.finished.emit()
         else:
