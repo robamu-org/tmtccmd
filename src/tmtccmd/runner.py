@@ -70,6 +70,12 @@ def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
 
 
 def add_cfdp_handler(cfdp_handler: CfdpHandler):
+    """Add a handler for CFDP requests. Please note that you still have take care of routing CFDP
+    TM packets to the handler as well, for example by adding the CFDP handler to the CCSDS TM
+    handler
+
+    :param cfdp_handler: Handler for CFDP user requests
+    """
     update_global(CoreGlobalIds.CFDP_HANDLER_HANDLE, cfdp_handler)
 
 
