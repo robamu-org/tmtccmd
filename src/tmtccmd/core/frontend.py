@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""
-@file           tmtc_frontend.py
-@date           01.11.2019
-@brief          This is part of the TMTC client developed by the SOURCE project by KSat
-@description    GUI is still work-in-progress
-@manual
-@author         R. Mueller, P. Scheurenbrand, D. Nguyen
+"""This is part of the TMTC client developed by the SOURCE project by KSat
 """
 import enum
 import os
@@ -34,6 +28,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
+from tmtccmd.config.globals import get_seq_cmd_cfg, set_seq_cmd_cfg
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.hook import TmTcHookBase
@@ -352,7 +347,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         combo_box_services = QComboBox()
-        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
+        default_service = get_seq_cmd_cfg().service
         self.service_op_code_dict = self._hook_obj.get_service_op_code_dictionary()
         if self.service_op_code_dict is None:
             LOGGER.warning("Invalid service to operation code dictionary")
@@ -456,12 +451,16 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info(["Enabled", "Disabled"][state == 0] + " print to log.")
 
     def __checkbox_console_update(self, state: bool):
-        update_global(CoreGlobalIds.PRINT_TM, state)
+        seq_cmd_cfg = get_seq_cmd_cfg()
+        seq_cmd_cfg.print_tm = state
+        set_seq_cmd_cfg(seq_cmd_cfg)
         if self.__debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " console print")
 
     def __checkbox_print_raw_data_update(self, state: int):
-        update_global(CoreGlobalIds.PRINT_RAW_TM, state)
+        seq_cmd_cfg = get_seq_cmd_cfg()
+        seq_cmd_cfg.print_raw_tm = state
+        set_seq_cmd_cfg(seq_cmd_cfg)
         if self.__debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
 
@@ -493,22 +492,34 @@ class SingleCommandTable(QTableWidget):
 
 
 def checkbox_print_hk_data(state: int):
-    update_global(CoreGlobalIds.PRINT_HK, state)
+    seq_cmd_cfg = get_seq_cmd_cfg()
+    seq_cmd_cfg.print_hk = state
+    set_seq_cmd_cfg(seq_cmd_cfg)
     LOGGER.info(["enabled", "disabled"][state == 0] + " printing of hk data")
 
 
 def checkbox_short_display_mode(state: int):
-    update_global(CoreGlobalIds.DISPLAY_MODE, state)
+    seq_cmd_cfg = get_seq_cmd_cfg()
+    if state:
+        state = "short"
+    else:
+        state = "long"
+    seq_cmd_cfg.display_mode = state
+    set_seq_cmd_cfg(seq_cmd_cfg)
     LOGGER.info(["enabled", "disabled"][state == 0] + " short display mode")
 
 
 def number_timeout(value: float):
-    update_global(CoreGlobalIds.TM_TIMEOUT, value)
+    seq_cmd_cfg = get_seq_cmd_cfg()
+    seq_cmd_cfg.tm_timeout = value
+    set_seq_cmd_cfg(seq_cmd_cfg)
     LOGGER.info("PUS TM timeout changed to: " + str(value))
 
 
 def number_timeout_factor(value: float):
-    update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, value)
+    seq_cmd_cfg = get_seq_cmd_cfg()
+    seq_cmd_cfg.tc_send_timeout_factor = value
+    set_seq_cmd_cfg(seq_cmd_cfg)
     LOGGER.info("PUS TM timeout factor changed to: " + str(value))
 
 

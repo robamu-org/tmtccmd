@@ -24,7 +24,7 @@ class CoreGlobalIds(enum.IntEnum):
     COM_IF_DICT = 140
     MODE = 141
     COM_IF = 142
-    SEQ_CMD_CFG = 143
+    SEQ_CMD_CFG = 144
 
     # CFDP
     CFDP_CFG = 150
