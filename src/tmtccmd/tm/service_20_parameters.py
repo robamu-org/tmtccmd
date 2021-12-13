@@ -14,14 +14,14 @@ LOGGER = get_console_logger()
 
 class ParamStruct:
     def __init__(self):
-        self.param_id = (0,)
-        self.domain_id = (0,)
-        self.unique_id = (0,)
-        self.linear_index = (0,)
+        self.param_id = 0
+        self.domain_id = 0
+        self.unique_id = 0
+        self.linear_index = 0
         self.type_ptc = 0
         self.type_pfc = 0
-        self.column = (0,)
-        self.row = (0,)
+        self.column = 0
+        self.row = 0
         self.param: any = 0
 
 
