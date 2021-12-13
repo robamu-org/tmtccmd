@@ -100,7 +100,7 @@ class CfdpHandler:
         cfg: LocalEntityCfg,
         com_if: Optional[CommunicationInterface],
         cfdp_user: Type[CfdpUserBase],
-        byte_flow_control: ByteFlowControl
+        byte_flow_ctrl: ByteFlowControl
     ):
         """
 
@@ -120,6 +120,7 @@ class CfdpHandler:
         self.state = CfdpStates.IDLE
         self.send_interval = send_interval
         self.seq_num = 0
+        self.byte_flow_ctrl = byte_flow_ctrl
 
         self.__current_put_request: Optional[PutRequest] = None
 
