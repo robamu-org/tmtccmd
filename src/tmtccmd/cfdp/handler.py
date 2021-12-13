@@ -1,9 +1,11 @@
 import enum
 import os
 import abc
+import struct
 from typing import Optional, Type, List
 
 from .filestore import VirtualFilestore
+from .mib import LocalEntityCfg
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -13,6 +15,7 @@ from spacepackets.cfdp.definitions import (
     TransmissionModes,
     ChecksumTypes,
     SegmentationControl,
+    Direction,
 )
 from spacepackets.cfdp.tlv import (
     FaultHandlerOverrideTlv,
@@ -46,15 +49,10 @@ class CfdpIndication(enum.Enum):
     EOF_RECV = 10
 
 
-class CfdpClass(enum.Enum):
-    UNRELIABLE_CL1 = 0
-    RELIABLE_CL2 = 1
-
-
 class PutRequest:
     destination_id: bytes
-    source_file_name: str
-    dest_file_name: str
+    source_file: str
+    dest_file: str
     seg_ctrl: SegmentationControl
     fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
     flow_label_tlv: Optional[FlowLabelTlv] = None
@@ -78,6 +76,10 @@ class BusyError(Exception):
     pass
 
 
+class SequenceNumberOverflow(Exception):
+    pass
+
+
 class CfdpUserBase:
     def __init__(self, vfs: Type[VirtualFilestore]):
         self.vfs = vfs
@@ -90,16 +92,27 @@ class CfdpUserBase:
 class CfdpHandler:
     def __init__(
         self,
+        cfg: LocalEntityCfg,
         com_if: Optional[CommunicationInterface],
-        cfdp_type: Optional[CfdpClass],
         cfdp_user: Type[CfdpUserBase],
         send_interval: float,
     ):
-        self.cfdp_type = cfdp_type
+        """
+
+        :param cfg: Local entity configuration
+        :param com_if: Communication interface used to send messages
+        :param cfdp_user: CFDP user which will receive indication messages and which also contains
+            the virtual filestore implementation
+        :param send_interval:
+        """
+        # The ID is going to be constant after initialization, store in separately
+        self.id = cfg.local_entity_id
+        self.cfg = cfg
         self.com_if = com_if
         self.cfdp_user = cfdp_user
         self.state = CfdpStates.IDLE
         self.send_interval = send_interval
+        self.seq_num = 0
 
         self.__current_put_request: Optional[PutRequest] = None
 
@@ -112,13 +125,57 @@ class CfdpHandler:
         self.__com_if = com_if
 
     def state_machine(self):
+        """Perform the CFDP state machine
+
+
+        :raises SequenceNumberOverflow: Overflow of sequence number occured. In this case, the
+            number will be reset but no operation will occured and the state machine needs
+            to be called again
+        """
         if self.state != CfdpStates.IDLE:
             if self.state == CfdpStates.CRC_PROCEDURE:
                 # Skip this step for now
                 self.state = CfdpStates.SENDING_METADATA
             if self.state == CfdpStates.SENDING_METADATA:
+                # TODO: CRC flag is derived from remote entity ID configuration
+                pdu_conf = PduConfig(
+                    seg_ctrl=self.__current_put_request.seg_ctrl,
+                    dest_entity_id=self.__current_put_request.destination_id,
+                    source_entity_id=self.id,
+                    crc_flag=False,
+                    direction=Direction.TOWARDS_RECEIVER,
+                    transaction_seq_num=self.__get_next_seq_num(),
+                    file_size=0,
+                    trans_mode=self.__current_put_request.trans_mode,
+                )
+                self.send_metadata_pdu(
+                    pdu_conf=pdu_conf,
+                    dest_file=self.__current_put_request.dest_file,
+                    source_file=self.__current_put_request.source_file,
+                )
                 self.state = CfdpStates.SENDING_FILE_DATA_PDUS
             pass
+
+    def __get_next_seq_num(self) -> bytes:
+        if self.cfg.length_seq_num == 1:
+            if self.seq_num == pow(2, 8) - 1:
+                LOGGER.warning("8-bit transaction sequence number overflowed!")
+                self.seq_num = 0
+                raise SequenceNumberOverflow
+            self.seq_num += 1
+            return bytes([self.seq_num])
+        elif self.cfg.length_seq_num == 2:
+            if self.seq_num == pow(2, 16) - 1:
+                LOGGER.warning("16-bit transaction sequence number overflowed!")
+                self.seq_num = 0
+                raise SequenceNumberOverflow
+            return struct.pack("!H", self.seq_num)
+        elif self.cfg.length_seq_num == 4:
+            if self.seq_num == pow(2, 32) - 1:
+                LOGGER.warning("32-bit transaction sequence number overflowed!")
+                self.seq_num = 0
+                raise SequenceNumberOverflow
+            return struct.pack("!I", self.seq_num)
 
     def pass_packet(
         self, apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter
@@ -136,24 +193,17 @@ class CfdpHandler:
     def send_metadata_pdu(
         self,
         pdu_conf: PduConfig,
-        file_repository: str,
-        file_name: str,
-        dest_repository: str,
-        dest_name: str,
+        source_file: str,
+        dest_file: str,
+        closure_requested: bool,
     ):
-        if self.cfdp_type == CfdpClass.RELIABLE_CL2:
-            pdu_conf.trans_mode = TransmissionModes.ACKNOWLEDGED
-        else:
-            pdu_conf.trans_mode = TransmissionModes.UNACKNOWLEDGED
-        source_file = os.path.join(file_repository, file_name)
-        dest_file = os.path.join(dest_repository, dest_name)
         metadata_pdu = MetadataPdu(
             pdu_conf=pdu_conf,
             file_size=0,
             source_file_name=source_file,
             dest_file_name=dest_file,
             checksum_type=ChecksumTypes.NULL_CHECKSUM,
-            closure_requested=False,
+            closure_requested=closure_requested,
         )
         data = metadata_pdu.pack()
         self.com_if.send(data=data)
