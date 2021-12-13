@@ -1,7 +1,7 @@
 import enum
 import os
 import abc
-from typing import Optional, Type
+from typing import Optional, Type, List
 
 from .filestore import VirtualFilestore
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -9,7 +9,17 @@ from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
 from spacepackets.cfdp.conf import PduConfig
-from spacepackets.cfdp.definitions import TransmissionModes, ChecksumTypes
+from spacepackets.cfdp.definitions import (
+    TransmissionModes,
+    ChecksumTypes,
+    SegmentationControl,
+)
+from spacepackets.cfdp.tlv import (
+    FaultHandlerOverrideTlv,
+    FlowLabelTlv,
+    MessageToUserTlv,
+    FileStoreRequestTlv,
+)
 
 LOGGER = get_console_logger()
 
@@ -41,6 +51,23 @@ class CfdpClass(enum.Enum):
     RELIABLE_CL2 = 1
 
 
+class PutRequest:
+    destination_id: bytes
+    source_file_name: str
+    dest_file_name: str
+    seg_ctrl: SegmentationControl
+    fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
+    flow_label_tlv: Optional[FlowLabelTlv] = None
+    trans_mode: TransmissionModes
+    closure_requested: bool
+    msgs_to_user: Optional[List[MessageToUserTlv]] = None
+    fs_requests: Optional[List[FileStoreRequestTlv]] = None
+
+
+class BusyError(Exception):
+    pass
+
+
 class CfdpUserBase:
     def __init__(self, vfs: Type[VirtualFilestore]):
         self.vfs = vfs
@@ -56,12 +83,15 @@ class CfdpHandler:
         com_if: Optional[CommunicationInterface],
         cfdp_type: Optional[CfdpClass],
         cfdp_user: Type[CfdpUserBase],
+        send_interval: float,
     ):
         self.cfdp_type = cfdp_type
         self.com_if = com_if
         self.cfdp_user = cfdp_user
-        self.__busy = False
-        pass
+        self.send_interval = send_interval
+
+        self.__current_put_request: Optional[PutRequest] = None
+        self.__copy_procedure_pending = False
 
     @property
     def com_if(self):
@@ -72,19 +102,23 @@ class CfdpHandler:
         self.__com_if = com_if
 
     def state_machine(self):
-        pass
+        if self.__copy_procedure_pending:
+            pass
 
     def pass_packet(
         self, apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter
     ):
         pass
 
-    def put_request(self, cfdp_type: CfdpClass):
-        if self.__is_busy():
-            # TODO: Custom exception
-            return
+    def put_request(self, put_request: PutRequest):
+        """A put request initiates a copy procedure. For now, only one put request at a time
+        is allowed"""
+        if self.__copy_procedure_pending():
+            raise BusyError
         if self.cfdp_type != cfdp_type:
             self.cfdp_type = cfdp_type
+        self.__current_put_request = put_request
+        self.__copy_procedure_pending = True
 
     def send_metadata_pdu(
         self,
