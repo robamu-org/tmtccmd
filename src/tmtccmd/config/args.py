@@ -122,27 +122,18 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         action="store_false",
     )
     arg_parser.add_argument(
-        "-f", "--file", help="Specify file to send for CFDP put request operation"
-    )
-    arg_parser.add_argument(
         "--sf", "--source_file", help="Source file for CFDP transactions"
     )
     arg_parser.add_argument(
         "--df", "--dest_file", help="Destination file for CFDP transactions"
     )
     arg_parser.add_argument(
-        "--tr",
-        "--towards_receiver",
+        "-p",
+        "--proxy",
         action="store_true",
-        help="CFDP transaction direction. If no direction information is "
-        "specified, default to send towards sender",
-    )
-    arg_parser.add_argument(
-        "--ts",
-        "--towards_sender",
-        action="store_true",
-        help="CFDP transaction direction. If no direction information is "
-        "specified, default to send towards sender",
+        help="CFDP proxy put operation. Can be used to request files from the remote entity. "
+        "The destination file should then be the file path on the sender side while the "
+        "source file should be the remote file to download.",
     )
     arg_parser.add_argument(
         "-t",

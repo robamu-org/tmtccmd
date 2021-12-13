@@ -157,19 +157,16 @@ def set_default_globals_post_args_parsing(
     seq_cmd_cfg.display_mode = display_mode_param
     if args.mode == "cfdp":
         cfdp_cfg = get_cfdp_cfg()
-        direction = Direction.TOWARDS_SENDER
-        if not args.ts and not args.tr:
-            LOGGER.info(
-                "No CFDP direction specified. Assuming direction towards sender"
-            )
-        elif args.ts and args.tr:
-            LOGGER.warning(
-                "CFDP direction: Both towards sender and towards receiver were specified"
-            )
-            LOGGER.warning("Assuming direction towards towards sender")
-        elif args.tr:
-            direction = Direction.TOWARDS_RECEIVER
-        cfdp_cfg.direction = direction
+        if args.sf is None:
+            # TODO: prompt from user?
+            LOGGER.warning("CFDP: No source file specified!")
+        else:
+            cfdp_cfg.source_file_name = args.sf
+        if args.df is None:
+            # TODO: prompt from user?
+            LOGGER.warning("CFDP: No destination file specified!")
+        else:
+            cfdp_cfg.dest_file_name = args.df
         set_cfdp_cfg(cfdp_cfg=cfdp_cfg)
 
     try:
