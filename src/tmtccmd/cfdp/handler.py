@@ -72,6 +72,11 @@ class CfdpStates(enum.Enum):
     SEND_ACK_PDU = 6
 
 
+class ByteFlowControl:
+    period: float
+    max_bytes: int
+
+
 class BusyError(Exception):
     pass
 
@@ -95,7 +100,7 @@ class CfdpHandler:
         cfg: LocalEntityCfg,
         com_if: Optional[CommunicationInterface],
         cfdp_user: Type[CfdpUserBase],
-        send_interval: float,
+        byte_flow_control: ByteFlowControl
     ):
         """
 
@@ -103,7 +108,9 @@ class CfdpHandler:
         :param com_if: Communication interface used to send messages
         :param cfdp_user: CFDP user which will receive indication messages and which also contains
             the virtual filestore implementation
-        :param send_interval:
+        :param byte_flow_control: Controls the number of bytes sent in a certain interval
+            The state machine will only send packets if the maximum number of specified bytes
+            is not exceeded in the specified time interval
         """
         # The ID is going to be constant after initialization, store in separately
         self.id = cfg.local_entity_id
@@ -138,6 +145,7 @@ class CfdpHandler:
                 self.state = CfdpStates.SENDING_METADATA
             if self.state == CfdpStates.SENDING_METADATA:
                 # TODO: CRC flag is derived from remote entity ID configuration
+                # TODO: Determine file size and check whether source file is valid
                 pdu_conf = PduConfig(
                     seg_ctrl=self.__current_put_request.seg_ctrl,
                     dest_entity_id=self.__current_put_request.destination_id,
