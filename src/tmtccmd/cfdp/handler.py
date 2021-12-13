@@ -64,6 +64,16 @@ class PutRequest:
     fs_requests: Optional[List[FileStoreRequestTlv]] = None
 
 
+class CfdpStates(enum.Enum):
+    IDLE = 0
+    CRC_PROCEDURE = 1
+    SENDING_METADATA = 2
+    SENDING_FILE_DATA_PDUS = 3
+    SENDING_EOF_DATA_PDU = 4
+    SENDING_FINISH_PDU = 5
+    SEND_ACK_PDU = 6
+
+
 class BusyError(Exception):
     pass
 
@@ -88,10 +98,10 @@ class CfdpHandler:
         self.cfdp_type = cfdp_type
         self.com_if = com_if
         self.cfdp_user = cfdp_user
+        self.state = CfdpStates.IDLE
         self.send_interval = send_interval
 
         self.__current_put_request: Optional[PutRequest] = None
-        self.__copy_procedure_pending = False
 
     @property
     def com_if(self):
@@ -102,7 +112,12 @@ class CfdpHandler:
         self.__com_if = com_if
 
     def state_machine(self):
-        if self.__copy_procedure_pending:
+        if self.state != CfdpStates.IDLE:
+            if self.state == CfdpStates.CRC_PROCEDURE:
+                # Skip this step for now
+                self.state = CfdpStates.SENDING_METADATA
+            if self.state == CfdpStates.SENDING_METADATA:
+                self.state = CfdpStates.SENDING_FILE_DATA_PDUS
             pass
 
     def pass_packet(
@@ -113,12 +128,10 @@ class CfdpHandler:
     def put_request(self, put_request: PutRequest):
         """A put request initiates a copy procedure. For now, only one put request at a time
         is allowed"""
-        if self.__copy_procedure_pending():
+        if self.state != CfdpStates.IDLE:
             raise BusyError
-        if self.cfdp_type != cfdp_type:
-            self.cfdp_type = cfdp_type
         self.__current_put_request = put_request
-        self.__copy_procedure_pending = True
+        self.state = CfdpStates.CRC_PROCEDURE
 
     def send_metadata_pdu(
         self,
@@ -144,6 +157,3 @@ class CfdpHandler:
         )
         data = metadata_pdu.pack()
         self.com_if.send(data=data)
-
-    def __is_busy(self) -> bool:
-        return self.__busy
