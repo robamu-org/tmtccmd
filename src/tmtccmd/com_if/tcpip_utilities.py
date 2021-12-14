@@ -85,9 +85,9 @@ def determine_tcpip_address(
     if reconfigure_ip_address:
         address_tuple = prompt_ip_address(type_str=info_string)
         save_to_json = input(
-            f"Do you want to store the {info_string} configuration? [y/n]: "
+            f"Do you want to store the {info_string} configuration? ([Y]/n): "
         )
-        if save_to_json.lower() in ["y", "yes"]:
+        if save_to_json.lower() in ["y", "yes", ""]:
             with open(json_cfg_path, "r+") as file:
                 json_dict = json.load(file)
                 json_dict[json_key_address] = address_tuple[0]
@@ -100,6 +100,8 @@ def determine_tcpip_address(
             LOGGER.info(
                 "Delete this file or edit it manually to change the used addresses."
             )
+        else:
+            LOGGER.info(f"{info_string} configuration was not stored")
     return address_tuple
 
 
@@ -131,8 +133,8 @@ def prompt_ip_address(type_str: str) -> EthernetAddressT:
         LOGGER.info(f"Specified {type_str} IP address: {ip_address}")
         LOGGER.info(f"Specified {type_str} port: {port}")
 
-        confirm = input("Please confirm selection [y/n]: ")
-        if not confirm.lower() in ["y", "yes", 1]:
+        confirm = input("Please confirm selection ([Y]/n): ")
+        if not confirm.lower() in ["y", "yes", 1, ""]:
             continue
         break
     return address_tuple
@@ -159,9 +161,9 @@ def determine_recv_buffer_len(json_cfg_path: str, tcpip_type: TcpIpType):
     if reconfigure_recv_buf_size:
         recv_max_size = prompt_recv_buffer_len(tcpip_type=tcpip_type)
         store_size = input(
-            "Do you store the maximum receive size configuration? [y/n]: "
+            "Do you store the maximum receive size configuration? ([Y]/n): "
         )
-        if store_size.lower() in ["y", "yes", "1"]:
+        if store_size.lower() in ["y", "yes", "1", ""]:
             with open(json_cfg_path, "r+") as file:
                 json_dict = json.load(file)
                 json_dict[json_key] = recv_max_size

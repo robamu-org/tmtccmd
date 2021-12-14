@@ -163,19 +163,19 @@ def __prompt_hint_handling(json_obj) -> (bool, str):
     ports = serial.tools.list_ports.comports()
     prompt_hint = input(
         "No hint found in config JSON. Do you want to print the list of devices "
-        "and then specify a hint based on it? [y/n]: "
+        "and then specify a hint based on it? ([Y]/n): "
     )
-    if prompt_hint.lower() in ["y", "yes", "1"]:
+    if prompt_hint.lower() in ["y", "yes", "1", ""]:
         while True:
             LOGGER.info("Found serial devices:")
             for port, desc, hwid in sorted(ports):
                 print("{}: {} [{}]".format(port, desc, hwid))
             hint = input("Specify hint: ")
             save_to_json = input(
-                "Do you want to store the hint to the configuration file or "
-                "specify a new one? (y/r): "
+                "Do you want to store the hint to the configuration file (y) or "
+                "specify a new one (r)? ([Y]/r): "
             )
-            if save_to_json in ["y", "yes", "1"]:
+            if save_to_json.lower() in ["y", "yes", "1", ""]:
                 json_obj[JsonKeyNames.SERIAL_HINT.value] = hint
                 reconfig_hint = True
                 break
@@ -209,10 +209,10 @@ def prompt_com_port() -> str:
         else:
             if not check_port_validity(com_port):
                 print(
-                    "Serial port not in list of available serial ports. Try again? [y/n]"
+                    "Serial port not in list of available serial ports. Try again? ([Y]/n)"
                 )
                 try_again = input()
-                if try_again.lower() in ["y", "yes"]:
+                if try_again.lower() in ["y", "yes", ""]:
                     continue
                 else:
                     break
