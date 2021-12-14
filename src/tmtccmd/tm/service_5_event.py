@@ -35,7 +35,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
     ):
         """Create a Service 5 telemetry instance.
         Use the unpack function to create an instance from a raw bytestream instead.
-        :param subservice_id: Subservice ID
+        :param subservice: Subservice ID
         :param time: CDS Short Timecode
         :param object_id: 4 byte object ID
         :raises ValueError: Invalid input arguments
@@ -148,7 +148,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             )
             raise ValueError
         if set_attrs_from_tm_data:
-            instance._event_id = struct.unpack(">H", tm_data[0:2])[0]
-            instance._object_id.set_from_bytes(tm_data[2:6])
-            instance._param_1 = struct.unpack(">I", tm_data[6:10])[0]
-            instance._param_2 = struct.unpack(">I", tm_data[10:14])[0]
+            instance._event_id = struct.unpack('>H', tm_data[0:2])[0]
+            instance._object_id.from_bytes(tm_data[2:6])
+            instance._param_1 = struct.unpack('>I', tm_data[6:10])[0]
+            instance._param_2 = struct.unpack('>I', tm_data[10:14])[0]
