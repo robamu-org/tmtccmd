@@ -11,4 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v1.11.0]
 
 - New API to build service/opcode dictionary
+
+## [v1.10.1]
+
 - Applied consistent formatting with `black` tool
+- Some bugfixes for PUS packet stack
