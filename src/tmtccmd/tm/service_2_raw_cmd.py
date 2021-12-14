@@ -8,10 +8,17 @@ from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 class Service2TM(PusTmInfoBase, PusTmBase):
     def __init__(
-            self, subservice: int, time: CdsShortTimestamp = None, ssc: int = 0,
-            source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, secondary_header_flag: bool = True,
-            space_time_ref: int = 0b0000, destination_id: int = 0
+        self,
+        subservice: int,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         pus_tm = PusTelemetry(
             service=2,
@@ -24,7 +31,7 @@ class Service2TM(PusTmInfoBase, PusTmBase):
             pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
         PusTmBase.__init__(self, pus_tm=pus_tm)
@@ -32,13 +39,13 @@ class Service2TM(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def __empty(cls) -> Service2TM:
-        return cls(
-            subservice=0
-        )
+        return cls(subservice=0)
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service2TM:
         service_2_tm = cls.__empty()
         service_2_tm.pus_tm = PusTelemetry.unpack(

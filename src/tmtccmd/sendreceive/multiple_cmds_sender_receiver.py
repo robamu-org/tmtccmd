@@ -6,7 +6,9 @@ from typing import Union, Deque
 from collections import deque
 
 from tmtccmd.config.definitions import CoreGlobalIds
-from tmtccmd.sendreceive.sequential_sender_receiver import SequentialCommandSenderReceiver
+from tmtccmd.sendreceive.sequential_sender_receiver import (
+    SequentialCommandSenderReceiver,
+)
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.core.globals_manager import get_global
@@ -22,9 +24,17 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
     Wait intervals can be specified with wait time between the send bursts.
     This is generally done in the separate test classes in UnitTest
     """
-    def __init__(self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-                 tc_queue: Deque, tm_listener: TmListener, wait_intervals: list,
-                 wait_time: Union[float, list], print_tm: bool):
+
+    def __init__(
+        self,
+        com_if: CommunicationInterface,
+        tmtc_printer: TmTcPrinter,
+        tc_queue: Deque,
+        tm_listener: TmListener,
+        wait_intervals: list,
+        wait_time: Union[float, list],
+        print_tm: bool,
+    ):
         """TCs are sent in burst when applicable. Wait intervals can be specified by supplying
         respective arguments
 
@@ -38,7 +48,10 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
         :param print_tm:
         """
         super().__init__(
-            com_if=com_if, tmtc_printer=tmtc_printer, tm_listener=tm_listener, tc_queue=tc_queue
+            com_if=com_if,
+            tmtc_printer=tmtc_printer,
+            tm_listener=tm_listener,
+            tc_queue=tc_queue,
         )
         self.waitIntervals = wait_intervals
         self.waitTime = wait_time
@@ -103,8 +116,10 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
         if self._tm_listener.reply_event():
             return self._tm_listener.retrieve_tm_packet_queue()
         else:
-            LOGGER.error("Multiple Command SenderReceiver: Configuration error, "
-                         "reply event not set in TM listener")
+            LOGGER.error(
+                "Multiple Command SenderReceiver: Configuration error, "
+                "reply event not set in TM listener"
+            )
 
     def __clear_listener_tm_info_queue(self):
         self._tm_listener.clear_tm_packet_queue()
