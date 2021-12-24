@@ -24,6 +24,7 @@ HEADER_BYTES_BEFORE_SIZE = 5
 
 class SerialConfigIds(enum.Enum):
     from enum import auto
+
     SERIAL_PORT = auto()
     SERIAL_BAUD_RATE = auto()
     SERIAL_TIMEOUT = auto()
@@ -40,6 +41,7 @@ class SerialCommunicationType(enum.Enum):
     If DLE is used, it is expected that the sender side encoded the packets with the DLE
     protocol. Any packets sent will also be encoded.
     """
+
     FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2
 
@@ -49,10 +51,15 @@ class SerialComIF(CommunicationInterface):
     """
     Communication Interface to use serial communication. This requires the PySerial library.
     """
+
     def __init__(
-            self, com_if_key: str, tmtc_printer: TmTcPrinter, com_port: str, baud_rate: int,
-            serial_timeout: float,
-            ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED
+        self,
+        com_if_key: str,
+        tmtc_printer: TmTcPrinter,
+        com_port: str,
+        baud_rate: int,
+        serial_timeout: float,
+        ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
     ):
         """
         Initiaze a serial communication handler.
@@ -93,7 +100,11 @@ class SerialComIF(CommunicationInterface):
         self.serial_frame_size = serial_frame_size
 
     def set_dle_settings(
-            self, dle_queue_len: int, dle_max_frame: int, dle_timeout: float, encode_cr: bool = True
+        self,
+        dle_queue_len: int,
+        dle_max_frame: int,
+        dle_timeout: float,
+        encode_cr: bool = True,
     ):
         self.dle_queue_len = dle_queue_len
         self.dle_max_frame = dle_max_frame
@@ -109,9 +120,12 @@ class SerialComIF(CommunicationInterface):
         try:
             if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
                 self.dle_polling_active_event.set()
-                self.reception_thread = threading.Thread(target=self.poll_dle_packets, daemon=True)
+                self.reception_thread = threading.Thread(
+                    target=self.poll_dle_packets, daemon=True
+                )
             self.serial = serial.Serial(
-                port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout)
+                port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout
+            )
         except serial.SerialException:
             LOGGER.error("Serial Port opening failure!")
             raise IOError
@@ -134,9 +148,7 @@ class SerialComIF(CommunicationInterface):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             encoded_data = data
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
-            encoded_data = self.encoder.encode(
-                source_packet=data, add_stx_etx=True
-            )
+            encoded_data = self.encoder.encode(source_packet=data, add_stx_etx=True)
         else:
             LOGGER.warning("This communication type was not implemented yet!")
             return
@@ -169,7 +181,9 @@ class SerialComIF(CommunicationInterface):
         start_time = time.time()
         sleep_time = timeout / 3.0
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            return self.data_available_fixed_frame(timeout=timeout, sleep_time=sleep_time)
+            return self.data_available_fixed_frame(
+                timeout=timeout, sleep_time=sleep_time
+            )
         elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             if timeout > 0:
                 while elapsed_time < timeout:
@@ -202,7 +216,9 @@ class SerialComIF(CommunicationInterface):
             if len(byte) == 1 and byte[0] == STX_CHAR:
                 data.append(byte[0])
                 self.serial.timeout = 0.1
-                bytes_rcvd = self.serial.read_until(serial.to_bytes([ETX_CHAR]), DLE_FRAME_LENGTH)
+                bytes_rcvd = self.serial.read_until(
+                    serial.to_bytes([ETX_CHAR]), DLE_FRAME_LENGTH
+                )
                 if bytes_rcvd[len(bytes_rcvd) - 1] == ETX_CHAR:
                     data.extend(bytes_rcvd)
                     self.reception_buffer.appendleft(data)
@@ -210,7 +226,7 @@ class SerialComIF(CommunicationInterface):
                 data.append(byte[0])
                 data.extend(self.serial.read(self.serial.inWaiting()))
                 # It is assumed that all packets are DLE encoded, so throw it away for now.
-                LOGGER.info(f'Non DLE-Encoded data with length {len(data) + 1} found..')
+                LOGGER.info(f"Non DLE-Encoded data with length {len(data) + 1} found..")
 
     @staticmethod
     def poll_pus_packets_fixed_frames(data: bytearray) -> list:
@@ -230,15 +246,18 @@ class SerialComIF(CommunicationInterface):
         return pus_data_list
 
     @staticmethod
-    def read_multiple_packets(data: bytearray, start_index: int, frame_size: int,
-                              pus_data_list: list):
+    def read_multiple_packets(
+        data: bytearray, start_index: int, frame_size: int, pus_data_list: list
+    ):
         while start_index < frame_size:
-            start_index = SerialComIF.parse_next_packets(data, start_index, frame_size,
-                                                         pus_data_list)
+            start_index = SerialComIF.parse_next_packets(
+                data, start_index, frame_size, pus_data_list
+            )
 
     @staticmethod
-    def parse_next_packets(data: bytearray, start_index: int, frame_size: int,
-                           pus_data_list: list) -> int:
+    def parse_next_packets(
+        data: bytearray, start_index: int, frame_size: int, pus_data_list: list
+    ) -> int:
         next_payload_len = data[start_index + 4] << 8 | data[start_index + 5]
         if next_payload_len == 0:
             end_index = frame_size

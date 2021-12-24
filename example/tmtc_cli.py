@@ -2,7 +2,11 @@
 """Example application for the TMTC Commander
 """
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander, add_ccsds_handler
+from tmtccmd.runner import (
+    run_tmtc_commander,
+    initialize_tmtc_commander,
+    add_ccsds_handler,
+)
 from tmtccmd.tm.handler import default_ccsds_packet_handler
 
 from config.hook_implementation import ExampleHookClass
@@ -20,5 +24,5 @@ def main():
     run_tmtc_commander(use_gui=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

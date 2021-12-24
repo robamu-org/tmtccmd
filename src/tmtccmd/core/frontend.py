@@ -15,8 +15,22 @@ import webbrowser
 from multiprocessing import Process
 from typing import Union
 
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QTableWidget, QWidget, QLabel, QCheckBox, \
-    QDoubleSpinBox, QFrame, QComboBox, QPushButton, QTableWidgetItem, QMenu, QAction, QMenuBar
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QGridLayout,
+    QTableWidget,
+    QWidget,
+    QLabel,
+    QCheckBox,
+    QDoubleSpinBox,
+    QFrame,
+    QComboBox,
+    QPushButton,
+    QTableWidgetItem,
+    QMenu,
+    QAction,
+    QMenuBar,
+)
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
@@ -34,31 +48,34 @@ import tmtccmd.config as config_module
 LOGGER = get_console_logger()
 
 
-CONNECT_BTTN_STYLE = \
-    "background-color: #1fc600;" \
-    "border-style: inset;" \
-    "font: bold;" \
-    "padding: 6px;" \
-    "border-width: 2px;" \
+CONNECT_BTTN_STYLE = (
+    "background-color: #1fc600;"
+    "border-style: inset;"
+    "font: bold;"
+    "padding: 6px;"
+    "border-width: 2px;"
     "border-radius: 6px;"
+)
 
 
-DISCONNECT_BTTN_STYLE = \
-    "background-color: orange;" \
-    "border-style: inset;" \
-    "font: bold;" \
-    "padding: 6px;" \
-    "border-width: 2px;" \
+DISCONNECT_BTTN_STYLE = (
+    "background-color: orange;"
+    "border-style: inset;"
+    "font: bold;"
+    "padding: 6px;"
+    "border-width: 2px;"
     "border-radius: 6px;"
+)
 
 
-COMMAND_BUTTON_STYLE = \
-    "background-color: #cdeefd;" \
-    "border-style: inset;" \
-    "font: bold;" \
-    "padding: 6px;" \
-    "border-width: 2px;" \
+COMMAND_BUTTON_STYLE = (
+    "background-color: #cdeefd;"
+    "border-style: inset;"
+    "font: bold;"
+    "padding: 6px;"
+    "border-width: 2px;"
     "border-radius: 6px;"
+)
 
 
 class WorkerOperationsCodes(enum.IntEnum):
@@ -97,12 +114,15 @@ class RunnableThread(QRunnable):
     """
     Runnable thread which can be used with QThreadPool. Not used for now, might be needed in the future.
     """
+
     def run(self):
         pass
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
-    def __init__(self, hook_obj: TmTcHookBase, tmtc_backend: TmTcHandler, app_name: str):
+    def __init__(
+        self, hook_obj: TmTcHookBase, tmtc_backend: TmTcHandler, app_name: str
+    ):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
         self._tmtc_handler = tmtc_backend
@@ -169,9 +189,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.__command_button = QPushButton()
         self.__command_button.setText("Send Command")
-        self.__command_button.setStyleSheet(
-            COMMAND_BUTTON_STYLE
-        )
+        self.__command_button.setStyleSheet(COMMAND_BUTTON_STYLE)
         self.__command_button.clicked.connect(self.__start_seq_cmd_op)
         self.__command_button.setEnabled(False)
         grid.addWidget(self.__command_button, row, 0, 1, 2)
@@ -187,7 +205,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._tmtc_handler.set_service(self._current_service)
         self._tmtc_handler.set_opcode(self._current_op_code)
         self.__start_qthread_task(
-            op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING, finish_callback=self.__finish_seq_cmd_op
+            op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING,
+            finish_callback=self.__finish_seq_cmd_op,
         )
 
     def __finish_seq_cmd_op(self):
@@ -200,13 +219,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             if self._current_com_if != self._last_com_if:
                 hook_obj = get_global_hook_obj()
                 new_com_if = hook_obj.assign_communication_interface(
-                    com_if_key=self._current_com_if, tmtc_printer=self._tmtc_handler.get_printer()
+                    com_if_key=self._current_com_if,
+                    tmtc_printer=self._tmtc_handler.get_printer(),
                 )
                 self._tmtc_handler.set_com_if(new_com_if)
             self._tmtc_handler.start_listener(False)
-            self.__connect_button.setStyleSheet(
-                DISCONNECT_BTTN_STYLE
-            )
+            self.__connect_button.setStyleSheet(DISCONNECT_BTTN_STYLE)
             self.__command_button.setEnabled(True)
             self.__connect_button.setText("Disconnect")
             self.__connected = True
@@ -215,15 +233,14 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self.__command_button.setEnabled(False)
             self.__connect_button.setEnabled(False)
             self.__start_qthread_task(
-                op_code=WorkerOperationsCodes.DISCONNECT, finish_callback=self.__finish_disconnect_button_op
+                op_code=WorkerOperationsCodes.DISCONNECT,
+                finish_callback=self.__finish_disconnect_button_op,
             )
 
     def __finish_disconnect_button_op(self):
         self.__connect_button.setEnabled(True)
         # self.__disconnect_button.setEnabled(False)
-        self.__connect_button.setStyleSheet(
-            CONNECT_BTTN_STYLE
-        )
+        self.__connect_button.setStyleSheet(CONNECT_BTTN_STYLE)
         self.__connect_button.setText("Connect")
         LOGGER.info("Disconnect successfull")
         self.__connected = False
@@ -242,7 +259,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     @staticmethod
     def __help_url():
-        webbrowser.open('https://tmtccmd.readthedocs.io/en/latest/')
+        webbrowser.open("https://tmtccmd.readthedocs.io/en/latest/")
 
     def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
@@ -322,9 +339,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.__connect_button = QPushButton()
         self.__connect_button.setText("Connect")
-        self.__connect_button.setStyleSheet(
-            CONNECT_BTTN_STYLE
-        )
+        self.__connect_button.setStyleSheet(CONNECT_BTTN_STYLE)
         self.__connect_button.clicked.connect(self.__connect_button_action)
 
         grid.addWidget(self.__connect_button, row, 0, 1, 2)
@@ -343,6 +358,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.warning("Invalid service to operation code dictionary")
             LOGGER.warning("Setting default dictionary")
             from tmtccmd.config.globals import get_default_service_op_code_dict
+
             self.service_op_code_dict = get_default_service_op_code_dict()
         index = 0
         default_index = 0
@@ -361,7 +377,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__combo_box_op_codes = QComboBox()
         self._current_service = self._service_list[default_index]
         self.__update_op_code_combo_box()
-        self.__combo_box_op_codes.currentIndexChanged.connect(self.__op_code_index_changed)
+        self.__combo_box_op_codes.currentIndexChanged.connect(
+            self.__op_code_index_changed
+        )
         # TODO: Combo box also needs to be updated if another service is selected
         grid.addWidget(self.__combo_box_op_codes, row, 1, 1, 1)
         row += 1
@@ -377,7 +395,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         pixmap_height = pixmap.height()
         row += 1
 
-        pixmap_scaled = pixmap.scaled(pixmap_width * 0.3, pixmap_height * 0.3, Qt.KeepAspectRatio)
+        pixmap_scaled = pixmap.scaled(
+            pixmap_width * 0.3, pixmap_height * 0.3, Qt.KeepAspectRatio
+        )
         label.setPixmap(pixmap_scaled)
         label.setScaledContents(True)
 
@@ -387,9 +407,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __start_qthread_task(self, op_code: WorkerOperationsCodes, finish_callback):
         self.__thread = QThread()
-        self.__worker = WorkerThread(
-            op_code=op_code, tmtc_handler=self._tmtc_handler
-        )
+        self.__worker = WorkerThread(op_code=op_code, tmtc_handler=self._tmtc_handler)
         self.__worker.moveToThread(self.__thread)
 
         self.__thread.started.connect(self.__worker.run_worker)
@@ -429,7 +447,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
                     self._op_code_list.append(op_code_key)
                     self.__combo_box_op_codes.addItem(op_code_value[0])
                 except TypeError:
-                    LOGGER.warning(f'Invalid op code entry {op_code_value}, skipping..')
+                    LOGGER.warning(f"Invalid op code entry {op_code_value}, skipping..")
             self._current_op_code = self._op_code_list[0]
 
     def __checkbox_log_update(self, state: int):

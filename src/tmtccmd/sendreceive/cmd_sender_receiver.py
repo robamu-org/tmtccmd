@@ -32,9 +32,14 @@ class CommandSenderReceiver:
     This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
+
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-            tm_listener: TmListener, tm_handler: CcsdsTmHandler, apid: int
+        self,
+        com_if: CommunicationInterface,
+        tmtc_printer: TmTcPrinter,
+        tm_listener: TmListener,
+        tm_handler: CcsdsTmHandler,
+        apid: int,
     ):
 
         """
@@ -92,8 +97,7 @@ class CommandSenderReceiver:
             tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_timeout = tm_timeout
 
-    def set_tc_send_timeout_factor(
-            self, new_factor: float = -1):
+    def set_tc_send_timeout_factor(self, new_factor: float = -1):
         """
         Set the TC resend timeout factor. After self._tm_timeout * new_factor seconds,
         a telecommand will be resent again.
@@ -116,8 +120,11 @@ class CommandSenderReceiver:
         else:
             self._check_for_timeout()
 
-    def wait_period_ongoing(self, sleep_rest_of_wait_period: bool = False,
-                            set_reply_rcvd_to_true: bool = True):
+    def wait_period_ongoing(
+        self,
+        sleep_rest_of_wait_period: bool = False,
+        set_reply_rcvd_to_true: bool = True,
+    ):
         if sleep_rest_of_wait_period:
             # wait rest of wait time
             sleep_time = self._wait_start + self._wait_period - time.time()
@@ -210,6 +217,7 @@ class CommandSenderReceiver:
             self._elapsed_time = time.time() - self._start_time
         if self._elapsed_time >= self._tm_timeout * self._tc_send_timeout_factor:
             from tmtccmd.core.globals_manager import get_global
+
             if get_global(CoreGlobalIds.RESEND_TC):
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
                 self._com_if.send(self._last_tc)

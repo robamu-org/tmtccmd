@@ -12,7 +12,11 @@ LOGGER = get_console_logger()
 
 class FileInfo:
     def __init__(
-            self, file_name: str, repo_path: str, file_size: int = 0, lock_status: bool = False
+        self,
+        file_name: str,
+        repo_path: str,
+        file_size: int = 0,
+        lock_status: bool = False,
     ):
         self.file_name = file_name
         self.repo_path = repo_path
@@ -25,13 +29,22 @@ class Service23TM(PusTmInfoBase, PusTmBase):
     MAX_FILENAME_LENGTH = 12
 
     def __init__(
-            self, subservice_id: int,
-            object_id: bytearray, repo_path: str, file_name: str,
-            time: CdsShortTimestamp = None, ssc: int = 0,
-            source_data: bytearray = bytearray([]), apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
-            ack: int = 0b1111, secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
-            destination_id: int = 0
+        self,
+        subservice_id: int,
+        object_id: bytearray,
+        repo_path: str,
+        file_name: str,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        pus_tm_version: int = 0b0001,
+        ack: int = 0b1111,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         self.object_id = object_id
         self.data_start_idx = 0
@@ -49,7 +62,7 @@ class Service23TM(PusTmInfoBase, PusTmBase):
             ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
@@ -62,7 +75,7 @@ class Service23TM(PusTmInfoBase, PusTmBase):
         if len(tm_data) < 4:
             LOGGER.error("Service23TM: Invalid packet format!")
             return
-        instance.object_id = struct.unpack('!I', tm_data[0:4])[0]
+        instance.object_id = struct.unpack("!I", tm_data[0:4])[0]
         instance.file_info.file_size = 0
         instance.file_info.lock_status = False
         instance.data_start_idx = 0
@@ -74,13 +87,13 @@ class Service23TM(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def __empty(cls) -> Service23TM:
-        return cls(
-            subservice_id=-1, object_id=bytearray(4), repo_path="", file_name=""
-        )
+        return cls(subservice_id=-1, object_id=bytearray(4), repo_path="", file_name="")
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service23TM:
         service_23_tm = cls.__empty()
         service_23_tm.pus_tm = PusTelemetry.unpack(
@@ -97,14 +110,14 @@ class Service23TM(PusTmInfoBase, PusTmBase):
         for idx in range(4, max_len_to_scan):
             if not repo_path_found and tm_data[idx] == 0:
                 repo_bytes = tm_data[4:idx]
-                self.file_info.repo_path = repo_bytes.decode('utf-8')
+                self.file_info.repo_path = repo_bytes.decode("utf-8")
                 path_idx_start = idx + 1
                 idx += 1
                 repo_path_found = True
             if repo_path_found:
                 if tm_data[idx] == 0:
                     filename_bytes = tm_data[path_idx_start:idx]
-                    self.file_info.file_name = filename_bytes.decode('utf-8')
+                    self.file_info.file_name = filename_bytes.decode("utf-8")
                     self.data_start_idx = idx + 1
                     break
 
@@ -115,7 +128,8 @@ class Service23TM(PusTmInfoBase, PusTmBase):
             LOGGER.error("Service23TM: Invalid lenght of file attributes data")
             return
         self.file_info.file_size = struct.unpack(
-            '!I', self.get_tm_data()[self.data_start_idx: self.data_start_idx + 4])[0]
+            "!I", self.get_tm_data()[self.data_start_idx : self.data_start_idx + 4]
+        )[0]
         self.file_info.lock_status = self.get_tm_data()[self.data_start_idx + 4]
 
     def append_telemetry_content(self, content_list: list):
