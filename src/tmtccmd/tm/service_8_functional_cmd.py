@@ -20,12 +20,9 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         custom_data: bytearray,
         time: CdsShortTimestamp = None,
         ssc: int = 0,
-        source_data: bytearray = bytearray([]),
         apid: int = -1,
         packet_version: int = 0b000,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-        pus_tm_version: int = 0b0001,
-        ack: int = 0b1111,
         secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
@@ -51,8 +48,6 @@ class Service8TM(PusTmBase, PusTmInfoBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -63,19 +58,19 @@ class Service8TM(PusTmBase, PusTmInfoBase):
 
     @staticmethod
     def __init_without_base(instance: Service8TM):
-        if instance.get_subservice() == 130:
-            tm_data = instance.get_tm_data()
+        if instance.subservice == 130:
+            tm_data = instance.tm_data
             if len(tm_data) < 8:
                 LOGGER.warning(
                     f"Length of Service 8 TM data field {len(tm_data)} short than 8"
                 )
                 raise ValueError
-            instance.specify_packet_info("Functional Data Reply")
+            instance.set_packet_info("Functional Data Reply")
             instance._object_id = ObjectId.from_bytes(obj_id_as_bytes=tm_data[0:4])
             instance._action_id = struct.unpack("!I", tm_data[4:8])[0]
             instance._custom_data = tm_data[8:]
         else:
-            instance.specify_packet_info("Unknown functional commanding reply")
+            instance.set_packet_info("Unknown functional commanding reply")
 
     @classmethod
     def __empty(cls) -> Service8TM:
@@ -101,7 +96,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(self._object_id.as_string())
+        content_list.append(self._object_id.as_string)
         content_list.append(self._action_id)
 
     def append_telemetry_column_headers(self, header_list: list):
