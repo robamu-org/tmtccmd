@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.11.0]
 
+## [v1.10.2]
+
 - New API to build service/opcode dictionary
+- Fixes for Service 8 Telemetry Parser
 
 ## [v1.10.1]
 
