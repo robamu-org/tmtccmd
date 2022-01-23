@@ -9,7 +9,7 @@ TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tm
 ## Overview
 
 - Documentation: https://tmtccmd.readthedocs.io/en/latest/
-- Project Homepage: https://github.com/spacefisch/tmtccmd
+- Project Homepage: https://github.com/robamu-org/tmtccmd
 
 This commander application was first developed by KSat for the 
 [SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board 
@@ -76,7 +76,7 @@ For developers, it is recommended to add this repostiory as a submodule
 with the following command:
 
 ```sh
-git submodule add https://github.com/rmspacefish/tmtccmd.git
+git submodule add https://github.com/robamu-org/tmtccmd.git
 ```
 
 For the following commands, replace `python3` with `py` on Windows.
