@@ -21,7 +21,7 @@ class AnsiColors:
 
 
 def check_args_in_dict(
-        param: any, iterable: Union[collections.abc.Iterable, dict], warning_hint: str
+    param: any, iterable: Union[collections.abc.Iterable, dict], warning_hint: str
 ) -> Tuple[bool, int]:
     """This functions checks whether the integer representation of a given parameter in
     contained within the passed collections, for example an (integer) enumeration.
@@ -54,15 +54,19 @@ def check_args_in_dict(
                 return True, idx
     else:
         res_tuple = __handle_iterable_non_dict(
-            param=param, iterable=iterable, might_be_integer=might_be_integer,
-            init_res_tuple=res_tuple
+            param=param,
+            iterable=iterable,
+            might_be_integer=might_be_integer,
+            init_res_tuple=res_tuple,
         )
     return res_tuple
 
 
 def __handle_iterable_non_dict(
-        param: any, iterable: collections.abc.Iterable, might_be_integer: bool,
-        init_res_tuple: Tuple[bool, any]
+    param: any,
+    iterable: collections.abc.Iterable,
+    might_be_integer: bool,
+    init_res_tuple: Tuple[bool, any],
 ) -> (bool, any):
     param_list = list()
     for idx, enum_value in enumerate(iterable):
@@ -87,8 +91,10 @@ def print_core_globals():
     service_param = get_global(CoreGlobalIds.CURRENT_SERVICE)
     mode_param = get_global(CoreGlobalIds.MODE)
     com_if_param = get_global(CoreGlobalIds.COM_IF)
-    print(f"Current globals | Mode(-m): {mode_param} | Service(-s): {service_param} | "
-          f"ComIF(-c): {com_if_param}")
+    print(
+        f"Current globals | Mode(-m): {mode_param} | Service(-s): {service_param} | "
+        f"ComIF(-c): {com_if_param}"
+    )
 
 
 @contextmanager

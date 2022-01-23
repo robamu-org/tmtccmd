@@ -13,7 +13,7 @@ class ObjectId:
     @classmethod
     def from_bytes(cls, obj_id_as_bytes: bytearray) -> ObjectId:
         obj_id = ObjectId(object_id=0)
-        obj_id.id=obj_id_as_bytes
+        obj_id.id = obj_id_as_bytes
         return obj_id
 
     @property
@@ -24,13 +24,13 @@ class ObjectId:
     def id(self, new_id: Union[int, bytearray]):
         if isinstance(new_id, int):
             self._object_id = new_id
-            self._id_as_bytes = struct.pack('!I', self._object_id)
+            self._id_as_bytes = struct.pack("!I", self._object_id)
         elif isinstance(new_id, bytearray):
             if len(new_id) != 4:
-                LOGGER.warning(f'Invalid object ID length {len(new_id)}')
+                LOGGER.warning(f"Invalid object ID length {len(new_id)}")
                 raise ValueError
             self._id_as_bytes = new_id
-            self._object_id = struct.unpack('!I', self._id_as_bytes[:])[0]
+            self._object_id = struct.unpack("!I", self._id_as_bytes[:])[0]
         else:
             raise ValueError
 
@@ -44,4 +44,4 @@ class ObjectId:
 
     @property
     def as_string(self) -> str:
-        return f'0x{self._object_id:08x}'
+        return f"0x{self._object_id:08x}"

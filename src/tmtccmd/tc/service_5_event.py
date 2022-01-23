@@ -19,7 +19,10 @@ def pack_disable_event_reporting_command(ssc: int, apid: int = -1):
     if apid == -1:
         apid = get_default_tc_apid()
     return PusTelecommand(
-        service=5, subservice=Srv5Subservices.DISABLE_EVENT_REPORTING, ssc=ssc, apid=apid
+        service=5,
+        subservice=Srv5Subservices.DISABLE_EVENT_REPORTING,
+        ssc=ssc,
+        apid=apid,
     )
 
 
@@ -44,7 +47,9 @@ def pack_generic_service5_test_into(tc_queue: TcQueueT, apid: int = -1):
     command = pack_enable_event_reporting_command(ssc=520)
     tc_queue.appendleft(command.pack_command_tuple())
     # trigger event
-    tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 5: Trigger another event"))
+    tc_queue.appendleft(
+        (QueueCommands.PRINT, "Testing Service 5: Trigger another event")
+    )
     command = PusTelecommand(service=17, subservice=128, apid=apid, ssc=530)
     tc_queue.appendleft(command.pack_command_tuple())
     tc_queue.appendleft((QueueCommands.EXPORT_LOG, "log/tmtc_log_service5.txt"))

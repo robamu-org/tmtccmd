@@ -8,6 +8,7 @@ class CoreGlobalIds(enum.IntEnum):
     """
     Numbers from 128 to 200 are reserved for core globals
     """
+
     # Object handles
     TMTC_HOOK = 128
     COM_INTERFACE_HANDLE = 129
@@ -83,7 +84,7 @@ CoreComInterfacesDict = {
     CoreComInterfaces.TCPIP_TCP.value: "TCP/IP with TCP",
     CoreComInterfaces.SERIAL_FIXED_FRAME.value: "Serial Interface with fixed size frames",
     CoreComInterfaces.SERIAL_QEMU.value: "Serial Interface using QEMU",
-    CoreComInterfaces.UNSPECIFIED.value: "Unspecified"
+    CoreComInterfaces.UNSPECIFIED.value: "Unspecified",
 }
 
 
@@ -107,7 +108,7 @@ class CoreModeList(enum.IntEnum):
 CoreModeStrings = {
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
-    CoreModeList.GUI_MODE: "gui"
+    CoreModeList.GUI_MODE: "gui",
 }
 
 
@@ -124,5 +125,5 @@ class CoreServiceList(enum.Enum):
     SERVICE_200 = "200"
 
 
-DEFAULT_APID = 0xef
+DEFAULT_APID = 0xEF
 DEBUG_MODE = False

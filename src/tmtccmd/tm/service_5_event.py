@@ -18,16 +18,24 @@ LOGGER = get_console_logger()
 
 class Service5TM(PusTmBase, PusTmInfoBase):
     def __init__(
-            self, subservice: Srv5Subservices, event_id: int, object_id: bytearray,
-            param_1: int, param_2: int, time: CdsShortTimestamp = None,
-            ssc: int = 0, apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-            secondary_header_flag: bool = True, space_time_ref: int = 0b0000,
-            destination_id: int = 0
+        self,
+        subservice: Srv5Subservices,
+        event_id: int,
+        object_id: bytearray,
+        param_1: int,
+        param_2: int,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         """Create a Service 5 telemetry instance.
         Use the unpack function to create an instance from a raw bytestream instead.
-        :param subservice_id: Subservice ID
+        :param subservice: Subservice ID
         :param time: CDS Short Timecode
         :param object_id: 4 byte object ID
         :raises ValueError: Invalid input arguments
@@ -37,13 +45,13 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         self._param_1 = param_1
         self._param_2 = param_2
         source_data = bytearray()
-        source_data.extend(struct.pack('!H', self._event_id))
+        source_data.extend(struct.pack("!H", self._event_id))
         if len(object_id) != 4:
-            LOGGER.warning('Object ID must be a bytrarray with length 4')
+            LOGGER.warning("Object ID must be a bytrarray with length 4")
             raise ValueError
         source_data.extend(object_id)
-        source_data.extend(struct.pack('!I', self._param_1))
-        source_data.extend(struct.pack('!I', self._param_2))
+        source_data.extend(struct.pack("!I", self._param_1))
+        source_data.extend(struct.pack("!I", self._param_2))
         pus_tm = PusTelemetry(
             service=PusServices.SERVICE_5_EVENT,
             subservice=subservice,
@@ -55,7 +63,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
@@ -68,12 +76,14 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             event_id=0,
             object_id=bytearray(4),
             param_1=0,
-            param_2=0
+            param_2=0,
         )
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service5TM:
         service_5_tm = cls.__empty()
         service_5_tm.pus_tm = PusTelemetry.unpack(
@@ -133,10 +143,12 @@ class Service5TM(PusTmBase, PusTmInfoBase):
             instance.append_packet_info(" Error High Severity")
         tm_data = instance.tm_data
         if len(tm_data) < 14:
-            LOGGER.warning(f'Length of TM data field {len(tm_data)} shorter than expected 14 bytes')
+            LOGGER.warning(
+                f"Length of TM data field {len(tm_data)} shorter than expected 14 bytes"
+            )
             raise ValueError
         if set_attrs_from_tm_data:
-            instance._event_id = struct.unpack('>H', tm_data[0:2])[0]
-            instance._object_id.set_from_bytes(tm_data[2:6])
-            instance._param_1 = struct.unpack('>I', tm_data[6:10])[0]
-            instance._param_2 = struct.unpack('>I', tm_data[10:14])[0]
+            instance._event_id = struct.unpack(">H", tm_data[0:2])[0]
+            instance._object_id.from_bytes(tm_data[2:6])
+            instance._param_1 = struct.unpack(">I", tm_data[6:10])[0]
+            instance._param_2 = struct.unpack(">I", tm_data[10:14])[0]

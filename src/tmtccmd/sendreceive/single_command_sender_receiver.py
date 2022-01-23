@@ -27,9 +27,14 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
     Specific implementation of CommandSenderReceiver to send a single telecommand
     This object can be used by instantiating it and calling sendSingleTcAndReceiveTm()
     """
+
     def __init__(
-            self, com_if: CommunicationInterface, tmtc_printer: TmTcPrinter,
-            tm_listener: TmListener, tm_handler: CcsdsTmHandler, apid: int
+        self,
+        com_if: CommunicationInterface,
+        tmtc_printer: TmTcPrinter,
+        tm_listener: TmListener,
+        tm_handler: CcsdsTmHandler,
+        apid: int,
     ):
         """
         :param com_if: CommunicationInterface object, passed on to CommandSenderReceiver
@@ -37,8 +42,11 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
         :param tmtc_printer: TmTcPrinter object, passed on to CommandSenderReceiver
         """
         super().__init__(
-            com_if=com_if, tm_listener=tm_listener, tmtc_printer=tmtc_printer,
-            tm_handler=tm_handler,apid=apid
+            com_if=com_if,
+            tm_listener=tm_listener,
+            tmtc_printer=tmtc_printer,
+            tm_handler=tm_handler,
+            apid=apid,
         )
 
     def send_single_tc_and_receive_tm(self, pus_packet_tuple: PusTcTupleT):
@@ -67,6 +75,8 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
             packet_queue = self._tm_listener.retrieve_ccsds_tm_packet_queue(
                 apid=self._apid, clear=True
             )
-            self._tm_handler.handle_ccsds_packet_queue(apid=self._apid, packet_queue=packet_queue)
+            self._tm_handler.handle_ccsds_packet_queue(
+                apid=self._apid, packet_queue=packet_queue
+            )
             logger.info("SingleCommandSenderReceiver: Reply received")
             logger.info("Listening for packages ...")

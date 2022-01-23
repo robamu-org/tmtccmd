@@ -10,20 +10,29 @@ from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 class Service200TM(PusTmBase, PusTmInfoBase):
     def __init__(
-            self, subservice_id: int, object_id: bytearray,
-            return_value: int = 0, mode: int = 0, submode: int = 0,
-            time: CdsShortTimestamp = None, ssc: int = 0, source_data: bytearray = bytearray([]),
-            apid: int = -1, packet_version: int = 0b000,
-            pus_version: PusVersion = PusVersion.GLOBAL_CONFIG, pus_tm_version: int = 0b0001,
-            secondary_header_flag: bool = True,
-            space_time_ref: int = 0b0000, destination_id: int = 0
+        self,
+        subservice_id: int,
+        object_id: bytearray,
+        return_value: int = 0,
+        mode: int = 0,
+        submode: int = 0,
+        time: CdsShortTimestamp = None,
+        ssc: int = 0,
+        source_data: bytearray = bytearray([]),
+        apid: int = -1,
+        packet_version: int = 0b000,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        pus_tm_version: int = 0b0001,
+        secondary_header_flag: bool = True,
+        space_time_ref: int = 0b0000,
+        destination_id: int = 0,
     ):
         source_data = bytearray()
         source_data.extend(object_id)
         if subservice_id == 7:
-            source_data.extend(struct.pack('!H', return_value))
+            source_data.extend(struct.pack("!H", return_value))
         elif subservice_id == 6 or subservice_id == 8:
-            source_data.extend(struct.pack('!I', mode))
+            source_data.extend(struct.pack("!I", mode))
             source_data.append(submode)
         pus_tm = PusTelemetry(
             service=CustomPusServices.SERVICE_200_MODE,
@@ -36,7 +45,7 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
-            destination_id=destination_id
+            destination_id=destination_id,
         )
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
@@ -58,24 +67,24 @@ class Service200TM(PusTmBase, PusTmInfoBase):
             instance.append_packet_info(": Can't reach mode")
             instance.is_cant_reach_mode_reply = True
             instance.return_value = tm_data[4] << 8 | tm_data[5]
-        elif instance.subservice == 6 or instance.subservice== 8:
+        elif instance.subservice == 6 or instance.subservice == 8:
             instance.is_mode_reply = True
             if instance.subservice == 8:
                 instance.append_packet_info(": Wrong Mode")
             elif instance.subservice == 6:
                 instance.append_packet_info(": Mode reached")
-            instance.mode = struct.unpack('!I', tm_data[4:8])[0]
+            instance.mode = struct.unpack("!I", tm_data[4:8])[0]
             instance.submode = tm_data[8]
 
     @classmethod
     def __empty(cls) -> Service200TM:
-        return cls(
-            subservice_id=0, object_id=bytearray(4)
-        )
+        return cls(subservice_id=0, object_id=bytearray(4))
 
     @classmethod
     def unpack(
-            cls, raw_telemetry: bytearray, pus_version: PusVersion = PusVersion.GLOBAL_CONFIG
+        cls,
+        raw_telemetry: bytearray,
+        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service200TM:
         service_200_tm = cls.__empty()
         service_200_tm.pus_tm = PusTelemetry.unpack(
@@ -86,8 +95,8 @@ class Service200TM(PusTmBase, PusTmInfoBase):
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        object_id_num = struct.unpack('!I', self.object_id)[0]
-        content_list.append(f'0x{object_id_num:08x}')
+        object_id_num = struct.unpack("!I", self.object_id)[0]
+        content_list.append(f"0x{object_id_num:08x}")
         if self.is_cant_reach_mode_reply:
             content_list.append(hex(self.return_value))
         elif self.is_mode_reply:
