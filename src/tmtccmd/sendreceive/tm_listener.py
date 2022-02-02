@@ -268,7 +268,7 @@ class TmListener:
             start_time = time.time()
             while not self.__event_mode_op_finished.is_set():
                 elapsed_time = time.time() - start_time
-                if elapsed_time < TmListener.MODE_OPERATION_TIMEOUT:
+                if elapsed_time < self._mode_op_timeout:
                     self.__perform_mode_operation()
                 else:
                     LOGGER.warning("TmListener: Mode operation timeout occured!")
