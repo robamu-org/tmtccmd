@@ -33,7 +33,7 @@ class TmListener:
     or any other software component can get the received packets from the internal deque container.
     """
 
-    MODE_OPERATION_TIMEOUT = 300
+    MODE_OPERATION_TIMEOUT = 300.0
     DEFAULT_UNKNOWN_QUEUE_MAX_LEN = 50
     QUEUE_DICT_QUEUE_IDX = 0
     QUEUE_DICT_MAX_LEN_IDX = 1
@@ -61,6 +61,7 @@ class TmListener:
         self.__tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
         self.__com_if = com_if
+        self._mode_op_timeout = self.MODE_OPERATION_TIMEOUT
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
         self.listener_active = False
@@ -96,6 +97,9 @@ class TmListener:
 
     def stop(self):
         self.event_listener_active.clear()
+
+    def set_mode_op_timeout(self, timeout: float):
+        self._mode_op_timeout = timeout
 
     def subscribe_ccsds_tm_handler(self, apid: int, queue_max_len: int):
         if self.__tm_type == TmTypes.CCSDS_SPACE_PACKETS:
