@@ -3,7 +3,7 @@ import argparse
 from abc import abstractmethod
 from typing import Dict, Tuple, Optional, Union
 
-from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT
+from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT, HkReplyUnpacked, DataReplyUnpacked
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
@@ -127,7 +127,7 @@ class TmTcHookBase:
     @staticmethod
     def handle_service_8_telemetry(
         object_id: bytes, action_id: int, custom_data: bytearray
-    ) -> Tuple[list, list]:
+    ) -> DataReplyUnpacked:
         """This function is called by the TMTC core to handle Service 8 packets
         The user can return a tuple of two lists, where the first list
         is a list of header strings to print and the second list is a list of values to print.
@@ -142,12 +142,12 @@ class TmTcHookBase:
             "TmTcHookBase: No service 8 handling implemented yet in handle_service_8_telemetry "
             "hook function"
         )
-        return [], []
+        return DataReplyUnpacked()
 
     @staticmethod
     def handle_service_3_housekeeping(
         object_id: bytes, set_id: int, hk_data: bytearray, service3_packet: Service3Base
-    ) -> Tuple[list, list, bytearray, int]:
+    ) -> HkReplyUnpacked:
         """This function is called when a Service 3 Housekeeping packet is received.
 
         :param object_id: Byte representation of the object ID
@@ -166,7 +166,7 @@ class TmTcHookBase:
             "TmTcHookBase: No service 3 housekeeping data handling implemented yet in "
             "handle_service_3_housekeeping hook function"
         )
-        return [], [], bytearray(), 0
+        return HkReplyUnpacked()
 
     @staticmethod
     def handle_service_5_event(
