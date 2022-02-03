@@ -120,24 +120,14 @@ class TmTcPrinter:
             return
         srv3_packet = cast(Service3Base, packet_if)
         if srv3_packet.custom_hk_handling:
-            (
-                hk_header,
-                hk_content,
-                validity_buffer,
-                num_vars,
-            ) = hook_obj.handle_service_3_housekeeping(
+            reply_unpacked = hook_obj.handle_service_3_housekeeping(
                 object_id=bytes(),
                 set_id=srv3_packet.set_id,
                 hk_data=packet_if.tm_data,
                 service3_packet=srv3_packet,
             )
         else:
-            (
-                hk_header,
-                hk_content,
-                validity_buffer,
-                num_vars,
-            ) = hook_obj.handle_service_3_housekeeping(
+            reply_unpacked = hook_obj.handle_service_3_housekeeping(
                 object_id=srv3_packet.object_id.as_bytes,
                 set_id=srv3_packet.set_id,
                 hk_data=packet_if.tm_data[8:],
@@ -147,10 +137,10 @@ class TmTcPrinter:
             self.handle_hk_print(
                 object_id=srv3_packet.object_id.as_int,
                 set_id=srv3_packet.set_id,
-                hk_header=hk_header,
-                hk_content=hk_content,
-                validity_buffer=validity_buffer,
-                num_vars=num_vars,
+                hk_header=reply_unpacked.header_list,
+                hk_content=reply_unpacked.content_list,
+                validity_buffer=reply_unpacked.validity_buffer,
+                num_vars=reply_unpacked.num_of_vars,
             )
         if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(
@@ -202,7 +192,7 @@ class TmTcPrinter:
             return
         obj_id = srv8_packet.source_object_id_as_bytes
         action_id = srv8_packet.action_id
-        header_list, content_list = hook_obj.handle_service_8_telemetry(
+        reply = hook_obj.handle_service_8_telemetry(
             object_id=obj_id, action_id=action_id, custom_data=srv8_packet.custom_data
         )
         obj_id_dict = hook_obj.get_object_ids()
@@ -213,10 +203,10 @@ class TmTcPrinter:
         self.__print_buffer = print_string
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = header_list
+        self.__print_buffer = reply.header_list
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = content_list
+        self.__print_buffer = reply.content_list
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
