@@ -27,9 +27,7 @@ from tmtccmd.config.definitions import (
     ServiceOpCodeDictT,
     OpCodeDictKeys,
     ComIFDictT,
-    ServiceDictValueT,
     OpCodeEntryT,
-    OpCodeInfoT,
     OpCodeOptionsT,
     OpCodeNameT,
 )

@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v1.11.0]
 
+### API Changes
+
+- Improved API to specify handling for Service 3 and Service 8 packets in user hook object
+
 ## [v1.10.2]
 
 - New API to build service/opcode dictionary
