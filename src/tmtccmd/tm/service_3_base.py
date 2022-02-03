@@ -32,6 +32,10 @@ class Service3Base:
     def set_id(self) -> int:
         return self._set_id
 
+    @set_id.setter
+    def set_id(self, set_id: int):
+        self._set_id = set_id
+
     @property
     def has_custom_hk_handling(self) -> bool:
         return self._custom_hk_handling

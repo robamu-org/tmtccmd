@@ -103,7 +103,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
         instance.object_id.id = tm_data[0:4]
-        instanceset_id = struct.unpack("!I", tm_data[4:8])[0]
+        instance.set_id = struct.unpack("!I", tm_data[4:8])[0]
         if instance.subservice == 25 or instance.subservice == 26:
             if len(tm_data) > 8:
                 instance._param_length = len(tm_data[8:])
