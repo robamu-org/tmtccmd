@@ -140,7 +140,7 @@ class TmTcPrinter:
                 hk_header=reply_unpacked.header_list,
                 hk_content=reply_unpacked.content_list,
                 validity_buffer=reply_unpacked.validity_buffer,
-                num_vars=reply_unpacked.num_of_vars
+                num_vars=reply_unpacked.num_of_vars,
             )
         if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(

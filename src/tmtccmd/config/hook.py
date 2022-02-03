@@ -3,7 +3,12 @@ import argparse
 from abc import abstractmethod
 from typing import Dict, Tuple, Optional, Union
 
-from tmtccmd.config.definitions import DEFAULT_APID, ServiceOpCodeDictT, HkReplyUnpacked, DataReplyUnpacked
+from tmtccmd.config.definitions import (
+    DEFAULT_APID,
+    ServiceOpCodeDictT,
+    HkReplyUnpacked,
+    DataReplyUnpacked,
+)
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
