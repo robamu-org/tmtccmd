@@ -67,6 +67,35 @@ ComIFDictT = Dict[str, ComIFValueT]
 EthernetAddressT = Tuple[str, int]
 
 
+class DataReplyUnpacked:
+    def __init__(self):
+        # Name of the data fields inside a data set
+        self.header_list = []
+        # Corresponding list of content
+        self.content_list = []
+
+
+class HkReplyUnpacked(DataReplyUnpacked):
+    def __init__(self):
+        # Validity buffer
+        self.validity_buffer = bytearray()
+        # Number of variables contained in HK set
+        self._num_of_vars = None
+
+    @property
+    def num_of_vars(self):
+        """Unless set to a specific number, will return the length of the content list
+        :return:
+        """
+        if self._num_of_vars is None:
+            return len(self.header_list)
+        return self._num_of_vars
+
+    @num_of_vars.setter
+    def num_of_vars(self, num_of_vars: int):
+        self._num_of_vars = num_of_vars
+
+
 class CoreComInterfaces(enum.Enum):
     DUMMY = "dummy"
     SERIAL_DLE = "ser_dle"
