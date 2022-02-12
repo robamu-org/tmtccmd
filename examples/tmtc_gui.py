@@ -17,11 +17,11 @@ from config.definitions import APID
 def main():
     hook_obj = ExampleHookClass()
     initialize_tmtc_commander(hook_object=hook_obj)
-    ccsds_handler = CcsdsTmHandler()
-    ccsds_handler.add_tm_handler(
-        apid=APID, pus_tm_handler=default_ccsds_packet_handler, max_queue_len=50
-    )
-    add_ccsds_handler(ccsds_handler)
+    # ccsds_handler = CcsdsTmHandler()
+    # ccsds_handler.add_tm_handler(
+    #    apid=APID, pus_tm_handler=default_ccsds_packet_handler, max_queue_len=50
+    # )
+    # add_ccsds_handler(ccsds_handler)
     run_tmtc_commander(use_gui=True, app_name="TMTC Commander Example")
 
 
