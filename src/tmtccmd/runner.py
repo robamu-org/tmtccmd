@@ -262,7 +262,10 @@ def get_default_tmtc_backend(
     print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
     tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
     if tm_handler is None:
-        LOGGER.warning("No TM Handler specified!")
+        LOGGER.warning(
+            "No TM Handler specified! Make sure to specify at least one TM handler"
+        )
+        sys.exit(1)
     else:
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             tm_handler = cast(CcsdsTmHandler, tm_handler)
