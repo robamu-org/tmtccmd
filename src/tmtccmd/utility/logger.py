@@ -45,29 +45,7 @@ def set_tmtc_console_logger() -> logging.Logger:
     # Use colorlog for now because it allows more flexibility and custom messages
     # for different levels
     set_up_colorlog_logger(logger=logger)
-
     # set_up_coloredlogs_logger(logger=logger)
-
-    file_format = logging.Formatter(
-        fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d | [%(filename)s:%(lineno)d] | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    console_error_handler = logging.StreamHandler(stream=sys.stderr)
-    console_error_handler.setLevel(logging.WARNING)
-
-    try:
-        error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
-        )
-    except FileNotFoundError:
-        os.mkdir("log")
-        error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
-        )
-    error_file_handler.setLevel(level=logging.WARNING)
-    error_file_handler.setFormatter(file_format)
-    logger.addHandler(error_file_handler)
 
     __CONSOLE_LOGGER_SET_UP = True
     return logger
