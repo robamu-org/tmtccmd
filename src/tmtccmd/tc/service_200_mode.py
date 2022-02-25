@@ -6,10 +6,14 @@ import struct
 
 
 class Modes(enum.IntEnum):
-    OFF = (0,)
-    ON = (1,)
-    NORMAL = (2,)
+    OFF = 0
+    ON = 1
+    NORMAL = 2
     RAW = 3
+
+
+class Subservices(enum.IntEnum):
+    SWITCH_MODE = 1
 
 
 def pack_mode_data(object_id: bytearray, mode: Modes, submode: int) -> bytearray:
