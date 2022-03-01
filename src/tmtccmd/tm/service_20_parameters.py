@@ -102,12 +102,12 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             if data_size > 12:
                 if rows == 1 and columns == 1:
                     instance.param_struct.param = deserialize_scalar_entry(
-                        ptc=ptc,
-                        pfc=pfc,
-                        tm_data=tm_data
+                        ptc=ptc, pfc=pfc, tm_data=tm_data
                     )
                 else:
-                    LOGGER.warning("Deserialization of non-scalar parameters not implemented yet")
+                    LOGGER.warning(
+                        "Deserialization of non-scalar parameters not implemented yet"
+                    )
             else:
                 LOGGER.info(
                     "Error when receiving Pus Service 20 TM: subservice is not 130"
@@ -236,9 +236,7 @@ def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[any
                 return None
             return struct.unpack("!q", tm_data[12:20])[0]
         else:
-            LOGGER.warning(
-                f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}"
-            )
+            LOGGER.warning(f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}")
             return None
     if ptc == EcssPtc.REAL:
         if pfc == EcssPfcReal.FLOAT_SIMPLE_PRECISION_IEEE:
