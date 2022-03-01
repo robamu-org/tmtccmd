@@ -1,74 +1,120 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
-from typing import Union
-from spacepackets.ecss.conf import get_default_tc_apid
+import struct
+from typing import Optional
+from tmtccmd.pus.service_20_parameter import (
+    EcssPtc,
+    EcssPfcUnsigned,
+    EcssPfcReal,
+    CustomSubservices,
+)
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.pus.service_20_parameter import EcssPtc, EcssPfcUnsigned
 from tmtccmd.utility.logger import get_console_logger
 
 logger = get_console_logger()
 
 
-def pack_boolean_parameter_command(
-    object_id: bytearray,
-    domain_id: int,
-    unique_id: int,
-    parameter: bool,
-    ssc: int,
-    apid: int = -1,
-) -> Union[PusTelecommand, None]:
-    """Generic function to pack a telecommand to tweak a boolean parameter
+def pack_fsfw_load_param_cmd(
+    app_data: bytes, ssc: int, apid: int = -1
+) -> PusTelecommand:
+    return PusTelecommand(
+        service=20,
+        subservice=CustomSubservices.LOAD,
+        app_data=app_data,
+        apid=apid,
+        ssc=ssc,
+    )
+
+
+def pack_boolean_parameter_app_data(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: bool
+) -> Optional[bytearray]:
+    """Generic function to pack a the application data for a parameter service command.
+    Tailored towards FSFW applications.
     :param object_id:
     :param domain_id:
     :param unique_id:
     :param parameter:
-    :param ssc:
-    :param apid:
-    @return:
+    :return: Application data
     """
-    if apid == -1:
-        apid = get_default_tc_apid()
+    data_to_pack = prepare_param_packet_header(
+        object_id=object_id,
+        domain_id=domain_id,
+        unique_id=unique_id,
+        ptc=EcssPtc.UNSIGNED,
+        pfc=EcssPfcUnsigned.ONE_BYTE,
+        rows=1,
+        columns=1,
+    )
+    if data_to_pack is not None:
+        data_to_pack.append(parameter)
+    return data_to_pack
 
+
+def pack_scalar_double_param_app_data(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: float
+) -> Optional[bytearray]:
+    data_to_pack = prepare_param_packet_header(
+        object_id=object_id,
+        domain_id=domain_id,
+        unique_id=unique_id,
+        ptc=EcssPtc.REAL,
+        pfc=EcssPfcReal.DOUBLE_PRECISION_IEEE,
+        rows=1,
+        columns=1,
+    )
+    if data_to_pack is not None:
+        data_to_pack.extend(struct.pack("!f", parameter))
+    return data_to_pack
+
+
+def pack_scalar_float_param_app_data(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: float
+) -> Optional[bytearray]:
+    data_to_pack = prepare_param_packet_header(
+        object_id=object_id,
+        domain_id=domain_id,
+        unique_id=unique_id,
+        ptc=EcssPtc.REAL,
+        pfc=EcssPfcReal.FLOAT_SIMPLE_PRECISION_IEEE,
+        rows=1,
+        columns=1,
+    )
+    if data_to_pack is not None:
+        data_to_pack.extend(struct.pack("!f", parameter))
+    return data_to_pack
+
+
+def prepare_param_packet_header(
+    object_id: bytes,
+    domain_id: int,
+    unique_id: int,
+    ptc: EcssPtc,
+    pfc: int,
+    rows: int,
+    columns: int,
+    start_at_idx: int = 0,
+) -> Optional[bytearray]:
     parameter_id = bytearray(4)
     parameter_id[0] = domain_id
     if unique_id > 255:
         logger.warning("Invalid unique ID, should be smaller than 255!")
         return None
     parameter_id[1] = unique_id
-    parameter_id[2] = 0
-    parameter_id[3] = 0
+    parameter_id[2] = (start_at_idx >> 8) & 0xFF
+    parameter_id[3] = start_at_idx & 0xFF
     data_to_pack = bytearray(object_id)
     data_to_pack.extend(parameter_id)
-    # PTC and PFC for uint8_t according to CCSDS
-    ptc = EcssPtc.UNSIGNED
-    pfc = EcssPfcUnsigned.ONE_BYTE
-    rows = 1
-    columns = 1
-    data_to_pack.append(ptc)
-    data_to_pack.append(pfc)
-    data_to_pack.append(rows)
-    data_to_pack.append(columns)
-    data_to_pack.append(parameter)
-    return PusTelecommand(
-        service=20, subservice=128, ssc=ssc, app_data=data_to_pack, apid=apid
+    data_to_pack.extend(
+        pack_type_and_matrix_data(ptc=ptc, pfc=pfc, rows=rows, columns=columns)
     )
-
-
-def pack_float_vector_parameter_command(
-    object_id: bytearray,
-    domain_id: int,
-    unique_id: int,
-    parameter: bytearray,
-    ssc: int,
-    apid: int = -1,
-):
-    pass
+    return data_to_pack
 
 
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
     # noinspection PyPep8
-    """Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the number of columns
-    and rows in the parameter.
+    """Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the
+    number of columns and rows in the parameter.
     See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
     p.428 for more information.
     :param ptc:     ECSS PTC number

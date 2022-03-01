@@ -68,5 +68,5 @@ class EcssPfcReal(enum.IntEnum):
 
 
 class CustomSubservices(enum.IntEnum):
-    LOAD = (128,)
+    LOAD = 128
     DUMP = 129
