@@ -64,7 +64,7 @@ def pack_scalar_double_param_app_data(
         columns=1,
     )
     if data_to_pack is not None:
-        data_to_pack.extend(struct.pack("!f", parameter))
+        data_to_pack.extend(struct.pack("!d", parameter))
     return data_to_pack
 
 

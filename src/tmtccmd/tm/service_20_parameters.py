@@ -1,11 +1,18 @@
 from __future__ import annotations
 import os
 import struct
+from typing import Optional
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.definitions import PusServices
 
 from tmtccmd.pus.obj_id import ObjectId
+from tmtccmd.pus.service_20_parameter import (
+    EcssPtc,
+    EcssPfcUnsigned,
+    EcssPfcReal,
+    EcssPfcSigned,
+)
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
 
@@ -14,14 +21,14 @@ LOGGER = get_console_logger()
 
 class ParamStruct:
     def __init__(self):
-        self.param_id = (0,)
-        self.domain_id = (0,)
-        self.unique_id = (0,)
-        self.linear_index = (0,)
+        self.param_id = 0
+        self.domain_id = 0
+        self.unique_id = 0
+        self.linear_index = 0
         self.type_ptc = 0
         self.type_pfc = 0
-        self.column = (0,)
-        self.row = (0,)
+        self.column = 0
+        self.row = 0
         self.param: any = 0
 
 
@@ -88,22 +95,19 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             instance.param_struct.type_pfc = tm_data[9]
             instance.param_struct.column = tm_data[10]
             instance.param_struct.row = tm_data[11]
+            rows = instance.param_struct.row
+            columns = instance.param_struct.column
+            ptc = instance.param_struct.type_ptc
+            pfc = instance.param_struct.type_pfc
             if data_size > 12:
-                if (
-                    instance.param_struct.type_ptc == 3
-                    and instance.param_struct.type_pfc == 14
-                ):
-                    instance.param_struct.param = struct.unpack("!I", tm_data[12:16])[0]
-                if (
-                    instance.param_struct.type_ptc == 4
-                    and instance.param_struct.type_pfc == 14
-                ):
-                    instance.param_struct.param = struct.unpack("!i", tm_data[12:16])[0]
-                if (
-                    instance.param_struct.type_ptc == 5
-                    and instance.param_struct.type_pfc == 1
-                ):
-                    instance.param_struct.param = struct.unpack("!f", tm_data[12:16])[0]
+                if rows == 1 and columns == 1:
+                    instance.param_struct.param = deserialize_scalar_entry(
+                        ptc=ptc,
+                        pfc=pfc,
+                        tm_data=tm_data
+                    )
+                else:
+                    LOGGER.warning("Deserialization of non-scalar parameters not implemented yet")
             else:
                 LOGGER.info(
                     "Error when receiving Pus Service 20 TM: subservice is not 130"
@@ -176,3 +180,80 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             custom_printout += f"{header_list}{os.linesep}"
             custom_printout += f"{content_list}"
         return custom_printout
+
+
+def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[any]:
+    param_data = tm_data[12:]
+    param_len = len(param_data)
+    len_error_str = "Invalid parameter data size, smaller than "
+    if param_len == 0:
+        return None
+    if ptc == EcssPtc.UNSIGNED:
+        if pfc == EcssPfcUnsigned.ONE_BYTE:
+            if param_len < 1:
+                LOGGER.warning(f"{len_error_str} 1")
+                raise None
+            return tm_data[12]
+        elif pfc == EcssPfcUnsigned.TWO_BYTES:
+            if param_len < 2:
+                LOGGER.warning(f"{len_error_str} 2")
+                return None
+            return struct.unpack("!H", tm_data[12:14])[0]
+        if pfc == EcssPfcUnsigned.FOUR_BYTES:
+            if param_len < 4:
+                LOGGER.warning(f"{len_error_str} 4")
+                return None
+            return struct.unpack("!I", tm_data[12:16])[0]
+        elif pfc == EcssPfcUnsigned.EIGHT_BYTES:
+            if param_len < 8:
+                LOGGER.warning(f"{len_error_str} 8")
+                return None
+            return struct.unpack("!Q", tm_data[12:20])[0]
+        else:
+            LOGGER.warning(
+                f"Parsing of unsigned PTC {ptc} not implemented for PFC {pfc}"
+            )
+            return None
+    elif ptc == EcssPtc.SIGNED:
+        if pfc == EcssPfcSigned.ONE_BYTE:
+            if param_len < 1:
+                LOGGER.warning(f"{len_error_str} 1")
+                return None
+            return struct.unpack("!b", tm_data[12:13])[0]
+        elif pfc == EcssPfcSigned.TWO_BYTES:
+            if param_len < 2:
+                LOGGER.warning(f"{len_error_str} 2")
+                return None
+            return struct.unpack("!h", tm_data[12:14])[0]
+        elif pfc == EcssPfcSigned.FOUR_BYTES:
+            if param_len < 4:
+                LOGGER.warning(f"{len_error_str} 4")
+                return None
+            return struct.unpack("!i", tm_data[12:16])[0]
+        elif pfc == EcssPfcSigned.EIGHT_BYTES:
+            if param_len < 8:
+                LOGGER.warning(f"{len_error_str} 8")
+                return None
+            return struct.unpack("!q", tm_data[12:20])[0]
+        else:
+            LOGGER.warning(
+                f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}"
+            )
+            return None
+    if ptc == EcssPtc.REAL:
+        if pfc == EcssPfcReal.FLOAT_SIMPLE_PRECISION_IEEE:
+            if param_len < 4:
+                LOGGER.warning(f"{len_error_str} 4")
+                return None
+            return struct.unpack("!f", tm_data[12:16])[0]
+        elif pfc == EcssPfcReal.DOUBLE_PRECISION_IEEE:
+            if param_len < 8:
+                LOGGER.warning(f"{len_error_str} 8")
+                return None
+            return struct.unpack("!d", tm_data[12:20])[0]
+        else:
+            LOGGER.warning(
+                f"Parsing of real (floating point) PTC {ptc} not implemented "
+                f"for PFC {pfc}"
+            )
+            return None
