@@ -12,7 +12,7 @@ from tmtccmd.pus.service_20_parameter import (
     EcssPfcUnsigned,
     EcssPfcReal,
     EcssPfcSigned,
-    CustomSubservices
+    CustomSubservices,
 )
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
@@ -33,10 +33,11 @@ class ParamStruct:
         self.param: any = 0
 
 
-class Service20FsfwTM(PusTmInfoBase, PusTmBase):
+class Service20FsfwTm(PusTmInfoBase, PusTmBase):
     """Custom Parameter Service Telemetry handler tailored towards Flight Software Framework (FSFW)
     TM packets
     """
+
     def __init__(
         self,
         subservice_id: int,
@@ -80,7 +81,7 @@ class Service20FsfwTM(PusTmInfoBase, PusTmBase):
         self.set_packet_info("Parameter Service Reply")
 
     @staticmethod
-    def __init_without_base(instance: Service20FsfwTM):
+    def __init_without_base(instance: Service20FsfwTm):
         tm_data = instance.tm_data
         if len(tm_data) < 8:
             return
@@ -117,7 +118,7 @@ class Service20FsfwTM(PusTmInfoBase, PusTmBase):
                 )
 
     @classmethod
-    def __empty(cls) -> Service20FsfwTM:
+    def __empty(cls) -> Service20FsfwTm:
         return cls(
             subservice_id=-1,
             object_id=bytearray(4),
@@ -132,7 +133,7 @@ class Service20FsfwTM(PusTmInfoBase, PusTmBase):
         cls,
         raw_telemetry: bytearray,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service20FsfwTM:
+    ) -> Service20FsfwTm:
         service_20_tm = cls.__empty()
         service_20_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version

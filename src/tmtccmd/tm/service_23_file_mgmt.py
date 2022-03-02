@@ -24,7 +24,7 @@ class FileInfo:
         self.lock_status = lock_status
 
 
-class Service23TM(PusTmInfoBase, PusTmBase):
+class Service23Tm(PusTmInfoBase, PusTmBase):
     MAX_REPOSITORY_LENGTH = 64
     MAX_FILENAME_LENGTH = 12
 
@@ -70,7 +70,7 @@ class Service23TM(PusTmInfoBase, PusTmBase):
         self.specify_packet_info("File Service Reply")
 
     @staticmethod
-    def __init_without_base(instance: Service23TM):
+    def __init_without_base(instance: Service23Tm):
         tm_data = instance.get_tm_data()
         if len(tm_data) < 4:
             LOGGER.error("Service23TM: Invalid packet format!")
@@ -86,7 +86,7 @@ class Service23TM(PusTmInfoBase, PusTmBase):
             instance.unpack_repo_and_filename()
 
     @classmethod
-    def __empty(cls) -> Service23TM:
+    def __empty(cls) -> Service23Tm:
         return cls(subservice_id=-1, object_id=bytearray(4), repo_path="", file_name="")
 
     @classmethod
@@ -94,7 +94,7 @@ class Service23TM(PusTmInfoBase, PusTmBase):
         cls,
         raw_telemetry: bytearray,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service23TM:
+    ) -> Service23Tm:
         service_23_tm = cls.__empty()
         service_23_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version

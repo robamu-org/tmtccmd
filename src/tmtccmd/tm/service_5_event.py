@@ -16,7 +16,7 @@ from tmtccmd.utility.logger import get_console_logger
 LOGGER = get_console_logger()
 
 
-class Service5TM(PusTmBase, PusTmInfoBase):
+class Service5Tm(PusTmBase, PusTmInfoBase):
     def __init__(
         self,
         subservice: Srv5Subservices,
@@ -70,7 +70,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         self.__init_without_base(instance=self, set_attrs_from_tm_data=False)
 
     @classmethod
-    def __empty(cls) -> Service5TM:
+    def __empty(cls) -> Service5Tm:
         return cls(
             subservice=Srv5Subservices.INFO_EVENT,
             event_id=0,
@@ -84,7 +84,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         cls,
         raw_telemetry: bytearray,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service5TM:
+    ) -> Service5Tm:
         service_5_tm = cls.__empty()
         service_5_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
@@ -129,7 +129,7 @@ class Service5TM(PusTmBase, PusTmInfoBase):
         return self._param_2
 
     @staticmethod
-    def __init_without_base(instance: Service5TM, set_attrs_from_tm_data: bool = False):
+    def __init_without_base(instance: Service5Tm, set_attrs_from_tm_data: bool = False):
         if instance.service != 5:
             LOGGER.warning("This packet is not an event service packet!")
         instance.set_packet_info("Event")

@@ -1,6 +1,6 @@
 from tmtccmd.tm.definitions import TmTypes
 from spacepackets.ecss.tm import PusTelemetry
-from tmtccmd.tm.service_5_event import Service5TM
+from tmtccmd.tm.service_5_event import Service5Tm
 from tmtccmd.pus.service_1_verification import Service1TM
 from tmtccmd.pus.service_17_test import Service17TMExtended
 from tmtccmd.utility.logger import get_console_logger
@@ -30,7 +30,7 @@ def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter):
     if service_type == 1:
         tm_packet = Service17TMExtended.unpack(raw_telemetry=raw_tm_packet)
     if service_type == 5:
-        tm_packet = Service5TM.unpack(raw_telemetry=raw_tm_packet)
+        tm_packet = Service5Tm.unpack(raw_telemetry=raw_tm_packet)
     if service_type == 17:
         tm_packet = Service17TMExtended.unpack(raw_telemetry=raw_tm_packet)
     if tm_packet is None:

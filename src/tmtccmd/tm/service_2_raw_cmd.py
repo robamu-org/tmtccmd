@@ -6,7 +6,7 @@ from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
-class Service2TM(PusTmInfoBase, PusTmBase):
+class Service2Tm(PusTmInfoBase, PusTmBase):
     def __init__(
         self,
         subservice: int,
@@ -38,7 +38,7 @@ class Service2TM(PusTmInfoBase, PusTmBase):
         self.set_packet_info("Raw Commanding Reply")
 
     @classmethod
-    def __empty(cls) -> Service2TM:
+    def __empty(cls) -> Service2Tm:
         return cls(subservice=0)
 
     @classmethod
@@ -46,7 +46,7 @@ class Service2TM(PusTmInfoBase, PusTmBase):
         cls,
         raw_telemetry: bytearray,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service2TM:
+    ) -> Service2Tm:
         service_2_tm = cls.__empty()
         service_2_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version

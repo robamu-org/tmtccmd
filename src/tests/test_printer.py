@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from tmtccmd.runner import initialize_tmtc_commander
-from tmtccmd.tm import Service5TM
+from tmtccmd.tm import Service5Tm
 from tmtccmd.pus.service_1_verification import Service1TMExtended
 from tmtccmd.tm.service_5_event import Srv5Subservices
 from spacepackets.ccsds.time import CdsShortTimestamp
@@ -44,7 +44,7 @@ class TestPrinter(TestCase):
         )
 
         self.tmtc_printer.set_display_mode(DisplayMode.LONG)
-        service_5_tm = Service5TM(
+        service_5_tm = Service5Tm(
             subservice=Srv5Subservices.INFO_EVENT,
             object_id=bytearray([0x01, 0x02, 0x03, 0x04]),
             event_id=22,
