@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [unreleased]
 
+## [v1.12.0]
+
+### API Changes
+
+- Renamed some TM packets to make it more explicit that these TM handlers are tailored
+  towards usage with the Flight Software Framework (FSFW)
+
+### Added
+
+- Better handling for scalar parameter telemetry for service 20. Emit better warnings for
+  unimplemented cases
+
+### Others
+
+- Bumped some package requirements.
+  - `colorlog` >= 6.6.0
+  - `spacepackets` >= 0.6
+  - `pyserial` >= 3.5
+
 ## [v1.11.0]
 
 ### API Changes
