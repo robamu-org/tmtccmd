@@ -7,8 +7,8 @@ from typing import cast
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.util import get_printable_data_string, PrintFormats
 
-from tmtccmd.tm.service_8_functional_cmd import Service8TM
-from tmtccmd.tm.service_5_event import Service5TM
+from tmtccmd.tm.service_8_fsfw_functional_cmd import Service8FsfwTm
+from tmtccmd.tm.service_5_event import Service5Tm
 from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
@@ -81,7 +81,7 @@ class TmTcPrinter:
             return
 
         if packet_if.service == PusServices.SERVICE_5_EVENT:
-            self.__handle_event_packet(cast(Service5TM, packet_if))
+            self.__handle_event_packet(cast(Service5Tm, packet_if))
 
         if self._display_mode == DisplayMode.SHORT:
             self.__handle_short_print(packet_if)
@@ -159,7 +159,7 @@ class TmTcPrinter:
         if hook_obj is None:
             LOGGER.warning("Hook object not set")
             return
-        srv5_packet = cast(Service5TM, packet_if)
+        srv5_packet = cast(Service5Tm, packet_if)
         custom_string = hook_obj.handle_service_5_event(
             object_id=srv5_packet.reporter_id_as_bytes,
             event_id=srv5_packet.event_id,
@@ -186,7 +186,7 @@ class TmTcPrinter:
         if hook_obj is None:
             LOGGER.warning("Hook object not set")
             return
-        srv8_packet = cast(Service8TM, packet_if)
+        srv8_packet = cast(Service8FsfwTm, packet_if)
         if srv8_packet is None:
             LOGGER.warning("Service 8 object is not instance of Service8TM")
             return
@@ -405,7 +405,7 @@ class TmTcPrinter:
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
 
-    def __handle_event_packet(self, srv_5_tm: Service5TM):
+    def __handle_event_packet(self, srv_5_tm: Service5Tm):
         printout = srv_5_tm.get_custom_printout()
         if printout != "":
             self.__print_buffer += printout

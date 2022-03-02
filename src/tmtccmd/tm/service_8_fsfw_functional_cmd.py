@@ -11,7 +11,11 @@ from tmtccmd.utility.logger import get_console_logger
 LOGGER = get_console_logger()
 
 
-class Service8TM(PusTmBase, PusTmInfoBase):
+class Service8FsfwTm(PusTmBase, PusTmInfoBase):
+    """Custom Action Service Telemetry handler tailored towards Flight Software Framework (FSFW)
+    TM service 8 packets
+    """
+
     def __init__(
         self,
         subservice_id: int,
@@ -57,7 +61,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
         self.__init_without_base(instance=self)
 
     @staticmethod
-    def __init_without_base(instance: Service8TM):
+    def __init_without_base(instance: Service8FsfwTm):
         if instance.subservice == 130:
             tm_data = instance.tm_data
             if len(tm_data) < 8:
@@ -73,7 +77,7 @@ class Service8TM(PusTmBase, PusTmInfoBase):
             instance.set_packet_info("Unknown functional commanding reply")
 
     @classmethod
-    def __empty(cls) -> Service8TM:
+    def __empty(cls) -> Service8FsfwTm:
         return cls(
             subservice_id=-1,
             object_id=bytearray(4),

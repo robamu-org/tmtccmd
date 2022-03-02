@@ -15,7 +15,7 @@ from typing import Tuple, List
 LOGGER = get_console_logger()
 
 
-class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
+class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     """This class encapsulates the format of Service 3 telemetry
     This class was written to handle Service 3 telemetry coming from the on-board software
     based on the Flight Software Framework (FSFW). A custom class can be defined, but should then
@@ -85,7 +85,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
 
     @staticmethod
     def __init_without_base(
-        instance: Service3TM,
+        instance: Service3FsfwTm,
         custom_hk_handling: bool,
         check_tm_data_size: bool,
         minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
@@ -110,7 +110,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         instance.set_packet_info("Housekeeping Packet")
 
     @classmethod
-    def __empty(cls) -> Service3TM:
+    def __empty(cls) -> Service3FsfwTm:
         return cls(
             subservice_id=-1,
             time=CdsShortTimestamp.init_from_current_time(),
@@ -123,7 +123,7 @@ class Service3TM(Service3Base, PusTmBase, PusTmInfoBase):
         raw_telemetry: bytearray,
         custom_hk_handling: bool,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service3TM:
+    ) -> Service3FsfwTm:
         service_3_tm = cls.__empty()
         service_3_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
