@@ -96,3 +96,9 @@ python3 -m pip install -e .[gui]
 
 Omit the `-e` for a regular installation. Alternatively you can now install the package
 from PyPI with `python3 -m pip install -e tmtccmd[gui]`.
+
+## Using PyCharm
+
+When using PyCharm and running the application from PyCharm, it is recommended to set
+the `Emulate terminal in output console` option. This is because packages like `prompt-toolkit`
+require a complete terminal for features like auto-complete to work.

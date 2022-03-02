@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v1.13.0]
+
+### Added
+
+- New dependency `prompt-toolkit`
+- Auto-Complete feature for service and op-code selection using the `prompt-toolkit`
+  packaged
+
 ## [v1.12.0]
 
 ### API Changes
