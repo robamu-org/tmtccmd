@@ -12,6 +12,7 @@ from tmtccmd.pus.service_20_parameter import (
     EcssPfcUnsigned,
     EcssPfcReal,
     EcssPfcSigned,
+    CustomSubservices
 )
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.utility.logger import get_console_logger
@@ -32,7 +33,7 @@ class ParamStruct:
         self.param: any = 0
 
 
-class Service20TM(PusTmInfoBase, PusTmBase):
+class Service20FsfwTM(PusTmInfoBase, PusTmBase):
     def __init__(
         self,
         subservice_id: int,
@@ -64,7 +65,6 @@ class Service20TM(PusTmInfoBase, PusTmBase):
             space_time_ref=space_time_ref,
             destination_id=destination_id,
         )
-
         self.object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
         self.param_struct = ParamStruct()
         self.param_struct.param_id = param_id
@@ -77,7 +77,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
         self.set_packet_info("Parameter Service Reply")
 
     @staticmethod
-    def __init_without_base(instance: Service20TM):
+    def __init_without_base(instance: Service20FsfwTM):
         tm_data = instance.tm_data
         if len(tm_data) < 8:
             return
@@ -88,7 +88,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
         instance.param_struct.unique_id = tm_data[5]
         instance.param_struct.linear_index = tm_data[6] << 8 | tm_data[7]
 
-        if instance.subservice == 130:
+        if instance.subservice == CustomSubservices.DUMP:
             # TODO: This needs to be more generic. Furthermore, we need to be able to handle
             #       vector and matrix dumps as well and this is not possible in the current form.
             instance.param_struct.type_ptc = tm_data[8]
@@ -114,7 +114,7 @@ class Service20TM(PusTmInfoBase, PusTmBase):
                 )
 
     @classmethod
-    def __empty(cls) -> Service20TM:
+    def __empty(cls) -> Service20FsfwTM:
         return cls(
             subservice_id=-1,
             object_id=bytearray(4),
@@ -129,17 +129,18 @@ class Service20TM(PusTmInfoBase, PusTmBase):
         cls,
         raw_telemetry: bytearray,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service20TM:
+    ) -> Service20FsfwTM:
         service_20_tm = cls.__empty()
         service_20_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
-        if len(service_20_tm.pus_tm.tm_data) < 4:
-            LOGGER.warning("Invalid data length, less than 4")
-        elif len(service_20_tm.pus_tm.tm_data) < 8:
-            LOGGER.warning(
-                "Invalid data length, less than 8 (Object ID and Parameter ID)"
-            )
+        if service_20_tm.custom_fsfw_handling:
+            if len(service_20_tm.pus_tm.tm_data) < 4:
+                LOGGER.warning("Invalid data length, less than 4")
+            elif len(service_20_tm.pus_tm.tm_data) < 8:
+                LOGGER.warning(
+                    "Invalid data length, less than 8 (Object ID and Parameter ID)"
+                )
         service_20_tm.__init_without_base(instance=service_20_tm)
         return service_20_tm
 
