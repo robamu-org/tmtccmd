@@ -4,7 +4,9 @@ Argument parser modules for the TMTC commander core
 import argparse
 import sys
 
-from tmtccmd.config.definitions import CoreModeList, ServiceOpCodeDictT
+from prompt_toolkit.completion import WordCompleter
+import prompt_toolkit
+from tmtccmd.config.definitions import CoreModeList, ServiceOpCodeDictT, OpCodeEntryT
 from tmtccmd.utility.logger import get_console_logger
 
 
@@ -281,16 +283,36 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
     while True:
         LOGGER.info(f"{service_string} | {info_string}")
         LOGGER.info(horiz_line)
+        srv_completer = build_service_word_completer(
+            service_op_code_dict=service_op_code_dict
+        )
         for service_entry in service_op_code_dict.items():
-            adjusted_service_entry = service_entry[0].ljust(service_adjustment)
-            adjusted_service_info = service_entry[1][0].ljust(info_adjustment)
-            LOGGER.info(f"{adjusted_service_entry} | {adjusted_service_info}")
-        service_string = input("Please select a service by specifying the key: ")
+            try:
+                adjusted_service_entry = service_entry[0].ljust(service_adjustment)
+                adjusted_service_info = service_entry[1][0].ljust(info_adjustment)
+                LOGGER.info(f"{adjusted_service_entry} | {adjusted_service_info}")
+            except AttributeError:
+                LOGGER.warning(
+                    f"Error handling service entry {service_entry[0]}. Skipping.."
+                )
+        service_string = prompt_toolkit.prompt(
+            "Please select a service by specifying the key: ", completer=srv_completer
+        )
         if service_string in service_op_code_dict:
             LOGGER.info(f"Selected service: {service_string}")
             return service_string
         else:
             LOGGER.warning("Invalid key, try again")
+
+
+def build_service_word_completer(
+    service_op_code_dict: ServiceOpCodeDictT,
+) -> WordCompleter:
+    srv_list = []
+    for service_entry in service_op_code_dict.items():
+        srv_list.append(service_entry[0])
+    srv_completer = WordCompleter(words=srv_list, ignore_case=True)
+    return srv_completer
 
 
 def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> str:
@@ -305,12 +327,16 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
         LOGGER.info(horiz_line)
         if service in service_op_code_dict:
             op_code_dict = service_op_code_dict[service][1]
+            completer = build_op_code_word_completer(
+                service=service, op_code_dict=op_code_dict
+            )
             for op_code_entry in op_code_dict.items():
                 adjusted_op_code_entry = op_code_entry[0].ljust(op_code_adjustment)
                 adjusted_op_code_info = op_code_entry[1][0].ljust(info_adjustment)
                 LOGGER.info(f"{adjusted_op_code_entry} | {adjusted_op_code_info}")
-            op_code_string = input(
-                "Please select an operation code by specifying the key: "
+            op_code_string = prompt_toolkit.prompt(
+                "Please select an operation code by specifying the key: ",
+                completer=completer,
             )
             if op_code_string in op_code_dict:
                 LOGGER.info(f"Selected op code: {op_code_string}")
@@ -322,3 +348,13 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
                 "Service not in dictionary. Setting default operation code 0"
             )
             return "0"
+
+
+def build_op_code_word_completer(
+    service: str, op_code_dict: OpCodeEntryT
+) -> WordCompleter:
+    op_code_list = []
+    for op_code_entry in op_code_dict.items():
+        op_code_list.append(op_code_entry[0])
+    op_code_completer = WordCompleter(words=op_code_list, ignore_case=True)
+    return op_code_completer
