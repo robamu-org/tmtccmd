@@ -34,6 +34,9 @@ class ParamStruct:
 
 
 class Service20FsfwTM(PusTmInfoBase, PusTmBase):
+    """Custom Parameter Service Telemetry handler tailored towards Flight Software Framework (FSFW)
+    TM packets
+    """
     def __init__(
         self,
         subservice_id: int,
