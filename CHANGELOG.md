@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   - `colorlog` >= 6.6.0
   - `spacepackets` >= 0.6
   - `pyserial` >= 3.5
+- Renamed example folder
+
+### Fixes
+
+- GUI example fixed
 
 ## [v1.11.0]
 
