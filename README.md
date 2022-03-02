@@ -24,9 +24,9 @@ This client currently supports the following communication interfaces:
 2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
 
-The TMTC commander also includes a Space Packet and a ECSS PUS packet stack. Some of these
-components might be moved to an own library soon, so they were decoupled from the rest 
-of the TMTC commander components.
+The TMTC commander also includes some telemetry handling components and telecommand packaging
+helpers. Some of those components are tailored towards usage with the
+[Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/).
 
 ## Examples 
 
