@@ -46,6 +46,7 @@ class CoreGlobalIds(enum.IntEnum):
 
 class OpCodeDictKeys(enum.IntEnum):
     TIMEOUT = CoreGlobalIds.TM_TIMEOUT
+    ENTER_LISTENER_MODE = CoreGlobalIds.USE_LISTENER_AFTER_OP
 
 
 # Service Op Code Dictionary Types
@@ -77,6 +78,7 @@ class DataReplyUnpacked:
 
 class HkReplyUnpacked(DataReplyUnpacked):
     def __init__(self):
+        super().__init__()
         # Validity buffer
         self.validity_buffer = bytearray()
         # Number of variables contained in HK set
