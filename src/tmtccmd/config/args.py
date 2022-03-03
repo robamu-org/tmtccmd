@@ -292,6 +292,8 @@ def handle_unspecified_args(args) -> None:
                 LOGGER.warning(
                     "Detected op code timeout configuration but is overriden by CLI argument"
                 )
+    if args.listener is None:
+        args.listener = False
 
 
 def handle_empty_args(args) -> None:
@@ -349,7 +351,7 @@ def build_service_word_completer(
 
 def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> str:
     op_code_adjustment = 24
-    info_adjustment = 40
+    info_adjustment = 56
     horz_line_num = op_code_adjustment + info_adjustment + 3
     horiz_line = horz_line_num * "-"
     op_code_info_str = "Operation Code".ljust(op_code_adjustment)
