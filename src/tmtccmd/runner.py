@@ -294,6 +294,6 @@ def get_default_tmtc_backend(
     )
     tmtc_backend.set_current_apid(apid=apid)
     tmtc_backend.set_one_shot_or_loop_handling(
-        get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP)
+        not get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP)
     )
     return tmtc_backend

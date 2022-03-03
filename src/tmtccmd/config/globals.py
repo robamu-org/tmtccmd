@@ -338,3 +338,9 @@ def add_service_op_code_entry(
     op_code_entry: OpCodeEntryT,
 ):
     srv_op_code_dict.update({name: (info, op_code_entry)})
+
+
+def generate_op_code_options(enter_listener_mode: bool, custom_timeout: float):
+    op_code_opts = dict()
+    op_code_opts.update({OpCodeDictKeys.ENTER_LISTENER_MODE: enter_listener_mode})
+    op_code_opts.update({OpCodeDictKeys.TIMEOUT: custom_timeout})

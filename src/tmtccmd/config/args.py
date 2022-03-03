@@ -6,7 +6,12 @@ import sys
 
 from prompt_toolkit.completion import WordCompleter
 import prompt_toolkit
-from tmtccmd.config.definitions import CoreModeList, ServiceOpCodeDictT, OpCodeEntryT
+from tmtccmd.config.definitions import (
+    CoreModeList,
+    ServiceOpCodeDictT,
+    OpCodeEntryT,
+    OpCodeDictKeys,
+)
 from tmtccmd.utility.logger import get_console_logger
 
 
@@ -121,7 +126,8 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "-l",
         "--listener",
         help="Determine whether the listener mode will be active after performing the operation",
-        action="store_false",
+        action="store_true",
+        default=None,
     )
     arg_parser.add_argument(
         "-t",
@@ -262,6 +268,30 @@ def handle_unspecified_args(args) -> None:
         args.op_code = prompt_op_code(
             service_op_code_dict=service_op_code_dict, service=current_service
         )
+    op_code_value = service_op_code_dict[args.service][1]
+    op_code_options = op_code_value[args.op_code][1]
+    if op_code_options is not None and isinstance(op_code_options, dict):
+        if op_code_options.get(OpCodeDictKeys.ENTER_LISTENER_MODE):
+            if args.listener is None:
+                LOGGER.info(
+                    "Detected op code configuration: Enter listener mode after command"
+                )
+                args.listener = True
+            else:
+                LOGGER.warning(
+                    "Detected op code listerner mode configuration but is overriden by CLI argument"
+                )
+        timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
+        if timeout is not None:
+            if args.tm_timeout is None:
+                LOGGER.info(
+                    f"Detected op code configuration: Set custom timeout {timeout}"
+                )
+                args.tm_timeout = timeout
+            else:
+                LOGGER.warning(
+                    "Detected op code timeout configuration but is overriden by CLI argument"
+                )
 
 
 def handle_empty_args(args) -> None:
