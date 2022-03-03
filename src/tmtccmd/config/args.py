@@ -281,8 +281,9 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
     service_string = "Service".ljust(service_adjustment)
     info_string = "Information".ljust(info_adjustment)
     while True:
-        LOGGER.info(f"{service_string} | {info_string}")
-        LOGGER.info(horiz_line)
+        print(f" {horiz_line}")
+        print(f"|{service_string} | {info_string}|")
+        print(f" {horiz_line}")
         srv_completer = build_service_word_completer(
             service_op_code_dict=service_op_code_dict
         )
@@ -290,11 +291,12 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
             try:
                 adjusted_service_entry = service_entry[0].ljust(service_adjustment)
                 adjusted_service_info = service_entry[1][0].ljust(info_adjustment)
-                LOGGER.info(f"{adjusted_service_entry} | {adjusted_service_info}")
+                print(f"|{adjusted_service_entry} | {adjusted_service_info}|")
             except AttributeError:
                 LOGGER.warning(
                     f"Error handling service entry {service_entry[0]}. Skipping.."
                 )
+        print(f" {horiz_line}")
         service_string = prompt_toolkit.prompt(
             "Please select a service by specifying the key: ", completer=srv_completer
         )
@@ -316,15 +318,16 @@ def build_service_word_completer(
 
 
 def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> str:
-    op_code_adjustment = 16
-    info_adjustment = 34
+    op_code_adjustment = 24
+    info_adjustment = 40
     horz_line_num = op_code_adjustment + info_adjustment + 3
     horiz_line = horz_line_num * "-"
     op_code_info_str = "Operation Code".ljust(op_code_adjustment)
     info_string = "Information".ljust(info_adjustment)
     while True:
-        LOGGER.info(f"{op_code_info_str} | {info_string}")
-        LOGGER.info(horiz_line)
+        print(f" {horiz_line}")
+        print(f"|{op_code_info_str} | {info_string}|")
+        print(f" {horiz_line}")
         if service in service_op_code_dict:
             op_code_dict = service_op_code_dict[service][1]
             completer = build_op_code_word_completer(
@@ -333,7 +336,8 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
             for op_code_entry in op_code_dict.items():
                 adjusted_op_code_entry = op_code_entry[0].ljust(op_code_adjustment)
                 adjusted_op_code_info = op_code_entry[1][0].ljust(info_adjustment)
-                LOGGER.info(f"{adjusted_op_code_entry} | {adjusted_op_code_info}")
+                print(f"|{adjusted_op_code_entry} | {adjusted_op_code_info}|")
+            print(f" {horiz_line}")
             op_code_string = prompt_toolkit.prompt(
                 "Please select an operation code by specifying the key: ",
                 completer=completer,
