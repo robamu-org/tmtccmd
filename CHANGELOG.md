@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v1.13.1]
+
+### Fixed
+
+- Return the config dictionary for op codes
+
 ## [v1.13.0]
 
 ### Added
