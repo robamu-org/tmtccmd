@@ -4,7 +4,7 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Union
+from typing import Union, cast
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.tm.definitions import TmTypes
@@ -63,13 +63,13 @@ class TmTcHandler(BackendBase):
         self.__apid = 0
 
         # This flag could be used later to command the TMTC Client with a front-end
-        self.one_shot_operation = True
+        self.one_shot_operation = False
 
         self.__com_if = com_if
         self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
-            self.__tm_handler: CcsdsTmHandler = tm_handler
+            self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
             for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
                 self.__tm_listener.subscribe_ccsds_tm_handler(
                     apid_queue_len_tuple[0], apid_queue_len_tuple[1]
@@ -141,6 +141,7 @@ class TmTcHandler(BackendBase):
         com_if: CommunicationInterface,
         tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
+        tm_handler: TmHandler,
         init_mode: int,
         init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
         init_opcode: str = "0",
@@ -154,6 +155,7 @@ class TmTcHandler(BackendBase):
             init_mode=init_mode,
             init_service=init_service,
             init_opcode=init_opcode,
+            tm_handler=tm_handler,
         )
         tmtc_task = Process(target=TmTcHandler.start_handler, args=(tmtc_handler,))
         return tmtc_task
@@ -273,7 +275,7 @@ class TmTcHandler(BackendBase):
                 print(error)
                 LOGGER.error("Custom mode handling module not provided!")
 
-    def __core_operation(self, one_shot):
+    def __core_operation(self, one_shot: bool):
         if self.mode == CoreModeList.LISTENER_MODE:
             one_shot = False
         if not one_shot:

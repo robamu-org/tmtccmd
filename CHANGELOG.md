@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v1.13.1]
+
+### Fixed
+
+- Return the config dictionary for op codes
+
 ## [v1.13.0]
 
 ### Added
@@ -14,6 +20,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - New dependency `prompt-toolkit`
 - Auto-Complete feature for service and op-code selection using the `prompt-toolkit`
   packaged
+
+### Fixed
+
+- Added missing super constructor call for HkReplyUnpacked
+- Extended Op Code options functionality and actually use it. Allows to set custom timeout
+  or and enter listener mode for certain op codes
 
 ## [v1.12.0]
 

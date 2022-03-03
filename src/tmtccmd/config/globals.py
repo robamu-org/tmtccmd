@@ -1,7 +1,7 @@
 import argparse
 import collections.abc
 import pprint
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Optional
 
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
@@ -338,3 +338,13 @@ def add_service_op_code_entry(
     op_code_entry: OpCodeEntryT,
 ):
     srv_op_code_dict.update({name: (info, op_code_entry)})
+
+
+def generate_op_code_options(
+    enter_listener_mode: bool = False, custom_timeout: Optional[float] = None
+) -> dict:
+    op_code_opts = dict()
+    op_code_opts.update({OpCodeDictKeys.ENTER_LISTENER_MODE: enter_listener_mode})
+    if custom_timeout is not None:
+        op_code_opts.update({OpCodeDictKeys.TIMEOUT: custom_timeout})
+    return op_code_opts
