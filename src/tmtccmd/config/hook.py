@@ -209,7 +209,7 @@ def get_global_hook_obj() -> Optional[TmTcHookBase]:
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
         if hook_obj_raw is None:
             LOGGER.error("Hook object is invalid!")
-            sys.exit(0)
+            return None
         return cast(TmTcHookBase, hook_obj_raw)
     except ImportError:
         LOGGER.exception("Issues importing modules to get global hook handle!")

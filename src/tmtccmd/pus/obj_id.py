@@ -32,7 +32,7 @@ class ObjectId:
         if isinstance(new_id, int):
             self._object_id = new_id
             self._id_as_bytes = struct.pack("!I", self._object_id)
-        elif isinstance(new_id, bytes):
+        elif isinstance(new_id, bytes) or isinstance(new_id, bytearray):
             if len(new_id) != 4:
                 LOGGER.warning(f"Invalid object ID length {len(new_id)}")
                 raise ValueError

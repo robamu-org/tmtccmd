@@ -87,7 +87,7 @@ class TmTcPrinter:
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
         # Handle special packet types
-        if packet.service == PusServices.SERVICE_1_VERIFICATION:
+        if packet_if.service == PusServices.SERVICE_1_VERIFICATION:
             self.handle_service_1_packet(packet_if=packet_if)
         if packet_if.service == PusServices.SERVICE_3_HOUSEKEEPING:
             self.handle_service_3_packet(packet_if=packet_if)
