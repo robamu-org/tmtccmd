@@ -8,7 +8,7 @@ import struct
 from spacepackets.ecss.definitions import PusServices
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
-from tmtccmd.pus.service_5_event import Srv5Subservices, Srv5Severity
+from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
 from tmtccmd.pus.obj_id import ObjectId
 from tmtccmd.utility.logger import get_console_logger
 
