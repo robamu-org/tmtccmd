@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, Dict
 import struct
 from tmtccmd.utility.logger import get_console_logger
 
@@ -7,8 +7,15 @@ LOGGER = get_console_logger()
 
 
 class ObjectId:
-    def __init__(self, object_id: int):
+    def __init__(self, object_id: int, name: str = ""):
         self.id = object_id
+        self.name = ""
+
+    def __str__(self):
+        return f"Object ID 0x{self.as_bytes} with name {self.name}"
+
+    def __repr__(self):
+        return self.id
 
     @classmethod
     def from_bytes(cls, obj_id_as_bytes: bytearray) -> ObjectId:
@@ -45,3 +52,6 @@ class ObjectId:
     @property
     def as_string(self) -> str:
         return f"0x{self._object_id:08x}"
+
+
+ObjectIdDictT = Dict[bytes, ObjectId]
