@@ -1,5 +1,5 @@
 import enum
-from typing import Optional
+from typing import Optional, Dict
 
 
 class Severity(enum.IntEnum):
@@ -35,3 +35,6 @@ class EventInfo:
     severity: str = ""
     info: str = ""
     file_location: str = ""
+
+
+EventDictT = Dict[int, EventInfo]
