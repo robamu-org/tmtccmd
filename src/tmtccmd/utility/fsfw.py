@@ -4,28 +4,7 @@ import copy
 from typing import Optional
 from tmtccmd.pus.obj_id import ObjectId, ObjectIdDictT
 from tmtccmd.pus.service_5_event import EventInfo, str_to_severity, EventDictT
-
-
-class RetvalInfo:
-    def __init__(self):
-        self.id: int = 0
-        self.name: str = ""
-        self.info: str = ""
-        self.if_name: str = ""
-
-    def id_as_hex(self) -> str:
-        return f"{self.id:#04x}"
-
-    @property
-    def subsystem_id(self) -> int:
-        return (self.id >> 8) & 0xFF
-
-    @property
-    def unique_id(self) -> int:
-        return self.id & 0xFF
-
-
-RetvalDictT = Dict[int, RetvalInfo]
+from tmtccmd.utility.retval import RetvalDictT, RetvalInfo
 
 
 def parse_fsfw_objects_csv(csv_file: str) -> Optional[ObjectIdDictT]:
@@ -62,7 +41,7 @@ def parse_fsfw_events_csv(csv_file: str) -> Optional[EventDictT]:
         return None
 
 
-def parse_fsfw_returnvalues_csv(csv_file: str) -> OptionalR[RetvalDictT]:
+def parse_fsfw_returnvalues_csv(csv_file: str) -> Optional[RetvalDictT]:
     if os.path.exists(csv_file):
         retval_dict = dict()
         with open(csv_file) as csvfile:
