@@ -15,7 +15,7 @@ class ObjectId:
         return f"Object ID 0x{self.as_bytes} with name {self.name}"
 
     def __repr__(self):
-        return self.id
+        return self.as_string
 
     @classmethod
     def from_bytes(cls, obj_id_as_bytes: bytearray) -> ObjectId:
