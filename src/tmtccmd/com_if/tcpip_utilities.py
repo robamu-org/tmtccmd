@@ -106,6 +106,7 @@ def determine_tcpip_address(
 
 
 def prompt_ip_address(type_str: str) -> EthernetAddressT:
+    """Prompt a valid IP address from the user"""
     address_tuple = ()
     while True:
         ip_address = input(
