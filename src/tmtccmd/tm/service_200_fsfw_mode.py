@@ -5,10 +5,11 @@ import struct
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
 from tmtccmd.pus.definitions import CustomPusServices
+from tmtccmd.pus.service_200_fsfw_mode import Subservices
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
-class Service200Tm(PusTmBase, PusTmInfoBase):
+class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     def __init__(
         self,
         subservice_id: int,
@@ -60,24 +61,27 @@ class Service200Tm(PusTmBase, PusTmInfoBase):
         self.__init_without_base(instance=self)
 
     @staticmethod
-    def __init_without_base(instance: Service200Tm):
+    def __init_without_base(instance: Service200FsfwTm):
         tm_data = instance.tm_data
         instance.object_id = tm_data[0:4]
-        if instance.subservice == 7:
+        if instance.subservice == Subservices.REPLY_CANT_REACH_MODE:
             instance.append_packet_info(": Can't reach mode")
             instance.is_cant_reach_mode_reply = True
             instance.return_value = tm_data[4] << 8 | tm_data[5]
-        elif instance.subservice == 6 or instance.subservice == 8:
+        elif (
+            instance.subservice == Subservices.REPLY_MODE_REPLY
+            or instance.subservice == Subservices.REPLY_WRONG_MODE_REPLY
+        ):
             instance.is_mode_reply = True
-            if instance.subservice == 8:
+            if instance.subservice == Subservices.REPLY_WRONG_MODE_REPLY:
                 instance.append_packet_info(": Wrong Mode")
-            elif instance.subservice == 6:
+            elif instance.subservice == Subservices.REPLY_MODE_REPLY:
                 instance.append_packet_info(": Mode reached")
             instance.mode = struct.unpack("!I", tm_data[4:8])[0]
             instance.submode = tm_data[8]
 
     @classmethod
-    def __empty(cls) -> Service200Tm:
+    def __empty(cls) -> Service200FsfwTm:
         return cls(subservice_id=0, object_id=bytearray(4))
 
     @classmethod
@@ -85,7 +89,7 @@ class Service200Tm(PusTmBase, PusTmInfoBase):
         cls,
         raw_telemetry: bytearray,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service200Tm:
+    ) -> Service200FsfwTm:
         service_200_tm = cls.__empty()
         service_200_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
