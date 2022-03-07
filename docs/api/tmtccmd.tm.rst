@@ -39,7 +39,7 @@ tmtccmd.tm.service\_1\_verification module
 tmtccmd.tm.service\_200\_mode module
 -----------------------------------------
 
-.. automodule:: tmtccmd.tm.service_200_mode
+.. automodule:: tmtccmd.tm.service_200_fsfw_mode
    :members:
    :undoc-members:
    :show-inheritance:
