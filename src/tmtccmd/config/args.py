@@ -135,7 +135,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         type=float,
         help="TM Timeout when listening to verification sequence."
         " Default: 5 seconds",
-        default=5.0,
+        default=None,
     )
     arg_parser.add_argument(
         "--nl",
@@ -245,8 +245,6 @@ def handle_unspecified_args(args) -> None:
     from tmtccmd.config.hook import get_global_hook_obj
     from tmtccmd.config.definitions import CoreModeStrings
 
-    if args.tm_timeout is None:
-        args.tm_timeout = 5.0
     if args.mode is None:
         args.mode = CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
     service_op_code_dict = dict()
@@ -280,7 +278,8 @@ def handle_unspecified_args(args) -> None:
                     args.listener = True
                 else:
                     LOGGER.warning(
-                        "Detected op code listerner mode configuration but is overriden by CLI argument"
+                        "Detected op code listerner mode configuration but is "
+                        "overriden by CLI argument"
                     )
             timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
             if timeout is not None:
@@ -293,6 +292,8 @@ def handle_unspecified_args(args) -> None:
                     LOGGER.warning(
                         "Detected op code timeout configuration but is overriden by CLI argument"
                     )
+    if args.tm_timeout is None:
+        args.tm_timeout = 5.0
     if args.listener is None:
         args.listener = False
 
