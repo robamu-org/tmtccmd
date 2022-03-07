@@ -30,7 +30,6 @@ def create_communication_interface_default(
     :param com_if_key:
     :param tmtc_printer:
     :param json_cfg_path:
-    TODO: List of packet IDs?
     :param space_packet_id: Can be used by communication interfaces as a start marker (e.g. TCP)
     :return:
     """
