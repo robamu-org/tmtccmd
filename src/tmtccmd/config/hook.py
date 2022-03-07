@@ -10,6 +10,8 @@ from tmtccmd.config.definitions import (
     DataReplyUnpacked,
 )
 from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.utility.retval import RetvalDictT
+from tmtccmd.pus.obj_id import ObjectIdDictT
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tc.definitions import TcQueueT
@@ -29,7 +31,7 @@ class TmTcHookBase:
         pass
 
     @abstractmethod
-    def get_object_ids(self) -> Dict[bytes, list]:
+    def get_object_ids(self) -> ObjectIdDictT:
         from tmtccmd.config.objects import get_core_object_ids
 
         """The user can specify an object ID dictionary here mapping object ID bytearrays to a
@@ -189,6 +191,10 @@ class TmTcHookBase:
         """
         return ""
 
+    def get_retval_dict(self) -> RetvalDictT:
+        LOGGER.info("No return value dictionary specified")
+        return dict()
+
 
 def get_global_hook_obj() -> Optional[TmTcHookBase]:
     """This function can be used to get the handle to the global hook object.
@@ -203,7 +209,7 @@ def get_global_hook_obj() -> Optional[TmTcHookBase]:
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
         if hook_obj_raw is None:
             LOGGER.error("Hook object is invalid!")
-            sys.exit(0)
+            return None
         return cast(TmTcHookBase, hook_obj_raw)
     except ImportError:
         LOGGER.exception("Issues importing modules to get global hook handle!")

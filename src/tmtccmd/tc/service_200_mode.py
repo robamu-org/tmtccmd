@@ -3,6 +3,7 @@
 """
 import enum
 import struct
+from tmtccmd.pus.service_200_fsfw_mode import Subservices
 
 
 class Modes(enum.IntEnum):
@@ -10,10 +11,6 @@ class Modes(enum.IntEnum):
     ON = 1
     NORMAL = 2
     RAW = 3
-
-
-class Subservices(enum.IntEnum):
-    SWITCH_MODE = 1
 
 
 def pack_mode_data(object_id: bytearray, mode: Modes, submode: int) -> bytearray:

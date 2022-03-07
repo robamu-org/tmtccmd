@@ -9,6 +9,7 @@ from spacepackets.util import get_printable_data_string, PrintFormats
 
 from tmtccmd.tm.service_8_fsfw_functional_cmd import Service8FsfwTm
 from tmtccmd.tm.service_5_event import Service5Tm
+from tmtccmd.pus.service_1_verification import Service1TMExtended
 from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
@@ -79,10 +80,6 @@ class TmTcPrinter:
         ):
             LOGGER.warning("Passed packet does not implement necessary interfaces!")
             return
-
-        if packet_if.service == PusServices.SERVICE_5_EVENT:
-            self.__handle_event_packet(cast(Service5Tm, packet_if))
-
         if self._display_mode == DisplayMode.SHORT:
             self.__handle_short_print(packet_if)
         else:
@@ -90,6 +87,8 @@ class TmTcPrinter:
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
         # Handle special packet types
+        if packet_if.service == PusServices.SERVICE_1_VERIFICATION:
+            self.handle_service_1_packet(packet_if=packet_if)
         if packet_if.service == PusServices.SERVICE_3_HOUSEKEEPING:
             self.handle_service_3_packet(packet_if=packet_if)
         if packet_if.service == PusServices.SERVICE_5_EVENT:
@@ -107,6 +106,28 @@ class TmTcPrinter:
             self.__print_buffer = f"TM Data:\n{tm_data_string}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
+
+    def handle_service_1_packet(self, packet_if: PusTmInterface):
+        from tmtccmd.config.hook import get_global_hook_obj
+
+        hook_obj = get_global_hook_obj()
+        if hook_obj is None:
+            LOGGER.warning("Hook object not set")
+            return
+        srv1_packet = cast(Service1TMExtended, packet_if)
+        retval_dict = hook_obj.get_retval_dict()
+        if srv1_packet.has_tc_error_code:
+            retval_info = retval_dict.get(srv1_packet.error_code)
+            if retval_info is None:
+                LOGGER.info(
+                    f"No returnvalue information found for error code {srv1_packet.error_code}"
+                )
+            else:
+                retval_info.name
+                LOGGER.info(
+                    f"Error Code information for code {srv1_packet.error_code}| "
+                    f"Name: {retval_info.name} | Info: {retval_info.info}"
+                )
 
     def handle_service_3_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
@@ -403,13 +424,6 @@ class TmTcPrinter:
             )
             self.__print_buffer = self.__print_buffer + info_if.get_source_data_string()
             LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
-
-    def __handle_event_packet(self, srv_5_tm: Service5Tm):
-        printout = srv_5_tm.get_custom_printout()
-        if printout != "":
-            self.__print_buffer += printout
-            LOGGER.info(printout)
             self.add_print_buffer_to_file_buffer()
 
     def print_string(self, string: str, add_cr_to_file_buffer: bool = False):

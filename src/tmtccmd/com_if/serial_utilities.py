@@ -16,6 +16,7 @@ LOGGER = get_console_logger()
 def determine_baud_rate(json_cfg_path: str) -> int:
     """Determine baud rate. Tries to read from JSON first. If the baud rate is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
+
     :return: Determined baud rate
     """
     baud_rate = 0
@@ -56,6 +57,7 @@ def determine_baud_rate(json_cfg_path: str) -> int:
 def determine_com_port(json_cfg_path: str) -> str:
     """Determine serial port. Tries to read from JSON first. If the com port is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
+
     :return: Determined serial port
     """
     reconfig_com_port = False

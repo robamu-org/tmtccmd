@@ -4,22 +4,6 @@ tmtccmd.utility package
 Submodules
 ----------
 
-tmtccmd.utility.conf\_util module
----------------------------------
-
-.. automodule:: tmtccmd.utility.conf_util
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.utility.dle\_encoder module
------------------------------------
-
-.. automodule:: tmtccmd.utility.dle_encoder
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.utility.exit\_handler module
 ------------------------------------
 
@@ -56,6 +40,14 @@ tmtccmd.utility.tmtc\_printer module
 ------------------------------------
 
 .. automodule:: tmtccmd.utility.tmtc_printer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.utility.conf\_util module
+---------------------------------
+
+.. automodule:: tmtccmd.utility.conf_util
    :members:
    :undoc-members:
    :show-inheritance:
