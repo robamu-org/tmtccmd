@@ -89,7 +89,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         service_5_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
-        service_5_tm.__init_without_base(instance=service_5_tm)
+        service_5_tm.__init_without_base(instance=service_5_tm, set_attrs_from_tm_data=True)
         return service_5_tm
 
     @abstractmethod
@@ -149,6 +149,6 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
             raise ValueError
         if set_attrs_from_tm_data:
             instance._event_id = struct.unpack(">H", tm_data[0:2])[0]
-            instance._object_id.from_bytes(tm_data[2:6])
+            instance._object_id = ObjectId.from_bytes(tm_data[2:6])
             instance._param_1 = struct.unpack(">I", tm_data[6:10])[0]
             instance._param_2 = struct.unpack(">I", tm_data[10:14])[0]
