@@ -2,6 +2,7 @@
 Argument parser modules for the TMTC commander core
 """
 import argparse
+import pprint
 import sys
 
 from prompt_toolkit.completion import WordCompleter
@@ -247,10 +248,8 @@ def handle_unspecified_args(args) -> None:
 
     if args.mode is None:
         args.mode = CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
-    service_op_code_dict = dict()
-    if args.service is None or args.op_code is None:
-        hook_obj = get_global_hook_obj()
-        service_op_code_dict = hook_obj.get_service_op_code_dictionary()
+    hook_obj = get_global_hook_obj()
+    service_op_code_dict = hook_obj.get_service_op_code_dictionary()
     if args.service is None:
         if args.mode == CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]:
             LOGGER.info("No service argument (-s) specified, prompting from user..")
@@ -261,7 +260,7 @@ def handle_unspecified_args(args) -> None:
                 args.op_code = prompt_op_code(
                     service_op_code_dict=service_op_code_dict, service=current_service
                 )
-    elif args.op_code is None:
+    elif args.op_code is not None:
         current_service = args.service
         args.op_code = prompt_op_code(
             service_op_code_dict=service_op_code_dict, service=current_service
