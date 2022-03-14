@@ -267,31 +267,33 @@ def handle_unspecified_args(args) -> None:
             service_op_code_dict=service_op_code_dict, service=current_service
         )
     if args.service is not None:
-        op_code_value = service_op_code_dict[args.service][1]
-        op_code_options = op_code_value[args.op_code][1]
-        if op_code_options is not None and isinstance(op_code_options, dict):
-            if op_code_options.get(OpCodeDictKeys.ENTER_LISTENER_MODE):
-                if args.listener is None:
-                    LOGGER.info(
-                        "Detected op code configuration: Enter listener mode after command"
-                    )
-                    args.listener = True
-                else:
-                    LOGGER.warning(
-                        "Detected op code listerner mode configuration but is "
-                        "overriden by CLI argument"
-                    )
-            timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
-            if timeout is not None:
-                if args.tm_timeout is None:
-                    LOGGER.info(
-                        f"Detected op code configuration: Set custom timeout {timeout}"
-                    )
-                    args.tm_timeout = timeout
-                else:
-                    LOGGER.warning(
-                        "Detected op code timeout configuration but is overriden by CLI argument"
-                    )
+        service_entry = service_op_code_dict.get(args.service)
+        if service_entry is not None:
+            op_code_value = service_op_code_dict[args.service][1]
+            op_code_options = op_code_value[args.op_code][1]
+            if op_code_options is not None and isinstance(op_code_options, dict):
+                if op_code_options.get(OpCodeDictKeys.ENTER_LISTENER_MODE):
+                    if args.listener is None:
+                        LOGGER.info(
+                            "Detected op code configuration: Enter listener mode after command"
+                        )
+                        args.listener = True
+                    else:
+                        LOGGER.warning(
+                            "Detected op code listerner mode configuration but is "
+                            "overriden by CLI argument"
+                        )
+                timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
+                if timeout is not None:
+                    if args.tm_timeout is None:
+                        LOGGER.info(
+                            f"Detected op code configuration: Set custom timeout {timeout}"
+                        )
+                        args.tm_timeout = timeout
+                    else:
+                        LOGGER.warning(
+                            "Detected op code timeout configuration but is overriden by CLI argument"
+                        )
     if args.tm_timeout is None:
         args.tm_timeout = 5.0
     if args.listener is None:
