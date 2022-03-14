@@ -285,17 +285,18 @@ def handle_unspecified_args(args) -> None:
                         "Detected op code listerner mode configuration but is "
                         "overriden by CLI argument"
                     )
-        timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
-        if timeout is not None:
-            if args.tm_timeout is None:
-                LOGGER.info(
-                    f"Detected op code configuration: Set custom timeout {timeout}"
-                )
-                args.tm_timeout = timeout
-            else:
-                LOGGER.warning(
-                    "Detected op code timeout configuration but is overriden by CLI argument"
-                )
+        if op_code_options is not None:
+            timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
+            if timeout is not None:
+                if args.tm_timeout is None:
+                    LOGGER.info(
+                        f"Detected op code configuration: Set custom timeout {timeout}"
+                    )
+                    args.tm_timeout = timeout
+                else:
+                    LOGGER.warning(
+                        "Detected op code timeout configuration but is overriden by CLI argument"
+                    )
     if args.tm_timeout is None:
         args.tm_timeout = 5.0
     if args.listener is None:
