@@ -364,20 +364,22 @@ class TmTcPrinter:
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
             return
-        headers_list = header
         self.__print_buffer = ""
-        if len(header) > 10:
-            headers_list = self.chunks(header, 10)
-        for header in headers_list:
-            self.__print_buffer += str(header)
+        headers_list = self.chunks(header, 10)
+        if len(headers_list) == 1:
+            self.__print_buffer = str(header)
+        else:
+            for idx, header in enumerate(headers_list):
+                self.__print_buffer += f"Part {idx + 1}: {header}"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
         self.__print_buffer = ""
-        contents_list = content
-        if len(content) > 10:
-            contents_list = self.chunks(content, 10)
-        for content in contents_list:
-            self.__print_buffer += str(content)
+        contents_list = self.chunks(content, 10)
+        if len(contents_list) == 1:
+            self.__print_buffer = str(content)
+        else:
+            for content in contents_list:
+                self.__print_buffer += f"Part {idx + 1}: {header}"
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
