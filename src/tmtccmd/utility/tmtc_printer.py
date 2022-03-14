@@ -2,7 +2,7 @@
 """
 import os
 import enum
-from typing import cast
+from typing import cast, List
 
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.util import get_printable_data_string, PrintFormats
@@ -341,8 +341,8 @@ class TmTcPrinter:
         content_type: HkContentType,
         object_id: int,
         set_id: int,
-        header: list,
-        content: list,
+        header: List,
+        content: List,
     ):
         """This function pretty prints HK packets with a given header and content list
         :param content_type: Type of content for HK packet
@@ -360,14 +360,24 @@ class TmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
         if len(content) == 0 or len(header) == 0:
-            self.__print_buffer = "Content and header list empty.."
+            self.__print_buffer = "Content and header list empty"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
             return
-        self.__print_buffer = str(header)
+        headers_list = header
+        self.__print_buffer = ""
+        if len(header) > 10:
+            headers_list = self.chunks(header, 10)
+        for header in headers_list:
+            self.__print_buffer += str(header)
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = str(content)
+        self.__print_buffer = ""
+        contents_list = content
+        if len(content) >= 10:
+            contents_list = self.chunks(content, 10)
+        for content in contents_list:
+            self.__print_buffer += str(content)
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
@@ -578,3 +588,9 @@ class TmTcPrinter:
         """
         string = get_printable_data_string(print_format=PrintFormats.HEX, data=data)
         LOGGER.info(string)
+
+    @staticmethod
+    def chunks(lst: List, n) -> List[List]:
+        """Yield successive n-sized chunks from lst."""
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
