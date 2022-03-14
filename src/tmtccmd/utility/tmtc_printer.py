@@ -374,7 +374,7 @@ class TmTcPrinter:
         self.add_print_buffer_to_file_buffer()
         self.__print_buffer = ""
         contents_list = content
-        if len(content) >= 10:
+        if len(content) > 10:
             contents_list = self.chunks(content, 10)
         for content in contents_list:
             self.__print_buffer += str(content)
