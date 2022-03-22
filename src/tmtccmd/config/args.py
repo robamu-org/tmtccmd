@@ -6,6 +6,7 @@ import pprint
 import sys
 
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
 from tmtccmd.config.definitions import (
     CoreModeList,
@@ -337,7 +338,9 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
                 )
         print(f" {horiz_line}")
         service_string = prompt_toolkit.prompt(
-            "Please select a service by specifying the key: ", completer=srv_completer
+            "Please select a service by specifying the key: ",
+            completer=srv_completer,
+            complete_style=CompleteStyle.READLINE_LIKE,
         )
         if service_string in service_op_code_dict:
             LOGGER.info(f"Selected service: {service_string}")
@@ -380,6 +383,7 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
             op_code_string = prompt_toolkit.prompt(
                 "Please select an operation code by specifying the key: ",
                 completer=completer,
+                complete_style=CompleteStyle.READLINE_LIKE,
             )
             if op_code_string in op_code_dict:
                 LOGGER.info(f"Selected op code: {op_code_string}")
