@@ -37,7 +37,7 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
             logger=logger,
             milliseconds=True,
             fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] "
-                "%(levelname)s %(message)s",
+            "%(levelname)s %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     except ImportError:

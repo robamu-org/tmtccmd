@@ -1,3 +1,5 @@
+import shutil
+import os
 from unittest import TestCase
 
 from tmtccmd.runner import initialize_tmtc_commander
@@ -7,16 +9,31 @@ from tmtccmd.tm.service_5_event import Srv5Subservices
 from spacepackets.ccsds.time import CdsShortTimestamp
 from tmtccmd.pus.service_17_test import pack_service_17_ping_command
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter, DisplayMode
-from tmtccmd.logging import get_console_logger
+from tmtccmd.logging import get_console_logger, LOG_DIR
 from tmtccmd.config.globals import update_global, CoreGlobalIds
+from tmtccmd.logging.pus import log_pus_tc, log_pus_tm, get_current_file_name
 
 from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
 
 
-class TestPrinter(TestCase):
+class TestPrintersLoggers(TestCase):
     def setUp(self):
+        shutil.rmtree(LOG_DIR)
+        os.mkdir(LOG_DIR)
         self.tmtc_printer = FsfwTmTcPrinter()
         self.logger = get_console_logger()
+
+    def test_pus_loggers(self):
+        pus_tc = pack_service_17_ping_command(ssc=0)
+        file_name = get_current_file_name()
+        log_pus_tc(pus_tc.pack())
+        pus_tm = Service1TMExtended(
+            subservice=1, time=CdsShortTimestamp.init_from_current_time()
+        )
+        log_pus_tm(pus_tm.pack())
+        log_pus_tc(pus_tc.pack(), srv_subservice=(pus_tc.service, pus_tc.subservice))
+        log_pus_tm(pus_tm.pack(), srv_subservice=(pus_tm.service, pus_tm.subservice))
+        self.assertTrue(os.path.exists(file_name))
 
     def test_print_functions(self):
         self.assertTrue(self.tmtc_printer.get_display_mode() == DisplayMode.LONG)
@@ -79,3 +96,4 @@ class TestPrinter(TestCase):
     def tearDown(self) -> None:
         """Reset the hook object"""
         update_global(CoreGlobalIds.TMTC_HOOK, None)
+        shutil.rmtree(LOG_DIR)

@@ -13,8 +13,8 @@ from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Srv17Subservices(enum.IntEnum):
-    PING_CMD = (1,)
-    PING_REPLY = (2,)
+    PING_CMD = 1
+    PING_REPLY = 2
     GEN_EVENT = 128
 
 
@@ -72,7 +72,7 @@ def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
     if apid == -1:
         apid = get_default_tc_apid()
     return PusTelecommand(
-        service=17, subservice=Srv17Subservices.PING_CMD, ssc=ssc, apid=apid
+        service=17, subservice=Srv17Subservices.PING_CMD.value, ssc=ssc, apid=apid
     )
 
 

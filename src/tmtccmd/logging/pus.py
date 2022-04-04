@@ -1,6 +1,7 @@
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 from datetime import datetime
+from tmtccmd.logging import LOG_DIR
 from logging.handlers import RotatingFileHandler
 
 FILE_BASE_NAME = "pus-log"
@@ -14,20 +15,44 @@ def create_pus_file_logger() -> logging.Logger:
     :return:
     """
     global __PUS_LOGGER
-    file_name = f"{FILE_BASE_NAME}_{datetime.now().date()}.txt"
+    file_name = get_current_file_name()
     if __PUS_LOGGER is None:
         __PUS_LOGGER = logging.getLogger(LOGGER_NAME)
         handler = RotatingFileHandler(filename=file_name, maxBytes=4096, backupCount=10)
         formatter = logging.Formatter(
-            fmt="(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+            fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
         handler.setFormatter(fmt=formatter)
         __PUS_LOGGER.addHandler(handler)
+    __PUS_LOGGER.info(
+        f"tmtccmd started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    )
     return __PUS_LOGGER
 
 
-def log_pus_packet(packet: bytes):
+def get_current_file_name() -> str:
+    return f"{LOG_DIR}/{FILE_BASE_NAME}_{datetime.now().date()}.txt"
+
+
+def log_pus_tc(packet: bytes, srv_subservice: Optional[Tuple[int, int]] = None):
     global __PUS_LOGGER
     if __PUS_LOGGER is None:
-        return
-    __PUS_LOGGER.info(f"hex [{packet.hex(sep=',')}]")
+        __PUS_LOGGER = create_pus_file_logger()
+    type_str = "TC"
+    if srv_subservice is not None:
+        type_str += f" [{srv_subservice[0], srv_subservice[1]}"
+
+    logged_msg = f"{type_str} | hex [{packet.hex(sep=',')}]"
+    __PUS_LOGGER.info(logged_msg)
+
+
+def log_pus_tm(packet: bytes, srv_subservice: Optional[Tuple[int, int]] = None):
+    global __PUS_LOGGER
+    if __PUS_LOGGER is None:
+        __PUS_LOGGER = create_pus_file_logger()
+    type_str = "TM"
+    if srv_subservice is not None:
+        type_str += f" [{srv_subservice[0], srv_subservice[1]}"
+
+    logged_msg = f"{type_str} | hex [{packet.hex(sep=',')}]"
+    __PUS_LOGGER.info(logged_msg)
