@@ -127,7 +127,7 @@ def get_console_logger() -> logging.Logger:
     return logger
 
 
-def init_console_logger(log_level: int = logging.DEBUG) -> logging.Logger:
+def init_console_logger(log_level: int = logging.INFO) -> logging.Logger:
     global __CONSOLE_LOGGER_SET_UP
     if not __CONSOLE_LOGGER_SET_UP:
         __CONSOLE_LOGGER_SET_UP = True
