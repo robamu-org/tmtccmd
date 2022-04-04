@@ -12,6 +12,7 @@ from tmtccmd.tm.service_5_event import Service5Tm
 from tmtccmd.pus.service_1_verification import Service1TMExtended
 from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
+from tmtccmd.pus import ObjectId
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.definitions import PusIFQueueT
 from tmtccmd.tm.service_3_base import Service3Base, HkContentType
@@ -123,7 +124,6 @@ class TmTcPrinter:
                     f"No returnvalue information found for error code {srv1_packet.error_code}"
                 )
             else:
-                retval_info.name
                 LOGGER.info(
                     f"Error Code information for code {srv1_packet.error_code}| "
                     f"Name: {retval_info.name} | Info: {retval_info.info}"
@@ -140,7 +140,7 @@ class TmTcPrinter:
             LOGGER.warning("Hook object not set")
             return
         srv3_packet = cast(Service3Base, packet_if)
-        if srv3_packet.custom_hk_handling:
+        if srv3_packet.has_custom_hk_handling:
             reply_unpacked = hook_obj.handle_service_3_housekeeping(
                 object_id=bytes(),
                 set_id=srv3_packet.set_id,
@@ -154,9 +154,13 @@ class TmTcPrinter:
                 hk_data=packet_if.tm_data[8:],
                 service3_packet=srv3_packet,
             )
+        obj_id_dict = hook_obj.get_object_ids()
+        obj_id = obj_id_dict.get(srv3_packet.object_id.as_bytes)
+        if obj_id is None:
+            obj_id = srv3_packet.object_id
         if packet_if.subservice == 25 or packet_if.subservice == 26:
             self.handle_hk_print(
-                object_id=srv3_packet.object_id.as_int,
+                object_id=obj_id,
                 set_id=srv3_packet.set_id,
                 hk_header=reply_unpacked.header_list,
                 hk_content=reply_unpacked.content_list,
@@ -165,7 +169,7 @@ class TmTcPrinter:
             )
         if packet_if.subservice == 10 or packet_if.subservice == 12:
             self.handle_hk_definition_print(
-                object_id=srv3_packet.object_id.id,
+                object_id=obj_id,
                 set_id=srv3_packet.set_id,
                 srv3_packet=srv3_packet,
             )
@@ -233,7 +237,7 @@ class TmTcPrinter:
 
     def handle_hk_print(
         self,
-        object_id: int,
+        object_id: ObjectId,
         set_id: int,
         hk_header: list,
         hk_content: list,
@@ -260,7 +264,7 @@ class TmTcPrinter:
         self.__print_validity_buffer(validity_buffer=validity_buffer, num_vars=num_vars)
 
     def handle_hk_definition_print(
-        self, object_id: int, set_id: int, srv3_packet: Service3Base
+        self, object_id: ObjectId, set_id: int, srv3_packet: Service3Base
     ):
         """
         :param object_id:
@@ -268,10 +272,7 @@ class TmTcPrinter:
         :param srv3_packet:
         :return:
         """
-        self.__print_buffer = (
-            f"HK Definition from Object ID {object_id:#010x} and set ID {set_id}:"
-        )
-        def_header, def_list = srv3_packet.get_hk_definitions_list()
+        def_header, def_list = srv3_packet.hk_definitions_list
         self.__print_hk(
             content_type=HkContentType.DEFINITIONS,
             object_id=object_id,
@@ -339,7 +340,7 @@ class TmTcPrinter:
     def __print_hk(
         self,
         content_type: HkContentType,
-        object_id: int,
+        object_id: ObjectId,
         set_id: int,
         header: List,
         content: List,
@@ -355,33 +356,33 @@ class TmTcPrinter:
         else:
             print_prefix = "Unknown housekeeping data"
         self.__print_buffer = (
-            f"{print_prefix} from Object ID {object_id:#010x} with Set ID {set_id}"
+            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_string}) with "
+            f"Set ID {set_id}"
         )
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
+        self.__print_buffer = ""
+        headers_list = list(self.chunks(header, 8))
+        contents_list = list(self.chunks(content, 8))
         if len(content) == 0 or len(header) == 0:
             self.__print_buffer = "Content and header list empty"
-            LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
             return
-        self.__print_buffer = ""
-        headers_list = self.chunks(header, 10)
-        if len(headers_list) == 1:
+        elif len(headers_list) == 1 and len(contents_list) == 1:
             self.__print_buffer = str(header)
-        else:
-            for idx, header in enumerate(headers_list):
-                self.__print_buffer += f"Part {idx + 1}: {header}"
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = ""
-        contents_list = self.chunks(content, 10)
-        if len(contents_list) == 1:
+            print(self.__print_buffer)
+            self.add_print_buffer_to_file_buffer()
+            self.__print_buffer = ""
             self.__print_buffer = str(content)
+            print(self.__print_buffer)
+            self.add_print_buffer_to_file_buffer()
         else:
-            for content in contents_list:
-                self.__print_buffer += f"Part {idx + 1}: {header}"
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
+            zipped_list = zip(headers_list, contents_list)
+            for idx, header_content_tuple in enumerate(zipped_list):
+                self.__print_buffer += f"Part {idx + 1}: {header_content_tuple[0]}\n" \
+                                       f"Content: {header_content_tuple[1]}"
+                print(self.__print_buffer)
+                self.add_print_buffer_to_file_buffer()
+                self.__print_buffer = ""
 
     def __print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
         """
