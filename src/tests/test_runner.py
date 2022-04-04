@@ -13,7 +13,7 @@ from tests.hook_obj_mock import create_hook_mock
 class TestTmtcRunner(TestCase):
     def test_tmtc_runner(self):
         hook_base = create_hook_mock()
-        tm_handler = CcsdsTmHandler(tmtc_printer=None)
+        tm_handler = CcsdsTmHandler()
         backend_mock = create_backend_mock(tm_handler=tm_handler)
         initialize_tmtc_commander(hook_object=hook_base)
         run_tmtc_commander(False, False, True, tmtc_backend=backend_mock)
