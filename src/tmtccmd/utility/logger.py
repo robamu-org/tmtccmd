@@ -46,7 +46,9 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
 
 # Custom formatter. Allows different strings for info, error and debug output
 class CustomTmtccmdFormatter(ColoredFormatter):
-    def __init__(self, info_fmt: str, dbg_fmt: str, err_fmt: str, warn_fmt: str, datefmt=None):
+    def __init__(
+        self, info_fmt: str, dbg_fmt: str, err_fmt: str, warn_fmt: str, datefmt=None
+    ):
         self.err_fmt = err_fmt
         self.info_fmt = info_fmt
         self.dbg_fmt = dbg_fmt
