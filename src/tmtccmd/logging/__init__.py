@@ -36,7 +36,8 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
             level="INFO",
             logger=logger,
             milliseconds=True,
-            fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] %(levelname)s %(message)s",
+            fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] "
+                "%(levelname)s %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     except ImportError:
@@ -103,16 +104,11 @@ def set_up_colorlog_logger(logger: logging.Logger):
 
     console_handler = StreamHandler()
 
-    try:
-        error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
-        )
-    except FileNotFoundError:
-        os.mkdir("log")
-        error_file_handler = logging.FileHandler(
-            filename=f"log/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
-        )
-
+    if not os.path.exists(LOG_DIR):
+        os.mkdir(LOG_DIR)
+    error_file_handler = logging.FileHandler(
+        filename=f"{LOG_DIR}/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
+    )
     error_file_handler.setLevel(level=logging.WARNING)
     error_file_handler.setFormatter(file_format)
     console_handler.setFormatter(custom_formatter)
@@ -137,3 +133,7 @@ def init_console_logger(log_level: int = logging.DEBUG) -> logging.Logger:
         __CONSOLE_LOGGER_SET_UP = True
         return __setup_tmtc_console_logger(log_level=log_level)
     return get_console_logger()
+
+
+def build_log_file_name(base_name: str):
+    return f"{LOG_DIR}/{base_name}"
