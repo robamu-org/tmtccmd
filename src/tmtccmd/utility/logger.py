@@ -44,12 +44,13 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
         print("Please install coloredlogs package first")
 
 
-# Custom formatter
+# Custom formatter. Allows different strings for info, error and debug output
 class CustomTmtccmdFormatter(ColoredFormatter):
-    def __init__(self, info_fmt: str, dbg_fmt: str, err_fmt: str, datefmt=None):
+    def __init__(self, info_fmt: str, dbg_fmt: str, err_fmt: str, warn_fmt: str, datefmt=None):
         self.err_fmt = err_fmt
         self.info_fmt = info_fmt
         self.dbg_fmt = dbg_fmt
+        self.warn_fmt = warn_fmt
         super().__init__(fmt="%(levelno)d: %(msg)s", datefmt=datefmt, style="%")
 
     def format(self, record):
@@ -67,6 +68,9 @@ class CustomTmtccmdFormatter(ColoredFormatter):
 
         elif record.levelno == logging.ERROR:
             self._style._fmt = self.err_fmt
+
+        elif record.levelno == logging.WARNING:
+            self._style._fmt = self.warn_fmt
 
         # Call the original formatter class to do the grunt work
         result = logging.Formatter.format(self, record)
@@ -88,6 +92,7 @@ def set_up_colorlog_logger(logger: logging.Logger):
         info_fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s",
         dbg_fmt=dbg_fmt,
         err_fmt=dbg_fmt,
+        warn_fmt=dbg_fmt,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     file_format = logging.Formatter(
