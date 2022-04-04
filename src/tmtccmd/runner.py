@@ -26,7 +26,7 @@ from tmtccmd.core.globals_manager import (
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
 

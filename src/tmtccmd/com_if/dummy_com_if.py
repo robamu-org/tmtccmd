@@ -10,7 +10,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.pus.service_1_verification import Service1TMExtended
 from tmtccmd.pus.service_17_test import Srv17Subservices, Service17TMExtended
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()

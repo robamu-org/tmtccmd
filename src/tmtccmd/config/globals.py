@@ -3,7 +3,7 @@ import collections.abc
 import pprint
 from typing import Union, List, Dict, Optional
 
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.conf_util import check_args_in_dict, print_core_globals
 from spacepackets.ecss.conf import (
     PusVersion,

@@ -3,7 +3,7 @@ from spacepackets.ecss.tm import PusTelemetry
 from tmtccmd.tm.service_5_event import Service5Tm
 from tmtccmd.pus.service_1_verification import Service1TM
 from tmtccmd.pus.service_17_test import Service17TMExtended
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()

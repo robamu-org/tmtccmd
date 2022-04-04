@@ -9,7 +9,7 @@ from typing import Union, cast
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.sendreceive.sequential_sender_receiver import (
     SequentialCommandSenderReceiver,
 )

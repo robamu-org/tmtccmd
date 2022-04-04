@@ -4,7 +4,7 @@ from tmtccmd.tm.handler import TmHandler
 from tmtccmd.tm.definitions import TelemetryQueueT, TmTypes
 from tmtccmd.sendreceive.tm_listener import QueueListT
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 

@@ -11,7 +11,7 @@ from spacepackets.ecss.tm import PusVersion, PusTelemetry
 from spacepackets.ecss.service_1_verification import Service1TM
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 

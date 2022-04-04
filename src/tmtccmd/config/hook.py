@@ -9,7 +9,7 @@ from tmtccmd.config.definitions import (
     HkReplyUnpacked,
     DataReplyUnpacked,
 )
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
 from tmtccmd.pus.obj_id import ObjectIdDictT
 from tmtccmd.core.backend import TmTcHandler

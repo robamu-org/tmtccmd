@@ -8,7 +8,7 @@ import struct
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.tm.service_3_base import Service3Base
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from typing import Tuple, List
 
 

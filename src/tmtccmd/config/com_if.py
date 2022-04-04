@@ -11,7 +11,7 @@ from tmtccmd.com_if.serial_com_if import (
 )
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
 from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF, TcpCommunicationType
 

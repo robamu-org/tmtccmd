@@ -8,7 +8,7 @@ import select
 import socket
 from typing import Union
 
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter

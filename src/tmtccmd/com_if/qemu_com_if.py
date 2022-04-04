@@ -31,7 +31,7 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 LOGGER = get_console_logger()

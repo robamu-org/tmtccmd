@@ -14,7 +14,7 @@ from typing import Union, Optional, Tuple
 
 from spacepackets.ccsds.spacepacket import parse_space_packets
 
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT

@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime
-from tmtccmd.utility.logger import LOG_DIR
+from tmtccmd.logging import LOG_DIR
 
 BASE_FILE_NAME = "events"
 

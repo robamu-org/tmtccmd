@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.config.definitions import CoreGlobalIds
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 
 LOGGER = get_console_logger()

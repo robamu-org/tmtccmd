@@ -16,7 +16,7 @@ from tmtccmd.pus import ObjectId
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.definitions import PusIFQueueT
 from tmtccmd.tm.service_3_base import Service3Base, HkContentType
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 

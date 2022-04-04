@@ -1,7 +1,7 @@
 import signal
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 

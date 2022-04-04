@@ -15,7 +15,7 @@ from tmtccmd.pus.service_20_parameter import (
     CustomSubservices,
 )
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 

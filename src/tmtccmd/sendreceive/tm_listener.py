@@ -14,7 +14,7 @@ from enum import Enum
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
 
 from tmtccmd.tm.definitions import TelemetryQueueT, TelemetryListT, TmTypes
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.utility.conf_util import acquire_timeout
 

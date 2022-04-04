@@ -10,7 +10,7 @@ from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
 from tmtccmd.pus.obj_id import ObjectId
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 
 LOGGER = get_console_logger()

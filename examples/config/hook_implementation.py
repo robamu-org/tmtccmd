@@ -3,7 +3,7 @@ from typing import Union, Dict, Tuple
 
 from tmtccmd.config.definitions import ServiceOpCodeDictT
 from tmtccmd.config.hook import TmTcHookBase
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tc.definitions import TcQueueT

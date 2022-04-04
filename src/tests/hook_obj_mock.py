@@ -11,7 +11,7 @@ from tmtccmd.tm.service_3_base import Service3Base
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.config.hook import TmTcHookBase
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
