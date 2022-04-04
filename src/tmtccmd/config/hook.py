@@ -13,7 +13,7 @@ from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
 from tmtccmd.pus.obj_id import ObjectIdDictT
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.service_3_base import Service3Base
@@ -65,7 +65,7 @@ class TmTcHookBase:
 
     @abstractmethod
     def assign_communication_interface(
-        self, com_if_key: str, tmtc_printer: TmTcPrinter
+        self, com_if_key: str
     ) -> Optional[CommunicationInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
@@ -77,7 +77,6 @@ class TmTcHookBase:
 
         return create_communication_interface_default(
             com_if_key=com_if_key,
-            tmtc_printer=tmtc_printer,
             json_cfg_path=self.get_json_config_file_path(),
         )
 
@@ -150,30 +149,6 @@ class TmTcHookBase:
             "hook function"
         )
         return DataReplyUnpacked()
-
-    @staticmethod
-    def handle_service_3_housekeeping(
-        object_id: bytes, set_id: int, hk_data: bytearray, service3_packet: Service3Base
-    ) -> HkReplyUnpacked:
-        """This function is called when a Service 3 Housekeeping packet is received.
-
-        :param object_id: Byte representation of the object ID
-        :param set_id: Unique set ID of the HK reply
-        :param hk_data:     HK data. For custom HK handling, whole HK data will be passed here.
-                            Otherwise, a 8 byte SID consisting of the 4 byte object ID and 4 byte
-                            set ID will be assumed and the remaining packet after the first 4 bytes
-                            will be passed here.
-        :param service3_packet: Service 3 packet object
-        :return: Expects a tuple, consisting of two lists, a bytearray and an integer
-            The first list contains the header columns, the second list the list with
-            the corresponding values. The bytearray is the validity buffer, which is usually appended
-            at the end of the housekeeping packet. The last value is the number of parameters.
-        """
-        LOGGER.info(
-            "TmTcHookBase: No service 3 housekeeping data handling implemented yet in "
-            "handle_service_3_housekeeping hook function"
-        )
-        return HkReplyUnpacked()
 
     @staticmethod
     def handle_service_5_event(

@@ -4,13 +4,13 @@ from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.config.com_if import create_communication_interface_default
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter, DisplayMode
 from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList
 from tmtccmd.core.frontend_base import FrontendBase
 
 
 def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
-    tmtc_printer = TmTcPrinter(
+    tmtc_printer = FsfwTmTcPrinter(
         display_mode=DisplayMode.LONG, do_print_to_file=False, print_tc=True
     )
     com_if = create_communication_interface_default(

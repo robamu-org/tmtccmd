@@ -13,7 +13,7 @@ from tmtccmd.sendreceive.tm_listener import TmListener
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
 
 from tmtccmd.tc.definitions import PusTcTupleT
@@ -31,7 +31,7 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
+        tmtc_printer: FsfwTmTcPrinter,
         tm_listener: TmListener,
         tm_handler: CcsdsTmHandler,
         apid: int,

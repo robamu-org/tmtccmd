@@ -1,21 +1,11 @@
-"""
-Program: obsw_module_test.py
-Date: 01.11.2019
-Description: All functions related to TmTc Sending and Receiving, used by UDP client
-
-Manual:
-Set up the UDP client as specified in the header comment and use the unit testing mode
-
-A separate thread is used to listen for replies and send a new telecommand
-if the first reply has not been received.
-
+"""Base class for sender/receiver objects
 @author: R. Mueller
 """
 import time
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
@@ -36,7 +26,6 @@ class CommandSenderReceiver:
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
         tm_handler: CcsdsTmHandler,
         apid: int,
@@ -57,12 +46,6 @@ class CommandSenderReceiver:
         else:
             LOGGER.error("CommandSenderReceiver: Invalid communication interface!")
             raise TypeError("CommandSenderReceiver: Invalid communication interface!")
-
-        if isinstance(tmtc_printer, TmTcPrinter):
-            self._tmtc_printer = tmtc_printer
-        else:
-            LOGGER.error("CommandSenderReceiver: Invalid TMTC printer!")
-            raise TypeError("CommandSenderReceiver: Invalid TMTC printer!")
 
         if isinstance(tm_listener, TmListener):
             self._tm_listener = tm_listener
@@ -184,16 +167,15 @@ class CommandSenderReceiver:
             self._wait_start = time.time()
         # printout optimized for LOGGER and debugging
         elif queue_entry_first == QueueCommands.PRINT:
-            print_string = queue_entry_second
-            print()
-            self._tmtc_printer.print_string(print_string, True)
+            LOGGER.info(queue_entry_second)
         elif queue_entry_first == QueueCommands.RAW_PRINT:
-            print_string = queue_entry_second
-            self._tmtc_printer.print_string(print_string, False)
+            LOGGER.info(f"Raw command: {queue_entry_second.hex(sep=',')}")
         elif queue_entry_first == QueueCommands.EXPORT_LOG:
-            export_name = queue_entry_second
-            self._tmtc_printer.add_print_buffer_to_buffer_list()
-            self._tmtc_printer.print_to_file(export_name, True)
+            # TODO: User should be able to pass a log export handler which performs this task
+            # export_name = queue_entry_second
+            # self._tmtc_printer.add_print_buffer_to_buffer_list()
+            # self._tmtc_printer.print_to_file(export_name, True)
+            LOGGER.warning("Export of TCs to log not implemented yet")
         elif queue_entry_first == QueueCommands.SET_TIMEOUT:
             self._tm_timeout = queue_entry_second
         else:
@@ -227,14 +209,3 @@ class CommandSenderReceiver:
                 # todo: we could also stop sending and clear the TC queue
                 self._reply_received = True
         time.sleep(0.5)
-
-    # TODO: Move to TMTC printer to decouple this module?
-    # def print_tm_queue(self, tm_queue: TelemetryQueueT):
-    #    while tm_queue:
-    #        try:
-    #            tm_packet_list = tm_queue.pop()
-    #            for tm_packet in tm_packet_list:
-    #                telemetry = PusTelemetry(tm_packet)
-    #                self._tmtc_printer.print_telemetry()
-    #        except AttributeError as e:
-    #            LOGGER.exception("CommandSenderReceiver Exception: Invalid queue entry. Traceback:", e)

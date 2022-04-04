@@ -18,7 +18,7 @@ from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT
 from tmtccmd.utility.conf_util import acquire_timeout
 
@@ -54,7 +54,6 @@ class TcpIpTcpComIF(CommunicationInterface):
         send_address: EthernetAddressT,
         max_recv_size: int,
         max_packets_stored: int = 50,
-        tmtc_printer: Union[None, TmTcPrinter] = None,
         init_mode: int = CoreModeList.LISTENER_MODE,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP
@@ -67,7 +66,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         :param tm_timeout:              Timeout in seconds
         :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
         """
-        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+        super().__init__(com_if_key=com_if_key)
         self.tm_timeout = tm_timeout
         self.com_type = com_type
         self.space_packet_ids = space_packet_ids

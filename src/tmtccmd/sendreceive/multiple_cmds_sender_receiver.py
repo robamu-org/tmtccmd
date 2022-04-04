@@ -10,7 +10,7 @@ from tmtccmd.sendreceive.sequential_sender_receiver import (
     SequentialCommandSenderReceiver,
 )
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.utility.tmtc_printer import get_console_logger
@@ -28,7 +28,7 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
+        tmtc_printer: FsfwTmTcPrinter,
         tc_queue: Deque,
         tm_listener: TmListener,
         wait_intervals: list,

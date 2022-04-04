@@ -88,7 +88,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ):
         service_8_tm = cls.__empty()

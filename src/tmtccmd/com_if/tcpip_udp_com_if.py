@@ -11,7 +11,7 @@ from typing import Union
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT, CoreModeList
 
 LOGGER = get_console_logger()
@@ -34,7 +34,6 @@ class TcpIpUdpComIF(CommunicationInterface):
         send_address: EthernetAddressT,
         max_recv_size: int,
         recv_addr: Union[None, EthernetAddressT] = None,
-        tmtc_printer: Union[None, TmTcPrinter] = None,
         init_mode: int = CoreModeList.LISTENER_MODE,
     ):
         """Initialize a communication interface to send and receive UDP datagrams.
@@ -45,7 +44,7 @@ class TcpIpUdpComIF(CommunicationInterface):
         :param recv_addr:
         :param tmtc_printer:        Printer instance, can be passed optionally to allow packet debugging
         """
-        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+        super().__init__(com_if_key=com_if_key)
         self.tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
         self.udp_socket = None

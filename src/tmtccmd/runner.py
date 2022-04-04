@@ -26,7 +26,7 @@ from tmtccmd.core.globals_manager import (
 from tmtccmd.core.object_id_manager import insert_object_ids
 from tmtccmd.config.args import parse_input_arguments
 from tmtccmd.config.objects import get_core_object_ids
-from tmtccmd.utility.logger import set_tmtc_console_logger, get_console_logger
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.utility.conf_util import AnsiColors
 
 
@@ -158,8 +158,6 @@ def __set_up_tmtc_commander(
     from tmtccmd.config.hook import TmTcHookBase
     from typing import cast
 
-    set_tmtc_console_logger()
-
     # First, we check whether a hook object was passed to the TMTC commander. This hook object
     # encapsulates control of the commnader core so it is required for proper functioning
     # of the commander core.
@@ -253,14 +251,13 @@ def get_default_tmtc_backend(
     hook_obj: TmTcHookBase, tm_handler: TmHandler, json_cfg_path: str
 ):
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.utility.tmtc_printer import TmTcPrinter
+    from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
     from tmtccmd.sendreceive.tm_listener import TmListener
     from typing import cast
 
     service, op_code, com_if_id, mode = __get_backend_init_variables()
     display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
     print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
-    tmtc_printer = TmTcPrinter(display_mode, print_to_file, True)
     if tm_handler is None:
         LOGGER.warning(
             "No TM Handler specified! Make sure to specify at least one TM handler"
@@ -269,13 +266,12 @@ def get_default_tmtc_backend(
     else:
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             tm_handler = cast(CcsdsTmHandler, tm_handler)
-            tm_handler.initialize(tmtc_printer=tmtc_printer)
     apid = get_default_tc_apid()
 
     if json_cfg_path:
         pass
     com_if = hook_obj.assign_communication_interface(
-        com_if_key=get_global(CoreGlobalIds.COM_IF), tmtc_printer=tmtc_printer
+        com_if_key=get_global(CoreGlobalIds.COM_IF)
     )
     tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
@@ -285,7 +281,6 @@ def get_default_tmtc_backend(
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
         com_if=com_if,
-        tmtc_printer=tmtc_printer,
         tm_listener=tm_listener,
         init_mode=mode,
         init_service=service,

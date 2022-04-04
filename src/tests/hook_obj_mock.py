@@ -3,7 +3,7 @@ from typing import Dict, Union, Optional, Tuple
 from unittest.mock import MagicMock
 import argparse
 
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.config.com_if import CommunicationInterface
 from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.config.definitions import ServiceOpCodeDictT, CoreModeList
@@ -86,7 +86,7 @@ class TestHookObj(TmTcHookBase):
 
     @abstractmethod
     def assign_communication_interface(
-        self, com_if_key: str, tmtc_printer: TmTcPrinter
+        self, com_if_key: str, tmtc_printer: FsfwTmTcPrinter
     ) -> Optional[CommunicationInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.

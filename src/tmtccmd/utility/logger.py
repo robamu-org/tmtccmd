@@ -4,50 +4,28 @@
 import logging
 import os
 import sys
+from colorlog import ColoredFormatter
 
 
-TMTC_LOGGER_NAME = "TMTC Console Logger"
-TMTC_FILE_LOGGER_NAME = "TMTC File Logger"
+LOG_DIR = "log"
+TMTC_LOGGER_NAME = "tmtccmd"
+TMTC_FILE_LOGGER_NAME = "tmtccmd-file"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"
 __CONSOLE_LOGGER_SET_UP = False
 __FILE_LOGER_SET_UP = False
 
 
-# pylint: disable=arguments-differ
-# pylint: disable=too-few-public-methods
-class InfoFilter(logging.Filter):
-    """Filter object, which is used so that only INFO and DEBUG messages are printed to stdout."""
-
-    def filter(self, rec):
-        if rec.levelno == logging.INFO:
-            return rec.levelno
-        return None
-
-
-class DebugFilter(logging.Filter):
-    """Filter object, which is used so that only DEBUG messages are printed to stdout."""
-
-    def filter(self, rec):
-        if rec.levelno == logging.DEBUG:
-            return rec.levelno
-        return None
-
-
-def set_tmtc_console_logger() -> logging.Logger:
+def __setup_tmtc_console_logger(log_level: int = logging.INFO) -> logging.Logger:
     """Sets the LOGGER object which will be used globally. This needs to be called before
     using the logger.
     :return:    Returns the instance of the global logger
     """
-    global __CONSOLE_LOGGER_SET_UP
     logger = logging.getLogger(TMTC_LOGGER_NAME)
-    logger.setLevel(level=logging.DEBUG)
-
     # Use colorlog for now because it allows more flexibility and custom messages
     # for different levels
     set_up_colorlog_logger(logger=logger)
+    logger.setLevel(level=log_level)
     # set_up_coloredlogs_logger(logger=logger)
-
-    __CONSOLE_LOGGER_SET_UP = True
     return logger
 
 
@@ -66,35 +44,58 @@ def set_up_coloredlogs_logger(logger: logging.Logger):
         print("Please install coloredlogs package first")
 
 
+# Custom formatter
+class CustomTmtccmdFormatter(ColoredFormatter):
+    def __init__(self, info_fmt: str, dbg_fmt: str, err_fmt: str, datefmt=None):
+        self.err_fmt = err_fmt
+        self.info_fmt = info_fmt
+        self.dbg_fmt = dbg_fmt
+        super().__init__(fmt="%(levelno)d: %(msg)s", datefmt=datefmt, style="%")
+
+    def format(self, record):
+
+        # Save the original format configured by the user
+        # when the logger formatter was instantiated
+        format_orig = self._style._fmt
+
+        # Replace the original format with one customized by logging level
+        if record.levelno == logging.DEBUG:
+            self._style._fmt = self.dbg_fmt
+
+        elif record.levelno == logging.INFO:
+            self._style._fmt = self.info_fmt
+
+        elif record.levelno == logging.ERROR:
+            self._style._fmt = self.err_fmt
+
+        # Call the original formatter class to do the grunt work
+        result = logging.Formatter.format(self, record)
+
+        # Restore the original format configured by the user
+        self._style._fmt = format_orig
+
+        return result
+
+
 def set_up_colorlog_logger(logger: logging.Logger):
-    from colorlog import ColoredFormatter, StreamHandler
+    from colorlog import StreamHandler
 
-    generic_format = ColoredFormatter(
-        fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s",
+    dbg_fmt = (
+        "%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d "
+        "[%(filename)s:%(lineno)d] %(reset)s%(message)s"
+    )
+    custom_formatter = CustomTmtccmdFormatter(
+        info_fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s",
+        dbg_fmt=dbg_fmt,
+        err_fmt=dbg_fmt,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-
-    fault_format = ColoredFormatter(
-        fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d "
-        "[%(filename)s:%(lineno)d] %(reset)s%(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
     file_format = logging.Formatter(
         fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    console_info_handler = StreamHandler(stream=sys.stdout)
-    console_info_handler.setLevel(logging.INFO)
-    console_info_handler.addFilter(InfoFilter())
-
-    console_debug_handler = logging.StreamHandler(stream=sys.stdout)
-    console_debug_handler.setLevel(logging.DEBUG)
-    console_debug_handler.addFilter(DebugFilter())
-
-    console_error_handler = logging.StreamHandler(stream=sys.stderr)
-    console_error_handler.setLevel(logging.WARNING)
+    console_handler = StreamHandler()
 
     try:
         error_file_handler = logging.FileHandler(
@@ -108,21 +109,25 @@ def set_up_colorlog_logger(logger: logging.Logger):
 
     error_file_handler.setLevel(level=logging.WARNING)
     error_file_handler.setFormatter(file_format)
-    console_info_handler.setFormatter(generic_format)
-    console_debug_handler.setFormatter(fault_format)
-    console_error_handler.setFormatter(fault_format)
+    console_handler.setFormatter(custom_formatter)
     logger.addHandler(error_file_handler)
-    logger.addHandler(console_info_handler)
-    logger.addHandler(console_debug_handler)
-    logger.addHandler(console_error_handler)
+    logger.addHandler(console_handler)
 
 
-def get_console_logger(set_up_logger: bool = False) -> logging.Logger:
+def get_console_logger() -> logging.Logger:
     global __CONSOLE_LOGGER_SET_UP
     """Get the global console logger instance. Error logs will still be saved to an error file
     """
     logger = logging.getLogger(TMTC_LOGGER_NAME)
-    if set_up_logger and not __CONSOLE_LOGGER_SET_UP:
+    if not __CONSOLE_LOGGER_SET_UP:
         __CONSOLE_LOGGER_SET_UP = True
-        set_tmtc_console_logger()
+        __setup_tmtc_console_logger()
     return logger
+
+
+def init_console_logger(log_level: int = logging.DEBUG) -> logging.Logger:
+    global __CONSOLE_LOGGER_SET_UP
+    if not __CONSOLE_LOGGER_SET_UP:
+        __CONSOLE_LOGGER_SET_UP = True
+        return __setup_tmtc_console_logger(log_level=log_level)
+    return get_console_logger()

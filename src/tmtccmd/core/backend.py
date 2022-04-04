@@ -16,7 +16,6 @@ from tmtccmd.sendreceive.sequential_sender_receiver import (
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tc.packer import ServiceQueuePacker
 
 
@@ -48,7 +47,6 @@ class TmTcHandler(BackendBase):
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
         tm_handler: TmHandler,
         init_mode: int,
@@ -66,7 +64,6 @@ class TmTcHandler(BackendBase):
         self.one_shot_operation = False
 
         self.__com_if = com_if
-        self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
@@ -82,9 +79,6 @@ class TmTcHandler(BackendBase):
 
     def get_com_if(self) -> CommunicationInterface:
         return self.__com_if
-
-    def get_printer(self) -> TmTcPrinter:
-        return self.__tmtc_printer
 
     def get_listener(self):
         return self.__tm_listener
@@ -139,7 +133,6 @@ class TmTcHandler(BackendBase):
     @staticmethod
     def prepare_tmtc_handler_start(
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
         tm_handler: TmHandler,
         init_mode: int,
@@ -150,7 +143,6 @@ class TmTcHandler(BackendBase):
 
         tmtc_handler = TmTcHandler(
             com_if=com_if,
-            tmtc_printer=tmtc_printer,
             tm_listener=tm_listener,
             init_mode=init_mode,
             init_service=init_service,
@@ -257,7 +249,6 @@ class TmTcHandler(BackendBase):
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
                 com_if=self.__com_if,
-                tmtc_printer=self.__tmtc_printer,
                 tm_handler=self.__tm_handler,
                 tm_listener=self.__tm_listener,
                 tc_queue=service_queue,

@@ -28,7 +28,7 @@ class DisplayMode(enum.Enum):
     LONG = enum.auto()
 
 
-class TmTcPrinter:
+class FsfwTmTcPrinter:
     """This class handles printing to the command line and to files.
     TODO: Introduce file logger"""
 
@@ -378,8 +378,10 @@ class TmTcPrinter:
         else:
             zipped_list = zip(headers_list, contents_list)
             for idx, header_content_tuple in enumerate(zipped_list):
-                self.__print_buffer += f"Part {idx + 1}: {header_content_tuple[0]}\n" \
-                                       f"Content: {header_content_tuple[1]}"
+                self.__print_buffer += (
+                    f"Part {idx + 1}: {header_content_tuple[0]}\n"
+                    f"Content: {header_content_tuple[1]}"
+                )
                 print(self.__print_buffer)
                 self.add_print_buffer_to_file_buffer()
                 self.__print_buffer = ""

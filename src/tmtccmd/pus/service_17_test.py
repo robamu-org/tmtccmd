@@ -57,7 +57,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service17TMExtended:
         service_17_tm = cls.__empty()

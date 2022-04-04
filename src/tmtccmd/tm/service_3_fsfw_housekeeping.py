@@ -120,7 +120,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         custom_hk_handling: bool,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service3FsfwTm:

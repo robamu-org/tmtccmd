@@ -11,7 +11,7 @@ from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.tc.definitions import TcQueueT
 
@@ -24,7 +24,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_handler: CcsdsTmHandler,
         apid: int,
         tm_listener: TmListener,
@@ -39,7 +38,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         """
         super().__init__(
             com_if=com_if,
-            tmtc_printer=tmtc_printer,
             tm_listener=tm_listener,
             tm_handler=tm_handler,
             apid=apid,
@@ -100,7 +98,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 apid=self._apid, clear=True
             )
             self._tm_handler.handle_ccsds_packet_queue(
-                apid=self._apid, packet_queue=packet_queue
+                apid=self._apid, tm_queue=packet_queue
             )
 
     def __check_next_tc_send(self):

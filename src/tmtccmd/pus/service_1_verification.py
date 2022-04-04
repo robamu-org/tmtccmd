@@ -57,7 +57,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service1TMExtended:
         """Parse a service 1 telemetry packet

@@ -6,8 +6,8 @@ from tmtccmd.pus.service_1_verification import Service1TMExtended
 from tmtccmd.tm.service_5_event import Srv5Subservices
 from spacepackets.ccsds.time import CdsShortTimestamp
 from tmtccmd.pus.service_17_test import pack_service_17_ping_command
-from tmtccmd.utility.tmtc_printer import TmTcPrinter, DisplayMode
-from tmtccmd.utility.logger import get_console_logger, set_tmtc_console_logger
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter, DisplayMode
+from tmtccmd.utility.logger import get_console_logger
 from tmtccmd.config.globals import update_global, CoreGlobalIds
 
 from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
@@ -15,9 +15,8 @@ from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
 
 class TestPrinter(TestCase):
     def setUp(self):
-        self.tmtc_printer = TmTcPrinter()
+        self.tmtc_printer = FsfwTmTcPrinter()
         self.logger = get_console_logger()
-        set_tmtc_console_logger()
 
     def test_print_functions(self):
         self.assertTrue(self.tmtc_printer.get_display_mode() == DisplayMode.LONG)
