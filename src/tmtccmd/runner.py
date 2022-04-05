@@ -32,12 +32,14 @@ from tmtccmd.utility.conf_util import AnsiColors
 
 LOGGER = get_console_logger()
 
+__SETUP_WAS_CALLED = False
+
 
 def get_tmtccmd_version() -> str:
     return __version__
 
 
-def initialize_tmtc_commander(hook_object: TmTcHookBase):
+def init_tmtccmd(hook_object: TmTcHookBase):
     """This function needs to be called first before running the TMTC commander core. A hook
     object handle needs to be passed to this function. The user should implement an own hook class
     instance which in turn implemented TmTcHookBase. An instantiation of the hook object is then
@@ -74,11 +76,12 @@ def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
     unlock_global_pool()
 
 
-def run_tmtc_commander(
+def run_tmtccmd(
     use_gui: bool,
+    tmtc_backend: BackendBase,
+    run_setup: bool,
     reduced_printout: bool = False,
     ansi_colors: bool = True,
-    tmtc_backend: Union[BackendBase, None] = None,
     tmtc_frontend: Union[FrontendBase, None] = None,
     app_name: str = "TMTC Commander",
 ):
@@ -98,56 +101,17 @@ def run_tmtc_commander(
     :raises RunTimeError:  if :py:func:`initialize_tmtc_commander` was not called before
     :return:
     """
-    try:
-        __set_up_tmtc_commander(
-            use_gui=use_gui, reduced_printout=reduced_printout, ansi_colors=ansi_colors
-        )
-    except ValueError:
-        raise RuntimeError
-
+    global __SETUP_WAS_CALLED
+    if not __SETUP_WAS_CALLED:
+        LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+        sys.exit(1)
     if use_gui:
         __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend, app_name=app_name)
     else:
-        if tmtc_backend is None:
-            from tmtccmd.config.hook import get_global_hook_obj
-
-            hook_obj = get_global_hook_obj()
-            json_cfg_path = hook_obj.get_json_config_file_path()
-            tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
-            tmtc_backend = get_default_tmtc_backend(
-                hook_obj=hook_obj, tm_handler=tm_handler, json_cfg_path=json_cfg_path
-            )
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
 
-def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
-    if hook_object is None:
-        raise ValueError
-
-    # Check whether all required hook functions have bee implemented properly, Python
-    # does not enforce this.
-    if (
-        hook_object.add_globals_pre_args_parsing is None
-        or hook_object.add_globals_post_args_parsing is None
-    ):
-        LOGGER.error(
-            "Passed hook base object handle is invalid. Abstract functions have to be implemented!"
-        )
-        raise ValueError
-    # Insert hook object handle into global dictionary so it can be used by the TMTC commander
-    update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
-    # Set core object IDs
-    insert_object_ids(get_core_object_ids())
-    # Set object IDs specified by the user.
-    insert_object_ids(hook_object.get_object_ids())
-
-
-def __set_up_tmtc_commander(
-    use_gui: bool,
-    reduced_printout: bool,
-    ansi_colors: bool = True,
-    tmtc_backend: Union[BackendBase, None] = None,
-):
+def setup_tmtccmd(use_gui: bool, reduced_printout: bool, ansi_colors: bool = True):
     """Set up the TMTC commander. Raise ValueError if a passed parameter is invalid.
     :param use_gui:
     :param reduced_printout:
@@ -155,6 +119,7 @@ def __set_up_tmtc_commander(
     :param tmtc_backend:
     :return:
     """
+    global __SETUP_WAS_CALLED
     from tmtccmd.config.hook import TmTcHookBase
     from typing import cast
 
@@ -179,6 +144,29 @@ def __set_up_tmtc_commander(
         hook_obj.add_globals_pre_args_parsing(True)
     else:
         __handle_cli_args_and_globals()
+    __SETUP_WAS_CALLED = True
+
+
+def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
+    if hook_object is None:
+        raise ValueError
+
+    # Check whether all required hook functions have bee implemented properly, Python
+    # does not enforce this.
+    if (
+        hook_object.add_globals_pre_args_parsing is None
+        or hook_object.add_globals_post_args_parsing is None
+    ):
+        LOGGER.error(
+            "Passed hook base object handle is invalid. Abstract functions have to be implemented!"
+        )
+        raise ValueError
+    # Insert hook object handle into global dictionary so it can be used by the TMTC commander
+    update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
+    # Set core object IDs
+    insert_object_ids(get_core_object_ids())
+    # Set object IDs specified by the user.
+    insert_object_ids(hook_object.get_object_ids())
 
 
 def __handle_init_printout(use_gui: bool, ansi_colors: bool):
@@ -250,11 +238,15 @@ def __get_backend_init_variables():
 def get_default_tmtc_backend(
     hook_obj: TmTcHookBase, tm_handler: TmHandler, json_cfg_path: str
 ):
+    global __SETUP_WAS_CALLED
     from tmtccmd.core.backend import TmTcHandler
     from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
     from tmtccmd.sendreceive.tm_listener import TmListener
     from typing import cast
 
+    if not __SETUP_WAS_CALLED:
+        LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+        sys.exit(1)
     service, op_code, com_if_id, mode = __get_backend_init_variables()
     display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
     print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
