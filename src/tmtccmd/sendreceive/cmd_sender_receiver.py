@@ -2,7 +2,7 @@
 @author: R. Mueller
 """
 import time
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Any
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
@@ -15,7 +15,7 @@ from tmtccmd.core.globals_manager import get_global
 
 LOGGER = get_console_logger()
 
-PreSendCbT = Callable[[bytes, ...], None]
+PreSendCbT = Callable[[bytes, Any], None]
 
 
 class CommandSenderReceiver:
