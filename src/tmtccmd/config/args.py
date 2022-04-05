@@ -2,6 +2,7 @@
 Argument parser modules for the TMTC commander core
 """
 import argparse
+import pprint
 import sys
 
 from prompt_toolkit.completion import WordCompleter
@@ -247,21 +248,21 @@ def handle_unspecified_args(args) -> None:
 
     if args.mode is None:
         args.mode = CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
-    service_op_code_dict = dict()
-    if args.service is None or args.op_code is None:
-        hook_obj = get_global_hook_obj()
-        service_op_code_dict = hook_obj.get_service_op_code_dictionary()
+    hook_obj = get_global_hook_obj()
+    service_op_code_dict = hook_obj.get_service_op_code_dictionary()
+    if service_op_code_dict is None:
+        LOGGER.warning("Invalid Service to Op-Code dictionary detected")
+        if args.service is None:
+            args.service = "0"
+        if args.op_code is None:
+            args.op_code = "0"
+        return
     if args.service is None:
         if args.mode == CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]:
             LOGGER.info("No service argument (-s) specified, prompting from user..")
             # Try to get the service list from the hook base and prompt service from user
             args.service = prompt_service(service_op_code_dict)
-            if args.op_code is None:
-                current_service = args.service
-                args.op_code = prompt_op_code(
-                    service_op_code_dict=service_op_code_dict, service=current_service
-                )
-    elif args.op_code is None:
+    if args.op_code is None:
         current_service = args.service
         args.op_code = prompt_op_code(
             service_op_code_dict=service_op_code_dict, service=current_service
@@ -270,7 +271,10 @@ def handle_unspecified_args(args) -> None:
         service_entry = service_op_code_dict.get(args.service)
         if service_entry is not None:
             op_code_value = service_op_code_dict[args.service][1]
-            op_code_options = op_code_value[args.op_code][1]
+            op_code_options = None
+            op_code_value = op_code_value.get(args.op_code)
+            if op_code_value is not None:
+                op_code_options = op_code_value[1]
             if op_code_options is not None and isinstance(op_code_options, dict):
                 if op_code_options.get(OpCodeDictKeys.ENTER_LISTENER_MODE):
                     if args.listener is None:
