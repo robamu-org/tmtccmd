@@ -61,9 +61,7 @@ class FsfwTmTcPrinter:
         base_string = "Received Telemetry: " + info_if.get_print_info()
         LOGGER.info(base_string)
         if self.file_logger is not None:
-            self.file_logger.info(
-                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {base_string}"
-            )
+            self.file_logger.info(f"{self.get_time_string(True)}: {base_string}")
         try:
             self.__handle_column_header_print(info_if=info_if)
             self.__handle_tm_content_print(info_if=info_if)
@@ -74,10 +72,17 @@ class FsfwTmTcPrinter:
                 f"[{packet_if.service}, {packet_if.subservice}]"
             )
 
+    def get_time_string(self, ms_prec: bool) -> str:
+        base_fmt = "%Y-%m-%d %H:%M:%S"
+        if ms_prec:
+            base_fmt += ".%f"
+            return datetime.now().strftime(base_fmt)[:-3]
+        return datetime.now().strftime(base_fmt)
+
     def __handle_column_header_print(self, info_if: PusTmInfoInterface):
         header_list = []
         info_if.append_telemetry_column_headers(header_list=header_list)
-        LOGGER.info(header_list)
+        print(header_list)
         if self.file_logger is not None:
             self.file_logger.info(header_list)
 
@@ -88,7 +93,7 @@ class FsfwTmTcPrinter:
         """
         content_list = []
         info_if.append_telemetry_content(content_list=content_list)
-        LOGGER.info(content_list)
+        print(content_list)
         if self.file_logger is not None:
             self.file_logger.info(content_list)
 
@@ -97,13 +102,14 @@ class FsfwTmTcPrinter:
         if additional_printout is not None and additional_printout != "":
             LOGGER.info(additional_printout)
             if self.file_logger is not None:
-                self.file_logger.info(additional_printout)
+                print(additional_printout)
 
     def generic_hk_print(
         self,
         content_type: HkContentType,
         object_id: ObjectId,
         set_id: int,
+        hk_data: bytes,
     ):
         """This function pretty prints HK packets with a given header and content list
         :param content_type: Type of content for HK packet
@@ -115,11 +121,15 @@ class FsfwTmTcPrinter:
             print_prefix = "Housekeeping definitions"
         else:
             print_prefix = "Unknown housekeeping data"
+        if object_id.name == "":
+            object_id.name = "Unknown Name"
         generic_info = (
             f"{print_prefix} from Object ID {object_id.name} ({object_id.as_string}) with "
-            f"Set ID {set_id}"
+            f"Set ID {set_id} and {len(hk_data)} bytes of HK data"
         )
         LOGGER.info(generic_info)
+        if self.file_logger is not None:
+            self.file_logger.info(f"{self.get_time_string(True)}: {generic_info}")
 
     def print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
         """
