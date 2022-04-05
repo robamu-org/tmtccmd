@@ -24,7 +24,10 @@ class TestTmtcRunner(TestCase):
 
         frontend_mock = create_frontend_mock()
         run_tmtccmd(
-            use_gui=True, run_setup=False, tmtc_backend=backend_mock, tmtc_frontend=frontend_mock
+            use_gui=True,
+            run_setup=False,
+            tmtc_backend=backend_mock,
+            tmtc_frontend=frontend_mock,
         )
         frontend_mock.start.assert_called_once()
         qt_app = frontend_mock.start.call_args[0][0]

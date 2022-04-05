@@ -10,9 +10,7 @@ from tmtccmd.core.frontend_base import FrontendBase
 
 
 def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
-    tmtc_printer = FsfwTmTcPrinter(
-        display_mode=DisplayMode.LONG, file_logger=None
-    )
+    tmtc_printer = FsfwTmTcPrinter(display_mode=DisplayMode.LONG, file_logger=None)
     com_if = create_communication_interface_default(
         com_if_key=CoreComInterfaces.DUMMY.value,
         json_cfg_path="tmtc_config.json",

@@ -15,7 +15,7 @@ from tmtccmd.logging.pus import (
     log_raw_pus_tc,
     log_raw_pus_tm,
     get_current_raw_file_name,
-    create_tmtc_logger
+    create_tmtc_logger,
 )
 
 from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
@@ -94,7 +94,6 @@ class TestPrintersLoggers(TestCase):
             param_2=82452,
         )
         """
-
 
         service_17_command = pack_service_17_ping_command(ssc=0, apid=42)
         self.tmtc_printer.print_telecommand(

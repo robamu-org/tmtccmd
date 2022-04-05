@@ -307,8 +307,6 @@ class FsfwTmTcPrinter:
         LOGGER.info(self.__print_buffer)
         """
 
-
-
     def _handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
         """
         Long TC print
