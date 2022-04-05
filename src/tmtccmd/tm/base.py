@@ -13,7 +13,7 @@ class PusTmInterface:
 
     @property
     @abstractmethod
-    def tm_data(self) -> bytearray:
+    def tm_data(self) -> bytes:
         raise NotImplementedError
 
     @property

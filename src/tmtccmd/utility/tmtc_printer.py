@@ -31,34 +31,117 @@ class DisplayMode(enum.Enum):
 
 
 class FsfwTmTcPrinter:
-    """This class handles printing to the command line and to files.
-    TODO: Introduce file logger"""
+    """This class handles printing to the command line and to files"""
 
     def __init__(
         self,
+        file_logger: Optional[logging.Logger],
         display_mode: DisplayMode = DisplayMode.LONG,
-        do_print_to_file: bool = True,
-        print_tc: bool = True,
     ):
         """
         :param display_mode:
         :param do_print_to_file: if true, print to file
         :param print_tc: if true, print TCs
         """
-        self._display_mode = display_mode
-        self.do_print_to_file = do_print_to_file
-        self.print_tc = print_tc
-        self.__print_buffer = ""
-        # global print buffer which will be useful to print something to file
-        self.__file_buffer = ""
-        # List implementation to store multiple strings
-        self.file_buffer_list = []
+        self.display_mode = display_mode
+        self.file_logger = file_logger
 
-    def set_display_mode(self, display_mode: DisplayMode):
-        self._display_mode = display_mode
+    @staticmethod
+    def generic_short_string(packet_if: PusTmInterface) -> str:
+        return f"Received TM[{packet_if.service}, {packet_if.subservice}]"
 
-    def get_display_mode(self) -> DisplayMode:
-        return self._display_mode
+    def handle_long_tm_print(
+        self, packet_if: PusTmInterface, info_if: PusTmInfoInterface
+    ):
+        """Main function to print the most important information inside the telemetry
+        :param packet_if: Core packet interface
+        :param info_if: Information interface
+        :return:
+        """
+        base_string = "Received Telemetry: " + info_if.get_print_info()
+        LOGGER.info(base_string)
+        if self.file_logger is not None:
+            self.file_logger.info(
+                f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {base_string}"
+            )
+        try:
+            self.__handle_column_header_print(info_if=info_if)
+            self.__handle_tm_content_print(info_if=info_if)
+            self.__handle_additional_printout(info_if=info_if)
+        except TypeError as error:
+            LOGGER.exception(
+                f"Type Error when trying to print TM Packet "
+                f"[{packet_if.service}, {packet_if.subservice}]"
+            )
+
+    def __handle_column_header_print(self, info_if: PusTmInfoInterface):
+        header_list = []
+        info_if.append_telemetry_column_headers(header_list=header_list)
+        LOGGER.info(header_list)
+        if self.file_logger is not None:
+            self.file_logger.info(header_list)
+
+    def __handle_tm_content_print(self, info_if: PusTmInfoInterface):
+        """
+        :param info_if: Information interface
+        :return:
+        """
+        content_list = []
+        info_if.append_telemetry_content(content_list=content_list)
+        LOGGER.info(content_list)
+        if self.file_logger is not None:
+            self.file_logger.info(content_list)
+
+    def __handle_additional_printout(self, info_if: PusTmInfoInterface):
+        additional_printout = info_if.get_custom_printout()
+        if additional_printout is not None and additional_printout != "":
+            LOGGER.info(additional_printout)
+            if self.file_logger is not None:
+                self.file_logger.info(additional_printout)
+
+    def generic_hk_print(
+        self,
+        content_type: HkContentType,
+        object_id: ObjectId,
+        set_id: int,
+    ):
+        """This function pretty prints HK packets with a given header and content list
+        :param content_type: Type of content for HK packet
+        :return:
+        """
+        if content_type == HkContentType.HK:
+            print_prefix = "Housekeeping data"
+        elif content_type == HkContentType.DEFINITIONS:
+            print_prefix = "Housekeeping definitions"
+        else:
+            print_prefix = "Unknown housekeeping data"
+        generic_info = (
+            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_string}) with "
+            f"Set ID {set_id}"
+        )
+        LOGGER.info(generic_info)
+
+    def print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
+        """
+        :param validity_buffer: Validity buffer in bytes format
+        :return:
+        """
+        printout = "Valid: ["
+        counter = 0
+        for index, byte in enumerate(validity_buffer):
+            for bit in range(1, 9):
+                if self.bit_extractor(byte, bit) == 1:
+                    printout += "Yes"
+                else:
+                    printout += "No"
+                counter += 1
+                if counter == num_vars:
+                    printout += "]"
+                    break
+                printout += ", "
+        LOGGER.info(printout)
+        if self.file_logger is not None:
+            self.file_logger.info(printout)
 
     def print_telemetry_queue(self, tm_queue: PusIFQueueT):
         """Print the telemetry queue which should contain lists of TM class instances."""
@@ -89,9 +172,6 @@ class FsfwTmTcPrinter:
             self.__handle_long_tm_print(packet_if=packet_if, info_if=info_if)
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
-        # Handle special packet types
-        if packet_if.service == PusServices.SERVICE_3_HOUSEKEEPING:
-            self.handle_service_3_packet(packet_if=packet_if)
         if (
             packet_if.service == PusServices.SERVICE_8_FUNC_CMD
             and packet_if.subservice == Srv8Subservices.DATA_REPLY
@@ -105,51 +185,6 @@ class FsfwTmTcPrinter:
             self.__print_buffer = f"TM Data:\n{tm_data_string}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
-
-    def handle_service_3_packet(self, packet_if: PusTmInterface):
-        from tmtccmd.config.hook import get_global_hook_obj
-
-        if packet_if.service != 3:
-            LOGGER.warning("This packet is not a service 3 packet!")
-            return
-        hook_obj = get_global_hook_obj()
-        if hook_obj is None:
-            LOGGER.warning("Hook object not set")
-            return
-        srv3_packet = cast(Service3Base, packet_if)
-        if srv3_packet.has_custom_hk_handling:
-            reply_unpacked = hook_obj.handle_service_3_housekeeping(
-                object_id=bytes(),
-                set_id=srv3_packet.set_id,
-                hk_data=packet_if.tm_data,
-                service3_packet=srv3_packet,
-            )
-        else:
-            reply_unpacked = hook_obj.handle_service_3_housekeeping(
-                object_id=srv3_packet.object_id.as_bytes,
-                set_id=srv3_packet.set_id,
-                hk_data=packet_if.tm_data[8:],
-                service3_packet=srv3_packet,
-            )
-        obj_id_dict = hook_obj.get_object_ids()
-        obj_id = obj_id_dict.get(srv3_packet.object_id.as_bytes)
-        if obj_id is None:
-            obj_id = srv3_packet.object_id
-        if packet_if.subservice == 25 or packet_if.subservice == 26:
-            self.handle_hk_print(
-                object_id=obj_id,
-                set_id=srv3_packet.set_id,
-                hk_header=reply_unpacked.header_list,
-                hk_content=reply_unpacked.content_list,
-                validity_buffer=reply_unpacked.validity_buffer,
-                num_vars=reply_unpacked.num_of_vars,
-            )
-        if packet_if.subservice == 10 or packet_if.subservice == 12:
-            self.handle_hk_definition_print(
-                object_id=obj_id,
-                set_id=srv3_packet.set_id,
-                srv3_packet=srv3_packet,
-            )
 
     def handle_service_8_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
@@ -191,137 +226,6 @@ class FsfwTmTcPrinter:
         LOGGER.info(self.__print_buffer)
         self.add_print_buffer_to_file_buffer()
 
-    def handle_hk_print(
-        self,
-        object_id: ObjectId,
-        set_id: int,
-        hk_header: list,
-        hk_content: list,
-        validity_buffer: bytearray,
-        num_vars: int,
-    ):
-        """Prints the passed housekeeping packet, if HK printout is enabled and also adds
-        it to the internal print buffer.
-        :param object_id:   Object ID in integer format
-        :param set_id:      Set ID in integer format
-        :param hk_header:   Header list
-        :param hk_content:  Content list
-        :param validity_buffer: Validity buffer bytearray
-        :param num_vars: The number of HK variables contained within the set
-        :return:
-        """
-        self.__print_hk(
-            content_type=HkContentType.HK,
-            object_id=object_id,
-            set_id=set_id,
-            header=hk_header,
-            content=hk_content,
-        )
-        self.__print_validity_buffer(validity_buffer=validity_buffer, num_vars=num_vars)
-
-    def handle_hk_definition_print(
-        self, object_id: ObjectId, set_id: int, srv3_packet: Service3Base
-    ):
-        """
-        :param object_id:
-        :param set_id:
-        :param srv3_packet:
-        :return:
-        """
-        def_header, def_list = srv3_packet.hk_definitions_list
-        self.__print_hk(
-            content_type=HkContentType.DEFINITIONS,
-            object_id=object_id,
-            set_id=set_id,
-            header=def_header,
-            content=def_list,
-        )
-
-    def __print_hk(
-        self,
-        content_type: HkContentType,
-        object_id: ObjectId,
-        set_id: int,
-        header: List,
-        content: List,
-    ):
-        """This function pretty prints HK packets with a given header and content list
-        :param content_type: Type of content for HK packet
-        :return:
-        """
-        if content_type == HkContentType.HK:
-            print_prefix = "Housekeeping data"
-        elif content_type == HkContentType.DEFINITIONS:
-            print_prefix = "Housekeeping definitions"
-        else:
-            print_prefix = "Unknown housekeeping data"
-        self.__print_buffer = (
-            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_string}) with "
-            f"Set ID {set_id}"
-        )
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-        self.__print_buffer = ""
-        headers_list = list(self.chunks(header, 8))
-        contents_list = list(self.chunks(content, 8))
-        if len(content) == 0 or len(header) == 0:
-            self.__print_buffer = "Content and header list empty"
-            return
-        elif len(headers_list) == 1 and len(contents_list) == 1:
-            self.__print_buffer = str(header)
-            print(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
-            self.__print_buffer = ""
-            self.__print_buffer = str(content)
-            print(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
-        else:
-            zipped_list = zip(headers_list, contents_list)
-            for idx, header_content_tuple in enumerate(zipped_list):
-                self.__print_buffer += (
-                    f"Part {idx + 1}: {header_content_tuple[0]}\n"
-                    f"Content: {header_content_tuple[1]}"
-                )
-                print(self.__print_buffer)
-                self.add_print_buffer_to_file_buffer()
-                self.__print_buffer = ""
-
-    def __print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
-        """
-        :param validity_buffer: Validity buffer in bytes format
-        :return:
-        """
-        if len(validity_buffer) == 0:
-            return
-        self.__print_buffer = "Valid: "
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-        self.__handle_validity_buffer_print(
-            validity_buffer=validity_buffer, num_vars=num_vars
-        )
-
-    def __handle_validity_buffer_print(self, validity_buffer: bytes, num_vars: int):
-        """
-        :param validity_buffer:
-        :param num_vars: Number of parameters
-        :return:
-        """
-        self.__print_buffer = "["
-        counter = 0
-        for index, byte in enumerate(validity_buffer):
-            for bit in range(1, 9):
-                if self.bit_extractor(byte, bit) == 1:
-                    self.__print_buffer = self.__print_buffer + "Yes"
-                else:
-                    self.__print_buffer = self.__print_buffer + "No"
-                counter += 1
-                if counter == num_vars:
-                    self.__print_buffer = self.__print_buffer + "]"
-                    break
-                self.__print_buffer = self.__print_buffer + ", "
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-
     def __handle_wiretapping_packet(
         self, packet_if: PusTmInterface, info_if: PusTmInfoInterface
     ):
@@ -340,87 +244,6 @@ class FsfwTmTcPrinter:
             self.__print_buffer = self.__print_buffer + info_if.get_source_data_string()
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
-
-    def print_string(self, string: str, add_cr_to_file_buffer: bool = False):
-        """
-        Print a string and adds it to the file buffer.
-        :param string:
-        :param add_cr_to_file_buffer:
-        :return:
-        """
-        self.__print_buffer = string
-        LOGGER.info(self.__print_buffer)
-        if self.do_print_to_file:
-            self.add_print_buffer_to_file_buffer(add_cr_to_file_buffer)
-
-    def add_to_print_string(self, string_to_add: str = ""):
-        """Add a specific string to the current print buffer"""
-        self.__print_buffer += string_to_add
-
-    def add_print_buffer_to_file_buffer(
-        self, additional_newline: bool = False, newline_before: bool = True
-    ):
-        """
-        Add to file buffer. Some options to optimize the output.
-        """
-        if self.do_print_to_file:
-            if additional_newline:
-                if newline_before:
-                    self.__file_buffer += f"\n{self.__print_buffer}\n"
-                else:
-                    self.__file_buffer += f"{self.__print_buffer}\n\n"
-            else:
-                self.__file_buffer += f"{self.__print_buffer}\n"
-
-    def add_print_buffer_to_buffer_list(self):
-        """Add the current print buffer to the buffer list"""
-        self.file_buffer_list.append(self.__file_buffer)
-
-    def clear_file_buffer(self):
-        """Clears the file buffer"""
-        self.__file_buffer = ""
-
-    def print_to_file(
-        self, log_name: str = "log/tmtc_log.txt", clear_file_buffer: bool = False
-    ):
-        """
-        :param log_name:
-        :param clear_file_buffer:
-        :return:
-        """
-        try:
-            file = open(log_name, "w")
-        except FileNotFoundError:
-            LOGGER.info("Log directory does not exists, creating log folder.")
-            os.mkdir("log")
-            file = open(log_name, "w")
-        file.write(self.__file_buffer)
-        if clear_file_buffer:
-            self.__file_buffer = ""
-        LOGGER.info("Log file written to %s", log_name)
-        file.close()
-
-    def print_file_buffer_list_to_file(
-        self, log_name: str = "log/tmtc_log.txt", clear_list: bool = True
-    ):
-        """
-        Joins the string list and prints it to an output file.
-        :param log_name:
-        :param clear_list:
-        :return:
-        """
-        try:
-            file = open(log_name, "w")
-        except FileNotFoundError:
-            LOGGER.info("Log directory does not exists, creating log folder.")
-            os.mkdir("log")
-            file = open(log_name, "w")
-        file_buffer = "".join(self.file_buffer_list)
-        file.write(file_buffer)
-        if clear_list:
-            self.file_buffer_list = []
-        LOGGER.info("Log file written to %s", log_name)
-        file.close()
 
     @staticmethod
     def bit_extractor(byte: int, position: int):
@@ -499,68 +322,3 @@ class FsfwTmTcPrinter:
         """Yield successive n-sized chunks from lst."""
         for i in range(0, len(lst), n):
             yield lst[i : i + n]
-
-
-def generic_short_string(packet_if: PusTmInterface) -> str:
-    return f"Received TM[{packet_if.service}, {packet_if.subservice}]"
-
-
-def handle_long_tm_print(
-    packet_if: PusTmInterface,
-    info_if: PusTmInfoInterface,
-    file_logger: Optional[logging.Logger],
-):
-    """Main function to print the most important information inside the telemetry
-    :param packet_if: Core packet interface
-    :param info_if: Information interface
-    :return:
-    """
-    base_string = "Received Telemetry: " + info_if.get_print_info()
-    LOGGER.info(base_string)
-    if file_logger is not None:
-        file_logger.info(
-            f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {base_string}"
-        )
-    try:
-        handle_column_header_print(info_if=info_if, file_logger=file_logger)
-        handle_tm_content_print(info_if=info_if, file_logger=file_logger)
-        handle_additional_printout(info_if=info_if, file_logger=file_logger)
-    except TypeError as error:
-        LOGGER.exception(
-            f"Type Error when trying to print TM Packet "
-            f"[{packet_if.service}, {packet_if.subservice}]"
-        )
-
-
-def handle_column_header_print(
-    info_if: PusTmInfoInterface, file_logger: Optional[logging.Logger]
-):
-    header_list = []
-    info_if.append_telemetry_column_headers(header_list=header_list)
-    LOGGER.info(header_list)
-    if file_logger is not None:
-        file_logger.info(header_list)
-
-
-def handle_tm_content_print(
-    info_if: PusTmInfoInterface, file_logger: Optional[logging.Logger]
-):
-    """
-    :param info_if: Information interface
-    :return:
-    """
-    content_list = []
-    info_if.append_telemetry_content(content_list=content_list)
-    LOGGER.info(content_list)
-    if file_logger is not None:
-        file_logger.info(content_list)
-
-
-def handle_additional_printout(
-    info_if: PusTmInfoInterface, file_logger: Optional[logging.Logger]
-):
-    additional_printout = info_if.get_custom_printout()
-    if additional_printout is not None and additional_printout != "":
-        LOGGER.info(additional_printout)
-        if file_logger is not None:
-            file_logger.info(additional_printout)
