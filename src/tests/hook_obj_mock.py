@@ -91,7 +91,6 @@ class TestHookObj(TmTcHookBase):
         TMTC with.
 
         :param com_if_key:      String key of the communication interface to be created.
-        :param tmtc_printer:    Printer utility instance.
         """
         from tmtccmd.config.com_if import create_communication_interface_default
 
