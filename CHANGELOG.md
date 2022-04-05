@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Refactoring and extending file logging functionalities
 - Exposes functions to create a raw PUS logger and a TMTC logger
 - Refactor modules to move packet printout and logging to user level
+- Simplified hook object, removed 2 static PUS handlers
+- Updated CCSDS Handler to make it more easily extensible by creating a new ApidHandler class
+- New Pre-Send Callback which is called by backend before sending each telecommand
 
 ## [v1.14.0]
 
