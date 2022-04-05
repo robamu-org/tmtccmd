@@ -150,22 +150,6 @@ class TmTcHookBase:
         )
         return DataReplyUnpacked()
 
-    @staticmethod
-    def handle_service_5_event(
-        object_id: bytes, event_id: int, param_1: int, param_2: int
-    ) -> str:
-        """This function is called when a Service 5 Event Packet is received. The user can specify
-         a custom string here which will be printed to display additional information related
-         to an event.
-
-        :param object_id: Byte representation of the object ID
-        :param event_id: Two-byte event ID
-        :param param_1: Four-byte Parameter 1
-        :param param_2: Four-byte Parameter 2
-        :return: Custom information string which will be printed with the event
-        """
-        return ""
-
     def get_retval_dict(self) -> RetvalDictT:
         LOGGER.info("No return value dictionary specified")
         return dict()
