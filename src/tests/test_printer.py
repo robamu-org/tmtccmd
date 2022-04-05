@@ -11,7 +11,11 @@ from tmtccmd.pus.service_17_test import pack_service_17_ping_command
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter, DisplayMode
 from tmtccmd.logging import get_console_logger, LOG_DIR
 from tmtccmd.config.globals import update_global, CoreGlobalIds
-from tmtccmd.logging.pus import log_pus_tc, log_pus_tm, get_current_file_name
+from tmtccmd.logging.pus import (
+    log_raw_pus_tc,
+    log_raw_pus_tm,
+    get_current_raw_file_name,
+)
 
 from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
 
@@ -25,14 +29,18 @@ class TestPrintersLoggers(TestCase):
 
     def test_pus_loggers(self):
         pus_tc = pack_service_17_ping_command(ssc=0)
-        file_name = get_current_file_name()
-        log_pus_tc(pus_tc.pack())
+        file_name = get_current_raw_file_name()
+        log_raw_pus_tc(pus_tc.pack())
         pus_tm = Service1TMExtended(
             subservice=1, time=CdsShortTimestamp.init_from_current_time()
         )
-        log_pus_tm(pus_tm.pack())
-        log_pus_tc(pus_tc.pack(), srv_subservice=(pus_tc.service, pus_tc.subservice))
-        log_pus_tm(pus_tm.pack(), srv_subservice=(pus_tm.service, pus_tm.subservice))
+        log_raw_pus_tm(pus_tm.pack())
+        log_raw_pus_tc(
+            pus_tc.pack(), srv_subservice=(pus_tc.service, pus_tc.subservice)
+        )
+        log_raw_pus_tm(
+            pus_tm.pack(), srv_subservice=(pus_tm.service, pus_tm.subservice)
+        )
         self.assertTrue(os.path.exists(file_name))
 
     def test_print_functions(self):

@@ -8,7 +8,7 @@ from colorlog import ColoredFormatter
 
 LOG_DIR = "log"
 # Always use the parent module name as the logger name. This makes it easier to derive loggers in submodules
-TMTC_LOGGER_NAME = '.'.join(__name__.split('.')[:-1])
+TMTC_LOGGER_NAME = ".".join(__name__.split(".")[:-1])
 TMTC_FILE_LOGGER_NAME = "tmtccmd-file"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"
 __CONSOLE_LOGGER_SET_UP = False

@@ -6,7 +6,7 @@ from tmtccmd.logging import LOG_DIR
 BASE_FILE_NAME = "events"
 
 
-def get_event_file_logger():
+def get_tm_logger():
     if not os.path.exists(LOG_DIR):
         os.mkdir(LOG_DIR)
     # This should create a unique event log file for most cases. If for some reason this is called
