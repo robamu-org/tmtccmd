@@ -136,22 +136,32 @@ class FsfwTmTcPrinter:
         :param validity_buffer: Validity buffer in bytes format
         :return:
         """
-        printout = "Valid: ["
+        valid_list = []
         counter = 0
         for index, byte in enumerate(validity_buffer):
             for bit in range(1, 9):
                 if self.bit_extractor(byte, bit) == 1:
-                    printout += "Yes"
+                    valid_list.append(True)
                 else:
-                    printout += "No"
+                    valid_list.append(False)
                 counter += 1
                 if counter == num_vars:
-                    printout += "]"
                     break
-                printout += ", "
-        LOGGER.info(printout)
-        if self.file_logger is not None:
-            self.file_logger.info(printout)
+        validity_lists = list(self.chunks(n=16, lst=valid_list))
+        for valid_list in validity_lists:
+            printout = "Valid: ["
+            for idx, valid in enumerate(valid_list):
+                if valid:
+                    printout += "Y"
+                else:
+                    printout += "N"
+                if idx < len(valid_list) - 1:
+                    printout += ","
+                else:
+                    printout += "]"
+            print(printout)
+            if self.file_logger is not None:
+                self.file_logger.info(printout)
 
     def print_telemetry_queue(self, tm_queue: PusIFQueueT):
         """Print the telemetry queue which should contain lists of TM class instances."""
