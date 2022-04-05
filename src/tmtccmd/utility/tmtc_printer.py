@@ -186,10 +186,11 @@ class FsfwTmTcPrinter:
         ):
             LOGGER.warning("Passed packet does not implement necessary interfaces!")
             return
-        if self._display_mode == DisplayMode.SHORT:
-            self.__handle_short_print(packet_if)
-        else:
-            self.__handle_long_tm_print(packet_if=packet_if, info_if=info_if)
+        # TODO: Maybe remove this function altogether?
+        # if self.display_mode == DisplayMode.SHORT:
+        #     self.__handle_short_print(packet_if)
+        # else:
+        #    self.__handle_long_tm_print(packet_if=packet_if, info_if=info_if)
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
         if (
@@ -202,9 +203,6 @@ class FsfwTmTcPrinter:
             tm_data_string = get_printable_data_string(
                 print_format=PrintFormats.HEX, data=packet_if.pack()
             )
-            self.__print_buffer = f"TM Data:\n{tm_data_string}"
-            LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
 
     def handle_service_8_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
@@ -286,14 +284,13 @@ class FsfwTmTcPrinter:
         :param tc_packet_raw:
         :return:
         """
-        if self.print_tc:
-            if tc_packet_obj is None:
-                LOGGER.error("TMTC Printer: Invalid telecommand")
-                return
-            if self._display_mode == DisplayMode.SHORT:
-                self._handle_short_tc_print(tc_packet_obj=tc_packet_obj)
-            else:
-                self._handle_long_tc_print(tc_packet_obj=tc_packet_obj)
+        if tc_packet_obj is None:
+            LOGGER.error("TMTC Printer: Invalid telecommand")
+            return
+        if self.display_mode == DisplayMode.SHORT:
+            self._handle_short_tc_print(tc_packet_obj=tc_packet_obj)
+        else:
+            self._handle_long_tc_print(tc_packet_obj=tc_packet_obj)
 
     def _handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
         """
@@ -301,12 +298,16 @@ class FsfwTmTcPrinter:
         :param tc_packet_obj:
         :return:
         """
+        # TODO: Refactor this
+        """
         self.__print_buffer = (
             f"Sent TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] with SSC "
             f"{tc_packet_obj.ssc}"
         )
         LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
+        """
+
+
 
     def _handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
         """
@@ -314,17 +315,19 @@ class FsfwTmTcPrinter:
         :param tc_packet_obj:
         :return:
         """
+        # TODO: Refactor this
         data_print = get_printable_data_string(
             print_format=PrintFormats.HEX, data=tc_packet_obj.app_data
         )
         try:
+            """
             self.__print_buffer = (
                 f"Telecommand TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] "
                 f"with SSC {tc_packet_obj.ssc} sent with data "
                 f"{data_print}"
             )
             LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
+            """
         except TypeError as error:
             LOGGER.error("TMTC Printer: Type Error! Traceback: %s", error)
 

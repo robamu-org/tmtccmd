@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [unreleased]
+## [v1.15.0]
+
+### Changed
+
+- Refactoring and extending file logging functionalities
+- Exposes functions to create a raw PUS logger and a TMTC logger
+- Refactor modules to move packet printout and logging to user level
 
 ## [v1.14.0]
 
