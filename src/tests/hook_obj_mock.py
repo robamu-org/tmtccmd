@@ -85,7 +85,7 @@ class TestHookObj(TmTcHookBase):
 
     @abstractmethod
     def assign_communication_interface(
-        self, com_if_key: str, tmtc_printer: FsfwTmTcPrinter
+        self, com_if_key: str
     ) -> Optional[CommunicationInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
@@ -97,7 +97,6 @@ class TestHookObj(TmTcHookBase):
 
         return create_communication_interface_default(
             com_if_key=com_if_key,
-            tmtc_printer=tmtc_printer,
             json_cfg_path=self.get_json_config_file_path(),
         )
 
