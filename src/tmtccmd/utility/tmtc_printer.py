@@ -274,61 +274,6 @@ class FsfwTmTcPrinter:
         shift_number = position + (6 - 2 * (position - 1))
         return (byte >> shift_number) & 1
 
-    def print_telecommand(
-        self, tc_packet_obj: PusTelecommand, tc_packet_raw: bytearray = bytes()
-    ):
-        """
-        This function handles the printing of Telecommands. It assumed the packets are sent
-        shortly before or after.
-        :param tc_packet_obj:
-        :param tc_packet_raw:
-        :return:
-        """
-        if tc_packet_obj is None:
-            LOGGER.error("TMTC Printer: Invalid telecommand")
-            return
-        if self.display_mode == DisplayMode.SHORT:
-            self._handle_short_tc_print(tc_packet_obj=tc_packet_obj)
-        else:
-            self._handle_long_tc_print(tc_packet_obj=tc_packet_obj)
-
-    def _handle_short_tc_print(self, tc_packet_obj: PusTelecommand):
-        """
-        Brief TC print
-        :param tc_packet_obj:
-        :return:
-        """
-        # TODO: Refactor this
-        """
-        self.__print_buffer = (
-            f"Sent TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] with SSC "
-            f"{tc_packet_obj.ssc}"
-        )
-        LOGGER.info(self.__print_buffer)
-        """
-
-    def _handle_long_tc_print(self, tc_packet_obj: PusTelecommand):
-        """
-        Long TC print
-        :param tc_packet_obj:
-        :return:
-        """
-        # TODO: Refactor this
-        data_print = get_printable_data_string(
-            print_format=PrintFormats.HEX, data=tc_packet_obj.app_data
-        )
-        try:
-            """
-            self.__print_buffer = (
-                f"Telecommand TC[{tc_packet_obj.service}, {tc_packet_obj.subservice}] "
-                f"with SSC {tc_packet_obj.ssc} sent with data "
-                f"{data_print}"
-            )
-            LOGGER.info(self.__print_buffer)
-            """
-        except TypeError as error:
-            LOGGER.error("TMTC Printer: Type Error! Traceback: %s", error)
-
     @staticmethod
     def print_data(data: bytes):
         """

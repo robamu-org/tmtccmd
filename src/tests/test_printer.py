@@ -85,7 +85,7 @@ class TestPrintersLoggers(TestCase):
         service_5_packed = service_5_tm.pack()
         self.tmtc_printer.print_telemetry(packet_if=service_5_tm, info_if=service_5_tm)
 
-        # Fix this test
+        # TODO: Fix this test
         """
         hook_base.handle_service_5_event.assert_called_with(
             object_id=bytes([0x01, 0x02, 0x03, 0x04]),
@@ -94,16 +94,6 @@ class TestPrintersLoggers(TestCase):
             param_2=82452,
         )
         """
-
-        service_17_command = pack_service_17_ping_command(ssc=0, apid=42)
-        self.tmtc_printer.print_telecommand(
-            tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack()
-        )
-        self.tmtc_printer.display_mode = DisplayMode.SHORT
-        self.tmtc_printer.print_telecommand(
-            tc_packet_obj=service_17_command, tc_packet_raw=service_17_command.pack()
-        )
-        self.tmtc_printer.display_mode = DisplayMode.LONG
 
     def tearDown(self) -> None:
         """Reset the hook object"""
