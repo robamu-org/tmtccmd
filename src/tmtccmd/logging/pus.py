@@ -18,9 +18,9 @@ __TMTC_LOGGER: Optional[logging.Logger] = None
 __RAW_PUS_LOGGER: Optional[logging.Logger] = None
 
 
-def create_raw_pus_file_logger() -> logging.Logger:
+def create_raw_pus_file_logger(max_bytes: int = 8192 * 16) -> logging.Logger:
     """Create a logger to log raw PUS messages by returning a rotating file handler which has
-    the current date in its log file name.
+    the current date in its log file name. This function is not thread-safe.
     :return:
     """
     global __RAW_PUS_LOGGER
@@ -28,7 +28,7 @@ def create_raw_pus_file_logger() -> logging.Logger:
     if __RAW_PUS_LOGGER is None:
         __RAW_PUS_LOGGER = logging.getLogger(RAW_PUS_LOGGER_NAME)
         handler = RotatingFileHandler(
-            filename=file_name, maxBytes=4096 * 4, backupCount=10
+            filename=file_name, maxBytes=max_bytes, backupCount=10
         )
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
@@ -47,8 +47,10 @@ def get_current_raw_file_name() -> str:
 
 
 def get_current_tmtc_file_name() -> str:
-    time_str: str = datetime.now().time().replace(":", "")
-    return f"{LOG_DIR}/{TMTC_FILE_BASE_NAME}_{datetime.now().date()}_{time_str}.log"
+    return (
+        f"{LOG_DIR}/{TMTC_FILE_BASE_NAME}_{datetime.now().date()}_"
+        f"{datetime.now().time().strftime('%H%M%S')}.log"
+    )
 
 
 def log_raw_pus_tc(packet: bytes, srv_subservice: Optional[Tuple[int, int]] = None):
@@ -88,7 +90,8 @@ def log_raw_unknown_packet(packet: bytes, packet_type: PacketTypes):
 
 
 def create_tmtc_logger():
-    """Create a generic TMTC logger which logs both to a unique file for a TMTC session
+    """Create a generic TMTC logger which logs both to a unique file for a TMTC session.
+    This functions is not thread-safe.
     :return:
     """
     global __TMTC_LOGGER
@@ -109,7 +112,8 @@ def create_tmtc_logger():
 
 
 def get_tmtc_file_logger() -> logging.Logger:
-    """Returns a generic TMTC logger which logs both to a unique file for a TMTC session
+    """Returns a generic TMTC logger which logs both to a unique file for a TMTC session.
+    This functions is not thread-safe.
     :return:
     """
     global __TMTC_LOGGER

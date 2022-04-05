@@ -1,8 +1,10 @@
 """Contains classes and functions that perform all printing functionalities.
 """
+import logging
 import os
 import enum
-from typing import cast, List
+from datetime import datetime
+from typing import cast, List, Optional
 
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.util import get_printable_data_string, PrintFormats
@@ -88,12 +90,8 @@ class FsfwTmTcPrinter:
         self.__handle_wiretapping_packet(packet_if=packet_if, info_if=info_if)
 
         # Handle special packet types
-        if packet_if.service == PusServices.SERVICE_1_VERIFICATION:
-            self.handle_service_1_packet(packet_if=packet_if)
         if packet_if.service == PusServices.SERVICE_3_HOUSEKEEPING:
             self.handle_service_3_packet(packet_if=packet_if)
-        if packet_if.service == PusServices.SERVICE_5_EVENT:
-            self.handle_service_5_packet(packet_if=packet_if)
         if (
             packet_if.service == PusServices.SERVICE_8_FUNC_CMD
             and packet_if.subservice == Srv8Subservices.DATA_REPLY
@@ -107,27 +105,6 @@ class FsfwTmTcPrinter:
             self.__print_buffer = f"TM Data:\n{tm_data_string}"
             LOGGER.info(self.__print_buffer)
             self.add_print_buffer_to_file_buffer()
-
-    def handle_service_1_packet(self, packet_if: PusTmInterface):
-        from tmtccmd.config.hook import get_global_hook_obj
-
-        hook_obj = get_global_hook_obj()
-        if hook_obj is None:
-            LOGGER.warning("Hook object not set")
-            return
-        srv1_packet = cast(Service1TMExtended, packet_if)
-        retval_dict = hook_obj.get_retval_dict()
-        if srv1_packet.has_tc_error_code:
-            retval_info = retval_dict.get(srv1_packet.error_code)
-            if retval_info is None:
-                LOGGER.info(
-                    f"No returnvalue information found for error code {srv1_packet.error_code}"
-                )
-            else:
-                LOGGER.info(
-                    f"Error Code information for code {srv1_packet.error_code}| "
-                    f"Name: {retval_info.name} | Info: {retval_info.info}"
-                )
 
     def handle_service_3_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
@@ -173,27 +150,6 @@ class FsfwTmTcPrinter:
                 set_id=srv3_packet.set_id,
                 srv3_packet=srv3_packet,
             )
-
-    def handle_service_5_packet(self, packet_if: PusTmInterface):
-        from tmtccmd.config.hook import get_global_hook_obj
-
-        if packet_if.service != 5:
-            LOGGER.warning("This packet is not a service 5 packet!")
-            return
-        hook_obj = get_global_hook_obj()
-        if hook_obj is None:
-            LOGGER.warning("Hook object not set")
-            return
-        srv5_packet = cast(Service5Tm, packet_if)
-        custom_string = hook_obj.handle_service_5_event(
-            object_id=srv5_packet.reporter_id_as_bytes,
-            event_id=srv5_packet.event_id,
-            param_1=srv5_packet.param_1,
-            param_2=srv5_packet.param_2,
-        )
-        self.__print_buffer = custom_string
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
 
     def handle_service_8_packet(self, packet_if: PusTmInterface):
         from tmtccmd.config.hook import get_global_hook_obj
@@ -280,62 +236,6 @@ class FsfwTmTcPrinter:
             header=def_header,
             content=def_list,
         )
-
-    def __handle_short_print(self, packet_if: PusTmInterface):
-        self.__print_buffer = (
-            "Received TM["
-            + str(packet_if.service)
-            + ","
-            + str(packet_if.subservice)
-            + "]"
-        )
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-
-    def __handle_long_tm_print(
-        self, packet_if: PusTmInterface, info_if: PusTmInfoInterface
-    ):
-        """Main function to print the most important information inside the telemetry
-        :param packet_if: Core packet interface
-        :param info_if: Information interface
-        :return:
-        """
-        self.__print_buffer = "Received Telemetry: " + info_if.get_print_info()
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-        try:
-            self.__handle_column_header_print(info_if=info_if)
-            self.__handle_tm_content_print(info_if=info_if)
-            self.__handle_additional_printout(info_if=info_if)
-        except TypeError as error:
-            LOGGER.exception(
-                f"Type Error when trying to print TM Packet "
-                f"[{packet_if.service} , {packet_if.subservice}]"
-            )
-
-    def __handle_column_header_print(self, info_if: PusTmInfoInterface):
-        header_list = []
-        info_if.append_telemetry_column_headers(header_list=header_list)
-        self.__print_buffer = str(header_list)
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-
-    def __handle_tm_content_print(self, info_if: PusTmInfoInterface):
-        """
-        :param info_if: Information interface
-        :return:
-        """
-        content_list = []
-        info_if.append_telemetry_content(content_list=content_list)
-        self.__print_buffer = str(content_list)
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
-
-    def __handle_additional_printout(self, info_if: PusTmInfoInterface):
-        additional_printout = info_if.get_custom_printout()
-        if additional_printout != "":
-            self.__print_buffer = additional_printout
-            LOGGER.info(self.__print_buffer)
 
     def __print_hk(
         self,
@@ -599,3 +499,68 @@ class FsfwTmTcPrinter:
         """Yield successive n-sized chunks from lst."""
         for i in range(0, len(lst), n):
             yield lst[i : i + n]
+
+
+def generic_short_string(packet_if: PusTmInterface) -> str:
+    return f"Received TM[{packet_if.service}, {packet_if.subservice}]"
+
+
+def handle_long_tm_print(
+    packet_if: PusTmInterface,
+    info_if: PusTmInfoInterface,
+    file_logger: Optional[logging.Logger],
+):
+    """Main function to print the most important information inside the telemetry
+    :param packet_if: Core packet interface
+    :param info_if: Information interface
+    :return:
+    """
+    base_string = "Received Telemetry: " + info_if.get_print_info()
+    LOGGER.info(base_string)
+    if file_logger is not None:
+        file_logger.info(
+            f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {base_string}"
+        )
+    try:
+        handle_column_header_print(info_if=info_if, file_logger=file_logger)
+        handle_tm_content_print(info_if=info_if, file_logger=file_logger)
+        handle_additional_printout(info_if=info_if, file_logger=file_logger)
+    except TypeError as error:
+        LOGGER.exception(
+            f"Type Error when trying to print TM Packet "
+            f"[{packet_if.service}, {packet_if.subservice}]"
+        )
+
+
+def handle_column_header_print(
+    info_if: PusTmInfoInterface, file_logger: Optional[logging.Logger]
+):
+    header_list = []
+    info_if.append_telemetry_column_headers(header_list=header_list)
+    LOGGER.info(header_list)
+    if file_logger is not None:
+        file_logger.info(header_list)
+
+
+def handle_tm_content_print(
+    info_if: PusTmInfoInterface, file_logger: Optional[logging.Logger]
+):
+    """
+    :param info_if: Information interface
+    :return:
+    """
+    content_list = []
+    info_if.append_telemetry_content(content_list=content_list)
+    LOGGER.info(content_list)
+    if file_logger is not None:
+        file_logger.info(content_list)
+
+
+def handle_additional_printout(
+    info_if: PusTmInfoInterface, file_logger: Optional[logging.Logger]
+):
+    additional_printout = info_if.get_custom_printout()
+    if additional_printout is not None and additional_printout != "":
+        LOGGER.info(additional_printout)
+        if file_logger is not None:
+            file_logger.info(additional_printout)
