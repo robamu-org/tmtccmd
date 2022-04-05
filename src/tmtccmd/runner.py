@@ -79,7 +79,6 @@ def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
 def run_tmtccmd(
     use_gui: bool,
     tmtc_backend: BackendBase,
-    run_setup: bool,
     reduced_printout: bool = False,
     ansi_colors: bool = True,
     tmtc_frontend: Union[FrontendBase, None] = None,
@@ -106,7 +105,11 @@ def run_tmtccmd(
         LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
     if use_gui:
-        __start_tmtc_commander_qt_gui(tmtc_frontend=tmtc_frontend, app_name=app_name)
+        __start_tmtc_commander_qt_gui(
+            tmtc_frontend=tmtc_frontend,
+            tmtc_backend=tmtc_backend,
+            app_name=app_name
+        )
     else:
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
@@ -201,30 +204,28 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
 
 
 def __start_tmtc_commander_qt_gui(
-    tmtc_frontend: Union[None, FrontendBase] = None, app_name: str = "TMTC Commander"
+    tmtc_backend: BackendBase,
+    tmtc_frontend: Union[None, FrontendBase] = None,
+    app_name: str = "TMTC Commander"
 ):
-    app = None
-    if tmtc_frontend is None:
-        from tmtccmd.core.frontend import TmTcFrontend
-        from tmtccmd.config.hook import get_global_hook_obj
-
-        try:
-            from PyQt5.QtWidgets import QApplication
-        except ImportError:
-            LOGGER.error("PyQt5 module not installed, can't run GUI mode!")
+    global __SETUP_WAS_CALLED
+    try:
+        from PyQt5.QtWidgets import QApplication
+        if not __SETUP_WAS_CALLED:
+            LOGGER.warning("setup_tmtccmd was not called first. Call it first")
             sys.exit(1)
+        app = None
         app = QApplication([app_name])
-        hook_obj = get_global_hook_obj()
-        json_cfg_path = hook_obj.get_json_config_file_path()
-        tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
-        # The global variables are set by the argument parser.
-        tmtc_backend = get_default_tmtc_backend(
-            hook_obj=hook_obj, tm_handler=tm_handler, json_cfg_path=json_cfg_path
-        )
-        tmtc_frontend = TmTcFrontend(
-            hook_obj=hook_obj, tmtc_backend=tmtc_backend, app_name=app_name
-        )
-    tmtc_frontend.start(app)
+        if tmtc_frontend is None:
+            from tmtccmd.core.frontend import TmTcFrontend
+            from tmtccmd.config.hook import get_global_hook_obj
+            tmtc_frontend = TmTcFrontend(
+                hook_obj=get_global_hook_obj(), tmtc_backend=tmtc_backend, app_name=app_name
+            )
+        tmtc_frontend.start(app)
+    except ImportError:
+        LOGGER.error("PyQt5 module not installed, can't run GUI mode!")
+        sys.exit(1)
 
 
 def __get_backend_init_variables():

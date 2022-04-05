@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """Example application for the TMTC Commander
 """
-from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.runner import (
-    run_tmtc_commander,
-    initialize_tmtc_commander,
-    add_ccsds_handler,
-)
+from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidHandler
+import tmtccmd.runner as tmtccmd
 from tmtccmd.tm.handler import default_ccsds_packet_handler
 
 from config.hook_implementation import ExampleHookClass
@@ -15,13 +11,24 @@ from config.definitions import APID
 
 def main():
     hook_obj = ExampleHookClass()
-    initialize_tmtc_commander(hook_object=hook_obj)
+    tmtccmd.init_tmtccmd(hook_object=hook_obj)
+    apid_handler = ApidHandler(
+        cb=default_ccsds_packet_handler,
+        queue_len=50,
+        user_args=None
+    )
     ccsds_handler = CcsdsTmHandler()
     ccsds_handler.add_tm_handler(
-        apid=APID, pus_tm_handler=default_ccsds_packet_handler, max_queue_len=50
+        apid=APID, handler=apid_handler
     )
-    add_ccsds_handler(ccsds_handler)
-    run_tmtc_commander(use_gui=False)
+    tmtccmd.setup_tmtccmd(use_gui=False, reduced_printout=False)
+    tmtc_backend = tmtccmd.get_default_tmtc_backend(
+        hook_obj=hook_obj,
+        json_cfg_path=hook_obj.get_json_config_file_path(),
+        tm_handler=ccsds_handler,
+    )
+    tmtccmd.add_ccsds_handler(ccsds_handler)
+    tmtccmd.run_tmtccmd(use_gui=False, tmtc_backend=tmtc_backend)
 
 
 if __name__ == "__main__":

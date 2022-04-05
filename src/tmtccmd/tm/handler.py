@@ -4,10 +4,13 @@ from tmtccmd.tm.service_5_event import Service5Tm
 from tmtccmd.pus.service_1_verification import Service1TM
 from tmtccmd.pus.service_17_test import Service17TMExtended
 from tmtccmd.logging import get_console_logger
+
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
-
+FSFW_PRINTER = FsfwTmTcPrinter(
+    file_logger=None
+)
 
 class TmHandler:
     def __init__(self, tm_type: TmTypes):
@@ -18,13 +21,13 @@ class TmHandler:
 
 
 def default_ccsds_packet_handler(
-    apid: int, raw_tm_packet: bytearray, tmtc_printer: FsfwTmTcPrinter
+    apid: int, raw_tm_packet: bytes, user_args: any
 ):
     """Default implementation only prints the packet"""
-    default_factory_hook(raw_tm_packet=raw_tm_packet, tmtc_printer=tmtc_printer)
+    default_factory_hook(raw_tm_packet=raw_tm_packet)
 
 
-def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: FsfwTmTcPrinter):
+def default_factory_hook(raw_tm_packet: bytes):
     service_type = raw_tm_packet[7]
     tm_packet = None
     if service_type == 1:
@@ -38,4 +41,4 @@ def default_factory_hook(raw_tm_packet: bytearray, tmtc_printer: FsfwTmTcPrinter
             f"The service {service_type} is not implemented in Telemetry Factory"
         )
         tm_packet = PusTelemetry.unpack(raw_telemetry=raw_tm_packet)
-    tmtc_printer.print_telemetry(packet_if=tm_packet, info_if=tm_packet)
+    FSFW_PRINTER.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
