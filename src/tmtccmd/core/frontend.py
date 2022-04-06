@@ -39,7 +39,7 @@ from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces
 from tmtccmd.config.hook import get_global_hook_obj
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.config as config_module

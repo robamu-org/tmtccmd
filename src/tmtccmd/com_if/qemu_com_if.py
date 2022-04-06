@@ -29,9 +29,9 @@ from threading import Thread
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 LOGGER = get_console_logger()
@@ -68,11 +68,11 @@ class QEMUComIF(CommunicationInterface):
 
     def __init__(
         self,
-        tmtc_printer: TmTcPrinter,
+        com_if_key: str,
         serial_timeout: float,
         ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
     ):
-        super().__init__(tmtc_printer)
+        super().__init__(com_if_key=com_if_key)
         self.serial_timeout = serial_timeout
         self.loop = asyncio.get_event_loop()
         self.number_of_packets = 0

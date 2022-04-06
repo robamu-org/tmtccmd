@@ -13,7 +13,7 @@ class Modes(enum.IntEnum):
     RAW = 3
 
 
-def pack_mode_data(object_id: bytearray, mode: Modes, submode: int) -> bytearray:
+def pack_mode_data(object_id: bytes, mode: Modes, submode: int) -> bytearray:
     """Mode 0: Off, Mode 1: Mode On, Mode 2: Mode Normal, Mode 3: Mode Raw"""
     # Normal mode
     mode_packed = struct.pack("!I", mode)

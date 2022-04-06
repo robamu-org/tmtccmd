@@ -37,9 +37,9 @@ def make_interval(interval_seconds: float) -> bytearray:
     return bytearray(struct.pack("!f", interval_seconds))
 
 
-def generate_one_hk_command(sid: bytearray, ssc: int):
+def generate_one_hk_command(sid: bytearray, ssc: int) -> PusTelecommand:
     return PusTelecommand(service=3, subservice=27, ssc=ssc, app_data=sid)
 
 
-def generate_one_diag_command(sid: bytearray, ssc: int):
+def generate_one_diag_command(sid: bytearray, ssc: int) -> PusTelecommand:
     return PusTelecommand(service=3, subservice=28, ssc=ssc, app_data=sid)

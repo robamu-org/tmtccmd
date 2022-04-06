@@ -10,15 +10,15 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.pus.service_1_verification import Service1TMExtended
 from tmtccmd.pus.service_17_test import Srv17Subservices, Service17TMExtended
-from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.logging import get_console_logger
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
 
 
 class DummyComIF(CommunicationInterface):
-    def __init__(self, com_if_key: str, tmtc_printer: TmTcPrinter):
-        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+    def __init__(self, com_if_key: str):
+        super().__init__(com_if_key=com_if_key)
         self.dummy_handler = DummyHandler()
         self.last_service = 0
         self.last_subservice = 0

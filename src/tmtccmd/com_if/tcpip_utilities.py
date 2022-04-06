@@ -5,7 +5,7 @@ import enum
 
 from tmtccmd.config.definitions import EthernetAddressT
 from tmtccmd.utility.json_handler import check_json_file
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.json_handler import JsonKeyNames
 
 LOGGER = get_console_logger()

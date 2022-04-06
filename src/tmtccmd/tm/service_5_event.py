@@ -10,7 +10,7 @@ from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
 from tmtccmd.pus.service_5_event import Srv5Subservices, Severity
 from tmtccmd.pus.obj_id import ObjectId
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 
 LOGGER = get_console_logger()
@@ -82,7 +82,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service5Tm:
         service_5_tm = cls.__empty()
@@ -110,13 +110,16 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         header_list.append("Parameter 1")
         header_list.append("Parameter 2")
 
-    @property
-    def reporter_id(self) -> int:
-        return self._object_id.id
+    def __str__(self):
+        return (
+            f"Subservice {self.subservice} | Event ID {self.event_id} | "
+            f"Reporter ID 0x{self.reporter_id.as_string} | "
+            f"Param 1 {self.param_1} | Param 2 {self.param_2}"
+        )
 
     @property
-    def reporter_id_as_bytes(self) -> bytes:
-        return self._object_id.as_bytes
+    def reporter_id(self) -> ObjectId:
+        return self._object_id
 
     @property
     def event_id(self):

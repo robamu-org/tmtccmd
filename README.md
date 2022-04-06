@@ -35,14 +35,14 @@ It can be run like this on Linux
 
 ```sh
 cd example
-./tmtc_cli.py
+./tmtccli.py
 ```
 
 or on Windows
 
 ```sh
 cd example
-py tmtc_cli.py
+py tmtccli.py
 ```
 
 The [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation of the TMTC commander

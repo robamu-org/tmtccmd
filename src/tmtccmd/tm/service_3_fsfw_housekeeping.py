@@ -7,8 +7,8 @@ import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.tm.service_3_base import Service3Base
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.tm.service_3_base import Service3Base, HkContentType
+from tmtccmd.logging import get_console_logger
 from typing import Tuple, List
 
 
@@ -102,7 +102,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
             raise ValueError
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
-        instance.object_id.id = tm_data[0:4]
+        instance.object_id.id = bytes(tm_data[0:4])
         instance.set_id = struct.unpack("!I", tm_data[4:8])[0]
         if instance.subservice == 25 or instance.subservice == 26:
             if len(tm_data) > 8:
@@ -120,7 +120,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         custom_hk_handling: bool,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service3FsfwTm:

@@ -87,7 +87,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service200FsfwTm:
         service_200_tm = cls.__empty()

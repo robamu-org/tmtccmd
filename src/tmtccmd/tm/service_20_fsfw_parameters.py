@@ -15,7 +15,7 @@ from tmtccmd.pus.service_20_parameter import (
     CustomSubservices,
 )
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
@@ -131,7 +131,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service20FsfwTm:
         service_20_tm = cls.__empty()

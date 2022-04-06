@@ -6,13 +6,14 @@
 """
 import sys
 import time
+from typing import Optional, Tuple
 
+from tmtccmd.config.definitions import UsrSendCbT
 from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.definitions import TcQueueT
 
 LOGGER = get_console_logger()
@@ -24,25 +25,23 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_handler: CcsdsTmHandler,
         apid: int,
         tm_listener: TmListener,
         tc_queue: TcQueueT,
+        usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None,
     ):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
         :param tm_listener:     TmListener object which runs in the background and receives
                                 all Telemetry
-        :param tmtc_printer:    TmTcPrinter object, passed on to CommandSenderReceiver for
-                                this time period
         """
         super().__init__(
             com_if=com_if,
-            tmtc_printer=tmtc_printer,
             tm_listener=tm_listener,
             tm_handler=tm_handler,
             apid=apid,
+            usr_send_wrapper=usr_send_wrapper,
         )
         self._tc_queue = tc_queue
         self.__all_replies_received = False
@@ -92,7 +91,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 apid=self._apid, clear=True
             )
             self._tm_handler.handle_ccsds_packet_queue(
-                apid=self._apid, packet_queue=packet_queue
+                apid=self._apid, tm_queue=packet_queue
             )
         # This makes reply reception more responsive
         elif self._tm_listener.tm_packets_available():
@@ -100,7 +99,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 apid=self._apid, clear=True
             )
             self._tm_handler.handle_ccsds_packet_queue(
-                apid=self._apid, packet_queue=packet_queue
+                apid=self._apid, tm_queue=packet_queue
             )
 
     def __check_next_tc_send(self):
@@ -119,8 +118,16 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
-            pus_packet, pus_packet_info = tc_queue_tuple
-            self._com_if.send(pus_packet)
+            packet, cmd_info = tc_queue_tuple
+            if self._usr_send_cb is not None:
+                try:
+                    self._usr_send_cb(
+                        packet, self._com_if, cmd_info, self._usr_send_args
+                    )
+                except TypeError:
+                    LOGGER.exception("User TC send callback invalid")
+            else:
+                self._com_if.send(packet)
             return True
         # queue empty.
         elif not self._tc_queue:

@@ -4,44 +4,28 @@ Argument parser modules for the TMTC commander core
 import argparse
 import pprint
 import sys
+from typing import Optional
 
 from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
+
 from tmtccmd.config.definitions import (
     CoreModeList,
     ServiceOpCodeDictT,
     OpCodeEntryT,
     OpCodeDictKeys,
 )
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.config.hook import TmTcHookBase
+from tmtccmd.utility.conf_util import AnsiColors
+from tmtccmd.logging import get_console_logger
 
 
 LOGGER = get_console_logger()
 
 
-def parse_input_arguments(
-    print_known_args: bool = False, print_unknown_args: bool = False
-) -> argparse.Namespace:
-    try:
-        from tmtccmd.config.hook import get_global_hook_obj
-
-        hook_obj = get_global_hook_obj()
-        args = hook_obj.custom_args_parsing()
-        if args is None:
-            return parse_default_input_arguments(print_known_args, print_unknown_args)
-    except ImportError:
-        return parse_default_input_arguments(print_known_args, print_unknown_args)
-
-
-def parse_default_input_arguments(
-    print_known_args: bool = False, print_unknown_args: bool = False
-):
-    """Parses all input arguments
-    :return: Input arguments contained in a special namespace and accessable by args.<variable>
-    """
-    from tmtccmd.utility.conf_util import AnsiColors
-
-    descrip_text = (
+def get_default_descript_txt() -> str:
+    return (
         f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
         f"{AnsiColors.RESET}This application provides generic components to execute "
         f"TMTC commanding.\n"
@@ -50,55 +34,76 @@ def parse_default_input_arguments(
         "to implement the handling of telemetry. All these tasks can be done by implementing\n"
         "a hook object and passing it to the core."
     )
-    arg_parser = argparse.ArgumentParser(
-        description=descrip_text, formatter_class=argparse.RawTextHelpFormatter
+
+
+def create_default_args_parser(
+    descript_txt: Optional[str] = None,
+) -> argparse.ArgumentParser:
+    if descript_txt is None:
+        descript_txt = get_default_descript_txt()
+    return argparse.ArgumentParser(
+        description=descript_txt, formatter_class=argparse.RawTextHelpFormatter
     )
 
-    add_default_mode_arguments(arg_parser)
-    add_default_com_if_arguments(arg_parser)
-    add_generic_arguments(arg_parser)
 
-    # TODO: Only add this if TMTC commander is configured for Ethernet?
-    add_ethernet_arguments(arg_parser)
+def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
+    add_default_mode_arguments(parser)
+    add_default_com_if_arguments(parser)
+    add_generic_arguments(parser)
 
-    arg_parser.add_argument(
-        "--tc_timeout_factor",
+    add_ethernet_arguments(parser)
+
+    parser.add_argument(
+        "--tctf",
         type=float,
         help="TC Timeout Factor. Multiplied with "
         "TM Timeout, TC sent again after this time period. Default: 3.5",
         default=3.5,
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "-r",
-        "--raw_data_print",
+        "--raw-print",
         help="Supply -r to print all raw TM data directly",
         action="store_true",
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "-d",
-        "--short_display_mode",
+        "--sh-display",
         help="Supply -d to print short output",
         action="store_true",
     )
-    arg_parser.add_argument(
+    parser.add_argument(
+        "-k",
         "--hk",
         dest="print_hk",
         help="Supply -k or --hk to print HK data",
         action="store_true",
     )
-    arg_parser.add_argument(
+    parser.add_argument(
         "--rs",
         dest="resend_tc",
         help="Specify whether TCs are sent again after timeout",
         action="store_true",
     )
 
+
+def parse_default_input_arguments(
+    parser: argparse.ArgumentParser,
+    hook_obj: TmTcHookBase,
+    print_known_args: bool = False,
+    print_unknown_args: bool = False,
+) -> argparse.Namespace:
+    """Parses all input arguments
+    :return: Input arguments contained in a special namespace and accessable by args.<variable>
+    """
+    from tmtccmd.utility.conf_util import AnsiColors
+
     if len(sys.argv) == 1:
         LOGGER.info(
             "No input arguments specified. Run with -h to get list of arguments"
         )
 
-    args, unknown = arg_parser.parse_known_args()
+    args, unknown = parser.parse_known_args()
 
     if print_known_args:
         LOGGER.info("Printing known arguments:")
@@ -109,7 +114,7 @@ def parse_default_input_arguments(
         for argument in unknown:
             LOGGER.info(argument)
 
-    args_post_processing(args, unknown)
+    args_post_processing(args, unknown, hook_obj.get_service_op_code_dictionary())
     return args
 
 
@@ -217,14 +222,16 @@ def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
 
 def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
-        "--clientIP", help="Client(Computer) IP. Default:''", default=""
+        "--client-ip", help="Client(Computer) IP. Default:''", default=""
     )
     arg_parser.add_argument(
-        "--boardIP", help="Board IP. Default: Localhost 127.0.0.1", default="127.0.0.1"
+        "--board-ip", help="Board IP. Default: Localhost 127.0.0.1", default="127.0.0.1"
     )
 
 
-def args_post_processing(args, unknown: list) -> None:
+def args_post_processing(
+    args, unknown: list, service_op_code_dict: ServiceOpCodeDictT
+) -> None:
     """Handles the parsed arguments.
     :param args: Namespace objects (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
     :param unknown: List of unknown parameters.
@@ -233,23 +240,20 @@ def args_post_processing(args, unknown: list) -> None:
     if len(unknown) > 0:
         print("Unknown arguments detected: " + str(unknown))
     if len(sys.argv) > 1:
-        handle_unspecified_args(args)
+        handle_unspecified_args(args, service_op_code_dict)
     if len(sys.argv) == 1:
-        handle_empty_args(args)
+        handle_empty_args(args, service_op_code_dict)
 
 
-def handle_unspecified_args(args) -> None:
+def handle_unspecified_args(args, service_op_code_dict: ServiceOpCodeDictT) -> None:
     """If some arguments are unspecified, they are set here with (variable) default values.
     :param args:
     :return: None
     """
-    from tmtccmd.config.hook import get_global_hook_obj
     from tmtccmd.config.definitions import CoreModeStrings
 
     if args.mode is None:
         args.mode = CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
-    hook_obj = get_global_hook_obj()
-    service_op_code_dict = hook_obj.get_service_op_code_dictionary()
     if service_op_code_dict is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
         if args.service is None:
@@ -285,30 +289,31 @@ def handle_unspecified_args(args) -> None:
                         "Detected op code listerner mode configuration but is "
                         "overriden by CLI argument"
                     )
-        timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
-        if timeout is not None:
-            if args.tm_timeout is None:
-                LOGGER.info(
-                    f"Detected op code configuration: Set custom timeout {timeout}"
-                )
-                args.tm_timeout = timeout
-            else:
-                LOGGER.warning(
-                    "Detected op code timeout configuration but is overriden by CLI argument"
-                )
+        if op_code_options is not None:
+            timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
+            if timeout is not None:
+                if args.tm_timeout is None:
+                    LOGGER.info(
+                        f"Detected op code configuration: Set custom timeout {timeout}"
+                    )
+                    args.tm_timeout = timeout
+                else:
+                    LOGGER.warning(
+                        "Detected op code timeout configuration but is overriden by CLI argument"
+                    )
     if args.tm_timeout is None:
         args.tm_timeout = 5.0
     if args.listener is None:
         args.listener = False
 
 
-def handle_empty_args(args) -> None:
+def handle_empty_args(args, service_op_code_dict: ServiceOpCodeDictT) -> None:
     """If no args were supplied, request input from user directly.
     :param args:
     :return:
     """
     LOGGER.info("No arguments specified..")
-    handle_unspecified_args(args=args)
+    handle_unspecified_args(args, service_op_code_dict)
 
 
 def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
@@ -336,7 +341,9 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
                 )
         print(f" {horiz_line}")
         service_string = prompt_toolkit.prompt(
-            "Please select a service by specifying the key: ", completer=srv_completer
+            "Please select a service by specifying the key: ",
+            completer=srv_completer,
+            complete_style=CompleteStyle.MULTI_COLUMN,
         )
         if service_string in service_op_code_dict:
             LOGGER.info(f"Selected service: {service_string}")
@@ -379,6 +386,7 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
             op_code_string = prompt_toolkit.prompt(
                 "Please select an operation code by specifying the key: ",
                 completer=completer,
+                complete_style=CompleteStyle.MULTI_COLUMN,
             )
             if op_code_string in op_code_dict:
                 LOGGER.info(f"Selected op code: {op_code_string}")

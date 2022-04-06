@@ -9,7 +9,7 @@ from tmtccmd.pus.service_20_parameter import (
     CustomSubservices,
 )
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 logger = get_console_logger()
 

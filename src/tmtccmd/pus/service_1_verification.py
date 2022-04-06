@@ -11,7 +11,7 @@ from spacepackets.ecss.tm import PusVersion, PusTelemetry
 from spacepackets.ecss.service_1_verification import Service1TM
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
@@ -57,7 +57,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service1TMExtended:
         """Parse a service 1 telemetry packet

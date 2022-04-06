@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union, Dict
 import struct
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
@@ -36,7 +36,7 @@ class ObjectId:
             if len(new_id) != 4:
                 LOGGER.warning(f"Invalid object ID length {len(new_id)}")
                 raise ValueError
-            self._id_as_bytes = new_id
+            self._id_as_bytes = bytes(new_id)
             self._object_id = struct.unpack("!I", self._id_as_bytes[:])[0]
         else:
             raise ValueError
