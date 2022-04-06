@@ -8,10 +8,18 @@ from tmtccmd.config.args import (
     add_default_tmtccmd_args,
     parse_default_input_arguments,
 )
+from tmtccmd.logging import get_console_logger
 from tmtccmd.tm.handler import default_ccsds_packet_handler
 
 from config.hook_implementation import ExampleHookClass
 from config.definitions import APID
+
+
+LOGGER = get_console_logger()
+
+
+def pre_send_cb(data: bytes, user_args: any):
+    LOGGER.info(f"Sending TC with {len(data)} bytes")
 
 
 def main():
@@ -20,7 +28,7 @@ def main():
     arg_parser = create_default_args_parser()
     add_default_tmtccmd_args(arg_parser)
     args = parse_default_input_arguments(arg_parser, hook_obj)
-    setup_args = SetupArgs(hook_obj=hook_obj, use_gui=False, cli_args=args)
+    setup_args = SetupArgs(hook_obj=hook_obj, use_gui=False, apid=APID, cli_args=args)
     apid_handler = ApidHandler(
         cb=default_ccsds_packet_handler, queue_len=50, user_args=None
     )
@@ -32,6 +40,7 @@ def main():
         setup_args=setup_args,
         tm_handler=ccsds_handler,
     )
+    tmtc_backend.set_pre_send_cb(callable=pre_send_cb, user_args=None)
     tmtccmd.run(tmtc_backend=tmtc_backend)
 
 
