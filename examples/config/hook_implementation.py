@@ -8,7 +8,7 @@ from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
-from config.definitions import APID
+from .definitions import APID
 
 LOGGER = get_console_logger()
 
@@ -16,11 +16,6 @@ LOGGER = get_console_logger()
 class ExampleHookClass(TmTcHookBase):
     def __init__(self, json_cfg_path: str):
         super().__init__(json_cfg_path=json_cfg_path)
-
-    def add_globals_pre_args_parsing(self, gui: bool = False):
-        from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-
-        set_default_globals_pre_args_parsing(gui=gui, tc_apid=APID, tm_apid=APID)
 
     def assign_communication_interface(
         self, com_if_key: str
