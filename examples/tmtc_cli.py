@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Example application for the TMTC Commander
-"""
+"""Example application for the TMTC Commander"""
 from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidHandler
 import tmtccmd.runner as tmtccmd
 from tmtccmd.config import SetupArgs, default_json_path
@@ -28,11 +27,11 @@ def main():
     ccsds_handler = CcsdsTmHandler()
     ccsds_handler.add_tm_handler(apid=APID, handler=apid_handler)
     tmtccmd.setup(setup_args=setup_args)
+    tmtccmd.add_ccsds_handler(ccsds_handler)
     tmtc_backend = tmtccmd.get_default_tmtc_backend(
         setup_args=setup_args,
         tm_handler=ccsds_handler,
     )
-    tmtccmd.add_ccsds_handler(ccsds_handler)
     tmtccmd.run(tmtc_backend=tmtc_backend)
 
 
