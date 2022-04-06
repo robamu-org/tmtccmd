@@ -30,6 +30,7 @@ class SetupArgs:
         self,
         hook_obj: TmTcHookBase,
         use_gui: bool,
+        apid: int,
         cli_args: Optional[argparse.Namespace],
         json_cfg_path: Optional[str] = None,
         reduced_printout: bool = False,
@@ -49,6 +50,8 @@ class SetupArgs:
         self.ansi_colors = use_ansi_colors
         self.cli_args = cli_args
         self.json_cfg_path = json_cfg_path
+        self.tc_apid = apid
+        self.tm_apid = apid
         if json_cfg_path is None:
             self.json_cfg_path = default_json_path()
 

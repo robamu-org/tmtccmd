@@ -112,14 +112,6 @@ def run(
 def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
     if hook_object is None:
         raise ValueError
-
-    # Check whether all required hook functions have bee implemented properly, Python
-    # does not enforce this.
-    if hook_object.add_globals_pre_args_parsing is None:
-        LOGGER.error(
-            "Passed hook base object handle is invalid. Abstract functions have to be implemented!"
-        )
-        raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
     # Set core object IDs
@@ -143,9 +135,14 @@ def init_printout(use_gui: bool, ansi_colors: bool = True):
 def __handle_cli_args_and_globals(setup_args: SetupArgs):
     from typing import cast
     from tmtccmd.core.globals_manager import get_global
+    from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 
     LOGGER.info("Setting up pre-globals..")
-    setup_args.hook_obj.add_globals_pre_args_parsing(False)
+    set_default_globals_pre_args_parsing(
+        setup_args.use_gui,
+        tc_apid=setup_args.tc_apid,
+        tm_apid=setup_args.tm_apid
+    )
     LOGGER.info("Setting up post-globals..")
     pass_cli_args(setup_args=setup_args)
 
