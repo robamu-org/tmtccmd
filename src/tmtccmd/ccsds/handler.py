@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Tuple, List, Type
+from typing import Callable, Dict, Optional, Tuple, List, Type, Any
 
 from tmtccmd.tm.handler import TmHandler
 from tmtccmd.tm.definitions import TelemetryQueueT, TmTypes
@@ -8,7 +8,7 @@ from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
-CcsdsCallbackT = Callable[[int, bytes, ...], None]
+CcsdsCallbackT = Callable[[int, bytes, Any], None]
 
 
 class ApidHandler:

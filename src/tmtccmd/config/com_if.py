@@ -32,7 +32,6 @@ def create_communication_interface_default(
     """
     from tmtccmd.com_if.dummy_com_if import DummyComIF
     from tmtccmd.com_if.qemu_com_if import QEMUComIF
-
     try:
         if (
             com_if_key == CoreComInterfaces.TCPIP_UDP.value

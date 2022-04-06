@@ -6,8 +6,9 @@
 """
 import sys
 import time
+from typing import Optional, Tuple
 
-from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
+from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver, PreSendCbT
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -28,6 +29,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         apid: int,
         tm_listener: TmListener,
         tc_queue: TcQueueT,
+        pre_send_cb: Optional[Tuple[PreSendCbT, any]] = None,
     ):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
@@ -41,6 +43,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             tm_listener=tm_listener,
             tm_handler=tm_handler,
             apid=apid,
+            pre_send_cb=pre_send_cb,
         )
         self._tc_queue = tc_queue
         self.__all_replies_received = False
@@ -118,6 +121,8 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
             pus_packet, pus_packet_info = tc_queue_tuple
+            if self._pre_send_cb is not None:
+                self._pre_send_cb(pus_packet, self._pre_send_args)
             self._com_if.send(pus_packet)
             return True
         # queue empty.

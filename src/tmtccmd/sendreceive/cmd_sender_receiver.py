@@ -2,7 +2,7 @@
 @author: R. Mueller
 """
 import time
-
+from typing import Callable, Optional, Tuple, Any
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
@@ -15,8 +15,9 @@ from tmtccmd.core.globals_manager import get_global
 
 LOGGER = get_console_logger()
 
+PreSendCbT = Callable[[bytes, Any], None]
 
-# pylint: disable=too-many-instance-attributes
+
 class CommandSenderReceiver:
     """
     This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
@@ -29,6 +30,7 @@ class CommandSenderReceiver:
         tm_listener: TmListener,
         tm_handler: CcsdsTmHandler,
         apid: int,
+        pre_send_cb: Optional[Tuple[PreSendCbT, any]] = None,
     ):
 
         """
@@ -40,6 +42,11 @@ class CommandSenderReceiver:
         self._tm_handler = tm_handler
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._apid = apid
+        self._pre_send_cb: Optional[PreSendCbT] = None
+        self._pre_send_args: Optional[any] = None
+        if pre_send_cb is not None:
+            self._pre_send_cb = pre_send_cb[0]
+            self._pre_send_args = pre_send_cb[1]
 
         if isinstance(com_if, CommunicationInterface):
             self._com_if = com_if

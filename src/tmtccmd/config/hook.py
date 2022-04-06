@@ -8,6 +8,7 @@ from tmtccmd.config.definitions import (
     ServiceOpCodeDictT,
     HkReplyUnpacked,
     DataReplyUnpacked,
+    default_json_path
 )
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
@@ -27,8 +28,10 @@ class TmTcHookBase:
     TMTC commander core.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, json_cfg_path: Optional[str] = None):
+        self.json_cfg_path = json_cfg_path
+        if self.json_cfg_path is None:
+            self.json_cfg_path = default_json_path()
 
     @abstractmethod
     def get_object_ids(self) -> ObjectIdDictT:
@@ -39,29 +42,6 @@ class TmTcHookBase:
         information about that object ID.
         """
         return get_core_object_ids()
-
-    @abstractmethod
-    def add_globals_pre_args_parsing(self, gui: bool = False):
-        """Add all global variables prior to parsing the CLI arguments.
-
-        :param gui: Set to true if the GUI mode is used
-        :return:
-        """
-        from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-
-        set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
-
-    @abstractmethod
-    def add_globals_post_args_parsing(self, args: argparse.Namespace):
-        """Add global variables prior after parsing the CLI arguments.
-
-        :param args: Specify whether a GUI is used
-        """
-        from tmtccmd.config.globals import set_default_globals_post_args_parsing
-
-        set_default_globals_post_args_parsing(
-            args=args, json_cfg_path=self.get_json_config_file_path()
-        )
 
     @abstractmethod
     def assign_communication_interface(
@@ -77,7 +57,7 @@ class TmTcHookBase:
 
         return create_communication_interface_default(
             com_if_key=com_if_key,
-            json_cfg_path=self.get_json_config_file_path(),
+            json_cfg_path=self.json_cfg_path
         )
 
     @abstractmethod
@@ -115,22 +95,6 @@ class TmTcHookBase:
         pass
 
     @staticmethod
-    def custom_args_parsing() -> Optional[argparse.Namespace]:
-        """The user can implement args parsing here to override the default argument parsing
-        for the CLI mode
-        :return:
-        """
-        return None
-
-    def get_json_config_file_path(self) -> str:
-        """The user can specify a path and filename for the JSON configuration file by overriding
-        this function.
-
-        :return:
-        """
-        return "tmtc_config.json"
-
-    @staticmethod
     def handle_service_8_telemetry(
         object_id: bytes, action_id: int, custom_data: bytearray
     ) -> DataReplyUnpacked:
@@ -149,22 +113,6 @@ class TmTcHookBase:
             "hook function"
         )
         return DataReplyUnpacked()
-
-    @staticmethod
-    def handle_service_5_event(
-        object_id: bytes, event_id: int, param_1: int, param_2: int
-    ) -> str:
-        """This function is called when a Service 5 Event Packet is received. The user can specify
-         a custom string here which will be printed to display additional information related
-         to an event.
-
-        :param object_id: Byte representation of the object ID
-        :param event_id: Two-byte event ID
-        :param param_1: Four-byte Parameter 1
-        :param param_2: Four-byte Parameter 2
-        :return: Custom information string which will be printed with the event
-        """
-        return ""
 
     def get_retval_dict(self) -> RetvalDictT:
         LOGGER.info("No return value dictionary specified")
