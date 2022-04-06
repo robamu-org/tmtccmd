@@ -11,9 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Changed
 
-- Improve core API: Additional `setup_tmtccmd` functions and requirement to user to create backend
-  themselves. Makes it easier to directly configure the backend and move to a generally more
-  pythonic API
+- Improve core API: Changes core functions to setup and run. Requirement to user to create backend.
+  Makes it easier to directly configure the backend and move to a generally more pythonic API
 - Refactoring and extending file logging functionalities
 - Exposes functions to create a raw PUS logger and a TMTC logger
 - Refactor modules to move packet printout and logging to user level

@@ -171,12 +171,6 @@ class CommandSenderReceiver:
             LOGGER.info(queue_entry_second)
         elif queue_entry_first == QueueCommands.RAW_PRINT:
             LOGGER.info(f"Raw command: {queue_entry_second.hex(sep=',')}")
-        elif queue_entry_first == QueueCommands.EXPORT_LOG:
-            # TODO: User should be able to pass a log export handler which performs this task
-            # export_name = queue_entry_second
-            # self._tmtc_printer.add_print_buffer_to_buffer_list()
-            # self._tmtc_printer.print_to_file(export_name, True)
-            LOGGER.warning("Export of TCs to log not implemented yet")
         elif queue_entry_first == QueueCommands.SET_TIMEOUT:
             self._tm_timeout = queue_entry_second
         else:
