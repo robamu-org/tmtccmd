@@ -28,7 +28,8 @@ class TestPrintersLoggers(TestCase):
         self.logger = get_console_logger()
 
     def test_pus_loggers(self):
-        pus_tc = pack_service_17_ping_command(ssc=0)
+        """
+                pus_tc = pack_service_17_ping_command(ssc=0)
         file_name = get_current_raw_file_name()
         log_raw_pus_tc(pus_tc.pack())
         pus_tm = Service1TMExtended(
@@ -42,6 +43,8 @@ class TestPrintersLoggers(TestCase):
             pus_tm.pack(), srv_subservice=(pus_tm.service, pus_tm.subservice)
         )
         self.assertTrue(os.path.exists(file_name))
+        :return:
+        """
 
     def test_print_functions(self):
         pass
