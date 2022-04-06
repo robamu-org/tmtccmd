@@ -14,14 +14,10 @@ def main():
     hook_obj = ExampleHookClass()
     tmtccmd.init_tmtccmd(hook_object=hook_obj)
     apid_handler = ApidHandler(
-        cb=default_ccsds_packet_handler,
-        queue_len=50,
-        user_args=None
+        cb=default_ccsds_packet_handler, queue_len=50, user_args=None
     )
     ccsds_handler = CcsdsTmHandler()
-    ccsds_handler.add_tm_handler(
-        apid=APID, handler=apid_handler
-    )
+    ccsds_handler.add_tm_handler(apid=APID, handler=apid_handler)
     tmtccmd.setup_tmtccmd(use_gui=True, reduced_printout=False)
     tmtc_backend = tmtccmd.get_default_tmtc_backend(
         hook_obj=hook_obj,

@@ -18,7 +18,7 @@ class TestTmtcRunner(TestCase):
         init_tmtccmd(hook_object=hook_base)
         setup_tmtccmd(use_gui=False, reduced_printout=False)
         backend_mock = create_backend_mock(tm_handler=tm_handler)
-        run_tmtccmd(use_gui=False, tmtc_backend=backend_mock)
+        run_tmtccmd(tmtc_backend=backend_mock)
         backend_mock.start_listener.assert_called_with()
         backend_mock.initialize.assert_called_with()
 

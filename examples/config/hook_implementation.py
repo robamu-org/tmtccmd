@@ -14,17 +14,14 @@ LOGGER = get_console_logger()
 
 
 class ExampleHookClass(TmTcHookBase):
+    def __init__(self, json_cfg_path: str):
+        super().__init__()
+        self.json_cfg_path = json_cfg_path
+
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 
         set_default_globals_pre_args_parsing(gui=gui, tc_apid=APID, tm_apid=APID)
-
-    def add_globals_post_args_parsing(self, args: argparse.Namespace):
-        from tmtccmd.config.globals import set_default_globals_post_args_parsing
-
-        set_default_globals_post_args_parsing(
-            args=args, json_cfg_path=self.get_json_config_file_path()
-        )
 
     def assign_communication_interface(
         self, com_if_key: str
@@ -34,7 +31,7 @@ class ExampleHookClass(TmTcHookBase):
         LOGGER.info("Communication interface assignment function was called")
         return create_communication_interface_default(
             com_if_key=com_if_key,
-            json_cfg_path=self.get_json_config_file_path(),
+            json_cfg_path=self.json_cfg_path,
         )
 
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

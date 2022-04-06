@@ -8,9 +8,8 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
-FSFW_PRINTER = FsfwTmTcPrinter(
-    file_logger=None
-)
+FSFW_PRINTER = FsfwTmTcPrinter(file_logger=None)
+
 
 class TmHandler:
     def __init__(self, tm_type: TmTypes):
@@ -20,9 +19,7 @@ class TmHandler:
         return self._tm_type
 
 
-def default_ccsds_packet_handler(
-    apid: int, raw_tm_packet: bytes, user_args: any
-):
+def default_ccsds_packet_handler(apid: int, raw_tm_packet: bytes, user_args: any):
     """Default implementation only prints the packet"""
     default_factory_hook(raw_tm_packet=raw_tm_packet)
 

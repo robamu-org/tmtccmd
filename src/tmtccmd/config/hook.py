@@ -41,29 +41,6 @@ class TmTcHookBase:
         return get_core_object_ids()
 
     @abstractmethod
-    def add_globals_pre_args_parsing(self, gui: bool = False):
-        """Add all global variables prior to parsing the CLI arguments.
-
-        :param gui: Set to true if the GUI mode is used
-        :return:
-        """
-        from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-
-        set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
-
-    @abstractmethod
-    def add_globals_post_args_parsing(self, args: argparse.Namespace):
-        """Add global variables prior after parsing the CLI arguments.
-
-        :param args: Specify whether a GUI is used
-        """
-        from tmtccmd.config.globals import set_default_globals_post_args_parsing
-
-        set_default_globals_post_args_parsing(
-            args=args, json_cfg_path=self.get_json_config_file_path()
-        )
-
-    @abstractmethod
     def assign_communication_interface(
         self, com_if_key: str
     ) -> Optional[CommunicationInterface]:
@@ -121,14 +98,6 @@ class TmTcHookBase:
         :return:
         """
         return None
-
-    def get_json_config_file_path(self) -> str:
-        """The user can specify a path and filename for the JSON configuration file by overriding
-        this function.
-
-        :return:
-        """
-        return "tmtc_config.json"
 
     @staticmethod
     def handle_service_8_telemetry(
