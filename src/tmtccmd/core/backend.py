@@ -96,8 +96,8 @@ class TmTcHandler(BackendBase):
                 "reassigning a new one"
             )
 
-    def set_pre_send_cb(self, callable: PreSendCbT, user_args: any):
-        self.__pre_send_cb = callable
+    def set_pre_send_cb(self, pre_send_cb: PreSendCbT, user_args: any):
+        self.__pre_send_cb = pre_send_cb
         self.__pre_send_args = user_args
 
     def is_com_if_active(self):
