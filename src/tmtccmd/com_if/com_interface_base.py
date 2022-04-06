@@ -42,7 +42,7 @@ class CommunicationInterface:
         """
 
     @abstractmethod
-    def send(self, data: bytearray):
+    def send(self, data: bytes):
         """Send raw data"""
 
     @abstractmethod

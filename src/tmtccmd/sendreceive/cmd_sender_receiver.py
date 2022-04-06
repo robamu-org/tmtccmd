@@ -2,10 +2,9 @@
 @author: R. Mueller
 """
 import time
-from typing import Callable, Optional, Tuple, Any
+from typing import Optional, Tuple
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds, UsrSendCbT
 from tmtccmd.logging import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
@@ -14,8 +13,6 @@ from tmtccmd.tc.definitions import TcQueueEntryT
 from tmtccmd.core.globals_manager import get_global
 
 LOGGER = get_console_logger()
-
-PreSendCbT = Callable[[bytes, Any], None]
 
 
 class CommandSenderReceiver:
@@ -30,23 +27,22 @@ class CommandSenderReceiver:
         tm_listener: TmListener,
         tm_handler: CcsdsTmHandler,
         apid: int,
-        pre_send_cb: Optional[Tuple[PreSendCbT, any]] = None,
+        usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None,
     ):
 
         """
         :param com_if: CommunicationInterface object. Instantiate the desired one
         and pass it here
-        :param tmtc_printer: TmTcPrinter object. Instantiate it and pass it here.
         """
         self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_handler = tm_handler
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._apid = apid
-        self._pre_send_cb: Optional[PreSendCbT] = None
-        self._pre_send_args: Optional[any] = None
-        if pre_send_cb is not None:
-            self._pre_send_cb = pre_send_cb[0]
-            self._pre_send_args = pre_send_cb[1]
+        self._usr_send_cb: Optional[UsrSendCbT] = None
+        self._usr_send_args: Optional[any] = None
+        if usr_send_wrapper is not None:
+            self._usr_send_cb = usr_send_wrapper[0]
+            self._usr_send_args = usr_send_wrapper[1]
 
         if isinstance(com_if, CommunicationInterface):
             self._com_if = com_if
@@ -168,9 +164,7 @@ class CommandSenderReceiver:
             wait_time = queue_entry_second
             self._tm_timeout = self._tm_timeout + wait_time
             self._wait_period = wait_time
-            print()
-            print_string = "Waiting for " + str(self._wait_period) + " seconds."
-            LOGGER.info(print_string)
+            LOGGER.info(f"Waiting for {self._wait_period} seconds.")
             self._wait_start = time.time()
         # printout optimized for LOGGER and debugging
         elif queue_entry_first == QueueCommands.PRINT:

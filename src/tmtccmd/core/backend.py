@@ -4,7 +4,7 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Union, cast, Optional
+from typing import Union, cast, Optional, Tuple, Any
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.tm.definitions import TmTypes
@@ -12,7 +12,7 @@ from tmtccmd.tm.handler import TmHandler
 from tmtccmd.logging import get_console_logger
 from tmtccmd.sendreceive.sequential_sender_receiver import (
     SequentialCommandSenderReceiver,
-    PreSendCbT,
+    UsrSendCbT,
 )
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
@@ -60,8 +60,7 @@ class TmTcHandler(BackendBase):
         self.__service = init_service
         self.__op_code = init_opcode
         self.__apid = 0
-        self.__pre_send_cb: Optional[PreSendCbT] = None
-        self.__pre_send_args: Optional[any] = None
+        self.__usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None
 
         # This flag could be used later to command the TMTC Client with a front-end
         self.one_shot_operation = False
@@ -92,13 +91,17 @@ class TmTcHandler(BackendBase):
             self.__tm_listener.set_com_if(self.__com_if)
         else:
             LOGGER.warning(
-                "Communication Interface is active and must be closed first before"
+                "Communication Interface is active and must be closed first before "
                 "reassigning a new one"
             )
 
-    def set_pre_send_cb(self, pre_send_cb: PreSendCbT, user_args: any):
-        self.__pre_send_cb = pre_send_cb
-        self.__pre_send_args = user_args
+    @property
+    def usr_send_wrapper(self):
+        return self.__usr_send_wrapper
+
+    @usr_send_wrapper.setter
+    def usr_send_wrapper(self, usr_send_wrapper: UsrSendCbT):
+        self.__usr_send_wrapper = usr_send_wrapper
 
     def is_com_if_active(self):
         return self.__com_if_active
@@ -254,16 +257,13 @@ class TmTcHandler(BackendBase):
             if not self.__com_if.valid:
                 return
             LOGGER.info("Performing service command operation")
-            pre_send_cb = None
-            if self.__pre_send_cb is not None:
-                pre_send_cb = (self.__pre_send_cb, self.__pre_send_args)
             sender_and_receiver = SequentialCommandSenderReceiver(
                 com_if=self.__com_if,
                 tm_handler=self.__tm_handler,
                 tm_listener=self.__tm_listener,
                 tc_queue=service_queue,
                 apid=self.__apid,
-                pre_send_cb=pre_send_cb,
+                usr_send_wrapper=self.usr_send_wrapper,
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE

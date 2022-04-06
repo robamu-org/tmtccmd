@@ -1,7 +1,11 @@
 """Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple, Dict, Optional, List, Union
+from typing import Tuple, Dict, Optional, List, Union, Callable, Any
+
+from spacepackets.ecss import PusTelecommand
+
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
 
 def default_json_path() -> str:
@@ -70,6 +74,8 @@ ComIFValueT = Tuple[str, any]
 ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
+
+UsrSendCbT = Callable[[bytes, CommunicationInterface, Any, Any], None]
 
 
 class DataReplyUnpacked:

@@ -36,7 +36,7 @@ def main():
         setup_args=setup_args,
         tm_handler=ccsds_handler,
     )
-    tmtc_backend.set_pre_send_cb(pre_send_cb, None)
+    tmtc_backend.usr_send_wrapper = (pre_send_cb, None)
     tmtccmd.run(tmtc_backend=tmtc_backend)
 
 

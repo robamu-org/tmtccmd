@@ -8,11 +8,11 @@ import sys
 import time
 from typing import Optional, Tuple
 
-from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver, PreSendCbT
+from tmtccmd.config.definitions import UsrSendCbT
+from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.definitions import TcQueueT
 
@@ -29,21 +29,19 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         apid: int,
         tm_listener: TmListener,
         tc_queue: TcQueueT,
-        pre_send_cb: Optional[Tuple[PreSendCbT, any]] = None,
+        usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None,
     ):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
         :param tm_listener:     TmListener object which runs in the background and receives
                                 all Telemetry
-        :param tmtc_printer:    TmTcPrinter object, passed on to CommandSenderReceiver for
-                                this time period
         """
         super().__init__(
             com_if=com_if,
             tm_listener=tm_listener,
             tm_handler=tm_handler,
             apid=apid,
-            pre_send_cb=pre_send_cb,
+            usr_send_wrapper=usr_send_wrapper,
         )
         self._tc_queue = tc_queue
         self.__all_replies_received = False
@@ -120,10 +118,16 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
-            pus_packet, pus_packet_info = tc_queue_tuple
-            if self._pre_send_cb is not None:
-                self._pre_send_cb(pus_packet, self._pre_send_args)
-            self._com_if.send(pus_packet)
+            packet, cmd_info = tc_queue_tuple
+            if self._usr_send_cb is not None:
+                try:
+                    self._usr_send_cb(
+                        packet, self._com_if, cmd_info, self._usr_send_args
+                    )
+                except TypeError:
+                    LOGGER.exception("User TC send callback invalid")
+            else:
+                self._com_if.send(packet)
             return True
         # queue empty.
         elif not self._tc_queue:
