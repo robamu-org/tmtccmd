@@ -13,7 +13,7 @@ from tmtccmd.pus import ObjectId
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.definitions import PusIFQueueT
 from tmtccmd.tm.service_3_base import HkContentType
-from tmtccmd.logging import get_console_logger, get_time_string
+from tmtccmd.logging import get_console_logger, get_current_time_string
 
 LOGGER = get_console_logger()
 
@@ -54,7 +54,7 @@ class FsfwTmTcPrinter:
         base_string = "Received Telemetry: " + info_if.get_print_info()
         LOGGER.info(base_string)
         if self.file_logger is not None:
-            self.file_logger.info(f"{get_time_string(True)}: {base_string}")
+            self.file_logger.info(f"{get_current_time_string(True)}: {base_string}")
         try:
             self.__handle_column_header_print(info_if=info_if)
             self.__handle_tm_content_print(info_if=info_if)
@@ -115,7 +115,7 @@ class FsfwTmTcPrinter:
         )
         LOGGER.info(generic_info)
         if self.file_logger is not None:
-            self.file_logger.info(f"{get_time_string(True)}: {generic_info}")
+            self.file_logger.info(f"{get_current_time_string(True)}: {generic_info}")
 
     def print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
         """

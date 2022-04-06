@@ -143,7 +143,7 @@ def build_log_file_name(base_name: str):
     return f"{LOG_DIR}/{base_name}"
 
 
-def get_time_string(ms_prec: bool) -> str:
+def get_current_time_string(ms_prec: bool) -> str:
     base_fmt = "%Y-%m-%d %H:%M:%S"
     if ms_prec:
         base_fmt += ".%f"
