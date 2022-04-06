@@ -153,8 +153,10 @@ class FsfwTmTcPrinter:
 
     @staticmethod
     def generic_action_packet_tm_print(packet: Service8FsfwTm, obj_id: ObjectId) -> str:
-        print_string = f"Service 8 data reply from {obj_id} with action ID {packet.action_id} " \
-                       f"and data size {len(packet.tm_data)}"
+        print_string = (
+            f"Service 8 data reply from {obj_id} with action ID {packet.action_id} "
+            f"and data size {len(packet.tm_data)}"
+        )
         return print_string
 
     def __handle_wiretapping_packet(
