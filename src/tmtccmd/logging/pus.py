@@ -5,8 +5,7 @@ from datetime import datetime
 from tmtccmd.logging import LOG_DIR
 from spacepackets.ccsds.spacepacket import PacketTypes
 from logging.handlers import RotatingFileHandler
-from logging import FileHandler, StreamHandler
-from tmtccmd.tm import Service5Tm
+from logging import FileHandler
 
 RAW_PUS_FILE_BASE_NAME = "pus-log"
 RAW_PUS_LOGGER_NAME = "pus-log"

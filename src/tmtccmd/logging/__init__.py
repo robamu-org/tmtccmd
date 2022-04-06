@@ -4,12 +4,13 @@
 import logging
 import os
 import sys
-
+from datetime import datetime
 from colorlog import ColoredFormatter
 
 
 LOG_DIR = "log"
-# Always use the parent module name as the logger name. This makes it easier to derive loggers in submodules
+# Always use the parent module name as the logger name. This makes it easier to derive
+# loggers in submodules
 TMTC_LOGGER_NAME = ".".join(__name__.split(".")[:-1])
 TMTC_FILE_LOGGER_NAME = "tmtccmd-file"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"
@@ -140,3 +141,11 @@ def init_console_logger(log_level: int = logging.INFO) -> logging.Logger:
 
 def build_log_file_name(base_name: str):
     return f"{LOG_DIR}/{base_name}"
+
+
+def get_time_string(ms_prec: bool) -> str:
+    base_fmt = "%Y-%m-%d %H:%M:%S"
+    if ms_prec:
+        base_fmt += ".%f"
+        return datetime.now().strftime(base_fmt)[:-3]
+    return datetime.now().strftime(base_fmt)

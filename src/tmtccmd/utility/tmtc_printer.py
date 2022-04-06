@@ -1,24 +1,19 @@
 """Contains classes and functions that perform all printing functionalities.
 """
 import logging
-import os
 import enum
-from datetime import datetime
 from typing import cast, List, Optional
 
-from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.util import get_printable_data_string, PrintFormats
 
 from tmtccmd.tm.service_8_fsfw_functional_cmd import Service8FsfwTm
-from tmtccmd.tm.service_5_event import Service5Tm
-from tmtccmd.pus.service_1_verification import Service1TMExtended
 from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus import ObjectId
 from tmtccmd.pus.service_8_func_cmd import Srv8Subservices
 from tmtccmd.tm.definitions import PusIFQueueT
-from tmtccmd.tm.service_3_base import Service3Base, HkContentType
-from tmtccmd.logging import get_console_logger
+from tmtccmd.tm.service_3_base import HkContentType
+from tmtccmd.logging import get_console_logger, get_time_string
 
 LOGGER = get_console_logger()
 
@@ -40,8 +35,6 @@ class FsfwTmTcPrinter:
     ):
         """
         :param display_mode:
-        :param do_print_to_file: if true, print to file
-        :param print_tc: if true, print TCs
         """
         self.display_mode = display_mode
         self.file_logger = file_logger
@@ -61,7 +54,7 @@ class FsfwTmTcPrinter:
         base_string = "Received Telemetry: " + info_if.get_print_info()
         LOGGER.info(base_string)
         if self.file_logger is not None:
-            self.file_logger.info(f"{self.get_time_string(True)}: {base_string}")
+            self.file_logger.info(f"{get_time_string(True)}: {base_string}")
         try:
             self.__handle_column_header_print(info_if=info_if)
             self.__handle_tm_content_print(info_if=info_if)
@@ -71,13 +64,6 @@ class FsfwTmTcPrinter:
                 f"Type Error when trying to print TM Packet "
                 f"[{packet_if.service}, {packet_if.subservice}]"
             )
-
-    def get_time_string(self, ms_prec: bool) -> str:
-        base_fmt = "%Y-%m-%d %H:%M:%S"
-        if ms_prec:
-            base_fmt += ".%f"
-            return datetime.now().strftime(base_fmt)[:-3]
-        return datetime.now().strftime(base_fmt)
 
     def __handle_column_header_print(self, info_if: PusTmInfoInterface):
         header_list = []
@@ -129,7 +115,7 @@ class FsfwTmTcPrinter:
         )
         LOGGER.info(generic_info)
         if self.file_logger is not None:
-            self.file_logger.info(f"{self.get_time_string(True)}: {generic_info}")
+            self.file_logger.info(f"{get_time_string(True)}: {generic_info}")
 
     def print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
         """
@@ -235,14 +221,8 @@ class FsfwTmTcPrinter:
             rep_str = "unknown object"
         print_string = f"Service 8 data reply from {rep_str} with action ID {action_id}"
         self.__print_buffer = print_string
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
         self.__print_buffer = reply.header_list
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
         self.__print_buffer = reply.content_list
-        LOGGER.info(self.__print_buffer)
-        self.add_print_buffer_to_file_buffer()
 
     def __handle_wiretapping_packet(
         self, packet_if: PusTmInterface, info_if: PusTmInfoInterface
@@ -259,9 +239,6 @@ class FsfwTmTcPrinter:
                 f"Wiretapping Packet or Raw Reply from TM [{packet_if.service},"
                 f"{packet_if.subservice}]: "
             )
-            self.__print_buffer = self.__print_buffer + info_if.get_source_data_string()
-            LOGGER.info(self.__print_buffer)
-            self.add_print_buffer_to_file_buffer()
 
     @staticmethod
     def bit_extractor(byte: int, position: int):
