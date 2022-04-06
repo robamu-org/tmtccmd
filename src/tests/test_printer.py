@@ -2,7 +2,6 @@ import shutil
 import os
 from unittest import TestCase
 
-from tmtccmd.runner import setup
 from tmtccmd.tm import Service5Tm
 from tmtccmd.pus.service_1_verification import Service1TMExtended
 from tmtccmd.tm.service_5_event import Srv5Subservices
