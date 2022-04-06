@@ -52,7 +52,8 @@ The example application for the CLI mode looks like this:
         tmtc_backend.set_pre_send_cb(callable=pre_send_cb, user_args=None)
         tmtccmd.run(tmtc_backend=tmtc_backend)
 
-1. The ``ExampleHookClass`` is located inside the ``examples/config`` folder and contains all
+1. The ``ExampleHookClass`` is located inside the
+   `examples/config <https://github.com/robamu-org/tmtccmd/blob/main/examples/config/hook_implementation.py>`_ folder and contains all
    important hook implementations.
 #. An argument parser is created and converted to also parse all CLI arguments required
    by ``tmtccmd``

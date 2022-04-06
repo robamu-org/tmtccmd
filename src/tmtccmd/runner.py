@@ -46,7 +46,7 @@ def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
 
 def setup(setup_args: SetupArgs):
     """This function needs to be called first before running the TMTC commander core. The setup
-    arguments encapsulate all required argumernts for the TMTC commander.
+    arguments encapsulate all required arguments for the TMTC commander.
 
     :param setup_args:     Setup arguments
     """
@@ -76,8 +76,7 @@ def run(
 ):
     """This is the primary function to run the TMTC commander. Users should call this function to
     start the TMTC commander. Please note that :py:func:`setup` needs to be
-    called before this function. Raises RuntimeError if :py:func:`setup`
-    has not been called before calling this function. You also need to build a TMTC backend
+    called before this function.  You also need to build a TMTC backend
     instance and pass it to this call. You can use :py:func:`create_default_tmtc_backend`
     to create a generic backend.
 
@@ -179,6 +178,7 @@ def __get_backend_init_variables():
 
 def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
+
     :param setup_args:
     :param tm_handler:
     :return:
