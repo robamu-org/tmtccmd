@@ -13,44 +13,40 @@ The example application for the CLI mode looks like this:
 
 ::
 
-    from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidHandler
-    import tmtccmd.runner as tmtccmd
-    from tmtccmd.config import SetupArgs, default_json_path
-    from tmtccmd.config.args import (
-        create_default_args_parser,
-        add_default_tmtccmd_args,
-        parse_default_input_arguments,
-    )
-    from tmtccmd.logging import get_console_logger
-    from tmtccmd.tm.handler import default_ccsds_packet_handler
+   import tmtccmd.runner as runner
+   from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidHandler
+   from tmtccmd.config import SetupArgs, default_json_path
+   from tmtccmd.logging import get_console_logger
 
-    from config.hook_implementation import ExampleHookClass
-    from config.definitions import APID, pre_send_cb
+   from config.hook_implementation import ExampleHookClass
+   from config.definitions import APID, pre_send_cb
+   from config.tm_handler import default_ccsds_packet_handler
+
+   LOGGER = get_console_logger()
 
 
-    LOGGER = get_console_logger()
+   def main():
+       runner.init_printout(True)
+       hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
+       setup_args = SetupArgs(hook_obj=hook_obj, use_gui=True, apid=APID, cli_args=None)
+       apid_handler = ApidHandler(
+           cb=default_ccsds_packet_handler, queue_len=50, user_args=None
+       )
+       ccsds_handler = CcsdsTmHandler()
+       ccsds_handler.add_tm_handler(apid=APID, handler=apid_handler)
+       runner.setup(setup_args=setup_args)
+       runner.add_ccsds_handler(ccsds_handler)
+       tmtc_backend = runner.create_default_tmtc_backend(
+           setup_args=setup_args,
+           tm_handler=ccsds_handler,
+       )
+       tmtc_backend.usr_send_wrapper = (pre_send_cb, None)
+       runner.run(tmtc_backend=tmtc_backend)
 
 
-    def main():
-        tmtccmd.init_printout(False)
-        hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
-        arg_parser = create_default_args_parser()
-        add_default_tmtccmd_args(arg_parser)
-        args = parse_default_input_arguments(arg_parser, hook_obj)
-        setup_args = SetupArgs(hook_obj=hook_obj, use_gui=False, apid=APID, cli_args=args)
-        apid_handler = ApidHandler(
-            cb=default_ccsds_packet_handler, queue_len=50, user_args=None
-        )
-        ccsds_handler = CcsdsTmHandler()
-        ccsds_handler.add_tm_handler(apid=APID, handler=apid_handler)
-        tmtccmd.setup(setup_args=setup_args)
-        tmtccmd.add_ccsds_handler(ccsds_handler)
-        tmtc_backend = tmtccmd.get_default_tmtc_backend(
-            setup_args=setup_args,
-            tm_handler=ccsds_handler,
-        )
-        tmtc_backend.set_pre_send_cb(callable=pre_send_cb, user_args=None)
-        tmtccmd.run(tmtc_backend=tmtc_backend)
+   if __name__ == "__main__":
+       main()
+
 
 1. The ``ExampleHookClass`` is located inside the
    `examples/config <https://github.com/robamu-org/tmtccmd/blob/main/examples/config/hook_implementation.py>`_ folder and contains all
@@ -58,7 +54,7 @@ The example application for the CLI mode looks like this:
 #. An argument parser is created and converted to also parse all CLI arguments required
    by ``tmtccmd``
 #. A :py:class:`tmtccmd.config.SetupArgs` class is created which contains most of the
-   configuration required by ``tmtcccmd``. The CLI arguments are also passed to this
+   configuration required by ``tmtccmd``. The CLI arguments are also passed to this
    class
 #. An :py:class:`tmtccmd.ccsds.handler.ApidHandler` is created to handle all telemetry
    for the application APID. This handler takes a user callback to handle the packets
@@ -72,7 +68,7 @@ The example application for the CLI mode looks like this:
 
 Most of the TMTC commander configuration is done through the hook object instance and the setup
 object. More information about its implementation will be provided in the :ref:`hook-func-label`
-chapter
+chapter.
 
 CLI
 ===

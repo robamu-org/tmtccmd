@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v2.0.1]
+
+### Fixed
+
+- Bugs in examples
+
 ## [v2.0.0]
 
 ### Changed
