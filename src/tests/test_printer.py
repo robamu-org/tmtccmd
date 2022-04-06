@@ -79,11 +79,11 @@ class TestPrintersLoggers(TestCase):
             param_2=82452,
             time=CdsShortTimestamp.init_from_current_time(),
         )
-        hook_base = create_hook_mock_with_srv_handlers()
+        # hook_base = create_hook_mock_with_srv_handlers()
         # TODO: Fix this test
         # setup(hook_object=hook_base)
 
-        service_5_packed = service_5_tm.pack()
+        # service_5_packed = service_5_tm.pack()
         # self.tmtc_printer.print_telemetry(packet_if=service_5_tm, info_if=service_5_tm)
 
         # TODO: Fix this test
