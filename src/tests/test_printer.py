@@ -18,7 +18,8 @@ from tests.hook_obj_mock import create_hook_mock_with_srv_handlers
 
 class TestPrintersLoggers(TestCase):
     def setUp(self):
-        shutil.rmtree(LOG_DIR)
+        if os.path.exists(LOG_DIR):
+            shutil.rmtree(LOG_DIR)
         os.mkdir(LOG_DIR)
         self.tmtc_printer = FsfwTmTcPrinter()
         self.logger = get_console_logger()
@@ -96,4 +97,5 @@ class TestPrintersLoggers(TestCase):
     def tearDown(self) -> None:
         """Reset the hook object"""
         update_global(CoreGlobalIds.TMTC_HOOK, None)
-        shutil.rmtree(LOG_DIR)
+        if os.path.exists(LOG_DIR):
+            shutil.rmtree(LOG_DIR)
