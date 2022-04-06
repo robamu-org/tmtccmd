@@ -1,9 +1,8 @@
 import argparse
 import collections.abc
 from typing import Optional, Union, List, Dict
-from .globals import (
-    update_global,
-    CoreGlobalIds,
+
+from tmtccmd.config.globals import (
     CoreServiceList,
     add_op_code_entry,
     add_service_op_code_entry,
@@ -14,13 +13,16 @@ from .globals import (
 )
 from .definitions import (
     QueueCommands,
+    CoreGlobalIds,
     ServiceOpCodeDictT,
     OpCodeDictKeys,
     HkReplyUnpacked,
     DataReplyUnpacked,
     default_json_path,
 )
+
 from tmtccmd.logging import get_console_logger
+from tmtccmd.core.globals_manager import update_global
 
 from .hook import TmTcHookBase
 

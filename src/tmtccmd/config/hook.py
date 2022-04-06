@@ -1,23 +1,19 @@
 import sys
 import argparse
 from abc import abstractmethod
-from typing import Dict, Tuple, Optional, Union
+from typing import Optional, Union
 
 from tmtccmd.config.definitions import (
-    DEFAULT_APID,
     ServiceOpCodeDictT,
-    HkReplyUnpacked,
     DataReplyUnpacked,
     default_json_path,
 )
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
 from tmtccmd.pus.obj_id import ObjectIdDictT
-from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.core.backend import BackendBase
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tm.service_3_base import Service3Base
 
 LOGGER = get_console_logger()
 
@@ -51,7 +47,6 @@ class TmTcHookBase:
         TMTC with.
 
         :param com_if_key:      String key of the communication interface to be created.
-        :param tmtc_printer:    Printer utility instance.
         """
         from tmtccmd.config.com_if import create_communication_interface_default
 
@@ -71,7 +66,7 @@ class TmTcHookBase:
         return get_default_service_op_code_dict()
 
     @abstractmethod
-    def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
+    def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
         """Perform custom mode operations
         :param tmtc_backend:
         :param mode:
