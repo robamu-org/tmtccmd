@@ -3,6 +3,8 @@
 """
 import logging
 import os
+import sys
+
 from colorlog import ColoredFormatter
 
 
@@ -103,7 +105,7 @@ def set_up_colorlog_logger(logger: logging.Logger):
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    console_handler = StreamHandler()
+    console_handler = StreamHandler(stream=sys.stdout)
 
     if not os.path.exists(LOG_DIR):
         os.mkdir(LOG_DIR)

@@ -23,11 +23,8 @@ from tmtccmd.core.globals_manager import (
     lock_global_pool,
     unlock_global_pool,
 )
-from tmtccmd.core.object_id_manager import insert_object_ids
-from tmtccmd.config.objects import get_core_object_ids
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.conf_util import AnsiColors
-
+from .config.globals import set_default_globals_pre_args_parsing
 
 LOGGER = get_console_logger()
 
@@ -68,8 +65,10 @@ def setup(setup_args: SetupArgs):
     __assign_tmtc_commander_hooks(hook_object=setup_args.hook_obj)
 
     if setup_args.use_gui:
-        pass_cli_args(setup_args=setup_args)
-    else:
+        set_default_globals_pre_args_parsing(
+            setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
+        )
+    if not setup_args.use_gui:
         __handle_cli_args_and_globals(setup_args)
     __SETUP_FOR_GUI = setup_args.use_gui
     __SETUP_WAS_CALLED = True
@@ -130,10 +129,6 @@ def init_printout(use_gui: bool, ansi_colors: bool = True):
 
 
 def __handle_cli_args_and_globals(setup_args: SetupArgs):
-    from typing import cast
-    from tmtccmd.core.globals_manager import get_global
-    from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-
     LOGGER.info("Setting up pre-globals..")
     set_default_globals_pre_args_parsing(
         setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
