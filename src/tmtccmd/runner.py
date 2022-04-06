@@ -1,12 +1,7 @@
-"""Contains core methods called by entry point files to initiate the TMTC commander.
-
-The commander is started by first running :py:func:`initialize_tmtc_commander` and then
-running :py:func:`run_tmtc_commander`
-"""
+"""Contains core methods called by entry point files to setup and start a tmtccmd application"""
 import sys
 import os
-import argparse
-from typing import Union, Optional
+from typing import Union
 
 from spacepackets.ecss.conf import get_default_tc_apid
 
@@ -38,6 +33,7 @@ def version() -> str:
 
 def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
     """Add a handler for CCSDS space packets, for example PUS packets
+
     :param ccsds_handler: CCSDS handler for all CCSDS packets, e.g. Space Packets
     :return:
     """
@@ -53,7 +49,6 @@ def setup(setup_args: SetupArgs):
     arguments encapsulate all required argumernts for the TMTC commander.
 
     :param setup_args:     Setup arguments
-    :raises: ValueError for an invalid hook object.
     """
     global __SETUP_WAS_CALLED, __SETUP_FOR_GUI
 
@@ -80,16 +75,18 @@ def run(
     app_name: str = "TMTC Commander",
 ):
     """This is the primary function to run the TMTC commander. Users should call this function to
-    start the TMTC commander. Please note that :py:func:`initialize_tmtc_commander` needs to be
-    called before this function. Raises RuntimeError if :py:func:`initialize_tmtc_commander`
-    has not been called before calling this function.
+    start the TMTC commander. Please note that :py:func:`setup` needs to be
+    called before this function. Raises RuntimeError if :py:func:`setup`
+    has not been called before calling this function. You also need to build a TMTC backend
+    instance and pass it to this call. You can use :py:func:`create_default_tmtc_backend`
+    to create a generic backend.
 
     :param tmtc_backend:        Custom backend can be passed here. Otherwise, a default backend
                                 will be created
     :param tmtc_frontend:       Custom frontend can be passed here. Otherwise, a default backend
                                 will be created
     :param app_name:            Name of application. Will be displayed in GUI
-    :raises RunTimeError:  if :py:func:`initialize_tmtc_commander` was not called before
+    :raises RunTimeError:  if :py:func:`setup` was not called before
     :return:
     """
     global __SETUP_WAS_CALLED, __SETUP_FOR_GUI
@@ -180,10 +177,14 @@ def __get_backend_init_variables():
     return service, op_code, com_if, mode
 
 
-def get_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
+def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
+    """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
+    :param setup_args:
+    :param tm_handler:
+    :return:
+    """
     global __SETUP_WAS_CALLED
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
     from tmtccmd.sendreceive.tm_listener import TmListener
     from typing import cast
 

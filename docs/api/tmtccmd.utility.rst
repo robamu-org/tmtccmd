@@ -28,14 +28,6 @@ tmtccmd.utility.json\_handler module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.logger module
------------------------------
-
-.. automodule:: tmtccmd.utility.logger
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.utility.tmtc\_printer module
 ------------------------------------
 

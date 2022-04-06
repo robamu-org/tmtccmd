@@ -26,7 +26,7 @@ def main():
     ccsds_handler.add_tm_handler(apid=APID, handler=apid_handler)
     tmtccmd.setup(setup_args=setup_args)
     tmtccmd.add_ccsds_handler(ccsds_handler)
-    tmtc_backend = tmtccmd.get_default_tmtc_backend(
+    tmtc_backend = tmtccmd.create_default_tmtc_backend(
         setup_args=setup_args,
         tm_handler=ccsds_handler,
     )
