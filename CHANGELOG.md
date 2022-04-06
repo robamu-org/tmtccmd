@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
-## [v1.14.0]
+## [v2.0.0]
 
 ### Changed
 
