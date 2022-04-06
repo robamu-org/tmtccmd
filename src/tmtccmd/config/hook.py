@@ -8,6 +8,7 @@ from tmtccmd.config.definitions import (
     ServiceOpCodeDictT,
     HkReplyUnpacked,
     DataReplyUnpacked,
+    default_json_path
 )
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
@@ -27,8 +28,10 @@ class TmTcHookBase:
     TMTC commander core.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, json_cfg_path: Optional[str] = None):
+        self.json_cfg_path = json_cfg_path
+        if self.json_cfg_path is None:
+            self.json_cfg_path = default_json_path()
 
     @abstractmethod
     def get_object_ids(self) -> ObjectIdDictT:
@@ -54,7 +57,7 @@ class TmTcHookBase:
 
         return create_communication_interface_default(
             com_if_key=com_if_key,
-            json_cfg_path=self.get_json_config_file_path(),
+            json_cfg_path=self.json_cfg_path
         )
 
     @abstractmethod
@@ -90,14 +93,6 @@ class TmTcHookBase:
         :return:
         """
         pass
-
-    @staticmethod
-    def custom_args_parsing() -> Optional[argparse.Namespace]:
-        """The user can implement args parsing here to override the default argument parsing
-        for the CLI mode
-        :return:
-        """
-        return None
 
     @staticmethod
     def handle_service_8_telemetry(

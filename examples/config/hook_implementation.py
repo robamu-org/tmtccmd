@@ -15,8 +15,7 @@ LOGGER = get_console_logger()
 
 class ExampleHookClass(TmTcHookBase):
     def __init__(self, json_cfg_path: str):
-        super().__init__()
-        self.json_cfg_path = json_cfg_path
+        super().__init__(json_cfg_path=json_cfg_path)
 
     def add_globals_pre_args_parsing(self, gui: bool = False):
         from tmtccmd.config.globals import set_default_globals_pre_args_parsing

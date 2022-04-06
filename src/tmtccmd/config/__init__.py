@@ -18,14 +18,11 @@ from .definitions import (
     OpCodeDictKeys,
     HkReplyUnpacked,
     DataReplyUnpacked,
+    default_json_path
 )
 from tmtccmd.logging import get_console_logger
 
 from .hook import TmTcHookBase
-
-
-def default_json_path() -> str:
-    return "tmtc_conf.json"
 
 
 class SetupArgs:

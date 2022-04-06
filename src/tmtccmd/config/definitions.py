@@ -4,6 +4,10 @@ import enum
 from typing import Tuple, Dict, Optional, List, Union
 
 
+def default_json_path() -> str:
+    return "tmtc_conf.json"
+
+
 class CoreGlobalIds(enum.IntEnum):
     """
     Numbers from 128 to 200 are reserved for core globals
