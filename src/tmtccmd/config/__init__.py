@@ -18,7 +18,7 @@ from .definitions import (
     OpCodeDictKeys,
     HkReplyUnpacked,
     DataReplyUnpacked,
-    default_json_path
+    default_json_path,
 )
 from tmtccmd.logging import get_console_logger
 

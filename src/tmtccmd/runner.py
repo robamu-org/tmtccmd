@@ -41,7 +41,7 @@ def version() -> str:
 
 def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
     """Add a handler for CCSDS space packets, for example PUS packets
-    :param pus_handler:
+    :param ccsds_handler: CCSDS handler for all CCSDS packets, e.g. Space Packets
     :return:
     """
     lock_global_pool()
@@ -59,8 +59,6 @@ def setup(setup_args: SetupArgs):
     :raises: ValueError for an invalid hook object.
     """
     global __SETUP_WAS_CALLED, __SETUP_FOR_GUI
-    from tmtccmd.config.hook import TmTcHookBase
-    from typing import cast
 
     if os.name == "nt":
         import colorama
@@ -87,8 +85,6 @@ def run(
     called before this function. Raises RuntimeError if :py:func:`initialize_tmtc_commander`
     has not been called before calling this function.
 
-    :param reduced_printout:    It is possible to reduce the initial printout with this flag
-    :param ansi_colors:         Enable ANSI color output for terminal
     :param tmtc_backend:        Custom backend can be passed here. Otherwise, a default backend
                                 will be created
     :param tmtc_frontend:       Custom frontend can be passed here. Otherwise, a default backend
@@ -114,15 +110,16 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
         raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
+    # TODO: Maybe this is not required anymore..
     # Set core object IDs
-    insert_object_ids(get_core_object_ids())
+    # insert_object_ids(get_core_object_ids())
     # Set object IDs specified by the user.
-    insert_object_ids(hook_object.get_object_ids())
+    # insert_object_ids(hook_object.get_object_ids())
 
 
 def init_printout(use_gui: bool, ansi_colors: bool = True):
     if ansi_colors:
-        print(f"{AnsiColors.CYAN}-- Python TMTC Commander --{AnsiColors.RESET}")
+        print(f"-- Python TMTC Commander --")
     if use_gui:
         print("-- GUI mode --")
     else:
@@ -139,9 +136,7 @@ def __handle_cli_args_and_globals(setup_args: SetupArgs):
 
     LOGGER.info("Setting up pre-globals..")
     set_default_globals_pre_args_parsing(
-        setup_args.use_gui,
-        tc_apid=setup_args.tc_apid,
-        tm_apid=setup_args.tm_apid
+        setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
     )
     LOGGER.info("Setting up post-globals..")
     pass_cli_args(setup_args=setup_args)
@@ -201,8 +196,6 @@ def get_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
         LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
     service, op_code, com_if_id, mode = __get_backend_init_variables()
-    display_mode = get_global(CoreGlobalIds.DISPLAY_MODE)
-    print_to_file = get_global(CoreGlobalIds.PRINT_TO_FILE)
     if tm_handler is None:
         LOGGER.warning(
             "No TM Handler specified! Make sure to specify at least one TM handler"

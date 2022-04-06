@@ -8,7 +8,7 @@ from tmtccmd.config.definitions import (
     ServiceOpCodeDictT,
     HkReplyUnpacked,
     DataReplyUnpacked,
-    default_json_path
+    default_json_path,
 )
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
@@ -56,8 +56,7 @@ class TmTcHookBase:
         from tmtccmd.config.com_if import create_communication_interface_default
 
         return create_communication_interface_default(
-            com_if_key=com_if_key,
-            json_cfg_path=self.json_cfg_path
+            com_if_key=com_if_key, json_cfg_path=self.json_cfg_path
         )
 
     @abstractmethod
