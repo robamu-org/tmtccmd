@@ -5,9 +5,9 @@ import enum
 from typing import List, Optional
 
 from spacepackets.util import get_printable_data_string, PrintFormats
+from spacepackets.ecss.definitions import PusServices
 
 from tmtccmd.tm.service_8_fsfw_functional_cmd import Service8FsfwTm
-from spacepackets.ecss.definitions import PusServices
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus import ObjectId
 from tmtccmd.tm.service_3_base import HkContentType
