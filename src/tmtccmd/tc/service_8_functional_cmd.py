@@ -6,7 +6,7 @@ from spacepackets.ecss.conf import get_default_tc_apid
 
 
 class Srv8Subservices(enum.IntEnum):
-    FUNC_CMD = (128,)
+    FUNC_CMD = 128
     DATA_REPLY = 130
 
 
