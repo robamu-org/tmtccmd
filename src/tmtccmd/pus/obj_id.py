@@ -12,7 +12,7 @@ class ObjectId:
         self.name = ""
 
     def __str__(self):
-        return f"Object ID 0x{self.as_bytes} with name {self.name}"
+        return f"Object ID 0x{self.as_string} with name {self.name}"
 
     def __repr__(self):
         return self.as_string
