@@ -2,7 +2,7 @@
 """
 import struct
 from typing import Optional
-from tmtccmd.pus.service_20_parameter import (
+from tmtccmd.pus.pus_20_params import (
     EcssPtc,
     EcssPfcUnsigned,
     EcssPfcReal,

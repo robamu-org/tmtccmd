@@ -1,0 +1,12 @@
+import enum
+
+
+class Subservices(enum.IntEnum):
+    TC_MODE_COMMAND = 1
+    TC_MODE_COMMAND_FORCES = 2
+    TC_MODE_READ = 3
+    TC_MODE_ANNOUNCE = 4
+    TC_MODE_ANNOUNCE_RECURSIVE = 5
+    TM_MODE_REPLY = 6
+    TM_CANT_REACH_MODE = 7
+    TM_WRONG_MODE_REPLY = 8

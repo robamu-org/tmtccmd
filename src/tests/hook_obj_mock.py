@@ -7,7 +7,7 @@ from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.config.com_if import CommunicationInterface
 from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.config.definitions import ServiceOpCodeDictT, CoreModeList
-from tmtccmd.tm.service_3_base import Service3Base
+from tmtccmd.tm.pus_3_hk_base import Service3Base
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.config.hook import TmTcHookBase

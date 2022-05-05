@@ -1,12 +1,12 @@
 from typing import Tuple, List
 import enum
 
-from tmtccmd.pus import ObjectId
+from tmtccmd.utility.obj_id import ObjectId
 
 
 class HkContentType(enum.Enum):
-    HK = enum.auto()
-    DEFINITIONS = enum.auto()
+    HK = enum.auto
+    DEFINITIONS = enum.auto
 
 
 class Service3Base:
