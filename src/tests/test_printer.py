@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from spacepackets.ccsds.time import CdsShortTimestamp
 
-from tmtccmd.pus.pus_1_verification import Service1TMExtended
+from tmtccmd.tm.pus_1_verification import Service1TMExtended
 from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.logging import get_console_logger, LOG_DIR

@@ -6,7 +6,7 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.conf import get_pus_tm_version, PusVersion, set_default_tm_apid
 from spacepackets.util import PrintFormats
 
-from tmtccmd.pus.pus_17_test import Service17TMExtended
+from tmtccmd.tm.pus_17_test import Service17TMExtended
 
 
 class TestTelemetry(TestCase):
