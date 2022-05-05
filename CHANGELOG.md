@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v2.1.0]
+
+- API consolidation for PUS TCs and TMs. Unified the API and made it more consistent
+
 ## [v2.0.1]
 
 ### Fixed
