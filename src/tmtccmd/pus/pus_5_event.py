@@ -1,12 +1,5 @@
-import enum
 from typing import Optional, Dict
-
-
-class Severity(enum.IntEnum):
-    INFO = 1
-    LOW = 2
-    MEDIUM = 3
-    HIGH = 4
+from spacepackets.ecss.pus_5_event import Severity
 
 
 def str_to_severity(string: str) -> Optional[Severity]:
@@ -18,15 +11,6 @@ def str_to_severity(string: str) -> Optional[Severity]:
         return Severity.MEDIUM
     elif string == "HIGH":
         return Severity.HIGH
-
-
-class Subservices(enum.IntEnum):
-    INFO_EVENT = Severity.INFO
-    LOW_SEVERITY_EVENT = Severity.LOW
-    MEDIUM_SEVERITY_EVENT = Severity.MEDIUM
-    HIGH_SEVERITY_EVENT = Severity.HIGH
-    ENABLE_EVENT_REPORTING = 5
-    DISABLE_EVENT_REPORTING = 6
 
 
 class EventInfo:

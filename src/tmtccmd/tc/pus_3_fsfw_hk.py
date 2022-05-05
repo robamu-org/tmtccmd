@@ -3,7 +3,7 @@
 import struct
 
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.pus.pus_3_hk import Subservices
+from spacepackets.ecss.pus_3_hk import Subservices
 
 
 def make_sid(object_id: bytes, set_id: int) -> bytearray:
@@ -19,7 +19,7 @@ def make_interval(interval_seconds: float) -> bytearray:
 def generate_one_hk_command(sid: bytes, ssc: int) -> PusTelecommand:
     return PusTelecommand(
         service=3,
-        subservice=Subservices.GENERATE_ONE_PARAMETER_REPORT,
+        subservice=Subservices.TC_GENERATE_ONE_PARAMETER_REPORT,
         ssc=ssc,
         app_data=sid,
     )
@@ -28,7 +28,7 @@ def generate_one_hk_command(sid: bytes, ssc: int) -> PusTelecommand:
 def generate_one_diag_command(sid: bytes, ssc: int) -> PusTelecommand:
     return PusTelecommand(
         service=3,
-        subservice=Subservices.GENERATE_ONE_DIAGNOSTICS_REPORT,
+        subservice=Subservices.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
         ssc=ssc,
         app_data=sid,
     )

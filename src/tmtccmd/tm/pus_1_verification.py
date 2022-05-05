@@ -4,10 +4,9 @@ from typing import Deque
 
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.tm import PusVersion, PusTelemetry
-from spacepackets.ecss.pus_1_verification import Service1TM
+from spacepackets.ecss.pus_1_verification import Service1TM, Subservices
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.pus.pus_1_verification import Subservices
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()

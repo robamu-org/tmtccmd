@@ -2,14 +2,12 @@ from __future__ import annotations
 import enum
 
 from spacepackets.ecss.conf import get_default_tc_apid
-
+from spacepackets.ecss.pus_17_test import Subservices
 from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
 
 
-class Subservices(enum.IntEnum):
-    TC_PING = 1
-    TM_REPLY = 2
+class CustomSubservices(enum.IntEnum):
     TC_GEN_EVENT = 128
 
 
@@ -41,7 +39,7 @@ def pack_generic_service17_test(
     # test event
     tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17: Trigger event"))
     command = PusTelecommand(
-        service=17, subservice=Subservices.TC_GEN_EVENT, ssc=new_ssc, apid=apid
+        service=17, subservice=CustomSubservices.TC_GEN_EVENT, ssc=new_ssc, apid=apid
     )
     tc_queue.appendleft(command.pack_command_tuple())
     new_ssc += 1
