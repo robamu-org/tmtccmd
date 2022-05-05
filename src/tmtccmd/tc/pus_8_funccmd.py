@@ -2,12 +2,8 @@ import enum
 import struct
 
 from tmtccmd.tc.definitions import PusTelecommand
+from tmtccmd.pus.pus_8_funccmd import Subservices
 from spacepackets.ecss.conf import get_default_tc_apid
-
-
-class Srv8Subservices(enum.IntEnum):
-    FUNC_CMD = 128
-    DATA_REPLY = 130
 
 
 def generate_action_command(
@@ -23,7 +19,7 @@ def generate_action_command(
     data_to_pack += make_action_id(action_id) + app_data
     return PusTelecommand(
         service=8,
-        subservice=Srv8Subservices.FUNC_CMD,
+        subservice=Subservices.FUNCTIONAL_CMD,
         ssc=ssc,
         app_data=data_to_pack,
         apid=apid,

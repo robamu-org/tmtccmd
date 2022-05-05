@@ -3,7 +3,7 @@ import enum
 import sys
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from spacepackets.ecss.service_17_test import Service17TM
+from spacepackets.ecss.pus_17_test import Service17TM
 from spacepackets.ecss.definitions import PusServices
 from spacepackets.ecss.conf import get_default_tc_apid
 
@@ -12,10 +12,10 @@ from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
-class Srv17Subservices(enum.IntEnum):
-    PING_CMD = 1
-    PING_REPLY = 2
-    GEN_EVENT = 128
+class Subservices(enum.IntEnum):
+    TC_PING = 1
+    TM_REPLY = 2
+    TC_GEN_EVENT = 128
 
 
 class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
@@ -47,7 +47,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         )
         PusTmBase.__init__(self, pus_tm=self.pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
-        if self.subservice == Srv17Subservices.PING_REPLY:
+        if self.subservice == Subservices.TM_REPLY:
             self.set_packet_info("Ping Reply")
 
     @classmethod
@@ -72,7 +72,7 @@ def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
     if apid == -1:
         apid = get_default_tc_apid()
     return PusTelecommand(
-        service=17, subservice=Srv17Subservices.PING_CMD.value, ssc=ssc, apid=apid
+        service=17, subservice=Subservices.TC_PING.value, ssc=ssc, apid=apid
     )
 
 
@@ -95,7 +95,7 @@ def pack_generic_service17_test(
     # test event
     tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17: Trigger event"))
     command = PusTelecommand(
-        service=17, subservice=Srv17Subservices.GEN_EVENT, ssc=new_ssc, apid=apid
+        service=17, subservice=Subservices.TC_GEN_EVENT, ssc=new_ssc, apid=apid
     )
     tc_queue.appendleft(command.pack_command_tuple())
     new_ssc += 1

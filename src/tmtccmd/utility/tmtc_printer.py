@@ -7,10 +7,10 @@ from typing import List, Optional
 from spacepackets.util import get_printable_data_string, PrintFormats
 from spacepackets.ecss.definitions import PusServices
 
-from tmtccmd.tm.service_8_fsfw_functional_cmd import Service8FsfwTm
+from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.pus import ObjectId
-from tmtccmd.tm.service_3_base import HkContentType
+from tmtccmd.tm.pus_3_hk_base import HkContentType
 from tmtccmd.logging import get_console_logger, get_current_time_string
 
 LOGGER = get_console_logger()

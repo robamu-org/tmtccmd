@@ -4,9 +4,9 @@ from typing import Optional, Dict
 
 class Severity(enum.IntEnum):
     INFO = 1
-    LOW_SEVERITY = 2
-    MEDIUM_SEVERITY = 3
-    HIGH_SEVERITY = 4
+    LOW = 2
+    MEDIUM = 3
+    HIGH = 4
 
 
 def str_to_severity(string: str) -> Optional[Severity]:
@@ -20,11 +20,11 @@ def str_to_severity(string: str) -> Optional[Severity]:
         return Severity.HIGH
 
 
-class Srv5Subservices(enum.IntEnum):
+class Subservices(enum.IntEnum):
     INFO_EVENT = Severity.INFO
-    LOW_SEVERITY_EVENT = Severity.LOW_SEVERITY
-    MEDIUM_SEVERITY_EVENT = Severity.MEDIUM_SEVERITY
-    HIGH_SEVERITY_EVENT = Severity.HIGH_SEVERITY
+    LOW_SEVERITY_EVENT = Severity.LOW
+    MEDIUM_SEVERITY_EVENT = Severity.MEDIUM
+    HIGH_SEVERITY_EVENT = Severity.HIGH
     ENABLE_EVENT_REPORTING = 5
     DISABLE_EVENT_REPORTING = 6
 

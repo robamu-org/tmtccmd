@@ -12,4 +12,6 @@ class FsfwHealth(enum.IntEnum):
 
 def pack_set_health_cmd_data(object_id: bytes, health: FsfwHealth) -> bytearray:
     cmd = bytearray()
-    cmd += object_id + health
+    cmd += object_id
+    cmd.append(health)
+    return cmd
