@@ -20,5 +20,5 @@ PusTmTupleQueueT = Deque[PusTmTupleT]
 
 
 class TmTypes(enum.Enum):
-    NONE = enum.auto()
-    CCSDS_SPACE_PACKETS = enum.auto()
+    NONE = enum.auto
+    CCSDS_SPACE_PACKETS = enum.auto

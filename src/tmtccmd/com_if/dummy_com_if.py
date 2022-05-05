@@ -8,8 +8,8 @@ from spacepackets.ccsds.spacepacket import (
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.pus.pus_1_verification import Service1TMExtended
-from tmtccmd.pus.pus_17_test import Subservices, Service17TMExtended
+from tmtccmd.tm.pus_1_verification import Service1TMExtended
+from tmtccmd.tm.pus_17_test import Subservices, Service17TMExtended
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
