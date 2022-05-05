@@ -1,5 +1,5 @@
 from spacepackets.ecss import PusTelemetry
-from tmtccmd.pus.pus_17_test import Service17TMExtended
+from tmtccmd.tm.pus_17_test import Service17TMExtended
 from tmtccmd.tm import Service5Tm
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.logging import get_console_logger
