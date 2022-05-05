@@ -6,8 +6,8 @@ from typing import Optional
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.definitions import PusServices
 
-from tmtccmd.pus.obj_id import ObjectId
-from tmtccmd.pus.service_20_parameter import (
+from tmtccmd.utility.obj_id import ObjectId
+from tmtccmd.pus.pus_20_params import (
     EcssPtc,
     EcssPfcUnsigned,
     EcssPfcReal,

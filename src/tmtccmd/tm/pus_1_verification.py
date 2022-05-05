@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-"""Deserialize PUS Service 1 Verification TM
-"""
 from __future__ import annotations
 from abc import abstractmethod
-import struct
 from typing import Deque
 
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.tm import PusVersion, PusTelemetry
-from spacepackets.ecss.service_1_verification import Service1TM
+from spacepackets.ecss.pus_1_verification import Service1TM, Subservices
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.logging import get_console_logger
@@ -121,25 +117,25 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         super()._handle_failure_verification()
         self.set_packet_info("Failure Verficiation")
         subservice = self.pus_tm.subservice
-        if subservice == 2:
+        if subservice == Subservices.TM_ACCEPTANCE_FAILURE:
             self.append_packet_info(" : Acceptance failure")
-        elif subservice == 4:
+        elif subservice == Subservices.TM_START_FAILURE:
             self.append_packet_info(" : Start failure")
-        elif subservice == 6:
+        elif subservice == Subservices.TM_STEP_FAILURE:
             self.append_packet_info(" : Step Failure")
-        elif subservice == 8:
+        elif subservice == Subservices.TM_COMPLETION_FAILURE:
             self.append_packet_info(" : Completion Failure")
 
     def _handle_success_verification(self):
         super()._handle_success_verification()
         self.set_packet_info("Success Verification")
-        if self.subservice == 1:
+        if self.subservice == Subservices.TM_ACCEPTANCE_SUCCESS:
             self.append_packet_info(" : Acceptance success")
-        elif self.subservice == 3:
+        elif self.subservice == Subservices.TM_START_SUCCESS:
             self.append_packet_info(" : Start success")
-        elif self.subservice == 5:
+        elif self.subservice == Subservices.TM_STEP_SUCCESS:
             self.append_packet_info(" : Step Success")
-        elif self.subservice == 7:
+        elif self.subservice == Subservices.TM_COMPLETION_SUCCESS:
             self.append_packet_info(" : Completion success")
 
 

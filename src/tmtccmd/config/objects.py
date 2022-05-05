@@ -1,6 +1,4 @@
-import copy
-from typing import Dict
-from tmtccmd.pus.obj_id import ObjectIdDictT, ObjectId
+from tmtccmd.utility.obj_id import ObjectIdDictT, ObjectId
 
 
 INVALID_ID = bytes([0xFF, 0xFF, 0xFF, 0xFF])

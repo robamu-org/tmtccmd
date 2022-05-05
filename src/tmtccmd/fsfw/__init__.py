@@ -2,8 +2,8 @@ import csv
 import os
 import copy
 from typing import Optional
-from tmtccmd.pus.obj_id import ObjectId, ObjectIdDictT
-from tmtccmd.pus.service_5_event import EventInfo, str_to_severity, EventDictT
+from tmtccmd.utility.obj_id import ObjectId, ObjectIdDictT
+from tmtccmd.pus.pus_5_event import EventInfo, EventDictT
 from tmtccmd.utility.retval import RetvalDictT, RetvalInfo
 
 

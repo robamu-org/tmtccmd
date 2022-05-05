@@ -1,8 +1,6 @@
-from abc import abstractmethod, ABC
-from typing import Optional
+from abc import abstractmethod
 
-from spacepackets.ecss.tm import PusTelemetry, PusVersion
-from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss.tm import PusTelemetry
 from spacepackets.util import PrintFormats
 
 

@@ -10,8 +10,8 @@ from typing import Union
 from tmtccmd.tc.definitions import TcQueueT
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.logging import get_console_logger
-from tmtccmd.pus.service_17_test import pack_service_17_ping_command
-from tmtccmd.tc.service_5_event import pack_generic_service5_test_into
+from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
+from tmtccmd.tc.pus_5_event import pack_generic_service5_test_into
 
 LOGGER = get_console_logger()
 

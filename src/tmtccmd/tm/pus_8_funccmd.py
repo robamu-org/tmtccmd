@@ -5,7 +5,7 @@ import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.pus import ObjectId
+from tmtccmd.utility.obj_id import ObjectId
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()

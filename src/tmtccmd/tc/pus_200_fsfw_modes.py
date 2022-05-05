@@ -3,7 +3,7 @@
 """
 import enum
 import struct
-from tmtccmd.pus.service_200_fsfw_mode import Subservices
+from tmtccmd.pus.pus_200_fsfw_mode import Subservices
 
 
 class Modes(enum.IntEnum):
@@ -15,9 +15,6 @@ class Modes(enum.IntEnum):
 
 def pack_mode_data(object_id: bytes, mode: Modes, submode: int) -> bytearray:
     """Mode 0: Off, Mode 1: Mode On, Mode 2: Mode Normal, Mode 3: Mode Raw"""
-    # Normal mode
-    mode_packed = struct.pack("!I", mode)
-    # Submode default
-    submode_byte = struct.pack("B", submode)
-    mode_data = object_id + mode_packed + submode_byte
+    mode_data = bytearray()
+    mode_data += object_id + struct.pack("!I", mode) + struct.pack("B", submode)
     return mode_data
