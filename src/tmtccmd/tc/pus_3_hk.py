@@ -18,11 +18,17 @@ def make_interval(interval_seconds: float) -> bytearray:
 
 def generate_one_hk_command(sid: bytes, ssc: int) -> PusTelecommand:
     return PusTelecommand(
-        service=3, subservice=Subservices.GENERATE_ONE_PARAMETER_REPORT, ssc=ssc, app_data=sid
+        service=3,
+        subservice=Subservices.GENERATE_ONE_PARAMETER_REPORT,
+        ssc=ssc,
+        app_data=sid,
     )
 
 
 def generate_one_diag_command(sid: bytes, ssc: int) -> PusTelecommand:
     return PusTelecommand(
-        service=3, subservice=Subservices.GENERATE_ONE_DIAGNOSTICS_REPORT, ssc=ssc, app_data=sid
+        service=3,
+        subservice=Subservices.GENERATE_ONE_DIAGNOSTICS_REPORT,
+        ssc=ssc,
+        app_data=sid,
     )
