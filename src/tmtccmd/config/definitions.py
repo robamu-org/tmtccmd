@@ -2,7 +2,6 @@
 """
 import enum
 from typing import Tuple, Dict, Optional, List, Union, Callable, Any
-from tmtccmd.config import QueueCommands
 
 from spacepackets.ecss import PusTelecommand
 
@@ -76,6 +75,14 @@ ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
 
+
+class QueueCommands(enum.Enum):
+    PRINT = "print"
+    RAW_PRINT = "raw_print"
+    WAIT = "wait"
+    SET_TIMEOUT = "set_timeout"
+
+
 UsrSendCbT = Callable[
     [Union[bytes, QueueCommands], CommunicationInterface, Any, Any], None
 ]
@@ -130,14 +137,6 @@ CoreComInterfacesDict = {
     CoreComInterfaces.SERIAL_QEMU.value: "Serial Interface using QEMU",
     CoreComInterfaces.UNSPECIFIED.value: "Unspecified",
 }
-
-
-class QueueCommands(enum.Enum):
-    PRINT = enum.auto()
-    RAW_PRINT = enum.auto()
-    WAIT = enum.auto()
-    EXPORT_LOG = enum.auto()
-    SET_TIMEOUT = enum.auto()
 
 
 # Mode options, set by args parser
