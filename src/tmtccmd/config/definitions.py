@@ -2,6 +2,7 @@
 """
 import enum
 from typing import Tuple, Dict, Optional, List, Union, Callable, Any
+from tmtccmd.config import QueueCommands
 
 from spacepackets.ecss import PusTelecommand
 
@@ -75,7 +76,9 @@ ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
 
-UsrSendCbT = Callable[[bytes, CommunicationInterface, Any, Any], None]
+UsrSendCbT = Callable[
+    [Union[bytes, QueueCommands], CommunicationInterface, Any, Any], None
+]
 
 
 class DataReplyUnpacked:

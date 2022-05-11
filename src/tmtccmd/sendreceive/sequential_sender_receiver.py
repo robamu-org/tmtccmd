@@ -129,6 +129,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             else:
                 self._com_if.send(packet)
             return True
+
         # queue empty.
         elif not self._tc_queue:
             # Special case: Last queue entry is not a Telecommand
@@ -139,6 +140,14 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 self.__all_replies_received = True
             return False
         else:
+            if self._usr_send_cb is not None:
+                queue_cmd, queue_cmd_arg = tc_queue_tuple
+                try:
+                    self._usr_send_cb(
+                        queue_cmd, self._com_if, queue_cmd_arg, self._usr_send_args
+                    )
+                except TypeError:
+                    LOGGER.exception("User TC send callback invalid")
             # If the queue entry was not a telecommand, send next telecommand
             self.__check_next_tc_send()
             return True
