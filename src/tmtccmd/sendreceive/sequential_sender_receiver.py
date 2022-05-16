@@ -107,13 +107,13 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             return
         # this flag is set in the separate receiver thread too
         if self._reply_received:
-            if self.__send_next_telecommand():
+            if self._send_next_telecommand():
                 self._reply_received = False
         # just calculate elapsed time if start time has already been set (= command has been sent)
         else:
             self._check_for_timeout()
 
-    def __send_next_telecommand(self) -> bool:
+    def _send_next_telecommand(self) -> bool:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):

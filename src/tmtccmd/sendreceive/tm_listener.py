@@ -41,9 +41,9 @@ class TmListener:
     DEFAULT_LOCK_TIMEOUT = 0.5
 
     class ListenerModes(Enum):
-        MANUAL = (1,)
-        LISTENER = (2,)
-        SEQUENCE = (3,)
+        MANUAL = 1
+        LISTENER = 2
+        SEQUENCE = 3
 
     def __init__(
         self,
@@ -371,7 +371,7 @@ class TmListener:
                 unknown_target_queue.pop()
             unknown_target_queue.appendleft(tm_packet)
 
-    def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
+    def __handle_ccsds_space_packet(self, tm_packet: bytes) -> bool:
         if len(tm_packet) < 6:
             LOGGER.warning("TM packet to small to be a CCSDS space packet")
         else:
