@@ -34,9 +34,6 @@ class TcpCommunicationType(enum.Enum):
     SPACE_PACKETS = 0
 
 
-# pylint: disable=abstract-method
-# pylint: disable=arguments-differ
-# pylint: disable=too-many-arguments
 class TcpIpTcpComIF(CommunicationInterface):
     """Communication interface for TCP communication."""
 
@@ -49,9 +46,8 @@ class TcpIpTcpComIF(CommunicationInterface):
         com_type: TcpCommunicationType,
         space_packet_ids: Tuple[int],
         tm_polling_freqency: float,
-        tm_timeout: float,
         tc_timeout_factor: float,
-        send_address: EthernetAddressT,
+        target_address: EthernetAddressT,
         max_recv_size: int,
         max_packets_stored: int = 50,
         init_mode: int = CoreModeList.LISTENER_MODE,
@@ -63,16 +59,13 @@ class TcpIpTcpComIF(CommunicationInterface):
         :param space_packet_ids:        16 bit packet header for space packet headers. Used to
                                         detect the start of PUS packets
         :param tm_polling_freqency:     Polling frequency in seconds
-        :param tm_timeout:              Timeout in seconds
-        :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
         """
         super().__init__(com_if_key=com_if_key)
-        self.tm_timeout = tm_timeout
         self.com_type = com_type
         self.space_packet_ids = space_packet_ids
         self.tc_timeout_factor = tc_timeout_factor
         self.tm_polling_frequency = tm_polling_freqency
-        self.send_address = send_address
+        self.target_address = target_address
         self.max_recv_size = max_recv_size
         self.max_packets_stored = max_packets_stored
         self.init_mode = init_mode
@@ -99,7 +92,7 @@ class TcpIpTcpComIF(CommunicationInterface):
     def initialize(self, args: any = None) -> any:
         self.__tm_thread_kill_signal.clear()
         self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__tcp_socket.connect(self.send_address)
+        self.__tcp_socket.connect(self.target_address)
 
     def open(self, args: any = None):
         self.__tcp_conn_thread.start()
@@ -116,7 +109,7 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def send(self, data: bytearray):
         try:
-            self.__tcp_socket.sendto(data, self.send_address)
+            self.__tcp_socket.sendto(data, self.target_address)
         except ConnectionRefusedError:
             LOGGER.warning("TCP connection attempt failed..")
 
