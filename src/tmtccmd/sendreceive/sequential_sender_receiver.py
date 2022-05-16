@@ -50,7 +50,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         """Primary function which is called for sequential transfer.
         :return:
         """
-        self._tm_listener.set_listener_mode(TmListener.ListenerModes.SEQUENCE)
+        self._tm_listener.sequence_mode()
         # tiny delay for pus_tm listener
         time.sleep(0.05)
         if self._tc_queue:
@@ -107,13 +107,13 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             return
         # this flag is set in the separate receiver thread too
         if self._reply_received:
-            if self.__send_next_telecommand():
+            if self._send_next_telecommand():
                 self._reply_received = False
         # just calculate elapsed time if start time has already been set (= command has been sent)
         else:
             self._check_for_timeout()
 
-    def __send_next_telecommand(self) -> bool:
+    def _send_next_telecommand(self) -> bool:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
@@ -129,6 +129,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             else:
                 self._com_if.send(packet)
             return True
+
         # queue empty.
         elif not self._tc_queue:
             # Special case: Last queue entry is not a Telecommand
@@ -139,6 +140,14 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 self.__all_replies_received = True
             return False
         else:
+            if self._usr_send_cb is not None:
+                queue_cmd, queue_cmd_arg = tc_queue_tuple
+                try:
+                    self._usr_send_cb(
+                        queue_cmd, self._com_if, queue_cmd_arg, self._usr_send_args
+                    )
+                except TypeError:
+                    LOGGER.exception("User TC send callback invalid")
             # If the queue entry was not a telecommand, send next telecommand
             self.__check_next_tc_send()
             return True

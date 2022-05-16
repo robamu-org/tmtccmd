@@ -74,14 +74,14 @@ def create_communication_interface_default(
         communication_interface.initialize()
         return communication_interface
     except ConnectionRefusedError:
-        LOGGER.exception(f"TCP/IP connection refused")
+        LOGGER.exception("TCP/IP connection refused")
         if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
             LOGGER.warning("Make sure that a UDP server is running")
         if com_if_key == CoreComInterfaces.TCPIP_TCP.value:
             LOGGER.warning("Make sure that a TCP server is running")
         sys.exit(1)
     except (IOError, OSError):
-        LOGGER.exception(f"Error setting up communication interface")
+        LOGGER.exception("Error setting up communication interface")
         sys.exit(1)
 
 
@@ -93,7 +93,7 @@ def default_tcpip_cfg_setup(
     :func:`create_default_tcpip_interface`
     :param tcpip_type:
     :param json_cfg_path:
-    :param space_packet_id:       Required if the TCP com interface needs to parse space packets
+    :param space_packet_ids:       Required if the TCP com interface needs to parse space packets
     :return:
     """
     from tmtccmd.com_if.tcpip_utilities import (
@@ -185,10 +185,8 @@ def create_default_tcpip_interface(
             com_if_key=com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,
             space_packet_ids=space_packet_ids,
-            tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
-            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             tm_polling_freqency=0.5,
-            send_address=send_addr,
+            target_address=send_addr,
             max_recv_size=max_recv_size,
             init_mode=init_mode,
         )

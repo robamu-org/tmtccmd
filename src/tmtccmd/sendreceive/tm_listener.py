@@ -8,7 +8,7 @@ import sys
 import time
 import threading
 from collections import deque
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from enum import Enum
 
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
@@ -26,6 +26,12 @@ QueueDictT = Dict[int, Tuple[TelemetryQueueT, int]]
 QueueListT = List[Tuple[int, TelemetryQueueT]]
 
 
+class ListenerModes(Enum):
+    MANUAL = 1
+    LISTENER = 2
+    SEQUENCE = 3
+
+
 class TmListener:
     """Performs all TM listening operations.
     This listener to have a permanent means to receive data. A background thread is used
@@ -37,29 +43,21 @@ class TmListener:
     DEFAULT_UNKNOWN_QUEUE_MAX_LEN = 50
     QUEUE_DICT_QUEUE_IDX = 0
     QUEUE_DICT_MAX_LEN_IDX = 1
+    DEFAULT_TM_TIMEOUT = 5.0
 
     DEFAULT_LOCK_TIMEOUT = 0.5
-
-    class ListenerModes(Enum):
-        MANUAL = (1,)
-        LISTENER = (2,)
-        SEQUENCE = (3,)
 
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tm_timeout: float,
-        tc_timeout_factor: float,
+        seq_timeout: float = DEFAULT_TM_TIMEOUT,
         tm_type: TmTypes = TmTypes.CCSDS_SPACE_PACKETS,
     ):
         """Initiate a TM listener.
-        :param com_if:              Type of communication interface, e.g. a serial or ethernet interface
-        :param tm_timeout:          Timeout for the TM reception
-        :param tc_timeout_factor:
-        :param tm_type:             Telemetry type. Default to CCSDS space packets for now
+        :param com_if: Type of communication interface,
+            e.g. a serial or ethernet interface
+        :param tm_type: Telemetry type. Default to CCSDS space packets for now
         """
-        self.__tm_timeout = tm_timeout
-        self.tc_timeout_factor = tc_timeout_factor
         self.__com_if = com_if
         self._mode_op_timeout = self.MODE_OPERATION_TIMEOUT
         # TM Listener operations can be suspended by setting this flag
@@ -81,7 +79,8 @@ class TmListener:
         # to transition back to listener mode
         self.__event_mode_op_finished = threading.Event()
 
-        self.__listener_mode = self.ListenerModes.LISTENER
+        self.__listener_mode = ListenerModes.LISTENER
+        self.seq_timeout = seq_timeout
         self.__tm_type = tm_type
         self.__queue_dict: QueueDictT = dict(
             {UNKNOWN_TARGET_ID: (deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN)}
@@ -116,13 +115,23 @@ class TmListener:
     def is_listener_active(self) -> bool:
         return self.listener_active
 
-    def set_timeouts(self, tm_timeout):
-        self.__tm_timeout = tm_timeout
+    def manual_mode(self) -> bool:
+        return self.__update_mode(ListenerModes.MANUAL)
 
-    def set_listener_mode(self, listener_mode: ListenerModes):
-        if listener_mode != self.__listener_mode:
+    def listener_mode(self) -> bool:
+        return self.__update_mode(ListenerModes.LISTENER)
+
+    def sequence_mode(self, seq_timeout: Optional[float] = None) -> bool:
+        if seq_timeout is not None:
+            self.seq_timeout = seq_timeout
+        return self.__update_mode(ListenerModes.SEQUENCE)
+
+    def __update_mode(self, new_mode: ListenerModes) -> bool:
+        if self.__listener_mode != new_mode:
             self.event_mode_change.set()
-        self.__listener_mode = listener_mode
+            self.__listener_mode = new_mode
+            return True
+        return False
 
     def reply_event(self):
         if self.__event_reply_received.is_set():
@@ -234,7 +243,7 @@ class TmListener:
             if acquired:
                 return target_queue.copy()
 
-    def check_for_one_telemetry_sequence(self) -> bool:
+    def check_for_one_telemetry_sequence(self, tm_timeout: float) -> bool:
         """Receive all telemetry for a specified time period.
         :return: True if a sequence was received
         """
@@ -242,7 +251,7 @@ class TmListener:
         if data_available == 0:
             return False
         elif data_available > 0:
-            self.__read_telemetry_sequence()
+            self.__read_telemetry_sequence(tm_timeout=tm_timeout)
             return True
         else:
             LOGGER.error("TmListener: Configuration error in communication interface!")
@@ -275,7 +284,7 @@ class TmListener:
                     break
             self.__event_mode_op_finished.clear()
             LOGGER.info("TmListener: Transitioning to listener mode.")
-            self.__listener_mode = self.ListenerModes.LISTENER
+            self.__listener_mode = ListenerModes.LISTENER
 
     def __perform_core_operation(self):
         """The core operation listens for packets."""
@@ -301,11 +310,11 @@ class TmListener:
         :return:
         """
         # Listener Mode
-        if self.__listener_mode == self.ListenerModes.LISTENER:
+        if self.__listener_mode == ListenerModes.LISTENER:
             if not self.__event_mode_op_finished.is_set():
                 self.__event_mode_op_finished.set()
         # Single Command Mode
-        elif self.__listener_mode == self.ListenerModes.SEQUENCE:
+        elif self.__listener_mode == ListenerModes.SEQUENCE:
             # This prevents the listener from listening from one more unnecessary cycle
             if self.__event_mode_op_finished.is_set():
                 return
@@ -315,17 +324,17 @@ class TmListener:
                 if not self.__event_reply_received.is_set():
                     self.__event_reply_received.set()
             time.sleep(0.2)
-        elif self.__listener_mode == self.ListenerModes.MANUAL:
+        elif self.__listener_mode == ListenerModes.MANUAL:
             self.__perform_core_operation()
 
-    def __read_telemetry_sequence(self):
+    def __read_telemetry_sequence(self, tm_timeout: float):
         """Thread-safe implementation for reading a telemetry sequence."""
         start_time = time.time()
         elapsed_time = 0
-        while elapsed_time < self.__tm_timeout:
+        while elapsed_time < tm_timeout:
             # Fast responsiveness in sequential mode
             if self.__event_mode_op_finished.is_set():
-                if self.__listener_mode == self.ListenerModes.SEQUENCE:
+                if self.__listener_mode == ListenerModes.SEQUENCE:
                     return
             packets_available = self.__com_if.data_available(
                 timeout=0.2, parameters=None
@@ -344,13 +353,6 @@ class TmListener:
             elapsed_time = time.time() - start_time
             if packets_available == 0:
                 time.sleep(0.1)
-        # the timeout value can be set by special TC queue entries if wiretapping_packet handling
-        # takes longer, but it is reset here to the global value
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.config.definitions import CoreGlobalIds
-
-        if self.__tm_timeout is not get_global(CoreGlobalIds.TM_TIMEOUT):
-            self.__tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
 
     def __route_packets(self, tm_packet_list: TelemetryListT):
         """Route given packets. For CCSDS packets, use APID to do this"""
@@ -371,7 +373,7 @@ class TmListener:
                 unknown_target_queue.pop()
             unknown_target_queue.appendleft(tm_packet)
 
-    def __handle_ccsds_space_packet(self, tm_packet: bytearray) -> bool:
+    def __handle_ccsds_space_packet(self, tm_packet: bytes) -> bool:
         if len(tm_packet) < 6:
             LOGGER.warning("TM packet to small to be a CCSDS space packet")
         else:

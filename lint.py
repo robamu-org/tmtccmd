@@ -15,6 +15,7 @@ def main():
         f"flake8 . {additional_flags_both_steps} "
         f"{additional_flags_first_step} {exclude_dirs_flag}"
     )
+    print(f"lint.py - Executing command: {flake8_first_step_cmd}")
     status = os.system(flake8_first_step_cmd)
     if os.name == "nt":
         if status != 0:
@@ -32,6 +33,7 @@ def main():
         f"flake8 . {additional_flags_both_steps}  {additional_flags_second_step}"
         f" {exclude_dirs_flag}"
     )
+    print(f"lint.py - Executing command: {flake8_second_step_cmd}")
     os.system(flake8_second_step_cmd)
 
 

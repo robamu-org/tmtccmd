@@ -119,8 +119,10 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
     p.428 for more information.
     :param ptc:     ECSS PTC number
     :param pfc:     ECSS PFC number
-    :param rows:     Number of rows in parameter (for matrix entries, 1 for vector entries, 1 for scalar entries)
-    :param columns:  Number of columns in parameter (for matrix or vector entries, 1 for scalar entries)
+    :param rows:     Number of rows in parameter (for matrix entries, 1 for vector entries,
+        1 for scalar entries)
+    :param columns:  Number of columns in parameter (for matrix or vector entries,
+        1 for scalar entries)
     :return: Parameter information field as 4 byte bytearray
     """
     data = bytearray(4)

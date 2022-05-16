@@ -75,7 +75,22 @@ ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
 
-UsrSendCbT = Callable[[bytes, CommunicationInterface, Any, Any], None]
+
+class QueueCommands(enum.Enum):
+    PRINT = "print"
+    RAW_PRINT = "raw_print"
+    WAIT = "wait"
+    SET_TIMEOUT = "set_timeout"
+
+
+TcQueueEntryArg = Any
+UserArg = Any
+"""Third Argument: Second argument in TC queue tuple. Fouth Argument
+"""
+UsrSendCbT = Callable[
+    [Union[bytes, QueueCommands], CommunicationInterface, TcQueueEntryArg, UserArg],
+    None,
+]
 
 
 class DataReplyUnpacked:
@@ -127,14 +142,6 @@ CoreComInterfacesDict = {
     CoreComInterfaces.SERIAL_QEMU.value: "Serial Interface using QEMU",
     CoreComInterfaces.UNSPECIFIED.value: "Unspecified",
 }
-
-
-class QueueCommands(enum.Enum):
-    PRINT = enum.auto()
-    RAW_PRINT = enum.auto()
-    WAIT = enum.auto()
-    EXPORT_LOG = enum.auto()
-    SET_TIMEOUT = enum.auto()
 
 
 # Mode options, set by args parser

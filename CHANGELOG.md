@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+- Improve `lint.py`: Add prefix and print out executed command
+- Architectural improvements for the `TmListener` component
+  - Separate functions to set the internal mode
+  - Moved mode enum outside of class scope
+- Call user send callback for both queue commands and regular telecommands
+
 ## [v2.1.0]
 
 - API consolidation for PUS TCs and TMs. Unified the API and made it more consistent
