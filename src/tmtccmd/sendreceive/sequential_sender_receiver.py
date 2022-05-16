@@ -50,7 +50,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         """Primary function which is called for sequential transfer.
         :return:
         """
-        self._tm_listener.set_listener_mode(TmListener.ListenerModes.SEQUENCE)
+        self._tm_listener.sequence_mode()
         # tiny delay for pus_tm listener
         time.sleep(0.05)
         if self._tc_queue:

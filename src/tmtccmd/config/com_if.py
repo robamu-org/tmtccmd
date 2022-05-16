@@ -185,7 +185,6 @@ def create_default_tcpip_interface(
             com_if_key=com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,
             space_packet_ids=space_packet_ids,
-            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             tm_polling_freqency=0.5,
             target_address=send_addr,
             max_recv_size=max_recv_size,

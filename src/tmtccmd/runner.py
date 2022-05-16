@@ -204,11 +204,8 @@ def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
     com_if = setup_args.hook_obj.assign_communication_interface(
         com_if_key=get_global(CoreGlobalIds.COM_IF)
     )
-    tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
-    tm_listener = TmListener(
-        com_if=com_if, tm_timeout=tm_timeout, tc_timeout_factor=tc_send_timeout_factor
-    )
+    tm_listener = TmListener(com_if=com_if, seq_timeout=tm_timeout)
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
         com_if=com_if,

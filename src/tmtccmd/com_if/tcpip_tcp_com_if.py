@@ -46,7 +46,6 @@ class TcpIpTcpComIF(CommunicationInterface):
         com_type: TcpCommunicationType,
         space_packet_ids: Tuple[int],
         tm_polling_freqency: float,
-        tc_timeout_factor: float,
         target_address: EthernetAddressT,
         max_recv_size: int,
         max_packets_stored: int = 50,
@@ -63,7 +62,6 @@ class TcpIpTcpComIF(CommunicationInterface):
         super().__init__(com_if_key=com_if_key)
         self.com_type = com_type
         self.space_packet_ids = space_packet_ids
-        self.tc_timeout_factor = tc_timeout_factor
         self.tm_polling_frequency = tm_polling_freqency
         self.target_address = target_address
         self.max_recv_size = max_recv_size

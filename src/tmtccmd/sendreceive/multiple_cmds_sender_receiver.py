@@ -65,7 +65,7 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
 
     def send_tc_queue_and_return_info(self):
         try:
-            self._tm_listener.set_listener_mode(TmListener.ListenerModes.MANUAL)
+            self._tm_listener.manual_mode()
             self._tm_listener.event_mode_change.set()
             time.sleep(0.1)
             # TC info queue is set in this function
