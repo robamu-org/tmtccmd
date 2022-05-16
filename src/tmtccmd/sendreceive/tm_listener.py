@@ -80,7 +80,7 @@ class TmListener:
         self.__event_mode_op_finished = threading.Event()
 
         self.__listener_mode = ListenerModes.LISTENER
-        self.__seq_timeout = seq_timeout
+        self.seq_timeout = seq_timeout
         self.__tm_type = tm_type
         self.__queue_dict: QueueDictT = dict(
             {UNKNOWN_TARGET_ID: (deque(), self.DEFAULT_UNKNOWN_QUEUE_MAX_LEN)}
@@ -123,7 +123,7 @@ class TmListener:
 
     def sequence_mode(self, seq_timeout: Optional[float] = None) -> bool:
         if seq_timeout is not None:
-            self.__seq_timeout = seq_timeout
+            self.seq_timeout = seq_timeout
         return self.__update_mode(ListenerModes.SEQUENCE)
 
     def __update_mode(self, new_mode: ListenerModes) -> bool:
