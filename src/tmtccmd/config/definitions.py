@@ -146,6 +146,7 @@ class CoreModeList(enum.IntEnum):
     GUI_MODE = 2
     IDLE = 5
     PROMPT_MODE = 6
+    CONTINOUS_MODE = 7 # will start a daemon handling tm and return after sending one tc
 
 
 CoreModeStrings = {
