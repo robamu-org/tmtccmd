@@ -115,7 +115,9 @@ class TcpIpTcpComIF(CommunicationInterface):
             try:
                 self.__tcp_socket.shutdown(socket.SHUT_RDWR)
             except OSError:
-                LOGGER.warning("TCP socket endpoint was already closed or not connected")
+                LOGGER.warning(
+                    "TCP socket endpoint was already closed or not connected"
+                )
             self.__tcp_socket.close()
         self.__tcp_socket = None
         self.__tcp_conn_thread = None

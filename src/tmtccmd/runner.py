@@ -99,11 +99,13 @@ def run(
     else:
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
+
 def init_and_start_daemons(tmtc_backend: BackendBase):
     if __SETUP_FOR_GUI:
         LOGGER.error("daemon mode only supported in cli mode")
         sys.exit(1)
     __start_tmtc_commander_cli(tmtc_backend=tmtc_backend, perform_op_immediately=False)
+
 
 def performOperation(tmtc_backend: BackendBase):
     tmtc_backend.perform_operation()
@@ -142,7 +144,9 @@ def __handle_cli_args_and_globals(setup_args: SetupArgs):
     pass_cli_args(setup_args=setup_args)
 
 
-def __start_tmtc_commander_cli(tmtc_backend: BackendBase, perform_op_immediately: bool = True):
+def __start_tmtc_commander_cli(
+    tmtc_backend: BackendBase, perform_op_immediately: bool = True
+):
     __get_backend_init_variables()
     tmtc_backend.initialize()
     tmtc_backend.start_listener(perform_op_immediately)

@@ -78,13 +78,13 @@ class TmTcHandler(BackendBase):
 
         # WIP: optionally having a receiver run in the background
         self.daemon_receiver = SequentialCommandSenderReceiver(
-                com_if=self.__com_if,
-                tm_handler=self.__tm_handler,
-                tm_listener=self.__tm_listener,
-                tc_queue=None,
-                apid=self.__apid,
-                usr_send_wrapper=self.usr_send_wrapper,
-            )
+            com_if=self.__com_if,
+            tm_handler=self.__tm_handler,
+            tm_listener=self.__tm_listener,
+            tc_queue=None,
+            apid=self.__apid,
+            usr_send_wrapper=self.usr_send_wrapper,
+        )
 
     def get_com_if_id(self):
         return self.com_if_key
@@ -200,7 +200,7 @@ class TmTcHandler(BackendBase):
                 self.__com_if.close()
                 sys.exit(1)
         if self.mode == CoreModeList.CONTINUOUS_MODE:
-            self.daemon_receiver.start_daemon();
+            self.daemon_receiver.start_daemon()
         if perform_op_immediately:
             self.perform_operation()
 
@@ -241,7 +241,6 @@ class TmTcHandler(BackendBase):
             else:
                 time.sleep(0.2)
 
-
     def startDaemonReceiver(self):
         try:
             self.daemon_receiver.start_daemon()
@@ -249,7 +248,6 @@ class TmTcHandler(BackendBase):
             # TODO check which exceptions we should handle
             LOGGER.error("receiver daemon could not be opened!")
             LOGGER.info("Receiver daemon will not be started")
-
 
     def __handle_action(self):
         """Command handling."""
@@ -295,7 +293,7 @@ class TmTcHandler(BackendBase):
                 return
             LOGGER.info("Performing service command operation")
             self.daemon_receiver.set_tc_queue(service_queue)
-            self.daemon_receiver.send_queue_tc_and_return();
+            self.daemon_receiver.send_queue_tc_and_return()
         else:
             try:
                 from tmtccmd.config.hook import get_global_hook_obj
