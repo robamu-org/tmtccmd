@@ -44,7 +44,7 @@ class Service2Tm(PusTmInfoBase, PusTmBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service2Tm:
         service_2_tm = cls.__empty()
