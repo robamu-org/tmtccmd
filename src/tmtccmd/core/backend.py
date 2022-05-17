@@ -178,7 +178,6 @@ class TmTcHandler(BackendBase):
 
     def start_listener(self, perform_op_immediately: bool = True):
         try:
-            self.__com_if.initialize()
             self.__com_if.open()
             self.__tm_listener.start()
             self.__com_if_active = True
