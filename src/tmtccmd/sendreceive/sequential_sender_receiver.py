@@ -16,6 +16,8 @@ from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.definitions import TcQueueT
 
+import threading
+
 LOGGER = get_console_logger()
 
 
@@ -46,6 +48,16 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         self._tc_queue = tc_queue
         self.__all_replies_received = False
 
+        # create a daemon (which will exit automatically if all other threads are closed)
+        # to handle telemetry
+        # this is an optional  functionality which can be used by the TmTcHandler aka backend
+        self.daemon_thread = threading.Thread(
+            target=self.__perform_daemon_operation, daemon=True
+        )
+
+    def set_tc_queue(self, tc_queue: TcQueueT):
+        self._tc_queue = tc_queue
+
     def send_queue_tc_and_receive_tm_sequentially(self):
         """Primary function which is called for sequential transfer.
         :return:
@@ -64,7 +76,33 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         else:
             LOGGER.warning("Supplied TC queue is empty!")
 
+    def send_queue_tc_and_return(self):
+        self._tm_listener.listener_mode()
+        # tiny delay for pus_tm listener
+        time.sleep(0.05)
+        if self._tc_queue:
+            try:
+                # Set to true for first packet, otherwise nothing will be sent.
+                self._reply_received = True
+                if not self._tc_queue.__len__() == 0:
+                    self.__check_next_tc_send()
+            except (KeyboardInterrupt, SystemExit):
+                LOGGER.info("Keyboard Interrupt.")
+                sys.exit()
+        else:
+            LOGGER.warning("Supplied TC queue is empty!")
+
+    def start_daemon(self):
+        if not self.daemon_thread.is_alive():
+            self.daemon_thread.start()
+
+    def __perform_daemon_operation(self):
+        while True:
+            self.__check_for_reply()
+            time.sleep(0.2)
+
     def __handle_tc_sending(self):
+        print("handle_tc_sending: " + str(self._tc_queue))
         while not self.__all_replies_received:
             while not self._tc_queue.__len__() == 0:
                 self.__check_for_reply()
@@ -82,6 +120,9 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             time.sleep(0.2)
         self._tm_listener.set_mode_op_finished()
         LOGGER.info("SequentialSenderReceiver: All replies received!")
+        while(True):
+            self.__check_for_reply()
+            time.sleep(0.2)
 
     def __check_for_reply(self):
         if self._tm_listener.reply_event():

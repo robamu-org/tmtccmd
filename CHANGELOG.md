@@ -7,11 +7,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v2.2.0]
+
 - Improve `lint.py`: Add prefix and print out executed command
 - Architectural improvements for the `TmListener` component
   - Separate functions to set the internal mode
   - Moved mode enum outside of class scope
 - Call user send callback for both queue commands and regular telecommands
+
+## TmTcHandler
+
+- Added a cached `SequentialCommandSenderReceiver`
+- Added `CONTINUOUS` mode which will start the receiver thread in the 
+  `SequentialCommandSenderReceiver` instance and only send one TC
+
+## Runner module
+
+- Added argument in `__start_tmtc_commander_cli` to defer sending of command
+- Added two functions, `init_and_start_daemons` and `performOperation`, to allow
+  separate calls to initiate the TmTcHandler and send TCs
+
+## SequentialCommandSenderReceiver
+
+- Added `send_queue_tc_and_return` function which does only that (and no TM checking)
+- Added possibility to start a thread which checks TM
 
 ## [v2.1.0]
 

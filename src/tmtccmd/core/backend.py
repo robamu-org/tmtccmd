@@ -76,6 +76,16 @@ class TmTcHandler(BackendBase):
         self.exit_on_com_if_init_failure = True
         self.single_command_package = bytearray(), None
 
+        # WIP: optionally having a receiver run in the background
+        self.daemon_receiver = SequentialCommandSenderReceiver(
+                com_if=self.__com_if,
+                tm_handler=self.__tm_handler,
+                tm_listener=self.__tm_listener,
+                tc_queue=None,
+                apid=self.__apid,
+                usr_send_wrapper=self.usr_send_wrapper,
+            )
+
     def get_com_if_id(self):
         return self.com_if_key
 
@@ -132,6 +142,7 @@ class TmTcHandler(BackendBase):
 
     def set_current_apid(self, apid: int):
         self.__apid = apid
+        self.daemon_receiver._apid = apid
 
     @staticmethod
     def prepare_tmtc_handler_start(
@@ -188,6 +199,8 @@ class TmTcHandler(BackendBase):
                 LOGGER.error("Closing TMTC commander..")
                 self.__com_if.close()
                 sys.exit(1)
+        if self.mode == CoreModeList.CONTINUOUS_MODE:
+            self.daemon_receiver.start_daemon();
         if perform_op_immediately:
             self.perform_operation()
 
@@ -228,6 +241,16 @@ class TmTcHandler(BackendBase):
             else:
                 time.sleep(0.2)
 
+
+    def startDaemonReceiver(self):
+        try:
+            self.daemon_receiver.start_daemon()
+        except:
+            # TODO check which exceptions we should handle
+            LOGGER.error("receiver daemon could not be opened!")
+            LOGGER.info("Receiver daemon will not be started")
+
+
     def __handle_action(self):
         """Command handling."""
         if self.mode == CoreModeList.LISTENER_MODE:
@@ -260,6 +283,19 @@ class TmTcHandler(BackendBase):
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
+        elif self.mode == CoreModeList.CONTINUOUS_MODE:
+            service_queue = deque()
+            service_queue_packer = ServiceQueuePacker()
+            service_queue_packer.pack_service_queue_core(
+                service=self.__service,
+                service_queue=service_queue,
+                op_code=self.__op_code,
+            )
+            if not self.__com_if.valid:
+                return
+            LOGGER.info("Performing service command operation")
+            self.daemon_receiver.set_tc_queue(service_queue)
+            self.daemon_receiver.send_queue_tc_and_return();
         else:
             try:
                 from tmtccmd.config.hook import get_global_hook_obj

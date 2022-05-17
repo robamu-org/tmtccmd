@@ -39,7 +39,7 @@ class TmListener:
     or any other software component can get the received packets from the internal deque container.
     """
 
-    MODE_OPERATION_TIMEOUT = 300.0
+    MODE_OPERATION_TIMEOUT = 30.0
     DEFAULT_UNKNOWN_QUEUE_MAX_LEN = 50
     QUEUE_DICT_QUEUE_IDX = 0
     QUEUE_DICT_MAX_LEN_IDX = 1
