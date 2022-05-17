@@ -83,8 +83,13 @@ class QueueCommands(enum.Enum):
     SET_TIMEOUT = "set_timeout"
 
 
+TcQueueEntryArg = Any
+UserArg = Any
+"""Third Argument: Second argument in TC queue tuple. Fouth Argument
+"""
 UsrSendCbT = Callable[
-    [Union[bytes, QueueCommands], CommunicationInterface, Any, Any], None
+    [Union[bytes, QueueCommands], CommunicationInterface, TcQueueEntryArg, UserArg],
+    None,
 ]
 
 

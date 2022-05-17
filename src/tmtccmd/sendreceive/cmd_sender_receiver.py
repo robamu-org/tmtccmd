@@ -173,6 +173,7 @@ class CommandSenderReceiver:
             LOGGER.info(f"Raw command: {queue_entry_second.hex(sep=',')}")
         elif queue_entry_first == QueueCommands.SET_TIMEOUT:
             self._tm_timeout = queue_entry_second
+            self._tm_listener.seq_timeout = queue_entry_second
         else:
             self._last_tc, self._last_tc_obj = (queue_entry_first, queue_entry_second)
             return True

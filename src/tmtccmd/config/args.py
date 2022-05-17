@@ -2,7 +2,6 @@
 Argument parser modules for the TMTC commander core
 """
 import argparse
-import pprint
 import sys
 from typing import Optional
 
@@ -96,7 +95,6 @@ def parse_default_input_arguments(
     """Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
-    from tmtccmd.utility.conf_util import AnsiColors
 
     if len(sys.argv) == 1:
         LOGGER.info(
@@ -233,7 +231,8 @@ def args_post_processing(
     args, unknown: list, service_op_code_dict: ServiceOpCodeDictT
 ) -> None:
     """Handles the parsed arguments.
-    :param args: Namespace objects (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
+    :param args: Namespace objects
+        (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
     :param unknown: List of unknown parameters.
     :return: None
     """
@@ -247,7 +246,8 @@ def args_post_processing(
 
 def handle_unspecified_args(args, service_op_code_dict: ServiceOpCodeDictT) -> None:
     """If some arguments are unspecified, they are set here with (variable) default values.
-    :param args:
+    :param args: Arguments from calling parse method
+    :param service_op_code_dict:
     :return: None
     """
     from tmtccmd.config.definitions import CoreModeStrings

@@ -15,7 +15,7 @@ def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
         com_if_key=CoreComInterfaces.DUMMY.value,
         json_cfg_path="tmtc_config.json",
     )
-    tm_listener = TmListener(com_if=com_if, tm_timeout=3.0, tc_timeout_factor=3.0)
+    tm_listener = TmListener(com_if=com_if, seq_timeout=3.0)
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
         com_if=com_if,
