@@ -206,7 +206,7 @@ class TmTcHandler(BackendBase):
                 LOGGER.error("Closing TMTC commander..")
                 self.__com_if.close()
                 sys.exit(1)
-        if self.mode == CoreModeList.CONTINOUS_MODE:
+        if self.mode == CoreModeList.CONTINUOUS_MODE:
             self.daemon_receiver.start_daemon();
         if perform_op_immediately:
             self.perform_operation()
@@ -290,7 +290,7 @@ class TmTcHandler(BackendBase):
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
-        elif self.mode == CoreModeList.CONTINOUS_MODE:
+        elif self.mode == CoreModeList.CONTINUOUS_MODE:
             service_queue = deque()
             service_queue_packer = ServiceQueuePacker()
             service_queue_packer.pack_service_queue_core(
