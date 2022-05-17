@@ -58,8 +58,6 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
-            pus_tm_version=pus_tm_version,
-            ack=ack,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -67,11 +65,11 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         PusTmBase.__init__(self, pus_tm=pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=pus_tm)
 
-        self.specify_packet_info("File Service Reply")
+        self.set_packet_info("File Service Reply")
 
     @staticmethod
     def __init_without_base(instance: Service23Tm):
-        tm_data = instance.get_tm_data()
+        tm_data = instance.tm_data
         if len(tm_data) < 4:
             LOGGER.error("Service23TM: Invalid packet format!")
             return
@@ -79,10 +77,10 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         instance.file_info.file_size = 0
         instance.file_info.lock_status = False
         instance.data_start_idx = 0
-        if instance.get_subservice() == 4:
+        if instance.subservice == 4:
             instance.unpack_repo_and_filename()
             instance.unpack_file_attributes()
-        elif instance.get_subservice() == 132:
+        elif instance.subservice == 132:
             instance.unpack_repo_and_filename()
 
     @classmethod
@@ -92,7 +90,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytearray,
+        raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service23Tm:
         service_23_tm = cls.__empty()
@@ -103,10 +101,10 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         return service_23_tm
 
     def unpack_repo_and_filename(self):
-        tm_data = self.get_tm_data()
+        tm_data = self.tm_data
         repo_path_found = False
         path_idx_start = 0
-        max_len_to_scan = len(self.get_tm_data()) - 4
+        max_len_to_scan = len(self.tm_data) - 4
         for idx in range(4, max_len_to_scan):
             if not repo_path_found and tm_data[idx] == 0:
                 repo_bytes = tm_data[4:idx]
@@ -123,21 +121,21 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
 
     def unpack_file_attributes(self):
         # Size of file length (4) + lock status (1), adapt if more field are added!
-        print(len(self.get_tm_data()) - self.data_start_idx)
-        if len(self.get_tm_data()) - self.data_start_idx != 5:
+        print(len(self.tm_data) - self.data_start_idx)
+        if len(self.tm_data) - self.data_start_idx != 5:
             LOGGER.error("Service23TM: Invalid lenght of file attributes data")
             return
         self.file_info.file_size = struct.unpack(
-            "!I", self.get_tm_data()[self.data_start_idx : self.data_start_idx + 4]
+            "!I", self.tm_data[self.data_start_idx : self.data_start_idx + 4]
         )[0]
-        self.file_info.lock_status = self.get_tm_data()[self.data_start_idx + 4]
+        self.file_info.lock_status = self.tm_data[self.data_start_idx + 4]
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list)
         content_list.append(self.object_id)
         content_list.append(self.file_info.repo_path)
         content_list.append(self.file_info.file_name)
-        if self.get_subservice() == 4:
+        if self.subservice == 4:
             content_list.append(self.file_info.file_size)
             if self.file_info.lock_status == 0:
                 content_list.append("No")
@@ -149,6 +147,6 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         header_list.append("Object ID")
         header_list.append("Repo Path")
         header_list.append("File Name")
-        if self.get_subservice() == 4:
+        if self.subservice == 4:
             header_list.append("File Size")
             header_list.append("Locked")

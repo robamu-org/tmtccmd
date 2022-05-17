@@ -102,7 +102,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             time.sleep(0.2)
 
     def __handle_tc_sending(self):
-        print("handle_tc_sending: " + str(self._tc_queue))
         while not self.__all_replies_received:
             while not self._tc_queue.__len__() == 0:
                 self.__check_for_reply()

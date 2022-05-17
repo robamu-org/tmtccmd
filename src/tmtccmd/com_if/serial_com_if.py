@@ -5,6 +5,7 @@ import threading
 import time
 import logging
 from collections import deque
+from typing import Optional
 
 import serial
 import serial.tools.list_ports
@@ -84,7 +85,7 @@ class SerialComIF(CommunicationInterface):
             self.encoder = DleEncoder()
             self.reception_thread = None
             self.reception_buffer = None
-            self.dle_polling_active_event = None
+            self.dle_polling_active_event: Optional[threading.Event] = None
             # Set to default value.
             self.dle_queue_len = 10
             self.dle_max_frame = 256
@@ -140,6 +141,7 @@ class SerialComIF(CommunicationInterface):
                 self.dle_polling_active_event.clear()
                 self.reception_thread.join(0.4)
             self.serial.close()
+            self.serial = None
         except serial.SerialException:
             logging.warning("SERIAL Port could not be closed!")
 
