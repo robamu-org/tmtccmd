@@ -106,13 +106,6 @@ class TmTcHandler(BackendBase):
     def is_com_if_active(self):
         return self.__com_if_active
 
-    def set_one_shot_or_loop_handling(self, enable: bool):
-        """
-        Specify whether the perform_operation() call will only handle one action depending
-        on the mode or keep listening for replies after handling an operation.
-        """
-        self.one_shot_operation = enable
-
     def set_mode(self, mode: int):
         """
         Set the mode which will determine what perform_operation does.
