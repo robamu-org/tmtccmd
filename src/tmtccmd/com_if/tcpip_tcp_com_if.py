@@ -72,7 +72,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__last_connection_time = 0
         self.__tm_thread_kill_signal = threading.Event()
         # Separate thread to request TM packets periodically if no TCs are being sent
-        self.__tcp_conn_thread = threading.Thread(
+        self.__tcp_conn_thread: Optional[threading.Thread] = threading.Thread(
             target=self.__tcp_tm_client, daemon=True
         )
         self.__tm_queue = deque()
@@ -88,12 +88,24 @@ class TcpIpTcpComIF(CommunicationInterface):
             LOGGER.warning("Could not close UDP communication interface!")
 
     def initialize(self, args: any = None) -> any:
-        self.__tm_thread_kill_signal.clear()
-        self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__tcp_socket.connect(self.target_address)
+        pass
 
     def open(self, args: any = None):
+        self.__tm_thread_kill_signal.clear()
+        self.set_up_socket()
+        self.set_up_tcp_thread()
         self.__tcp_conn_thread.start()
+
+    def set_up_socket(self):
+        if self.__tcp_socket is None:
+            self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__tcp_socket.connect(self.target_address)
+
+    def set_up_tcp_thread(self):
+        if self.__tcp_conn_thread is None:
+            self.__tcp_conn_thread = threading.Thread(
+                target=self.__tcp_tm_client, daemon=True
+            )
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
@@ -104,6 +116,8 @@ class TcpIpTcpComIF(CommunicationInterface):
         except OSError:
             LOGGER.warning("TCP socket endpoint was already closed or not connected")
         self.__tcp_socket.close()
+        self.__tcp_socket = None
+        self.__tcp_conn_thread = None
 
     def send(self, data: bytearray):
         try:
@@ -155,7 +169,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                             "Overwriting old packets.."
                         )
                         self.__tm_queue.pop()
-                    self.__tm_queue.appendleft(bytearray(bytes_recvd))
+                    self.__tm_queue.appendleft(bytes(bytes_recvd))
         except ConnectionResetError:
             LOGGER.exception("ConnectionResetError. TCP server might not be up")
 
