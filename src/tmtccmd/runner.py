@@ -216,7 +216,7 @@ def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
         tm_handler=tm_handler,
     )
     tmtc_backend.set_current_apid(apid=apid)
-    tmtc_backend.set_one_shot_or_loop_handling(
-        not get_global(CoreGlobalIds.USE_LISTENER_AFTER_OP)
+    tmtc_backend.one_shot_operation = not get_global(
+        CoreGlobalIds.USE_LISTENER_AFTER_OP
     )
     return tmtc_backend

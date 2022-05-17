@@ -102,7 +102,9 @@ class WorkerThread(QObject):
             self.finished.emit()
         elif self.op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
             self.tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
-            # It is expected that the TMTC handler is in the according state to perform the operation
+            self.tmtc_handler.one_shot_operation = True
+            # It is expected that the TMTC handler is in the according state to perform the
+            # operation
             self.tmtc_handler.perform_operation()
             self.finished.emit()
         else:
@@ -219,8 +221,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             if self._current_com_if != self._last_com_if:
                 hook_obj = get_global_hook_obj()
                 new_com_if = hook_obj.assign_communication_interface(
-                    com_if_key=self._current_com_if,
-                    tmtc_printer=self._tmtc_handler.get_printer(),
+                    com_if_key=self._current_com_if
                 )
                 self._tmtc_handler.set_com_if(new_com_if)
             self._tmtc_handler.start_listener(False)
