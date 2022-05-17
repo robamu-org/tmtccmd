@@ -2,14 +2,14 @@
 """
 import struct
 from typing import Optional
-from tmtccmd.pus.service_20_parameter import (
+from tmtccmd.pus.pus_20_params import (
     EcssPtc,
     EcssPfcUnsigned,
     EcssPfcReal,
     CustomSubservices,
 )
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 logger = get_console_logger()
 
@@ -119,8 +119,10 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
     p.428 for more information.
     :param ptc:     ECSS PTC number
     :param pfc:     ECSS PFC number
-    :param rows:     Number of rows in parameter (for matrix entries, 1 for vector entries, 1 for scalar entries)
-    :param columns:  Number of columns in parameter (for matrix or vector entries, 1 for scalar entries)
+    :param rows:     Number of rows in parameter (for matrix entries, 1 for vector entries,
+        1 for scalar entries)
+    :param columns:  Number of columns in parameter (for matrix or vector entries,
+        1 for scalar entries)
     :return: Parameter information field as 4 byte bytearray
     """
     data = bytearray(4)

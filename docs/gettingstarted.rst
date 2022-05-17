@@ -3,7 +3,7 @@ Getting Started
 ===============
 
 The example provided in the ``example`` folder of the Python package is a good place to get started.
-You can run the ``tmtc_cli.py`` file to test the CLI interface or the ``tmtc_gui.py`` file
+You can run the ``tmtccli.py`` file to test the CLI interface or the ``tmtcgui.py`` file
 to test the GUI interface. The only working communication interface for the example applications is 
 the ``dummy`` interface.
 
@@ -13,43 +13,67 @@ The example application for the CLI mode looks like this:
 
 ::
 
-    from tmtccmd.ccsds.handler import CcsdsTmHandler
-    from tmtccmd.runner import run_tmtc_commander, initialize_tmtc_commander, add_ccsds_handler
-    from tmtccmd.tm.handler import default_ccsds_packet_handler
+   import tmtccmd.runner as runner
+   from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidHandler
+   from tmtccmd.config import SetupArgs, default_json_path
+   from tmtccmd.logging import get_console_logger
 
-    from config.hook_implementation import ExampleHookClass
-    from config.definitions import APID
+   from config.hook_implementation import ExampleHookClass
+   from config.definitions import APID, pre_send_cb
+   from config.tm_handler import default_ccsds_packet_handler
+
+   LOGGER = get_console_logger()
 
 
-    def main():
-        hook_obj = ExampleHookClass()
-        initialize_tmtc_commander(hook_object=hook_obj)
-        ccsds_handler = CcsdsTmHandler()
-        ccsds_handler.add_tm_handler(apid=APID, pus_tm_handler=default_ccsds_packet_handler, max_queue_len=50)
-        add_ccsds_handler(ccsds_handler)
-        run_tmtc_commander(use_gui=False)
+   def main():
+       runner.init_printout(True)
+       hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
+       setup_args = SetupArgs(hook_obj=hook_obj, use_gui=True, apid=APID, cli_args=None)
+       apid_handler = ApidHandler(
+           cb=default_ccsds_packet_handler, queue_len=50, user_args=None
+       )
+       ccsds_handler = CcsdsTmHandler()
+       ccsds_handler.add_tm_handler(apid=APID, handler=apid_handler)
+       runner.setup(setup_args=setup_args)
+       runner.add_ccsds_handler(ccsds_handler)
+       tmtc_backend = runner.create_default_tmtc_backend(
+           setup_args=setup_args,
+           tm_handler=ccsds_handler,
+       )
+       tmtc_backend.usr_send_wrapper = (pre_send_cb, None)
+       runner.run(tmtc_backend=tmtc_backend)
 
-1. The ``ExampleHookClass`` is located inside the ``example/config`` folder and contains all
+
+   if __name__ == "__main__":
+       main()
+
+
+1. The ``ExampleHookClass`` is located inside the
+   `examples/config <https://github.com/robamu-org/tmtccmd/blob/main/examples/config/hook_implementation.py>`_ folder and contains all
    important hook implementations.
-#. The hook instance is passed to the :py:meth:`tmtccmd.runner.initialize_tmtc_commander` method
-   which takes care of internal initialization.
+#. An argument parser is created and converted to also parse all CLI arguments required
+   by ``tmtccmd``
+#. A :py:class:`tmtccmd.config.SetupArgs` class is created which contains most of the
+   configuration required by ``tmtccmd``. The CLI arguments are also passed to this
+   class
+#. An :py:class:`tmtccmd.ccsds.handler.ApidHandler` is created to handle all telemetry
+   for the application APID. This handler takes a user callback to handle the packets
 #. After that, a generic :py:class:`tmtccmd.ccsds.handler.CcsdsTmHandler` is
-   created, which can be used to handle PUS packets, which are a specific type of CCSDS packets.
-   Here, it is assumed the so called Application Process Identifier or APID will be constant
-   for all PUS packets.
-#. A telemetry handler is added to the CCSDS handler for handling PUS telemetry with that specific
-   APID.
-#. The CCSDS Handler is added so it can be used by the TMTC commander core
-#. Finally, the application can be started with the :py:meth:`tmtccmd.runner.run_tmtc_commander`
-   call.
+   created and the APID handler is added to it. This allows specifying different handler for
+   different APIDs
+#. Finally, a TMTC backend is created. A backend is required for the :py:func:`tmtccmd.runner.run`
+   function.
+#. A pre-send callback is added to the backend. Each time a telecommand is sent, this callback
+   will be called
 
-Most of the TMTC commander configuration is done through the hook object instance. More information
-about its implementation will be provided in the :ref:`hook-func-label` chapter
+Most of the TMTC commander configuration is done through the hook object instance and the setup
+object. More information about its implementation will be provided in the :ref:`hook-func-label`
+chapter.
 
 CLI
 ===
 
-If ``tmtc_cli.py`` is run without any command line arguments the commander core will prompt values
+If ``tmtccli.py`` is run without any command line arguments the commander core will prompt values
 like the service or operation code. These values are passed on to the hook functions, which
 allows a developers to package different telecommand stacks for different service and op code
 combinations.
@@ -57,7 +81,7 @@ combinations.
 GUI
 ===
 
-Simply run the ``tmtc_gui.py`` application and connect to the Dummy communication interface.
+Simply run the ``tmtcgui.py`` application and connect to the Dummy communication interface.
 After that, you can send a ping command and see the generated replies.
 
 .. _hook-func-label:

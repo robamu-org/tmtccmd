@@ -1,22 +1,17 @@
-import sys
-import argparse
 from abc import abstractmethod
-from typing import Dict, Tuple, Optional, Union
+from typing import Optional, Union
 
 from tmtccmd.config.definitions import (
-    DEFAULT_APID,
     ServiceOpCodeDictT,
-    HkReplyUnpacked,
     DataReplyUnpacked,
+    default_json_path,
 )
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
-from tmtccmd.pus.obj_id import ObjectIdDictT
-from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.core.backend import BackendBase
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tm.service_3_base import Service3Base
 
 LOGGER = get_console_logger()
 
@@ -27,8 +22,10 @@ class TmTcHookBase:
     TMTC commander core.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, json_cfg_path: Optional[str] = None):
+        self.json_cfg_path = json_cfg_path
+        if self.json_cfg_path is None:
+            self.json_cfg_path = default_json_path()
 
     @abstractmethod
     def get_object_ids(self) -> ObjectIdDictT:
@@ -41,44 +38,18 @@ class TmTcHookBase:
         return get_core_object_ids()
 
     @abstractmethod
-    def add_globals_pre_args_parsing(self, gui: bool = False):
-        """Add all global variables prior to parsing the CLI arguments.
-
-        :param gui: Set to true if the GUI mode is used
-        :return:
-        """
-        from tmtccmd.config.globals import set_default_globals_pre_args_parsing
-
-        set_default_globals_pre_args_parsing(gui=gui, apid=DEFAULT_APID)
-
-    @abstractmethod
-    def add_globals_post_args_parsing(self, args: argparse.Namespace):
-        """Add global variables prior after parsing the CLI arguments.
-
-        :param args: Specify whether a GUI is used
-        """
-        from tmtccmd.config.globals import set_default_globals_post_args_parsing
-
-        set_default_globals_post_args_parsing(
-            args=args, json_cfg_path=self.get_json_config_file_path()
-        )
-
-    @abstractmethod
     def assign_communication_interface(
-        self, com_if_key: str, tmtc_printer: TmTcPrinter
+        self, com_if_key: str
     ) -> Optional[CommunicationInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
 
         :param com_if_key:      String key of the communication interface to be created.
-        :param tmtc_printer:    Printer utility instance.
         """
         from tmtccmd.config.com_if import create_communication_interface_default
 
         return create_communication_interface_default(
-            com_if_key=com_if_key,
-            tmtc_printer=tmtc_printer,
-            json_cfg_path=self.get_json_config_file_path(),
+            com_if_key=com_if_key, json_cfg_path=self.json_cfg_path
         )
 
     @abstractmethod
@@ -93,7 +64,7 @@ class TmTcHookBase:
         return get_default_service_op_code_dict()
 
     @abstractmethod
-    def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
+    def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
         """Perform custom mode operations
         :param tmtc_backend:
         :param mode:
@@ -116,22 +87,6 @@ class TmTcHookBase:
         pass
 
     @staticmethod
-    def custom_args_parsing() -> Optional[argparse.Namespace]:
-        """The user can implement args parsing here to override the default argument parsing
-        for the CLI mode
-        :return:
-        """
-        return None
-
-    def get_json_config_file_path(self) -> str:
-        """The user can specify a path and filename for the JSON configuration file by overriding
-        this function.
-
-        :return:
-        """
-        return "tmtc_config.json"
-
-    @staticmethod
     def handle_service_8_telemetry(
         object_id: bytes, action_id: int, custom_data: bytearray
     ) -> DataReplyUnpacked:
@@ -150,46 +105,6 @@ class TmTcHookBase:
             "hook function"
         )
         return DataReplyUnpacked()
-
-    @staticmethod
-    def handle_service_3_housekeeping(
-        object_id: bytes, set_id: int, hk_data: bytearray, service3_packet: Service3Base
-    ) -> HkReplyUnpacked:
-        """This function is called when a Service 3 Housekeeping packet is received.
-
-        :param object_id: Byte representation of the object ID
-        :param set_id: Unique set ID of the HK reply
-        :param hk_data:     HK data. For custom HK handling, whole HK data will be passed here.
-                            Otherwise, a 8 byte SID consisting of the 4 byte object ID and 4 byte
-                            set ID will be assumed and the remaining packet after the first 4 bytes
-                            will be passed here.
-        :param service3_packet: Service 3 packet object
-        :return: Expects a tuple, consisting of two lists, a bytearray and an integer
-            The first list contains the header columns, the second list the list with
-            the corresponding values. The bytearray is the validity buffer, which is usually appended
-            at the end of the housekeeping packet. The last value is the number of parameters.
-        """
-        LOGGER.info(
-            "TmTcHookBase: No service 3 housekeeping data handling implemented yet in "
-            "handle_service_3_housekeeping hook function"
-        )
-        return HkReplyUnpacked()
-
-    @staticmethod
-    def handle_service_5_event(
-        object_id: bytes, event_id: int, param_1: int, param_2: int
-    ) -> str:
-        """This function is called when a Service 5 Event Packet is received. The user can specify
-         a custom string here which will be printed to display additional information related
-         to an event.
-
-        :param object_id: Byte representation of the object ID
-        :param event_id: Two-byte event ID
-        :param param_1: Four-byte Parameter 1
-        :param param_2: Four-byte Parameter 2
-        :return: Custom information string which will be printed with the event
-        """
-        return ""
 
     def get_retval_dict(self) -> RetvalDictT:
         LOGGER.info("No return value dictionary specified")

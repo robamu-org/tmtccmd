@@ -4,19 +4,19 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 from collections import deque
-from typing import Union, cast
+from typing import Union, cast, Optional, Tuple
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.sendreceive.sequential_sender_receiver import (
     SequentialCommandSenderReceiver,
+    UsrSendCbT,
 )
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
 from tmtccmd.tc.packer import ServiceQueuePacker
 
 
@@ -48,7 +48,6 @@ class TmTcHandler(BackendBase):
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
         tm_handler: TmHandler,
         init_mode: int,
@@ -61,12 +60,12 @@ class TmTcHandler(BackendBase):
         self.__service = init_service
         self.__op_code = init_opcode
         self.__apid = 0
+        self.__usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None
 
         # This flag could be used later to command the TMTC Client with a front-end
         self.one_shot_operation = False
 
         self.__com_if = com_if
-        self.__tmtc_printer = tmtc_printer
         self.__tm_listener = tm_listener
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
@@ -83,9 +82,6 @@ class TmTcHandler(BackendBase):
     def get_com_if(self) -> CommunicationInterface:
         return self.__com_if
 
-    def get_printer(self) -> TmTcPrinter:
-        return self.__tmtc_printer
-
     def get_listener(self):
         return self.__tm_listener
 
@@ -95,9 +91,17 @@ class TmTcHandler(BackendBase):
             self.__tm_listener.set_com_if(self.__com_if)
         else:
             LOGGER.warning(
-                "Communication Interface is active and must be closed first before"
+                "Communication Interface is active and must be closed first before "
                 "reassigning a new one"
             )
+
+    @property
+    def usr_send_wrapper(self):
+        return self.__usr_send_wrapper
+
+    @usr_send_wrapper.setter
+    def usr_send_wrapper(self, usr_send_wrapper: UsrSendCbT):
+        self.__usr_send_wrapper = usr_send_wrapper
 
     def is_com_if_active(self):
         return self.__com_if_active
@@ -139,7 +143,6 @@ class TmTcHandler(BackendBase):
     @staticmethod
     def prepare_tmtc_handler_start(
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
         tm_handler: TmHandler,
         init_mode: int,
@@ -150,7 +153,6 @@ class TmTcHandler(BackendBase):
 
         tmtc_handler = TmTcHandler(
             com_if=com_if,
-            tmtc_printer=tmtc_printer,
             tm_listener=tm_listener,
             init_mode=init_mode,
             init_service=init_service,
@@ -257,11 +259,11 @@ class TmTcHandler(BackendBase):
             LOGGER.info("Performing service command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
                 com_if=self.__com_if,
-                tmtc_printer=self.__tmtc_printer,
                 tm_handler=self.__tm_handler,
                 tm_listener=self.__tm_listener,
                 tc_queue=service_queue,
                 apid=self.__apid,
+                usr_send_wrapper=self.usr_send_wrapper,
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE

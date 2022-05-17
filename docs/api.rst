@@ -47,3 +47,4 @@ Other Submodules
    :maxdepth: 4
 
    api/tmtccmd.utility
+   api/tmtccmd.logging

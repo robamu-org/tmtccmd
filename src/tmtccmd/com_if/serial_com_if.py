@@ -10,9 +10,9 @@ import serial
 import serial.tools.list_ports
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 
@@ -55,7 +55,6 @@ class SerialComIF(CommunicationInterface):
     def __init__(
         self,
         com_if_key: str,
-        tmtc_printer: TmTcPrinter,
         com_port: str,
         baud_rate: int,
         serial_timeout: float,
@@ -70,7 +69,7 @@ class SerialComIF(CommunicationInterface):
         :param serial_timeout: Specify serial timeout
         :param ser_com_type: Specify how to handle serial reception
         """
-        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+        super().__init__(com_if_key=com_if_key)
 
         self.com_port = com_port
         self.baud_rate = baud_rate

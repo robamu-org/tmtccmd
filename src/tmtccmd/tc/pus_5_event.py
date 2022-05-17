@@ -1,17 +1,17 @@
 """Contains definitions and functions related to PUS Service 5 Telecommands.
 """
 from spacepackets.ecss.conf import get_default_tc_apid
+from spacepackets.ecss.pus_5_event import Subservices
 
 from tmtccmd.config.definitions import QueueCommands
 from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
-from tmtccmd.pus.service_5_event import Srv5Subservices
 
 
 def pack_enable_event_reporting_command(ssc: int, apid: int = -1):
     if apid == -1:
         apid = get_default_tc_apid()
     return PusTelecommand(
-        service=5, subservice=Srv5Subservices.ENABLE_EVENT_REPORTING, ssc=ssc, apid=apid
+        service=5, subservice=Subservices.TC_ENABLE_EVENT_REPORTING, ssc=ssc, apid=apid
     )
 
 
@@ -20,7 +20,7 @@ def pack_disable_event_reporting_command(ssc: int, apid: int = -1):
         apid = get_default_tc_apid()
     return PusTelecommand(
         service=5,
-        subservice=Srv5Subservices.DISABLE_EVENT_REPORTING,
+        subservice=Subservices.TC_DISABLE_EVENT_REPORTING,
         ssc=ssc,
         apid=apid,
     )

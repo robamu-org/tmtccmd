@@ -6,7 +6,7 @@ Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 from abc import abstractmethod
 
 from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 
 class CommunicationInterface:
@@ -14,8 +14,7 @@ class CommunicationInterface:
     the underlying interface.
     """
 
-    def __init__(self, tmtc_printer: TmTcPrinter, com_if_key: str):
-        self.tmtc_printer = tmtc_printer
+    def __init__(self, com_if_key: str):
         self.valid = True
         self.com_if_key = com_if_key
 
@@ -43,7 +42,7 @@ class CommunicationInterface:
         """
 
     @abstractmethod
-    def send(self, data: bytearray):
+    def send(self, data: bytes):
         """Send raw data"""
 
     @abstractmethod

@@ -11,8 +11,7 @@ build
 # Python egg metadata, regenerated from source files by setuptools.
 *.egg-info
 
-/example/log
-/example/tmtc_config.json
+/examples/log
 /src/log
 /src/tests/log
 

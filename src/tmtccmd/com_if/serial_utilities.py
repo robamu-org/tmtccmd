@@ -3,7 +3,7 @@ from typing import TextIO
 
 import serial
 import serial.tools.list_ports
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.json_handler import (
     check_json_file,
     JsonKeyNames,

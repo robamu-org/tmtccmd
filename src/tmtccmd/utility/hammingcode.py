@@ -40,7 +40,7 @@ Translated from ATMEL C library.
 """
 from enum import Enum
 
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 

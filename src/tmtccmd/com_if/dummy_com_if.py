@@ -8,17 +8,17 @@ from spacepackets.ccsds.spacepacket import (
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.pus.service_1_verification import Service1TMExtended
-from tmtccmd.pus.service_17_test import Srv17Subservices, Service17TMExtended
-from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.tm.pus_1_verification import Service1TMExtended
+from tmtccmd.tm.pus_17_test import Subservices, Service17TMExtended
+from tmtccmd.logging import get_console_logger
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
 
 
 class DummyComIF(CommunicationInterface):
-    def __init__(self, com_if_key: str, tmtc_printer: TmTcPrinter):
-        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
+    def __init__(self, com_if_key: str):
+        super().__init__(com_if_key=com_if_key)
         self.dummy_handler = DummyHandler()
         self.last_service = 0
         self.last_subservice = 0
@@ -100,7 +100,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17TMExtended(subservice=Srv17Subservices.PING_REPLY)
+                tm_packer = Service17TMExtended(subservice=Subservices.TM_REPLY)
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
