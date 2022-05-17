@@ -85,7 +85,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         try:
             self.close()
         except IOError:
-            LOGGER.warning("Could not close UDP communication interface!")
+            LOGGER.warning("Could not close TCP communication interface!")
 
     def initialize(self, args: any = None) -> any:
         pass
@@ -109,13 +109,14 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
-        if self.__tcp_conn_thread.is_alive():
-            self.__tcp_conn_thread.join(self.tm_polling_frequency)
-        try:
-            self.__tcp_socket.shutdown(socket.SHUT_RDWR)
-        except OSError:
-            LOGGER.warning("TCP socket endpoint was already closed or not connected")
-        self.__tcp_socket.close()
+        if self.__tcp_conn_thread != None:
+            if self.__tcp_conn_thread.is_alive():
+                self.__tcp_conn_thread.join(self.tm_polling_frequency)
+            try:
+                self.__tcp_socket.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                LOGGER.warning("TCP socket endpoint was already closed or not connected")
+            self.__tcp_socket.close()
         self.__tcp_socket = None
         self.__tcp_conn_thread = None
 

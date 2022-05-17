@@ -119,9 +119,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             time.sleep(0.2)
         self._tm_listener.set_mode_op_finished()
         LOGGER.info("SequentialSenderReceiver: All replies received!")
-        while(True):
-            self.__check_for_reply()
-            time.sleep(0.2)
+
 
     def __check_for_reply(self):
         if self._tm_listener.reply_event():
