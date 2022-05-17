@@ -279,7 +279,7 @@ class TmTcHandler(BackendBase):
             )
             if not self.__com_if.valid:
                 return
-            LOGGER.info("Performing service command operation")
+            LOGGER.info("Performing sequential command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
                 com_if=self.__com_if,
                 tm_handler=self.__tm_handler,

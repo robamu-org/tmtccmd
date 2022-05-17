@@ -32,9 +32,8 @@ class CcsdsTmHandler(TmHandler):
     def add_tm_handler(self, apid: int, handler: ApidHandler):
         """Add a TM handler for a certain APID. The handler is a callback function which
         will be called if telemetry with that APID arrives
-        :param apid:            CCSDS Application Process ID
-        :param pus_tm_handler:  Callback function
-        :param max_queue_len:
+        :param apid: CCSDS Application Process ID
+        :param handler: Handler class instance
         :return:
         """
         self._handler_dict[apid] = handler
@@ -51,7 +50,7 @@ class CcsdsTmHandler(TmHandler):
             handler_obj = self._handler_dict.get(apid)
             if handler_obj is not None:
                 self.handle_ccsds_packet_queue(
-                    queue=queue_tuple[1], apid=apid, handler=handler_obj
+                    tm_queue=queue_tuple[1], apid=apid, handler=handler_obj
                 )
 
     def handle_ccsds_packet_queue(

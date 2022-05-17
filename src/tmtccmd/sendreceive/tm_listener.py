@@ -243,7 +243,7 @@ class TmListener:
             if acquired:
                 return target_queue.copy()
 
-    def check_for_one_telemetry_sequence(self, tm_timeout: float) -> bool:
+    def check_for_one_telemetry_sequence(self, seq_timeout: float) -> bool:
         """Receive all telemetry for a specified time period.
         :return: True if a sequence was received
         """
@@ -251,7 +251,7 @@ class TmListener:
         if data_available == 0:
             return False
         elif data_available > 0:
-            self.__read_telemetry_sequence(tm_timeout=tm_timeout)
+            self.__read_telemetry_sequence(tm_timeout=seq_timeout)
             return True
         else:
             LOGGER.error("TmListener: Configuration error in communication interface!")
@@ -319,7 +319,7 @@ class TmListener:
             if self.__event_mode_op_finished.is_set():
                 return
             # Listen for one reply sequence.
-            if self.check_for_one_telemetry_sequence():
+            if self.check_for_one_telemetry_sequence(self.seq_timeout):
                 # Set reply event, will be cleared by checkForFirstReply()
                 if not self.__event_reply_received.is_set():
                     self.__event_reply_received.set()
