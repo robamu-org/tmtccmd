@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v2.2.1]
+
+- Minor fix for CI/CD
+
 ## [v2.2.0]
 
 - Improve `lint.py`: Add prefix and print out executed command
