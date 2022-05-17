@@ -66,7 +66,7 @@ class FsfwTmTcPrinter:
     def __handle_column_header_print(self, info_if: PusTmInfoInterface):
         header_list = []
         info_if.append_telemetry_column_headers(header_list=header_list)
-        print(header_list)
+        LOGGER.info(header_list)
         if self.file_logger is not None:
             self.file_logger.info(header_list)
 
@@ -77,7 +77,7 @@ class FsfwTmTcPrinter:
         """
         content_list = []
         info_if.append_telemetry_content(content_list=content_list)
-        print(content_list)
+        LOGGER.info(content_list)
         if self.file_logger is not None:
             self.file_logger.info(content_list)
 
@@ -86,7 +86,7 @@ class FsfwTmTcPrinter:
         if additional_printout is not None and additional_printout != "":
             LOGGER.info(additional_printout)
             if self.file_logger is not None:
-                print(additional_printout)
+                self.file_logger.info(additional_printout)
 
     def generic_hk_tm_print(
         self,
