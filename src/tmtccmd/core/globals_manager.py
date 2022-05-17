@@ -25,7 +25,9 @@ def update_global(global_param_id: int, parameter: any, lock: bool = False):
         __GLOBALS_LOCK.release()
 
 
-def lock_global_pool(blocking: Optional[bool] = None, timeout: Optional[float] = None) -> bool:
+def lock_global_pool(
+    blocking: Optional[bool] = None, timeout: Optional[float] = None
+) -> bool:
     global __LOCK_TIMEOUT, __GLOBALS_LOCK
     """Lock the global objects. This is important if the values are changed. Don't forget to unlock the pool
     after finishing work with the globals!
