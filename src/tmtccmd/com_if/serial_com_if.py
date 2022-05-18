@@ -189,11 +189,11 @@ class SerialComIF(CommunicationInterface):
             if timeout > 0:
                 while elapsed_time < timeout:
                     if self.reception_buffer:
-                        return self.reception_buffer.__len__()
+                        return len(self.reception_buffer)
                     elapsed_time = time.time() - start_time
                     time.sleep(sleep_time)
             if self.reception_buffer:
-                return self.reception_buffer.__len__()
+                return len(self.reception_buffer)
         return 0
 
     def data_available_fixed_frame(self, timeout: float, sleep_time: float):
