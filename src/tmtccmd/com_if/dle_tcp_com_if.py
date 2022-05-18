@@ -72,9 +72,10 @@ class DleTcpComIF(CommunicationInterface):
     def poll_dle_packets(self):
         # Todo handle disconnect and reconnect properly
         while True and self.dle_polling_active_event.is_set():
-            bytes = self.client_socket.recv()
 
-            self.receive_data.append(bytes)
+            bytes = self.client_socket.recv(4096)
+
+            self.receive_data += bytes
 
             index = self.receive_data.find(STX_CHAR)
 
@@ -87,16 +88,16 @@ class DleTcpComIF(CommunicationInterface):
             while True:
                 retval, decoded_packet, decoded_bytes = self.encoder.decode(self.receive_data)
 
-                if retval == DleEncoder.OK:
+                if retval == DleErrorCodes.OK:
                     self.receive_queue.appendleft(decoded_packet)
                     self.receive_data = self.receive_data[decoded_bytes:]
                     continue
 
-                if retval == DleEncoder.END_REACHED:
+                if retval == DleErrorCodes.END_REACHED:
                     # wait until we get more data
                     break
 
-                if retval == DleEncoder.DECODING_ERROR:
+                if retval == DleErrorCodes.DECODING_ERROR:
                     self.receive_data = self.receive_data[decoded_bytes:]
                     # if there is no STX, no need to try again
                     if not STX_CHAR in self.receive_data:
