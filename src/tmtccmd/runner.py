@@ -107,10 +107,6 @@ def init_and_start_daemons(tmtc_backend: BackendBase):
     __start_tmtc_commander_cli(tmtc_backend=tmtc_backend, perform_op_immediately=False)
 
 
-def performOperation(tmtc_backend: BackendBase):
-    tmtc_backend.perform_operation()
-
-
 def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
     if hook_object is None:
         raise ValueError

@@ -50,6 +50,7 @@ class CoreGlobalIds(enum.IntEnum):
     SERIAL_CONFIG = 161
     USE_ETHERNET = 162
     ETHERNET_CONFIG = 163
+    END = 300
 
 
 class OpCodeDictKeys(enum.IntEnum):
