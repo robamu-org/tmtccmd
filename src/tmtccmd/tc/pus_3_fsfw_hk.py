@@ -23,7 +23,7 @@ def enable_periodic_hk_command(diag: bool, sid: bytes, ssc: int) -> PusTelecomma
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float, ssc: int
 ) -> (PusTelecommand, PusTelecommand):
-    cmd0 = (modify_collection_interval(diag, sid, interval_seconds, ssc),)
+    cmd0 = modify_collection_interval(diag, sid, interval_seconds, ssc)
     cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid, ssc=ssc)
     return cmd0, cmd1
 
