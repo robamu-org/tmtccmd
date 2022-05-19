@@ -40,10 +40,10 @@ def __generate_periodic_hk_command(
         if diag:
             subservice = Subservices.TC_ENABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
-            subservice = Subservices.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
+            subservice = Subservices.TC_ENABLE_PERIODIC_HK_GEN
     else:
         if diag:
-            subservice = Subservices.TC_ENABLE_PERIODIC_HK_GEN
+            subservice = Subservices.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
             subservice = Subservices.TC_DISABLE_PERIODIC_HK_GEN
     return PusTelecommand(service=3, subservice=subservice, ssc=ssc, app_data=app_data)
