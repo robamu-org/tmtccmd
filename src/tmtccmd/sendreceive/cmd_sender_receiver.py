@@ -66,11 +66,10 @@ class CommandSenderReceiver:
 
         # this flag can be used to notify when the operation is finished
         self._operation_pending = False
-        # This flag can be used to notify when a reply was received.
-        self._reply_received = False
 
         self._wait_period = 0
         self._wait_start = 0
+        self._wait_end = 0
 
     def set_tm_timeout(self, tm_timeout: float = -1):
         """
@@ -94,26 +93,28 @@ class CommandSenderReceiver:
             new_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._tc_send_timeout_factor = new_factor
 
-    def _check_for_first_reply(self) -> None:
+    def _check_for_first_reply(self) -> bool:
         """
         Checks for replies. If no reply is received, send telecommand again in checkForTimeout()
         :return: None
         """
         if self._tm_listener.reply_event():
-            self._reply_received = True
             self._operation_pending = False
             self._tm_listener.clear_reply_event()
+            return True
         else:
-            self._check_for_timeout()
+            return self._check_for_tm_timeout()
 
     def wait_period_ongoing(
         self,
         sleep_rest_of_wait_period: bool = False,
-        set_reply_rcvd_to_true: bool = True,
-    ):
+    ) -> bool:
+        """If the first argument is set to true, this function will reset the internal wait time
+        variable to 0
+        """
         if sleep_rest_of_wait_period:
             # wait rest of wait time
-            sleep_time = self._wait_start + self._wait_period - time.time()
+            sleep_time = self._wait_end - time.time()
             if sleep_time > 0:
                 time.sleep(sleep_time)
             LOGGER.info("Wait period over.")
@@ -121,8 +122,6 @@ class CommandSenderReceiver:
         # If wait period was specified, we need to wait before checking the next queue entry.
         if self._wait_period > 0:
             if time.time() - self._wait_start < self._wait_period:
-                if set_reply_rcvd_to_true:
-                    self._reply_received = True
                 return True
             else:
                 LOGGER.info("Wait period over.")
@@ -162,10 +161,10 @@ class CommandSenderReceiver:
 
         if queue_entry_first == QueueCommands.WAIT:
             wait_time = queue_entry_second
-            self._tm_timeout = self._tm_timeout + wait_time
             self._wait_period = wait_time
-            LOGGER.info(f"Waiting for {self._wait_period} seconds.")
             self._wait_start = time.time()
+            self._wait_end = self._wait_start + self._wait_period
+            LOGGER.info(f"Waiting for {self._wait_period} seconds.")
         # printout optimized for LOGGER and debugging
         elif queue_entry_first == QueueCommands.PRINT:
             LOGGER.info(queue_entry_second)
@@ -179,29 +178,31 @@ class CommandSenderReceiver:
             return True
         return queue_entry_is_telecommand
 
-    def _check_for_timeout(self, last_timeout: bool = True):
+    def _check_for_tm_timeout(self, resend_tc: bool = False) -> bool:
         """
         Checks whether a timeout after sending a telecommand has occured and sends telecommand
         again. If resending reached certain counter, exit the program.
         :return:
         """
-
         if self._start_time == 0:
-            self._start_time = time.time()
+            raise True
         if self._timeout_counter == 5:
             LOGGER.info("CommandSenderReceiver: No response from command !")
             self._operation_pending = False
-        if self._start_time != 0:
-            self._elapsed_time = time.time() - self._start_time
+        print(self._start_time)
+        print(time.time())
+        self._elapsed_time = time.time() - self._start_time
         if self._elapsed_time >= self._tm_timeout * self._tc_send_timeout_factor:
             from tmtccmd.core.globals_manager import get_global
 
-            if get_global(CoreGlobalIds.RESEND_TC):
+            if resend_tc:
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
                 self._com_if.send(self._last_tc)
                 self._timeout_counter = self._timeout_counter + 1
                 self._start_time = time.time()
+                return False
             else:
                 # todo: we could also stop sending and clear the TC queue
-                self._reply_received = True
-        time.sleep(0.5)
+                return True
+        else:
+            return False
