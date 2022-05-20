@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v2.2.2]
+
+- Improve internal structure of sequential sender receiver object
+- Add some PUS11 Telecommand Scheduling helpers
+
 ## [v2.2.1]
 
 - Minor fix for CI/CD
