@@ -1,5 +1,8 @@
+from __future__ import annotations
 import enum
 import struct
+
+from spacepackets.ecss import PusTelecommand
 
 
 class TypeOfTimeWindow(enum.IntEnum):
@@ -60,3 +63,7 @@ class TcSchedReqId:
             f"TcSchedReqId(apid={self.apid:#04x},seq_cnt={self.seq_cnt},"
             f"src_id={self.src_id:#04x})"
         )
+
+    @classmethod
+    def build_from_tc(cls, tc: PusTelecommand) -> TcSchedReqId:
+        return TcSchedReqId(tc.data_field_header.source_id, tc.apid, tc.ssc)
