@@ -176,6 +176,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
+            print("no")
             packet, cmd_info = tc_queue_tuple
             if self._usr_send_cb is not None:
                 try:
