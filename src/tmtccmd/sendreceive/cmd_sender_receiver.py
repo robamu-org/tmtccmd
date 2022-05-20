@@ -189,12 +189,8 @@ class CommandSenderReceiver:
         if self._timeout_counter == 5:
             LOGGER.info("CommandSenderReceiver: No response from command !")
             self._operation_pending = False
-        print(self._start_time)
-        print(time.time())
         self._elapsed_time = time.time() - self._start_time
         if self._elapsed_time >= self._tm_timeout * self._tc_send_timeout_factor:
-            from tmtccmd.core.globals_manager import get_global
-
             if resend_tc:
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
                 self._com_if.send(self._last_tc)

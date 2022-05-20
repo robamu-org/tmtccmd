@@ -69,8 +69,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         time.sleep(0.05)
         if self._tc_queue:
             try:
-                # Set to true for first packet, otherwise nothing will be sent.
-                self._next_send_condition = True
                 self.__handle_tc_sending_and_tm_reception()
             except (KeyboardInterrupt, SystemExit):
                 LOGGER.info("Keyboard Interrupt.")
@@ -103,37 +101,49 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             self.__check_for_reply()
             time.sleep(0.2)
 
-    def __print_rem_timeout(self, op_divider: int, divisor: int = 20):
+    def __print_rem_timeout(self, op_divider: int, divisor: int = 15):
         if op_divider % divisor == 0:
-            LOGGER.info(
-                f"{self._wait_end - time.time():.01f}  seconds wait time remaining"
-            )
+            rem_time = self._wait_end - time.time()
+            if rem_time > 0:
+                LOGGER.info(
+                    f"{rem_time:.01f} seconds wait time remaining"
+                )
 
     def __handle_tc_sending_and_tm_reception(self):
+        """Internal function which handles the given TC queue while also simultaneously
+        polling all TM.
+        TODO: Make it testable by not delaying here and removing the loop, make
+              this function runnable in discrete steps
+        """
+        # Set to true for first packet, otherwise nothing will be sent.
+        self._next_send_condition = True
         next_sleep = 0.2
         op_divider = 0
+        tc_queue_is_empty_and_processed = False
         while not self.__all_replies_received:
-            while True:
+            # Do not use continue anywhere in this while loop for now
+            if not tc_queue_is_empty_and_processed:
                 if self._tc_queue.__len__() == 0:
                     if self._wait_period == 0:
-                        print("test")
                         # cache this for last wait time
                         self._start_time = time.time()
-                        break
+                        tc_queue_is_empty_and_processed = True
                 self.__check_for_reply()
-                if not self.wait_period_ongoing():
-                    self._wait_period = 0
-                    self.__check_next_tc_send()
-                op_divider += 1
-                self.__print_rem_timeout(op_divider=op_divider)
-                time.sleep(next_sleep)
-            if not self._check_for_tm_timeout():
-                self.__check_for_reply()
-                # Delay for a bit longer in case we are waiting for the TM timeout
-                next_sleep = 0.5
+                if not tc_queue_is_empty_and_processed:
+                    if not self.wait_period_ongoing():
+                        self._wait_period = 0
+                        self.__check_next_tc_send()
+                    self.__print_rem_timeout(op_divider=op_divider)
+                    time.sleep(next_sleep)
             else:
-                self.__all_replies_received = True
-                break
+                if not self._check_for_tm_timeout():
+                    self.__check_for_reply()
+                    self.__print_rem_timeout(op_divider=op_divider)
+                    # Delay for a bit longer in case we are waiting for the TM timeout
+                    next_sleep = 0.5
+                else:
+                    self.__all_replies_received = True
+                    break
             time.sleep(next_sleep)
             op_divider += 1
         self._tm_listener.set_mode_op_finished()
@@ -176,7 +186,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
-            print("no")
             packet, cmd_info = tc_queue_tuple
             if self._usr_send_cb is not None:
                 try:
