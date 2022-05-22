@@ -85,7 +85,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 # Set to true for first packet, otherwise nothing will be sent.
                 self._next_send_condition = True
                 if not self._tc_queue.__len__() == 0:
-                    self.__check_next_tc_send()
+                    self.__handle_tc_sending_without_tm_reception()
             except (KeyboardInterrupt, SystemExit):
                 LOGGER.info("Keyboard Interrupt.")
                 sys.exit()
@@ -108,6 +108,28 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 LOGGER.info(
                     f"{rem_time:.01f} seconds wait time remaining"
                 )
+
+    def __handle_tc_sending_without_tm_reception(self):
+        """Internal function which handles the given TC queue
+        TODO: Make it testable by not delaying here and removing the loop, make
+              this function runnable in discrete steps
+        """
+        next_sleep = 0.2
+        tc_queue_is_empty_and_processed = False
+        while not tc_queue_is_empty_and_processed:
+            if self._tc_queue.__len__() == 0:
+                if self._wait_period == 0:
+                    # cache this for last wait time
+                    self._start_time = time.time()
+                    tc_queue_is_empty_and_processed = True
+            if not tc_queue_is_empty_and_processed:
+                if not self.wait_period_ongoing():
+                    self._wait_period = 0
+                    # force sending of TC, we do not wait for TM
+                    self._just_send_next_telecommand()
+                time.sleep(next_sleep)
+
+        LOGGER.info("SequentialSenderReceiver: All commands sent!")
 
     def __handle_tc_sending_and_tm_reception(self):
         """Internal function which handles the given TC queue while also simultaneously
@@ -184,8 +206,6 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         if not self._tc_queue:
             return False
         tc_queue_tuple = self._tc_queue.pop()
-        print("popped")
-        print(tc_queue_tuple)
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
             packet, cmd_info = tc_queue_tuple
@@ -213,13 +233,31 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             if self._usr_send_cb is not None:
                 queue_cmd, queue_cmd_arg = tc_queue_tuple
                 try:
-                    print("callback")
                     self._usr_send_cb(
                         queue_cmd, self._com_if, queue_cmd_arg, self._usr_send_args
                     )
                 except TypeError:
                     LOGGER.exception("User TC send callback invalid")
-            print("try again")
             # If the queue entry was not a telecommand, send next telecommand
             self.__check_next_tc_send()
+            return True
+
+    def _just_send_next_telecommand(self) -> bool:
+        """Sends the next telecommand and returns whether an actual telecommand was sent"""
+        # Queue empty. Can happen because a wait period might still be ongoing
+        if not self._tc_queue:
+            return False
+        tc_queue_tuple = self._tc_queue.pop()
+        if self.check_queue_entry(tc_queue_tuple):
+            self._start_time = time.time()
+            packet, cmd_info = tc_queue_tuple
+            if self._usr_send_cb is not None:
+                try:
+                    self._usr_send_cb(
+                        packet, self._com_if, cmd_info, self._usr_send_args
+                    )
+                except TypeError:
+                    LOGGER.exception("User TC send callback invalid")
+            else:
+                self._com_if.send(packet)
             return True

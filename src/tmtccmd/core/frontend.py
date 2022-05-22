@@ -113,6 +113,19 @@ class WorkerThread(QObject):
             LOGGER.warning("Unknown worker operation code!")
             self.finished.emit()
 
+class ContWorkerThread(QObject):
+    finished = pyqtSignal()
+
+    def __init__(self, queue, tmtc_handler: TmTcHandler):
+        super(QObject, self).__init__()
+        self.queue = queue
+        self.tmtc_handler = tmtc_handler
+        
+
+    def run_worker(self):
+        self.tmtc_handler.performSending(self.queue)
+        self.finished.emit()
+
 
 class RunnableThread(QRunnable):
     """
@@ -213,8 +226,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._tmtc_handler.set_opcode(self._current_op_code)
 
         if self._tmtc_handler.mode == CoreModeList.CONTINUOUS_MODE:
-            self._tmtc_handler.perform_operation()
-            self.__set_send_button(True)
+            # uses a widget to ask for parameters, so needs to be in this thread
+            queue = self._tmtc_handler.performPacking()
+
+            # now enter new thread for long lasting task
+            self.__start_qthread_task_continuous(
+                queue,
+                finish_callback=self.__finish_seq_cmd_op,
+            )
+            # TODO add abort window...
         else :
             self.__start_qthread_task(
                 op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING,
@@ -418,6 +438,19 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(label, row, 0, 1, 2)
         row += 1
         return row
+    
+    def __start_qthread_task_continuous(self, queue, finish_callback):
+        self.__thread = QThread()
+        self.__worker = ContWorkerThread(queue, tmtc_handler=self._tmtc_handler)
+        self.__worker.moveToThread(self.__thread)
+
+        self.__thread.started.connect(self.__worker.run_worker)
+        self.__worker.finished.connect(self.__thread.quit)
+        self.__worker.finished.connect(self.__worker.deleteLater)
+        self.__thread.finished.connect(self.__thread.deleteLater)
+
+        self.__thread.finished.connect(finish_callback)
+        self.__thread.start()
 
     def __start_qthread_task(self, op_code: WorkerOperationsCodes, finish_callback):
         self.__thread = QThread()

@@ -221,6 +221,31 @@ class TmTcHandler(BackendBase):
             if join:
                 close_thread.join(timeout=join_timeout_seconds)
 
+
+    def performPacking(self):
+        service_queue = deque()
+        service_queue_packer = ServiceQueuePacker()
+        service_queue_packer.pack_service_queue_core(
+            service=self.__service,
+            service_queue=service_queue,
+            op_code=self.__op_code,
+        )
+        if not self.__com_if.valid:
+            return None
+        return service_queue
+
+    def performSending(self, service_queue):
+        try:
+            LOGGER.info("Performing service command operation")
+            self.daemon_receiver.set_tc_queue(service_queue)
+            self.daemon_receiver.send_queue_tc_and_return()
+        except KeyboardInterrupt:
+            LOGGER.info("Keyboard Interrupt.")
+            sys.exit()
+        except IOError:
+            LOGGER.exception("IO Error occured")
+            sys.exit()
+
     def perform_operation(self):
         """Periodic operation"""
         try:
