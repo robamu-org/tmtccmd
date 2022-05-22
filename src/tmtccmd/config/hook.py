@@ -86,26 +86,6 @@ class TmTcHookBase:
         """
         pass
 
-    @staticmethod
-    def handle_service_8_telemetry(
-        object_id: bytes, action_id: int, custom_data: bytearray
-    ) -> DataReplyUnpacked:
-        """This function is called by the TMTC core to handle Service 8 packets
-        The user can return a tuple of two lists, where the first list
-        is a list of header strings to print and the second list is a list of values to print.
-        The TMTC core will take care of printing both lists and logging them.
-
-        :param object_id: Byte representation of the object ID
-        :param action_id:
-        :param custom_data:
-        :return:
-        """
-        LOGGER.info(
-            "TmTcHookBase: No service 8 handling implemented yet in handle_service_8_telemetry "
-            "hook function"
-        )
-        return DataReplyUnpacked()
-
     def get_retval_dict(self) -> RetvalDictT:
         LOGGER.info("No return value dictionary specified")
         return dict()

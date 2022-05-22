@@ -36,12 +36,15 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         )
         PusTmBase.__init__(self, pus_tm=self.pus_tm)
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
-        if self.subservice == Subservices.TM_REPLY:
-            self.set_packet_info("Ping Reply")
+        self.__set_internal_fields()
 
     @classmethod
     def __empty(cls) -> Service17TMExtended:
         return cls(subservice=0)
+
+    def __set_internal_fields(self):
+        if self.subservice == Subservices.TM_REPLY:
+            self.set_packet_info("Ping Reply")
 
     @classmethod
     def unpack(
@@ -53,4 +56,5 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         service_17_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
+        service_17_tm.__set_internal_fields()
         return service_17_tm

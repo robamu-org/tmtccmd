@@ -39,7 +39,7 @@ class TmListener:
     or any other software component can get the received packets from the internal deque container.
     """
 
-    MODE_OPERATION_TIMEOUT = 30.0
+    DEFAULT_MODE_OPERATION_TIMEOUT = 300.0
     DEFAULT_UNKNOWN_QUEUE_MAX_LEN = 50
     QUEUE_DICT_QUEUE_IDX = 0
     QUEUE_DICT_MAX_LEN_IDX = 1
@@ -59,7 +59,7 @@ class TmListener:
         :param tm_type: Telemetry type. Default to CCSDS space packets for now
         """
         self.__com_if = com_if
-        self._mode_op_timeout = self.MODE_OPERATION_TIMEOUT
+        self._mode_op_timeout = TmListener.DEFAULT_MODE_OPERATION_TIMEOUT
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
         self.listener_active = False

@@ -86,7 +86,7 @@ class MultipleCommandSenderReceiver(SequentialCommandSenderReceiver):
             if self._tc_queue.__len__ == 0:
                 if self._start_time == 0:
                     self._start_time = time.time()
-            self._check_for_timeout()
+            self._check_for_tm_timeout()
 
     def __send_all_queue(self):
         while not self._tc_queue.__len__() == 0:

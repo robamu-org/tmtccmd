@@ -39,7 +39,7 @@ class FsfwTmTcPrinter:
 
     @staticmethod
     def generic_short_string(packet_if: PusTmInterface) -> str:
-        return f"Received TM[{packet_if.service}, {packet_if.subservice}]"
+        return f"Got TM[{packet_if.service}, {packet_if.subservice}]"
 
     def handle_long_tm_print(
         self, packet_if: PusTmInterface, info_if: PusTmInfoInterface
@@ -49,7 +49,7 @@ class FsfwTmTcPrinter:
         :param info_if: Information interface
         :return:
         """
-        base_string = "Received Telemetry: " + info_if.get_print_info()
+        base_string = "Got TM: " + info_if.get_print_info()
         LOGGER.info(base_string)
         if self.file_logger is not None:
             self.file_logger.info(f"{get_current_time_string(True)}: {base_string}")
