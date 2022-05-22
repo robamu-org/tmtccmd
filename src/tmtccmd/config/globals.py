@@ -71,6 +71,7 @@ def set_default_globals_pre_args_parsing(
     set_default_tm_apid(tm_apid=tm_apid)
     set_pus_tc_version(pus_tc_version)
     set_pus_tm_version(pus_tm_version)
+    update_global(CoreGlobalIds.GUI, gui)
     update_global(CoreGlobalIds.COM_IF, com_if_id)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, tc_send_timeout_factor)
     update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)

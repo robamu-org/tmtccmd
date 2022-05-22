@@ -153,6 +153,8 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
     def _send_next_telecommand(self) -> bool:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         tc_queue_tuple = self._tc_queue.pop()
+        print("popped")
+        print(tc_queue_tuple)
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
             packet, cmd_info = tc_queue_tuple
@@ -180,11 +182,13 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             if self._usr_send_cb is not None:
                 queue_cmd, queue_cmd_arg = tc_queue_tuple
                 try:
+                    print("callback")
                     self._usr_send_cb(
                         queue_cmd, self._com_if, queue_cmd_arg, self._usr_send_args
                     )
                 except TypeError:
                     LOGGER.exception("User TC send callback invalid")
+            print("try again")
             # If the queue entry was not a telecommand, send next telecommand
             self.__check_next_tc_send()
             return True

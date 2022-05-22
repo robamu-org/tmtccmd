@@ -71,6 +71,13 @@ class CommandSenderReceiver:
 
         self._wait_period = 0
         self._wait_start = 0
+    
+    def set_com_if(self, com_if: CommunicationInterface ):
+        if isinstance(com_if, CommunicationInterface):
+            self._com_if = com_if
+        else:
+            LOGGER.error("CommandSenderReceiver: Invalid communication interface!")
+            raise TypeError("CommandSenderReceiver: Invalid communication interface!")
 
     def set_tm_timeout(self, tm_timeout: float = -1):
         """

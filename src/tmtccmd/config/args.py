@@ -44,6 +44,8 @@ def create_default_args_parser(
         description=descript_txt, formatter_class=argparse.RawTextHelpFormatter
     )
 
+def add_gui_tmtccmd_args(parser: argparse.ArgumentParser):
+    add_default_mode_arguments(parser)
 
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_default_mode_arguments(parser)
@@ -84,6 +86,19 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
         help="Specify whether TCs are sent again after timeout",
         action="store_true",
     )
+
+def parse_gui_input_arguments(parser: argparse.ArgumentParser):
+    """Parses all input arguments
+        :return: Input arguments contained in a special namespace and accessable by args.<variable>
+    """
+
+    if len(sys.argv) == 1:
+        LOGGER.info(
+            "No input arguments specified. Run with -h to get list of arguments"
+        )
+
+    args, unknown = parser.parse_known_args()
+    return args
 
 
 def parse_default_input_arguments(
@@ -173,7 +188,12 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: "
         f"GUI mode\n"
     )
-    help_text += seq_help + listener_help + gui_help
+    continuous_help = (
+        f"{CoreModeList.CONTINUOUS_MODE} or "
+        f"{CoreModeStrings[CoreModeList.CONTINUOUS_MODE]}: "
+        f"GUI mode\n"
+    )
+    help_text += seq_help + listener_help + gui_help + continuous_help
     arg_parser.add_argument(
         "-m",
         "--mode",

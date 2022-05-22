@@ -19,7 +19,7 @@ from tmtccmd.core.globals_manager import (
     unlock_global_pool,
 )
 from tmtccmd.logging import get_console_logger
-from .config.globals import set_default_globals_pre_args_parsing
+from .config.globals import set_default_globals_pre_args_parsing, handle_mode_arg
 
 LOGGER = get_console_logger()
 
@@ -63,6 +63,7 @@ def setup(setup_args: SetupArgs):
         set_default_globals_pre_args_parsing(
             setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
         )
+        handle_mode_arg(setup_args.cli_args)
     if not setup_args.use_gui:
         __handle_cli_args_and_globals(setup_args)
     __SETUP_FOR_GUI = setup_args.use_gui
@@ -215,7 +216,7 @@ def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
             tm_handler = cast(CcsdsTmHandler, tm_handler)
     apid = get_default_tc_apid()
     com_if = setup_args.hook_obj.assign_communication_interface(
-        com_if_key=get_global(CoreGlobalIds.COM_IF)
+        com_if_key=com_if_id
     )
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
     tm_listener = TmListener(com_if=com_if, seq_timeout=tm_timeout)

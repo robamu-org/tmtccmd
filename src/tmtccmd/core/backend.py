@@ -99,6 +99,7 @@ class TmTcHandler(BackendBase):
         if not self.is_com_if_active():
             self.__com_if = com_if
             self.__tm_listener.set_com_if(self.__com_if)
+            self.daemon_receiver.set_com_if(self.__com_if)
         else:
             LOGGER.warning(
                 "Communication Interface is active and must be closed first before "

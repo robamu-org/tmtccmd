@@ -26,6 +26,7 @@ class CoreGlobalIds(enum.IntEnum):
     PRETTY_PRINTER = 133
 
     # Parameters
+    GUI = 138
     JSON_CFG_PATH = 139
     MODE = 141
     CURRENT_SERVICE = 142
@@ -160,6 +161,7 @@ CoreModeStrings = {
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
     CoreModeList.GUI_MODE: "gui",
+    CoreModeList.CONTINUOUS_MODE: "cont"
 }
 
 

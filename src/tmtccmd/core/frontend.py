@@ -44,6 +44,8 @@ from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.config as config_module
 
+import tmtccmd.runner as tmtccmd
+
 
 LOGGER = get_console_logger()
 
@@ -90,6 +92,7 @@ class WorkerThread(QObject):
         super(QObject, self).__init__()
         self.op_code = op_code
         self.tmtc_handler = tmtc_handler
+        
 
     def run_worker(self):
         if self.op_code == WorkerOperationsCodes.DISCONNECT:
@@ -102,7 +105,6 @@ class WorkerThread(QObject):
             self.finished.emit()
         elif self.op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
             self.tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
-            self.tmtc_handler.one_shot_operation = True
             # It is expected that the TMTC handler is in the according state to perform the
             # operation
             self.tmtc_handler.perform_operation()
@@ -146,6 +148,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__worker = None
         self.__thread = None
         self.__debug_mode = False
+
+        # neccessary, as it will be initialized to False in GUI Mode with unwanted results
+        self._tmtc_handler.one_shot_operation = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
@@ -206,10 +211,16 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__set_send_button(False)
         self._tmtc_handler.set_service(self._current_service)
         self._tmtc_handler.set_opcode(self._current_op_code)
-        self.__start_qthread_task(
-            op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING,
-            finish_callback=self.__finish_seq_cmd_op,
-        )
+
+        if self._tmtc_handler.mode == CoreModeList.CONTINUOUS_MODE:
+            self._tmtc_handler.perform_operation()
+            self.__set_send_button(True)
+        else :
+            self.__start_qthread_task(
+                op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING,
+                finish_callback=self.__finish_seq_cmd_op,
+            )
+
 
     def __finish_seq_cmd_op(self):
         self.__set_send_button(True)
