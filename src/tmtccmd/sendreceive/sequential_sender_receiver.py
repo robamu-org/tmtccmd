@@ -105,9 +105,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         if op_divider % divisor == 0:
             rem_time = self._wait_end - time.time()
             if rem_time > 0:
-                LOGGER.info(
-                    f"{rem_time:.01f} seconds wait time remaining"
-                )
+                LOGGER.info(f"{rem_time:.01f} seconds wait time remaining")
 
     def __handle_tc_sending_and_tm_reception(self):
         """Internal function which handles the given TC queue while also simultaneously
