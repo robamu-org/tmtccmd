@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - Improve internal structure of sequential sender receiver object
 - Add some PUS11 Telecommand Scheduling helpers
+- Bugfixes for new modules and code
 
 ## [v2.2.1]
 
