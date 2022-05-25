@@ -55,9 +55,9 @@ def modify_collection_interval(
     app_data = bytearray(sid)
     app_data += make_interval(interval_seconds)
     if diag:
-        subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
-    else:
         subservice = Subservices.TC_MODIFY_DIAGNOSTICS_REPORT_COLLECTION_INTERVAL
+    else:
+        subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
     return PusTelecommand(service=3, subservice=subservice, ssc=ssc, app_data=app_data)
 
 
