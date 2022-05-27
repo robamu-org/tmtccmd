@@ -13,7 +13,7 @@ def __generic_param_less_tc_sched_cmd(
 
 
 def generate_enable_tc_sched_cmd(
-    ssc: int, apid: int = FETCH_GLOBAL_APID
+    ssc: int = 0, apid: int = FETCH_GLOBAL_APID
 ) -> PusTelecommand:
     return __generic_param_less_tc_sched_cmd(
         subservice=Subservices.TC_ENABLE, ssc=ssc, apid=apid
@@ -21,7 +21,7 @@ def generate_enable_tc_sched_cmd(
 
 
 def generate_disable_tc_sched_cmd(
-    ssc: int, apid: int = FETCH_GLOBAL_APID
+    ssc: int = 0, apid: int = FETCH_GLOBAL_APID
 ) -> PusTelecommand:
     return __generic_param_less_tc_sched_cmd(
         subservice=Subservices.TC_DISABLE, ssc=ssc, apid=apid
@@ -29,7 +29,7 @@ def generate_disable_tc_sched_cmd(
 
 
 def generate_reset_tc_sched_cmd(
-    ssc: int, apid: int = FETCH_GLOBAL_APID
+    ssc: int = 0, apid: int = FETCH_GLOBAL_APID
 ) -> PusTelecommand:
     return __generic_param_less_tc_sched_cmd(
         subservice=Subservices.TC_RESET, ssc=ssc, apid=apid
@@ -39,7 +39,7 @@ def generate_reset_tc_sched_cmd(
 def generate_time_tagged_cmd(
     release_time: bytes,
     tc_to_insert: PusTelecommand,
-    ssc: int,
+    ssc: int = 0,
     apid: int = FETCH_GLOBAL_APID,
 ):
     return PusTelecommand(
