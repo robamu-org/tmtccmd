@@ -81,15 +81,20 @@ COMMAND_BUTTON_STYLE = (
 class WorkerOperationsCodes(enum.IntEnum):
     DISCONNECT = 0
     SEQUENTIAL_COMMANDING = 1
+    LISTENING = 2
 
 
 class WorkerThread(QObject):
     finished = pyqtSignal()
+    sequential_commanding_finished = pyqtSignal()
 
     def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: TmTcHandler):
         super(QObject, self).__init__()
         self.op_code = op_code
         self.tmtc_handler = tmtc_handler
+
+    def set_op_code(self, op_code: WorkerOperationsCodes):
+        self.op_code = op_code
 
     def run_worker(self):
         if self.op_code == WorkerOperationsCodes.DISCONNECT:
@@ -106,7 +111,11 @@ class WorkerThread(QObject):
             # It is expected that the TMTC handler is in the according state to perform the
             # operation
             self.tmtc_handler.perform_operation()
-            self.finished.emit()
+            self.sequential_commanding_finished.emit()
+            self.op_code = WorkerOperationsCodes.LISTENING
+        elif self.op_code == WorkerOperationsCodes.LISTENING:
+            self.tmtc_handler.set_mode(CoreModeList.LISTENER_MODE)
+            self.tmtc_handler.perform_operation()
         else:
             LOGGER.warning("Unknown worker operation code!")
             self.finished.emit()
@@ -150,6 +159,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__combo_box_op_codes: Union[None, QComboBox] = None
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
+        self.__start_qthread_task(WorkerOperationsCodes.LISTENING)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start)
@@ -408,7 +418,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
-    def __start_qthread_task(self, op_code: WorkerOperationsCodes, finish_callback):
+    def __start_qthread_task(self, op_code: WorkerOperationsCodes):
         self.__thread = QThread()
         self.__worker = WorkerThread(op_code=op_code, tmtc_handler=self._tmtc_handler)
         self.__worker.moveToThread(self.__thread)
@@ -417,9 +427,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__worker.finished.connect(self.__thread.quit)
         self.__worker.finished.connect(self.__worker.deleteLater)
         self.__thread.finished.connect(self.__thread.deleteLater)
-
-        self.__thread.finished.connect(finish_callback)
         self.__thread.start()
+
+    def __send_commands(self, finish_callback):
+        self.__worker.set_op_code()
+        self.__worker.sequential_commanding_finished.connect(finish_callback)
 
     @staticmethod
     def __add_vertical_separator(grid: QGridLayout, row: int):
