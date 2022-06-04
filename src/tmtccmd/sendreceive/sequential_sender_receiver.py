@@ -181,6 +181,8 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         # Queue empty. Can happen because a wait period might still be ongoing
         if not self._tc_queue:
             return False
+        if self.wait_period_ongoing():
+            return False
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
