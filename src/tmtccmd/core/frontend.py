@@ -217,7 +217,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __start_seq_cmd_op(self):
         if self.__debug_mode:
-            LOGGER.info("Start Service Test Button pressed.")
+            LOGGER.info("Send command button pressed.")
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
