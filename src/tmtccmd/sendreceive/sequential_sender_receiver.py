@@ -200,7 +200,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
 
         # queue empty.
         elif not self._tc_queue:
-            # Another specal case: Last queue entry is to wait.
+            # Another special case: Last queue entry is to wait.
             if self._wait_period > 0:
                 if self.wait_period_ongoing():
                     return False
