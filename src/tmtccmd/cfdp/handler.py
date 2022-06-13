@@ -84,7 +84,7 @@ class SequenceNumberOverflow(Exception):
 
 
 class CfdpUserBase:
-    def __init__(self, vfs: Type[VirtualFilestore]):
+    def __init__(self, vfs: VirtualFilestore):
         self.vfs = vfs
 
     @abc.abstractmethod
@@ -183,7 +183,7 @@ class CfdpHandler:
                 raise SequenceNumberOverflow
             return struct.pack("!I", self.seq_num)
 
-    def pass_packet(self, apid: int, raw_tm_packet: bytearray, args: Any):
+    def pass_packet(self, apid: int, raw_tm_packet: bytes, args: Any):
         pass
 
     def put_request(self, put_request: PutRequest):
