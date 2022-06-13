@@ -97,7 +97,7 @@ class CfdpHandler:
         self,
         cfg: LocalEntityCfg,
         com_if: Optional[CommunicationInterface],
-        cfdp_user: Type[CfdpUserBase],
+        cfdp_user: CfdpUserBase,
         byte_flow_ctrl: ByteFlowControl,
     ):
         """
@@ -106,7 +106,7 @@ class CfdpHandler:
         :param com_if: Communication interface used to send messages
         :param cfdp_user: CFDP user which will receive indication messages and which also contains
             the virtual filestore implementation
-        :param byte_flow_control: Controls the number of bytes sent in a certain interval
+        :param byte_flow_ctrl: Controls the number of bytes sent in a certain interval
             The state machine will only send packets if the maximum number of specified bytes
             is not exceeded in the specified time interval
         """
