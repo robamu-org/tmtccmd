@@ -3,7 +3,7 @@ import os
 import shutil
 import platform
 
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from spacepackets.cfdp.tlv import FilestoreResponseStatusCode
 
 LOGGER = get_console_logger()
@@ -94,7 +94,7 @@ class HostFilestore(VirtualFilestore):
         file_size = os.path.getsize(file_path)
         if offset > file_size:
             return FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET
-        file.seek(offset=offset)
+        file.seek(offset)
         file.write(data)
         file.close()
         return FilestoreResponseStatusCode.SUCCESS
