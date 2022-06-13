@@ -1,10 +1,11 @@
-"""cmd_sender_receiver.py"""
+"""Base class for sender/receiver objects
+@author: R. Mueller
+"""
 import time
-
+from typing import Optional, Tuple
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds, UsrSendCbT
+from tmtccmd.logging import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
@@ -14,45 +15,40 @@ from tmtccmd.core.globals_manager import get_global
 LOGGER = get_console_logger()
 
 
-# pylint: disable=too-many-instance-attributes
 class CommandSenderReceiver:
-    """This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
+    """
+    This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
     """
 
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tmtc_printer: TmTcPrinter,
         tm_listener: TmListener,
         tm_handler: CcsdsTmHandler,
         apid: int,
-        tm_timeout: float = 2.5,
-        tc_send_timeout_factor: float = 2.5,
-        resend_tc: bool = False,
+        usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None,
     ):
+
         """
         :param com_if: CommunicationInterface object. Instantiate the desired one
         and pass it here
-        :param tmtc_printer: TmTcPrinter object. Instantiate it and pass it here.
         """
-        self._tm_timeout = tm_timeout
+        self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_handler = tm_handler
-        self._tc_send_timeout_factor = tc_send_timeout_factor
+        self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._apid = apid
-        self.resend_tc = resend_tc
+        self._usr_send_cb: Optional[UsrSendCbT] = None
+        self._usr_send_args: Optional[any] = None
+        if usr_send_wrapper is not None:
+            self._usr_send_cb = usr_send_wrapper[0]
+            self._usr_send_args = usr_send_wrapper[1]
 
         if isinstance(com_if, CommunicationInterface):
             self._com_if = com_if
         else:
             LOGGER.error("CommandSenderReceiver: Invalid communication interface!")
             raise TypeError("CommandSenderReceiver: Invalid communication interface!")
-
-        if isinstance(tmtc_printer, TmTcPrinter):
-            self._tmtc_printer = tmtc_printer
-        else:
-            LOGGER.error("CommandSenderReceiver: Invalid TMTC printer!")
-            raise TypeError("CommandSenderReceiver: Invalid TMTC printer!")
 
         if isinstance(tm_listener, TmListener):
             self._tm_listener = tm_listener
@@ -76,22 +72,26 @@ class CommandSenderReceiver:
         self._wait_period = 0
         self._wait_start = 0
 
-    def set_tm_timeout(self, tm_timeout: float):
+    def set_tm_timeout(self, tm_timeout: float = -1):
         """
         Set the TM timeout. Usually, the global value set by the args parser is set,
         but the TM timeout can be reset (e.g. for slower architectures)
         :param tm_timeout: New TM timeout value as a float value in seconds
         :return:
         """
+        if tm_timeout == -1:
+            tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_timeout = tm_timeout
 
-    def set_tc_send_timeout_factor(self, new_factor: float):
+    def set_tc_send_timeout_factor(self, new_factor: float = -1):
         """
         Set the TC resend timeout factor. After self._tm_timeout * new_factor seconds,
         a telecommand will be resent again.
         :param new_factor: Factor as a float number
         :return:
         """
+        if new_factor == -1:
+            new_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._tc_send_timeout_factor = new_factor
 
     def _check_for_first_reply(self) -> None:
@@ -164,24 +164,16 @@ class CommandSenderReceiver:
             wait_time = queue_entry_second
             self._tm_timeout = self._tm_timeout + wait_time
             self._wait_period = wait_time
-            print()
-            print_string = "Waiting for " + str(self._wait_period) + " seconds."
-            LOGGER.info(print_string)
+            LOGGER.info(f"Waiting for {self._wait_period} seconds.")
             self._wait_start = time.time()
         # printout optimized for LOGGER and debugging
         elif queue_entry_first == QueueCommands.PRINT:
-            print_string = queue_entry_second
-            print()
-            self._tmtc_printer.print_string(print_string, True)
+            LOGGER.info(queue_entry_second)
         elif queue_entry_first == QueueCommands.RAW_PRINT:
-            print_string = queue_entry_second
-            self._tmtc_printer.print_string(print_string, False)
-        elif queue_entry_first == QueueCommands.EXPORT_LOG:
-            export_name = queue_entry_second
-            self._tmtc_printer.add_print_buffer_to_buffer_list()
-            self._tmtc_printer.print_to_file(export_name, True)
+            LOGGER.info(f"Raw command: {queue_entry_second.hex(sep=',')}")
         elif queue_entry_first == QueueCommands.SET_TIMEOUT:
             self._tm_timeout = queue_entry_second
+            self._tm_listener.seq_timeout = queue_entry_second
         else:
             self._last_tc, self._last_tc_obj = (queue_entry_first, queue_entry_second)
             return True
@@ -202,7 +194,9 @@ class CommandSenderReceiver:
         if self._start_time != 0:
             self._elapsed_time = time.time() - self._start_time
         if self._elapsed_time >= self._tm_timeout * self._tc_send_timeout_factor:
-            if self.resend_tc:
+            from tmtccmd.core.globals_manager import get_global
+
+            if get_global(CoreGlobalIds.RESEND_TC):
                 LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
                 self._com_if.send(self._last_tc)
                 self._timeout_counter = self._timeout_counter + 1

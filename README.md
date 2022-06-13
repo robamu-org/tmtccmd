@@ -9,7 +9,7 @@ TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tm
 ## Overview
 
 - Documentation: https://tmtccmd.readthedocs.io/en/latest/
-- Project Homepage: https://github.com/spacefisch/tmtccmd
+- Project Homepage: https://github.com/robamu-org/tmtccmd
 
 This commander application was first developed by KSat for the 
 [SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board 
@@ -24,9 +24,9 @@ This client currently supports the following communication interfaces:
 2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
 
-The TMTC commander also includes a Space Packet and a ECSS PUS packet stack. Some of these
-components might be moved to an own library soon, so they were decoupled from the rest 
-of the TMTC commander components.
+The TMTC commander also includes some telemetry handling components and telecommand packaging
+helpers. Some of those components are tailored towards usage with the
+[Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/).
 
 ## Examples 
 
@@ -35,18 +35,19 @@ It can be run like this on Linux
 
 ```sh
 cd example
-./tmtc_cli.py
+./tmtccli.py
 ```
 
 or on Windows
 
 ```sh
 cd example
-py tmtc_cli.py
+py tmtccli.py
 ```
 
-The [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) implementation of the TMTC commander
-provides a more complex implementation.
+The [EIVE](https://egit.irs.uni-stuttgart.de/eive/eive-tmtc) and
+[SOURCE](https://git.ksat-stuttgart.de/source/tmtc) project implementation of the TMTC commander
+provide more complex implementations.
 
 ## Tests
 
@@ -76,7 +77,7 @@ For developers, it is recommended to add this repostiory as a submodule
 with the following command:
 
 ```sh
-git submodule add https://github.com/rmspacefish/tmtccmd.git
+git submodule add https://github.com/robamu-org/tmtccmd.git
 ```
 
 For the following commands, replace `python3` with `py` on Windows.
@@ -96,3 +97,9 @@ python3 -m pip install -e .[gui]
 
 Omit the `-e` for a regular installation. Alternatively you can now install the package
 from PyPI with `python3 -m pip install -e tmtccmd[gui]`.
+
+## Using PyCharm
+
+When using PyCharm and running the application from PyCharm, it is recommended to set
+the `Emulate terminal in output console` option. This is because packages like `prompt-toolkit`
+require a complete terminal for features like auto-complete to work.

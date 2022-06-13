@@ -3,7 +3,7 @@ from typing import TextIO
 
 import serial
 import serial.tools.list_ports
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.json_handler import (
     check_json_file,
     JsonKeyNames,
@@ -16,6 +16,7 @@ LOGGER = get_console_logger()
 def determine_baud_rate(json_cfg_path: str) -> int:
     """Determine baud rate. Tries to read from JSON first. If the baud rate is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
+
     :return: Determined baud rate
     """
     baud_rate = 0
@@ -56,6 +57,7 @@ def determine_baud_rate(json_cfg_path: str) -> int:
 def determine_com_port(json_cfg_path: str) -> str:
     """Determine serial port. Tries to read from JSON first. If the com port is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
+
     :return: Determined serial port
     """
     reconfig_com_port = False
@@ -163,19 +165,19 @@ def __prompt_hint_handling(json_obj) -> (bool, str):
     ports = serial.tools.list_ports.comports()
     prompt_hint = input(
         "No hint found in config JSON. Do you want to print the list of devices "
-        "and then specify a hint based on it? [y/n]: "
+        "and then specify a hint based on it? ([Y]/n): "
     )
-    if prompt_hint.lower() in ["y", "yes", "1"]:
+    if prompt_hint.lower() in ["y", "yes", "1", ""]:
         while True:
             LOGGER.info("Found serial devices:")
             for port, desc, hwid in sorted(ports):
                 print("{}: {} [{}]".format(port, desc, hwid))
             hint = input("Specify hint: ")
             save_to_json = input(
-                "Do you want to store the hint to the configuration file or "
-                "specify a new one? (y/r): "
+                "Do you want to store the hint to the configuration file (y) or "
+                "specify a new one (r)? ([Y]/r): "
             )
-            if save_to_json in ["y", "yes", "1"]:
+            if save_to_json.lower() in ["y", "yes", "1", ""]:
                 json_obj[JsonKeyNames.SERIAL_HINT.value] = hint
                 reconfig_hint = True
                 break
@@ -209,10 +211,10 @@ def prompt_com_port() -> str:
         else:
             if not check_port_validity(com_port):
                 print(
-                    "Serial port not in list of available serial ports. Try again? [y/n]"
+                    "Serial port not in list of available serial ports. Try again? ([Y]/n)"
                 )
                 try_again = input()
-                if try_again.lower() in ["y", "yes"]:
+                if try_again.lower() in ["y", "yes", ""]:
                     continue
                 else:
                     break

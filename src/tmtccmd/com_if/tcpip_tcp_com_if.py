@@ -14,11 +14,11 @@ from typing import Union, Optional, Tuple
 
 from spacepackets.ccsds.spacepacket import parse_space_packets
 
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.config.definitions import CoreModeList
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.config.definitions import EthernetAddressT
 from tmtccmd.utility.conf_util import acquire_timeout
 
@@ -34,9 +34,6 @@ class TcpCommunicationType(enum.Enum):
     SPACE_PACKETS = 0
 
 
-# pylint: disable=abstract-method
-# pylint: disable=arguments-differ
-# pylint: disable=too-many-arguments
 class TcpIpTcpComIF(CommunicationInterface):
     """Communication interface for TCP communication."""
 
@@ -49,12 +46,9 @@ class TcpIpTcpComIF(CommunicationInterface):
         com_type: TcpCommunicationType,
         space_packet_ids: Tuple[int],
         tm_polling_freqency: float,
-        tm_timeout: float,
-        tc_timeout_factor: float,
-        send_address: EthernetAddressT,
+        target_address: EthernetAddressT,
         max_recv_size: int,
         max_packets_stored: int = 50,
-        tmtc_printer: Union[None, TmTcPrinter] = None,
         init_mode: int = CoreModeList.LISTENER_MODE,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP
@@ -64,16 +58,12 @@ class TcpIpTcpComIF(CommunicationInterface):
         :param space_packet_ids:        16 bit packet header for space packet headers. Used to
                                         detect the start of PUS packets
         :param tm_polling_freqency:     Polling frequency in seconds
-        :param tm_timeout:              Timeout in seconds
-        :param tmtc_printer: Printer instance, can be passed optionally to allow packet debugging
         """
-        super().__init__(com_if_key=com_if_key, tmtc_printer=tmtc_printer)
-        self.tm_timeout = tm_timeout
+        super().__init__(com_if_key=com_if_key)
         self.com_type = com_type
         self.space_packet_ids = space_packet_ids
-        self.tc_timeout_factor = tc_timeout_factor
         self.tm_polling_frequency = tm_polling_freqency
-        self.send_address = send_address
+        self.target_address = target_address
         self.max_recv_size = max_recv_size
         self.max_packets_stored = max_packets_stored
         self.init_mode = init_mode
@@ -82,7 +72,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.__last_connection_time = 0
         self.__tm_thread_kill_signal = threading.Event()
         # Separate thread to request TM packets periodically if no TCs are being sent
-        self.__tcp_conn_thread = threading.Thread(
+        self.__tcp_conn_thread: Optional[threading.Thread] = threading.Thread(
             target=self.__tcp_tm_client, daemon=True
         )
         self.__tm_queue = deque()
@@ -95,29 +85,46 @@ class TcpIpTcpComIF(CommunicationInterface):
         try:
             self.close()
         except IOError:
-            LOGGER.warning("Could not close UDP communication interface!")
+            LOGGER.warning("Could not close TCP communication interface!")
 
     def initialize(self, args: any = None) -> any:
-        self.__tm_thread_kill_signal.clear()
-        self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__tcp_socket.connect(self.send_address)
+        pass
 
     def open(self, args: any = None):
+        self.__tm_thread_kill_signal.clear()
+        self.set_up_socket()
+        self.set_up_tcp_thread()
         self.__tcp_conn_thread.start()
+
+    def set_up_socket(self):
+        if self.__tcp_socket is None:
+            self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.__tcp_socket.connect(self.target_address)
+
+    def set_up_tcp_thread(self):
+        if self.__tcp_conn_thread is None:
+            self.__tcp_conn_thread = threading.Thread(
+                target=self.__tcp_tm_client, daemon=True
+            )
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
-        if self.__tcp_conn_thread.is_alive():
-            self.__tcp_conn_thread.join(self.tm_polling_frequency)
-        try:
-            self.__tcp_socket.shutdown(socket.SHUT_RDWR)
-        except OSError:
-            LOGGER.warning("TCP socket endpoint was already closed or not connected")
-        self.__tcp_socket.close()
+        if self.__tcp_conn_thread != None:
+            if self.__tcp_conn_thread.is_alive():
+                self.__tcp_conn_thread.join(self.tm_polling_frequency)
+            try:
+                self.__tcp_socket.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                LOGGER.warning(
+                    "TCP socket endpoint was already closed or not connected"
+                )
+            self.__tcp_socket.close()
+        self.__tcp_socket = None
+        self.__tcp_conn_thread = None
 
     def send(self, data: bytearray):
         try:
-            self.__tcp_socket.sendto(data, self.send_address)
+            self.__tcp_socket.sendto(data, self.target_address)
         except ConnectionRefusedError:
             LOGGER.warning("TCP connection attempt failed..")
 
@@ -165,7 +172,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                             "Overwriting old packets.."
                         )
                         self.__tm_queue.pop()
-                    self.__tm_queue.appendleft(bytearray(bytes_recvd))
+                    self.__tm_queue.appendleft(bytes(bytes_recvd))
         except ConnectionResetError:
             LOGGER.exception("ConnectionResetError. TCP server might not be up")
 

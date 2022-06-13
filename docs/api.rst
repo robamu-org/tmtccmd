@@ -28,7 +28,7 @@ Configuration Submodules
    api/tmtccmd.config
    api/tmtccmd.com_if
 
-ECSS & PUS Submodules
+CCSDS & ECSS Submodules
 =========================
 
 .. toctree::
@@ -39,6 +39,7 @@ ECSS & PUS Submodules
    api/tmtccmd.pus
    api/tmtccmd.tc
    api/tmtccmd.tm
+   api/tmtccmd.cfdp
 
 Other Submodules
 =========================
@@ -47,3 +48,4 @@ Other Submodules
    :maxdepth: 4
 
    api/tmtccmd.utility
+   api/tmtccmd.logging

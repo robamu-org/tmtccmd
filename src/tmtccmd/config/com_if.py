@@ -11,8 +11,7 @@ from tmtccmd.com_if.serial_com_if import (
 )
 from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
-from tmtccmd.utility.logger import get_console_logger
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
 from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF, TcpCommunicationType
 
@@ -21,14 +20,12 @@ LOGGER = get_console_logger()
 
 def create_communication_interface_default(
     com_if_key: str,
-    tmtc_printer: TmTcPrinter,
     json_cfg_path: str,
     space_packet_ids: Tuple[int] = (0,),
 ) -> Optional[CommunicationInterface]:
     """Return the desired communication interface object
 
     :param com_if_key:
-    :param tmtc_printer:
     :param json_cfg_path:
     :param space_packet_ids: Can be used by communication interfaces as a start marker (e.g. TCP)
     :return:
@@ -44,7 +41,6 @@ def create_communication_interface_default(
             communication_interface = create_default_tcpip_interface(
                 com_if_key=com_if_key,
                 json_cfg_path=json_cfg_path,
-                tmtc_printer=tmtc_printer,
                 space_packet_ids=space_packet_ids,
             )
         elif (
@@ -53,14 +49,13 @@ def create_communication_interface_default(
         ):
             communication_interface = create_default_serial_interface(
                 com_if_key=com_if_key,
-                tmtc_printer=tmtc_printer,
                 json_cfg_path=json_cfg_path,
             )
         elif com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(
-                tmtc_printer=tmtc_printer,
+                com_if_key=com_if_key,
                 serial_timeout=serial_timeout,
                 ser_com_type=SerialCommunicationType.DLE_ENCODING,
             )
@@ -70,9 +65,7 @@ def create_communication_interface_default(
                 dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
-            communication_interface = DummyComIF(
-                com_if_key=com_if_key, tmtc_printer=tmtc_printer
-            )
+            communication_interface = DummyComIF(com_if_key=com_if_key)
         if communication_interface is None:
             return communication_interface
         if not communication_interface.valid:
@@ -81,14 +74,14 @@ def create_communication_interface_default(
         communication_interface.initialize()
         return communication_interface
     except ConnectionRefusedError:
-        LOGGER.exception(f"TCP/IP connection refused")
+        LOGGER.exception("TCP/IP connection refused")
         if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
             LOGGER.warning("Make sure that a UDP server is running")
         if com_if_key == CoreComInterfaces.TCPIP_TCP.value:
             LOGGER.warning("Make sure that a TCP server is running")
         sys.exit(1)
     except (IOError, OSError):
-        LOGGER.exception(f"Error setting up communication interface")
+        LOGGER.exception("Error setting up communication interface")
         sys.exit(1)
 
 
@@ -151,17 +144,13 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
 
 def create_default_tcpip_interface(
     com_if_key: str,
-    tmtc_printer: TmTcPrinter,
     json_cfg_path: str,
     space_packet_ids: Tuple[int] = (0,),
 ) -> Optional[CommunicationInterface]:
-    from tmtccmd.config.globals import get_seq_cmd_cfg
-
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
 
     :param com_if_key:
-    :param tmtc_printer:
     :param json_cfg_path:
     :param space_packet_ids: Two byte packet IDs which is used by TCP to parse space packets
     :return:
@@ -180,17 +169,15 @@ def create_default_tcpip_interface(
     recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
     max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
     init_mode = get_global(CoreGlobalIds.MODE)
-    seq_cmd_cfg = get_seq_cmd_cfg()
     space_packet_id = ethernet_cfg_dict[TcpIpConfigIds.SPACE_PACKET_ID]
     if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
         communication_interface = TcpIpUdpComIF(
             com_if_key=com_if_key,
-            tm_timeout=seq_cmd_cfg.tm_timeout,
-            tc_timeout_factor=seq_cmd_cfg.tc_send_timeout_factor,
+            tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
+            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             send_address=send_addr,
             recv_addr=recv_addr,
             max_recv_size=max_recv_size,
-            tmtc_printer=tmtc_printer,
             init_mode=init_mode,
         )
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
@@ -198,25 +185,21 @@ def create_default_tcpip_interface(
             com_if_key=com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,
             space_packet_ids=space_packet_ids,
-            tm_timeout=seq_cmd_cfg.tm_timeout,
-            tc_timeout_factor=seq_cmd_cfg.tc_send_timeout_factor,
             tm_polling_freqency=0.5,
-            send_address=send_addr,
+            target_address=send_addr,
             max_recv_size=max_recv_size,
-            tmtc_printer=tmtc_printer,
             init_mode=init_mode,
         )
     return communication_interface
 
 
 def create_default_serial_interface(
-    com_if_key: str, tmtc_printer: TmTcPrinter, json_cfg_path: str
+    com_if_key: str, json_cfg_path: str
 ) -> Optional[CommunicationInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
 
     :param com_if_key:
-    :param tmtc_printer:
     :param json_cfg_path:
     :return:
     """
@@ -241,7 +224,6 @@ def create_default_serial_interface(
             ser_com_type = SerialCommunicationType.FIXED_FRAME_BASED
         communication_interface = SerialComIF(
             com_if_key=com_if_key,
-            tmtc_printer=tmtc_printer,
             com_port=com_port,
             baud_rate=serial_baudrate,
             serial_timeout=serial_timeout,

@@ -1,4 +1,5 @@
 from threading import Lock
+from typing import Optional
 
 __GLOBALS_DICT = dict()
 __LOCK_TIMEOUT = 50
@@ -8,7 +9,7 @@ __GLOBALS_LOCK = Lock()
 def get_global(global_param_id: int, lock: bool = False):
     global __LOCK_TIMEOUT, __GLOBALS_DICT
     if lock:
-        __GLOBALS_LOCK.acquire(blocking=True, timeout=__LOCK_TIMEOUT)
+        __GLOBALS_LOCK.acquire(timeout=__LOCK_TIMEOUT)
     global_param = __GLOBALS_DICT.get(global_param_id)
     if lock:
         __GLOBALS_LOCK.release()
@@ -18,13 +19,15 @@ def get_global(global_param_id: int, lock: bool = False):
 def update_global(global_param_id: int, parameter: any, lock: bool = False):
     global __LOCK_TIMEOUT, __GLOBALS_DICT
     if lock:
-        __GLOBALS_LOCK.acquire(blocking=True, timeout=__LOCK_TIMEOUT)
+        __GLOBALS_LOCK.acquire(timeout=__LOCK_TIMEOUT)
     __GLOBALS_DICT[global_param_id] = parameter
     if lock:
         __GLOBALS_LOCK.release()
 
 
-def __lock_global_pool() -> bool:
+def lock_global_pool(
+    blocking: Optional[bool] = None, timeout: Optional[float] = None
+) -> bool:
     global __LOCK_TIMEOUT, __GLOBALS_LOCK
     """Lock the global objects. This is important if the values are changed. Don't forget to unlock the pool
     after finishing work with the globals!
@@ -32,10 +35,14 @@ def __lock_global_pool() -> bool:
     released.
     :return: Returns whether lock was locked or not.
     """
-    return __GLOBALS_LOCK.acquire(True, __LOCK_TIMEOUT)
+    if blocking is None:
+        blocking = True
+    if timeout is None:
+        timeout = __LOCK_TIMEOUT
+    return __GLOBALS_LOCK.acquire(blocking=blocking, timeout=timeout)
 
 
-def __unlock_global_pool():
+def unlock_global_pool():
     global __GLOBALS_LOCK
     """Releases the lock so other objects can use the global pool as well"""
     return __GLOBALS_LOCK.release()

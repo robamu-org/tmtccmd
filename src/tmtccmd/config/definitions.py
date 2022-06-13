@@ -1,7 +1,15 @@
 """Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple, Dict, Optional, List, Union
+from typing import Tuple, Dict, Optional, List, Union, Callable, Any
+
+from spacepackets.ecss import PusTelecommand
+
+from tmtccmd.com_if.com_interface_base import CommunicationInterface
+
+
+def default_json_path() -> str:
+    return "tmtc_conf.json"
 
 
 class CoreGlobalIds(enum.IntEnum):
@@ -15,22 +23,27 @@ class CoreGlobalIds(enum.IntEnum):
     TM_LISTENER_HANDLE = 130
     TMTC_PRINTER_HANDLE = 131
     TM_HANDLER_HANDLE = 132
-    CFDP_HANDLER_HANDLE = 133
-    TMTC_BACKEND = 134
-    PRETTY_PRINTER = 135
+    PRETTY_PRINTER = 133
 
-    # Core Parameters
+    # Parameters
     JSON_CFG_PATH = 139
-    COM_IF_DICT = 140
     MODE = 141
-    COM_IF = 142
-    SEQ_CMD_CFG = 144
-
-    # CFDP
-    CFDP_CFG = 150
+    CURRENT_SERVICE = 142
+    COM_IF = 144
+    OP_CODE = 145
+    TM_TIMEOUT = 146
+    SERVICE_OP_CODE_DICT = 147
+    COM_IF_DICT = 148
 
     # Miscellaneous
+    DISPLAY_MODE = 150
+    USE_LISTENER_AFTER_OP = 151
+    PRINT_HK = 152
+    PRINT_TM = 153
+    PRINT_RAW_TM = 154
     PRINT_TO_FILE = 155
+    RESEND_TC = 156
+    TC_SEND_TIMEOUT_FACTOR = 157
 
     # Config dictionaries
     USE_SERIAL = 160
@@ -40,7 +53,8 @@ class CoreGlobalIds(enum.IntEnum):
 
 
 class OpCodeDictKeys(enum.IntEnum):
-    TIMEOUT = 0
+    TIMEOUT = CoreGlobalIds.TM_TIMEOUT
+    ENTER_LISTENER_MODE = CoreGlobalIds.USE_LISTENER_AFTER_OP
 
 
 # Service Op Code Dictionary Types
@@ -60,6 +74,53 @@ ComIFValueT = Tuple[str, any]
 ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
+
+
+class QueueCommands(enum.Enum):
+    PRINT = "print"
+    RAW_PRINT = "raw_print"
+    WAIT = "wait"
+    SET_TIMEOUT = "set_timeout"
+
+
+TcQueueEntryArg = Any
+UserArg = Any
+"""Third Argument: Second argument in TC queue tuple. Fouth Argument
+"""
+UsrSendCbT = Callable[
+    [Union[bytes, QueueCommands], CommunicationInterface, TcQueueEntryArg, UserArg],
+    None,
+]
+
+
+class DataReplyUnpacked:
+    def __init__(self):
+        # Name of the data fields inside a data set
+        self.header_list = []
+        # Corresponding list of content
+        self.content_list = []
+
+
+class HkReplyUnpacked(DataReplyUnpacked):
+    def __init__(self):
+        super().__init__()
+        # Validity buffer
+        self.validity_buffer = bytearray()
+        # Number of variables contained in HK set
+        self._num_of_vars = None
+
+    @property
+    def num_of_vars(self):
+        """Unless set to a specific number, will return the length of the content list
+        :return:
+        """
+        if self._num_of_vars is None:
+            return len(self.header_list)
+        return self._num_of_vars
+
+    @num_of_vars.setter
+    def num_of_vars(self, num_of_vars: int):
+        self._num_of_vars = num_of_vars
 
 
 class CoreComInterfaces(enum.Enum):
@@ -83,28 +144,21 @@ CoreComInterfacesDict = {
 }
 
 
-class QueueCommands(enum.Enum):
-    PRINT = enum.auto()
-    RAW_PRINT = enum.auto()
-    WAIT = enum.auto()
-    EXPORT_LOG = enum.auto()
-    SET_TIMEOUT = enum.auto()
-
-
 # Mode options, set by args parser
 class CoreModeList(enum.IntEnum):
     SEQUENTIAL_CMD_MODE = 0
     LISTENER_MODE = 1
-    CFDP_MODE = 2
-    GUI_MODE = 3
+    GUI_MODE = 2
     IDLE = 5
     PROMPT_MODE = 6
+    CONTINUOUS_MODE = (
+        7  # will start a daemon handling tm and return after sending one tc
+    )
 
 
 CoreModeStrings = {
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
-    CoreModeList.CFDP_MODE: "cfdp",
     CoreModeList.GUI_MODE: "gui",
 }
 
@@ -120,20 +174,6 @@ class CoreServiceList(enum.Enum):
     SERVICE_20 = "20"
     SERVICE_23 = "23"
     SERVICE_200 = "200"
-
-
-class SeqTransferCfg:
-    service = CoreServiceList.SERVICE_17
-    op_code = "0"
-    tm_timeout = 2.0
-    tc_send_timeout_factor = 2.5
-    resend_tc = False
-    print_hk = False
-    print_tm = True
-    print_raw_tm = True
-    display_mode = "long"
-    service_op_code_dict = dict()
-    listener_after_op = False
 
 
 DEFAULT_APID = 0xEF
