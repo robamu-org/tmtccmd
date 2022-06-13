@@ -53,7 +53,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         source_data.extend(struct.pack("!I", self._param_1))
         source_data.extend(struct.pack("!I", self._param_2))
         pus_tm = PusTelemetry(
-            service=PusServices.SERVICE_5_EVENT,
+            service=PusServices.S5_EVENT,
             subservice=subservice,
             time=time,
             ssc=ssc,

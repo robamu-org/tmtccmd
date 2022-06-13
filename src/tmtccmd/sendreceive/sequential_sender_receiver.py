@@ -47,6 +47,8 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         )
         self._tc_queue = tc_queue
         self.__all_replies_received = False
+        # This flag can be used to notify the sender to send the next TC
+        self._next_send_condition = False
 
         # create a daemon (which will exit automatically if all other threads are closed)
         # to handle telemetry
@@ -67,9 +69,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         time.sleep(0.05)
         if self._tc_queue:
             try:
-                # Set to true for first packet, otherwise nothing will be sent.
-                self._reply_received = True
-                self.__handle_tc_sending()
+                self.__handle_tc_sending_and_tm_reception()
             except (KeyboardInterrupt, SystemExit):
                 LOGGER.info("Keyboard Interrupt.")
                 sys.exit()
@@ -83,7 +83,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
         if self._tc_queue:
             try:
                 # Set to true for first packet, otherwise nothing will be sent.
-                self._reply_received = True
+                self._next_send_condition = True
                 if not self._tc_queue.__len__() == 0:
                     self.__check_next_tc_send()
             except (KeyboardInterrupt, SystemExit):
@@ -101,22 +101,49 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             self.__check_for_reply()
             time.sleep(0.2)
 
-    def __handle_tc_sending(self):
+    def __print_rem_timeout(self, op_divider: int, divisor: int = 15):
+        if op_divider % divisor == 0:
+            rem_time = self._wait_end - time.time()
+            if rem_time > 0:
+                LOGGER.info(f"{rem_time:.01f} seconds wait time remaining")
+
+    def __handle_tc_sending_and_tm_reception(self):
+        """Internal function which handles the given TC queue while also simultaneously
+        polling all TM.
+        TODO: Make it testable by not delaying here and removing the loop, make
+              this function runnable in discrete steps
+        """
+        # Set to true for first packet, otherwise nothing will be sent.
+        self._next_send_condition = True
+        next_sleep = 0.2
+        op_divider = 0
+        tc_queue_is_empty_and_processed = False
         while not self.__all_replies_received:
-            while not self._tc_queue.__len__() == 0:
-                self.__check_for_reply()
-                self.__check_next_tc_send()
+            # Do not use continue anywhere in this while loop for now
+            if not tc_queue_is_empty_and_processed:
                 if self._tc_queue.__len__() == 0:
-                    self._start_time = time.time()
-                    break
-                time.sleep(0.2)
-            if not self._reply_received:
+                    if self._wait_period == 0:
+                        # cache this for last wait time
+                        self._start_time = time.time()
+                        tc_queue_is_empty_and_processed = True
                 self.__check_for_reply()
-                self._check_for_timeout()
-            if self._reply_received:
-                self.__all_replies_received = True
-                break
-            time.sleep(0.2)
+                if not tc_queue_is_empty_and_processed:
+                    if not self.wait_period_ongoing():
+                        self._wait_period = 0
+                        self.__check_next_tc_send()
+                    self.__print_rem_timeout(op_divider=op_divider)
+                    time.sleep(next_sleep)
+            else:
+                if not self._check_for_tm_timeout():
+                    self.__check_for_reply()
+                    self.__print_rem_timeout(op_divider=op_divider)
+                    # Delay for a bit longer in case we are waiting for the TM timeout
+                    next_sleep = 0.5
+                else:
+                    self.__all_replies_received = True
+                    break
+            time.sleep(next_sleep)
+            op_divider += 1
         self._tm_listener.set_mode_op_finished()
         LOGGER.info("SequentialSenderReceiver: All replies received!")
 
@@ -140,18 +167,22 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             )
 
     def __check_next_tc_send(self):
-        if self.wait_period_ongoing():
-            return
         # this flag is set in the separate receiver thread too
-        if self._reply_received:
+        if self._next_send_condition:
             if self._send_next_telecommand():
-                self._reply_received = False
+                self._next_send_condition = False
         # just calculate elapsed time if start time has already been set (= command has been sent)
         else:
-            self._check_for_timeout()
+            if self._check_for_tm_timeout():
+                self._next_send_condition = True
 
     def _send_next_telecommand(self) -> bool:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
+        # Queue empty. Can happen because a wait period might still be ongoing
+        if not self._tc_queue:
+            return False
+        if self.wait_period_ongoing():
+            return False
         tc_queue_tuple = self._tc_queue.pop()
         if self.check_queue_entry(tc_queue_tuple):
             self._start_time = time.time()
@@ -169,11 +200,11 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
 
         # queue empty.
         elif not self._tc_queue:
-            # Special case: Last queue entry is not a Telecommand
-            self._reply_received = True
-            # Another specal case: Last queue entry is to wait.
+            # Another special case: Last queue entry is to wait.
             if self._wait_period > 0:
-                self.wait_period_ongoing(True)
+                if self.wait_period_ongoing():
+                    return False
+                self._wait_period = 0
                 self.__all_replies_received = True
             return False
         else:
