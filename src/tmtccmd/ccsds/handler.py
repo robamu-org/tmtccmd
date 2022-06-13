@@ -12,6 +12,9 @@ CcsdsCallbackT = Callable[[int, bytes, Any], None]
 
 
 class ApidHandler:
+    """Handler function for space packets with an APID. The APID will be passed to the
+    CCSDS callback as the first argument. The raw packets will be passed as the second argument
+    and the user arguments will be passed as a third argument"""
     def __init__(self, cb: CcsdsCallbackT, queue_len: int, user_args: any):
         self.callback: CcsdsCallbackT = cb
         self.queue_len: int = queue_len
