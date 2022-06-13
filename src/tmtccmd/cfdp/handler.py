@@ -1,13 +1,11 @@
 import enum
-import os
 import abc
 import struct
-from typing import Optional, Type, List
+from typing import Optional, Type, List, Any
 
 from .filestore import VirtualFilestore
 from .mib import LocalEntityCfg
-from tmtccmd.utility.tmtc_printer import TmTcPrinter
-from tmtccmd.utility.logger import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
 from spacepackets.cfdp.conf import PduConfig
@@ -100,7 +98,7 @@ class CfdpHandler:
         cfg: LocalEntityCfg,
         com_if: Optional[CommunicationInterface],
         cfdp_user: Type[CfdpUserBase],
-        byte_flow_ctrl: ByteFlowControl
+        byte_flow_ctrl: ByteFlowControl,
     ):
         """
 
@@ -118,7 +116,6 @@ class CfdpHandler:
         self.com_if = com_if
         self.cfdp_user = cfdp_user
         self.state = CfdpStates.IDLE
-        self.send_interval = send_interval
         self.seq_num = 0
         self.byte_flow_ctrl = byte_flow_ctrl
 
@@ -186,9 +183,7 @@ class CfdpHandler:
                 raise SequenceNumberOverflow
             return struct.pack("!I", self.seq_num)
 
-    def pass_packet(
-        self, apid: int, raw_tm_packet: bytearray, tmtc_printer: TmTcPrinter
-    ):
+    def pass_packet(self, apid: int, raw_tm_packet: bytearray, args: Any):
         pass
 
     def put_request(self, put_request: PutRequest):

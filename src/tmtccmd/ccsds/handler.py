@@ -16,6 +16,7 @@ class ApidHandler:
     """Handler function for space packets with an APID. The APID will be passed to the
     CCSDS callback as the first argument. The raw packets will be passed as the second argument
     and the user arguments will be passed as a third argument"""
+
     def __init__(self, cb: CcsdsCallbackT, queue_len: int, user_args: any):
         self.callback: CcsdsCallbackT = cb
         self.queue_len: int = queue_len
@@ -42,16 +43,11 @@ class CcsdsTmHandler(TmHandler):
         """
         self._handler_dict[apid] = handler
 
-    def add_cfdp_handler(
-        self, apid: int, cfdp_handler: CfdpHandler, max_queue_len: int
-    ):
-        self._handler_dict[apid] = cfdp_handler.pass_packet, max_queue_len
-
     def get_apid_queue_len_list(self) -> List[Tuple[int, int]]:
-        list = []
+        apid_queue_len_list = []
         for apid, handler_value in self._handler_dict.items():
-            list.append((apid, handler_value.queue_len))
-        return list
+            apid_queue_len_list.append((apid, handler_value.queue_len))
+        return apid_queue_len_list
 
     def handle_packet_queues(self, packet_queue_list: QueueListT):
         for queue_tuple in packet_queue_list:

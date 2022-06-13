@@ -5,6 +5,7 @@ They can be used to identify up to two bit errors and correct one bit error per 
 """
 from enum import Enum
 from tmtccmd.logging import get_console_logger
+
 # Translated from ATMEL C library.
 # /* ----------------------------------------------------------------------------
 # *         ATMEL Microcontroller Software Support

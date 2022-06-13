@@ -170,7 +170,7 @@ class TcpIpTcpComIF(CommunicationInterface):
             ready = select.select([self.__tcp_socket], [], [], 0)
             if ready[0]:
                 bytes_recvd = self.__tcp_socket.recv(self.max_recv_size)
-                if bytes_recvd == b'':
+                if bytes_recvd == b"":
                     self.__close_tcp_socket()
                     LOGGER.info("TCP server has been closed")
                     return
