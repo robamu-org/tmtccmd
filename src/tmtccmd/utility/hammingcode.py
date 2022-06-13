@@ -3,7 +3,8 @@ Hamming codes belong to the family of linear error correcting codes.
 Documentation: https://en.wikipedia.org/wiki/Hamming_code
 They can be used to identify up to two bit errors and correct one bit error per 256 byte block.
 """
-
+from enum import Enum
+from tmtccmd.logging import get_console_logger
 # Translated from ATMEL C library.
 # /* ----------------------------------------------------------------------------
 # *         ATMEL Microcontroller Software Support
@@ -33,20 +34,18 @@ They can be used to identify up to two bit errors and correct one bit error per 
 # * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # * ----------------------------------------------------------------------------
 # */
-from enum import Enum
 
-from tmtccmd.utility.logger import get_console_logger
 
 LOGGER = get_console_logger()
 
 
 class HammingReturnCodes(Enum):
     # No bit flips
-    CODE_OKAY = (0,)
+    CODE_OKAY = 0
     # Single bit flip which can be corrected
-    ERROR_SINGLE_BIT = (1,)
+    ERROR_SINGLE_BIT = 1
     # Error in the hamming code
-    ERROR_ECC = (2,)
+    ERROR_ECC = 2
     # Multi bit error which can not be corrected
     ERROR_MULTI_BIT = 3
     # Invalid input
