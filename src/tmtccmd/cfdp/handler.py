@@ -13,7 +13,7 @@ from spacepackets.cfdp.definitions import (
     TransmissionModes,
     ChecksumTypes,
     SegmentationControl,
-    Direction,
+    Direction, CrcFlag, FileSize,
 )
 from spacepackets.cfdp.tlv import (
     FaultHandlerOverrideTlv,
@@ -148,16 +148,17 @@ class CfdpHandler:
                     seg_ctrl=self.__current_put_request.seg_ctrl,
                     dest_entity_id=self.__current_put_request.destination_id,
                     source_entity_id=self.id,
-                    crc_flag=False,
+                    crc_flag=CrcFlag.GLOBAL_CONFIG,
                     direction=Direction.TOWARDS_RECEIVER,
                     transaction_seq_num=self.__get_next_seq_num(),
-                    file_size=0,
+                    file_size=FileSize.GLOBAL_CONFIG,
                     trans_mode=self.__current_put_request.trans_mode,
                 )
                 self.send_metadata_pdu(
                     pdu_conf=pdu_conf,
                     dest_file=self.__current_put_request.dest_file,
                     source_file=self.__current_put_request.source_file,
+                    closure_requested=False
                 )
                 self.state = CfdpStates.SENDING_FILE_DATA_PDUS
             pass
