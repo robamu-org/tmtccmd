@@ -73,7 +73,7 @@ class SingleCommandSenderReceiver(CommandSenderReceiver):
         while self._operation_pending:
             # wait until reply is received
             super()._check_for_first_reply()
-        if self._reply_received:
+        if self._next_send_condition:
             self._tm_listener.set_mode_op_finished()
             packet_queue = self._tm_listener.retrieve_ccsds_tm_packet_queue(
                 apid=self._apid, clear=True

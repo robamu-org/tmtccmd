@@ -67,6 +67,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         self.max_recv_size = max_recv_size
         self.max_packets_stored = max_packets_stored
         self.init_mode = init_mode
+        self.connected = False
 
         self.__tcp_socket: Optional[socket.socket] = None
         self.__last_connection_time = 0
@@ -100,6 +101,7 @@ class TcpIpTcpComIF(CommunicationInterface):
         if self.__tcp_socket is None:
             self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.__tcp_socket.connect(self.target_address)
+            self.connected = True
 
     def set_up_tcp_thread(self):
         if self.__tcp_conn_thread is None:
@@ -112,20 +114,26 @@ class TcpIpTcpComIF(CommunicationInterface):
         if self.__tcp_conn_thread != None:
             if self.__tcp_conn_thread.is_alive():
                 self.__tcp_conn_thread.join(self.tm_polling_frequency)
-            try:
-                self.__tcp_socket.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                LOGGER.warning(
-                    "TCP socket endpoint was already closed or not connected"
-                )
-            self.__tcp_socket.close()
+            if self.connected:
+                try:
+                    self.__tcp_socket.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    LOGGER.warning(
+                        "TCP socket endpoint was already closed or not connected"
+                    )
+                self.__tcp_socket.close()
         self.__tcp_socket = None
         self.__tcp_conn_thread = None
 
     def send(self, data: bytearray):
         try:
+            if not self.connected:
+                self.set_up_socket()
             self.__tcp_socket.sendto(data, self.target_address)
-        except ConnectionRefusedError:
+        except ConnectionRefusedError or OSError:
+            self.connected = False
+            self.__tcp_socket.close()
+            self.__tcp_socket = None
             LOGGER.warning("TCP connection attempt failed..")
 
     def receive(self, poll_timeout: float = 0) -> TelemetryListT:
@@ -150,10 +158,11 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
-            try:
-                self.__receive_tm_packets()
-            except ConnectionRefusedError:
-                LOGGER.warning("TCP connection attempt failed..")
+            if self.connected:
+                try:
+                    self.__receive_tm_packets()
+                except ConnectionRefusedError:
+                    LOGGER.warning("TCP connection attempt failed..")
             time.sleep(self.TM_LOOP_DELAY)
 
     def __receive_tm_packets(self):
@@ -161,6 +170,12 @@ class TcpIpTcpComIF(CommunicationInterface):
             ready = select.select([self.__tcp_socket], [], [], 0)
             if ready[0]:
                 bytes_recvd = self.__tcp_socket.recv(self.max_recv_size)
+                if bytes_recvd == b'':
+                    self.__close_tcp_socket()
+                    LOGGER.info("TCP server has been closed")
+                    return
+                else:
+                    self.connected = True
                 with acquire_timeout(
                     self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT
                 ) as acquired:
@@ -174,6 +189,7 @@ class TcpIpTcpComIF(CommunicationInterface):
                         self.__tm_queue.pop()
                     self.__tm_queue.appendleft(bytes(bytes_recvd))
         except ConnectionResetError:
+            self.__close_tcp_socket()
             LOGGER.exception("ConnectionResetError. TCP server might not be up")
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
@@ -181,3 +197,8 @@ class TcpIpTcpComIF(CommunicationInterface):
             return True
         else:
             return False
+
+    def __close_tcp_socket(self):
+        self.connected = False
+        self.__tcp_socket.close()
+        self.__tcp_socket = None

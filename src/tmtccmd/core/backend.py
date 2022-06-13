@@ -81,7 +81,7 @@ class TmTcHandler(BackendBase):
             com_if=self.__com_if,
             tm_handler=self.__tm_handler,
             tm_listener=self.__tm_listener,
-            tc_queue=None,
+            tc_queue=deque(),
             apid=self.__apid,
             usr_send_wrapper=self.usr_send_wrapper,
         )
@@ -241,13 +241,15 @@ class TmTcHandler(BackendBase):
             else:
                 time.sleep(0.2)
 
-    def startDaemonReceiver(self):
+    def start_daemon_receiver(self):
         try:
             self.daemon_receiver.start_daemon()
-        except:
-            # TODO check which exceptions we should handle
-            LOGGER.error("receiver daemon could not be opened!")
-            LOGGER.info("Receiver daemon will not be started")
+        except RuntimeError:
+            LOGGER.error("Error when starting daemon receiver. Not starting it")
+        except Exception as e:
+            LOGGER.exception(
+                f"Unknown exception {e} when starting daemon receiver. Not starting it"
+            )
 
     def __handle_action(self):
         """Command handling."""
@@ -305,8 +307,6 @@ class TmTcHandler(BackendBase):
                 LOGGER.error("Custom mode handling module not provided!")
 
     def __core_operation(self, one_shot: bool):
-        if self.mode == CoreModeList.LISTENER_MODE:
-            one_shot = False
         if not one_shot:
             while True:
                 self.__handle_action()

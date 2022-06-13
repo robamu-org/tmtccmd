@@ -81,35 +81,51 @@ COMMAND_BUTTON_STYLE = (
 class WorkerOperationsCodes(enum.IntEnum):
     DISCONNECT = 0
     SEQUENTIAL_COMMANDING = 1
+    LISTENING = 2
+    IDLE = 4
 
 
 class WorkerThread(QObject):
-    finished = pyqtSignal()
+    disconnected = pyqtSignal()
+    command_executed = pyqtSignal()
 
     def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: TmTcHandler):
         super(QObject, self).__init__()
         self.op_code = op_code
         self.tmtc_handler = tmtc_handler
+        self.tmtc_handler.one_shot_operation = True
+
+    def set_op_code(self, op_code: WorkerOperationsCodes):
+        self.op_code = op_code
 
     def run_worker(self):
-        if self.op_code == WorkerOperationsCodes.DISCONNECT:
-            self.tmtc_handler.close_listener()
-            while True:
-                if not self.tmtc_handler.is_com_if_active():
-                    break
-                else:
-                    time.sleep(0.4)
-            self.finished.emit()
-        elif self.op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
-            self.tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
-            self.tmtc_handler.one_shot_operation = True
-            # It is expected that the TMTC handler is in the according state to perform the
-            # operation
-            self.tmtc_handler.perform_operation()
-            self.finished.emit()
-        else:
-            LOGGER.warning("Unknown worker operation code!")
-            self.finished.emit()
+        while True:
+            op_code = self.op_code
+            if op_code == WorkerOperationsCodes.DISCONNECT:
+                self.tmtc_handler.close_listener()
+                while True:
+                    if not self.tmtc_handler.is_com_if_active():
+                        break
+                    else:
+                        time.sleep(0.4)
+                self.op_code = WorkerOperationsCodes.IDLE
+                self.disconnected.emit()
+            elif op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
+                self.tmtc_handler.one_shot_operation = True
+                # It is expected that the TMTC handler is in the according state to perform the
+                # operation
+                self.tmtc_handler.perform_operation()
+                self.op_code = WorkerOperationsCodes.LISTENING
+                self.command_executed.emit()
+            elif op_code == WorkerOperationsCodes.LISTENING:
+                self.tmtc_handler.one_shot_operation = True
+                self.tmtc_handler.set_mode(CoreModeList.LISTENER_MODE)
+                self.tmtc_handler.perform_operation()
+            elif op_code == WorkerOperationsCodes.IDLE:
+                pass
+            else:
+                # This must be a programming error
+                LOGGER.error("Unknown worker operation code {0}!".format(self.op_code))
 
 
 class RunnableThread(QRunnable):
@@ -145,11 +161,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         self.__worker = None
         self.__thread = None
-        self.__debug_mode = False
+        self.__debug_mode = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
+        self.__start_qthread_task(WorkerOperationsCodes.LISTENING)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start)
@@ -200,16 +217,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __start_seq_cmd_op(self):
         if self.__debug_mode:
-            LOGGER.info("Start Service Test Button pressed.")
+            LOGGER.info("Send command button pressed.")
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
         self._tmtc_handler.set_service(self._current_service)
         self._tmtc_handler.set_opcode(self._current_op_code)
-        self.__start_qthread_task(
-            op_code=WorkerOperationsCodes.SEQUENTIAL_COMMANDING,
-            finish_callback=self.__finish_seq_cmd_op,
-        )
+        self._tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
+        self.__worker.set_op_code(WorkerOperationsCodes.SEQUENTIAL_COMMANDING)
+        self.__worker.command_executed.connect(self.__finish_seq_cmd_op)
 
     def __finish_seq_cmd_op(self):
         self.__set_send_button(True)
@@ -235,10 +251,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info("Closing TM listener..")
             self.__command_button.setEnabled(False)
             self.__connect_button.setEnabled(False)
-            self.__start_qthread_task(
-                op_code=WorkerOperationsCodes.DISCONNECT,
-                finish_callback=self.__finish_disconnect_button_op,
-            )
+            self.__worker.set_op_code(WorkerOperationsCodes.DISCONNECT)
 
     def __finish_disconnect_button_op(self):
         self.__connect_button.setEnabled(True)
@@ -408,18 +421,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
-    def __start_qthread_task(self, op_code: WorkerOperationsCodes, finish_callback):
+    def __start_qthread_task(self, op_code: WorkerOperationsCodes):
         self.__thread = QThread()
         self.__worker = WorkerThread(op_code=op_code, tmtc_handler=self._tmtc_handler)
         self.__worker.moveToThread(self.__thread)
-
         self.__thread.started.connect(self.__worker.run_worker)
-        self.__worker.finished.connect(self.__thread.quit)
-        self.__worker.finished.connect(self.__worker.deleteLater)
-        self.__thread.finished.connect(self.__thread.deleteLater)
-
-        self.__thread.finished.connect(finish_callback)
         self.__thread.start()
+        self.__worker.disconnected.connect(self.__finish_disconnect_button_op)
 
     @staticmethod
     def __add_vertical_separator(grid: QGridLayout, row: int):
