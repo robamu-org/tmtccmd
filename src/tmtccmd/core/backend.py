@@ -307,8 +307,6 @@ class TmTcHandler(BackendBase):
                 LOGGER.error("Custom mode handling module not provided!")
 
     def __core_operation(self, one_shot: bool):
-        if self.mode == CoreModeList.LISTENER_MODE:
-            one_shot = False
         if not one_shot:
             while True:
                 self.__handle_action()
