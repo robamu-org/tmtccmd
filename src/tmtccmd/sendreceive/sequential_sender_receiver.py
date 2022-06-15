@@ -155,7 +155,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 apid=self._apid, clear=True
             )
             self._tm_handler.handle_ccsds_packet_queue(
-                apid=self._apid, tm_queue=packet_queue
+                apid=self._apid, tm_queue=packet_queue, handler=None
             )
         # This makes reply reception more responsive
         elif self._tm_listener.tm_packets_available():
@@ -163,7 +163,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 apid=self._apid, clear=True
             )
             self._tm_handler.handle_ccsds_packet_queue(
-                apid=self._apid, tm_queue=packet_queue
+                apid=self._apid, tm_queue=packet_queue, handler=None
             )
 
     def __check_next_tc_send(self):

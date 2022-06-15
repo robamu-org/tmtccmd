@@ -55,19 +55,20 @@ class CcsdsTmHandler(TmHandler):
     def handle_packet_queues(self, packet_queue_list: QueueListT):
         for queue_tuple in packet_queue_list:
             apid = queue_tuple[0]
-            handler_obj = self._handler_dict.get(apid)
-            if handler_obj is not None:
-                self.handle_ccsds_packet_queue(
-                    tm_queue=queue_tuple[1], apid=apid, handler=handler_obj
-                )
-            else:
-                LOGGER.warning(f"No valid handler for TM with APID {apid} found")
+            self.handle_ccsds_packet_queue(
+                tm_queue=queue_tuple[1], apid=apid, handler=self._handler_dict.get(apid)
+            )
 
-    @staticmethod
     def handle_ccsds_packet_queue(
+        self,
         tm_queue: TelemetryQueueT,
         apid: int,
-        handler: ApidTmHandlerBase,
+        handler: Optional[ApidTmHandlerBase],
     ):
-        for tm_packet in tm_queue:
-            handler.handle_tm_for_apid(apid, tm_packet, handler.user_args)
+        if handler is None:
+            handler = self._handler_dict.get(apid)
+        if handler is None:
+            LOGGER.warning(f"No valid handler for TM with APID {apid} found")
+        else:
+            for tm_packet in tm_queue:
+                handler.handle_tm_for_apid(apid, tm_packet, handler.user_args)
