@@ -1,7 +1,7 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
 import sys
 import os
-from typing import Union
+from typing import Union, cast
 
 from spacepackets.ecss.conf import get_default_tc_apid
 
@@ -112,11 +112,6 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
         raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
-    # TODO: Maybe this is not required anymore..
-    # Set core object IDs
-    # insert_object_ids(get_core_object_ids())
-    # Set object IDs specified by the user.
-    # insert_object_ids(hook_object.get_object_ids())
 
 
 def init_printout(use_gui: bool, ansi_colors: bool = True):
@@ -160,15 +155,15 @@ def __start_tmtc_commander_qt_gui(
         if not __SETUP_WAS_CALLED:
             LOGGER.warning("setup_tmtccmd was not called first. Call it first")
             sys.exit(1)
-        app = None
         app = QApplication([app_name])
         if tmtc_frontend is None:
             from tmtccmd.core.frontend import TmTcFrontend
             from tmtccmd.config.hook import get_global_hook_obj
+            from tmtccmd.core.backend import TmTcHandler
 
             tmtc_frontend = TmTcFrontend(
                 hook_obj=get_global_hook_obj(),
-                tmtc_backend=tmtc_backend,
+                tmtc_backend=cast(TmTcHandler, tmtc_backend),
                 app_name=app_name,
             )
         tmtc_frontend.start(app)
@@ -217,6 +212,7 @@ def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
     tm_listener = TmListener(com_if=com_if, seq_timeout=tm_timeout)
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
+        hook_obj=setup_args.hook_obj,
         com_if=com_if,
         tm_listener=tm_listener,
         init_mode=mode,

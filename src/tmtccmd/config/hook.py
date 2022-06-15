@@ -9,7 +9,7 @@ from tmtccmd.config.definitions import (
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
 from tmtccmd.utility.obj_id import ObjectIdDictT
-from tmtccmd.core.backend import BackendBase
+from tmtccmd.core.base import BackendBase
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 

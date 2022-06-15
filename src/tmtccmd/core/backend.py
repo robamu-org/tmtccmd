@@ -2,11 +2,12 @@ import atexit
 import time
 import sys
 from threading import Thread
-from abc import abstractmethod
 from collections import deque
 from typing import Union, cast, Optional, Tuple
 
+from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
+from tmtccmd.core.base import BackendBase
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
@@ -24,23 +25,6 @@ from tmtccmd.tc.packer import ServiceQueuePacker
 LOGGER = get_console_logger()
 
 
-class BackendBase:
-    @abstractmethod
-    def initialize(self):
-        """Initialize the backend. Raise RuntimeError or ValueError on failure"""
-
-    @abstractmethod
-    def start_listener(self):
-        """Start the backend. Raise RuntimeError on failure"""
-
-    @abstractmethod
-    def set_mode(self, mode: int):
-        """Set backend mode
-        :param mode:
-        :return:
-        """
-
-
 class TmTcHandler(BackendBase):
     """This is the primary class which handles TMTC reception. This can be seen as the backend
     in case a GUI or front-end is implemented.
@@ -48,6 +32,7 @@ class TmTcHandler(BackendBase):
 
     def __init__(
         self,
+        hook_obj: TmTcHookBase,
         com_if: CommunicationInterface,
         tm_listener: TmListener,
         tm_handler: TmHandler,
@@ -57,6 +42,7 @@ class TmTcHandler(BackendBase):
     ):
         self.mode = init_mode
         self.com_if_key = com_if.get_id()
+        self.__hook_obj = hook_obj
         self.__com_if_active = False
         self.__service = init_service
         self.__op_code = init_opcode
@@ -147,6 +133,7 @@ class TmTcHandler(BackendBase):
 
     @staticmethod
     def prepare_tmtc_handler_start(
+        hook_obj: TmTcHookBase,
         com_if: CommunicationInterface,
         tm_listener: TmListener,
         tm_handler: TmHandler,
@@ -157,6 +144,7 @@ class TmTcHandler(BackendBase):
         from multiprocessing import Process
 
         tmtc_handler = TmTcHandler(
+            hook_obj=hook_obj,
             com_if=com_if,
             tm_listener=tm_listener,
             init_mode=init_mode,
@@ -287,10 +275,9 @@ class TmTcHandler(BackendBase):
             self.daemon_receiver.send_queue_tc_and_return()
         else:
             try:
-                from tmtccmd.config.hook import get_global_hook_obj
-
-                hook_obj = get_global_hook_obj()
-                hook_obj.perform_mode_operation(mode=self.mode, tmtc_backend=self)
+                self.__hook_obj.perform_mode_operation(
+                    mode=self.mode, tmtc_backend=self
+                )
             except ImportError as error:
                 print(error)
                 LOGGER.error("Custom mode handling module not provided!")
