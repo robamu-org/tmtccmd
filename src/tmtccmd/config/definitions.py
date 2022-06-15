@@ -155,6 +155,7 @@ class CoreModeList(enum.IntEnum):
     CONTINUOUS_MODE = (
         7  # will start a daemon handling tm and return after sending one tc
     )
+    CFDP_MODE = 8
 
 
 CoreModeStrings = {

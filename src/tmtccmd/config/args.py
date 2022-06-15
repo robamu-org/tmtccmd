@@ -27,11 +27,7 @@ def get_default_descript_txt() -> str:
     return (
         f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
         f"{AnsiColors.RESET}This application provides generic components to execute "
-        f"TMTC commanding.\n"
-        f"The developer is expected to specify the packaged telecommands for a given\n"
-        "service and operation code combination. The developer is also expected\n"
-        "to implement the handling of telemetry. All these tasks can be done by implementing\n"
-        "a hook object and passing it to the core."
+        f"TMTC commanding\n"
     )
 
 
@@ -49,6 +45,7 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_default_mode_arguments(parser)
     add_default_com_if_arguments(parser)
     add_generic_arguments(parser)
+    add_cfdp_parser(parser)
 
     add_ethernet_arguments(parser)
 
@@ -116,6 +113,27 @@ def parse_default_input_arguments(
     return args
 
 
+def add_cfdp_parser(arg_parser: argparse.ArgumentParser):
+    subparsers = arg_parser.add_subparsers(
+        title="CFDP",
+        description="CCSDS File Delivery Protocol commands",
+        help="CCDSDS File Delivery Commands",
+        dest="cfdp",
+    )
+    cfdp = subparsers.add_parser("cfdp")
+    cfdp.add_argument("-p", "--proxy")
+    cfdp.add_argument(
+        "-f", "--file", dest="cfdp_file", help="CFDP target file", default=None
+    )
+    cfdp.add_argument(
+        "-d",
+        "--dest",
+        dest="cfdp_dest",
+        help="CFDP file destination path",
+        default=None,
+    )
+
+
 def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-s", "--service", type=str, help="Service to test", default=None
@@ -132,20 +150,6 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         help="Determine whether the listener mode will be active after performing the operation",
         action="store_true",
         default=None,
-    )
-    arg_parser.add_argument(
-        "--sf", "--source_file", help="Source file for CFDP transactions"
-    )
-    arg_parser.add_argument(
-        "--df", "--dest_file", help="Destination file for CFDP transactions"
-    )
-    arg_parser.add_argument(
-        "-p",
-        "--proxy",
-        action="store_true",
-        help="CFDP proxy put operation. Can be used to request files from the remote entity. "
-        "The destination file should then be the file path on the sender side while the "
-        "source file should be the remote file to download.",
     )
     arg_parser.add_argument(
         "-t",
@@ -178,11 +182,6 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]}: "
         f"Sequential Command Mode\n"
     )
-    cfdp_help = (
-        f"{CoreModeList.CFDP_MODE} or "
-        f"{CoreModeStrings[CoreModeList.CFDP_MODE]}: "
-        f"GUI mode\n"
-    )
     listener_help = (
         f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: "
         f"Listener Mode\n"
@@ -192,7 +191,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: "
         f"GUI mode\n"
     )
-    help_text += seq_help + cfdp_help + listener_help + gui_help
+    help_text += seq_help + listener_help + gui_help
     arg_parser.add_argument(
         "-m",
         "--mode",

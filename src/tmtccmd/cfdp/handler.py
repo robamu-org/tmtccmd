@@ -13,7 +13,9 @@ from spacepackets.cfdp.definitions import (
     TransmissionModes,
     ChecksumTypes,
     SegmentationControl,
-    Direction, CrcFlag, FileSize,
+    Direction,
+    CrcFlag,
+    FileSize,
 )
 from spacepackets.cfdp.tlv import (
     FaultHandlerOverrideTlv,
@@ -158,7 +160,7 @@ class CfdpHandler:
                     pdu_conf=pdu_conf,
                     dest_file=self.__current_put_request.dest_file,
                     source_file=self.__current_put_request.source_file,
-                    closure_requested=False
+                    closure_requested=False,
                 )
                 self.state = CfdpStates.SENDING_FILE_DATA_PDUS
             pass
