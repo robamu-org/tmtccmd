@@ -74,16 +74,20 @@ class TmTcHookBase:
 
     @abstractmethod
     def pack_service_queue(
-        self, service: Union[int, str], op_code: str, service_queue: TcQueueT
+        self, service: Union[int, str], op_code: str, tc_queue: TcQueueT
     ):
         """Overriding this function allows the user to package a telecommand queue for a given
         service and operation code combination.
 
         :param service:
         :param op_code:
-        :param service_queue:
+        :param tc_queue:
         :return:
         """
+        pass
+
+    def feedback_handler(self, com_if: CommunicationInterface, tc_queue: TcQueueT):
+        """This function will be called"""
         pass
 
     def get_retval_dict(self) -> RetvalDictT:

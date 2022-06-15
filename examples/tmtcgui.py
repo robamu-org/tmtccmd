@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Example application for the TMTC Commander"""
 import tmtccmd.runner as runner
-from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidHandler
+from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidTmHandlerBase
 from tmtccmd.config import SetupArgs, default_json_path
 from tmtccmd.logging import get_console_logger
 
@@ -16,7 +16,7 @@ def main():
     runner.init_printout(True)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     setup_args = SetupArgs(hook_obj=hook_obj, use_gui=True, apid=APID, cli_args=None)
-    apid_handler = ApidHandler(
+    apid_handler = ApidTmHandlerBase(
         cb=default_ccsds_packet_handler, queue_len=50, user_args=None
     )
     ccsds_handler = CcsdsTmHandler()

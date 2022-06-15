@@ -151,17 +151,19 @@ class CoreModeList(enum.IntEnum):
     LISTENER_MODE = 1
     GUI_MODE = 2
     IDLE = 5
-    PROMPT_MODE = 6
-    CONTINUOUS_MODE = (
-        7  # will start a daemon handling tm and return after sending one tc
-    )
-    CFDP_MODE = 8
+    # will start a daemon handling tm and return after sending one tc
+    CONTINUOUS_MODE = 7
+    # The user can interactively specify the next queue to send and when to exit or switch
+    # to listener mode
+    FEEDBACK_MODE = 8
 
 
 CoreModeStrings = {
     CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
     CoreModeList.LISTENER_MODE: "listener",
     CoreModeList.GUI_MODE: "gui",
+    CoreModeList.CONTINUOUS_MODE: "continuous",
+    CoreModeList.FEEDBACK_MODE: "feedback",
 }
 
 

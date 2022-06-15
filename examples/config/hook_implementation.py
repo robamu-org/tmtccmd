@@ -33,13 +33,13 @@ class ExampleHookClass(TmTcHookBase):
         pass
 
     def pack_service_queue(
-        self, service: Union[str, int], op_code: str, service_queue: TcQueueT
+        self, service: Union[str, int], op_code: str, tc_queue: TcQueueT
     ):
         from tmtccmd.tc.packer import default_service_queue_preparation
 
         LOGGER.info("Service queue packer hook was called")
         default_service_queue_preparation(
-            service=service, op_code=op_code, service_queue=service_queue
+            service=service, op_code=op_code, service_queue=tc_queue
         )
 
     def get_object_ids(self) -> ObjectIdDictT:

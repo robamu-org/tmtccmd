@@ -30,7 +30,7 @@ class ServiceQueuePacker:
 
             hook_obj = get_global_hook_obj()
             hook_obj.pack_service_queue(
-                service=service, op_code=op_code, service_queue=service_queue
+                service=service, op_code=op_code, tc_queue=service_queue
             )
         except ImportError:
             LOGGER.exception(

@@ -26,9 +26,7 @@ LOGGER = get_console_logger()
 
 
 class TmTcHandler(BackendBase):
-    """This is the primary class which handles TMTC reception. This can be seen as the backend
-    in case a GUI or front-end is implemented.
-    """
+    """This is the primary class which handles TMTC reception and sending"""
 
     def __init__(
         self,

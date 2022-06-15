@@ -1,3 +1,4 @@
+import abc
 from typing import Callable, Dict, Optional, Tuple, List, Type, Any
 
 from tmtccmd.tm.handler import TmHandler
@@ -12,18 +13,20 @@ LOGGER = get_console_logger()
 CcsdsCallbackT = Callable[[int, bytes, Any], None]
 
 
-class ApidHandler:
-    """Handler function for space packets with an APID. The APID will be passed to the
-    CCSDS callback as the first argument. The raw packets will be passed as the second argument
-    and the user arguments will be passed as a third argument"""
+class ApidTmHandlerBase:
+    """Handler base for space packets with an APID. If a packet is received for a certain APID,
+    the :py:func:`handle_tm_for_apid` function will be called"""
 
-    def __init__(self, cb: CcsdsCallbackT, queue_len: int, user_args: any):
-        self.callback: CcsdsCallbackT = cb
+    def __init__(self, queue_len: int, user_args: any):
         self.queue_len: int = queue_len
         self.user_args: any = user_args
 
+    @abc.abstractmethod
+    def handle_tm_for_apid(self, apid: int, packet: bytes, user_args: any):
+        pass
 
-HandlerDictT = Dict[int, ApidHandler]
+
+HandlerDictT = Dict[int, ApidTmHandlerBase]
 
 
 class CcsdsTmHandler(TmHandler):
@@ -34,7 +37,7 @@ class CcsdsTmHandler(TmHandler):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
 
-    def add_tm_handler(self, apid: int, handler: ApidHandler):
+    def add_tm_handler(self, apid: int, handler: ApidTmHandlerBase):
         """Add a TM handler for a certain APID. The handler is a callback function which
         will be called if telemetry with that APID arrives
         :param apid: CCSDS Application Process ID
@@ -57,17 +60,14 @@ class CcsdsTmHandler(TmHandler):
                 self.handle_ccsds_packet_queue(
                     tm_queue=queue_tuple[1], apid=apid, handler=handler_obj
                 )
-
-    def handle_ccsds_packet_queue(
-        self,
-        tm_queue: TelemetryQueueT,
-        apid: int,
-        handler: Optional[ApidHandler] = None,
-    ):
-        if handler is None:
-            handler = self._handler_dict.get(apid)
-        for tm_packet in tm_queue:
-            if handler is not None:
-                handler.callback(apid, tm_packet, handler.user_args)
             else:
                 LOGGER.warning(f"No valid handler for TM with APID {apid} found")
+
+    @staticmethod
+    def handle_ccsds_packet_queue(
+        tm_queue: TelemetryQueueT,
+        apid: int,
+        handler: ApidTmHandlerBase,
+    ):
+        for tm_packet in tm_queue:
+            handler.handle_tm_for_apid(apid, tm_packet, handler.user_args)
