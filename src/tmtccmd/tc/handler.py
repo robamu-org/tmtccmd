@@ -20,3 +20,6 @@ class TcHandlerBase:
         user_arg: Any,
     ):
         pass
+
+    def feedback_call(self):
+        pass

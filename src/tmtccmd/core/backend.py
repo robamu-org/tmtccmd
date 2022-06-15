@@ -1,4 +1,5 @@
 import atexit
+import enum
 import time
 import sys
 from threading import Thread
@@ -7,7 +8,7 @@ from typing import Union, cast, Optional, Tuple
 
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
-from tmtccmd.core.base import BackendBase
+from tmtccmd.core.base import BackendBase, BackendResult, Request
 from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tm.definitions import TmTypes
@@ -47,6 +48,7 @@ class TmTcHandler(BackendBase):
         self.__service = init_service
         self.__op_code = init_opcode
         self.__apid = 0
+        self.__res = BackendResult(Request.NONE)
         self.__usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None
 
         # This flag could be used later to command the TMTC Client with a front-end
@@ -132,30 +134,6 @@ class TmTcHandler(BackendBase):
         self.daemon_receiver._apid = apid
 
     @staticmethod
-    def prepare_tmtc_handler_start(
-        hook_obj: TmTcHookBase,
-        com_if: CommunicationInterface,
-        tm_listener: TmListener,
-        tm_handler: TmHandler,
-        init_mode: int,
-        init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
-        init_opcode: str = "0",
-    ):
-        from multiprocessing import Process
-
-        tmtc_handler = TmTcHandler(
-            hook_obj=hook_obj,
-            com_if=com_if,
-            tm_listener=tm_listener,
-            init_mode=init_mode,
-            init_service=init_service,
-            init_opcode=init_opcode,
-            tm_handler=tm_handler,
-        )
-        tmtc_task = Process(target=TmTcHandler.start_handler, args=(tmtc_handler,))
-        return tmtc_task
-
-    @staticmethod
     def start_handler(executed_handler):
         if not isinstance(executed_handler, TmTcHandler):
             LOGGER.error("Unexpected argument, should be TmTcHandler!")
@@ -197,7 +175,7 @@ class TmTcHandler(BackendBase):
         if self.mode == CoreModeList.CONTINUOUS_MODE:
             self.daemon_receiver.start_daemon()
         if perform_op_immediately:
-            self.perform_operation()
+            self.periodic_op()
 
     def close_listener(self, join: bool = False, join_timeout_seconds: float = 1.0):
         """Closes the TM listener and the communication interface. This is started in a separarate
@@ -215,16 +193,30 @@ class TmTcHandler(BackendBase):
             if join:
                 close_thread.join(timeout=join_timeout_seconds)
 
-    def perform_operation(self):
-        """Periodic operation"""
+    def periodic_op(self) -> BackendResult:
+        """Periodic operation
+        :raises KeyboardInterrupt: Yields info output and then propagates the exception
+        :raises IOError: Yields informative output and propagates exception
+        :"""
         try:
-            self.__core_operation(self.one_shot_operation)
-        except KeyboardInterrupt:
+            return self.__core_operation(self.one_shot_operation)
+        except KeyboardInterrupt as e:
             LOGGER.info("Keyboard Interrupt.")
-            sys.exit()
-        except IOError:
+            raise e
+        except IOError as e:
             LOGGER.exception("IO Error occured")
-            sys.exit()
+            raise e
+
+    def __core_operation(self, one_shot: bool) -> BackendResult:
+        self.__handle_action()
+        if one_shot:
+            self.__res.req = Request.TERMINATION_NO_ERROR
+        else:
+            if self.mode == CoreModeList.IDLE:
+                self.__res.req = Request.DELAY_IDLE
+            elif self.mode == CoreModeList.LISTENER_MODE:
+                self.__res.req = Request.DELAY_LISTENER
+        return self.__res
 
     def __com_if_closing(self):
         self.__tm_listener.stop()
@@ -289,18 +281,6 @@ class TmTcHandler(BackendBase):
             except ImportError as error:
                 print(error)
                 LOGGER.error("Custom mode handling module not provided!")
-
-    def __core_operation(self, one_shot: bool):
-        if not one_shot:
-            while True:
-                self.__handle_action()
-                if self.mode == CoreModeList.IDLE:
-                    LOGGER.info("TMTC Client in idle mode")
-                    time.sleep(5)
-                elif self.mode == CoreModeList.LISTENER_MODE:
-                    time.sleep(1)
-        else:
-            self.__handle_action()
 
     def __prepare_tc_queue(self) -> Optional[TcQueueT]:
         service_queue = deque()

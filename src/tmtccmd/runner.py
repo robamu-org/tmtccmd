@@ -20,6 +20,7 @@ from tmtccmd.core.globals_manager import (
 )
 from tmtccmd.logging import get_console_logger
 from .config.globals import set_default_globals_pre_args_parsing
+from .tc.handler import TcHandlerBase
 
 LOGGER = get_console_logger()
 
@@ -69,7 +70,7 @@ def setup(setup_args: SetupArgs):
     __SETUP_WAS_CALLED = True
 
 
-def run(
+def start(
     tmtc_backend: BackendBase,
     tmtc_frontend: Union[FrontendBase, None] = None,
     app_name: str = "TMTC Commander",
@@ -180,9 +181,12 @@ def __get_backend_init_variables():
     return service, op_code, com_if, mode
 
 
-def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
+def create_default_tmtc_backend(
+    setup_args: SetupArgs, tm_handler: TmHandler, tc_handler: TcHandlerBase
+) -> BackendBase:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 
+    :param tc_handler:
     :param setup_args:
     :param tm_handler:
     :return:
@@ -219,6 +223,7 @@ def create_default_tmtc_backend(setup_args: SetupArgs, tm_handler: TmHandler):
         init_service=service,
         init_opcode=op_code,
         tm_handler=tm_handler,
+        tc_handler=tc_handler,
     )
     tmtc_backend.set_current_apid(apid=apid)
     tmtc_backend.one_shot_operation = not get_global(

@@ -1,4 +1,18 @@
+import enum
 from abc import abstractmethod
+
+
+class Request(enum.IntEnum):
+    NONE = 0
+    TERMINATION_NO_ERROR = 1
+    DELAY_IDLE = 2
+    DELAY_LISTENER = 3
+
+
+class BackendResult:
+    def __init__(self, req: Request):
+        self.req = req
+        self.mode_changed = False
 
 
 class BackendBase:
@@ -16,3 +30,7 @@ class BackendBase:
         :param mode:
         :return:
         """
+
+    @abstractmethod
+    def periodic_op(self) -> BackendResult:
+        pass

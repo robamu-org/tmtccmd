@@ -114,13 +114,13 @@ class WorkerThread(QObject):
                 self.tmtc_handler.one_shot_operation = True
                 # It is expected that the TMTC handler is in the according state to perform the
                 # operation
-                self.tmtc_handler.perform_operation()
+                self.tmtc_handler.periodic_op()
                 self.op_code = WorkerOperationsCodes.LISTENING
                 self.command_executed.emit()
             elif op_code == WorkerOperationsCodes.LISTENING:
                 self.tmtc_handler.one_shot_operation = True
                 self.tmtc_handler.set_mode(CoreModeList.LISTENER_MODE)
-                self.tmtc_handler.perform_operation()
+                self.tmtc_handler.periodic_op()
             elif op_code == WorkerOperationsCodes.IDLE:
                 pass
             else:

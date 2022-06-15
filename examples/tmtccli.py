@@ -36,7 +36,7 @@ def main():
         tm_handler=ccsds_handler,
     )
     tmtc_backend.usr_send_wrapper = (pre_send_cb, None)
-    tmtccmd.runner.run(tmtc_backend=tmtc_backend)
+    tmtccmd.runner.start(tmtc_backend=tmtc_backend)
 
 
 if __name__ == "__main__":
