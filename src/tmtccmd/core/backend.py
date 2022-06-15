@@ -7,6 +7,7 @@ from collections import deque
 from typing import Union, cast, Optional, Tuple
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
+from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
 from tmtccmd.logging import get_console_logger
@@ -263,14 +264,8 @@ class TmTcHandler(BackendBase):
                     )
                 self.__tm_listener.clear_reply_event()
         elif self.mode == CoreModeList.SEQUENTIAL_CMD_MODE:
-            service_queue = deque()
-            service_queue_packer = ServiceQueuePacker()
-            service_queue_packer.pack_service_queue_core(
-                service=self.__service,
-                service_queue=service_queue,
-                op_code=self.__op_code,
-            )
-            if not self.__com_if.valid:
+            service_queue = self.__prepare_tc_queue()
+            if service_queue is None:
                 return
             LOGGER.info("Performing sequential command operation")
             sender_and_receiver = SequentialCommandSenderReceiver(
@@ -284,14 +279,8 @@ class TmTcHandler(BackendBase):
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
         elif self.mode == CoreModeList.CONTINUOUS_MODE:
-            service_queue = deque()
-            service_queue_packer = ServiceQueuePacker()
-            service_queue_packer.pack_service_queue_core(
-                service=self.__service,
-                service_queue=service_queue,
-                op_code=self.__op_code,
-            )
-            if not self.__com_if.valid:
+            service_queue = self.__prepare_tc_queue()
+            if service_queue is None:
                 return
             LOGGER.info("Performing service command operation")
             self.daemon_receiver.set_tc_queue(service_queue)
@@ -317,3 +306,15 @@ class TmTcHandler(BackendBase):
                     time.sleep(1)
         else:
             self.__handle_action()
+
+    def __prepare_tc_queue(self) -> Optional[TcQueueT]:
+        service_queue = deque()
+        service_queue_packer = ServiceQueuePacker()
+        service_queue_packer.pack_service_queue_core(
+            service=self.__service,
+            service_queue=service_queue,
+            op_code=self.__op_code,
+        )
+        if not self.__com_if.valid:
+            return None
+        return service_queue
