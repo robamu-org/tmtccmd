@@ -174,18 +174,24 @@ class TmTcHandler(BackendBase):
             keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if
         )
 
+    def __listener_io_error_handler(self, ctx: str):
+        LOGGER.error(f"Communication Interface could not be {ctx}")
+        LOGGER.info("TM listener will not be started")
+        if self.exit_on_com_if_init_failure:
+            LOGGER.error("Closing TMTC commander..")
+            self.__com_if.close()
+            sys.exit(1)
+
     def start_listener(self, perform_op_immediately: bool = True):
         try:
             self.__com_if.open()
-            self.__tm_listener.start()
-            self.__com_if_active = True
         except IOError:
-            LOGGER.error("Communication Interface could not be opened!")
-            LOGGER.info("TM listener will not be started")
-            if self.exit_on_com_if_init_failure:
-                LOGGER.error("Closing TMTC commander..")
-                self.__com_if.close()
-                sys.exit(1)
+            self.__listener_io_error_handler("opened")
+        try:
+            self.__tm_listener.start()
+        except IOError:
+            self.__listener_io_error_handler("started")
+        self.__com_if_active = True
         if self.mode == CoreModeList.CONTINUOUS_MODE:
             self.daemon_receiver.start_daemon()
         if perform_op_immediately:

@@ -93,7 +93,11 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def open(self, args: any = None):
         self.__tm_thread_kill_signal.clear()
-        self.set_up_socket()
+        try:
+            self.set_up_socket()
+        except IOError as e:
+            LOGGER.exception("Issues setting up the TCP socket")
+            raise e
         self.set_up_tcp_thread()
         self.__tcp_conn_thread.start()
 
@@ -111,7 +115,7 @@ class TcpIpTcpComIF(CommunicationInterface):
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
-        if self.__tcp_conn_thread != None:
+        if self.__tcp_conn_thread is not None:
             if self.__tcp_conn_thread.is_alive():
                 self.__tcp_conn_thread.join(self.tm_polling_frequency)
             if self.connected:
@@ -130,6 +134,8 @@ class TcpIpTcpComIF(CommunicationInterface):
             if not self.connected:
                 self.set_up_socket()
             self.__tcp_socket.sendto(data, self.target_address)
+        except BrokenPipeError:
+            LOGGER.exception("Communication Interface setup might have failed")
         except ConnectionRefusedError or OSError:
             self.connected = False
             self.__tcp_socket.close()
