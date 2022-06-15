@@ -134,7 +134,6 @@ class CfdpHandler:
     def state_machine(self):
         """Perform the CFDP state machine
 
-
         :raises SequenceNumberOverflow: Overflow of sequence number occured. In this case, the
             number will be reset but no operation will occured and the state machine needs
             to be called again

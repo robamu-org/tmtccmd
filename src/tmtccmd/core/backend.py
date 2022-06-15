@@ -9,6 +9,7 @@ from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.core.base import BackendBase
 from tmtccmd.tc.definitions import TcQueueT
+from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandler
 from tmtccmd.logging import get_console_logger
@@ -34,6 +35,7 @@ class TmTcHandler(BackendBase):
         com_if: CommunicationInterface,
         tm_listener: TmListener,
         tm_handler: TmHandler,
+        tc_handler: TcHandlerBase,
         init_mode: int,
         init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
         init_opcode: str = "0",
@@ -277,6 +279,8 @@ class TmTcHandler(BackendBase):
             LOGGER.info("Performing service command operation")
             self.daemon_receiver.set_tc_queue(service_queue)
             self.daemon_receiver.send_queue_tc_and_return()
+        elif self.mode == CoreModeList.FEEDBACK_MODE:
+            pass
         else:
             try:
                 self.__hook_obj.perform_mode_operation(
