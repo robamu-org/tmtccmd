@@ -29,7 +29,9 @@ def parse_fsfw_events_csv(csv_file: str) -> Optional[EventDictT]:
         with open(csv_file) as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=";")
             info = EventInfo()
-            for row in csv_reader:
+            for idx, row in enumerate(csv_reader):
+                if idx == 0:
+                    continue
                 info.id = int(row[0])
                 info.name = row[2]
                 info.severity = row[3]
@@ -47,9 +49,15 @@ def parse_fsfw_returnvalues_csv(csv_file: str) -> Optional[RetvalDictT]:
         with open(csv_file) as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=";")
             info = RetvalInfo()
-            for row in csv_reader:
-                # Parse hex string
-                info.id = int(row[0], 16)
+            for idx, row in enumerate(csv_reader):
+                if idx == 0:
+                    continue
+                # Parse hex
+                id_col = str(row[0])
+                if "0x" in id_col:
+                    info.id = int(id_col, 0)
+                else:
+                    info.id = int(id_col, 16)
                 info.name = row[1]
                 info.info = row[2]
                 info.if_name = row[5]
