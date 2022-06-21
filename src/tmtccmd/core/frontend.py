@@ -1,10 +1,4 @@
-#!/usr/bin/env python3
-"""
-@file           tmtc_frontend.py
-@date           01.11.2019
-@brief          This is part of the TMTC client developed by the SOURCE project by KSat
-@description    GUI is still work-in-progress
-@manual
+"""PyQt front end components for the tmtccmd framework.
 @author         R. Mueller, P. Scheurenbrand, D. Nguyen
 """
 import enum
@@ -43,7 +37,7 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.config as config_module
-
+from tmtccmd.tc.definitions import ProcedureInfo
 
 LOGGER = get_console_logger()
 
@@ -119,7 +113,7 @@ class WorkerThread(QObject):
                 self.command_executed.emit()
             elif op_code == WorkerOperationsCodes.LISTENING:
                 self.tmtc_handler.one_shot_operation = True
-                self.tmtc_handler.set_mode(CoreModeList.LISTENER_MODE)
+                self.tmtc_handler.mode = CoreModeList.LISTENER_MODE
                 self.tmtc_handler.periodic_op()
             elif op_code == WorkerOperationsCodes.IDLE:
                 pass
@@ -221,9 +215,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
-        self._tmtc_handler.set_service(self._current_service)
-        self._tmtc_handler.set_opcode(self._current_op_code)
-        self._tmtc_handler.set_mode(CoreModeList.SEQUENTIAL_CMD_MODE)
+        self._tmtc_handler.current_proc_info = ProcedureInfo(
+            self._current_service, self._current_op_code
+        )
+        self._tmtc_handler.mode = CoreModeList.SEQUENTIAL_CMD_MODE
         self.__worker.set_op_code(WorkerOperationsCodes.SEQUENTIAL_COMMANDING)
         self.__worker.command_executed.connect(self.__finish_seq_cmd_op)
 

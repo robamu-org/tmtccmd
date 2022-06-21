@@ -1,16 +1,12 @@
 import abc
-from typing import Callable, Dict, Optional, Tuple, List, Type, Any
+from typing import Dict, Optional, Tuple, List
 
-from tmtccmd.tm.handler import TmHandler
-from tmtccmd.cfdp.handler import CfdpHandler
+from tmtccmd.tm.handler import TmHandlerBase
 from tmtccmd.tm.definitions import TelemetryQueueT, TmTypes
 from tmtccmd.sendreceive.tm_listener import QueueListT
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
-
-CcsdsCallbackT = Callable[[int, bytes, Any], None]
 
 
 class ApidTmHandlerBase:
@@ -29,7 +25,7 @@ class ApidTmHandlerBase:
 HandlerDictT = Dict[int, ApidTmHandlerBase]
 
 
-class CcsdsTmHandler(TmHandler):
+class CcsdsTmHandler(TmHandlerBase):
     """Generic CCSDS handler class. The user can create an instance of this class to handle
     CCSDS packets with different APIDs"""
 

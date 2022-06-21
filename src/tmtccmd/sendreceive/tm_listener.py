@@ -1,9 +1,4 @@
-"""
-@file       tmtcc_tm_listener.py
-@date       01.11.2019
-@brief      Separate class to listen to telecommands.
-@author     R. Mueller
-"""
+"""Contains the TmListener which can be used to listen to Telemetry in the background"""
 import sys
 import time
 import threading

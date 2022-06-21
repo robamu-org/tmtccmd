@@ -10,7 +10,7 @@ from tmtccmd.config import SetupArgs, TmTcHookBase, CoreGlobalIds, pass_cli_args
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm.definitions import TmTypes
-from tmtccmd.tm.handler import TmHandler
+from tmtccmd.tm.handler import TmHandlerBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.core.globals_manager import (
     update_global,
@@ -20,6 +20,7 @@ from tmtccmd.core.globals_manager import (
 )
 from tmtccmd.logging import get_console_logger
 from .config.globals import set_default_globals_pre_args_parsing
+from .tc.definitions import ProcedureInfo
 from .tc.handler import TcHandlerBase
 
 LOGGER = get_console_logger()
@@ -182,7 +183,7 @@ def __get_backend_init_variables():
 
 
 def create_default_tmtc_backend(
-    setup_args: SetupArgs, tm_handler: TmHandler, tc_handler: TcHandlerBase
+    setup_args: SetupArgs, tm_handler: TmHandlerBase, tc_handler: TcHandlerBase
 ) -> BackendBase:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 
@@ -219,13 +220,12 @@ def create_default_tmtc_backend(
         hook_obj=setup_args.hook_obj,
         com_if=com_if,
         tm_listener=tm_listener,
-        init_mode=mode,
-        init_service=service,
-        init_opcode=op_code,
         tm_handler=tm_handler,
         tc_handler=tc_handler,
     )
-    tmtc_backend.set_current_apid(apid=apid)
+    tmtc_backend.mode = mode
+    tmtc_backend.current_proc_info = ProcedureInfo(service, op_code)
+    tmtc_backend.apid = apid
     tmtc_backend.one_shot_operation = not get_global(
         CoreGlobalIds.USE_LISTENER_AFTER_OP
     )

@@ -9,6 +9,7 @@ LOGGER = get_console_logger()
 
 def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
     do_prompt_com_if = False
+    com_if_string = ""
     if not check_json_file(json_cfg_path=json_cfg_path):
         do_prompt_com_if = True
     if not do_prompt_com_if:
@@ -31,6 +32,7 @@ def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
 
 
 def prompt_com_if(com_if_dict: dict) -> str:
+    com_if_string = ""
     while True:
         com_if_list = []
         for index, com_if_value in enumerate(com_if_dict.items()):

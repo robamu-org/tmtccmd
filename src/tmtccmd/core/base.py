@@ -25,12 +25,5 @@ class BackendBase:
         """Start the backend. Raise RuntimeError on failure"""
 
     @abstractmethod
-    def set_mode(self, mode: int):
-        """Set backend mode
-        :param mode:
-        :return:
-        """
-
-    @abstractmethod
     def periodic_op(self) -> BackendResult:
         pass

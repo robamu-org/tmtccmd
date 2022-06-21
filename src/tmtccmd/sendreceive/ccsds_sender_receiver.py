@@ -2,20 +2,20 @@
 @author: R. Mueller
 """
 import time
-from typing import Optional, Tuple
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds, UsrSendCbT
+from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.logging import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.tc.definitions import TcQueueEntryT
+from tmtccmd.tc.definitions import TcQueueEntryBase
 from tmtccmd.core.globals_manager import get_global
+from tmtccmd.tc.handler import TcHandlerBase
 
 LOGGER = get_console_logger()
 
 
-class CommandSenderReceiver:
+class CcsdsCommandSenderReceiver:
     """
     This is the generic CommandSenderReceiver object. All TMTC objects inherit this object,
     for example specific implementations (e.g. SingleCommandSenderReceiver)
@@ -26,8 +26,8 @@ class CommandSenderReceiver:
         com_if: CommunicationInterface,
         tm_listener: TmListener,
         tm_handler: CcsdsTmHandler,
+        tc_handler: TcHandlerBase,
         apid: int,
-        usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None,
     ):
 
         """
@@ -36,13 +36,9 @@ class CommandSenderReceiver:
         """
         self._tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
         self._tm_handler = tm_handler
+        self._tc_handler = tc_handler
         self._tc_send_timeout_factor = get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR)
         self._apid = apid
-        self._usr_send_cb: Optional[UsrSendCbT] = None
-        self._usr_send_args: Optional[any] = None
-        if usr_send_wrapper is not None:
-            self._usr_send_cb = usr_send_wrapper[0]
-            self._usr_send_args = usr_send_wrapper[1]
 
         if isinstance(com_if, CommunicationInterface):
             self._com_if = com_if
@@ -131,7 +127,7 @@ class CommandSenderReceiver:
             return False
 
     @staticmethod
-    def check_queue_entry_static(tc_queue_entry: TcQueueEntryT) -> bool:
+    def check_queue_entry_static(tc_queue_entry: TcQueueEntryBase) -> bool:
         """Static method to check whether a queue entry is a valid telecommand"""
         queue_entry_first, queue_entry_second = tc_queue_entry
         if isinstance(queue_entry_first, str):
@@ -144,7 +140,7 @@ class CommandSenderReceiver:
         else:
             return False
 
-    def check_queue_entry(self, tc_queue_entry: TcQueueEntryT) -> bool:
+    def check_queue_entry(self, tc_queue_entry: TcQueueEntryBase) -> bool:
         """
         Checks whether the entry in the pus_tc queue is a telecommand.
         The last telecommand and respective information are stored in _last_tc

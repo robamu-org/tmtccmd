@@ -1,27 +1,24 @@
 import atexit
-import enum
 import time
 import sys
 from threading import Thread
 from collections import deque
-from typing import Union, cast, Optional, Tuple
+from typing import cast, Optional
 
 from tmtccmd.config.hook import TmTcHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.core.base import BackendBase, BackendResult, Request
-from tmtccmd.tc.definitions import TcQueueT
+from tmtccmd.tc.definitions import TcQueueT, ProcedureInfo
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tm.definitions import TmTypes
-from tmtccmd.tm.handler import TmHandler
+from tmtccmd.tm.handler import TmHandlerBase
 from tmtccmd.logging import get_console_logger
-from tmtccmd.sendreceive.sequential_sender_receiver import (
-    SequentialCommandSenderReceiver,
-    UsrSendCbT,
+from tmtccmd.sendreceive.seq_ccsds_sender_receiver import (
+    SequentialCcsdsSenderReceiver,
 )
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tc.packer import ServiceQueuePacker
 
 
 LOGGER = get_console_logger()
@@ -35,27 +32,23 @@ class TmTcHandler(BackendBase):
         hook_obj: TmTcHookBase,
         com_if: CommunicationInterface,
         tm_listener: TmListener,
-        tm_handler: TmHandler,
+        tm_handler: TmHandlerBase,
         tc_handler: TcHandlerBase,
-        init_mode: int,
-        init_service: Union[str, int] = CoreServiceList.SERVICE_17.value,
-        init_opcode: str = "0",
     ):
-        self.mode = init_mode
+        self.mode = CoreModeList.LISTENER_MODE
         self.com_if_key = com_if.get_id()
         self.__hook_obj = hook_obj
         self.__com_if_active = False
-        self.__service = init_service
-        self.__op_code = init_opcode
         self.__apid = 0
         self.__res = BackendResult(Request.NONE)
-        self.__usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None
+        self.__tc_handler = tc_handler
 
         # This flag could be used later to command the TMTC Client with a front-end
         self.one_shot_operation = False
 
         self.__com_if = com_if
         self.__tm_listener = tm_listener
+        self._current_proc_info = ProcedureInfo(CoreServiceList.SERVICE_17.value, "0")
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
             for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
@@ -66,13 +59,13 @@ class TmTcHandler(BackendBase):
         self.single_command_package = bytearray(), None
 
         # WIP: optionally having a receiver run in the background
-        self.daemon_receiver = SequentialCommandSenderReceiver(
+        self.daemon_receiver = SequentialCcsdsSenderReceiver(
             com_if=self.__com_if,
             tm_handler=self.__tm_handler,
             tm_listener=self.__tm_listener,
             tc_queue=deque(),
+            tc_handler=tc_handler,
             apid=self.__apid,
-            usr_send_wrapper=self.usr_send_wrapper,
         )
 
     def get_com_if_id(self):
@@ -94,42 +87,23 @@ class TmTcHandler(BackendBase):
                 "reassigning a new one"
             )
 
-    @property
-    def usr_send_wrapper(self):
-        return self.__usr_send_wrapper
-
-    @usr_send_wrapper.setter
-    def usr_send_wrapper(self, usr_send_wrapper: UsrSendCbT):
-        self.__usr_send_wrapper = usr_send_wrapper
-
     def is_com_if_active(self):
         return self.__com_if_active
 
-    def set_mode(self, mode: int):
-        """
-        Set the mode which will determine what perform_operation does.
-        """
-        self.mode = mode
+    @property
+    def current_proc_info(self) -> ProcedureInfo:
+        return self._current_proc_info
 
-    def get_mode(self) -> int:
-        return self.mode
+    @current_proc_info.setter
+    def current_proc_info(self, proc_info: ProcedureInfo):
+        self._current_proc_info = proc_info
 
-    def set_service(self, service: Union[str, int]):
-        self.__service = service
-
-    def set_opcode(self, op_code: str):
-        self.__op_code = op_code
-
-    def get_service(self) -> Union[str, int]:
-        return self.__service
-
-    def get_opcode(self) -> str:
-        return self.__op_code
-
-    def get_current_apid(self) -> int:
+    @property
+    def apid(self) -> int:
         return self.__apid
 
-    def set_current_apid(self, apid: int):
+    @apid.setter
+    def apid(self, apid: int):
         self.__apid = apid
         self.daemon_receiver._apid = apid
 
@@ -254,13 +228,13 @@ class TmTcHandler(BackendBase):
             if service_queue is None:
                 return
             LOGGER.info("Performing sequential command operation")
-            sender_and_receiver = SequentialCommandSenderReceiver(
+            sender_and_receiver = SequentialCcsdsSenderReceiver(
                 com_if=self.__com_if,
                 tm_handler=self.__tm_handler,
                 tm_listener=self.__tm_listener,
                 tc_queue=service_queue,
                 apid=self.__apid,
-                usr_send_wrapper=self.usr_send_wrapper,
+                tc_handler=self.__tc_handler,
             )
             sender_and_receiver.send_queue_tc_and_receive_tm_sequentially()
             self.mode = CoreModeList.LISTENER_MODE
@@ -283,13 +257,7 @@ class TmTcHandler(BackendBase):
                 LOGGER.error("Custom mode handling module not provided!")
 
     def __prepare_tc_queue(self) -> Optional[TcQueueT]:
-        service_queue = deque()
-        service_queue_packer = ServiceQueuePacker()
-        service_queue_packer.pack_service_queue_core(
-            service=self.__service,
-            service_queue=service_queue,
-            op_code=self.__op_code,
-        )
+        service_queue = self.__tc_handler.pass_queue(self.current_proc_info)
         if not self.__com_if.valid:
             return None
         return service_queue

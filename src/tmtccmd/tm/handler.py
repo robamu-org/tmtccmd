@@ -1,7 +1,7 @@
 from tmtccmd.tm.definitions import TmTypes
 
 
-class TmHandler:
+class TmHandlerBase:
     def __init__(self, tm_type: TmTypes):
         self._tm_type = tm_type
 

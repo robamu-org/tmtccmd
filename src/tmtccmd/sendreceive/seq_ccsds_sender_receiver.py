@@ -1,37 +1,30 @@
-#!/usr/bin/python3.8
-"""
-@file   tmtcc_sequential_sender_receiver.py
-@date   01.11.2019
-@brief  Used to send multiple TCs in sequence and listen for replies after each sent TC
-"""
+"""Used to send multiple TCs in sequence and listen for replies after each sent TC"""
 import sys
 import time
-from typing import Optional, Tuple
+import threading
 
-from tmtccmd.config.definitions import UsrSendCbT
-from tmtccmd.sendreceive.cmd_sender_receiver import CommandSenderReceiver
+from tmtccmd.sendreceive.ccsds_sender_receiver import CcsdsCommandSenderReceiver
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.definitions import TcQueueT
-
-import threading
+from tmtccmd.tc.handler import TcHandlerBase
 
 LOGGER = get_console_logger()
 
 
-class SequentialCommandSenderReceiver(CommandSenderReceiver):
+class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
     """Specific implementation of CommandSenderReceiver to send multiple telecommands in sequence"""
 
     def __init__(
         self,
-        com_if: CommunicationInterface,
-        tm_handler: CcsdsTmHandler,
-        apid: int,
-        tm_listener: TmListener,
         tc_queue: TcQueueT,
-        usr_send_wrapper: Optional[Tuple[UsrSendCbT, any]] = None,
+        com_if: CommunicationInterface,
+        tm_listener: TmListener,
+        tm_handler: CcsdsTmHandler,
+        tc_handler: TcHandlerBase,
+        apid: int,
     ):
         """
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
@@ -43,8 +36,9 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             tm_listener=tm_listener,
             tm_handler=tm_handler,
             apid=apid,
-            usr_send_wrapper=usr_send_wrapper,
+            tc_handler=tc_handler,
         )
+        self._tc_handler = tc_handler
         self._tc_queue = tc_queue
         self.__all_replies_received = False
         # This flag can be used to notify the sender to send the next TC
@@ -183,20 +177,10 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
             return False
         if self.wait_period_ongoing():
             return False
-        tc_queue_tuple = self._tc_queue.pop()
-        if self.check_queue_entry(tc_queue_tuple):
+        next_queue_entry = self._tc_queue.pop()
+        if self.check_queue_entry(next_queue_entry):
             self._start_time = time.time()
-            packet, cmd_info = tc_queue_tuple
-            if self._usr_send_cb is not None:
-                try:
-                    self._usr_send_cb(
-                        packet, self._com_if, cmd_info, self._usr_send_args
-                    )
-                except TypeError:
-                    LOGGER.exception("User TC send callback invalid")
-            else:
-                self._com_if.send(packet)
-            return True
+            self._tc_handler.pre_send_cb(next_queue_entry, self._com_if)
 
         # queue empty.
         elif not self._tc_queue:
@@ -208,14 +192,7 @@ class SequentialCommandSenderReceiver(CommandSenderReceiver):
                 self.__all_replies_received = True
             return False
         else:
-            if self._usr_send_cb is not None:
-                queue_cmd, queue_cmd_arg = tc_queue_tuple
-                try:
-                    self._usr_send_cb(
-                        queue_cmd, self._com_if, queue_cmd_arg, self._usr_send_args
-                    )
-                except TypeError:
-                    LOGGER.exception("User TC send callback invalid")
+            self._tc_handler.pre_send_cb(next_queue_entry, self._com_if)
             # If the queue entry was not a telecommand, send next telecommand
             self.__check_next_tc_send()
             return True
