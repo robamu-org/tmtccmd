@@ -8,7 +8,7 @@ from tmtccmd.tc.definitions import (
 )
 
 
-class QueueHelper:
+class QueueWrapper:
     def __init__(self, queue: TcQueueT):
         self.queue = queue
 

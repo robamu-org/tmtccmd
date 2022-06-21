@@ -51,7 +51,12 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
             target=self.__perform_daemon_operation, daemon=True
         )
 
-    def set_tc_queue(self, tc_queue: TcQueueT):
+    @property
+    def tc_queue(self):
+        return self._tc_queue
+
+    @tc_queue.setter
+    def tc_queue(self, tc_queue: TcQueueT):
         self._tc_queue = tc_queue
 
     def send_queue_tc_and_receive_tm_sequentially(self):
