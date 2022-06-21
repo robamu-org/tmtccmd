@@ -2,13 +2,23 @@
 @author: R. Mueller
 """
 import time
+from typing import Optional
+
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
 from tmtccmd.logging import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.sendreceive.tm_listener import TmListener
-from tmtccmd.tc.definitions import TcQueueEntryBase
+from tmtccmd.tc.definitions import (
+    TcQueueEntryBase,
+    TcQueueEntryType,
+    cast_pus_tc_entry_from_base,
+    cast_raw_tc_entry_from_base,
+    cast_print_entry_from_base,
+    cast_wait_entry_from_base,
+    cast_timeout_entry_from_base,
+)
 from tmtccmd.core.globals_manager import get_global
 from tmtccmd.tc.handler import TcHandlerBase
 
@@ -57,8 +67,8 @@ class CcsdsCommandSenderReceiver:
         self._timeout_counter = 0
 
         # needed to store last actual TC packet from queue
-        self._last_tc = bytearray()
-        self._last_tc_obj = None
+        self._last_queue_entry: Optional[TcQueueEntryBase] = None
+        self._last_tc: Optional[TcQueueEntryBase] = None
 
         # this flag can be used to notify when the operation is finished
         self._operation_pending = False
@@ -140,41 +150,37 @@ class CcsdsCommandSenderReceiver:
         else:
             return False
 
-    def check_queue_entry(self, tc_queue_entry: TcQueueEntryBase) -> bool:
+    def check_queue_entry(self, queue_entry: TcQueueEntryBase) -> bool:
         """
         Checks whether the entry in the pus_tc queue is a telecommand.
-        The last telecommand and respective information are stored in _last_tc
-        and _last_tc_info
-        :param tc_queue_entry:
+        :param queue_entry: Generic queue entry
         :return: True if queue entry is telecommand, False if it is not
         """
-        queue_entry_first, queue_entry_second = tc_queue_entry
-        queue_entry_is_telecommand = False
+        if not isinstance(queue_entry, TcQueueEntryBase):
+            LOGGER.warning("Invalid queue entry detected")
+            raise ValueError("Invalid queue entry detected")
 
-        if isinstance(queue_entry_first, str):
-            LOGGER.warning("Invalid telecommand. Queue entry is a string!")
-            return queue_entry_is_telecommand
-
-        if queue_entry_first == QueueCommands.WAIT:
-            wait_time = queue_entry_second
-            self._wait_period = wait_time
+        if queue_entry.etype == TcQueueEntryType.WAIT:
+            wait_entry = cast_wait_entry_from_base(queue_entry)
+            self._wait_period = wait_entry.wait_time
             self._wait_start = time.time()
             self._wait_end = self._wait_start + self._wait_period
             LOGGER.info(f"Waiting for {self._wait_period} seconds.")
-        # printout optimized for LOGGER and debugging
-        elif queue_entry_first == QueueCommands.PRINT:
-            LOGGER.info(queue_entry_second)
-        elif queue_entry_first == QueueCommands.RAW_PRINT:
-            LOGGER.info(f"Raw command: {queue_entry_second.hex(sep=',')}")
-        elif queue_entry_first == QueueCommands.SET_TIMEOUT:
-            self._tm_timeout = queue_entry_second
-            self._tm_listener.seq_timeout = queue_entry_second
-        else:
-            self._last_tc, self._last_tc_obj = (queue_entry_first, queue_entry_second)
-            return True
-        return queue_entry_is_telecommand
+        elif queue_entry.etype == TcQueueEntryType.SET_TIMEOUT:
+            timeout_entry = cast_timeout_entry_from_base(queue_entry)
+            self._tm_timeout = timeout_entry.timeout_secs
+            self._tm_listener.seq_timeout = timeout_entry.timeout_secs
+        is_tc = False
+        if (
+            queue_entry.etype == TcQueueEntryType.RAW_TC
+            or queue_entry.etype == TcQueueEntryType.PUS_TC
+        ):
+            self._last_tc = queue_entry
+            is_tc = True
+        self._last_queue_entry = queue_entry
+        return is_tc
 
-    def _check_for_tm_timeout(self, resend_tc: bool = False) -> bool:
+    def _check_for_tm_timeout(self) -> bool:
         """
         Checks whether a timeout after sending a telecommand has occured and sends telecommand
         again. If resending reached certain counter, exit the program.
@@ -187,14 +193,7 @@ class CcsdsCommandSenderReceiver:
             self._operation_pending = False
         self._elapsed_time = time.time() - self._start_time
         if self._elapsed_time >= self._tm_timeout * self._tc_send_timeout_factor:
-            if resend_tc:
-                LOGGER.info("CommandSenderReceiver: Timeout, sending TC again !")
-                self._com_if.send(self._last_tc)
-                self._timeout_counter = self._timeout_counter + 1
-                self._start_time = time.time()
-                return False
-            else:
-                # todo: we could also stop sending and clear the TC queue
-                return True
+            # TODO: The user should be able to select via Python code whether TCs should be resent
+            return True
         else:
             return False
