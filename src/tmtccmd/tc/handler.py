@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Optional
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.core.backend import ProcedureInfo
+from tmtccmd.core.ccsds_backend import ProcedureInfo
 from tmtccmd.tc.definitions import TcQueueEntryBase
 
 

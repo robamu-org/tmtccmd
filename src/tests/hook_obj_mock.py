@@ -8,7 +8,7 @@ from tmtccmd.config.com_if import CommunicationInterface
 from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.config.definitions import ServiceOpCodeDictT, CoreModeList
 from tmtccmd.tm.pus_3_hk_base import Service3Base
-from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tc.definitions import QueueHelper
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
@@ -111,7 +111,7 @@ class TestHookObj(TmTcCfgHookBase):
         return get_default_tmtc_defs()
 
     @abstractmethod
-    def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
+    def perform_mode_operation(self, tmtc_backend: CcsdsTmtcBackend, mode: int):
         """Perform custom mode operations
         :param tmtc_backend:
         :param mode:

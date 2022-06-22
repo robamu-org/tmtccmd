@@ -4,7 +4,7 @@ from typing import Union, Tuple
 from tmtccmd.config.definitions import ServiceOpCodeDictT
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase, ObjectIdDictT
 from tmtccmd.logging import get_console_logger
-from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tc.definitions import QueueHelper
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
@@ -28,7 +28,7 @@ class ExampleHookClass(TmTcCfgHookBase):
             json_cfg_path=self.json_cfg_path,
         )
 
-    def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):
+    def perform_mode_operation(self, tmtc_backend: CcsdsTmtcBackend, mode: int):
         LOGGER.info("Mode operation hook was called")
         pass
 

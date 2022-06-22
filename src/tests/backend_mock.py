@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.config.com_if import create_communication_interface_default
 from tmtccmd.sendreceive.ccsds_tm_listener import CcsdsTmListener
@@ -9,7 +9,7 @@ from tmtccmd.config.definitions import CoreComInterfaces, CoreModeList
 from tmtccmd.core.frontend_base import FrontendBase
 
 
-def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
+def create_backend_mock(tm_handler: CcsdsTmHandler) -> CcsdsTmtcBackend:
     tmtc_printer = FsfwTmTcPrinter(display_mode=DisplayMode.LONG, file_logger=None)
     com_if = create_communication_interface_default(
         com_if_key=CoreComInterfaces.DUMMY.value,
@@ -17,7 +17,7 @@ def create_backend_mock(tm_handler: CcsdsTmHandler) -> TmTcHandler:
     )
     tm_listener = CcsdsTmListener(com_if=com_if, seq_timeout=3.0)
     # The global variables are set by the argument parser.
-    tmtc_backend = TmTcHandler(
+    tmtc_backend = CcsdsTmtcBackend(
         com_if=com_if,
         tm_listener=tm_listener,
         init_mode=CoreModeList.IDLE,

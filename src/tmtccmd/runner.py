@@ -7,7 +7,7 @@ from spacepackets.ecss.conf import get_default_tc_apid
 
 from tmtccmd import __version__
 from tmtccmd.config import SetupArgs, TmTcCfgHookBase, CoreGlobalIds
-from tmtccmd.core.backend import BackendBase
+from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandlerBase
@@ -162,11 +162,11 @@ def __start_tmtc_commander_qt_gui(
         if tmtc_frontend is None:
             from tmtccmd.core.frontend import TmTcFrontend
             from tmtccmd.config.cfg_hook import get_global_hook_obj
-            from tmtccmd.core.backend import TmTcHandler
+            from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 
             tmtc_frontend = TmTcFrontend(
                 hook_obj=get_global_hook_obj(),
-                tmtc_backend=cast(TmTcHandler, tmtc_backend),
+                tmtc_backend=cast(CcsdsTmtcBackend, tmtc_backend),
                 app_name=app_name,
             )
         tmtc_frontend.start(app)
@@ -194,7 +194,7 @@ def create_default_tmtc_backend(
     :return:
     """
     global __SETUP_WAS_CALLED
-    from tmtccmd.core.backend import TmTcHandler
+    from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
     from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
     from typing import cast
 
@@ -217,7 +217,7 @@ def create_default_tmtc_backend(
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
     tm_listener = CcsdsTmListener(com_if=com_if, seq_timeout=tm_timeout)
     # The global variables are set by the argument parser.
-    tmtc_backend = TmTcHandler(
+    tmtc_backend = CcsdsTmtcBackend(
         hook_obj=setup_args.hook_obj,
         com_if=com_if,
         tm_listener=tm_listener,

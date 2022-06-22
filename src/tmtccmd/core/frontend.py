@@ -29,7 +29,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
 from tmtccmd.core.frontend_base import FrontendBase
-from tmtccmd.core.backend import TmTcHandler
+from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces
 from tmtccmd.config.cfg_hook import get_global_hook_obj
@@ -83,7 +83,7 @@ class WorkerThread(QObject):
     disconnected = pyqtSignal()
     command_executed = pyqtSignal()
 
-    def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: TmTcHandler):
+    def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: CcsdsTmtcBackend):
         super(QObject, self).__init__()
         self.op_code = op_code
         self.tmtc_handler = tmtc_handler
@@ -133,7 +133,7 @@ class RunnableThread(QRunnable):
 
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(
-        self, hook_obj: TmTcCfgHookBase, tmtc_backend: TmTcHandler, app_name: str
+        self, hook_obj: TmTcCfgHookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str
     ):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
@@ -336,7 +336,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         for com_if_key, com_if_value in all_com_ifs.items():
             com_if_combo_box.addItem(com_if_value)
             self._com_if_list.append((com_if_key, com_if_value))
-            if self._tmtc_handler.get_com_if_id() == com_if_key:
+            if self._tmtc_handler.com_if_id() == com_if_key:
                 com_if_combo_box.setCurrentIndex(index)
             index += 1
         com_if_combo_box.currentIndexChanged.connect(self.__com_if_sel_index_changed)
