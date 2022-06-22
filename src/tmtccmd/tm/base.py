@@ -83,7 +83,7 @@ class PusTmBase(PusTmInterface):
 
     @property
     def ssc(self) -> int:
-        return self.pus_tm.ssc
+        return self.pus_tm.seq_count
 
     @property
     def valid(self):
@@ -138,15 +138,15 @@ class PusTmInfoBase(PusTmInfoInterface):
         """
         content_list.append(f"{self.pus_tm.service}")
         content_list.append(f"{self.pus_tm.subservice}")
-        content_list.append(f"{self.pus_tm.secondary_packet_header.message_counter}")
+        content_list.append(f"{self.pus_tm.pus_tm_sec_header.message_counter}")
         content_list.append(
-            f"{self.pus_tm.secondary_packet_header.time.return_unix_seconds()}"
+            f"{self.pus_tm.pus_tm_sec_header.time.return_unix_seconds()}"
         )
         content_list.append(
-            f"{self.pus_tm.secondary_packet_header.time.return_time_string()}"
+            f"{self.pus_tm.pus_tm_sec_header.time.return_time_string()}"
         )
-        content_list.append(f"0x{self.pus_tm.space_packet_header.apid:02x}")
-        content_list.append(f"{self.pus_tm.space_packet_header.ssc}")
+        content_list.append(f"0x{self.pus_tm.sp_header.apid:02x}")
+        content_list.append(f"{self.pus_tm.sp_header.seq_count}")
         if self.pus_tm.valid:
             content_list.append("Yes")
         else:

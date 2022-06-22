@@ -66,4 +66,4 @@ class TcSchedReqId:
 
     @classmethod
     def build_from_tc(cls, tc: PusTelecommand) -> TcSchedReqId:
-        return TcSchedReqId(tc.data_field_header.source_id, tc.apid, tc.ssc)
+        return TcSchedReqId(tc.pus_tc_sec_header.source_id, tc.apid, tc.seq_count)

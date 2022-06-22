@@ -2,7 +2,7 @@
 """
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ccsds.spacepacket import (
-    get_space_packet_sequence_control,
+    get_sp_psc_raw,
     SequenceFlags,
 )
 
@@ -76,9 +76,9 @@ class DummyHandler:
         """
         if self.last_service == 17:
             if self.last_subservice == 1:
-                tc_psc = get_space_packet_sequence_control(
-                    sequence_flags=SequenceFlags.UNSEGMENTED,
-                    source_sequence_count=self.last_tc_ssc,
+                tc_psc = get_sp_psc_raw(
+                    seq_flags=SequenceFlags.UNSEGMENTED,
+                    seq_count=self.last_tc_ssc,
                 )
                 tm_packer = Service1TMExtended(
                     subservice=1,

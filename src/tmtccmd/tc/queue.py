@@ -1,5 +1,6 @@
 from typing import Optional
 
+from spacepackets.ccsds.spacepacket import SpacePacket
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.tc.definitions import (
     TcQueueT,
@@ -25,6 +26,9 @@ class QueueHelper:
 
     def add_pus_tc(self, pus_tc: PusTelecommand):
         self.queue_wrapper.queue.appendleft(PusTcEntry(pus_tc))
+
+    def add_ccsds_tc(self, space_packet: SpacePacket):
+        pass
 
     def add_raw_tc(self, tc: bytes):
         self.queue_wrapper.queue.appendleft(RawTcEntry(tc))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from unittest import TestCase
 
-from spacepackets.ccsds.spacepacket import get_space_packet_sequence_control
+from spacepackets.ccsds.spacepacket import get_sp_psc_raw
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.conf import get_pus_tm_version, PusVersion, set_default_tm_apid
 from spacepackets.util import PrintFormats
