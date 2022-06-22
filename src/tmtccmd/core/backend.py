@@ -50,6 +50,10 @@ class BackendState:
     def tm_mode(self):
         return self._mode_wrapper.tm_mode
 
+    @property
+    def mode_wrapper(self):
+        return self._mode_wrapper
+
 
 class BackendController:
     def __init__(self):

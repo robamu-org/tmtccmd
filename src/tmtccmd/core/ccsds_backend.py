@@ -19,7 +19,7 @@ from tmtccmd.tc.ccsds_seq_sender_receiver import (
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-
+from tmtccmd.utility.countdown import Countdown
 
 LOGGER = get_console_logger()
 
@@ -106,6 +106,10 @@ class CcsdsTmtcBackend(BackendBase):
     @apid.setter
     def apid(self, apid: int):
         self.__apid = apid
+
+    @property
+    def mode(self):
+        return self._state.mode
 
     @staticmethod
     def start_handler(executed_handler, ctrl: BackendController):
@@ -214,7 +218,7 @@ class CcsdsTmtcBackend(BackendBase):
         # TODO: This this that is done for the listener mode: Do it for all modes with a
         #       configurable polling delay. TM should be polled and handled independently of TC,
         #       or tying them together in some way should remain a user option
-        if self.mode == CoreModeList.LISTENER_MODE:
+        if self._state.tm_mode == CoreModeList.LISTENER_MODE:
             if self.__tm_listener.reply_event():
                 LOGGER.info("TmTcHandler: Packets received.")
                 packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
@@ -236,7 +240,7 @@ class CcsdsTmtcBackend(BackendBase):
             #       be able to switch the mode
             self._seq_handler.queue_wrapper = service_queue
             self._seq_handler.send_queue_tc_and_receive_tm_sequentially()
-            self.mode = CoreModeList.LISTENER_MODE
+            self._state.mode_wrapper.mode = CoreModeList.LISTENER_MODE
         elif self.mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
             # TODO: Handle the queue as long as the current one is full. If it is finished,
             #       request another queue or further instructions from the user, maybe in form
