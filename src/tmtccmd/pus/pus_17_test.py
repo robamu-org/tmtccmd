@@ -3,8 +3,8 @@ import enum
 
 from spacepackets.ecss.conf import get_default_tc_apid
 from spacepackets.ecss.pus_17_test import Subservices
-from tmtccmd.config.definitions import QueueCommands
-from tmtccmd.tc.definitions import PusTelecommand, TcQueueT
+from tmtccmd.tc.definitions import PusTelecommand
+from tmtccmd.tc.queue import QueueHelper
 
 
 class CustomSubservices(enum.IntEnum):
@@ -20,32 +20,32 @@ def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
     )
 
 
-def pack_generic_service17_test(
-    init_ssc: int, tc_queue: TcQueueT, apid: int = -1
-) -> int:
+def pack_generic_service17_test(init_ssc: int, q: QueueHelper, apid: int = -1) -> int:
     if apid == -1:
         apid = get_default_tc_apid()
     new_ssc = init_ssc
-    tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17"))
+    q.add_log_cmd("Testing Service 17")
     # ping test
-    tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17: Ping Test"))
-    tc_queue.appendleft(pack_service_17_ping_command(ssc=new_ssc).pack_command_tuple())
+    q.add_log_cmd("Testing Service 17: Ping Test")
+    q.add_pus_tc(pack_service_17_ping_command(ssc=new_ssc))
     new_ssc += 1
     # enable event
-    tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17: Enable Event"))
-    command = PusTelecommand(service=5, subservice=5, ssc=new_ssc, apid=apid)
-    tc_queue.appendleft(command.pack_command_tuple())
+    q.add_log_cmd("Testing Service 17: Enable Event")
+    q.add_pus_tc(PusTelecommand(service=5, subservice=5, ssc=new_ssc, apid=apid))
     new_ssc += 1
     # test event
-    tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17: Trigger event"))
-    command = PusTelecommand(
-        service=17, subservice=CustomSubservices.TC_GEN_EVENT, ssc=new_ssc, apid=apid
+    q.add_log_cmd("Testing Service 17: Trigger event")
+    q.add_pus_tc(
+        PusTelecommand(
+            service=17,
+            subservice=CustomSubservices.TC_GEN_EVENT,
+            ssc=new_ssc,
+            apid=apid,
+        )
     )
-    tc_queue.appendleft(command.pack_command_tuple())
     new_ssc += 1
     # invalid subservice
-    tc_queue.appendleft((QueueCommands.PRINT, "Testing Service 17: Invalid subservice"))
-    command = PusTelecommand(service=17, subservice=243, ssc=new_ssc, apid=apid)
-    tc_queue.appendleft(command.pack_command_tuple())
+    q.add_log_cmd("Testing Service 17: Invalid subservice")
+    q.add_pus_tc(PusTelecommand(service=17, subservice=243, ssc=new_ssc, apid=apid))
     new_ssc += 1
     return new_ssc

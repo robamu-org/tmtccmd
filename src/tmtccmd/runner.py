@@ -6,7 +6,7 @@ from typing import Union, cast
 from spacepackets.ecss.conf import get_default_tc_apid
 
 from tmtccmd import __version__
-from tmtccmd.config import SetupArgs, TmTcCfgHookBase, CoreGlobalIds, pass_cli_args
+from tmtccmd.config import SetupArgs, TmTcCfgHookBase, CoreGlobalIds
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm.definitions import TmTypes
@@ -134,7 +134,8 @@ def __handle_cli_args_and_globals(setup_args: SetupArgs):
         setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
     )
     LOGGER.info("Setting up post-globals..")
-    pass_cli_args(setup_args=setup_args)
+    # TODO: How to better do this?
+    # pass_cli_args(setup_args=setup_args)
 
 
 def __start_tmtc_commander_cli(
@@ -194,7 +195,7 @@ def create_default_tmtc_backend(
     """
     global __SETUP_WAS_CALLED
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.sendreceive.ccsds_tm_listener import CcsdsTmListener
+    from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
     from typing import cast
 
     if not __SETUP_WAS_CALLED:

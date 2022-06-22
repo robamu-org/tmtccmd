@@ -5,7 +5,7 @@ from tmtccmd.config.definitions import ServiceOpCodeDictT
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase, ObjectIdDictT
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.tc.definitions import TcQueueT
+from tmtccmd.tc.definitions import QueueHelper
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
 from .definitions import APID
@@ -33,7 +33,7 @@ class ExampleHookClass(TmTcCfgHookBase):
         pass
 
     def pack_service_queue(
-        self, service: Union[str, int], op_code: str, tc_queue: TcQueueT
+        self, service: Union[str, int], op_code: str, tc_queue: QueueHelper
     ):
         from tmtccmd.tc.packer import default_service_queue_preparation
 

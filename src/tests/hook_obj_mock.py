@@ -9,7 +9,7 @@ from tmtccmd.config.definitions import DEFAULT_APID
 from tmtccmd.config.definitions import ServiceOpCodeDictT, CoreModeList
 from tmtccmd.tm.pus_3_hk_base import Service3Base
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.tc.definitions import TcQueueT
+from tmtccmd.tc.definitions import QueueHelper
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
 
@@ -121,7 +121,7 @@ class TestHookObj(TmTcCfgHookBase):
 
     @abstractmethod
     def pack_service_queue(
-        self, service: Union[int, str], op_code: str, tc_queue: TcQueueT
+        self, service: Union[int, str], op_code: str, tc_queue: QueueHelper
     ):
         """Overriding this function allows the user to package a telecommand queue for a given
         service and operation code combination.

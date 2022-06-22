@@ -7,7 +7,7 @@
 import sys
 from typing import Union
 
-from tmtccmd.tc.definitions import TcQueueT
+from tmtccmd.tc.definitions import QueueHelper
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.logging import get_console_logger
 from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
@@ -38,7 +38,7 @@ class ServiceQueuePacker:
 """
 
 
-def ping_queue(service_queue: TcQueueT):
+def ping_queue(service_queue: QueueHelper):
     from tmtccmd.config.definitions import CoreServiceList, QueueCommands
 
     service_queue.appendleft((QueueCommands.PRINT, "Sending ping command PUS TC[17,1]"))

@@ -28,7 +28,7 @@ class TcQueueEntryBase:
         return False
 
 
-TcQueueT = Deque[TcQueueEntryBase]
+QueueDequeT = Deque[TcQueueEntryBase]
 
 
 class PusTcEntry(TcQueueEntryBase):

@@ -3,7 +3,7 @@ from typing import Optional
 from spacepackets.ccsds.spacepacket import SpacePacket
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.tc.definitions import (
-    TcQueueT,
+    QueueDequeT,
     LogQueueEntry,
     PusTcEntry,
     RawTcEntry,
@@ -12,7 +12,7 @@ from tmtccmd.tc.definitions import (
 
 
 class QueueWrapper:
-    def __init__(self, queue: Optional[TcQueueT], inter_cmd_delay: bool = True):
+    def __init__(self, queue: Optional[QueueDequeT], inter_cmd_delay: bool = True):
         self.queue = queue
         self.inter_cmd_delay = inter_cmd_delay
 

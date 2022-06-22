@@ -26,7 +26,7 @@ from tmtccmd.com_if.com_if_utilities import determine_com_if
 from .tmtc_defs import TmTcDefWrapper, OpCodeEntry
 
 LOGGER = get_console_logger()
-DEF_WRAPPER = TmTcDefWrapper()
+DEF_WRAPPER = None
 
 
 def set_json_cfg_path(json_cfg_path: str):
@@ -229,7 +229,8 @@ def check_and_set_core_service_arg(
 
 def get_default_tmtc_defs() -> TmTcDefWrapper:
     global DEF_WRAPPER
-    if DEF_WRAPPER == dict():
+    if DEF_WRAPPER is None:
+        DEF_WRAPPER = TmTcDefWrapper()
         srv_5 = OpCodeEntry()
         srv_5.add("0", "Event Test")
         DEF_WRAPPER.add_service(

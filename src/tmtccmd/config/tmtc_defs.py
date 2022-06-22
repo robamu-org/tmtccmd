@@ -15,8 +15,11 @@ OpCodeDictT = Dict[str, Tuple[OpCodeInfoT, OpCodeOptionBase]]
 
 
 class OpCodeEntry:
-    def __init__(self):
-        self._op_code_dict: OpCodeDictT = dict()
+    def __init__(self, init_dict: Optional[OpCodeDictT] = None):
+        if init_dict is not None:
+            self._op_code_dict = init_dict
+        else:
+            self._op_code_dict: OpCodeDictT = dict()
 
     def add(
         self,
@@ -38,6 +41,9 @@ class OpCodeEntry:
         if entry_tuple is not None:
             return entry_tuple[0]
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(init_dict={self._op_code_dict!r}"
+
     @property
     def op_code_dict(self):
         return self._op_code_dict
@@ -49,9 +55,14 @@ ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 
 
 class TmTcDefWrapper:
-    def __init__(self):
-        self.defs: ServiceOpCodeDictT = dict()
-        pass
+    def __init__(self, init_defs: Optional[ServiceOpCodeDictT] = None):
+        if init_defs is None:
+            self.defs: ServiceOpCodeDictT = dict()
+        else:
+            self.defs = init_defs
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(init_defs={self.defs!r}"
 
     def add_service(
         self,
