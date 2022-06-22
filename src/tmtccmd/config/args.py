@@ -47,9 +47,16 @@ class ArgsGroup:
     interactive: bool = False
 
 
-class TmtccmdArgsWrapper:
-    def __init__(self, descript_txt: Optional[str] = None):
-        self.args_parser = create_default_args_parser(descript_txt)
+class ArgParserWrapper:
+    def __init__(
+            self, parser: Optional[argparse.ArgumentParser] = None,
+            descript_txt: Optional[str] = None
+    ):
+        if parser is None:
+            self.args_parser = create_default_args_parser(descript_txt)
+            add_default_tmtccmd_args(self.args_parser)
+        else:
+            self.args_parser = parser
         self.print_known_args = False
         self.print_unknown_args = False
         self.unknown_args = [""]
@@ -192,7 +199,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: "
         f"GUI mode\n"
     )
-    help_text += one_q + listener_help + gui_help
+    help_text += one_q + listener_help + gui_help + multi_q
     arg_parser.add_argument(
         "-m",
         "--mode",
@@ -262,7 +269,7 @@ def args_post_processing(
         handle_empty_args(args, service_op_code_dict)
 
 
-def handle_unspecified_args(args, tmtc_defs: TmTcDefWrapper) -> None:
+def handle_unspecified_args(args: argparse.Namespace, tmtc_defs: TmTcDefWrapper) -> None:
     """If some arguments are unspecified, they are set here with (variable) default values.
     :param args: Arguments from calling parse method
     :param tmtc_defs:
