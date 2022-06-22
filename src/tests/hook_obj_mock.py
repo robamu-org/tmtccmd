@@ -10,17 +10,17 @@ from tmtccmd.config.definitions import ServiceOpCodeDictT, CoreModeList
 from tmtccmd.tm.pus_3_hk_base import Service3Base
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.tc.definitions import TcQueueT
-from tmtccmd.config.hook import TmTcHookBase
+from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
 
-def create_hook_mock() -> TmTcHookBase:
+def create_hook_mock() -> TmTcCfgHookBase:
     """Create simple minimal hook mock using the MagicMock facilities by unittest
     :return:
     """
-    tmtc_hook_base = TmTcHookBase()
+    tmtc_hook_base = TmTcCfgHookBase()
     tmtc_hook_base.add_globals_pre_args_parsing = MagicMock(return_value=0)
     tmtc_hook_base.add_globals_post_args_parsing = MagicMock(return_value=0)
     tmtc_hook_base.custom_args_parsing = MagicMock(
@@ -29,7 +29,7 @@ def create_hook_mock() -> TmTcHookBase:
     return tmtc_hook_base
 
 
-def create_hook_mock_with_srv_handlers() -> TmTcHookBase:
+def create_hook_mock_with_srv_handlers() -> TmTcCfgHookBase:
     tmtc_hook_base = create_hook_mock()
     tmtc_hook_base.handle_service_8_telemetry = MagicMock(return_value=(["Test"], [0]))
     # Valid returnvalue for now
@@ -40,13 +40,13 @@ def create_hook_mock_with_srv_handlers() -> TmTcHookBase:
     return tmtc_hook_base
 
 
-class TestHookObj(TmTcHookBase):
+class TestHookObj(TmTcCfgHookBase):
     service_8_handler_called = False
     service_5_handler_called = False
     service_3_handler_called = False
 
     def __init__(self):
-        super(self, TmTcHookBase).__init__()
+        super(self, TmTcCfgHookBase).__init__()
         self.get_obj_id_called = False
         self.add_globals_pre_args_parsing_called = False
         self.add_globals_post_args_parsing_called = False
@@ -58,7 +58,7 @@ class TestHookObj(TmTcHookBase):
         list. This list could contain containing the string representation or additional
         information about that object ID.
         """
-        return TmTcHookBase.get_object_ids()
+        return TmTcCfgHookBase.get_object_ids()
 
     @abstractmethod
     def add_globals_pre_args_parsing(self, gui: bool = False):
@@ -100,15 +100,15 @@ class TestHookObj(TmTcHookBase):
         )
 
     @abstractmethod
-    def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
+    def get_tmtc_definitions(self) -> ServiceOpCodeDictT:
         """This is a dicitonary mapping services represented by strings to an operation code
         dictionary.
 
         :return:
         """
-        from tmtccmd.config.globals import get_default_service_op_code_dict
+        from tmtccmd.config.globals import get_default_tmtc_defs
 
-        return get_default_service_op_code_dict()
+        return get_default_tmtc_defs()
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: TmTcHandler, mode: int):

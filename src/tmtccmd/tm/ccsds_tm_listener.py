@@ -27,7 +27,7 @@ class ListenerModes(Enum):
     SEQUENCE = 3
 
 
-class TmListener:
+class CcsdsTmListener:
     """Performs all TM listening operations.
     This listener to have a permanent means to receive data. A background thread is used
     to poll data with the provided communication interface. Dedicated sender and receiver object
@@ -54,11 +54,10 @@ class TmListener:
         :param tm_type: Telemetry type. Default to CCSDS space packets for now
         """
         self.__com_if = com_if
-        self._mode_op_timeout = TmListener.DEFAULT_MODE_OPERATION_TIMEOUT
+        self._mode_op_timeout = CcsdsTmListener.DEFAULT_MODE_OPERATION_TIMEOUT
         # TM Listener operations can be suspended by setting this flag
         self.event_listener_active = threading.Event()
         self.listener_active = False
-        self.current_apid = INVALID_APID
 
         # Listener is daemon and will exit automatically if all other threads are closed
         self.listener_thread = threading.Thread(
@@ -100,9 +99,6 @@ class TmListener:
             self.__queue_dict[apid] = (deque(), queue_max_len)
         else:
             LOGGER.warning("This function only support CCSDS space packet handling")
-
-    def set_current_apid(self, new_apid: int):
-        self.current_apid = new_apid
 
     def set_com_if(self, com_if: CommunicationInterface):
         self.__com_if = com_if
@@ -152,7 +148,7 @@ class TmListener:
         else:
             return False
 
-    def tm_packets_available(self):
+    def tm_packets_available(self) -> bool:
         with acquire_timeout(
             self.lock_listener, timeout=self.DEFAULT_LOCK_TIMEOUT
         ) as acquired:
@@ -177,12 +173,10 @@ class TmListener:
         return queues
 
     def retrieve_ccsds_tm_packet_queue(
-        self, apid: int = -1, clear: bool = False
+        self, apid: int, clear: bool = False
     ) -> TelemetryQueueT:
         """Retrieve the packet queue for a given APID. The TM listener will handle routing
         packets into the correct queue."""
-        if apid == -1:
-            apid = self.current_apid
         target_queue_list = self.__queue_dict.get(apid)
         if target_queue_list is None:
             LOGGER.warning(f"No queue available for APID {apid}")
@@ -203,8 +197,6 @@ class TmListener:
         return tm_queue_copy
 
     def clear_ccsds_tm_packet_queue(self, apid: int):
-        if apid == -1:
-            apid = self.current_apid
         target_queue = self.__queue_dict.get(apid)
         if target_queue is None:
             LOGGER.warning(f"No queue available for APID {apid}")
@@ -282,7 +274,7 @@ class TmListener:
             self.__listener_mode = ListenerModes.LISTENER
 
     def __perform_core_operation(self):
-        """The core operation listens for packets."""
+        """The core operation listens for packets and routes them"""
         packet_list = self.__com_if.receive()
         if len(packet_list) > 0:
             with acquire_timeout(
@@ -308,7 +300,6 @@ class TmListener:
         if self.__listener_mode == ListenerModes.LISTENER:
             if not self.__event_mode_op_finished.is_set():
                 self.__event_mode_op_finished.set()
-        # Single Command Mode
         elif self.__listener_mode == ListenerModes.SEQUENCE:
             # This prevents the listener from listening from one more unnecessary cycle
             if self.__event_mode_op_finished.is_set():

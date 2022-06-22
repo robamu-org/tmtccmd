@@ -1,8 +1,9 @@
 from abc import abstractmethod
+from typing import Optional
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.core.backend import ProcedureInfo
-from tmtccmd.tc.definitions import TcQueueT, TcQueueEntryBase
+from tmtccmd.tc.definitions import TcQueueEntryBase
 
 
 class TcHandlerBase:
@@ -16,12 +17,9 @@ class TcHandlerBase:
         pass
 
     @abstractmethod
-    def pass_queue(self, info: ProcedureInfo) -> TcQueueT:
+    def queue_finished_cb(self, info: ProcedureInfo):
         pass
 
     @abstractmethod
-    def queue_finished_cb(self, service: str, op_code: str):
-        pass
-
-    def feed_cb(self):
+    def feed_cb(self, info: Optional[ProcedureInfo]):
         pass

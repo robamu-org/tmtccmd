@@ -5,11 +5,11 @@ import time
 from typing import Optional
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.config.definitions import QueueCommands, CoreGlobalIds
+from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.logging import get_console_logger
 
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.sendreceive.tm_listener import TmListener
+from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.tc.definitions import (
     TcQueueEntryBase,
     TcQueueEntryType,
@@ -34,7 +34,7 @@ class CcsdsCommandSenderReceiver:
     def __init__(
         self,
         com_if: CommunicationInterface,
-        tm_listener: TmListener,
+        tm_listener: CcsdsTmListener,
         tm_handler: CcsdsTmHandler,
         tc_handler: TcHandlerBase,
         apid: int,
@@ -56,7 +56,7 @@ class CcsdsCommandSenderReceiver:
             LOGGER.error("CommandSenderReceiver: Invalid communication interface!")
             raise TypeError("CommandSenderReceiver: Invalid communication interface!")
 
-        if isinstance(tm_listener, TmListener):
+        if isinstance(tm_listener, CcsdsTmListener):
             self._tm_listener = tm_listener
         else:
             LOGGER.error("CommandSenderReceiver: Invalid TM listener!")
@@ -133,20 +133,6 @@ class CcsdsCommandSenderReceiver:
                 LOGGER.info("Wait period over.")
                 self._wait_period = 0
                 return False
-        else:
-            return False
-
-    @staticmethod
-    def check_queue_entry_static(tc_queue_entry: TcQueueEntryBase) -> bool:
-        """Static method to check whether a queue entry is a valid telecommand"""
-        queue_entry_first, queue_entry_second = tc_queue_entry
-        if isinstance(queue_entry_first, str):
-            LOGGER.warning("Invalid telecommand. Queue entry is a string!")
-            return False
-        if isinstance(queue_entry_first, QueueCommands):
-            return False
-        elif isinstance(queue_entry_first, bytearray):
-            return True
         else:
             return False
 

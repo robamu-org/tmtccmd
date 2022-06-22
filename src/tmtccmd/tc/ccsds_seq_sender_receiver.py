@@ -3,13 +3,14 @@ import sys
 import time
 import threading
 
-from tmtccmd.sendreceive.ccsds_sender_receiver import CcsdsCommandSenderReceiver
+from tmtccmd.tc.ccsds_sender_receiver import CcsdsCommandSenderReceiver
+from tmtccmd.tc.handler import TcHandlerBase
+from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.sendreceive.tm_listener import TmListener
+from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.logging import get_console_logger
-from tmtccmd.tc.definitions import TcQueueT
-from tmtccmd.tc.handler import TcHandlerBase
+
 
 LOGGER = get_console_logger()
 
@@ -19,9 +20,9 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
 
     def __init__(
         self,
-        tc_queue: TcQueueT,
+        queue_wrapper: QueueWrapper,
         com_if: CommunicationInterface,
-        tm_listener: TmListener,
+        tm_listener: CcsdsTmListener,
         tm_handler: CcsdsTmHandler,
         tc_handler: TcHandlerBase,
         apid: int,
@@ -39,7 +40,7 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
             tc_handler=tc_handler,
         )
         self._tc_handler = tc_handler
-        self._tc_queue = tc_queue
+        self._queue_wrapper = queue_wrapper
         self.__all_replies_received = False
         # This flag can be used to notify the sender to send the next TC
         self._next_send_condition = False
@@ -52,12 +53,15 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
         )
 
     @property
-    def tc_queue(self):
-        return self._tc_queue
+    def queue_wrapper(self):
+        return self._queue_wrapper
 
-    @tc_queue.setter
-    def tc_queue(self, tc_queue: TcQueueT):
-        self._tc_queue = tc_queue
+    @queue_wrapper.setter
+    def queue_wrapper(self, queue_wrapper: QueueWrapper):
+        self._queue_wrapper = queue_wrapper
+
+    def operation(self):
+        pass
 
     def send_queue_tc_and_receive_tm_sequentially(self):
         """Primary function which is called for sequential transfer.
@@ -66,7 +70,7 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
         self._tm_listener.sequence_mode()
         # tiny delay for pus_tm listener
         time.sleep(0.05)
-        if self._tc_queue:
+        if self.queue_wrapper.queue:
             try:
                 self.__handle_tc_sending_and_tm_reception()
             except (KeyboardInterrupt, SystemExit):
@@ -79,11 +83,11 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
         self._tm_listener.listener_mode()
         # tiny delay for pus_tm listener
         time.sleep(0.05)
-        if self._tc_queue:
+        if self.queue_wrapper.queue:
             try:
                 # Set to true for first packet, otherwise nothing will be sent.
                 self._next_send_condition = True
-                if not self._tc_queue.__len__() == 0:
+                if not self.queue_wrapper.queue.__len__() == 0:
                     self.__check_next_tc_send()
             except (KeyboardInterrupt, SystemExit):
                 LOGGER.info("Keyboard Interrupt.")
@@ -120,7 +124,7 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
         while not self.__all_replies_received:
             # Do not use continue anywhere in this while loop for now
             if not tc_queue_is_empty_and_processed:
-                if self._tc_queue.__len__() == 0:
+                if self.queue_wrapper.queue.__len__() == 0:
                     if self._wait_period == 0:
                         # cache this for last wait time
                         self._start_time = time.time()
@@ -178,17 +182,17 @@ class SequentialCcsdsSenderReceiver(CcsdsCommandSenderReceiver):
     def _send_next_telecommand(self) -> bool:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         # Queue empty. Can happen because a wait period might still be ongoing
-        if not self._tc_queue:
+        if not self.queue_wrapper.queue:
             return False
         if self.wait_period_ongoing():
             return False
-        next_queue_entry = self._tc_queue.pop()
+        next_queue_entry = self.queue_wrapper.queue.pop()
         if self.check_queue_entry(next_queue_entry):
             self._start_time = time.time()
             self._tc_handler.pre_send_cb(next_queue_entry, self._com_if)
 
         # queue empty.
-        elif not self._tc_queue:
+        elif not self.queue_wrapper.queue:
             # Another special case: Last queue entry is to wait.
             if self._wait_period > 0:
                 if self.wait_period_ongoing():

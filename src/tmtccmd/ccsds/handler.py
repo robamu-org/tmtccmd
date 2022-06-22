@@ -3,7 +3,7 @@ from typing import Dict, Optional, Tuple, List
 
 from tmtccmd.tm.handler import TmHandlerBase
 from tmtccmd.tm.definitions import TelemetryQueueT, TmTypes
-from tmtccmd.sendreceive.tm_listener import QueueListT
+from tmtccmd.tm.ccsds_tm_listener import QueueListT
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()

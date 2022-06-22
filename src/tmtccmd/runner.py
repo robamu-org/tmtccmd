@@ -6,7 +6,7 @@ from typing import Union, cast
 from spacepackets.ecss.conf import get_default_tc_apid
 
 from tmtccmd import __version__
-from tmtccmd.config import SetupArgs, TmTcHookBase, CoreGlobalIds, pass_cli_args
+from tmtccmd.config import SetupArgs, TmTcCfgHookBase, CoreGlobalIds, pass_cli_args
 from tmtccmd.core.backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm.definitions import TmTypes
@@ -109,7 +109,7 @@ def init_and_start_daemons(tmtc_backend: BackendBase):
     __start_tmtc_commander_cli(tmtc_backend=tmtc_backend, perform_op_immediately=False)
 
 
-def __assign_tmtc_commander_hooks(hook_object: TmTcHookBase):
+def __assign_tmtc_commander_hooks(hook_object: TmTcCfgHookBase):
     if hook_object is None:
         raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
@@ -160,7 +160,7 @@ def __start_tmtc_commander_qt_gui(
         app = QApplication([app_name])
         if tmtc_frontend is None:
             from tmtccmd.core.frontend import TmTcFrontend
-            from tmtccmd.config.hook import get_global_hook_obj
+            from tmtccmd.config.cfg_hook import get_global_hook_obj
             from tmtccmd.core.backend import TmTcHandler
 
             tmtc_frontend = TmTcFrontend(
@@ -194,7 +194,7 @@ def create_default_tmtc_backend(
     """
     global __SETUP_WAS_CALLED
     from tmtccmd.core.backend import TmTcHandler
-    from tmtccmd.sendreceive.tm_listener import TmListener
+    from tmtccmd.sendreceive.ccsds_tm_listener import CcsdsTmListener
     from typing import cast
 
     if not __SETUP_WAS_CALLED:
@@ -214,7 +214,7 @@ def create_default_tmtc_backend(
         com_if_key=get_global(CoreGlobalIds.COM_IF)
     )
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
-    tm_listener = TmListener(com_if=com_if, seq_timeout=tm_timeout)
+    tm_listener = CcsdsTmListener(com_if=com_if, seq_timeout=tm_timeout)
     # The global variables are set by the argument parser.
     tmtc_backend = TmTcHandler(
         hook_obj=setup_args.hook_obj,

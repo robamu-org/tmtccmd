@@ -2,7 +2,7 @@ import argparse
 from typing import Union, Tuple
 
 from tmtccmd.config.definitions import ServiceOpCodeDictT
-from tmtccmd.config.hook import TmTcHookBase, ObjectIdDictT
+from tmtccmd.config.cfg_hook import TmTcCfgHookBase, ObjectIdDictT
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.backend import TmTcHandler
 from tmtccmd.tc.definitions import TcQueueT
@@ -13,7 +13,7 @@ from .definitions import APID
 LOGGER = get_console_logger()
 
 
-class ExampleHookClass(TmTcHookBase):
+class ExampleHookClass(TmTcCfgHookBase):
     def __init__(self, json_cfg_path: str):
         super().__init__(json_cfg_path=json_cfg_path)
 
@@ -47,10 +47,10 @@ class ExampleHookClass(TmTcHookBase):
 
         return get_core_object_ids()
 
-    def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
-        from tmtccmd.config.globals import get_default_service_op_code_dict
+    def get_tmtc_definitions(self) -> ServiceOpCodeDictT:
+        from tmtccmd.config.globals import get_default_tmtc_defs
 
-        return get_default_service_op_code_dict()
+        return get_default_tmtc_defs()
 
     @staticmethod
     def handle_service_8_telemetry(

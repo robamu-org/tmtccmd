@@ -1,22 +1,18 @@
 from abc import abstractmethod
-from typing import Optional, Union
+from typing import Optional
 
-from tmtccmd.config.definitions import (
-    ServiceOpCodeDictT,
-    DataReplyUnpacked,
-    default_json_path,
-)
+from tmtccmd.config.definitions import default_json_path
+from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
 from tmtccmd.utility.obj_id import ObjectIdDictT
 from tmtccmd.core.base import BackendBase
-from tmtccmd.tc.definitions import TcQueueT
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
 LOGGER = get_console_logger()
 
 
-class TmTcHookBase:
+class TmTcCfgHookBase:
     """This hook allows users to adapt the TMTC commander core to the unique mission requirements.
     It is used by implementing all abstract functions and then passing the instance to the
     TMTC commander core.
@@ -53,15 +49,15 @@ class TmTcHookBase:
         )
 
     @abstractmethod
-    def get_service_op_code_dictionary(self) -> ServiceOpCodeDictT:
+    def get_tmtc_definitions(self) -> TmTcDefWrapper:
         """This is a dicitonary mapping services represented by strings to an operation code
         dictionary.
 
         :return:
         """
-        from tmtccmd.config.globals import get_default_service_op_code_dict
+        from tmtccmd.config.globals import get_default_tmtc_defs
 
-        return get_default_service_op_code_dict()
+        return get_default_tmtc_defs()
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
@@ -72,30 +68,12 @@ class TmTcHookBase:
         """
         pass
 
-    @abstractmethod
-    def pack_service_queue(
-        self, service: Union[int, str], op_code: str, tc_queue: TcQueueT
-    ):
-        """Overriding this function allows the user to package a telecommand queue for a given
-        service and operation code combination.
-
-        :param service:
-        :param op_code:
-        :param tc_queue:
-        :return:
-        """
-        pass
-
-    def feedback_handler(self, com_if: CommunicationInterface, tc_queue: TcQueueT):
-        """This function will be called"""
-        pass
-
     def get_retval_dict(self) -> RetvalDictT:
         LOGGER.info("No return value dictionary specified")
         return dict()
 
 
-def get_global_hook_obj() -> Optional[TmTcHookBase]:
+def get_global_hook_obj() -> Optional[TmTcCfgHookBase]:
     """This function can be used to get the handle to the global hook object.
     :return:
     """
@@ -109,7 +87,7 @@ def get_global_hook_obj() -> Optional[TmTcHookBase]:
         if hook_obj_raw is None:
             LOGGER.error("Hook object is invalid!")
             return None
-        return cast(TmTcHookBase, hook_obj_raw)
+        return cast(TmTcCfgHookBase, hook_obj_raw)
     except ImportError:
         LOGGER.exception("Issues importing modules to get global hook handle!")
         return None

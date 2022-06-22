@@ -19,6 +19,14 @@ class TcQueueEntryBase:
     def __init__(self, etype: TcQueueEntryType):
         self.etype = etype
 
+    def is_tc(self) -> bool:
+        if (
+            self.etype == TcQueueEntryType.PUS_TC
+            or self.etype == TcQueueEntryType.RAW_TC
+        ):
+            return True
+        return False
+
 
 TcQueueT = Deque[TcQueueEntryBase]
 

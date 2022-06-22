@@ -1,7 +1,6 @@
-import argparse
 import collections.abc
 import pprint
-from typing import Union, List, Dict, Optional
+from typing import Union, List, Dict
 
 
 from tmtccmd.logging import get_console_logger
@@ -21,18 +20,13 @@ from .definitions import (
     CoreModeStrings,
     CoreComInterfacesDict,
     CoreComInterfaces,
-    DEBUG_MODE,
-    ServiceOpCodeDictT,
-    OpCodeDictKeys,
     ComIFDictT,
-    OpCodeEntryT,
-    OpCodeOptionsT,
-    OpCodeNameT,
 )
 from tmtccmd.com_if.com_if_utilities import determine_com_if
+from .tmtc_defs import TmTcDefWrapper, OpCodeEntry
 
 LOGGER = get_console_logger()
-SERVICE_OP_CODE_DICT = dict()
+DEF_WRAPPER = TmTcDefWrapper()
 
 
 def set_json_cfg_path(json_cfg_path: str):
@@ -192,9 +186,9 @@ def check_and_set_core_mode_arg(
     if mode_arg_invalid:
         LOGGER.warning(
             f"Passed mode argument might be invalid, "
-            f"setting to {CoreModeList.SEQUENTIAL_CMD_MODE}"
+            f"setting to {CoreModeList.ONE_QUEUE_MODE}"
         )
-        mode_value = CoreModeList.SEQUENTIAL_CMD_MODE
+        mode_value = CoreModeList.ONE_QUEUE_MODE
     update_global(CoreGlobalIds.MODE, mode_value)
     return mode_value
 
@@ -233,50 +227,21 @@ def check_and_set_core_service_arg(
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
 
 
-def get_default_service_op_code_dict() -> ServiceOpCodeDictT:
-    global SERVICE_OP_CODE_DICT
-    service_op_code_dict = SERVICE_OP_CODE_DICT
-    if service_op_code_dict == dict():
-        op_code_dict_srv_5 = {
-            "0": ("Event Test", {OpCodeDictKeys.TIMEOUT: 2.0}),
-        }
-        service_5_tuple = ("PUS Service 5 Event", op_code_dict_srv_5)
-        op_code_dict_srv_17 = {
-            "0": ("Ping Test", {OpCodeDictKeys.TIMEOUT: 2.2}),
-        }
-        service_17_tuple = ("PUS Service 17 Test", op_code_dict_srv_17)
-
-        service_op_code_dict[CoreServiceList.SERVICE_5.value] = service_5_tuple
-        service_op_code_dict[CoreServiceList.SERVICE_17.value] = service_17_tuple
-        # SERVICE_OP_CODE_DICT = service_op_code_dict
-    return service_op_code_dict
-
-
-def add_op_code_entry(
-    op_code_dict: OpCodeEntryT,
-    keys: OpCodeNameT,
-    info: str,
-    options: OpCodeOptionsT = None,
-):
-    if isinstance(keys, str):
-        keys = [keys]
-    op_code_dict.update(OpCodeEntryT.fromkeys(keys, (info, options)))
-
-
-def add_service_op_code_entry(
-    srv_op_code_dict: ServiceOpCodeDictT,
-    name: str,
-    info: str,
-    op_code_entry: OpCodeEntryT,
-):
-    srv_op_code_dict.update({name: (info, op_code_entry)})
-
-
-def generate_op_code_options(
-    enter_listener_mode: bool = False, custom_timeout: Optional[float] = None
-) -> dict:
-    op_code_opts = dict()
-    op_code_opts.update({OpCodeDictKeys.ENTER_LISTENER_MODE: enter_listener_mode})
-    if custom_timeout is not None:
-        op_code_opts.update({OpCodeDictKeys.TIMEOUT: custom_timeout})
-    return op_code_opts
+def get_default_tmtc_defs() -> TmTcDefWrapper:
+    global DEF_WRAPPER
+    if DEF_WRAPPER == dict():
+        srv_5 = OpCodeEntry()
+        srv_5.add("0", "Event Test")
+        DEF_WRAPPER.add_service(
+            service_name=CoreServiceList.SERVICE_5.value,
+            info="PUS Service 5 Event",
+            op_code_entry=srv_5,
+        )
+        srv_17 = OpCodeEntry()
+        srv_17.add("0", "Ping Test")
+        DEF_WRAPPER.add_service(
+            service_name=CoreServiceList.SERVICE_17.value,
+            info="PUS Service 17 Test",
+            op_code_entry=srv_17,
+        )
+    return DEF_WRAPPER

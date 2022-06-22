@@ -1,36 +1,24 @@
 import argparse
-import collections.abc
-from typing import Optional, Union, List, Dict
+from typing import Optional
 
 from tmtccmd.config.globals import (
     CoreServiceList,
-    add_op_code_entry,
-    add_service_op_code_entry,
-    generate_op_code_options,
     handle_mode_arg,
     check_and_set_other_args,
     handle_com_if_arg,
 )
 from .definitions import (
-    QueueCommands,
     CoreGlobalIds,
-    ServiceOpCodeDictT,
     OpCodeDictKeys,
-    HkReplyUnpacked,
-    DataReplyUnpacked,
     default_json_path,
 )
-
-from tmtccmd.logging import get_console_logger
-from tmtccmd.core.globals_manager import update_global
-
-from .hook import TmTcHookBase
+from .cfg_hook import TmTcCfgHookBase
 
 
 class SetupArgs:
     def __init__(
         self,
-        hook_obj: TmTcHookBase,
+        hook_obj: TmTcCfgHookBase,
         use_gui: bool,
         apid: int,
         cli_args: Optional[argparse.Namespace],
@@ -58,24 +46,13 @@ class SetupArgs:
             self.json_cfg_path = default_json_path()
 
 
+"""
 def pass_cli_args(
     setup_args: SetupArgs,
     custom_modes_list: Optional[List[Union[collections.abc.Iterable, Dict]]] = None,
-    custom_services_list: Optional[List[Union[collections.abc.Iterable, Dict]]] = None,
     custom_com_if_dict: Dict[str, any] = None,
 ):
-    """This function takes the argument namespace as a parameter and determines
-    a set of globals from the parsed arguments.
-    If custom dictionaries are specified, the developer should take care of specifying
-    integers as keys and the string representation of the command line argument as value.
-    This will be used for internalization.
 
-    :param setup_args: Setup arguments
-    :param custom_modes_list: List of collections or dictionaries containing custom modes
-    :param custom_services_list: List of collections or dictionaries containing custom services
-    :param custom_com_if_dict: List of collections or dictionaries containing customcommunication interfaces
-    :return:
-    """
     logger = get_console_logger()
     args = setup_args.cli_args
     handle_mode_arg(args=args, custom_modes_list=custom_modes_list)
@@ -113,3 +90,5 @@ def pass_cli_args(
         check_and_set_other_args(args=args)
     except AttributeError:
         logger.exception("Passed arguments are missing components.")
+
+"""

@@ -1,11 +1,7 @@
 """Definitions for the TMTC commander core
 """
 import enum
-from typing import Tuple, Dict, Optional, List, Union, Callable, Any
-
-from spacepackets.ecss import PusTelecommand
-
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from typing import Tuple, Dict
 
 
 def default_json_path() -> str:
@@ -58,70 +54,11 @@ class OpCodeDictKeys(enum.IntEnum):
     ENTER_LISTENER_MODE = CoreGlobalIds.USE_LISTENER_AFTER_OP
 
 
-# Service Op Code Dictionary Types
-ServiceNameT = str
-ServiceInfoT = str
-OpCodeNameT = Union[str, List[str]]
-OpCodeInfoT = str
-# Operation code options are optional. If none are supplied, default values are assumed
-OpCodeOptionsT = Optional[Dict[OpCodeDictKeys, any]]
-OpCodeEntryT = Dict[OpCodeNameT, Tuple[OpCodeInfoT, OpCodeOptionsT]]
-# It is possible to specify a service without any op codes
-ServiceDictValueT = Optional[Tuple[ServiceInfoT, OpCodeEntryT]]
-ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
-
 # Com Interface Types
 ComIFValueT = Tuple[str, any]
 ComIFDictT = Dict[str, ComIFValueT]
 
 EthernetAddressT = Tuple[str, int]
-
-
-class QueueCommands(enum.Enum):
-    PRINT = "print"
-    RAW_PRINT = "raw_print"
-    WAIT = "wait"
-    SET_TIMEOUT = "set_timeout"
-
-
-TcQueueEntryArg = Any
-UserArg = Any
-"""Third Argument: Second argument in TC queue tuple. Fouth Argument
-"""
-UsrSendCbT = Callable[
-    [Union[bytes, QueueCommands], CommunicationInterface, TcQueueEntryArg, UserArg],
-    None,
-]
-
-
-class DataReplyUnpacked:
-    def __init__(self):
-        # Name of the data fields inside a data set
-        self.header_list = []
-        # Corresponding list of content
-        self.content_list = []
-
-
-class HkReplyUnpacked(DataReplyUnpacked):
-    def __init__(self):
-        super().__init__()
-        # Validity buffer
-        self.validity_buffer = bytearray()
-        # Number of variables contained in HK set
-        self._num_of_vars = None
-
-    @property
-    def num_of_vars(self):
-        """Unless set to a specific number, will return the length of the content list
-        :return:
-        """
-        if self._num_of_vars is None:
-            return len(self.header_list)
-        return self._num_of_vars
-
-    @num_of_vars.setter
-    def num_of_vars(self, num_of_vars: int):
-        self._num_of_vars = num_of_vars
 
 
 class CoreComInterfaces(enum.Enum):
@@ -147,23 +84,27 @@ CoreComInterfacesDict = {
 
 # Mode options, set by args parser
 class CoreModeList(enum.IntEnum):
-    SEQUENTIAL_CMD_MODE = 0
+    # This mode is optimized to handle one queue. It will configure the backend to request
+    # program termination upon finishing the queue handling. This is also the appropriate solution
+    # for single commands where the queue only consists of one telecommand.
+    ONE_QUEUE_MODE = 0
     LISTENER_MODE = 1
+    # Interactive GUI mode which allows sending and handling procedures interactively
     GUI_MODE = 2
+    # This mode is optimized for the handling of multiple queues. It will configure the backend
+    # to request additional queues or a mode change from the user instead of requesting program
+    # termination
+    MULTI_INTERACTIVE_QUEUE_MODE = 3
+    # The program will not do anything in this mode. This includes polling TM and sending any TCs
     IDLE = 5
-    # will start a daemon handling tm and return after sending one tc
-    CONTINUOUS_MODE = 7
-    # The user can interactively specify the next queue to send and when to exit or switch
-    # to listener mode
-    FEEDBACK_MODE = 8
 
 
 CoreModeStrings = {
-    CoreModeList.SEQUENTIAL_CMD_MODE: "seqcmd",
+    CoreModeList.ONE_QUEUE_MODE: "one-q",
+    CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE: "multi-q",
     CoreModeList.LISTENER_MODE: "listener",
+    CoreModeList.IDLE: "idle",
     CoreModeList.GUI_MODE: "gui",
-    CoreModeList.CONTINUOUS_MODE: "continuous",
-    CoreModeList.FEEDBACK_MODE: "feedback",
 }
 
 

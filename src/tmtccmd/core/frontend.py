@@ -30,9 +30,9 @@ from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.backend import TmTcHandler
-from tmtccmd.config.hook import TmTcHookBase
+from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces
-from tmtccmd.config.hook import get_global_hook_obj
+from tmtccmd.config.cfg_hook import get_global_hook_obj
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
@@ -133,7 +133,7 @@ class RunnableThread(QRunnable):
 
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(
-        self, hook_obj: TmTcHookBase, tmtc_backend: TmTcHandler, app_name: str
+        self, hook_obj: TmTcCfgHookBase, tmtc_backend: TmTcHandler, app_name: str
     ):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
@@ -218,7 +218,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._tmtc_handler.current_proc_info = ProcedureInfo(
             self._current_service, self._current_op_code
         )
-        self._tmtc_handler.mode = CoreModeList.SEQUENTIAL_CMD_MODE
+        self._tmtc_handler.mode = CoreModeList.ONE_QUEUE_MODE
         self.__worker.set_op_code(WorkerOperationsCodes.SEQUENTIAL_COMMANDING)
         self.__worker.command_executed.connect(self.__finish_seq_cmd_op)
 
@@ -364,13 +364,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         combo_box_services = QComboBox()
         default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-        self.service_op_code_dict = self._hook_obj.get_service_op_code_dictionary()
+        self.service_op_code_dict = self._hook_obj.get_tmtc_definitions()
         if self.service_op_code_dict is None:
             LOGGER.warning("Invalid service to operation code dictionary")
             LOGGER.warning("Setting default dictionary")
-            from tmtccmd.config.globals import get_default_service_op_code_dict
+            from tmtccmd.config.globals import get_default_tmtc_defs
 
-            self.service_op_code_dict = get_default_service_op_code_dict()
+            self.service_op_code_dict = get_default_tmtc_defs()
         index = 0
         default_index = 0
         for service_key, service_value in self.service_op_code_dict.items():

@@ -3,19 +3,16 @@ Argument parser modules for the TMTC commander core
 """
 import argparse
 import sys
-from typing import Optional
+from typing import Optional, List
+from dataclasses import dataclass
 
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
 
-from tmtccmd.config.definitions import (
-    CoreModeList,
-    ServiceOpCodeDictT,
-    OpCodeEntryT,
-    OpCodeDictKeys,
-)
-from tmtccmd.config.hook import TmTcHookBase
+from tmtccmd.config.definitions import CoreModeList
+from tmtccmd.config.tmtc_defs import TmTcDefWrapper, OpCodeEntry
+from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.utility.conf_util import AnsiColors
 from tmtccmd.logging import get_console_logger
 
@@ -41,6 +38,39 @@ def create_default_args_parser(
     )
 
 
+@dataclass
+class ArgsGroup:
+    service: str
+    op_code: str
+    mode: str
+    listener: bool = False
+    interactive: bool = False
+
+
+class TmtccmdArgsWrapper:
+    def __init__(self, descript_txt: Optional[str] = None):
+        self.args_parser = create_default_args_parser(descript_txt)
+        self.print_known_args = False
+        self.print_unknown_args = False
+        self.unknown_args = [""]
+        self.args = ArgsGroup("", "", "")
+
+    def add_default_tmtccmd_args(self):
+        add_default_tmtccmd_args(self.args_parser)
+
+    def parse(self, hook_obj: TmTcCfgHookBase):
+        args, self.unknown_args = parse_default_tmtccmd_input_arguments(
+            self.args_parser,
+            hook_obj,
+            print_known_args=self.print_known_args,
+            print_unknown_args=self.print_unknown_args,
+        )
+        self.args.service = args.service
+        self.args.op_code = args.op_code
+        self.args.mode = args.mode
+        self.args.listener = args.listener
+
+
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_default_mode_arguments(parser)
     add_default_com_if_arguments(parser)
@@ -49,46 +79,13 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
 
     add_ethernet_arguments(parser)
 
-    parser.add_argument(
-        "--tctf",
-        type=float,
-        help="TC Timeout Factor. Multiplied with "
-        "TM Timeout, TC sent again after this time period. Default: 3.5",
-        default=3.5,
-    )
-    parser.add_argument(
-        "-r",
-        "--raw-print",
-        help="Supply -r to print all raw TM data directly",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-d",
-        "--sh-display",
-        help="Supply -d to print short output",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-k",
-        "--hk",
-        dest="print_hk",
-        help="Supply -k or --hk to print HK data",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--rs",
-        dest="resend_tc",
-        help="Specify whether TCs are sent again after timeout",
-        action="store_true",
-    )
 
-
-def parse_default_input_arguments(
+def parse_default_tmtccmd_input_arguments(
     parser: argparse.ArgumentParser,
-    hook_obj: TmTcHookBase,
+    hook_obj: TmTcCfgHookBase,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
-) -> argparse.Namespace:
+) -> (argparse.Namespace, List[str]):
     """Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
     """
@@ -109,8 +106,8 @@ def parse_default_input_arguments(
         for argument in unknown:
             LOGGER.info(argument)
 
-    args_post_processing(args, unknown, hook_obj.get_service_op_code_dictionary())
-    return args
+    args_post_processing(args, unknown, hook_obj.get_tmtc_definitions())
+    return args, unknown
 
 
 def add_cfdp_parser(arg_parser: argparse.ArgumentParser):
@@ -136,68 +133,72 @@ def add_cfdp_parser(arg_parser: argparse.ArgumentParser):
 
 def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
-        "-s", "--service", type=str, help="Service to test", default=None
+        "-s",
+        "--service",
+        help="Procedure service code which is passed to the TC handler objects",
+        default=None,
     )
     arg_parser.add_argument(
         "-o",
         "--op_code",
-        help="Operation code, which is passed to the TC packer functions",
+        help="Procedcure operation code, which is passed to the TC packer functions",
         default=None,
     )
     arg_parser.add_argument(
         "-l",
         "--listener",
-        help="Determine whether the listener mode will be active after performing the operation",
+        help="The backend will be configured to go into listener mode after "
+        "finishing the first queue",
         action="store_true",
-        default=None,
+        default=False,
+    )
+    arg_parser.add_argument(
+        "-i",
+        "--interactive",
+        help="Enables interactive or multi-queue mode, where the backend will be confiogured "
+        "to handle multiple queues",
+        action="store_true",
+        default=False,
     )
     arg_parser.add_argument(
         "-t",
         "--tm_timeout",
         type=float,
-        help="TM Timeout when listening to verification sequence."
-        " Default: 5 seconds",
-        default=None,
-    )
-    arg_parser.add_argument(
-        "--nl",
-        dest="print_log",
-        help="Supply --nl to suppress print output to log files.",
-        action="store_false",
-    )
-    arg_parser.add_argument(
-        "--np",
-        dest="print_tm",
-        help="Supply --np to suppress print output to console.",
-        action="store_false",
+        help="Default inter-packet delay" " Default: 3 seconds",
+        default=3.0,
     )
 
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config.definitions import CoreModeList, CoreModeStrings
 
-    help_text = "Core Modes. Default: seqcmd\n"
-    seq_help = (
-        f"{CoreModeList.SEQUENTIAL_CMD_MODE} or "
-        f"{CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]}: "
-        f"Sequential Command Mode\n"
+    help_text = f"Core Modes. Default: {CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]}\n"
+    one_q = (
+        f"{CoreModeList.ONE_QUEUE_MODE} or "
+        f"{CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]}: "
+        f"One Queue Command Mode\n"
     )
     listener_help = (
         f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: "
         f"Listener Mode\n"
+    )
+    multi_q = (
+        f"{CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE} or "
+        f"{CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]}: "
+        f"Multi Queue and Interactive Command Mode\n"
     )
     gui_help = (
         f"{CoreModeList.GUI_MODE} or "
         f"{CoreModeStrings[CoreModeList.GUI_MODE]}: "
         f"GUI mode\n"
     )
-    help_text += seq_help + listener_help + gui_help
+    help_text += one_q + listener_help + gui_help
     arg_parser.add_argument(
         "-m",
         "--mode",
         type=str,
         help=help_text,
-        default=CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE],
+        default=CoreModeStrings[CoreModeList.ONE_QUEUE_MODE],
     )
 
 
@@ -237,18 +238,17 @@ def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
+    arg_parser.add_argument("--h-ip", help="Host (Computer) IP. Default:''", default="")
     arg_parser.add_argument(
-        "--client-ip", help="Client(Computer) IP. Default:''", default=""
-    )
-    arg_parser.add_argument(
-        "--board-ip", help="Board IP. Default: Localhost 127.0.0.1", default="127.0.0.1"
+        "--t-ip", help="Target IP. Default: Localhost 127.0.0.1", default="127.0.0.1"
     )
 
 
 def args_post_processing(
-    args, unknown: list, service_op_code_dict: ServiceOpCodeDictT
+    args, unknown: list, service_op_code_dict: TmTcDefWrapper
 ) -> None:
     """Handles the parsed arguments.
+    :param service_op_code_dict:
     :param args: Namespace objects
         (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
     :param unknown: List of unknown parameters.
@@ -262,17 +262,17 @@ def args_post_processing(
         handle_empty_args(args, service_op_code_dict)
 
 
-def handle_unspecified_args(args, service_op_code_dict: ServiceOpCodeDictT) -> None:
+def handle_unspecified_args(args, tmtc_defs: TmTcDefWrapper) -> None:
     """If some arguments are unspecified, they are set here with (variable) default values.
     :param args: Arguments from calling parse method
-    :param service_op_code_dict:
+    :param tmtc_defs:
     :return: None
     """
     from tmtccmd.config.definitions import CoreModeStrings
 
     if args.mode is None:
-        args.mode = CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]
-    if service_op_code_dict is None:
+        args.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
+    if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
         if args.service is None:
             args.service = "0"
@@ -280,55 +280,22 @@ def handle_unspecified_args(args, service_op_code_dict: ServiceOpCodeDictT) -> N
             args.op_code = "0"
         return
     if args.service is None:
-        if args.mode == CoreModeStrings[CoreModeList.SEQUENTIAL_CMD_MODE]:
+        if args.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
             LOGGER.info("No service argument (-s) specified, prompting from user..")
             # Try to get the service list from the hook base and prompt service from user
-            args.service = prompt_service(service_op_code_dict)
+            args.service = prompt_service(tmtc_defs)
     if args.op_code is None:
         current_service = args.service
-        args.op_code = prompt_op_code(
-            service_op_code_dict=service_op_code_dict, service=current_service
-        )
-    if args.service is not None:
-        service_entry = service_op_code_dict.get(args.service)
-        if service_entry is not None:
-            op_code_value = service_op_code_dict[args.service][1]
-            op_code_options = None
-            op_code_value = op_code_value.get(args.op_code)
-            if op_code_value is not None:
-                op_code_options = op_code_value[1]
-            if op_code_options is not None and isinstance(op_code_options, dict):
-                if op_code_options.get(OpCodeDictKeys.ENTER_LISTENER_MODE):
-                    if args.listener is None:
-                        LOGGER.info(
-                            "Detected op code configuration: Enter listener mode after command"
-                        )
-                        args.listener = True
-                    else:
-                        LOGGER.warning(
-                            "Detected op code listerner mode configuration but is "
-                            "overriden by CLI argument"
-                        )
-                timeout = op_code_options.get(OpCodeDictKeys.TIMEOUT)
-                if timeout is not None:
-                    if args.tm_timeout is None:
-                        LOGGER.info(
-                            f"Detected op code configuration: Set custom timeout {timeout}"
-                        )
-                        args.tm_timeout = timeout
-                    else:
-                        LOGGER.warning(
-                            "Detected op code timeout configuration but is overriden by "
-                            "CLI argument"
-                        )
+        args.op_code = prompt_op_code(tmtc_defs, current_service)
     if args.tm_timeout is None:
         args.tm_timeout = 5.0
     if args.listener is None:
         args.listener = False
 
 
-def handle_empty_args(args, service_op_code_dict: ServiceOpCodeDictT) -> None:
+def handle_empty_args(args, service_op_code_dict: TmTcDefWrapper) -> None:
     """If no args were supplied, request input from user directly.
+    :param service_op_code_dict:
     :param args:
     :return:
     """
@@ -336,7 +303,7 @@ def handle_empty_args(args, service_op_code_dict: ServiceOpCodeDictT) -> None:
     handle_unspecified_args(args, service_op_code_dict)
 
 
-def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
+def prompt_service(tmtc_defs: TmTcDefWrapper) -> str:
     service_adjustment = 20
     info_adjustment = 30
     horiz_line_num = service_adjustment + info_adjustment + 3
@@ -347,10 +314,8 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
         print(f" {horiz_line}")
         print(f"|{service_string} | {info_string}|")
         print(f" {horiz_line}")
-        srv_completer = build_service_word_completer(
-            service_op_code_dict=service_op_code_dict
-        )
-        for service_entry in service_op_code_dict.items():
+        srv_completer = build_service_word_completer(tmtc_defs)
+        for service_entry in tmtc_defs.defs.items():
             try:
                 adjusted_service_entry = service_entry[0].ljust(service_adjustment)
                 adjusted_service_info = service_entry[1][0].ljust(info_adjustment)
@@ -365,7 +330,7 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
             completer=srv_completer,
             complete_style=CompleteStyle.MULTI_COLUMN,
         )
-        if service_string in service_op_code_dict:
+        if service_string in tmtc_defs:
             LOGGER.info(f"Selected service: {service_string}")
             return service_string
         else:
@@ -373,16 +338,16 @@ def prompt_service(service_op_code_dict: ServiceOpCodeDictT) -> str:
 
 
 def build_service_word_completer(
-    service_op_code_dict: ServiceOpCodeDictT,
+    tmtc_defs: TmTcDefWrapper,
 ) -> WordCompleter:
     srv_list = []
-    for service_entry in service_op_code_dict.items():
+    for service_entry in tmtc_defs.defs.items():
         srv_list.append(service_entry[0])
     srv_completer = WordCompleter(words=srv_list, ignore_case=True)
     return srv_completer
 
 
-def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> str:
+def prompt_op_code(tmtc_defs: TmTcDefWrapper, service: str) -> str:
     op_code_adjustment = 24
     info_adjustment = 56
     horz_line_num = op_code_adjustment + info_adjustment + 3
@@ -393,12 +358,12 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
         print(f" {horiz_line}")
         print(f"|{op_code_info_str} | {info_string}|")
         print(f" {horiz_line}")
-        if service in service_op_code_dict:
-            op_code_dict = service_op_code_dict[service][1]
+        if service in tmtc_defs.defs:
+            op_code_entry = tmtc_defs.op_code_entry(service)
             completer = build_op_code_word_completer(
-                service=service, op_code_dict=op_code_dict
+                service=service, op_code_entry=op_code_entry
             )
-            for op_code_entry in op_code_dict.items():
+            for op_code_entry in op_code_entry.op_code_dict.items():
                 adjusted_op_code_entry = op_code_entry[0].ljust(op_code_adjustment)
                 adjusted_op_code_info = op_code_entry[1][0].ljust(info_adjustment)
                 print(f"|{adjusted_op_code_entry} | {adjusted_op_code_info}|")
@@ -408,7 +373,7 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
                 completer=completer,
                 complete_style=CompleteStyle.MULTI_COLUMN,
             )
-            if op_code_string in op_code_dict:
+            if op_code_string in op_code_entry:
                 LOGGER.info(f"Selected op code: {op_code_string}")
                 return op_code_string
             else:
@@ -421,10 +386,10 @@ def prompt_op_code(service_op_code_dict: ServiceOpCodeDictT, service: str) -> st
 
 
 def build_op_code_word_completer(
-    service: str, op_code_dict: OpCodeEntryT
+    service: str, op_code_entry: OpCodeEntry
 ) -> WordCompleter:
     op_code_list = []
-    for op_code_entry in op_code_dict.items():
+    for op_code_entry in op_code_entry.op_code_dict.items():
         op_code_list.append(op_code_entry[0])
     op_code_completer = WordCompleter(words=op_code_list, ignore_case=True)
     return op_code_completer

@@ -31,14 +31,12 @@ class TestGlobalManager(TestCase):
         set_default_globals_pre_args_parsing(gui=False, tc_apid=0x02, tm_apid=0x03)
 
         result = check_and_set_core_mode_arg(mode_arg="udp")
-        self.assertTrue(result == CoreModeList.SEQUENTIAL_CMD_MODE)
+        self.assertTrue(result == CoreModeList.ONE_QUEUE_MODE)
 
         result = check_and_set_core_mode_arg(mode_arg="listener")
         self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.LISTENER_MODE)
         self.assertTrue(result == CoreModeList.LISTENER_MODE)
 
         result = check_and_set_core_mode_arg(mode_arg="seqcmd")
-        self.assertTrue(
-            get_global(CoreGlobalIds.MODE) == CoreModeList.SEQUENTIAL_CMD_MODE
-        )
-        self.assertTrue(result == CoreModeList.SEQUENTIAL_CMD_MODE)
+        self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.ONE_QUEUE_MODE)
+        self.assertTrue(result == CoreModeList.ONE_QUEUE_MODE)
