@@ -35,12 +35,11 @@ class CcsdsTmtcBackend(BackendBase):
         tm_handler: TmHandlerBase,
         tc_handler: TcHandlerBase,
     ):
-        self.mode = CoreModeList.LISTENER_MODE
-        self.com_if_key = com_if.get_id()
+        self._state = BackendState()
+        self._com_if_key = com_if.get_id()
         self.__hook_obj = hook_obj
         self.__com_if_active = False
         self.__apid = 0
-        self.__res = BackendState(Request.NONE)
         self.__tc_handler = tc_handler
 
         # This flag could be used later to command the TMTC Client with a front-end
@@ -68,7 +67,7 @@ class CcsdsTmtcBackend(BackendBase):
 
     @property
     def com_if_id(self):
-        return self.com_if_key
+        return self._com_if_key
 
     @property
     def com_if(self) -> CommunicationInterface:
@@ -78,9 +77,10 @@ class CcsdsTmtcBackend(BackendBase):
     def tm_listener(self):
         return self.__tm_listener
 
-    def set_com_if(self, com_if: CommunicationInterface):
-        if not self.is_com_if_active():
+    def try_set_com_if(self, com_if: CommunicationInterface):
+        if not self.com_if_active():
             self.__com_if = com_if
+            self._com_if_key = com_if.get_id()
             self.__tm_listener.set_com_if(self.__com_if)
         else:
             LOGGER.warning(
@@ -88,7 +88,7 @@ class CcsdsTmtcBackend(BackendBase):
                 "reassigning a new one"
             )
 
-    def is_com_if_active(self):
+    def com_if_active(self):
         return self.__com_if_active
 
     @property
@@ -181,13 +181,13 @@ class CcsdsTmtcBackend(BackendBase):
     def __core_operation(self, one_shot: bool) -> BackendState:
         self.__handle_action()
         if one_shot:
-            self.__res.req = Request.TERMINATION_NO_ERROR
+            self._state.__req = Request.TERMINATION_NO_ERROR
         else:
             if self.mode == CoreModeList.IDLE:
-                self.__res.req = Request.DELAY_IDLE
+                self._state.__req = Request.DELAY_IDLE
             elif self.mode == CoreModeList.LISTENER_MODE:
-                self.__res.req = Request.DELAY_LISTENER
-        return self.__res
+                self._state.__req = Request.DELAY_LISTENER
+        return self._state
 
     def __com_if_closing(self):
         self.__tm_listener.stop()

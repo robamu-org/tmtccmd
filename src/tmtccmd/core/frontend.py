@@ -98,7 +98,7 @@ class WorkerThread(QObject):
             if op_code == WorkerOperationsCodes.DISCONNECT:
                 self.tmtc_handler.close_listener()
                 while True:
-                    if not self.tmtc_handler.is_com_if_active():
+                    if not self.tmtc_handler.com_if_active():
                         break
                     else:
                         time.sleep(0.4)

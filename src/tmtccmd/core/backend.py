@@ -1,6 +1,8 @@
 import enum
 from abc import abstractmethod
 
+from tmtccmd.config.definitions import CoreModeList
+
 
 class Request(enum.IntEnum):
     NONE = 0
@@ -9,15 +11,9 @@ class Request(enum.IntEnum):
     DELAY_LISTENER = 3
 
 
-class BackendState:
-    def __init__(self, req: Request):
-        self.req = req
-        self.mode_changed = False
-
-
 class TcMode(enum.IntEnum):
-    IDLE = (0,)
-    ONE_QUEUE = (1,)
+    IDLE = 0
+    ONE_QUEUE = 1
     MULTI_QUEUE = 2
 
 
@@ -28,14 +24,31 @@ class TmMode(enum.IntEnum):
 
 class BackendModeWrapper:
     def __init__(self):
+        self.mode = CoreModeList.ONE_QUEUE_MODE
         self.tc_mode = TcMode.IDLE
         self.tm_mode = TmMode.IDLE
 
 
 class BackendState:
     def __init__(self):
-        self.mode_wrapper = BackendModeWrapper()
-        self.result = BackendState(Request.NONE)
+        self._mode_wrapper = BackendModeWrapper()
+        self._req = Request.NONE
+
+    @property
+    def request(self):
+        return self._req
+
+    @property
+    def mode(self):
+        return self._mode_wrapper.mode
+
+    @property
+    def tc_mode(self):
+        return self._mode_wrapper.tc_mode
+
+    @property
+    def tm_mode(self):
+        return self._mode_wrapper.tm_mode
 
 
 class BackendController:
