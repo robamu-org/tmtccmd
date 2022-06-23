@@ -4,9 +4,7 @@ from typing import Optional
 
 from tmtccmd.tc.definitions import (
     TcQueueEntryBase,
-    TcQueueEntryType,
-    cast_wait_entry_from_base,
-    cast_timeout_entry_from_base,
+    TcQueueEntryType, CastWrapper
 )
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
@@ -122,13 +120,13 @@ class SequentialCcsdsSender:
         if not isinstance(queue_entry, TcQueueEntryBase):
             LOGGER.warning("Invalid queue entry detected")
             raise ValueError("Invalid queue entry detected")
-
+        cast_wrapper = CastWrapper(queue_entry)
         if queue_entry.etype == TcQueueEntryType.WAIT:
-            wait_entry = cast_wait_entry_from_base(queue_entry)
+            wait_entry = cast_wrapper.to_wait_entry()
             LOGGER.info(f"Waiting for {wait_entry.wait_time} seconds.")
             self._wait_cd.reset(new_timeout=wait_entry.wait_time)
         elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:
-            timeout_entry = cast_timeout_entry_from_base(queue_entry)
+            timeout_entry = cast_wrapper.to_packet_delay_entry()
             self._send_cd.reset(new_timeout=timeout_entry.timeout_secs)
         is_tc = False
         if (
