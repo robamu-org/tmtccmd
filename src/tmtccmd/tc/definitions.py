@@ -12,7 +12,7 @@ class TcQueueEntryType(Enum):
     PRINT = "print"
     WAIT = "wait"
     RAW_PRINT = "raw-print"
-    SET_TIMEOUT = "set-timeout"
+    SET_INTER_CMD_DELAY = "set-delay"
 
 
 class TcQueueEntryBase:
@@ -69,7 +69,7 @@ class WaitEntry(TcQueueEntryBase):
 
 class TimeoutEntry(TcQueueEntryBase):
     def __init__(self, timeout_secs: float):
-        super().__init__(TcQueueEntryType.SET_TIMEOUT)
+        super().__init__(TcQueueEntryType.SET_INTER_CMD_DELAY)
         self.timeout_secs = timeout_secs
 
     def __repr__(self):

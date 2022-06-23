@@ -110,7 +110,7 @@ def handle_com_if_arg(
     if custom_com_if_dict is not None:
         all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
     try:
-        com_if_key = str(args.com_if)
+        com_if_key = str(args._com_if)
     except AttributeError:
         LOGGER.warning("No communication interface specified")
         LOGGER.warning("Trying to set from existing configuration..")

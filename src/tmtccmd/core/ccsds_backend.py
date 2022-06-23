@@ -13,13 +13,12 @@ from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.tm.definitions import TmTypes
 from tmtccmd.tm.handler import TmHandlerBase
 from tmtccmd.logging import get_console_logger
-from tmtccmd.tc.ccsds_seq_sender_receiver import (
-    SequentialCcsdsSenderReceiver,
+from tmtccmd.tc.ccsds_seq_sender import (
+    SequentialCcsdsSender,
 )
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.countdown import Countdown
 
 LOGGER = get_console_logger()
 
@@ -56,12 +55,9 @@ class CcsdsTmtcBackend(BackendBase):
                 )
         self.exit_on_com_if_init_failure = True
         self._queue_wrapper = QueueWrapper(None)
-        self._seq_handler = SequentialCcsdsSenderReceiver(
+        self._seq_handler = SequentialCcsdsSender(
             com_if=self.__com_if,
-            tm_handler=self.__tm_handler,
-            tm_listener=self.__tm_listener,
             tc_handler=tc_handler,
-            apid=self.__apid,
             queue_wrapper=self._queue_wrapper,
         )
 
@@ -239,7 +235,7 @@ class CcsdsTmtcBackend(BackendBase):
             #       the queue and then request program termination. Alternatively, the user should
             #       be able to switch the mode
             self._seq_handler.queue_wrapper = service_queue
-            self._seq_handler.send_queue_tc_and_receive_tm_sequentially()
+            seq_res_wrapper = self._seq_handler.operation()
             self._state.mode_wrapper.mode = CoreModeList.LISTENER_MODE
         elif self.mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
             # TODO: Handle the queue as long as the current one is full. If it is finished,

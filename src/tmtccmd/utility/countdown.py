@@ -28,7 +28,7 @@ class Countdown:
     def busy(self) -> bool:
         return not self.timed_out()
 
-    def reset(self, new_timeout: Optional[float]):
+    def reset(self, new_timeout: Optional[float] = None):
         if new_timeout is not None:
             self.timeout = new_timeout
         else:
@@ -36,3 +36,10 @@ class Countdown:
 
     def time_out(self):
         self._start_time = time.time() - self._timeout
+
+    def rem_time(self) -> float:
+        end_time = self._start_time + self._timeout
+        current = time.time()
+        if end_time < current:
+            return 0
+        return end_time - current

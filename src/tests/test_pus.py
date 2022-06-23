@@ -46,7 +46,7 @@ class TestTelemetry(TestCase):
         print(full_string)
         print(pus_17_telemetry)
         print(repr(pus_17_telemetry))
-        self.assertTrue(pus_17_telemetry.pus_tm.packet_id == 0x8 << 8 | 0xEF)
+        self.assertTrue(pus_17_telemetry.pus_tm.packet_id.raw() == 0x8 << 8 | 0xEF)
 
     def test_list_functionality(self):
         pus_17_telecommand = Service17TMExtended(
