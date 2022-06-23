@@ -2,9 +2,8 @@ from abc import abstractmethod
 from typing import Optional
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.core.ccsds_backend import ProcedureInfo
 from tmtccmd.core.modes import ModeWrapper
-from tmtccmd.tc.definitions import TcQueueEntryBase, QueueDequeT
+from tmtccmd.tc.definitions import TcQueueEntryBase, QueueDequeT, ProcedureInfo
 
 
 class FeedWrapper:

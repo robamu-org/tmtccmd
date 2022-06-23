@@ -8,18 +8,28 @@ from tmtccmd.tc.definitions import (
     PusTcEntry,
     RawTcEntry,
     WaitEntry,
+    SpacePacketEntry,
 )
 
 
 class QueueWrapper:
-    def __init__(self, queue: Optional[QueueDequeT], inter_cmd_delay: bool = True):
+    def __init__(self, queue: Optional[QueueDequeT], inter_cmd_delay: float = 0.0):
         self.queue = queue
         self.inter_cmd_delay = inter_cmd_delay
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(queue={self.queue!r}, "
+            f"inter_cmd_delay={self.inter_cmd_delay!r})"
+        )
 
 
 class QueueHelper:
     def __init__(self, queue_wrapper: QueueWrapper):
         self.queue_wrapper = queue_wrapper
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(queue_wrapper={self.queue_wrapper!r})"
 
     def add_log_cmd(self, print_str: str):
         self.queue_wrapper.queue.appendleft(LogQueueEntry(print_str))
@@ -28,7 +38,7 @@ class QueueHelper:
         self.queue_wrapper.queue.appendleft(PusTcEntry(pus_tc))
 
     def add_ccsds_tc(self, space_packet: SpacePacket):
-        pass
+        self.queue_wrapper.queue.appendleft(SpacePacketEntry(space_packet))
 
     def add_raw_tc(self, tc: bytes):
         self.queue_wrapper.queue.appendleft(RawTcEntry(tc))

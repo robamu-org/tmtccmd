@@ -5,10 +5,10 @@ from typing import Optional
 class Countdown:
     def __init__(self, init_timeout_secs: Optional[float]):
         if init_timeout_secs is not None:
-            self.timeout = init_timeout_secs
+            self._timeout = init_timeout_secs
         else:
             self._timeout = 0
-        self._start_time = 0
+        self._start_time = time.time()
 
     @property
     def timeout(self):

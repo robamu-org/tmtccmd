@@ -75,9 +75,11 @@ class SequentialCcsdsSender:
     def pause(self):
         self._mode = SenderMode.IDLE
 
+    def resume(self):
+        if self._mode == SenderMode.IDLE:
+            self._mode = SenderMode.BUSY
+
     def operation(self) -> SeqResultWrapper:
-        if not self.queue_wrapper.queue and self._mode != SenderMode.DONE:
-            self._mode = SenderMode.DONE
         if self._mode == SenderMode.IDLE or self._mode == SenderMode.DONE:
             return SeqResultWrapper(self._mode)
         self._handle_current_tc_queue()
@@ -91,6 +93,7 @@ class SequentialCcsdsSender:
             if self._wait_cd.timed_out() and self._send_cd.timed_out():
                 # cache this for last wait time
                 self._mode = SenderMode.DONE
+                return
         else:
             if not self._send_cd.busy() and not self._wait_cd.busy():
                 self._send_next_telecommand()

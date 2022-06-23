@@ -1,15 +1,16 @@
 from __future__ import annotations
 from enum import Enum
-from typing import Deque
-from typing import cast
+from typing import Deque, cast, Type, Any
+from spacepackets.ccsds.spacepacket import SpacePacket
 from spacepackets.ecss.tc import PusTelecommand
 
 
 class TcQueueEntryType(Enum):
     PUS_TC = "pus-tc"
+    CCSDS_TC = "ccsds-tc"
     RAW_TC = "raw-tc"
     CUSTOM = "custom"
-    PRINT = "print"
+    LOG = "log"
     WAIT = "wait"
     RAW_PRINT = "raw-print"
     SET_INTER_CMD_DELAY = "set-delay"
@@ -37,16 +38,25 @@ class PusTcEntry(TcQueueEntryBase):
         self.pus_tc = pus_tc
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(pus_tc={self.pus_tc!r}"
+        return f"{self.__class__.__name__}({self.pus_tc!r})"
+
+
+class SpacePacketEntry(TcQueueEntryBase):
+    def __init__(self, space_packet: SpacePacket):
+        super().__init__(TcQueueEntryType.CCSDS_TC)
+        self.space_packet = space_packet
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.space_packet!r})"
 
 
 class LogQueueEntry(TcQueueEntryBase):
     def __init__(self, log_str: str):
-        super().__init__(TcQueueEntryType.PRINT)
+        super().__init__(TcQueueEntryType.LOG)
         self.print_str = log_str
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(print_str={self.print_str!r}"
+        return f"{self.__class__.__name__}({self.print_str!r})"
 
 
 class RawTcEntry(TcQueueEntryBase):
@@ -55,7 +65,7 @@ class RawTcEntry(TcQueueEntryBase):
         self.tc = tc
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(tc={self.tc!r}"
+        return f"{self.__class__.__name__}({self.tc!r})"
 
 
 class WaitEntry(TcQueueEntryBase):
@@ -64,7 +74,7 @@ class WaitEntry(TcQueueEntryBase):
         self.wait_time = wait_secs
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(wait_time={self.wait_time!r}"
+        return f"{self.__class__.__name__}({self.wait_time!r})"
 
 
 class TimeoutEntry(TcQueueEntryBase):
@@ -73,27 +83,40 @@ class TimeoutEntry(TcQueueEntryBase):
         self.timeout_secs = timeout_secs
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(timeout_secs={self.timeout_secs!r}"
+        return f"{self.__class__.__name__}({self.timeout_secs!r})"
 
 
-def cast_print_entry_from_base(base: TcQueueEntryBase) -> LogQueueEntry:
-    return cast(LogQueueEntry, base)
+class CastWrapper:
+    def __init__(self, base: TcQueueEntryBase):
+        self.base = base
 
+    def __cast_internally(
+        self,
+        obj_type: Type[TcQueueEntryBase],
+        obj: TcQueueEntryBase,
+        expected_type: TcQueueEntryType,
+    ) -> Any:
+        if self.base.etype != expected_type:
+            raise TypeError(f"Invalid object {obj} for type {self.base.etype}")
+        return cast(obj_type, obj)
 
-def cast_pus_tc_entry_from_base(base: TcQueueEntryBase) -> PusTcEntry:
-    return cast(PusTcEntry, base)
+    def to_print_entry(self) -> LogQueueEntry:
+        return self.__cast_internally(LogQueueEntry, self.base, self.base.etype)
 
+    def to_pus_tc_entry(self) -> PusTcEntry:
+        return self.__cast_internally(PusTcEntry, self.base, self.base.etype)
 
-def cast_raw_tc_entry_from_base(base: TcQueueEntryBase) -> RawTcEntry:
-    return cast(RawTcEntry, base)
+    def to_raw_tc_entry(self) -> RawTcEntry:
+        return self.__cast_internally(RawTcEntry, self.base, self.base.etype)
 
+    def to_wait_entry(self) -> WaitEntry:
+        return self.__cast_internally(WaitEntry, self.base, self.base.etype)
 
-def cast_wait_entry_from_base(base: TcQueueEntryBase) -> WaitEntry:
-    return cast(WaitEntry, base)
+    def to_timeout_entry(self) -> TimeoutEntry:
+        return self.__cast_internally(TimeoutEntry, self.base, self.base.etype)
 
-
-def cast_timeout_entry_from_base(base: TcQueueEntryBase) -> TimeoutEntry:
-    return cast(TimeoutEntry, base)
+    def to_space_packet_entry(self) -> SpacePacketEntry:
+        return self.__cast_internally(SpacePacketEntry, self.base, self.base.etype)
 
 
 class ProcedureInfo:
