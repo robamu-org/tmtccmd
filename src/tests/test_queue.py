@@ -71,3 +71,9 @@ class TestTcQueue(TestCase):
         space_packet_entry = cast_wrapper.to_space_packet_entry()
         self.assertTrue(space_packet_entry)
         self.assertTrue(space_packet_entry.space_packet, pus_cmd.to_space_packet())
+
+        packet_delay = queue_wrapper.queue.pop()
+        self.assertFalse(packet_delay.is_tc())
+        cast_wrapper.base = packet_delay
+        packet_delay = cast_wrapper.to_packet_delay_entry()
+        self.assertEqual(packet_delay.timeout_secs, 3.0)
