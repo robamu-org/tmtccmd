@@ -12,17 +12,21 @@ class TcQueueEntryType(Enum):
     CUSTOM = "custom"
     LOG = "log"
     WAIT = "wait"
-    SET_INTER_CMD_DELAY = "set-delay"
+    PACKET_DELAY = "set-delay"
 
 
 class TcQueueEntryBase:
+    """Generic TC queue entry abstraction. This allows filling the TC queue with custom objects"""
+
     def __init__(self, etype: TcQueueEntryType):
         self.etype = etype
 
     def is_tc(self) -> bool:
+        """Check whether concrete object is an actual telecommand"""
         if (
             self.etype == TcQueueEntryType.PUS_TC
             or self.etype == TcQueueEntryType.RAW_TC
+            or self.etype == TcQueueEntryType.CCSDS_TC
         ):
             return True
         return False
@@ -52,10 +56,10 @@ class SpacePacketEntry(TcQueueEntryBase):
 class LogQueueEntry(TcQueueEntryBase):
     def __init__(self, log_str: str):
         super().__init__(TcQueueEntryType.LOG)
-        self.print_str = log_str
+        self.log_str = log_str
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.print_str!r})"
+        return f"{self.__class__.__name__}({self.log_str!r})"
 
 
 class RawTcEntry(TcQueueEntryBase):
@@ -76,9 +80,9 @@ class WaitEntry(TcQueueEntryBase):
         return f"{self.__class__.__name__}({self.wait_time!r})"
 
 
-class TimeoutEntry(TcQueueEntryBase):
+class PacketDelayEntry(TcQueueEntryBase):
     def __init__(self, timeout_secs: float):
-        super().__init__(TcQueueEntryType.SET_INTER_CMD_DELAY)
+        super().__init__(TcQueueEntryType.PACKET_DELAY)
         self.timeout_secs = timeout_secs
 
     def __repr__(self):
@@ -111,9 +115,9 @@ class CastWrapper:
     def to_wait_entry(self) -> WaitEntry:
         return self.__cast_internally(WaitEntry, self.base, TcQueueEntryType.WAIT)
 
-    def to_timeout_entry(self) -> TimeoutEntry:
+    def to_packet_delay_entry(self) -> PacketDelayEntry:
         return self.__cast_internally(
-            TimeoutEntry, self.base, TcQueueEntryType.SET_INTER_CMD_DELAY
+            PacketDelayEntry, self.base, TcQueueEntryType.PACKET_DELAY
         )
 
     def to_space_packet_entry(self) -> SpacePacketEntry:
@@ -123,6 +127,10 @@ class CastWrapper:
 
 
 class ProcedureInfo:
+    """Generic abstraction for procedures. A procedure can be a single command or a sequence
+    of commands. Generally, one procedure is mapped to a specific TC queue which is packed
+    during run-time"""
+
     def __init__(self, service: str, op_code: str):
         self.service = service
         self.op_code = op_code

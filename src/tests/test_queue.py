@@ -5,6 +5,10 @@ from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.tc.definitions import WaitEntry, CastWrapper
+
+# Required for eval calls
+# noinspection PyUnresolvedReferences
+from tmtccmd.tc.definitions import LogQueueEntry, RawTcEntry
 from tmtccmd.tc.queue import QueueWrapper, QueueHelper
 
 
@@ -29,7 +33,9 @@ class TestTcQueue(TestCase):
         queue_helper.add_log_cmd("Test String")
         queue_helper.add_raw_tc(bytes([0, 1, 2]))
         queue_helper.add_ccsds_tc(pus_cmd.to_space_packet())
-        self.assertEqual(len(queue_wrapper.queue), 4)
+        queue_helper.add_packet_delay(3.0)
+        print(queue_wrapper.queue)
+        self.assertEqual(len(queue_wrapper.queue), 5)
 
         pus_entry = queue_wrapper.queue.pop()
         self.assertTrue(pus_entry.is_tc())
@@ -39,3 +45,29 @@ class TestTcQueue(TestCase):
         self.assertTrue(pus_entry)
         with self.assertRaises(TypeError):
             cast_wrapper.to_wait_entry()
+        log_entry = queue_wrapper.queue.pop()
+        self.assertFalse(log_entry.is_tc())
+        cast_wrapper.base = log_entry
+        log_entry = cast_wrapper.to_log_entry()
+        self.assertTrue(log_entry)
+        with self.assertRaises(TypeError):
+            cast_wrapper.to_raw_tc_entry()
+        self.assertEqual(log_entry.log_str, "Test String")
+        test_obj = eval(f"{log_entry!r}")
+        self.assertEqual(test_obj.log_str, log_entry.log_str)
+
+        raw_entry = queue_wrapper.queue.pop()
+        self.assertTrue(raw_entry.is_tc())
+        cast_wrapper.base = raw_entry
+        raw_entry = cast_wrapper.to_raw_tc_entry()
+        self.assertTrue(raw_entry)
+        self.assertEqual(raw_entry.tc, bytes([0, 1, 2]))
+        test_obj = eval(f"{raw_entry!r}")
+        self.assertEqual(raw_entry.tc, test_obj.tc)
+
+        space_packet_entry = queue_wrapper.queue.pop()
+        self.assertTrue(space_packet_entry.is_tc())
+        cast_wrapper.base = space_packet_entry
+        space_packet_entry = cast_wrapper.to_space_packet_entry()
+        self.assertTrue(space_packet_entry)
+        self.assertTrue(space_packet_entry.space_packet, pus_cmd.to_space_packet())

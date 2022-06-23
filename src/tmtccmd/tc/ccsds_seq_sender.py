@@ -127,7 +127,7 @@ class SequentialCcsdsSender:
             wait_entry = cast_wait_entry_from_base(queue_entry)
             LOGGER.info(f"Waiting for {wait_entry.wait_time} seconds.")
             self._wait_cd.reset(new_timeout=wait_entry.wait_time)
-        elif queue_entry.etype == TcQueueEntryType.SET_INTER_CMD_DELAY:
+        elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:
             timeout_entry = cast_timeout_entry_from_base(queue_entry)
             self._send_cd.reset(new_timeout=timeout_entry.timeout_secs)
         is_tc = False

@@ -9,6 +9,7 @@ from tmtccmd.tc.definitions import (
     RawTcEntry,
     WaitEntry,
     SpacePacketEntry,
+    PacketDelayEntry,
 )
 
 
@@ -45,3 +46,6 @@ class QueueHelper:
 
     def add_wait(self, wait_secs: float):
         self.queue_wrapper.queue.appendleft(WaitEntry(wait_secs))
+
+    def add_packet_delay(self, delay: float):
+        self.queue_wrapper.queue.appendleft(PacketDelayEntry(delay))
