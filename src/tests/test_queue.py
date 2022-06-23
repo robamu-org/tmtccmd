@@ -17,6 +17,7 @@ class TestTcQueue(TestCase):
         self.assertEqual(len(queue_wrapper.queue), 1)
         wait_entry = cast(WaitEntry, queue_wrapper.queue.pop())
         self.assertTrue(wait_entry)
+        self.assertFalse(wait_entry.is_tc())
         self.assertTrue(
             math.isclose(wait_entry.wait_time, eval(f"{wait_entry!r}").wait_time)
         )
@@ -31,6 +32,10 @@ class TestTcQueue(TestCase):
         self.assertEqual(len(queue_wrapper.queue), 4)
 
         pus_entry = queue_wrapper.queue.pop()
+        self.assertTrue(pus_entry.is_tc())
         cast_wrapper = CastWrapper(pus_entry)
         pus_entry = cast_wrapper.to_pus_tc_entry()
-        print(pus_entry.pus_tc)
+        self.assertEqual(pus_entry.pus_tc, pus_cmd)
+        self.assertTrue(pus_entry)
+        with self.assertRaises(TypeError):
+            cast_wrapper.to_wait_entry()

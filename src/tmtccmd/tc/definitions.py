@@ -12,7 +12,6 @@ class TcQueueEntryType(Enum):
     CUSTOM = "custom"
     LOG = "log"
     WAIT = "wait"
-    RAW_PRINT = "raw-print"
     SET_INTER_CMD_DELAY = "set-delay"
 
 
@@ -96,27 +95,31 @@ class CastWrapper:
         obj: TcQueueEntryBase,
         expected_type: TcQueueEntryType,
     ) -> Any:
-        if self.base.etype != expected_type:
+        if obj.etype != expected_type:
             raise TypeError(f"Invalid object {obj} for type {self.base.etype}")
         return cast(obj_type, obj)
 
-    def to_print_entry(self) -> LogQueueEntry:
-        return self.__cast_internally(LogQueueEntry, self.base, self.base.etype)
+    def to_log_entry(self) -> LogQueueEntry:
+        return self.__cast_internally(LogQueueEntry, self.base, TcQueueEntryType.LOG)
 
     def to_pus_tc_entry(self) -> PusTcEntry:
-        return self.__cast_internally(PusTcEntry, self.base, self.base.etype)
+        return self.__cast_internally(PusTcEntry, self.base, TcQueueEntryType.PUS_TC)
 
     def to_raw_tc_entry(self) -> RawTcEntry:
-        return self.__cast_internally(RawTcEntry, self.base, self.base.etype)
+        return self.__cast_internally(RawTcEntry, self.base, TcQueueEntryType.RAW_TC)
 
     def to_wait_entry(self) -> WaitEntry:
-        return self.__cast_internally(WaitEntry, self.base, self.base.etype)
+        return self.__cast_internally(WaitEntry, self.base, TcQueueEntryType.WAIT)
 
     def to_timeout_entry(self) -> TimeoutEntry:
-        return self.__cast_internally(TimeoutEntry, self.base, self.base.etype)
+        return self.__cast_internally(
+            TimeoutEntry, self.base, TcQueueEntryType.SET_INTER_CMD_DELAY
+        )
 
     def to_space_packet_entry(self) -> SpacePacketEntry:
-        return self.__cast_internally(SpacePacketEntry, self.base, self.base.etype)
+        return self.__cast_internally(
+            SpacePacketEntry, self.base, TcQueueEntryType.CCSDS_TC
+        )
 
 
 class ProcedureInfo:
