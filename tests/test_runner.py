@@ -2,8 +2,8 @@ from unittest import TestCase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 import tmtccmd.runner as tmtccmd
 
-from tests.backend_mock import create_backend_mock, create_frontend_mock
-from tests.hook_obj_mock import create_hook_mock
+from .backend_mock import create_backend_mock, create_frontend_mock
+from .hook_obj_mock import create_hook_mock
 
 
 class TestTmtcRunner(TestCase):

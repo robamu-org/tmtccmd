@@ -1,7 +1,7 @@
 from __future__ import annotations
 import enum
 import logging
-from typing import Optional
+from typing import Optional, Union
 from datetime import datetime
 
 from spacepackets.ecss import PusTelecommand, PusTelemetry
@@ -31,46 +31,58 @@ class TimedLogWhen(enum.Enum):
 
 
 class RawTmtcLogBase:
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, log_repr: bool = True, log_raw_repr: bool = True):
         self.logger = logger
+        self.do_log_repr = log_repr
+        self.do_log_raw_repr = log_raw_repr
+        self.counter = 0
 
     def log_tc(self, packet: PusTelecommand):
         """Default log function which logs the Python packet representation and raw bytes"""
-        self.log_pus_tc_repr(packet)
-        self.log_raw_pus_tc_bytes(packet)
+        prefix = self.tc_prefix(packet, self.counter)
+        if self.do_log_repr:
+            self.log_repr(prefix, packet)
+        raw_bytes = packet.pack()
+        self.__log_raw_inc_counter(prefix, raw_bytes)
 
     def log_tm(self, packet: PusTelemetry):
         """Default log function which logs the Python packet representation and raw bytes"""
-        self.log_pus_tm_repr(packet)
-        self.log_raw_pus_tm_bytes(packet)
+        prefix = self.tm_prefix(packet, self.counter)
+        if self.do_log_repr:
+            self.log_repr(prefix, packet)
+        raw_bytes = packet.pack()
+        self.__log_raw_inc_counter(prefix, raw_bytes)
 
-    def log_pus_tc_repr(self, packet: PusTelecommand):
-        self.logger.info(f"repr: {packet!r}")
+    def __log_raw_inc_counter(self, prefix: str, raw: bytes):
+        self.log_bytes_readable(prefix, raw)
+        if self.do_log_raw_repr:
+            self.log_bytes_repr(prefix, raw)
+        self.counter += 1
 
-    def log_pus_tm_repr(self, packet: PusTelemetry):
-        self.logger.info(f"repr: {packet!r}")
+    def log_repr(self, prefix: str, packet: Union[PusTelecommand, PusTelemetry]):
+        self.logger.info(f"{prefix} repr: {packet!r}")
 
     @staticmethod
-    def tc_prefix(packet: PusTelecommand):
-        return f"TC[{packet.service}, {packet.subservice}]"
+    def tc_prefix(packet: PusTelecommand, counter: int):
+        return f"tc {counter} [{packet.service}, {packet.subservice}]"
 
     @staticmethod
-    def tm_prefix(packet: PusTelemetry):
-        return f"TM[{packet.service}, {packet.subservice}]"
+    def tm_prefix(packet: PusTelemetry, counter: int):
+        return f"tm {counter} [{packet.service}, {packet.subservice}]"
 
-    def log_raw_pus_tc_bytes(self, packet: PusTelecommand):
-        self.log_pus_bytes(self.tc_prefix(packet), packet.pack())
+    def log_bytes_readable(self, prefix: str, packet: bytes):
+        self.logger.info(f"{prefix} raw readable hex: [{packet.hex(sep=',')}]")
 
-    def log_raw_pus_tm_bytes(self, packet: PusTelemetry):
-        self.log_pus_bytes(self.tm_prefix(packet), packet.pack())
-
-    def log_pus_bytes(self, prefix: str, packet: bytes):
-        self.logger.info(f"{prefix} hex: [{packet.hex(sep=',')}]")
+    def log_bytes_repr(self, prefix: str, packet: bytes):
+        self.logger.info(f"{prefix} raw repr: {packet!r}")
 
 
 class RawTmtcTimedLogWrapper(RawTmtcLogBase):
     def __init__(
-        self, when: TimedLogWhen, interval: int, file_name: str = RAW_PUS_FILE_BASE_NAME
+        self,
+        when: TimedLogWhen,
+        interval: int,
+        file_name: str = f"{RAW_PUS_FILE_BASE_NAME}.log"
     ):
         """Create a raw TMTC timed rotating log wrapper.
         See the official Python documentation at
@@ -83,7 +95,7 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
             hour intervals
         :param file_name: Base filename of the log file
         """
-        logger = logging.getLogger(file_name)
+        logger = logging.getLogger(RAW_PUS_LOGGER_NAME)
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
@@ -91,8 +103,9 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
             filename=file_name, when=when.value, interval=interval
         )
         handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        self.file_name = handler.baseFilename
         super().__init__(logger)
 
 
@@ -101,7 +114,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
         self,
         max_bytes: int,
         backup_count: int,
-        file_name: str = f"{LOG_DIR}/RAW_PUS_FILE_BASE_NAME",
+        file_name: str = f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}",
         suffix: str = date_suffix(),
     ):
         """Create a raw TMTC rotating log wrapper.
@@ -120,16 +133,17 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
             argument will use a date suffix, which will lead to a new unique rotating log created
             every day
         """
-        logger = logging.getLogger(f"{file_name}_{suffix}.log")
+        logger = logging.getLogger(RAW_PUS_LOGGER_NAME)
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
         handler = RotatingFileHandler(
-            filename=file_name, maxBytes=max_bytes, backupCount=backup_count
+            filename=f"{file_name}_{suffix}.log", maxBytes=max_bytes, backupCount=backup_count
         )
         handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-        self.logger.setLevel(logging.INFO)
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        self.file_name = handler.baseFilename
         super().__init__(logger)
 
 
@@ -139,10 +153,10 @@ class RegularTmtcLogWrapper:
             self.file_name = self.get_current_tmtc_file_name()
         else:
             self.file_name = file_name
-        self.logger = logging.getLogger(self.file_name)
-        file_handler = FileHandler(filename=file_name)
+        self.logger = logging.getLogger(TMTC_LOGGER_NAME)
+        file_handler = FileHandler(file_name)
         formatter = logging.Formatter()
-        file_handler.setFormatter(fmt=formatter)
+        file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
         self.logger.setLevel(logging.INFO)
 

@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
-from tests.hook_obj_mock import TestHookObj
-from tests.tc_handler_mock import TcHandler
+from .hook_obj_mock import TestHookObj
+from .tc_handler_mock import TcHandler
 
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.ccsds.handler import CcsdsTmHandler

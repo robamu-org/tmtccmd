@@ -12,8 +12,8 @@ build
 *.egg-info
 
 /examples/log
-/src/log
-/src/tests/log
+/tmtccmd/log
+/tmtccmd/tests/log
 
 .idea
 venv
