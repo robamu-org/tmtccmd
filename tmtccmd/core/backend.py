@@ -52,6 +52,7 @@ class BackendController:
 
 
 class BackendBase:
+
     @abstractmethod
     def initialize(self):
         """Initialize the backend. Raise RuntimeError or ValueError on failure"""

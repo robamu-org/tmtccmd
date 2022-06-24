@@ -67,6 +67,22 @@ class CcsdsTmtcBackend(BackendBase):
         return self.__com_if
 
     @property
+    def tc_mode(self):
+        return self._state.mode_wrapper.tc_mode
+
+    @property
+    def tm_mode(self):
+        return self._state.mode_wrapper.tm_mode
+
+    @tc_mode.setter
+    def tc_mode(self, tc_mode: TcMode):
+        self.mode_wrapper._tc_mode = tc_mode
+
+    @tm_mode.setter
+    def tm_mode(self, tm_mode: TmMode):
+        self.mode_wrapper._tm_mode = tm_mode
+
+    @property
     def tm_listener(self):
         return self.__tm_listener
 
@@ -168,7 +184,7 @@ class CcsdsTmtcBackend(BackendBase):
             raise e
 
     def __core_operation(self) -> BackendState:
-        self.__handle_action()
+        self.default_operation()
         if self.mode == CoreModeList.IDLE:
             self._state.__req = Request.DELAY_IDLE
         elif self.mode == CoreModeList.LISTENER_MODE:
@@ -182,35 +198,41 @@ class CcsdsTmtcBackend(BackendBase):
         """Poll TM, irrespective of current TM mode"""
         self.__tm_listener.operation()
 
-    def __handle_action(self):
+    def default_operation(self):
         """Command handling."""
+        self.tm_operation()
+        self.tc_operation()
+        self.__hook_obj.perform_mode_operation(
+            mode=self.mode, tmtc_backend=self
+        )
+
+    def tm_operation(self):
         if self._state.tm_mode == TmMode.LISTENER:
             self.__tm_listener.operation()
-        elif self._state.tc_mode == TcMode.ONE_QUEUE:
-            if not self._seq_handler.mode == SenderMode.DONE:
-                service_queue = self.__prepare_tc_queue()
-                if service_queue is None:
-                    return
-                LOGGER.info("Loading TC queue")
-                self._seq_handler.queue_wrapper = service_queue
-                self._seq_handler.resume()
-            self._state._sender_res = self._seq_handler.operation()
+
+    def tc_operation(self):
+        if self._state.tc_mode == TcMode.ONE_QUEUE:
+            self.__check_and_execute_seq_send()
             if self._seq_handler.mode == SenderMode.DONE:
-                self._state.mode_wrapper.mode = CoreModeList.LISTENER_MODE
+                self._state.mode_wrapper.tc_mode = TcMode.IDLE
                 self._state._request = Request.TERMINATION_NO_ERROR
         elif self.mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
             # TODO: Handle the queue as long as the current one is full. If it is finished,
             #       request another queue or further instructions from the user, maybe in form
             #       of a special object, using the TC handler feed function
-            pass
-        else:
-            try:
-                self.__hook_obj.perform_mode_operation(
-                    mode=self.mode, tmtc_backend=self
-                )
-            except ImportError as error:
-                print(error)
-                LOGGER.error("Custom mode handling module not provided!")
+            self.__check_and_execute_seq_send()
+
+
+
+    def __check_and_execute_seq_send(self):
+        if not self._seq_handler.mode == SenderMode.DONE:
+            service_queue = self.__prepare_tc_queue()
+            if service_queue is None:
+                return
+            LOGGER.info("Loading TC queue")
+            self._seq_handler.queue_wrapper = service_queue
+            self._seq_handler.resume()
+        self._state._sender_res = self._seq_handler.operation()
 
     def __prepare_tc_queue(self) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper()
