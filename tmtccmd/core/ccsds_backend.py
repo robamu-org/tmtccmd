@@ -1,23 +1,20 @@
 import atexit
-import time
 import sys
-from threading import Thread
-from typing import cast, Optional
+from typing import Optional
 
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.core.backend import BackendBase, BackendState, Request, BackendController
+from tmtccmd.core.modes import TcMode, TmMode
 from tmtccmd.tc.definitions import ProcedureInfo
-from tmtccmd.tc.handler import TcHandlerBase
+from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.tc.queue import QueueWrapper
-from tmtccmd.tm.definitions import TmTypes
-from tmtccmd.tm.handler import TmHandlerBase
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.ccsds_seq_sender import (
     SequentialCcsdsSender,
+    SenderMode,
 )
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
 LOGGER = get_console_logger()
@@ -28,14 +25,13 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __init__(
         self,
+        init_state: BackendState,
         hook_obj: TmTcCfgHookBase,
         com_if: CommunicationInterface,
         tm_listener: CcsdsTmListener,
-        tm_handler: TmHandlerBase,
         tc_handler: TcHandlerBase,
     ):
-        self._state = BackendState()
-        self._com_if_key = com_if.get_id()
+        self._state = init_state
         self.__hook_obj = hook_obj
         self.__com_if_active = False
         self.__apid = 0
@@ -47,12 +43,6 @@ class CcsdsTmtcBackend(BackendBase):
         self.__com_if = com_if
         self.__tm_listener = tm_listener
         self._current_proc_info = ProcedureInfo(CoreServiceList.SERVICE_17.value, "0")
-        if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
-            self.__tm_handler: CcsdsTmHandler = cast(CcsdsTmHandler, tm_handler)
-            for apid_queue_len_tuple in self.__tm_handler.get_apid_queue_len_list():
-                self.__tm_listener.subscribe_ccsds_tm_handler(
-                    apid_queue_len_tuple[0], apid_queue_len_tuple[1]
-                )
         self.exit_on_com_if_init_failure = True
         self._queue_wrapper = QueueWrapper(None)
         self._seq_handler = SequentialCcsdsSender(
@@ -63,7 +53,7 @@ class CcsdsTmtcBackend(BackendBase):
 
     @property
     def com_if_id(self):
-        return self._com_if_key
+        return self.__com_if.get_id()
 
     @property
     def com_if(self) -> CommunicationInterface:
@@ -76,8 +66,7 @@ class CcsdsTmtcBackend(BackendBase):
     def try_set_com_if(self, com_if: CommunicationInterface):
         if not self.com_if_active():
             self.__com_if = com_if
-            self._com_if_key = com_if.get_id()
-            self.__tm_listener.set_com_if(self.__com_if)
+            self.__tm_listener.com_if(self.__com_if)
         else:
             LOGGER.warning(
                 "Communication Interface is active and must be closed first before "
@@ -141,28 +130,21 @@ class CcsdsTmtcBackend(BackendBase):
             self.__com_if.open()
         except IOError:
             self.__listener_io_error_handler("opened")
-        try:
-            self.__tm_listener.start()
-        except IOError:
-            self.__listener_io_error_handler("started")
         self.__com_if_active = True
-        self.periodic_op(ctrl)
 
-    def close_listener(self, join: bool = False, join_timeout_seconds: float = 1.0):
+    def close_listener(self):
         """Closes the TM listener and the communication interface. This is started in a separarate
         thread because the communication interface might still be busy. The completion can be
         checked with :meth:`tmtccmd.core.backend.is_com_if_active`. Alternatively, waiting on
         completion is possible by specifying the join argument and a timeout in
         floating point second.
-        :param join:
-        :param join_timeout_seconds:
         :return:
         """
-        if self.__com_if_active:
-            close_thread = Thread(target=self.__com_if_closing)
-            close_thread.start()
-            if join:
-                close_thread.join(timeout=join_timeout_seconds)
+        try:
+            self.__com_if.close()
+        except IOError:
+            self.__listener_io_error_handler("close")
+        self.__com_if_active = False
 
     def periodic_op(self, ctrl: BackendController) -> BackendState:
         """Periodic operation
@@ -189,54 +171,29 @@ class CcsdsTmtcBackend(BackendBase):
                 self._state.__req = Request.DELAY_LISTENER
         return self._state
 
-    def __com_if_closing(self):
-        self.__tm_listener.stop()
-        while True:
-            if not self.__tm_listener.is_listener_active():
-                self.__com_if.close()
-                self.__com_if_active = False
-                break
-            else:
-                time.sleep(0.2)
+    def close_com_if(self):
+        self.__com_if.close()
+
+    def poll_tm(self):
+        """Poll TM, irrespective of current TM mode"""
+        self.__tm_listener.operation()
 
     def __handle_action(self):
         """Command handling."""
-        # TODO: It should be possible to call this function discretely. This avoids having to
-        #       start receiver threads in the backgrounds. The backend should then perform the
-        #       periodic TM polling here, with a configurable polling frequency.
-        #       In total this needs to be done like this: In One Queue Mode, request a queue
-        #       from the user if there is not one available yet. If one is available, consume it
-        #       on every operation call. If the queue was consumed, request program termination
-        #       or mode change. This is done using the one-shot flag, so the ONE SHOT MODE is tied
-        #       to that flag.
-        #       For multi-mode do the same, but instead of requesting program termination, use
-        #       the feed function of the TC handler to request another queue
-        # TODO: This this that is done for the listener mode: Do it for all modes with a
-        #       configurable polling delay. TM should be polled and handled independently of TC,
-        #       or tying them together in some way should remain a user option
-        if self._state.tm_mode == CoreModeList.LISTENER_MODE:
-            if self.__tm_listener.reply_event():
-                LOGGER.info("TmTcHandler: Packets received.")
-                packet_queues = self.__tm_listener.retrieve_tm_packet_queues(clear=True)
-                if len(packet_queues) > 0:
-                    self.__tm_handler.handle_packet_queues(
-                        packet_queue_list=packet_queues
-                    )
-                self.__tm_listener.clear_reply_event()
-        elif self.mode == CoreModeList.ONE_QUEUE_MODE:
-            service_queue = self.__prepare_tc_queue()
-            if service_queue is None:
-                return
-            LOGGER.info("Performing sequential command operation")
-            # TODO: Some sort of reset mode for sequence handler? In total, we should request
-            #       the queue from the user somehow and then handle it. After finishing the
-            #       handling, request termination from the user. This mode will be optimized
-            #       for handling a single queue, so the default behaviour should be to handle
-            #       the queue and then request program termination. Alternatively, the user should
-            #       be able to switch the mode
-            self._seq_handler.queue_wrapper = service_queue
-            seq_res_wrapper = self._seq_handler.operation()
-            self._state.mode_wrapper.mode = CoreModeList.LISTENER_MODE
+        if self._state.tm_mode == TmMode.LISTENER:
+            self.__tm_listener.operation()
+        elif self._state.tc_mode == TcMode.ONE_QUEUE:
+            if not self._seq_handler.mode == SenderMode.DONE:
+                service_queue = self.__prepare_tc_queue()
+                if service_queue is None:
+                    return
+                LOGGER.info("Loading TC queue")
+                self._seq_handler.queue_wrapper = service_queue
+                self._seq_handler.resume()
+            self._state._sender_res = self._seq_handler.operation()
+            if self._seq_handler.mode == SenderMode.DONE:
+                self._state.mode_wrapper.mode = CoreModeList.LISTENER_MODE
+                self._state._request = Request.TERMINATION_NO_ERROR
         elif self.mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
             # TODO: Handle the queue as long as the current one is full. If it is finished,
             #       request another queue or further instructions from the user, maybe in form
@@ -252,7 +209,8 @@ class CcsdsTmtcBackend(BackendBase):
                 LOGGER.error("Custom mode handling module not provided!")
 
     def __prepare_tc_queue(self) -> Optional[QueueWrapper]:
-        service_queue = self.__tc_handler.feed_cb(self.current_proc_info)
-        if not self.__com_if.valid:
+        feed_wrapper = FeedWrapper()
+        self.__tc_handler.feed_cb(self.current_proc_info, feed_wrapper)
+        if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None
-        return service_queue
+        return feed_wrapper.current_queue

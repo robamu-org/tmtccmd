@@ -2,6 +2,7 @@ import enum
 from abc import abstractmethod
 
 from tmtccmd.core.modes import ModeWrapper, TcMode, TmMode
+from tmtccmd.tc.ccsds_seq_sender import SeqResultWrapper, SenderMode
 
 
 class Request(enum.IntEnum):
@@ -12,9 +13,12 @@ class Request(enum.IntEnum):
 
 
 class BackendState:
-    def __init__(self):
-        self._mode_wrapper = ModeWrapper()
-        self._req = Request.NONE
+    def __init__(
+        self, mode_wrapper: ModeWrapper = ModeWrapper(), req: Request = Request.NONE
+    ):
+        self._mode_wrapper = mode_wrapper
+        self._req = req
+        self._sender_res = SeqResultWrapper(SenderMode.DONE)
 
     @property
     def request(self):
@@ -23,6 +27,10 @@ class BackendState:
     @property
     def mode(self):
         return self._mode_wrapper.mode
+
+    @property
+    def sender_res(self):
+        return self._sender_res
 
     @property
     def tc_mode(self):
