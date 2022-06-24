@@ -1,6 +1,6 @@
 import atexit
 import sys
-from typing import Optional
+from typing import Optional, Union
 
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
@@ -25,20 +25,27 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __init__(
         self,
-        init_state: BackendState,
+        mode: Union[CoreModeList, int],
         hook_obj: TmTcCfgHookBase,
         com_if: CommunicationInterface,
         tm_listener: CcsdsTmListener,
         tc_handler: TcHandlerBase,
     ):
-        self._state = init_state
+        self._state = BackendState()
+        self._state.mode_wrapper.mode = mode
+        if mode == CoreModeList.LISTENER_MODE:
+            self._state.mode_wrapper.tm_mode = TmMode.LISTENER
+            self._state.mode_wrapper.tc_mode = TcMode.IDLE
+        elif mode == CoreModeList.ONE_QUEUE_MODE:
+            self._state.mode_wrapper.tm_mode = TmMode.LISTENER
+            self._state.mode_wrapper.tc_mode = TcMode.ONE_QUEUE
+        elif mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
+            self._state.mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
+            self._state.mode_wrapper.tm_mode = TmMode.LISTENER
         self.__hook_obj = hook_obj
         self.__com_if_active = False
         self.__apid = 0
         self.__tc_handler = tc_handler
-
-        # This flag could be used later to command the TMTC Client with a front-end
-        self.one_shot_operation = False
 
         self.__com_if = com_if
         self.__tm_listener = tm_listener
@@ -152,7 +159,7 @@ class CcsdsTmtcBackend(BackendBase):
         :raises IOError: Yields informative output and propagates exception
         :"""
         try:
-            return self.__core_operation(self.one_shot_operation)
+            return self.__core_operation()
         except KeyboardInterrupt as e:
             LOGGER.info("Keyboard Interrupt.")
             raise e
@@ -160,15 +167,12 @@ class CcsdsTmtcBackend(BackendBase):
             LOGGER.exception("IO Error occured")
             raise e
 
-    def __core_operation(self, one_shot: bool) -> BackendState:
+    def __core_operation(self) -> BackendState:
         self.__handle_action()
-        if one_shot:
-            self._state.__req = Request.TERMINATION_NO_ERROR
-        else:
-            if self.mode == CoreModeList.IDLE:
-                self._state.__req = Request.DELAY_IDLE
-            elif self.mode == CoreModeList.LISTENER_MODE:
-                self._state.__req = Request.DELAY_LISTENER
+        if self.mode == CoreModeList.IDLE:
+            self._state.__req = Request.DELAY_IDLE
+        elif self.mode == CoreModeList.LISTENER_MODE:
+            self._state.__req = Request.DELAY_LISTENER
         return self._state
 
     def close_com_if(self):
