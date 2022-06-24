@@ -1,10 +1,9 @@
 from collections import deque
 from unittest import TestCase
-from unittest.mock import MagicMock, ANY, sentinel
+from unittest.mock import MagicMock, ANY
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.tc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
-from tmtccmd.tc.definitions import RawTcEntry
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper, QueueHelper
 

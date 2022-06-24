@@ -31,7 +31,9 @@ class TimedLogWhen(enum.Enum):
 
 
 class RawTmtcLogBase:
-    def __init__(self, logger: logging.Logger, log_repr: bool = True, log_raw_repr: bool = True):
+    def __init__(
+        self, logger: logging.Logger, log_repr: bool = True, log_raw_repr: bool = True
+    ):
         self.logger = logger
         self.do_log_repr = log_repr
         self.do_log_raw_repr = log_raw_repr
@@ -82,7 +84,7 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         self,
         when: TimedLogWhen,
         interval: int,
-        file_name: str = f"{RAW_PUS_FILE_BASE_NAME}.log"
+        file_name: str = f"{RAW_PUS_FILE_BASE_NAME}.log",
     ):
         """Create a raw TMTC timed rotating log wrapper.
         See the official Python documentation at
@@ -138,7 +140,9 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
         handler = RotatingFileHandler(
-            filename=f"{file_name}_{suffix}.log", maxBytes=max_bytes, backupCount=backup_count
+            filename=f"{file_name}_{suffix}.log",
+            maxBytes=max_bytes,
+            backupCount=backup_count,
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)

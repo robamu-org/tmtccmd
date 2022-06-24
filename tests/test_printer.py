@@ -12,7 +12,8 @@ from tmtccmd.config.globals import update_global, CoreGlobalIds
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
     RawTmtcTimedLogWrapper,
-    RawTmtcRotatingLogWrapper, TimedLogWhen
+    RawTmtcRotatingLogWrapper,
+    TimedLogWhen,
 )
 
 
@@ -28,10 +29,7 @@ class TestPrintersLoggers(TestCase):
         #    when=TimedLogWhen.PER_SECOND,
         #    interval=1
         # )
-        self.raw_tmtc_log = RawTmtcRotatingLogWrapper(
-            max_bytes=1024,
-            backup_count=10
-        )
+        self.raw_tmtc_log = RawTmtcRotatingLogWrapper(max_bytes=1024, backup_count=10)
         # self.tmtc_printer = FsfwTmTcPrinter(file_logger=self.regular_tmtc_logger.logger)
         self.logger = get_console_logger()
 
