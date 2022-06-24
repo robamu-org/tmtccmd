@@ -223,8 +223,4 @@ def create_default_tmtc_backend(
     tmtc_backend.current_proc_info = ProcedureInfo(
         setup_args.args_wrapper.service, setup_args.args_wrapper.op_code
     )
-    tmtc_backend.apid = apid
-    tmtc_backend.one_shot_operation = not get_global(
-        CoreGlobalIds.USE_LISTENER_AFTER_OP
-    )
     return tmtc_backend

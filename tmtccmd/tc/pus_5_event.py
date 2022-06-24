@@ -3,8 +3,7 @@
 from spacepackets.ecss.conf import get_default_tc_apid
 from spacepackets.ecss.pus_5_event import Subservices
 
-from tmtccmd.config.definitions import QueueCommands
-from tmtccmd.tc.definitions import PusTelecommand, QueueHelper
+from tmtccmd.tc.definitions import PusTelecommand
 from tmtccmd.tc.queue import QueueHelper
 
 

@@ -49,9 +49,7 @@ class CcsdsTmtcBackend(BackendBase):
             tc_handler=tc_handler,
             queue_wrapper=self._queue_wrapper,
         )
-        atexit.register(
-            keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if
-        )
+        atexit.register(keyboard_interrupt_handler, self)
 
     @property
     def com_if_id(self):
@@ -146,7 +144,7 @@ class CcsdsTmtcBackend(BackendBase):
         try:
             return self.default_operation()
         except KeyboardInterrupt as e:
-            LOGGER.info("Keyboard Interrupt.")
+            LOGGER.info("Keyboard Interrupt")
             raise e
         except IOError as e:
             LOGGER.exception("IO Error occured")
@@ -195,7 +193,7 @@ class CcsdsTmtcBackend(BackendBase):
         self.__check_and_execute_seq_send()
 
     def __check_and_execute_seq_send(self):
-        if not self._seq_handler.mode == SenderMode.DONE:
+        if self._seq_handler.mode == SenderMode.DONE:
             service_queue = self.__prepare_tc_queue()
             if service_queue is None:
                 return
