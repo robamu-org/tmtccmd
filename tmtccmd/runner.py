@@ -215,7 +215,7 @@ def create_default_tmtc_backend(
         com_if_key=get_global(CoreGlobalIds.COM_IF)
     )
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
-    tm_listener = CcsdsTmListener(com_if=com_if, seq_timeout=tm_timeout)
+    tm_listener = CcsdsTmListener(com_if=com_if, tm_handler=tm_handler)
     # The global variables are set by the argument parser.
     tmtc_backend = CcsdsTmtcBackend(
         hook_obj=setup_args.hook_obj,
@@ -224,7 +224,7 @@ def create_default_tmtc_backend(
         tm_handler=tm_handler,
         tc_handler=tc_handler,
     )
-    tmtc_backend.mode = mode
+    # tmtc_backend.mode = mode
     tmtc_backend.current_proc_info = ProcedureInfo(service, op_code)
     tmtc_backend.apid = apid
     tmtc_backend.one_shot_operation = not get_global(

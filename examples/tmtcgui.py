@@ -17,7 +17,7 @@ def main():
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     setup_args = SetupArgs(hook_obj=hook_obj, use_gui=True, apid=APID, cli_args=None)
     apid_handler = ApidTmHandlerBase(
-        cb=default_ccsds_packet_handler, queue_len=50, user_args=None
+        cb=default_ccsds_packet_handler, max_queue_len=50, user_args=None
     )
     ccsds_handler = CcsdsTmHandler()
     ccsds_handler.add_apid_handler(apid=APID, handler=apid_handler)

@@ -25,7 +25,7 @@ def main():
     args = parse_default_tmtccmd_input_arguments(arg_parser, hook_obj)
     setup_args = SetupArgs(hook_obj=hook_obj, use_gui=False, apid=APID, cli_args=args)
     apid_handler = ApidTmHandlerBase(
-        cb=default_ccsds_packet_handler, queue_len=50, user_args=None
+        cb=default_ccsds_packet_handler, max_queue_len=50, user_args=None
     )
     ccsds_handler = CcsdsTmHandler()
     ccsds_handler.add_apid_handler(apid=APID, handler=apid_handler)
