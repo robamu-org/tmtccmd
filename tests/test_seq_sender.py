@@ -30,7 +30,8 @@ class TestSendReceive(TestCase):
         seq_sender.operation()
         tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
         call_args = tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args.args_converted[0].tc, bytes([0, 1, 2]))
+        print(call_args)
+        self.assertEqual(call_args.args[0].tc, bytes([0, 1, 2]))
         # Queue should be empty now
         self.assertFalse(queue_wrapper.queue)
         self.assertEqual(seq_sender.mode, SenderMode.DONE)
@@ -43,4 +44,4 @@ class TestSendReceive(TestCase):
         self.assertEqual(res.mode, SenderMode.BUSY)
         tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
         call_args = tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args.args_converted[0].tc, bytes([3, 2, 1]))
+        self.assertEqual(call_args.args[0].tc, bytes([3, 2, 1]))

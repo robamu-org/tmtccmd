@@ -13,7 +13,7 @@ build
 
 /examples/log
 /tmtccmd/log
-/tmtccmd/tests/log
+/tests/log
 
 .idea
 venv

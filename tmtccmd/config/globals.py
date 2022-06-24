@@ -22,7 +22,7 @@ from tmtccmd.config.definitions import (
     ComIFDictT,
 )
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper, OpCodeEntry
-from tmtccmd.utility.conf_util import check_args_in_dict
+
 
 LOGGER = get_console_logger()
 DEF_WRAPPER = None
@@ -197,6 +197,8 @@ def check_and_set_core_mode_arg(
 def check_and_set_core_service_arg(
     service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
+    from tmtccmd.utility.conf_util import check_args_in_dict
+
     in_enum, service_value = check_args_in_dict(
         param=service_arg, iterable=CoreServiceList, warning_hint="service"
     )

@@ -28,7 +28,7 @@ class TestGlobalManager(TestCase):
         com_if_dict = get_glob_com_if_dict()
         self.assertTrue(com_if_dict["test"][0] == "Test Interface")
 
-        set_default_globals_pre_args_parsing(gui=False, tc_apid=0x02, tm_apid=0x03)
+        set_default_globals_pre_args_parsing(apid=0x02)
 
         result = check_and_set_core_mode_arg(mode_arg="udp")
         self.assertTrue(result == CoreModeList.ONE_QUEUE_MODE)
