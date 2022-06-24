@@ -12,7 +12,7 @@ from tmtccmd.config.globals import update_global, CoreGlobalIds
 from tmtccmd.logging.pus import (
     log_raw_pus_tc,
     log_raw_pus_tm,
-    get_current_raw_file_name,
+    get_file_name_with_date_suffix,
     create_tmtc_logger,
 )
 
@@ -27,7 +27,7 @@ class TestPrintersLoggers(TestCase):
 
     def test_pus_loggers(self):
         pus_tc = pack_service_17_ping_command(ssc=0)
-        file_name = get_current_raw_file_name()
+        file_name = get_file_name_with_date_suffix()
         log_raw_pus_tc(pus_tc.pack())
         pus_tm = Service1TMExtended(
             subservice=1, time=CdsShortTimestamp.init_from_current_time()
