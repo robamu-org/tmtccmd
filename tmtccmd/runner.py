@@ -6,6 +6,8 @@ from typing import Union, cast
 from spacepackets.ecss.conf import get_default_tc_apid
 
 from tmtccmd import __version__
+from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
+from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import TmTcCfgHookBase, CoreGlobalIds
 from tmtccmd.config.setup import SetupArgs
 from tmtccmd.core.ccsds_backend import BackendBase
@@ -117,16 +119,11 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcCfgHookBase):
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
 
 
-def init_printout(use_gui: bool, ansi_colors: bool = True):
-    if ansi_colors:
-        print(f"-- Python TMTC Commander --")
+def init_printout(use_gui: bool):
     if use_gui:
-        print("-- GUI mode --")
+        print(f"-- tmtccmd v{version()} GUI Mode --")
     else:
-        print("-- Command line mode --")
-
-    print(f"-- tmtccmd version v{version()} --")
-    LOGGER.info("Starting TMTC Commander..")
+        print(f"-- tmtccmd v{version()} CLI Mode --")
 
 
 def __handle_cli_args_and_globals(setup_args: SetupArgs):
@@ -142,8 +139,7 @@ def __handle_cli_args_and_globals(setup_args: SetupArgs):
 def __start_tmtc_commander_cli(
     tmtc_backend: BackendBase, perform_op_immediately: bool = True
 ):
-    __get_backend_init_variables()
-    tmtc_backend.initialize()
+    # __get_backend_init_variables()
     tmtc_backend.start_listener(perform_op_immediately)
 
 
@@ -176,12 +172,14 @@ def __start_tmtc_commander_qt_gui(
         sys.exit(1)
 
 
+"""
 def __get_backend_init_variables():
     service = get_global(CoreGlobalIds.CURRENT_SERVICE)
     op_code = get_global(CoreGlobalIds.OP_CODE)
     com_if = get_global(CoreGlobalIds.COM_IF)
     mode = get_global(CoreGlobalIds.MODE)
     return service, op_code, com_if, mode
+"""
 
 
 def create_default_tmtc_backend(
@@ -195,14 +193,13 @@ def create_default_tmtc_backend(
     :return:
     """
     global __SETUP_WAS_CALLED
-    from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-    from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
+
     from typing import cast
 
     if not __SETUP_WAS_CALLED:
         LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
-    service, op_code, com_if_id, mode = __get_backend_init_variables()
+    # service, op_code, com_if_id, mode = __get_backend_init_variables()
     if tm_handler is None:
         LOGGER.warning(
             "No TM Handler specified! Make sure to specify at least one TM handler"
@@ -217,16 +214,17 @@ def create_default_tmtc_backend(
     )
     tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
     tm_listener = CcsdsTmListener(com_if=com_if, tm_handler=tm_handler)
+
     # The global variables are set by the argument parser.
     tmtc_backend = CcsdsTmtcBackend(
-        hook_obj=setup_args.hook_obj,
         com_if=com_if,
         tm_listener=tm_listener,
-        tm_handler=tm_handler,
         tc_handler=tc_handler,
     )
-    # tmtc_backend.mode = mode
-    tmtc_backend.current_proc_info = ProcedureInfo(service, op_code)
+    tmtc_backend.current_proc_info = ProcedureInfo(
+        setup_args.cli_args.args_converted.service,
+        setup_args.cli_args.args_converted.op_code,
+    )
     tmtc_backend.apid = apid
     tmtc_backend.one_shot_operation = not get_global(
         CoreGlobalIds.USE_LISTENER_AFTER_OP

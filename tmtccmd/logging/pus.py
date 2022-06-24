@@ -158,7 +158,7 @@ class RegularTmtcLogWrapper:
         else:
             self.file_name = file_name
         self.logger = logging.getLogger(TMTC_LOGGER_NAME)
-        file_handler = FileHandler(file_name)
+        file_handler = FileHandler(self.file_name)
         formatter = logging.Formatter()
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)

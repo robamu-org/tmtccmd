@@ -1,7 +1,7 @@
-import argparse
 from typing import Optional
 
 from tmtccmd.config import TmTcCfgHookBase, default_json_path
+from tmtccmd.config.args import ArgParserWrapper
 
 
 class SetupArgs:
@@ -10,7 +10,7 @@ class SetupArgs:
         hook_obj: TmTcCfgHookBase,
         use_gui: bool,
         apid: int,
-        cli_args: Optional[argparse.Namespace],
+        cli_args: Optional[ArgParserWrapper],
         json_cfg_path: Optional[str] = None,
         reduced_printout: bool = False,
         use_ansi_colors: bool = True,

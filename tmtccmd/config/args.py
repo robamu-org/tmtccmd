@@ -58,22 +58,24 @@ class ArgParserWrapper:
         self.print_known_args = False
         self.print_unknown_args = False
         self.unknown_args = [""]
-        self.args = ArgsGroup("", "", "")
+        self.args_converted = ArgsGroup("", "", "")
+        self.args_raw = None
 
     def add_default_tmtccmd_args(self):
         add_default_tmtccmd_args(self.args_parser)
 
     def parse(self, hook_obj: TmTcCfgHookBase):
-        args, self.unknown_args = parse_default_tmtccmd_input_arguments(
+        self.args_raw, self.unknown_args = parse_default_tmtccmd_input_arguments(
             self.args_parser,
             hook_obj,
             print_known_args=self.print_known_args,
             print_unknown_args=self.print_unknown_args,
         )
-        self.args.service = args.service
-        self.args.op_code = args.op_code
-        self.args.mode = args.mode
-        self.args.listener = args.listener
+        self.args_converted.service = self.args_raw.service
+        self.args_converted.op_code = self.args_raw.op_code
+        self.args_converted.mode = self.args_raw.mode
+        self.args_converted.listener = self.args_raw.listener
+        self.args_converted.interactive = self.args_raw.interactive
 
 
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):

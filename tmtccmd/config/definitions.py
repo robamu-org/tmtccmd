@@ -3,6 +3,8 @@
 import enum
 from typing import Tuple, Dict
 
+from tmtccmd.core.modes import ModeWrapper, TmMode, TcMode
+
 
 def default_json_path() -> str:
     return "tmtc_conf.json"
@@ -106,6 +108,21 @@ CoreModeStrings = {
     CoreModeList.IDLE: "idle",
     CoreModeList.GUI_MODE: "gui",
 }
+
+
+def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
+    if mode == CoreModeList.LISTENER_MODE:
+        mode_wrapper.tm_mode = TmMode.LISTENER
+        mode_wrapper.tc_mode = TcMode.IDLE
+    elif mode == CoreModeList.ONE_QUEUE_MODE:
+        mode_wrapper.tm_mode = TmMode.LISTENER
+        mode_wrapper.tc_mode = TcMode.ONE_QUEUE
+    elif mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
+        mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
+        mode_wrapper.tm_mode = TmMode.LISTENER
+    elif mode == CoreModeList.GUI_MODE:
+        mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
+        mode_wrapper.tm_mode = TmMode.IDLE
 
 
 class CoreServiceList(enum.Enum):

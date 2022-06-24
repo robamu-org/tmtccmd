@@ -1,8 +1,7 @@
 import atexit
 import sys
-from typing import Optional, Union
+from typing import Optional
 
-from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.core.backend import BackendBase, BackendState, Request, BackendController
 from tmtccmd.core.modes import TcMode, TmMode
@@ -25,26 +24,19 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __init__(
         self,
-        mode: Union[CoreModeList, int],
-        hook_obj: TmTcCfgHookBase,
+        tc_mode: TcMode,
+        tm_mode: TmMode,
         com_if: CommunicationInterface,
         tm_listener: CcsdsTmListener,
         tc_handler: TcHandlerBase,
     ):
+        from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
+
         self._state = BackendState()
-        self._state.mode_wrapper.mode = mode
-        if mode == CoreModeList.LISTENER_MODE:
-            self._state.mode_wrapper.tm_mode = TmMode.LISTENER
-            self._state.mode_wrapper.tc_mode = TcMode.IDLE
-        elif mode == CoreModeList.ONE_QUEUE_MODE:
-            self._state.mode_wrapper.tm_mode = TmMode.LISTENER
-            self._state.mode_wrapper.tc_mode = TcMode.ONE_QUEUE
-        elif mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
-            self._state.mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
-            self._state.mode_wrapper.tm_mode = TmMode.LISTENER
-        self.__hook_obj = hook_obj
+        self._state.mode_wrapper.tc_mode = tc_mode
+        self._state.mode_wrapper.tm_mode = tm_mode
+
         self.__com_if_active = False
-        self.__apid = 0
         self.__tc_handler = tc_handler
 
         self.__com_if = com_if
@@ -56,6 +48,9 @@ class CcsdsTmtcBackend(BackendBase):
             com_if=self.__com_if,
             tc_handler=tc_handler,
             queue_wrapper=self._queue_wrapper,
+        )
+        atexit.register(
+            keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if
         )
 
     @property
@@ -76,11 +71,11 @@ class CcsdsTmtcBackend(BackendBase):
 
     @tc_mode.setter
     def tc_mode(self, tc_mode: TcMode):
-        self.mode_wrapper._tc_mode = tc_mode
+        self._state.mode_wrapper._tc_mode = tc_mode
 
     @tm_mode.setter
     def tm_mode(self, tm_mode: TmMode):
-        self.mode_wrapper._tm_mode = tm_mode
+        self._state.mode_wrapper._tm_mode = tm_mode
 
     @property
     def tm_listener(self):
@@ -107,38 +102,12 @@ class CcsdsTmtcBackend(BackendBase):
     def current_proc_info(self, proc_info: ProcedureInfo):
         self._current_proc_info = proc_info
 
-    @property
-    def apid(self) -> int:
-        return self.__apid
-
-    @apid.setter
-    def apid(self, apid: int):
-        self.__apid = apid
-
-    @property
-    def mode(self):
-        return self._state.mode
-
     @staticmethod
     def start_handler(executed_handler, ctrl: BackendController):
         if not isinstance(executed_handler, CcsdsTmtcBackend):
             LOGGER.error("Unexpected argument, should be TmTcHandler!")
             sys.exit(1)
-        executed_handler.initialize()
         executed_handler.start_listener(ctrl)
-
-    def initialize(self):
-        from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
-
-        """
-        Perform initialization steps which might be necessary after class construction.
-        This has to be called at some point before using the class!
-        """
-        if self.mode == CoreModeList.LISTENER_MODE:
-            LOGGER.info("Running in listener mode..")
-        atexit.register(
-            keyboard_interrupt_handler, tmtc_backend=self, com_interface=self.__com_if
-        )
 
     def __listener_io_error_handler(self, ctx: str):
         LOGGER.error(f"Communication Interface could not be {ctx}")
@@ -175,7 +144,7 @@ class CcsdsTmtcBackend(BackendBase):
         :raises IOError: Yields informative output and propagates exception
         :"""
         try:
-            return self.__core_operation()
+            return self.default_operation()
         except KeyboardInterrupt as e:
             LOGGER.info("Keyboard Interrupt.")
             raise e
@@ -183,13 +152,33 @@ class CcsdsTmtcBackend(BackendBase):
             LOGGER.exception("IO Error occured")
             raise e
 
-    def __core_operation(self) -> BackendState:
-        self.default_operation()
-        if self.mode == CoreModeList.IDLE:
-            self._state.__req = Request.DELAY_IDLE
-        elif self.mode == CoreModeList.LISTENER_MODE:
-            self._state.__req = Request.DELAY_LISTENER
+    def default_operation(self) -> BackendState:
+        """Command handling."""
+        self.tm_operation()
+        self.tc_operation()
+        self.mode_to_req()
         return self._state
+
+    def mode_to_req(self):
+        if self.tc_mode == TcMode.IDLE and self.tm_mode == TmMode.IDLE:
+            self._state.__req = Request.DELAY_IDLE
+        elif self.tm_mode == TmMode.LISTENER and self.tc_mode == CoreModeList.IDLE:
+            self._state.__req = Request.DELAY_LISTENER
+        elif self._seq_handler.mode == SenderMode.DONE:
+            if self._state.tc_mode == TcMode.ONE_QUEUE:
+                self._state.mode_wrapper.tc_mode = TcMode.IDLE
+                self._state._request = Request.TERMINATION_NO_ERROR
+            elif self._state.tc_mode == TcMode.MULTI_QUEUE:
+                self._state.mode_wrapper.tc_mode = TcMode.IDLE
+                self._state._request = Request.CALL_NEXT
+        else:
+            if self._state.sender_res.longest_rem_delay > 0:
+                self._state._recommended_delay = (
+                    self._state.sender_res.longest_rem_delay
+                )
+                self._state._request = Request.DELAY_CUSTOM
+            else:
+                self._state._request = Request.CALL_NEXT
 
     def close_com_if(self):
         self.__com_if.close()
@@ -198,31 +187,12 @@ class CcsdsTmtcBackend(BackendBase):
         """Poll TM, irrespective of current TM mode"""
         self.__tm_listener.operation()
 
-    def default_operation(self):
-        """Command handling."""
-        self.tm_operation()
-        self.tc_operation()
-        self.__hook_obj.perform_mode_operation(
-            mode=self.mode, tmtc_backend=self
-        )
-
     def tm_operation(self):
         if self._state.tm_mode == TmMode.LISTENER:
             self.__tm_listener.operation()
 
     def tc_operation(self):
-        if self._state.tc_mode == TcMode.ONE_QUEUE:
-            self.__check_and_execute_seq_send()
-            if self._seq_handler.mode == SenderMode.DONE:
-                self._state.mode_wrapper.tc_mode = TcMode.IDLE
-                self._state._request = Request.TERMINATION_NO_ERROR
-        elif self.mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
-            # TODO: Handle the queue as long as the current one is full. If it is finished,
-            #       request another queue or further instructions from the user, maybe in form
-            #       of a special object, using the TC handler feed function
-            self.__check_and_execute_seq_send()
-
-
+        self.__check_and_execute_seq_send()
 
     def __check_and_execute_seq_send(self):
         if not self._seq_handler.mode == SenderMode.DONE:

@@ -10,6 +10,8 @@ class Request(enum.IntEnum):
     TERMINATION_NO_ERROR = 1
     DELAY_IDLE = 2
     DELAY_LISTENER = 3
+    DELAY_CUSTOM = 4
+    CALL_NEXT = 5
 
 
 class BackendState:
@@ -18,15 +20,16 @@ class BackendState:
     ):
         self._mode_wrapper = mode_wrapper
         self._req = req
+        self._recommended_delay = 0
         self._sender_res = SeqResultWrapper(SenderMode.DONE)
+
+    @property
+    def next_delay(self):
+        return self._recommended_delay
 
     @property
     def request(self):
         return self._req
-
-    @property
-    def mode(self):
-        return self._mode_wrapper.mode
 
     @property
     def sender_res(self):
@@ -52,11 +55,6 @@ class BackendController:
 
 
 class BackendBase:
-
-    @abstractmethod
-    def initialize(self):
-        """Initialize the backend. Raise RuntimeError or ValueError on failure"""
-
     @abstractmethod
     def start_listener(self, perform_op_immediately: bool):
         """Start the backend. Raise RuntimeError on failure"""

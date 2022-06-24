@@ -185,7 +185,7 @@ class CfdpHandler:
                 raise SequenceNumberOverflow
             return struct.pack("!I", self.seq_num)
 
-    def pass_packet(self, apid: int, raw_tm_packet: bytes, args: Any):
+    def pass_packet(self, raw_tm_packet: bytes):
         pass
 
     def put_request(self, put_request: PutRequest):

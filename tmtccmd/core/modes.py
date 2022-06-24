@@ -1,7 +1,5 @@
 import enum
 
-from tmtccmd.config.definitions import CoreModeList
-
 
 class TcMode(enum.IntEnum):
     IDLE = 0
@@ -16,6 +14,5 @@ class TmMode(enum.IntEnum):
 
 class ModeWrapper:
     def __init__(self):
-        self.mode = CoreModeList.ONE_QUEUE_MODE
         self.tc_mode = TcMode.IDLE
         self.tm_mode = TmMode.IDLE

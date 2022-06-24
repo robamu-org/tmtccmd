@@ -23,8 +23,7 @@ class ApidTmHandlerBase:
 
 
 class UnknownApidHandlerBase:
-    def __init__(self, max_queue_len: int, user_args: any):
-        self.queue = deque(maxlen=max_queue_len)
+    def __init__(self, user_args: any):
         self.user_args: any = user_args
 
     @abc.abstractmethod

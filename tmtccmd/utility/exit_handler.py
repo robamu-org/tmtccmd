@@ -1,15 +1,12 @@
 import signal
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
 
-def keyboard_interrupt_handler(
-    tmtc_backend: CcsdsTmtcBackend, com_interface: CommunicationInterface
-):
-    tmtc_backend.close_listener(join=True, join_timeout_seconds=1.0)
+def keyboard_interrupt_handler(tmtc_backend: CcsdsTmtcBackend):
+    tmtc_backend.close_listener()
     LOGGER.info("Closing TMTC client")
 
 
