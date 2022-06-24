@@ -40,6 +40,7 @@ class ArgsGroup:
     service: str
     op_code: str
     mode: str
+    com_if: str
     listener: bool = False
     interactive: bool = False
 
@@ -58,7 +59,7 @@ class ArgParserWrapper:
         self.print_known_args = False
         self.print_unknown_args = False
         self.unknown_args = [""]
-        self.args_converted = ArgsGroup("", "", "")
+        self.args_converted = ArgsGroup("", "", "", "")
         self.args_raw = None
 
     def add_default_tmtccmd_args(self):
@@ -76,6 +77,22 @@ class ArgParserWrapper:
         self.args_converted.mode = self.args_raw.mode
         self.args_converted.listener = self.args_raw.listener
         self.args_converted.interactive = self.args_raw.interactive
+
+    @property
+    def service(self):
+        return self.args_converted.service
+
+    @property
+    def op_code(self):
+        return self.args_converted.op_code
+
+    @property
+    def mode(self):
+        return self.args_converted.mode
+
+    @property
+    def com_if(self):
+        return self.args_converted.com_if
 
 
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):

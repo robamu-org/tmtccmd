@@ -22,7 +22,7 @@ from tmtccmd.config.definitions import (
     ComIFDictT,
 )
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper, OpCodeEntry
-
+from tmtccmd.utility.conf_util import check_args_in_dict
 
 LOGGER = get_console_logger()
 DEF_WRAPPER = None
@@ -46,9 +46,7 @@ def get_glob_com_if_dict() -> ComIFDictT:
 
 
 def set_default_globals_pre_args_parsing(
-    gui: bool,
-    tc_apid: int,
-    tm_apid: int,
+    apid: int,
     pus_tc_version: PusVersion = PusVersion.PUS_C,
     pus_tm_version: PusVersion = PusVersion.PUS_C,
     com_if_id: str = CoreComInterfaces.DUMMY.value,
@@ -60,8 +58,8 @@ def set_default_globals_pre_args_parsing(
 ):
     if custom_com_if_dict is None:
         custom_com_if_dict = dict()
-    set_default_tc_apid(tc_apid=tc_apid)
-    set_default_tm_apid(tm_apid=tm_apid)
+    set_default_tc_apid(tc_apid=apid)
+    set_default_tm_apid(tm_apid=apid)
     set_pus_tc_version(pus_tc_version)
     set_pus_tm_version(pus_tm_version)
     update_global(CoreGlobalIds.COM_IF, com_if_id)
@@ -111,7 +109,7 @@ def handle_com_if_arg(
     if custom_com_if_dict is not None:
         all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
     try:
-        com_if_key = str(args._com_if)
+        com_if_key = str(args.com_if)
     except AttributeError:
         LOGGER.warning("No communication interface specified")
         LOGGER.warning("Trying to set from existing configuration..")

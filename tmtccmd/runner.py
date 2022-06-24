@@ -22,7 +22,9 @@ from tmtccmd.core.globals_manager import (
     unlock_global_pool,
 )
 from tmtccmd.logging import get_console_logger
+from .config.definitions import backend_mode_conversion
 from .config.globals import set_default_globals_pre_args_parsing
+from .core.modes import ModeWrapper
 from .tc.definitions import ProcedureInfo
 from .tc.handler import TcHandlerBase
 
@@ -128,12 +130,8 @@ def init_printout(use_gui: bool):
 
 def __handle_cli_args_and_globals(setup_args: SetupArgs):
     LOGGER.info("Setting up pre-globals..")
-    set_default_globals_pre_args_parsing(
-        setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
-    )
+    set_default_globals_pre_args_parsing(setup_args.apid)
     LOGGER.info("Setting up post-globals..")
-    # TODO: How to better do this?
-    # pass_cli_args(setup_args=setup_args)
 
 
 def __start_tmtc_commander_cli(
@@ -199,7 +197,6 @@ def create_default_tmtc_backend(
     if not __SETUP_WAS_CALLED:
         LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
-    # service, op_code, com_if_id, mode = __get_backend_init_variables()
     if tm_handler is None:
         LOGGER.warning(
             "No TM Handler specified! Make sure to specify at least one TM handler"
@@ -212,18 +209,19 @@ def create_default_tmtc_backend(
     com_if = setup_args.hook_obj.assign_communication_interface(
         com_if_key=get_global(CoreGlobalIds.COM_IF)
     )
-    tm_timeout = get_global(CoreGlobalIds.TM_TIMEOUT)
     tm_listener = CcsdsTmListener(com_if=com_if, tm_handler=tm_handler)
-
+    mode_wrapper = ModeWrapper()
+    backend_mode_conversion(setup_args.args_wrapper.mode, mode_wrapper)
     # The global variables are set by the argument parser.
     tmtc_backend = CcsdsTmtcBackend(
         com_if=com_if,
         tm_listener=tm_listener,
         tc_handler=tc_handler,
+        tc_mode=mode_wrapper.tc_mode,
+        tm_mode=mode_wrapper.tm_mode,
     )
     tmtc_backend.current_proc_info = ProcedureInfo(
-        setup_args.cli_args.args_converted.service,
-        setup_args.cli_args.args_converted.op_code,
+        setup_args.args_wrapper.service, setup_args.args_wrapper.op_code
     )
     tmtc_backend.apid = apid
     tmtc_backend.one_shot_operation = not get_global(
