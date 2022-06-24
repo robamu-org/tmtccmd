@@ -37,7 +37,10 @@ class TestPrintersLoggers(TestCase):
         pus_tc = pack_service_17_ping_command(ssc=0)
         self.raw_tmtc_log.log_tc(pus_tc)
         pus_tm = Service1TMExtended(
-            subservice=1, time=CdsShortTimestamp.init_from_current_time()
+            subservice=1,
+            time=CdsShortTimestamp.init_from_current_time(),
+            tc_packet_id=pus_tc.packet_id,
+            tc_psc=pus_tc.packet_seq_ctrl,
         )
         self.raw_tmtc_log.log_tm(pus_tm.pus_tm)
         self.assertTrue(Path(self.regular_file_name).exists())

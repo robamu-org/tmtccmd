@@ -26,7 +26,8 @@ class JsonKeyNames(enum.Enum):
 def check_json_file(json_cfg_path: str) -> bool:
     """The check JSON file and return whether it was valid or not. A JSON file is invalid
     if it does not exist or the format ins invalid.
-    :return: True if JSON file is valid, False if not and a new one was created at the specified path
+    :return: True if JSON file is valid, False if not and a new one was created at the
+    specified path
     """
     if json_cfg_path == "":
         json_cfg_path = "tmtc_config.json"

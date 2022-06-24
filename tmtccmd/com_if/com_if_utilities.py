@@ -1,6 +1,7 @@
 import json
 
 from tmtccmd.logging import get_console_logger
+from tmtccmd.utility.conf_util import wrapped_prompt
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
 from tmtccmd.config.definitions import ComIFDictT
 
@@ -10,7 +11,7 @@ LOGGER = get_console_logger()
 def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
     do_prompt_com_if = False
     com_if_string = ""
-    if not check_json_file(json_cfg_path=json_cfg_path):
+    if not check_json_file(json_cfg_path):
         do_prompt_com_if = True
     if not do_prompt_com_if:
         with open(json_cfg_path, "r") as read:
@@ -22,23 +23,25 @@ def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
                 do_prompt_com_if = True
             com_if_string = str(com_if_string)
     if do_prompt_com_if:
-        com_if_string = prompt_com_if(com_if_dict=com_if_dict)
-        save_to_json = input(
-            "Do you want to store the communication interface? (y/n): "
+        com_if_string = prompt_com_if(com_if_dict)
+        save_to_json = wrapped_prompt(
+            "Do you want to store the communication interface? ([Y]/n): "
         )
-        if save_to_json.lower() in ["y", "yes", "1"]:
+        if save_to_json.lower() in ["", "y", "yes", "1"]:
             store_com_if_json(com_if_string=com_if_string, json_cfg_path=json_cfg_path)
     return com_if_string
 
 
-def prompt_com_if(com_if_dict: dict) -> str:
+def prompt_com_if(com_if_dict: ComIFDictT) -> str:
     com_if_string = ""
     while True:
         com_if_list = []
         for index, com_if_value in enumerate(com_if_dict.items()):
             print(f"{index}: {com_if_value}")
             com_if_list.append(com_if_value)
-        com_if_key = input("Please enter the desired communication interface by key: ")
+        com_if_key = wrapped_prompt(
+            "Please enter the desired communication interface by key: "
+        )
         if not com_if_key.isdigit():
             print("Key is not a digit, try again")
             continue

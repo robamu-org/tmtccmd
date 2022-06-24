@@ -2,9 +2,6 @@ import collections.abc
 import pprint
 from typing import Union, List, Dict
 
-
-from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.conf_util import check_args_in_dict
 from spacepackets.ecss.conf import (
     PusVersion,
     set_default_tc_apid,
@@ -12,8 +9,10 @@ from spacepackets.ecss.conf import (
     set_pus_tc_version,
     set_pus_tm_version,
 )
+
+from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import update_global, get_global
-from .definitions import (
+from tmtccmd.config.definitions import (
     CoreGlobalIds,
     CoreModeList,
     CoreServiceList,
@@ -22,8 +21,8 @@ from .definitions import (
     CoreComInterfaces,
     ComIFDictT,
 )
-from tmtccmd.com_if.com_if_utilities import determine_com_if
-from .tmtc_defs import TmTcDefWrapper, OpCodeEntry
+from tmtccmd.config.tmtc_defs import TmTcDefWrapper, OpCodeEntry
+
 
 LOGGER = get_console_logger()
 DEF_WRAPPER = None
@@ -106,6 +105,8 @@ def handle_mode_arg(
 def handle_com_if_arg(
     args, json_cfg_path: str, custom_com_if_dict: Dict[str, any] = None
 ):
+    from tmtccmd.com_if.com_if_utilities import determine_com_if
+
     all_com_ifs = CoreComInterfacesDict
     if custom_com_if_dict is not None:
         all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
@@ -150,6 +151,8 @@ def check_and_set_core_mode_arg(
     mode_arg: any,
     custom_modes_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None,
 ) -> int:
+    from tmtccmd.utility.conf_util import check_args_in_dict
+
     """Checks whether the mode argument is contained inside the core mode list integer enumeration
     or a custom mode list integer which can be passed optionally.
     This function will set the single command mode as the global mode parameter if the passed mode

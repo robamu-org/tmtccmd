@@ -264,7 +264,6 @@ class SerialComIF(CommunicationInterface):
             end_index = frame_size
             return end_index
         next_packet_size = next_payload_len + 7
-        # remaining_size = frame_size - start_index
 
         if next_packet_size > SERIAL_FRAME_LENGTH:
             LOGGER.error(

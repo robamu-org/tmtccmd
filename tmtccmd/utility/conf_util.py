@@ -10,6 +10,10 @@ from tmtccmd.logging import get_console_logger
 LOGGER = get_console_logger()
 
 
+def wrapped_prompt(text: str):
+    return input(text)
+
+
 class AnsiColors:
     RED = "\x1b[31m"
     GREEN = "\x1b[32m"

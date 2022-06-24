@@ -1,5 +1,7 @@
 """Dummy Communication Interface. Currently serves to provide an example without external hardware
 """
+from typing import Optional
+
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ccsds.spacepacket import (
     get_sp_psc_raw,
@@ -44,25 +46,18 @@ class DummyComIF(CommunicationInterface):
 
     def send(self, data: bytearray):
         if data is not None:
-            self.dummy_handler.pass_telecommand(data=data)
+            self.dummy_handler.pass_telecommand(data)
 
 
 class DummyHandler:
     def __init__(self):
-        self.last_telecommand = None
+        self.last_tc: Optional[PusTelecommand] = None
         self.next_telemetry_package = []
-        self.last_tc_ssc = 0
-        self.last_tc_packet_id = 0
         self.current_ssc = 0
         self.reply_pending = False
 
     def pass_telecommand(self, data: bytearray):
-        # TODO: Need TC deserializer for cleaner implementation
-        self.last_telecommand = data
-        self.last_tc_ssc = ((data[2] << 8) | data[3]) & 0x3FFF
-        self.last_service = data[7]
-        self.last_subservice = data[8]
-        self.tc_packet_id = data[0] << 8 | data[1]
+        self.last_tc = PusTelecommand.unpack(data)
         self.reply_pending = True
         self.generate_reply_package()
 
@@ -74,16 +69,13 @@ class DummyHandler:
          - Generate the object representation which would otherwise be generated from the raw bytearray received
            from an external source
         """
-        if self.last_service == 17:
-            if self.last_subservice == 1:
-                tc_psc = get_sp_psc_raw(
-                    seq_flags=SequenceFlags.UNSEGMENTED,
-                    seq_count=self.last_tc_ssc,
-                )
+        if self.last_tc.service == 17:
+            if self.last_tc.subservice == 1:
+                tc_psc = self.last_tc.sp_header.psc.raw()
                 tm_packer = Service1TMExtended(
                     subservice=1,
                     ssc=self.current_ssc,
-                    tc_packet_id=self.last_tc_packet_id,
+                    tc_packet_id=self.last_tc.packet_id,
                     tc_psc=tc_psc,
                 )
 
@@ -93,7 +85,7 @@ class DummyHandler:
                 tm_packer = Service1TMExtended(
                     subservice=7,
                     ssc=self.current_ssc,
-                    tc_packet_id=self.last_tc_packet_id,
+                    tc_packet_id=self.last_tc.packet_id,
                     tc_psc=tc_psc,
                 )
                 tm_packet_raw = tm_packer.pack()
