@@ -10,8 +10,7 @@ from tmtccmd.config import TmTcCfgHookBase, CoreGlobalIds
 from tmtccmd.config.setup import SetupArgs
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
-from tmtccmd.tm.definitions import TmTypes
-from tmtccmd.tm.handler import TmHandlerBase
+from tmtccmd.tm import TmTypes, TmHandlerBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.core.globals_manager import (
     update_global,
@@ -20,11 +19,11 @@ from tmtccmd.core.globals_manager import (
     unlock_global_pool,
 )
 from tmtccmd.logging import get_console_logger
-from .config.definitions import backend_mode_conversion
-from .config.globals import set_default_globals_pre_args_parsing
-from .core.modes import ModeWrapper
-from .tc.definitions import DefaultProcedureInfo
-from .tc.handler import TcHandlerBase
+from tmtccmd.config.definitions import backend_mode_conversion
+from tmtccmd.config.globals import set_default_globals_pre_args_parsing
+from tmtccmd.core import ModeWrapper
+from tmtccmd.tc.definitions import DefaultProcedureInfo
+from tmtccmd.tc.handler import TcHandlerBase
 
 LOGGER = get_console_logger()
 

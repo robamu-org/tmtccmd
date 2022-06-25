@@ -57,7 +57,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         destination_id: int = 0,
     ):
         pus_tm = PusTelemetry(
-            service=PusServices.SERVICE_20_PARAMETER,
+            service=PusServices.S20_PARAMETER,
             subservice=subservice_id,
             time=time,
             ssc=ssc,

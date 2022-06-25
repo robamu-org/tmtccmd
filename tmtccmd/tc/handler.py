@@ -1,13 +1,13 @@
 from abc import abstractmethod
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.core.modes import ModeWrapper
 from tmtccmd.tc.definitions import TcQueueEntryBase, TcProcedureBase
 from tmtccmd.tc.queue import QueueHelper, QueueWrapper
 
-
 class FeedWrapper:
+
     def __init__(self, queue_wrapper: QueueWrapper, auto_dispatch: bool):
+        from tmtccmd.core import ModeWrapper
         self.queue_helper = QueueHelper(queue_wrapper)
         self.dispatch_next_queue = auto_dispatch
         self.pause = False

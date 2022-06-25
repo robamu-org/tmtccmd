@@ -108,6 +108,7 @@ def process_tmtccmd_args(
     args: argparse.Namespace, hook_obj: TmTcCfgHookBase, use_prompts: bool
 ) -> ArgsGroup:
     """If some arguments are unspecified, they are set here with (variable) default values.
+
     :param args: Arguments from calling parse method
     :param hook_obj:
     :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified

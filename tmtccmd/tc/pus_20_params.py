@@ -117,6 +117,7 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
     number of columns and rows in the parameter.
     See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
     p.428 for more information.
+
     :param ptc:     ECSS PTC number
     :param pfc:     ECSS PFC number
     :param rows:     Number of rows in parameter (for matrix entries, 1 for vector entries,

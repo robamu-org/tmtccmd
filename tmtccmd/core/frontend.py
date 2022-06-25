@@ -123,8 +123,8 @@ class WorkerThread(QObject):
 
 
 class RunnableThread(QRunnable):
-    """
-    Runnable thread which can be used with QThreadPool. Not used for now, might be needed in the future.
+    """Runnable thread which can be used with QThreadPool. Not used for now, might be needed
+    in the future.
     """
 
     def run(self):

@@ -1,5 +1,5 @@
-tmtccmd.pus package
-===================
+tmtccmd.fsfw package
+=====================
 
 Submodules
 ----------
@@ -7,7 +7,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: tmtccmd.pus
+.. automodule:: tmtccmd.fsfw
    :members:
    :undoc-members:
    :show-inheritance:

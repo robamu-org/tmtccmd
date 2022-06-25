@@ -6,7 +6,7 @@ from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
 from tmtccmd.utility.obj_id import ObjectIdDictT
-from tmtccmd.core.backend import BackendBase
+from tmtccmd.core import BackendBase
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 
 LOGGER = get_console_logger()

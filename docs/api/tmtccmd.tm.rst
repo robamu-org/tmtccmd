@@ -20,6 +20,23 @@ tmtccmd.tm.handler module
    :undoc-members:
    :show-inheritance:
 
+tmtccmd.tm.base module
+----------------------------------
+
+.. automodule:: tmtccmd.tm.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+tmtccmd.tm.ccsds_tm_listener module
+------------------------------------
+
+.. automodule:: tmtccmd.tm.ccsds_tm_listener
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tmtccmd.tm.service\_200\_fsfw\_mode module
 --------------------------------------------
 

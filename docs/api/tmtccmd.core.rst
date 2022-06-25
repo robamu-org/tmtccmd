@@ -36,14 +36,6 @@ tmtccmd.core.globals\_manager module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.core.object\_id\_manager module
----------------------------------------
-
-.. automodule:: tmtccmd.core.object_id_manager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

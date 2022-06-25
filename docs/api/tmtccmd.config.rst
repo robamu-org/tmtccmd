@@ -7,7 +7,7 @@ Submodules
 tmtccmd.config.hook module
 --------------------------
 
-.. automodule:: tmtccmd.config.hook
+.. automodule:: tmtccmd.config.cfg_hook
    :members:
    :undoc-members:
    :show-inheritance:

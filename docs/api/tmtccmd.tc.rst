@@ -29,7 +29,7 @@ tmtccmd.tc.queue module
    :show-inheritance:
 
 tmtccmd.tc.ccsds\_seq\_sender module
------------------------------
+---------------------------------------
 
 .. automodule:: tmtccmd.tc.ccsds_seq_sender
    :members:

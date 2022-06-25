@@ -4,8 +4,7 @@ from collections import deque
 from typing import Optional
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
-from tmtccmd.core.backend import BackendBase, BackendState, Request, BackendController
-from tmtccmd.core.modes import TcMode, TmMode
+from tmtccmd.core import BackendBase, BackendState, Request, BackendController, TcMode, TmMode
 from tmtccmd.tc.definitions import DefaultProcedureInfo
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.tc.queue import QueueWrapper

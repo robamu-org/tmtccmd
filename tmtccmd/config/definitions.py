@@ -3,7 +3,7 @@
 import enum
 from typing import Tuple, Dict
 
-from tmtccmd.core.modes import ModeWrapper, TmMode, TcMode
+from tmtccmd.core import ModeWrapper, TmMode, TcMode
 
 
 def default_json_path() -> str:
