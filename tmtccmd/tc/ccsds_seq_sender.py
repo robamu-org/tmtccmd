@@ -2,7 +2,7 @@
 import enum
 from typing import Optional
 
-from tmtccmd.tc.definitions import TcQueueEntryBase, TcQueueEntryType, CastWrapper
+from tmtccmd.tc.definitions import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
@@ -139,7 +139,7 @@ class SequentialCcsdsSender:
         if not isinstance(queue_entry, TcQueueEntryBase):
             LOGGER.warning("Invalid queue entry detected")
             raise ValueError("Invalid queue entry detected")
-        cast_wrapper = CastWrapper(queue_entry)
+        cast_wrapper = PacketCastWrapper(queue_entry)
         if queue_entry.etype == TcQueueEntryType.WAIT:
             wait_entry = cast_wrapper.to_wait_entry()
             LOGGER.info(f"Waiting for {wait_entry.wait_time} seconds.")

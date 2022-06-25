@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest import TestCase
 
 from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss.pus_1_verification import RequestId
 
 from tmtccmd.tm.pus_1_verification import Service1TMExtended
 from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
@@ -39,8 +40,7 @@ class TestPrintersLoggers(TestCase):
         pus_tm = Service1TMExtended(
             subservice=1,
             time=CdsShortTimestamp.init_from_current_time(),
-            tc_packet_id=pus_tc.packet_id,
-            tc_psc=pus_tc.packet_seq_ctrl,
+            tc_request_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl)
         )
         self.raw_tmtc_log.log_tm(pus_tm.pus_tm)
         self.assertTrue(Path(self.regular_file_name).exists())

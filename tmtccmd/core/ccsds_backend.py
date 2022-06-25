@@ -6,7 +6,7 @@ from typing import Optional
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
 from tmtccmd.core.backend import BackendBase, BackendState, Request, BackendController
 from tmtccmd.core.modes import TcMode, TmMode
-from tmtccmd.tc.definitions import ProcedureInfo
+from tmtccmd.tc.definitions import DefaultProcedureInfo
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger
@@ -42,7 +42,9 @@ class CcsdsTmtcBackend(BackendBase):
 
         self.__com_if = com_if
         self.__tm_listener = tm_listener
-        self._current_proc_info = ProcedureInfo(CoreServiceList.SERVICE_17.value, "0")
+        self._current_proc_info = DefaultProcedureInfo(
+            CoreServiceList.SERVICE_17.value, "0"
+        )
         self.exit_on_com_if_init_failure = True
         self._queue_wrapper = QueueWrapper(deque())
         self._seq_handler = SequentialCcsdsSender(
@@ -102,11 +104,11 @@ class CcsdsTmtcBackend(BackendBase):
         return self.__com_if_active
 
     @property
-    def current_proc_info(self) -> ProcedureInfo:
+    def current_proc_info(self) -> DefaultProcedureInfo:
         return self._current_proc_info
 
     @current_proc_info.setter
-    def current_proc_info(self, proc_info: ProcedureInfo):
+    def current_proc_info(self, proc_info: DefaultProcedureInfo):
         self._current_proc_info = proc_info
 
     @staticmethod

@@ -23,7 +23,7 @@ from tmtccmd.logging import get_console_logger
 from .config.definitions import backend_mode_conversion
 from .config.globals import set_default_globals_pre_args_parsing
 from .core.modes import ModeWrapper
-from .tc.definitions import ProcedureInfo
+from .tc.definitions import DefaultProcedureInfo
 from .tc.handler import TcHandlerBase
 
 LOGGER = get_console_logger()
@@ -216,7 +216,7 @@ def create_default_tmtc_backend(
         tm_mode=mode_wrapper.tm_mode,
     )
     tmtc_backend.inter_cmd_delay = setup_args.args_wrapper.delay
-    tmtc_backend.current_proc_info = ProcedureInfo(
+    tmtc_backend.current_proc_info = DefaultProcedureInfo(
         setup_args.args_wrapper.service, setup_args.args_wrapper.op_code
     )
     return tmtc_backend

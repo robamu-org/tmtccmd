@@ -37,7 +37,7 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.config as config_module
-from tmtccmd.tc.definitions import ProcedureInfo
+from tmtccmd.tc.definitions import DefaultProcedureInfo
 
 LOGGER = get_console_logger()
 
@@ -215,7 +215,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if not self.__get_send_button():
             return
         self.__set_send_button(False)
-        self._tmtc_handler.current_proc_info = ProcedureInfo(
+        self._tmtc_handler.current_proc_info = DefaultProcedureInfo(
             self._current_service, self._current_op_code
         )
         self._tmtc_handler.mode = CoreModeList.ONE_QUEUE_MODE
