@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tc.definitions import TcQueueEntryBase, TcProcedureBase
+from tmtccmd.tc import TcQueueEntryBase, TcProcedureBase
 from tmtccmd.tc.queue import QueueHelper, QueueWrapper
 
 

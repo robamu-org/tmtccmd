@@ -2,7 +2,7 @@ from typing import Optional
 
 from spacepackets.ccsds.spacepacket import SpacePacket
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.tc.definitions import (
+from tmtccmd.tc import (
     QueueDequeT,
     LogQueueEntry,
     PusTcEntry,

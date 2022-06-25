@@ -15,7 +15,7 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.config.definitions import backend_mode_conversion
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
-from tmtccmd.tc.definitions import DefaultProcedureInfo
+from tmtccmd.tc import DefaultProcedureInfo
 from tmtccmd.tc.handler import TcHandlerBase
 
 VERSION_NAME = "tmtccmd"

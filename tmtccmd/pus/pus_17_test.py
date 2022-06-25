@@ -1,9 +1,9 @@
 from __future__ import annotations
 import enum
 
+from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.conf import get_default_tc_apid
 from spacepackets.ecss.pus_17_test import Subservices
-from tmtccmd.tc.definitions import PusTelecommand
 from tmtccmd.tc.queue import QueueHelper
 
 

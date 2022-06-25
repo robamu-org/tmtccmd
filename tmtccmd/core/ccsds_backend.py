@@ -12,7 +12,7 @@ from tmtccmd.core import (
     TcMode,
     TmMode,
 )
-from tmtccmd.tc.definitions import DefaultProcedureInfo
+from tmtccmd.tc import DefaultProcedureInfo
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger

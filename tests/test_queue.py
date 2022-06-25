@@ -4,11 +4,11 @@ from typing import cast
 from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.tc.definitions import WaitEntry, PacketCastWrapper
+from tmtccmd.tc import WaitEntry, PacketCastWrapper
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
-from tmtccmd.tc.definitions import LogQueueEntry, RawTcEntry
+from tmtccmd.tc import LogQueueEntry, RawTcEntry
 from tmtccmd.tc.queue import QueueWrapper, QueueHelper
 
 

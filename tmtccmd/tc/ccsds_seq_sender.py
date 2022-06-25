@@ -2,7 +2,7 @@
 import enum
 from typing import Optional
 
-from tmtccmd.tc.definitions import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
+from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
