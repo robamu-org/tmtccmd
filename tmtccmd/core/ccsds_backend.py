@@ -44,7 +44,7 @@ class CcsdsTmtcBackend(BackendBase):
         self.__tm_listener = tm_listener
         self._current_proc_info = ProcedureInfo(CoreServiceList.SERVICE_17.value, "0")
         self.exit_on_com_if_init_failure = True
-        self._queue_wrapper = QueueWrapper(None)
+        self._queue_wrapper = QueueWrapper(deque())
         self._seq_handler = SequentialCcsdsSender(
             com_if=self.__com_if,
             tc_handler=tc_handler,
@@ -67,6 +67,14 @@ class CcsdsTmtcBackend(BackendBase):
     @property
     def tm_mode(self):
         return self._state.mode_wrapper.tm_mode
+
+    @property
+    def inter_cmd_delay(self):
+        return self._queue_wrapper.inter_cmd_delay
+
+    @inter_cmd_delay.setter
+    def inter_cmd_delay(self, delay: float):
+        self._queue_wrapper.inter_cmd_delay = delay
 
     @tc_mode.setter
     def tc_mode(self, tc_mode: TcMode):
@@ -195,16 +203,16 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __check_and_execute_seq_send(self):
         if self._seq_handler.mode == SenderMode.DONE:
-            service_queue = self.__prepare_tc_queue()
-            if service_queue is None:
+            queue = self.__prepare_tc_queue()
+            if queue is None:
                 return
             LOGGER.info("Loading TC queue")
-            self._seq_handler.queue_wrapper = service_queue
+            self._seq_handler.queue_wrapper = queue
             self._seq_handler.resume()
         self._state._sender_res = self._seq_handler.operation()
 
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
-        feed_wrapper = FeedWrapper(QueueWrapper(deque()), auto_dispatch)
+        feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
         self.__tc_handler.feed_cb(self.current_proc_info, feed_wrapper)
         if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None

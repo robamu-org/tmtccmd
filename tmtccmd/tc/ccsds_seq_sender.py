@@ -59,6 +59,8 @@ class SequentialCcsdsSender:
         if self._mode == SenderMode.BUSY:
             raise ValueError("Busy with other queue")
         self._mode = SenderMode.BUSY
+        if queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
+            self._send_cd.reset(queue_wrapper.inter_cmd_delay)
         self._queue_wrapper = queue_wrapper
 
     def handle_new_queue_forced(self, queue_wrapper: QueueWrapper):
@@ -152,6 +154,7 @@ class SequentialCcsdsSender:
         if (
             queue_entry.etype == TcQueueEntryType.RAW_TC
             or queue_entry.etype == TcQueueEntryType.PUS_TC
+            or queue_entry.etype == TcQueueEntryType.CCSDS_TC
         ):
             self._last_tc = queue_entry
             is_tc = True

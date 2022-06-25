@@ -215,6 +215,7 @@ def create_default_tmtc_backend(
         tc_mode=mode_wrapper.tc_mode,
         tm_mode=mode_wrapper.tm_mode,
     )
+    tmtc_backend.inter_cmd_delay = setup_args.args_wrapper.delay
     tmtc_backend.current_proc_info = ProcedureInfo(
         setup_args.args_wrapper.service, setup_args.args_wrapper.op_code
     )

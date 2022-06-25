@@ -17,7 +17,6 @@ class Countdown:
     @timeout.setter
     def timeout(self, timeout: float):
         self._timeout = timeout
-        self._start_time = time.time()
 
     def timed_out(self) -> bool:
         if time.time() - self._start_time > self._timeout:
@@ -33,6 +32,10 @@ class Countdown:
             self.timeout = new_timeout
         else:
             self.timeout = self._timeout
+        self.start()
+
+    def start(self):
+        self._start_time = time.time()
 
     def time_out(self):
         self._start_time = time.time() - self._timeout
