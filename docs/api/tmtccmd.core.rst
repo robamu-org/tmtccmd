@@ -4,14 +4,6 @@ tmtccmd.core package
 Submodules
 ----------
 
-tmtccmd.core.backend module
----------------------------
-
-.. automodule:: tmtccmd.core.backend
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.core.frontend module
 ----------------------------
 

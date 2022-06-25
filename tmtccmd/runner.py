@@ -12,12 +12,7 @@ from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
-from tmtccmd.core.globals_manager import (
-    update_global,
-    get_global,
-    lock_global_pool,
-    unlock_global_pool,
-)
+from tmtccmd.core.globals_manager import update_global
 from tmtccmd.logging import get_console_logger
 from tmtccmd.config.definitions import backend_mode_conversion
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
@@ -33,19 +28,6 @@ __SETUP_FOR_GUI = False
 
 def version() -> str:
     return __version__
-
-
-def add_ccsds_handler(ccsds_handler: CcsdsTmHandler):
-    """Add a handler for CCSDS space packets, for example PUS packets
-
-    :param ccsds_handler: CCSDS handler for all CCSDS packets, e.g. Space Packets
-    :return:
-    """
-    lock_global_pool()
-    tm_handler = get_global(CoreGlobalIds.TM_HANDLER_HANDLE)
-    if tm_handler is None:
-        update_global(CoreGlobalIds.TM_HANDLER_HANDLE, ccsds_handler)
-    unlock_global_pool()
 
 
 def setup(setup_args: SetupArgs):
@@ -163,16 +145,6 @@ def __start_tmtc_commander_qt_gui(
     except ImportError:
         LOGGER.error("PyQt5 module not installed, can't run GUI mode!")
         sys.exit(1)
-
-
-"""
-def __get_backend_init_variables():
-    service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-    op_code = get_global(CoreGlobalIds.OP_CODE)
-    com_if = get_global(CoreGlobalIds.COM_IF)
-    mode = get_global(CoreGlobalIds.MODE)
-    return service, op_code, com_if, mode
-"""
 
 
 def create_default_tmtc_backend(
