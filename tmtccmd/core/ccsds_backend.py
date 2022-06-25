@@ -143,7 +143,8 @@ class CcsdsTmtcBackend(BackendBase):
         :raises IOError: Yields informative output and propagates exception
         :"""
         try:
-            return self.default_operation()
+            self.default_operation()
+            return self._state
         except KeyboardInterrupt as e:
             LOGGER.info("Keyboard Interrupt")
             raise e
@@ -151,25 +152,24 @@ class CcsdsTmtcBackend(BackendBase):
             LOGGER.exception("IO Error occured")
             raise e
 
-    def default_operation(self) -> BackendState:
+    def default_operation(self):
         """Command handling."""
         self.tm_operation()
         self.tc_operation()
         self.mode_to_req()
-        return self._state
 
     def mode_to_req(self):
         if self.tc_mode == TcMode.IDLE and self.tm_mode == TmMode.IDLE:
-            self._state.__req = Request.DELAY_IDLE
+            self._state._req = Request.DELAY_IDLE
         elif self.tm_mode == TmMode.LISTENER and self.tc_mode == CoreModeList.IDLE:
-            self._state.__req = Request.DELAY_LISTENER
+            self._state._req = Request.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
                 self._state.mode_wrapper.tc_mode = TcMode.IDLE
-                self._state._request = Request.TERMINATION_NO_ERROR
+                self._state._req = Request.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
                 self._state.mode_wrapper.tc_mode = TcMode.IDLE
-                self._state._request = Request.CALL_NEXT
+                self._state._req = Request.CALL_NEXT
         else:
             if self._state.sender_res.longest_rem_delay > 0:
                 self._state._recommended_delay = (

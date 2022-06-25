@@ -121,6 +121,8 @@ def process_tmtccmd_args(
     group = ArgsGroup()
     if args.mode is None:
         group.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
+    else:
+        group.mode = args.mode
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
         if args.service is None:
