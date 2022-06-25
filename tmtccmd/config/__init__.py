@@ -2,10 +2,7 @@ from typing import Optional
 
 from tmtccmd.config.globals import CoreServiceList
 from .args import ArgParserWrapper
-from .definitions import (
-    CoreGlobalIds,
-    OpCodeDictKeys, default_json_path
-)
+from .definitions import CoreGlobalIds, OpCodeDictKeys, default_json_path
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 
 

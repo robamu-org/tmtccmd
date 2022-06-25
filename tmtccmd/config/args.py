@@ -17,6 +17,7 @@ LOGGER = get_console_logger()
 
 def get_default_descript_txt() -> str:
     from tmtccmd.utility.conf_util import AnsiColors
+
     return (
         f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
         f"{AnsiColors.RESET}This application provides generic components to execute "
