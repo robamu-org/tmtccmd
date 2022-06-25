@@ -17,7 +17,6 @@ tmtccmd.runner module
    :maxdepth: 4
 
    api/tmtccmd.core
-   api/tmtccmd.sendreceive
 
 Configuration Submodules
 =========================
@@ -49,3 +48,4 @@ Other Submodules
 
    api/tmtccmd.utility
    api/tmtccmd.logging
+   api/tmtccmd.fsfw
