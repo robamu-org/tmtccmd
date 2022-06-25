@@ -37,10 +37,11 @@ def create_default_args_parser(
 
 @dataclass
 class ArgsGroup:
-    service: str
-    op_code: str
-    mode: str
-    com_if: str
+    service: Optional[str] = None
+    op_code: Optional[str] = None
+    mode: str = ""
+    com_if: str = ""
+    delay: float = 0.0
     listener: bool = False
     interactive: bool = False
 
@@ -59,24 +60,25 @@ class ArgParserWrapper:
         self.print_known_args = False
         self.print_unknown_args = False
         self.unknown_args = [""]
-        self.args_converted = ArgsGroup("", "", "", "")
+        self.args_converted: Optional[ArgsGroup] = None
         self.args_raw = None
 
     def add_default_tmtccmd_args(self):
         add_default_tmtccmd_args(self.args_parser)
 
-    def parse(self, hook_obj: TmTcCfgHookBase):
+    def parse(self, hook_obj: TmTcCfgHookBase, use_prompts: bool):
         self.args_raw, self.unknown_args = parse_default_tmtccmd_input_arguments(
             self.args_parser,
-            hook_obj,
             print_known_args=self.print_known_args,
             print_unknown_args=self.print_unknown_args,
         )
-        self.args_converted.service = self.args_raw.service
-        self.args_converted.op_code = self.args_raw.op_code
-        self.args_converted.mode = self.args_raw.mode
-        self.args_converted.listener = self.args_raw.listener
-        self.args_converted.interactive = self.args_raw.interactive
+        self.args_converted = process_tmtccmd_args(
+            self.args_raw, hook_obj.get_tmtc_definitions(), use_prompts
+        )
+
+    @property
+    def delay(self):
+        return self.args_converted.delay
 
     @property
     def service(self):
@@ -104,9 +106,60 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_ethernet_arguments(parser)
 
 
+def process_tmtccmd_args(
+    args: argparse.Namespace, tmtc_defs: TmTcDefWrapper, use_prompts: bool
+) -> ArgsGroup:
+    """If some arguments are unspecified, they are set here with (variable) default values.
+    :param args: Arguments from calling parse method
+    :param tmtc_defs:
+    :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
+        arguments. For something like a GUI, it might make sense to disable this
+    :return: None
+    """
+    from tmtccmd.config.definitions import CoreModeStrings
+
+    group = ArgsGroup()
+    if args.mode is None:
+        group.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
+    if tmtc_defs is None:
+        LOGGER.warning("Invalid Service to Op-Code dictionary detected")
+        if args.service is None:
+            group.service = "0"
+        if args.op_code is None:
+            group.op_code = "0"
+    else:
+        if args.service is None:
+            if args.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+                if use_prompts:
+                    LOGGER.info(
+                        "No service argument (-s) specified, prompting from user.."
+                    )
+                    # Try to get the service list from the hook base and prompt service from user
+                    group.service = prompt_service(tmtc_defs)
+        else:
+            group.service = args.service
+        if args.op_code is None:
+            current_service = group.service
+            if use_prompts:
+                group.op_code = prompt_op_code(tmtc_defs, current_service)
+        else:
+            group.op_code = args.op_code
+    if args.delay is None:
+        if group.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+            group.delay = 3.0
+        else:
+            group.delay = 0.0
+    else:
+        group.delay = args.delay
+    if args.listener is None:
+        args.listener = False
+    else:
+        group.listener = args.listener
+    return group
+
+
 def parse_default_tmtccmd_input_arguments(
     parser: argparse.ArgumentParser,
-    hook_obj: TmTcCfgHookBase,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
 ) -> (argparse.Namespace, List[str]):
@@ -130,7 +183,8 @@ def parse_default_tmtccmd_input_arguments(
         for argument in unknown:
             LOGGER.info(argument)
 
-    args_post_processing(args, unknown, hook_obj.get_tmtc_definitions())
+    if len(unknown) > 0:
+        print(f"Unknown arguments detected: {unknown}")
     return args, unknown
 
 
@@ -179,17 +233,18 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-i",
         "--interactive",
-        help="Enables interactive or multi-queue mode, where the backend will be confiogured "
+        help="Enables interactive or multi-queue mode, where the backend will be configured "
         "to handle multiple queues",
         action="store_true",
         default=False,
     )
     arg_parser.add_argument(
-        "-t",
-        "--tm_timeout",
+        "-d",
+        "--delay",
         type=float,
-        help="Default inter-packet delay" " Default: 3 seconds",
-        default=3.0,
+        help="Default inter-packet delay. Default: 3 seconds for one queue mode, "
+        "0 for interactive mode",
+        default=None,
     )
 
 
@@ -266,64 +321,3 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "--t-ip", help="Target IP. Default: Localhost 127.0.0.1", default="127.0.0.1"
     )
-
-
-def args_post_processing(
-    args, unknown: list, service_op_code_dict: TmTcDefWrapper
-) -> None:
-    """Handles the parsed arguments.
-    :param service_op_code_dict:
-    :param args: Namespace objects
-        (see https://docs.python.org/dev/library/argparse.html#argparse.Namespace)
-    :param unknown: List of unknown parameters.
-    :return: None
-    """
-    if len(unknown) > 0:
-        print("Unknown arguments detected: " + str(unknown))
-    if len(sys.argv) > 1:
-        handle_unspecified_args(args, service_op_code_dict)
-    if len(sys.argv) == 1:
-        handle_empty_args(args, service_op_code_dict)
-
-
-def handle_unspecified_args(
-    args: argparse.Namespace, tmtc_defs: TmTcDefWrapper
-) -> None:
-    """If some arguments are unspecified, they are set here with (variable) default values.
-    :param args: Arguments from calling parse method
-    :param tmtc_defs:
-    :return: None
-    """
-    from tmtccmd.config.definitions import CoreModeStrings
-
-    if args.mode is None:
-        args.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
-    if tmtc_defs is None:
-        LOGGER.warning("Invalid Service to Op-Code dictionary detected")
-        if args.service is None:
-            args.service = "0"
-        if args.op_code is None:
-            args.op_code = "0"
-        return
-    if args.service is None:
-        if args.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
-            LOGGER.info("No service argument (-s) specified, prompting from user..")
-            # Try to get the service list from the hook base and prompt service from user
-            args.service = prompt_service(tmtc_defs)
-    if args.op_code is None:
-        current_service = args.service
-        args.op_code = prompt_op_code(tmtc_defs, current_service)
-    if args.tm_timeout is None:
-        args.tm_timeout = 5.0
-    if args.listener is None:
-        args.listener = False
-
-
-def handle_empty_args(args, service_op_code_dict: TmTcDefWrapper) -> None:
-    """If no args were supplied, request input from user directly.
-    :param service_op_code_dict:
-    :param args:
-    :return:
-    """
-    LOGGER.info("No arguments specified..")
-    handle_unspecified_args(args, service_op_code_dict)
