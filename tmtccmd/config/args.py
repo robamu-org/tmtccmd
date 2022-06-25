@@ -6,11 +6,9 @@ import sys
 from typing import Optional, List
 from dataclasses import dataclass
 
-from tmtccmd.com_if.com_if_utilities import determine_com_if
 from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces
 from tmtccmd.config.prompt import prompt_service, prompt_op_code
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
-from tmtccmd.utility.conf_util import AnsiColors
 from tmtccmd.logging import get_console_logger
 
 
@@ -18,6 +16,7 @@ LOGGER = get_console_logger()
 
 
 def get_default_descript_txt() -> str:
+    from tmtccmd.utility.conf_util import AnsiColors
     return (
         f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
         f"{AnsiColors.RESET}This application provides generic components to execute "
@@ -116,6 +115,7 @@ def process_tmtccmd_args(
     :return: None
     """
     from tmtccmd.config.definitions import CoreModeStrings
+    from tmtccmd.com_if.com_if_utilities import determine_com_if
 
     group = ArgsGroup()
     if args.com_if is None or args.com_if == CoreComInterfaces.UNSPECIFIED.value:

@@ -2,12 +2,13 @@
 """Example application for the TMTC Commander"""
 import tmtccmd.runner
 from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidTmHandlerBase
-from tmtccmd.config import SetupArgs, default_json_path
+from tmtccmd.config import default_json_path
 from tmtccmd.config.args import (
     create_default_args_parser,
     add_default_tmtccmd_args,
     parse_default_tmtccmd_input_arguments,
 )
+from tmtccmd.config.setup import SetupArgs
 from tmtccmd.logging import get_console_logger
 
 from config.hook_implementation import ExampleHookClass

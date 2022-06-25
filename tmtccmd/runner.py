@@ -6,8 +6,7 @@ from typing import Union, cast
 from tmtccmd import __version__
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.config import TmTcCfgHookBase, CoreGlobalIds
-from tmtccmd.config.setup import SetupArgs
+from tmtccmd.config import TmTcCfgHookBase, CoreGlobalIds, SetupArgs
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase
