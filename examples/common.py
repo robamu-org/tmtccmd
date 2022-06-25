@@ -1,16 +1,18 @@
 from typing import Optional
 
+from pus_tc.service_17_test import pack_service17_test_into
 from spacepackets.ecss import PusTelemetry
 from tmtccmd import get_console_logger, TcHandlerBase, TmTcCfgHookBase, CcsdsTmtcBackend
 from tmtccmd.ccsds.handler import ApidTmHandlerBase
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.config import CoreServiceList
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.logging.pus import RawTmtcTimedLogWrapper
-from tmtccmd.tc.definitions import (
+from tmtccmd.tc import (
     TcProcedureBase,
     TcQueueEntryBase,
     PacketCastWrapper,
-    TcQueueEntryType,
+    TcQueueEntryType, ProcedureCastWrapper, TcProcedureType,
 )
 from tmtccmd.tc.handler import FeedWrapper
 from tmtccmd.tm import Service5Tm
@@ -77,6 +79,7 @@ class PusHandler(ApidTmHandlerBase):
                 f"The service {service} is not implemented in Telemetry Factory"
             )
             tm_packet = PusTelemetry.unpack(packet)
+        self.raw_logger.log_tm(tm_packet)
         self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
 
 
@@ -87,11 +90,18 @@ class TcHandler(TcHandlerBase):
             if tc_queue_entry.etype == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = cast_wrapper.to_pus_tc_entry()
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
-                LOGGER.info(pus_tc_wrapper.pus_tc)
+                LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
                 com_if.send(raw_tc)
 
     def queue_finished_cb(self, info: TcProcedureBase):
         pass
 
     def feed_cb(self, info: TcProcedureBase, wrapper: FeedWrapper):
-        pass
+        proc_caster = ProcedureCastWrapper(info)
+        if info.ptype == TcProcedureType.DEFAULT:
+            info = proc_caster.to_def_procedure()
+            queue_helper = wrapper.queue_helper
+            service = info.service
+            op_code = info.op_code
+            if service == CoreServiceList.SERVICE_17.value:
+                return pack_service17_test_into(queue_helper, op_code=op_code)

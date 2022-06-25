@@ -1,5 +1,5 @@
 import abc
-from typing import Dict
+from typing import Dict, Optional
 
 from tmtccmd.tm import TmTypes, TmHandlerBase
 from tmtccmd.logging import get_console_logger
@@ -36,10 +36,13 @@ class CcsdsTmHandler(TmHandlerBase):
     """Generic CCSDS handler class. The user can create an instance of this class to handle
     CCSDS packets with different APIDs"""
 
-    def __init__(self, unknown_handler: UnknownApidHandlerBase):
+    def __init__(self, unknown_handler: Optional[UnknownApidHandlerBase]):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
-        self.unknown_handler = unknown_handler
+        if unknown_handler:
+            self.unknown_handler = UnknownApidHandlerBase(None)
+        else:
+            self.unknown_handler = unknown_handler
 
     def add_apid_handler(self, handler: ApidTmHandlerBase):
         """Add a TM handler for a certain APID. The handler is a callback function which

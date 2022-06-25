@@ -1,9 +1,9 @@
 """Contains definitions and functions related to PUS Service 5 Telecommands.
 """
+from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.conf import get_default_tc_apid
 from spacepackets.ecss.pus_5_event import Subservices
 
-from tmtccmd.tc.definitions import PusTelecommand
 from tmtccmd.tc.queue import QueueHelper
 
 

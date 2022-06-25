@@ -1,7 +1,6 @@
-import enum
 import struct
 
-from tmtccmd.tc.definitions import PusTelecommand
+from spacepackets.ecss import PusTelecommand
 from tmtccmd.pus.pus_8_funccmd import Subservices
 from spacepackets.ecss.conf import get_default_tc_apid
 

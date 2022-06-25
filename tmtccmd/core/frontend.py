@@ -37,7 +37,7 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
 import tmtccmd.config as config_module
-from tmtccmd.tc.definitions import DefaultProcedureInfo
+from tmtccmd.tc import DefaultProcedureInfo
 
 LOGGER = get_console_logger()
 

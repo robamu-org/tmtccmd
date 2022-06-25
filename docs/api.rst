@@ -5,10 +5,10 @@ API
 Core Submodules
 ===============
 
-tmtccmd.runner module
+tmtccmd module
 ---------------------
 
-.. automodule:: tmtccmd.runner
+.. automodule:: tmtccmd
    :members:
    :undoc-members:
    :show-inheritance:

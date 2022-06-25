@@ -2,6 +2,7 @@
 """
 from typing import Optional
 
+from spacepackets.ecss.pus_1_verification import RequestId
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ccsds.spacepacket import (
     get_sp_psc_raw,
@@ -71,12 +72,10 @@ class DummyHandler:
         """
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
-                tc_psc = self.last_tc.sp_header.psc.raw()
                 tm_packer = Service1TMExtended(
                     subservice=1,
                     ssc=self.current_ssc,
-                    tc_packet_id=self.last_tc.packet_id,
-                    tc_psc=tc_psc,
+                    tc_request_id=RequestId(self.last_tc.packet_id, self.last_tc.packet_seq_ctrl)
                 )
 
                 self.current_ssc += 1
@@ -85,8 +84,7 @@ class DummyHandler:
                 tm_packer = Service1TMExtended(
                     subservice=7,
                     ssc=self.current_ssc,
-                    tc_packet_id=self.last_tc.packet_id,
-                    tc_psc=tc_psc,
+                    tc_request_id=RequestId(self.last_tc.packet_id, self.last_tc.packet_seq_ctrl)
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
