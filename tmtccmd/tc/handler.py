@@ -3,13 +3,14 @@ from typing import Optional
 
 from tmtccmd.com_if.com_interface_base import CommunicationInterface
 from tmtccmd.core.modes import ModeWrapper
-from tmtccmd.tc.definitions import TcQueueEntryBase, QueueDequeT, ProcedureInfo
+from tmtccmd.tc.definitions import TcQueueEntryBase, ProcedureInfo
+from tmtccmd.tc.queue import QueueHelper, QueueWrapper
 
 
 class FeedWrapper:
-    def __init__(self):
-        self.current_queue: Optional[QueueDequeT] = None
-        self.dispatch_next_queue = False
+    def __init__(self, queue_wrapper: QueueWrapper, auto_dispatch: bool):
+        self.queue_helper = QueueHelper(queue_wrapper)
+        self.dispatch_next_queue = auto_dispatch
         self.pause = False
         self.modes = ModeWrapper()
 

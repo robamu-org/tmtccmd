@@ -3,8 +3,6 @@ import sys
 import os
 from typing import Union, cast
 
-from spacepackets.ecss.conf import get_default_tc_apid
-
 from tmtccmd import __version__
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
@@ -67,9 +65,7 @@ def setup(setup_args: SetupArgs):
     __assign_tmtc_commander_hooks(hook_object=setup_args.hook_obj)
 
     if setup_args.use_gui:
-        set_default_globals_pre_args_parsing(
-            setup_args.use_gui, tc_apid=setup_args.tc_apid, tm_apid=setup_args.tm_apid
-        )
+        set_default_globals_pre_args_parsing(setup_args.apid)
     if not setup_args.use_gui:
         __handle_cli_args_and_globals(setup_args)
     __SETUP_FOR_GUI = setup_args.use_gui
@@ -205,9 +201,8 @@ def create_default_tmtc_backend(
     else:
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             tm_handler = cast(CcsdsTmHandler, tm_handler)
-    apid = get_default_tc_apid()
     com_if = setup_args.hook_obj.assign_communication_interface(
-        com_if_key=get_global(CoreGlobalIds.COM_IF)
+        com_if_key=setup_args.args_wrapper.com_if
     )
     tm_listener = CcsdsTmListener(com_if=com_if, tm_handler=tm_handler)
     mode_wrapper = ModeWrapper()

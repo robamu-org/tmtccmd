@@ -84,7 +84,7 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         self,
         when: TimedLogWhen,
         interval: int,
-        file_name: str = f"{RAW_PUS_FILE_BASE_NAME}.log",
+        file_name: str = f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}.log",
     ):
         """Create a raw TMTC timed rotating log wrapper.
         See the official Python documentation at

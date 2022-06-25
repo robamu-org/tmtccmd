@@ -1,5 +1,6 @@
 import atexit
 import sys
+from collections import deque
 from typing import Optional
 
 from tmtccmd.config.definitions import CoreServiceList, CoreModeList
@@ -202,9 +203,9 @@ class CcsdsTmtcBackend(BackendBase):
             self._seq_handler.resume()
         self._state._sender_res = self._seq_handler.operation()
 
-    def __prepare_tc_queue(self) -> Optional[QueueWrapper]:
-        feed_wrapper = FeedWrapper()
+    def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
+        feed_wrapper = FeedWrapper(QueueWrapper(deque()), auto_dispatch)
         self.__tc_handler.feed_cb(self.current_proc_info, feed_wrapper)
         if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None
-        return feed_wrapper.current_queue
+        return feed_wrapper.queue_helper.queue_wrapper
