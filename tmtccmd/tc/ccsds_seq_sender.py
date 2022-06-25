@@ -59,7 +59,8 @@ class SequentialCcsdsSender:
         if self._mode == SenderMode.BUSY:
             raise ValueError("Busy with other queue")
         self._mode = SenderMode.BUSY
-        # There is no need to delay sending of the first entry
+        # There is no need to delay sending of the first entry, the send delay is inter-packet
+        # only
         self._send_cd.timeout = 0
         self._queue_wrapper = queue_wrapper
 

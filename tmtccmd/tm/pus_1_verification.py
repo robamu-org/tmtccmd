@@ -4,15 +4,10 @@ import struct
 from abc import abstractmethod
 from typing import Deque
 
-from spacepackets.ccsds.spacepacket import (
-    PacketSeqCtrl,
-    PacketId,
-    PacketTypes,
-    SequenceFlags,
-)
+from spacepackets.ccsds.spacepacket import PacketSeqCtrl
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.tm import PusVersion, PusTelemetry
-from spacepackets.ecss.pus_1_verification import Service1TM, Subservices
+from spacepackets.ecss.pus_1_verification import Service1TM, Subservices, RequestId
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.logging import get_console_logger
@@ -26,8 +21,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     def __init__(
         self,
         subservice: int,
-        tc_packet_id: PacketId,
-        tc_psc: PacketSeqCtrl,
+        tc_request_id: RequestId,
         time: CdsShortTimestamp = None,
         ssc: int = 0,
         source_data: bytearray = bytearray([]),
@@ -40,8 +34,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     ):
         Service1TM.__init__(
             self,
-            tc_packet_id=tc_packet_id,
-            tc_psc=tc_psc,
+            tc_request_id=tc_request_id,
             subservice=subservice,
             time=time,
             ssc=ssc,
@@ -58,11 +51,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
 
     @classmethod
     def __empty(cls) -> Service1TMExtended:
-        return cls(
-            subservice=0,
-            tc_packet_id=PacketId(apid=0, sec_header_flag=False, ptype=PacketTypes.TM),
-            tc_psc=PacketSeqCtrl(SequenceFlags.CONTINUATION_SEGMENT, 0),
-        )
+        return cls(subservice=0, tc_request_id=RequestId.empty())
 
     @classmethod
     def unpack(
@@ -81,25 +70,14 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         service_1_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version
         )
-        tm_data = service_1_tm.tm_data
-        if len(tm_data) < 4:
-            LOGGER.warning("TM data less than 4 bytes!")
-            raise ValueError
-        service_1_tm.tc_packet_id = struct.unpack("!H", tm_data[0:2])[0]
-        service_1_tm.tc_psc = PacketSeqCtrl.from_raw(
-            struct.unpack("!H", tm_data[2:4])[0]
-        )
-        if service_1_tm.subservice % 2 == 0:
-            service_1_tm._handle_failure_verification()
-        else:
-            service_1_tm._handle_success_verification()
+        cls._unpack_raw_tm(service_1_tm)
         return service_1_tm
 
     @abstractmethod
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(str(hex(self.tc_packet_id.raw())))
-        content_list.append(str(self.tc_ssc))
+        content_list.append(self.tc_req_id.tc_packet_id)
+        content_list.append(self.tc_req_id.tc_psc)
         if self.has_tc_error_code:
             if self.is_step_reply:
                 content_list.append(str(self.step_number))
@@ -117,7 +95,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)
         header_list.append("TC Packet ID")
-        header_list.append("TC SSC")
+        header_list.append("TC PSC")
         if self.has_tc_error_code:
             if self.is_step_reply:
                 header_list.append("Step Number")

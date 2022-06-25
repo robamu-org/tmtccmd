@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Optional
 
-from tmtccmd.config.definitions import default_json_path
+from tmtccmd.config.definitions import default_json_path, ComIFDictT, CORE_COM_IF_DICT
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.retval import RetvalDictT
@@ -47,6 +47,9 @@ class TmTcCfgHookBase:
         return create_communication_interface_default(
             com_if_key=com_if_key, json_cfg_path=self.json_cfg_path
         )
+
+    def get_com_if_dict(self) -> ComIFDictT:
+        return CORE_COM_IF_DICT
 
     @abstractmethod
     def get_tmtc_definitions(self) -> TmTcDefWrapper:

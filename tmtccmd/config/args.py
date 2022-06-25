@@ -6,9 +6,9 @@ import sys
 from typing import Optional, List
 from dataclasses import dataclass
 
-from tmtccmd.config.definitions import CoreModeList
+from tmtccmd.com_if.com_if_utilities import determine_com_if
+from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces
 from tmtccmd.config.prompt import prompt_service, prompt_op_code
-from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.utility.conf_util import AnsiColors
 from tmtccmd.logging import get_console_logger
@@ -72,9 +72,7 @@ class ArgParserWrapper:
             print_known_args=self.print_known_args,
             print_unknown_args=self.print_unknown_args,
         )
-        self.args_converted = process_tmtccmd_args(
-            self.args_raw, hook_obj.get_tmtc_definitions(), use_prompts
-        )
+        self.args_converted = process_tmtccmd_args(self.args_raw, hook_obj, use_prompts)
 
     @property
     def delay(self):
@@ -107,11 +105,11 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
 
 
 def process_tmtccmd_args(
-    args: argparse.Namespace, tmtc_defs: TmTcDefWrapper, use_prompts: bool
+    args: argparse.Namespace, hook_obj: TmTcCfgHookBase, use_prompts: bool
 ) -> ArgsGroup:
     """If some arguments are unspecified, they are set here with (variable) default values.
     :param args: Arguments from calling parse method
-    :param tmtc_defs:
+    :param hook_obj:
     :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
         arguments. For something like a GUI, it might make sense to disable this
     :return: None
@@ -119,10 +117,19 @@ def process_tmtccmd_args(
     from tmtccmd.config.definitions import CoreModeStrings
 
     group = ArgsGroup()
+    if args.com_if is None or args.com_if == CoreComInterfaces.UNSPECIFIED.value:
+        if use_prompts:
+            group.com_if = determine_com_if(
+                hook_obj.get_com_if_dict(), hook_obj.json_cfg_path
+            )
+    else:
+        # TODO: Check whether COM IF is valid?
+        group.com_if = args.com_if
     if args.mode is None:
         group.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
     else:
         group.mode = args.mode
+    tmtc_defs = hook_obj.get_tmtc_definitions()
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
         if args.service is None:
@@ -284,28 +291,26 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config.definitions import CoreComInterfacesDict, CoreComInterfaces
+    from tmtccmd.config.definitions import CORE_COM_IF_DICT, CoreComInterfaces
 
     help_text = (
         "Core Communication Interface. If this is not specified, the commander core\n"
-        "will try to extract it from the JSON or prompt it from the user.\n"
+        "will try to extract it from the JSON or prompt it from the user\n"
     )
-    dummy_line = (
-        f"{CoreComInterfacesDict[CoreComInterfaces.DUMMY.value]}: Dummy Interface\n"
-    )
+    dummy_line = f"{CORE_COM_IF_DICT[CoreComInterfaces.DUMMY.value]}: Dummy Interface\n"
     udp_line = (
-        f"{CoreComInterfacesDict[CoreComInterfaces.TCPIP_UDP.value]}: " f"UDP client\n"
+        f"{CORE_COM_IF_DICT[CoreComInterfaces.TCPIP_UDP.value]}: " f"UDP client\n"
     )
     ser_dle_line = (
-        f"{CoreComInterfacesDict[CoreComInterfaces.SERIAL_DLE.value]}: "
+        f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_DLE.value]}: "
         f"Serial with DLE transport layer\n"
     )
     ser_fixed_line = (
-        f"{CoreComInterfacesDict[CoreComInterfaces.SERIAL_FIXED_FRAME.value]}: "
+        f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_FIXED_FRAME.value]}: "
         f"Serial with fixed frames\n"
     )
     ser_qemu_line = (
-        f"{CoreComInterfacesDict[CoreComInterfaces.SERIAL_QEMU.value]}: "
+        f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_QEMU.value]}: "
         f"QEMU serial interface\n"
     )
     help_text += dummy_line + ser_dle_line + udp_line + ser_fixed_line + ser_qemu_line

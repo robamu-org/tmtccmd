@@ -17,7 +17,7 @@ from tmtccmd.config.definitions import (
     CoreModeList,
     CoreServiceList,
     CoreModeStrings,
-    CoreComInterfacesDict,
+    CORE_COM_IF_DICT,
     CoreComInterfaces,
     ComIFDictT,
 )
@@ -37,8 +37,8 @@ def get_json_cfg_path() -> str:
 
 
 def set_glob_com_if_dict(custom_com_if_dict: ComIFDictT):
-    CoreComInterfacesDict.update(custom_com_if_dict)
-    update_global(CoreGlobalIds.COM_IF_DICT, CoreComInterfacesDict)
+    CORE_COM_IF_DICT.update(custom_com_if_dict)
+    update_global(CoreGlobalIds.COM_IF_DICT, CORE_COM_IF_DICT)
 
 
 def get_glob_com_if_dict() -> ComIFDictT:
@@ -105,9 +105,9 @@ def handle_com_if_arg(
 ):
     from tmtccmd.com_if.com_if_utilities import determine_com_if
 
-    all_com_ifs = CoreComInterfacesDict
+    all_com_ifs = CORE_COM_IF_DICT
     if custom_com_if_dict is not None:
-        all_com_ifs = CoreComInterfacesDict.update(custom_com_if_dict)
+        all_com_ifs = CORE_COM_IF_DICT.update(custom_com_if_dict)
     try:
         com_if_key = str(args.com_if)
     except AttributeError:

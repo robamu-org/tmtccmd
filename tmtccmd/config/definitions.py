@@ -73,7 +73,7 @@ class CoreComInterfaces(enum.Enum):
     UNSPECIFIED = "unspec"
 
 
-CoreComInterfacesDict = {
+CORE_COM_IF_DICT = {
     CoreComInterfaces.DUMMY.value: "Dummy Interface",
     CoreComInterfaces.SERIAL_DLE.value: "Serial Interace with DLE encoding",
     CoreComInterfaces.TCPIP_UDP.value: "TCP/IP with UDP datagrams",
