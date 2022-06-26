@@ -2,6 +2,9 @@
 Getting Started
 ===============
 
+Example Project
+================
+
 The example provided in the ``example`` folder of the Python package is a good place to get started.
 You can run the ``tmtccli.py`` file to test the CLI interface or the ``tmtcgui.py`` file
 to test the GUI interface. The only working communication interface for the example applications is 

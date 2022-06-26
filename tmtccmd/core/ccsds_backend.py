@@ -68,6 +68,12 @@ class CcsdsTmtcBackend(BackendBase):
     def com_if(self) -> ComInterface:
         return self.__com_if
 
+    @com_if.setter
+    def com_if(self, com_if: ComInterface):
+        if self.__com_if_active:
+            return
+        self.__com_if = com_if
+
     @property
     def tc_mode(self):
         return self._state.mode_wrapper.tc_mode

@@ -1,29 +1,48 @@
+#!/usr/bin/env python3
+"""Example application for the TMTC Commander"""
+import sys
+import time
 from typing import Optional
 
-from pus_tc.service_17_test import pack_service17_test_into
-from spacepackets.ecss import PusTelemetry
-from tmtccmd import get_console_logger, TcHandlerBase, TmTcCfgHookBase, CcsdsTmtcBackend
-from tmtccmd.ccsds.handler import ApidTmHandlerBase
+import tmtccmd
+from spacepackets.ecss import PusTelemetry, PusTelecommand
+
+from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
+from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidTmHandlerBase
 from tmtccmd.com_if import ComInterface
-from tmtccmd.config import CoreServiceList
-from tmtccmd.config.tmtc import TmTcDefWrapper
-from tmtccmd.logging.pus import RawTmtcTimedLogWrapper
+from tmtccmd.config import (
+    default_json_path,
+    SetupParams,
+    TmTcCfgHookBase,
+    TmTcDefWrapper,
+    CoreServiceList,
+)
+from tmtccmd.config import ArgParserWrapper, SetupWrapper
+from tmtccmd.core import BackendController, Request
+from tmtccmd.logging import get_console_logger
+from tmtccmd.logging.pus import (
+    RegularTmtcLogWrapper,
+    RawTmtcTimedLogWrapper,
+    TimedLogWhen,
+)
 from tmtccmd.tc import (
-    TcProcedureBase,
     TcQueueEntryBase,
     PacketCastWrapper,
     TcQueueEntryType,
+    TcProcedureBase,
     ProcedureCastWrapper,
     TcProcedureType,
 )
 from tmtccmd.tc.handler import FeedWrapper
 from tmtccmd.tm import Service5Tm
-from tmtccmd.tm.pus_17_test import Service17TMExtended
+from tmtccmd.tm.pus_17_test import Service17TmExtended
+from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.utility.obj_id import ObjectIdDictT
+
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 
-APID = 0xEF
 LOGGER = get_console_logger()
+EXAMPLE_APID = 0xEF
 
 
 class ExampleHookClass(TmTcCfgHookBase):
@@ -56,7 +75,7 @@ class ExampleHookClass(TmTcCfgHookBase):
 
 class PusHandler(ApidTmHandlerBase):
     def __init__(self, printer: FsfwTmTcPrinter, raw_logger: RawTmtcTimedLogWrapper):
-        super().__init__(APID, None)
+        super().__init__(EXAMPLE_APID, None)
         self.printer = printer
         self.raw_logger = raw_logger
 
@@ -69,11 +88,11 @@ class PusHandler(ApidTmHandlerBase):
             return
         service = tm_packet.service
         if service == 1:
-            tm_packet = Service17TMExtended.unpack(packet)
+            tm_packet = Service1TmExtended.unpack(packet)
         if service == 5:
             tm_packet = Service5Tm.unpack(packet)
         if service == 17:
-            tm_packet = Service17TMExtended.unpack(packet)
+            tm_packet = Service17TmExtended.unpack(packet)
         if tm_packet is None:
             LOGGER.info(
                 f"The service {service} is not implemented in Telemetry Factory"
@@ -102,6 +121,55 @@ class TcHandler(TcHandlerBase):
             info = proc_caster.to_def_procedure()
             queue_helper = wrapper.queue_helper
             service = info.service
-            op_code = info.op_code
             if service == CoreServiceList.SERVICE_17.value:
-                return pack_service17_test_into(queue_helper, op_code=op_code)
+                return queue_helper.add_pus_tc(PusTelecommand(service=17, subservice=1))
+
+
+def main():
+    tmtccmd.init_printout(False)
+    hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
+    parser_wrapper = ArgParserWrapper(hook_obj)
+    parser_wrapper.parse()
+    params = SetupParams()
+    parser_wrapper.set_params(params)
+    params.apid = EXAMPLE_APID
+    setup_args = SetupWrapper(hook_obj=hook_obj, setup_params=params)
+    # Create console logger helper and file loggers
+    tmtc_logger = RegularTmtcLogWrapper()
+    printer = FsfwTmTcPrinter(tmtc_logger.logger)
+    raw_logger = RawTmtcTimedLogWrapper(when=TimedLogWhen.PER_HOUR, interval=1)
+
+    # Create primary TM handler and add it to the CCSDS Packet Handler
+    tm_handler = PusHandler(printer, raw_logger)
+    ccsds_handler = CcsdsTmHandler(unknown_handler=None)
+    ccsds_handler.add_apid_handler(tm_handler)
+
+    # Create TC handler
+    tc_handler = TcHandler()
+    tmtccmd.setup(setup_args=setup_args)
+
+    tmtc_backend = tmtccmd.create_default_tmtc_backend(
+        setup_wrapper=setup_args, tm_handler=ccsds_handler, tc_handler=tc_handler
+    )
+    tmtccmd.start(tmtc_backend=tmtc_backend)
+    ctrl = BackendController()
+    try:
+        while True:
+            state = tmtc_backend.periodic_op(ctrl)
+            if state.request == Request.TERMINATION_NO_ERROR:
+                sys.exit(0)
+            elif state.request == Request.DELAY_IDLE:
+                LOGGER.info("TMTC Client in IDLE mode")
+                time.sleep(3.0)
+            elif state.request == Request.DELAY_LISTENER:
+                time.sleep(0.8)
+            elif state.request == Request.DELAY_CUSTOM:
+                time.sleep(state.next_delay)
+            elif state.request == Request.CALL_NEXT:
+                pass
+    except KeyboardInterrupt:
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -5,7 +5,6 @@ import argparse
 import sys
 from typing import Optional, List
 from dataclasses import dataclass
-from tmtccmd.config.prompt import prompt_service, prompt_op_code
 from tmtccmd.logging import get_console_logger
 
 
@@ -53,10 +52,48 @@ class BackendParams:
 
 
 @dataclass
+class AppParams:
+    use_gui: bool = False
+    reduced_printout: bool = False
+    use_ansi_colors: bool = True
+
+
 class SetupParams:
-    def_proc_args: Optional[DefProcedureParams] = None
-    tc_properties: TcParams = TcParams()
-    backend_params: BackendParams = BackendParams()
+    def __init__(
+        self,
+        def_proc_args: Optional[DefProcedureParams] = None,
+        tc_params: TcParams = TcParams(),
+        backend_params: BackendParams = BackendParams(),
+        app_params: AppParams = AppParams(),
+    ):
+        self.def_proc_args = def_proc_args
+        self.tc_params = tc_params
+        self.backend_params = backend_params
+        self.app_params = app_params
+
+    @property
+    def apid(self):
+        return self.tc_params.apid
+
+    @apid.setter
+    def apid(self, apid):
+        self.tc_params.apid = apid
+
+    @property
+    def use_gui(self):
+        return self.app_params.use_gui
+
+    @use_gui.setter
+    def use_gui(self, use_gui):
+        self.app_params.use_gui = use_gui
+
+    @property
+    def mode(self):
+        return self.backend_params.mode
+
+    @mode.setter
+    def mode(self, mode: str):
+        self.backend_params.mode = mode
 
 
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
@@ -120,6 +157,9 @@ def add_cfdp_parser(arg_parser: argparse.ArgumentParser):
 
 
 def add_generic_arguments(arg_parser: argparse.ArgumentParser):
+    arg_parser.add_argument(
+        "-g", "--gui", help="Use GUI mode", action="store_true", default=False
+    )
     arg_parser.add_argument(
         "-s",
         "--service",

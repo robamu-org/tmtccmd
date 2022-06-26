@@ -7,7 +7,7 @@ from typing import Deque
 from spacepackets.ccsds.spacepacket import PacketSeqCtrl
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.tm import PusVersion, PusTelemetry
-from spacepackets.ecss.pus_1_verification import Service1TM, Subservices, RequestId
+from spacepackets.ecss.pus_1_verification import Service1Tm, Subservices, RequestId
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.logging import get_console_logger
@@ -15,7 +15,7 @@ from tmtccmd.logging import get_console_logger
 LOGGER = get_console_logger()
 
 
-class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
+class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
     """Service 1 TM class representation. Can be used to deserialize raw service 1 packets."""
 
     def __init__(
@@ -24,7 +24,6 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         tc_request_id: RequestId,
         time: CdsShortTimestamp = None,
         ssc: int = 0,
-        source_data: bytearray = bytearray([]),
         apid: int = -1,
         packet_version: int = 0b000,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
@@ -32,13 +31,12 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
-        Service1TM.__init__(
+        Service1Tm.__init__(
             self,
             tc_request_id=tc_request_id,
             subservice=subservice,
             time=time,
             ssc=ssc,
-            source_data=source_data,
             apid=apid,
             packet_version=packet_version,
             pus_version=pus_version,
@@ -50,7 +48,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         PusTmInfoBase.__init__(self, pus_tm=self.pus_tm)
 
     @classmethod
-    def __empty(cls) -> Service1TMExtended:
+    def __empty(cls) -> Service1TmExtended:
         return cls(subservice=0, tc_request_id=RequestId.empty())
 
     @classmethod
@@ -58,7 +56,7 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
         cls,
         raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service1TMExtended:
+    ) -> Service1TmExtended:
         """Parse a service 1 telemetry packet
 
         :param raw_telemetry:
@@ -132,4 +130,4 @@ class Service1TMExtended(PusTmBase, PusTmInfoBase, Service1TM):
             self.append_packet_info(" : Completion success")
 
 
-PusVerifQueue = Deque[Service1TM]
+PusVerifQueue = Deque[Service1Tm]

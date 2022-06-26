@@ -1,13 +1,13 @@
 from __future__ import annotations
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss import PusVersion, PusTelemetry
-from spacepackets.ecss.pus_17_test import Service17TM
+from spacepackets.ecss.pus_17_test import Service17Tm
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 from tmtccmd.pus.pus_17_test import Subservices
 
 
-class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
+class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
     def __init__(
         self,
         subservice: int,
@@ -21,7 +21,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
-        Service17TM.__init__(
+        Service17Tm.__init__(
             self,
             subservice=subservice,
             time=time,
@@ -39,7 +39,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         self.__set_internal_fields()
 
     @classmethod
-    def __empty(cls) -> Service17TMExtended:
+    def __empty(cls) -> Service17TmExtended:
         return cls(subservice=0)
 
     def __set_internal_fields(self):
@@ -51,7 +51,7 @@ class Service17TMExtended(PusTmBase, PusTmInfoBase, Service17TM):
         cls,
         raw_telemetry: bytes,
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service17TMExtended:
+    ) -> Service17TmExtended:
         service_17_tm = cls.__empty()
         service_17_tm.pus_tm = PusTelemetry.unpack(
             raw_telemetry=raw_telemetry, pus_version=pus_version

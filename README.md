@@ -30,19 +30,20 @@ helpers. Some of those components are tailored towards usage with the
 
 ## Examples 
 
-The `example` folder contains a simple example using a dummy communication interface.
-It can be run like this on Linux
+The `examples` folder contains a simple example using a dummy communication interface.
+It sends a PUS ping telecommand and then reads the ping reply and the verification
+replies back from the dummy interface. It can be run like this on Linux:
 
 ```sh
-cd example
-./tmtccli.py
+cd examples
+./tmtcc.py
 ```
 
-or on Windows
+or on Windows:
 
 ```sh
-cd example
-py tmtccli.py
+cd examples
+py tmtcc.py
 ```
 
 The [EIVE](https://egit.irs.uni-stuttgart.de/eive/eive-tmtc) and

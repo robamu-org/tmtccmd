@@ -5,7 +5,7 @@ from unittest import TestCase
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_1_verification import RequestId
 
-from tmtccmd.tm.pus_1_verification import Service1TMExtended
+from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.logging import get_console_logger, LOG_DIR
@@ -37,7 +37,7 @@ class TestPrintersLoggers(TestCase):
     def test_pus_loggers(self):
         pus_tc = pack_service_17_ping_command(ssc=0)
         self.raw_tmtc_log.log_tc(pus_tc)
-        pus_tm = Service1TMExtended(
+        pus_tm = Service1TmExtended(
             subservice=1,
             time=CdsShortTimestamp.init_from_current_time(),
             tc_request_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl),

@@ -7,8 +7,8 @@ from spacepackets.ecss.tc import PusTelecommand
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.tm.pus_1_verification import Service1TMExtended
-from tmtccmd.tm.pus_17_test import Subservices, Service17TMExtended
+from tmtccmd.tm.pus_1_verification import Service1TmExtended
+from tmtccmd.tm.pus_17_test import Subservices, Service17TmExtended
 from tmtccmd.logging import get_console_logger
 
 
@@ -68,7 +68,7 @@ class DummyHandler:
         """
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
-                tm_packer = Service1TMExtended(
+                tm_packer = Service1TmExtended(
                     subservice=1,
                     ssc=self.current_ssc,
                     tc_request_id=RequestId(
@@ -79,7 +79,7 @@ class DummyHandler:
                 self.current_ssc += 1
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
-                tm_packer = Service1TMExtended(
+                tm_packer = Service1TmExtended(
                     subservice=7,
                     ssc=self.current_ssc,
                     tc_request_id=RequestId(
@@ -90,7 +90,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17TMExtended(subservice=Subservices.TM_REPLY)
+                tm_packer = Service17TmExtended(subservice=Subservices.TM_REPLY)
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1

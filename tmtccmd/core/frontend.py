@@ -29,6 +29,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
 from tmtccmd.config.globals import CoreGlobalIds
+from tmtccmd.core import BackendController
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import (
@@ -90,6 +91,7 @@ class WorkerThread(QObject):
     def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: CcsdsTmtcBackend):
         super(QObject, self).__init__()
         self.op_code = op_code
+        self.backend_ctrl = BackendController()
         self.tmtc_handler = tmtc_handler
         self.tmtc_handler.one_shot_operation = True
 
@@ -112,13 +114,13 @@ class WorkerThread(QObject):
                 self.tmtc_handler.one_shot_operation = True
                 # It is expected that the TMTC handler is in the according state to perform the
                 # operation
-                self.tmtc_handler.periodic_op()
+                self.tmtc_handler.periodic_op(self.backend_ctrl)
                 self.op_code = WorkerOperationsCodes.LISTENING
                 self.command_executed.emit()
             elif op_code == WorkerOperationsCodes.LISTENING:
                 self.tmtc_handler.one_shot_operation = True
                 self.tmtc_handler.mode = CoreModeList.LISTENER_MODE
-                self.tmtc_handler.periodic_op()
+                self.tmtc_handler.periodic_op(self.backend_ctrl)
             elif op_code == WorkerOperationsCodes.IDLE:
                 pass
             else:
@@ -144,12 +146,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._tmtc_handler = tmtc_backend
         self._app_name = app_name
         self._hook_obj = hook_obj
-
-        self._tmtc_handler.initialize()
-        self.service_op_code_dict = dict()
         self._service_list = []
         self._op_code_list = []
         self._com_if_list = []
+        self._service_op_code_dict = hook_obj.get_tmtc_definitions()
         self._last_com_if = CoreComInterfaces.UNSPECIFIED.value
         self._current_com_if = CoreComInterfaces.UNSPECIFIED.value
         self._current_service = ""
@@ -239,9 +239,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
                     com_if_key=self._current_com_if
                 )
                 self._last_com_if = self._current_com_if
-                self._tmtc_handler.set_com_if(new_com_if)
+                self._tmtc_handler.com_if = new_com_if
             LOGGER.info("Starting listener")
-            self._tmtc_handler.start_listener(False)
             self.__connect_button.setStyleSheet(DISCONNECT_BTTN_STYLE)
             self.__command_button.setEnabled(True)
             self.__connect_button.setText("Disconnect")
@@ -368,16 +367,16 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
         combo_box_services = QComboBox()
         default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-        self.service_op_code_dict = self._hook_obj.get_tmtc_definitions()
-        if self.service_op_code_dict is None:
+        self._service_op_code_dict = self._hook_obj.get_tmtc_definitions()
+        if self._service_op_code_dict is None:
             LOGGER.warning("Invalid service to operation code dictionary")
             LOGGER.warning("Setting default dictionary")
             from tmtccmd.config.globals import get_default_tmtc_defs
 
-            self.service_op_code_dict = get_default_tmtc_defs()
+            self._service_op_code_dict = get_default_tmtc_defs()
         index = 0
         default_index = 0
-        for service_key, service_value in self.service_op_code_dict.items():
+        for service_key, service_value in self._service_op_code_dict.defs.items():
             combo_box_services.addItem(service_value[0])
             if service_key == default_service:
                 default_index = index
@@ -450,9 +449,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __update_op_code_combo_box(self):
         self.__combo_box_op_codes.clear()
         self._op_code_list = []
-        op_code_dict = self.service_op_code_dict[self._current_service][1]
-        if op_code_dict is not None:
-            for op_code_key, op_code_value in op_code_dict.items():
+        op_code_entry = self._service_op_code_dict.op_code_entry(self._current_service)
+        if op_code_entry is not None:
+            for op_code_key, op_code_value in op_code_entry.op_code_dict.items():
                 try:
                     self._op_code_list.append(op_code_key)
                     self.__combo_box_op_codes.addItem(op_code_value[0])

@@ -6,12 +6,12 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.conf import get_pus_tm_version, PusVersion, set_default_tm_apid
 from spacepackets.util import PrintFormats
 
-from tmtccmd.tm.pus_17_test import Service17TMExtended
+from tmtccmd.tm.pus_17_test import Service17TmExtended
 
 
 class TestTelemetry(TestCase):
     def test_generic_pus_c(self):
-        pus_17_telemetry = Service17TMExtended(
+        pus_17_telemetry = Service17TmExtended(
             subservice=1,
             ssc=36,
             time=CdsShortTimestamp.init_from_current_time(),
@@ -22,12 +22,12 @@ class TestTelemetry(TestCase):
         pus_17_telemetry = None
 
         def tm_func(raw_telemetry: bytearray):
-            return Service17TMExtended.unpack(raw_telemetry=raw_telemetry)
+            return Service17TmExtended.unpack(raw_telemetry=raw_telemetry)
 
         self.assertRaises(ValueError, tm_func, bytearray())
         self.assertRaises(ValueError, tm_func, None)
 
-        pus_17_telemetry = Service17TMExtended.unpack(raw_telemetry=pus_17_raw)
+        pus_17_telemetry = Service17TmExtended.unpack(raw_telemetry=pus_17_raw)
         self.assertTrue(get_pus_tm_version() == PusVersion.PUS_C)
         self.assertTrue(pus_17_telemetry.service == 17)
         self.assertTrue(pus_17_telemetry.apid == 0xEF)
@@ -49,11 +49,11 @@ class TestTelemetry(TestCase):
         self.assertTrue(pus_17_telemetry.pus_tm.packet_id.raw() == 0x8 << 8 | 0xEF)
 
     def test_list_functionality(self):
-        pus_17_telecommand = Service17TMExtended(
+        pus_17_telecommand = Service17TmExtended(
             subservice=1, ssc=36, time=CdsShortTimestamp.init_from_current_time()
         )
         pus_17_raw = pus_17_telecommand.pack()
-        pus_17_telemetry = Service17TMExtended.unpack(raw_telemetry=pus_17_raw)
+        pus_17_telemetry = Service17TmExtended.unpack(raw_telemetry=pus_17_raw)
 
         header_list = []
         content_list = []

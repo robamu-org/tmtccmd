@@ -52,11 +52,11 @@ def setup(setup_args: SetupWrapper):
 
     __assign_tmtc_commander_hooks(hook_object=setup_args.hook_obj)
 
-    if setup_args.use_gui:
-        set_default_globals_pre_args_parsing(setup_args.apid)
-    if not setup_args.use_gui:
+    if setup_args.params.use_gui:
+        set_default_globals_pre_args_parsing(setup_args.params.apid)
+    if not setup_args.params.use_gui:
         __handle_cli_args_and_globals(setup_args)
-    __SETUP_FOR_GUI = setup_args.use_gui
+    __SETUP_FOR_GUI = setup_args.params.use_gui
     __SETUP_WAS_CALLED = True
 
 
@@ -116,7 +116,7 @@ def init_printout(use_gui: bool):
 
 def __handle_cli_args_and_globals(setup_args: SetupWrapper):
     LOGGER.info("Setting up pre-globals..")
-    set_default_globals_pre_args_parsing(setup_args.apid)
+    set_default_globals_pre_args_parsing(setup_args.params.apid)
     LOGGER.info("Setting up post-globals..")
 
 
@@ -157,12 +157,12 @@ def __start_tmtc_commander_qt_gui(
 
 
 def create_default_tmtc_backend(
-    setup_args: SetupWrapper, tm_handler: TmHandlerBase, tc_handler: TcHandlerBase
+    setup_wrapper: SetupWrapper, tm_handler: TmHandlerBase, tc_handler: TcHandlerBase
 ) -> BackendBase:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 
     :param tc_handler:
-    :param setup_args:
+    :param setup_wrapper:
     :param tm_handler:
     :return:
     """
@@ -181,12 +181,12 @@ def create_default_tmtc_backend(
     else:
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             tm_handler = cast(CcsdsTmHandler, tm_handler)
-    com_if = setup_args.hook_obj.assign_communication_interface(
-        com_if_key=setup_args.args_wrapper.com_if
+    com_if = setup_wrapper.hook_obj.assign_communication_interface(
+        com_if_key=setup_wrapper.params.com_if
     )
     tm_listener = CcsdsTmListener(com_if=com_if, tm_handler=tm_handler)
     mode_wrapper = ModeWrapper()
-    backend_mode_conversion(setup_args.args_wrapper.mode, mode_wrapper)
+    backend_mode_conversion(setup_wrapper.params.mode, mode_wrapper)
     # The global variables are set by the argument parser.
     tmtc_backend = CcsdsTmtcBackend(
         com_if=com_if,
@@ -195,8 +195,9 @@ def create_default_tmtc_backend(
         tc_mode=mode_wrapper.tc_mode,
         tm_mode=mode_wrapper.tm_mode,
     )
-    tmtc_backend.inter_cmd_delay = setup_args.args_wrapper.delay
+    tmtc_backend.inter_cmd_delay = setup_wrapper.params.tc_params.delay
     tmtc_backend.current_proc_info = DefaultProcedureInfo(
-        setup_args.args_wrapper.service, setup_args.args_wrapper.op_code
+        setup_wrapper.params.def_proc_args.service,
+        setup_wrapper.params.def_proc_args.op_code,
     )
     return tmtc_backend
