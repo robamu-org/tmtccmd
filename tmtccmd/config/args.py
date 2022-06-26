@@ -115,7 +115,7 @@ def process_tmtccmd_args(
     :return: None
     """
     from tmtccmd.config import CoreModeStrings, CoreComInterfaces, CoreModeList
-    from tmtccmd.com_if.com_if_utilities import determine_com_if
+    from tmtccmd.com_if.utils import determine_com_if
 
     group = ArgsGroup()
     if args.com_if is None or args.com_if == CoreComInterfaces.UNSPECIFIED.value:

@@ -29,7 +29,7 @@ from threading import Thread
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
+from tmtccmd.com_if.serial import SerialComIF, SerialCommunicationType
 from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 

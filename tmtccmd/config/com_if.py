@@ -5,16 +5,16 @@ from tmtccmd.config import CoreComInterfaces
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_com_if import (
+from tmtccmd.com_if.serial import (
     SerialConfigIds,
     SerialCommunicationType,
     SerialComIF,
 )
-from tmtccmd.com_if.serial_utilities import determine_com_port, determine_baud_rate
-from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds, TcpIpType
+from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
+from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds, TcpIpType
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if.tcpip_udp_com_if import TcpIpUdpComIF
-from tmtccmd.com_if.tcpip_tcp_com_if import TcpIpTcpComIF, TcpCommunicationType
+from tmtccmd.com_if.udp import TcpIpUdpComIF
+from tmtccmd.com_if.tcp import TcpIpTcpComIF, TcpCommunicationType
 
 LOGGER = get_console_logger()
 
@@ -31,8 +31,8 @@ def create_communication_interface_default(
     :param space_packet_ids: Can be used by communication interfaces as a start marker (e.g. TCP)
     :return:
     """
-    from tmtccmd.com_if.dummy_com_if import DummyComIF
-    from tmtccmd.com_if.qemu_com_if import QEMUComIF
+    from tmtccmd.com_if.dummy import DummyComIF
+    from tmtccmd.com_if.qemu import QEMUComIF
 
     try:
         if (
@@ -97,7 +97,7 @@ def default_tcpip_cfg_setup(
     :param space_packet_ids:       Required if the TCP com interface needs to parse space packets
     :return:
     """
-    from tmtccmd.com_if.tcpip_utilities import (
+    from tmtccmd.com_if.tcpip_utils import (
         determine_udp_send_address,
         determine_tcp_send_address,
         determine_recv_buffer_len,
