@@ -62,6 +62,7 @@ def setup(setup_args: SetupWrapper):
 
 def start(
     tmtc_backend: BackendBase,
+    hook_obj: TmTcCfgHookBase,
     tmtc_frontend: Union[FrontendBase, None] = None,
     app_name: str = "TMTC Commander",
 ):
@@ -73,6 +74,7 @@ def start(
 
     :param tmtc_backend:        Custom backend can be passed here. Otherwise, a default backend
                                 will be created
+    :param hook_obj:
     :param tmtc_frontend:       Custom frontend can be passed here. Otherwise, a default frontend
                                 will be created
     :param app_name:            Name of application. Will be displayed in GUI
@@ -85,7 +87,10 @@ def start(
         sys.exit(1)
     if __SETUP_FOR_GUI:
         __start_tmtc_commander_qt_gui(
-            tmtc_frontend=tmtc_frontend, tmtc_backend=tmtc_backend, app_name=app_name
+            tmtc_frontend=tmtc_frontend,
+            hook_obj=hook_obj,
+            tmtc_backend=tmtc_backend,
+            app_name=app_name,
         )
     else:
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
@@ -129,6 +134,7 @@ def __start_tmtc_commander_cli(
 
 def __start_tmtc_commander_qt_gui(
     tmtc_backend: BackendBase,
+    hook_obj: TmTcCfgHookBase,
     tmtc_frontend: Union[None, FrontendBase] = None,
     app_name: str = "TMTC Commander",
 ):
@@ -142,17 +148,16 @@ def __start_tmtc_commander_qt_gui(
         app = QApplication([app_name])
         if tmtc_frontend is None:
             from tmtccmd.core.frontend import TmTcFrontend
-            from tmtccmd.config.cfg_hook import get_global_hook_obj
             from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 
             tmtc_frontend = TmTcFrontend(
-                hook_obj=get_global_hook_obj(),
+                hook_obj=hook_obj,
                 tmtc_backend=cast(CcsdsTmtcBackend, tmtc_backend),
                 app_name=app_name,
             )
         tmtc_frontend.start(app)
-    except ImportError:
-        LOGGER.error("PyQt5 module not installed, can't run GUI mode!")
+    except ImportError as e:
+        LOGGER.exception(e)
         sys.exit(1)
 
 

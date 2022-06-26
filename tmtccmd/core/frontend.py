@@ -23,13 +23,12 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QMenu,
     QAction,
-    QMenuBar,
 )
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
 from tmtccmd.config.globals import CoreGlobalIds
-from tmtccmd.core import BackendController
+from tmtccmd.core import BackendController, TmMode, TcMode
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import (
@@ -79,7 +78,7 @@ COMMAND_BUTTON_STYLE = (
 
 class WorkerOperationsCodes(enum.IntEnum):
     DISCONNECT = 0
-    SEQUENTIAL_COMMANDING = 1
+    ONE_QUEUE_MODE = 1
     LISTENING = 2
     IDLE = 4
 
@@ -107,11 +106,10 @@ class WorkerThread(QObject):
                     if not self.tmtc_handler.com_if_active():
                         break
                     else:
-                        time.sleep(0.4)
+                        time.sleep(0.2)
                 self.op_code = WorkerOperationsCodes.IDLE
                 self.disconnected.emit()
-            elif op_code == WorkerOperationsCodes.SEQUENTIAL_COMMANDING:
-                self.tmtc_handler.one_shot_operation = True
+            elif op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
                 # It is expected that the TMTC handler is in the according state to perform the
                 # operation
                 self.tmtc_handler.periodic_op(self.backend_ctrl)
@@ -211,6 +209,14 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__command_button.setEnabled(False)
         grid.addWidget(self.__command_button, row, 0, 1, 2)
         row += 1
+
+        self.__listener_button = QPushButton()
+        self.__listener_button.setText("Activate TM listener")
+        self.__listener_button.setStyleSheet(COMMAND_BUTTON_STYLE)
+        self.__listener_button.clicked.connect(self.__start_listener)
+        self.__command_button.setEnabled(False)
+        grid.addWidget(self.__listener_button, row, 0, 1, 2)
+        row += 1
         self.show()
 
     def __start_seq_cmd_op(self):
@@ -222,9 +228,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._tmtc_handler.current_proc_info = DefaultProcedureInfo(
             self._current_service, self._current_op_code
         )
-        self._tmtc_handler.mode = CoreModeList.ONE_QUEUE_MODE
-        self.__worker.set_op_code(WorkerOperationsCodes.SEQUENTIAL_COMMANDING)
+        self._tmtc_handler.tc_mode = TcMode.IDLE
+        self._tmtc_handler.tm_mode = TmMode.LISTENER
+        self.__worker.set_op_code(WorkerOperationsCodes.ONE_QUEUE_MODE)
         self.__worker.command_executed.connect(self.__finish_seq_cmd_op)
+
+    def __start_listener(self):
+        pass
 
     def __finish_seq_cmd_op(self):
         self.__set_send_button(True)
@@ -333,13 +343,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __set_up_com_if_section(self, grid: QGridLayout, row: int) -> int:
         grid.addWidget(QLabel("Communication Interface:"), row, 0, 1, 1)
         com_if_combo_box = QComboBox()
-        all_com_ifs = get_global(CoreGlobalIds.COM_IF_DICT)
+        all_com_ifs = self._hook_obj.get_com_if_dict()
         index = 0
         # add all possible ComIFs to the comboBox
-        for com_if_key, com_if_value in all_com_ifs.items():
-            com_if_combo_box.addItem(com_if_value)
-            self._com_if_list.append((com_if_key, com_if_value))
-            if self._tmtc_handler.com_if_id() == com_if_key:
+        for id, com_if_value in all_com_ifs.items():
+            com_if_combo_box.addItem(com_if_value[0])
+            self._com_if_list.append((id, com_if_value[0]))
+            if self._tmtc_handler.com_if_id == id:
                 com_if_combo_box.setCurrentIndex(index)
             index += 1
         com_if_combo_box.currentIndexChanged.connect(self.__com_if_sel_index_changed)

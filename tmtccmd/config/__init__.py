@@ -43,13 +43,16 @@ class CoreComInterfaces(enum.Enum):
 
 
 CORE_COM_IF_DICT = {
-    CoreComInterfaces.DUMMY.value: "Dummy Interface",
-    CoreComInterfaces.SERIAL_DLE.value: "Serial Interace with DLE encoding",
-    CoreComInterfaces.UDP.value: "TCP/IP with UDP datagrams",
-    CoreComInterfaces.TCP.value: "TCP/IP with TCP",
-    CoreComInterfaces.SERIAL_FIXED_FRAME.value: "Serial Interface with fixed size frames",
-    CoreComInterfaces.SERIAL_QEMU.value: "Serial Interface using QEMU",
-    CoreComInterfaces.UNSPECIFIED.value: "Unspecified",
+    CoreComInterfaces.DUMMY.value: ("Dummy Interface", None),
+    CoreComInterfaces.SERIAL_DLE.value: ("Serial Interace with DLE encoding", None),
+    CoreComInterfaces.UDP.value: ("TCP/IP with UDP datagrams", None),
+    CoreComInterfaces.TCP.value: ("TCP/IP with TCP", None),
+    CoreComInterfaces.SERIAL_FIXED_FRAME.value: (
+        "Serial Interface with fixed size frames",
+        None,
+    ),
+    CoreComInterfaces.SERIAL_QEMU.value: ("Serial Interface using QEMU", None),
+    CoreComInterfaces.UNSPECIFIED.value: ("Unspecified", None),
 }
 
 
@@ -218,6 +221,7 @@ def args_to_params(
     :return: None
     """
     from tmtccmd.com_if.utils import determine_com_if
+
     if pargs.gui is None:
         params.app_params.use_gui = False
     else:
