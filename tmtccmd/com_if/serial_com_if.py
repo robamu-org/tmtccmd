@@ -1,5 +1,4 @@
-"""Serial Communication Interface Implementation
-"""
+"""Serial Communication Interface Implementation"""
 import enum
 import threading
 import time
@@ -10,9 +9,8 @@ from typing import Optional
 import serial
 import serial.tools.list_ports
 
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
-from tmtccmd.tm.definitions import TelemetryListT
+from tmtccmd.com_if import ComInterface
+from tmtccmd.tm import TelemetryListT
 from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
@@ -48,7 +46,7 @@ class SerialCommunicationType(enum.Enum):
 
 
 # pylint: disable=arguments-differ
-class SerialComIF(CommunicationInterface):
+class SerialComIF(ComInterface):
     """
     Communication Interface to use serial communication. This requires the PySerial library.
     """
@@ -63,8 +61,6 @@ class SerialComIF(CommunicationInterface):
     ):
         """
         Initiaze a serial communication handler.
-        :param tmtc_printer: TMTC printer object. Can be used for diagnostic purposes, but main
-        packet handling should be done by a separate thread.
         :param com_port: Specify COM port.
         :param baud_rate: Specify baud rate
         :param serial_timeout: Specify serial timeout

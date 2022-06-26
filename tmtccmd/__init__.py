@@ -5,14 +5,14 @@ from typing import Union, cast
 
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.config import TmTcCfgHookBase, CoreGlobalIds, SetupArgs
+from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion
+from tmtccmd.config.setup import SetupArgs
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
 from tmtccmd.logging import get_console_logger
-from tmtccmd.config.definitions import backend_mode_conversion
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
 from tmtccmd.tc import DefaultProcedureInfo
@@ -100,6 +100,8 @@ def init_and_start_daemons(tmtc_backend: BackendBase):
 
 
 def __assign_tmtc_commander_hooks(hook_object: TmTcCfgHookBase):
+    from tmtccmd.config.globals import CoreGlobalIds
+
     if hook_object is None:
         raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander

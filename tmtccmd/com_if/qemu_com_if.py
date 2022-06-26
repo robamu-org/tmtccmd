@@ -27,9 +27,8 @@ import time
 from collections import deque
 from threading import Thread
 
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.com_if import ComInterface
+from tmtccmd.tm import TelemetryListT
 from tmtccmd.com_if.serial_com_if import SerialComIF, SerialCommunicationType
 from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
@@ -61,7 +60,7 @@ def start_background_loop(loop: asyncio.AbstractEventLoop) -> None:
     loop.run_forever()
 
 
-class QEMUComIF(CommunicationInterface):
+class QEMUComIF(ComInterface):
     """
     Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the TMTC software
     """

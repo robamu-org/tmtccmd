@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from tmtccmd.tc import TcQueueEntryBase, TcProcedureBase
 from tmtccmd.tc.queue import QueueHelper, QueueWrapper
 
@@ -25,7 +25,7 @@ class TcHandlerBase:
         pass
 
     @abstractmethod
-    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: CommunicationInterface):
+    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: ComInterface):
         """This function callback will be called for each queue entry. This also includes
         miscellaneous queue entries, for example the ones used to log additional information.
         It is up to the user code implementation to determine the concrete queue entry.

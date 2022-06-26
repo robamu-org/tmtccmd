@@ -3,7 +3,6 @@ from typing import Tuple, Union
 from contextlib import contextmanager
 
 from tmtccmd.core.globals_manager import get_global
-from tmtccmd.config.definitions import CoreGlobalIds
 from tmtccmd.logging import get_console_logger
 
 
@@ -92,6 +91,8 @@ def print_core_globals():
     or as an optional information output
     :return:
     """
+    from tmtccmd.config.globals import CoreGlobalIds
+
     service_param = get_global(CoreGlobalIds.CURRENT_SERVICE)
     mode_param = get_global(CoreGlobalIds.MODE)
     com_if_param = get_global(CoreGlobalIds.COM_IF)

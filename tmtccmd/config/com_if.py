@@ -1,9 +1,10 @@
 import sys
 from typing import Optional, Tuple
 
-from tmtccmd.config.definitions import CoreGlobalIds, CoreComInterfaces
+from tmtccmd.config import CoreComInterfaces
+from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_com_if import (
     SerialConfigIds,
     SerialCommunicationType,
@@ -22,7 +23,7 @@ def create_communication_interface_default(
     com_if_key: str,
     json_cfg_path: str,
     space_packet_ids: Tuple[int] = (0,),
-) -> Optional[CommunicationInterface]:
+) -> Optional[ComInterface]:
     """Return the desired communication interface object
 
     :param com_if_key:
@@ -146,7 +147,7 @@ def create_default_tcpip_interface(
     com_if_key: str,
     json_cfg_path: str,
     space_packet_ids: Tuple[int] = (0,),
-) -> Optional[CommunicationInterface]:
+) -> Optional[ComInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`default_tcpip_cfg_setup` for more details.
 
@@ -195,7 +196,7 @@ def create_default_tcpip_interface(
 
 def create_default_serial_interface(
     com_if_key: str, json_cfg_path: str
-) -> Optional[CommunicationInterface]:
+) -> Optional[ComInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
 

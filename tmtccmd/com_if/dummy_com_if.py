@@ -4,22 +4,18 @@ from typing import Optional
 
 from spacepackets.ecss.pus_1_verification import RequestId
 from spacepackets.ecss.tc import PusTelecommand
-from spacepackets.ccsds.spacepacket import (
-    get_sp_psc_raw,
-    SequenceFlags,
-)
 
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.tm.pus_1_verification import Service1TMExtended
 from tmtccmd.tm.pus_17_test import Subservices, Service17TMExtended
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+
 
 LOGGER = get_console_logger()
 
 
-class DummyComIF(CommunicationInterface):
+class DummyComIF(ComInterface):
     def __init__(self, com_if_key: str):
         super().__init__(com_if_key=com_if_key)
         self.dummy_handler = DummyHandler()
@@ -75,7 +71,9 @@ class DummyHandler:
                 tm_packer = Service1TMExtended(
                     subservice=1,
                     ssc=self.current_ssc,
-                    tc_request_id=RequestId(self.last_tc.packet_id, self.last_tc.packet_seq_ctrl)
+                    tc_request_id=RequestId(
+                        self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                    ),
                 )
 
                 self.current_ssc += 1
@@ -84,7 +82,9 @@ class DummyHandler:
                 tm_packer = Service1TMExtended(
                     subservice=7,
                     ssc=self.current_ssc,
-                    tc_request_id=RequestId(self.last_tc.packet_id, self.last_tc.packet_seq_ctrl)
+                    tc_request_id=RequestId(
+                        self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                    ),
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)

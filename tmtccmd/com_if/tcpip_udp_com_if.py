@@ -1,18 +1,12 @@
-"""
-:file:      tcpip_udp_com_if.py
-:date:      13.05.2021
-:brief:     UDP Communication Interface
-:author:    R. Mueller
-"""
+"""UDP Communication Interface"""
 import select
 import socket
 from typing import Union
 
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
-from tmtccmd.config.definitions import EthernetAddressT, CoreModeList
+from tmtccmd.com_if import ComInterface
+from tmtccmd.tm import TelemetryListT
+from tmtccmd.config import EthernetAddressT, CoreModeList
 
 LOGGER = get_console_logger()
 
@@ -20,10 +14,7 @@ UDP_RECV_WIRETAPPING_ENABLED = False
 UDP_SEND_WIRETAPPING_ENABLED = False
 
 
-# pylint: disable=abstract-method
-# pylint: disable=arguments-differ
-# pylint: disable=too-many-arguments
-class TcpIpUdpComIF(CommunicationInterface):
+class TcpIpUdpComIF(ComInterface):
     """Communication interface for UDP communication."""
 
     def __init__(
@@ -75,6 +66,8 @@ class TcpIpUdpComIF(CommunicationInterface):
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
         if self.init_mode == CoreModeList.LISTENER_MODE:
+            # TODO: This is kind of an ugly hack.. find a better solution, maybe by passing
+            #       a CB which does this.. actually, this looks like a userspace problem
             from tmtccmd.pus.pus_17_test import pack_service17_ping_command
 
             # Send ping command immediately so the reception address is known for UDP

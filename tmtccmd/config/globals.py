@@ -1,4 +1,5 @@
 import collections.abc
+import enum
 import pprint
 from typing import Union, List, Dict
 
@@ -12,20 +13,60 @@ from spacepackets.ecss.conf import (
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import update_global, get_global
-from tmtccmd.config.definitions import (
-    CoreGlobalIds,
+from tmtccmd.config import (
     CoreModeList,
     CoreServiceList,
     CoreModeStrings,
     CORE_COM_IF_DICT,
     CoreComInterfaces,
-    ComIFDictT,
+    ComIfDictT,
 )
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper, OpCodeEntry
 
 
 LOGGER = get_console_logger()
 DEF_WRAPPER = None
+
+
+class CoreGlobalIds(enum.IntEnum):
+    """
+    Numbers from 128 to 200 are reserved for core globals
+    """
+
+    # Object handles
+    TMTC_HOOK = 128
+    COM_INTERFACE_HANDLE = 129
+    TM_LISTENER_HANDLE = 130
+    TMTC_PRINTER_HANDLE = 131
+    TM_HANDLER_HANDLE = 132
+    PRETTY_PRINTER = 133
+
+    # Parameters
+    JSON_CFG_PATH = 139
+    MODE = 141
+    CURRENT_SERVICE = 142
+    COM_IF = 144
+    OP_CODE = 145
+    TM_TIMEOUT = 146
+    SERVICE_OP_CODE_DICT = 147
+    COM_IF_DICT = 148
+
+    # Miscellaneous
+    DISPLAY_MODE = 150
+    USE_LISTENER_AFTER_OP = 151
+    PRINT_HK = 152
+    PRINT_TM = 153
+    PRINT_RAW_TM = 154
+    PRINT_TO_FILE = 155
+    RESEND_TC = 156
+    TC_SEND_TIMEOUT_FACTOR = 157
+
+    # Config dictionaries
+    USE_SERIAL = 160
+    SERIAL_CONFIG = 161
+    USE_ETHERNET = 162
+    ETHERNET_CONFIG = 163
+    END = 300
 
 
 def set_json_cfg_path(json_cfg_path: str):
@@ -36,12 +77,12 @@ def get_json_cfg_path() -> str:
     return get_global(CoreGlobalIds.JSON_CFG_PATH)
 
 
-def set_glob_com_if_dict(custom_com_if_dict: ComIFDictT):
+def set_glob_com_if_dict(custom_com_if_dict: ComIfDictT):
     CORE_COM_IF_DICT.update(custom_com_if_dict)
     update_global(CoreGlobalIds.COM_IF_DICT, CORE_COM_IF_DICT)
 
 
-def get_glob_com_if_dict() -> ComIFDictT:
+def get_glob_com_if_dict() -> ComIfDictT:
     return get_global(CoreGlobalIds.COM_IF_DICT)
 
 

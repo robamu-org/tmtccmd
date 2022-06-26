@@ -3,12 +3,12 @@ import json
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.conf_util import wrapped_prompt
 from tmtccmd.utility.json_handler import check_json_file, JsonKeyNames
-from tmtccmd.config.definitions import ComIFDictT
+from tmtccmd.config import ComIfDictT
 
 LOGGER = get_console_logger()
 
 
-def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
+def determine_com_if(com_if_dict: ComIfDictT, json_cfg_path: str) -> str:
     do_prompt_com_if = False
     com_if_string = ""
     if not check_json_file(json_cfg_path):
@@ -32,7 +32,7 @@ def determine_com_if(com_if_dict: ComIFDictT, json_cfg_path: str) -> str:
     return com_if_string
 
 
-def prompt_com_if(com_if_dict: ComIFDictT) -> str:
+def prompt_com_if(com_if_dict: ComIfDictT) -> str:
     com_if_string = ""
     while True:
         com_if_list = []

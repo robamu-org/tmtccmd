@@ -3,7 +3,7 @@ import sys
 from collections import deque
 from typing import Optional
 
-from tmtccmd.config.definitions import CoreServiceList, CoreModeList
+from tmtccmd.config import CoreServiceList, CoreModeList
 from tmtccmd.core import (
     BackendBase,
     BackendState,
@@ -21,7 +21,7 @@ from tmtccmd.tc.ccsds_seq_sender import (
     SenderMode,
 )
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 
 LOGGER = get_console_logger()
 
@@ -33,7 +33,7 @@ class CcsdsTmtcBackend(BackendBase):
         self,
         tc_mode: TcMode,
         tm_mode: TmMode,
-        com_if: CommunicationInterface,
+        com_if: ComInterface,
         tm_listener: CcsdsTmListener,
         tc_handler: TcHandlerBase,
     ):
@@ -65,7 +65,7 @@ class CcsdsTmtcBackend(BackendBase):
         return self.__com_if.get_id()
 
     @property
-    def com_if(self) -> CommunicationInterface:
+    def com_if(self) -> ComInterface:
         return self.__com_if
 
     @property
@@ -96,7 +96,7 @@ class CcsdsTmtcBackend(BackendBase):
     def tm_listener(self):
         return self.__tm_listener
 
-    def try_set_com_if(self, com_if: CommunicationInterface):
+    def try_set_com_if(self, com_if: ComInterface):
         if not self.com_if_active():
             self.__com_if = com_if
             self.__tm_listener.com_if(self.__com_if)

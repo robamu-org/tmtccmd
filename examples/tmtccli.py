@@ -10,7 +10,11 @@ from tmtccmd.config.args import ArgParserWrapper
 from tmtccmd.config import SetupArgs
 from tmtccmd.core import BackendController, Request
 from tmtccmd.logging import get_console_logger
-from tmtccmd.logging.pus import RegularTmtcLogWrapper, RawTmtcTimedLogWrapper, TimedLogWhen
+from tmtccmd.logging.pus import (
+    RegularTmtcLogWrapper,
+    RawTmtcTimedLogWrapper,
+    TimedLogWhen,
+)
 
 from common import TcHandler, PusHandler, ExampleHookClass, APID
 from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
@@ -42,9 +46,7 @@ def main():
     tmtccmd.setup(setup_args=setup_args)
 
     tmtc_backend = tmtccmd.create_default_tmtc_backend(
-        setup_args=setup_args,
-        tm_handler=ccsds_handler,
-        tc_handler=tc_handler
+        setup_args=setup_args, tm_handler=ccsds_handler, tc_handler=tc_handler
     )
     tmtccmd.start(tmtc_backend=tmtc_backend)
     ctrl = BackendController()

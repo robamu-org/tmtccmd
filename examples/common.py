@@ -12,7 +12,9 @@ from tmtccmd.tc import (
     TcProcedureBase,
     TcQueueEntryBase,
     PacketCastWrapper,
-    TcQueueEntryType, ProcedureCastWrapper, TcProcedureType,
+    TcQueueEntryType,
+    ProcedureCastWrapper,
+    TcProcedureType,
 )
 from tmtccmd.tc.handler import FeedWrapper
 from tmtccmd.tm import Service5Tm

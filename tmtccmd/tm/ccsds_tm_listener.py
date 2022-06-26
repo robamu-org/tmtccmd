@@ -4,9 +4,9 @@ from typing import Dict, List, Tuple
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 
-from tmtccmd.tm.definitions import TelemetryQueueT
+from tmtccmd.tm import TelemetryQueueT
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 
 LOGGER = get_console_logger()
 
@@ -25,7 +25,7 @@ class CcsdsTmListener:
 
     def __init__(
         self,
-        com_if: CommunicationInterface,
+        com_if: ComInterface,
         tm_handler: CcsdsTmHandler,
     ):
         """Initiate a TM listener.
@@ -42,7 +42,7 @@ class CcsdsTmListener:
         return self.__com_if
 
     @com_if.setter
-    def com_if(self, com_if: CommunicationInterface):
+    def com_if(self, com_if: ComInterface):
         self.__com_if = com_if
 
     def operation(self) -> int:

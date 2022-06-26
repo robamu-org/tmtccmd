@@ -10,16 +10,14 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import Union, Optional, Tuple
+from typing import Optional, Tuple
 
 from spacepackets.ccsds.spacepacket import parse_space_packets
 
 from tmtccmd.logging import get_console_logger
-from tmtccmd.config.definitions import CoreModeList
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
-from tmtccmd.tm.definitions import TelemetryListT
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
-from tmtccmd.config.definitions import EthernetAddressT
+from tmtccmd.com_if import ComInterface
+from tmtccmd.tm import TelemetryListT
+from tmtccmd.config import EthernetAddressT, CoreModeList
 from tmtccmd.utility.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()
@@ -34,7 +32,7 @@ class TcpCommunicationType(enum.Enum):
     SPACE_PACKETS = 0
 
 
-class TcpIpTcpComIF(CommunicationInterface):
+class TcpIpTcpComIF(ComInterface):
     """Communication interface for TCP communication."""
 
     DEFAULT_LOCK_TIMEOUT = 0.4

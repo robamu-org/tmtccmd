@@ -5,7 +5,7 @@ from typing import Optional
 from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.countdown import Countdown
 
@@ -30,7 +30,7 @@ class SequentialCcsdsSender:
     def __init__(
         self,
         queue_wrapper: QueueWrapper,
-        com_if: CommunicationInterface,
+        com_if: ComInterface,
         tc_handler: TcHandlerBase,
     ):
         """

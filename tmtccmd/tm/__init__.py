@@ -1,11 +1,23 @@
 import enum
+from typing import Deque, List, Union
 
-from tmtccmd.tm.definitions import TelemetryListT, TelemetryQueueT
+from spacepackets.ecss import PusTelemetry
+from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
 from tmtccmd.tm.pus_3_fsfw_hk import Service3FsfwTm
 from tmtccmd.tm.pus_20_fsfw_parameters import Service20FsfwTm
 from tmtccmd.tm.pus_200_fsfw_modes import Service200FsfwTm
+
+TelemetryListT = List[bytes]
+TelemetryQueueT = Deque[bytes]
+
+PusTmQueue = Deque[PusTelemetry]
+PusTmListT = List[PusTelemetry]
+
+PusTmQueueT = Deque[PusTmListT]
+PusIFListT = List[Union[PusTmInfoInterface, PusTmInterface]]
+PusIFQueueT = Deque[PusIFListT]
 
 
 class TmTypes(enum.Enum):

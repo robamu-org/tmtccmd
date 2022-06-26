@@ -6,9 +6,8 @@ import sys
 from typing import Optional, List
 from dataclasses import dataclass
 
-from tmtccmd.config.definitions import CoreModeList, CoreComInterfaces
+from tmtccmd import TmTcCfgHookBase
 from tmtccmd.config.prompt import prompt_service, prompt_op_code
-from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
 
 
@@ -115,7 +114,7 @@ def process_tmtccmd_args(
         arguments. For something like a GUI, it might make sense to disable this
     :return: None
     """
-    from tmtccmd.config.definitions import CoreModeStrings
+    from tmtccmd.config import CoreModeStrings, CoreComInterfaces, CoreModeList
     from tmtccmd.com_if.com_if_utilities import determine_com_if
 
     group = ArgsGroup()
@@ -260,7 +259,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config.definitions import CoreModeList, CoreModeStrings
+    from tmtccmd.config import CoreModeList, CoreModeStrings
 
     help_text = f"Core Modes. Default: {CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]}\n"
     one_q = (
@@ -293,7 +292,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config.definitions import CORE_COM_IF_DICT, CoreComInterfaces
+    from tmtccmd.config import CORE_COM_IF_DICT, CoreComInterfaces
 
     help_text = (
         "Core Communication Interface. If this is not specified, the commander core\n"

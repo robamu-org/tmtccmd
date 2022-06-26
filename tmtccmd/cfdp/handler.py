@@ -1,12 +1,12 @@
 import enum
 import abc
 import struct
-from typing import Optional, Type, List, Any
+from typing import Optional, List
 
 from .filestore import VirtualFilestore
 from .mib import LocalEntityCfg
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
 from spacepackets.cfdp.conf import PduConfig
 from spacepackets.cfdp.definitions import (
@@ -98,7 +98,7 @@ class CfdpHandler:
     def __init__(
         self,
         cfg: LocalEntityCfg,
-        com_if: Optional[CommunicationInterface],
+        com_if: Optional[ComInterface],
         cfdp_user: CfdpUserBase,
         byte_flow_ctrl: ByteFlowControl,
     ):
@@ -128,7 +128,7 @@ class CfdpHandler:
         return self.__com_if
 
     @com_if.setter
-    def com_if(self, com_if: CommunicationInterface):
+    def com_if(self, com_if: ComInterface):
         self.__com_if = com_if
 
     def state_machine(self):

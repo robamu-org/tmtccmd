@@ -8,7 +8,7 @@ from tmtccmd.ccsds.handler import (
     CcsdsTmHandler,
     UnknownApidHandlerBase,
 )
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 
 
@@ -29,9 +29,9 @@ class ApidHandler(ApidTmHandlerBase):
 class TestTmHandler(TestCase):
     def test_basic(self):
         tm_handler = ApidHandler(0x01)
-        com_if = MagicMock(specs=CommunicationInterface)
+        com_if = MagicMock(specs=ComInterface)
         unknown_handler = MagicMock(specs=UnknownApidHandlerBase)
-        ccsds_handler = CcsdsTmHandler(unknown_handler=unknown_handler)
+        ccsds_handler = CcsdsTmHandler(unknown_handler)
         ccsds_handler.add_apid_handler(tm_handler)
         tm_listener = CcsdsTmListener(tm_handler=ccsds_handler, com_if=com_if)
         handled_packets = tm_listener.operation()
