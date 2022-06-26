@@ -16,8 +16,8 @@ LOGGER = get_console_logger()
 
 
 class DummyComIF(ComInterface):
-    def __init__(self, com_if_key: str):
-        super().__init__(com_if_key=com_if_key)
+    def __init__(self, com_if_id: str):
+        super().__init__(com_if_id=com_if_id)
         self.dummy_handler = DummyHandler()
         self.last_service = 0
         self.last_subservice = 0

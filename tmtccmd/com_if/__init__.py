@@ -13,12 +13,12 @@ class ComInterface:
     the underlying interface.
     """
 
-    def __init__(self, com_if_key: str):
+    def __init__(self, com_if_id: str):
         self.valid = True
-        self.com_if_key = com_if_key
+        self.com_if_id = com_if_id
 
     def get_id(self) -> str:
-        return self.com_if_key
+        return self.com_if_id
 
     @abstractmethod
     def initialize(self, args: any = None) -> any:

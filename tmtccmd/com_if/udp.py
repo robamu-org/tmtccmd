@@ -19,7 +19,7 @@ class UdpComIF(ComInterface):
 
     def __init__(
         self,
-        com_if_key: str,
+        com_if_id: str,
         tm_timeout: float,
         tc_timeout_factor: float,
         send_address: EthernetAddressT,
@@ -33,7 +33,7 @@ class UdpComIF(ComInterface):
         :param max_recv_size:
         :param recv_addr:
         """
-        super().__init__(com_if_key=com_if_key)
+        super().__init__(com_if_id=com_if_id)
         self.tm_timeout = tm_timeout
         self.tc_timeout_factor = tc_timeout_factor
         self.udp_socket = None

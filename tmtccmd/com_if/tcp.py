@@ -35,7 +35,7 @@ class TcpComIF(ComInterface):
 
     def __init__(
         self,
-        com_if_key: str,
+        com_if_id: str,
         com_type: TcpCommunicationType,
         space_packet_ids: Tuple[int],
         tm_polling_freqency: float,
@@ -44,14 +44,14 @@ class TcpComIF(ComInterface):
         max_packets_stored: int = 50,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP
-        :param com_if_key:
+        :param com_if_id:
         :param com_type:                Communication Type. By default, it is assumed that
                                         space packets are sent via TCP
         :param space_packet_ids:        16 bit packet header for space packet headers. Used to
                                         detect the start of PUS packets
         :param tm_polling_freqency:     Polling frequency in seconds
         """
-        super().__init__(com_if_key=com_if_key)
+        super().__init__(com_if_id=com_if_id)
         self.com_type = com_type
         self.space_packet_ids = space_packet_ids
         self.tm_polling_frequency = tm_polling_freqency

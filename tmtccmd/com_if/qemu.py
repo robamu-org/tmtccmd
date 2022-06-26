@@ -67,11 +67,11 @@ class QEMUComIF(ComInterface):
 
     def __init__(
         self,
-        com_if_key: str,
+        com_if_id: str,
         serial_timeout: float,
         ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
     ):
-        super().__init__(com_if_key=com_if_key)
+        super().__init__(com_if_id=com_if_id)
         self.serial_timeout = serial_timeout
         self.loop = asyncio.get_event_loop()
         self.number_of_packets = 0

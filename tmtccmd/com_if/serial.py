@@ -53,7 +53,7 @@ class SerialComIF(ComInterface):
 
     def __init__(
         self,
-        com_if_key: str,
+        com_if_id: str,
         com_port: str,
         baud_rate: int,
         serial_timeout: float,
@@ -66,7 +66,7 @@ class SerialComIF(ComInterface):
         :param serial_timeout: Specify serial timeout
         :param ser_com_type: Specify how to handle serial reception
         """
-        super().__init__(com_if_key=com_if_key)
+        super().__init__(com_if_id=com_if_id)
 
         self.com_port = com_port
         self.baud_rate = baud_rate

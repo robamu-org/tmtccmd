@@ -56,7 +56,7 @@ def create_communication_interface_default(
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(
-                com_if_key=com_if_key,
+                com_if_id=com_if_key,
                 serial_timeout=serial_timeout,
                 ser_com_type=SerialCommunicationType.DLE_ENCODING,
             )
@@ -66,7 +66,7 @@ def create_communication_interface_default(
                 dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
-            communication_interface = DummyComIF(com_if_key=com_if_key)
+            communication_interface = DummyComIF(com_if_id=com_if_key)
         if communication_interface is None:
             return communication_interface
         if not communication_interface.valid:
@@ -171,7 +171,7 @@ def create_default_tcpip_interface(
     max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
     if com_if_key == CoreComInterfaces.UDP.value:
         communication_interface = UdpComIF(
-            com_if_key=com_if_key,
+            com_if_id=com_if_key,
             tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
             tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             send_address=send_addr,
@@ -180,7 +180,7 @@ def create_default_tcpip_interface(
         )
     elif com_if_key == CoreComInterfaces.TCP.value:
         communication_interface = TcpComIF(
-            com_if_key=com_if_key,
+            com_if_id=com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,
             space_packet_ids=space_packet_ids,
             tm_polling_freqency=0.5,
@@ -220,7 +220,7 @@ def create_default_serial_interface(
         else:
             ser_com_type = SerialCommunicationType.FIXED_FRAME_BASED
         communication_interface = SerialComIF(
-            com_if_key=com_if_key,
+            com_if_id=com_if_key,
             com_port=com_port,
             baud_rate=serial_baudrate,
             serial_timeout=serial_timeout,
