@@ -28,14 +28,18 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
+from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-from tmtccmd.config.cfg_hook import TmTcCfgHookBase
-from tmtccmd.config.definitions import CoreGlobalIds, CoreModeList, CoreComInterfaces
-from tmtccmd.config.cfg_hook import get_global_hook_obj
+from tmtccmd.config import (
+    TmTcCfgHookBase,
+    get_global_hook_obj,
+    CoreModeList,
+    CoreComInterfaces,
+)
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com_if.tcpip_utilities import TcpIpConfigIds
+from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds
 import tmtccmd.config as config_module
 from tmtccmd.tc import DefaultProcedureInfo
 

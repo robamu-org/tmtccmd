@@ -7,7 +7,7 @@ import tmtccmd
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.config import default_json_path
 from tmtccmd.config.args import ArgParserWrapper
-from tmtccmd.config import SetupArgs
+from tmtccmd.config.setup import SetupArgs
 from tmtccmd.core import BackendController, Request
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
@@ -23,7 +23,6 @@ LOGGER = get_console_logger()
 
 
 def main():
-    print(f"-- example tmtc v{tmtccmd.__version__} --")
     tmtccmd.init_printout(False)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     parser_wrapper = ArgParserWrapper()

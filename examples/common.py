@@ -4,7 +4,7 @@ from pus_tc.service_17_test import pack_service17_test_into
 from spacepackets.ecss import PusTelemetry
 from tmtccmd import get_console_logger, TcHandlerBase, TmTcCfgHookBase, CcsdsTmtcBackend
 from tmtccmd.ccsds.handler import ApidTmHandlerBase
-from tmtccmd.com_if.com_interface_base import CommunicationInterface
+from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreServiceList
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.logging.pus import RawTmtcTimedLogWrapper
@@ -30,9 +30,7 @@ class ExampleHookClass(TmTcCfgHookBase):
     def __init__(self, json_cfg_path: str):
         super().__init__(json_cfg_path=json_cfg_path)
 
-    def assign_communication_interface(
-        self, com_if_key: str
-    ) -> Optional[CommunicationInterface]:
+    def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         from tmtccmd.config.com_if import create_communication_interface_default
 
         LOGGER.info("Communication interface assignment function was called")
@@ -86,7 +84,7 @@ class PusHandler(ApidTmHandlerBase):
 
 
 class TcHandler(TcHandlerBase):
-    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: CommunicationInterface):
+    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: ComInterface):
         cast_wrapper = PacketCastWrapper(tc_queue_entry)
         if tc_queue_entry.is_tc():
             if tc_queue_entry.etype == TcQueueEntryType.PUS_TC:
