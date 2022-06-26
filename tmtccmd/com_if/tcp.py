@@ -1,9 +1,4 @@
-"""
-:file:      tcpip_tcp_com_if.py
-:date:      13.05.2021
-:brief:     TCP communication interface
-:author:    R. Mueller
-"""
+"""TCP communication interface"""
 import socket
 import time
 import enum
@@ -32,7 +27,7 @@ class TcpCommunicationType(enum.Enum):
     SPACE_PACKETS = 0
 
 
-class TcpIpTcpComIF(ComInterface):
+class TcpComIF(ComInterface):
     """Communication interface for TCP communication."""
 
     DEFAULT_LOCK_TIMEOUT = 0.4

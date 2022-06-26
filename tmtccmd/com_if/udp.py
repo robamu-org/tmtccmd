@@ -1,12 +1,12 @@
 """UDP Communication Interface"""
 import select
 import socket
-from typing import Union
+from typing import Optional
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.config import EthernetAddressT, CoreModeList
+from tmtccmd.config import EthernetAddressT
 
 LOGGER = get_console_logger()
 
@@ -14,7 +14,7 @@ UDP_RECV_WIRETAPPING_ENABLED = False
 UDP_SEND_WIRETAPPING_ENABLED = False
 
 
-class TcpIpUdpComIF(ComInterface):
+class UdpComIF(ComInterface):
     """Communication interface for UDP communication."""
 
     def __init__(
@@ -24,8 +24,7 @@ class TcpIpUdpComIF(ComInterface):
         tc_timeout_factor: float,
         send_address: EthernetAddressT,
         max_recv_size: int,
-        recv_addr: Union[None, EthernetAddressT] = None,
-        init_mode: int = CoreModeList.LISTENER_MODE,
+        recv_addr: Optional[EthernetAddressT] = None,
     ):
         """Initialize a communication interface to send and receive UDP datagrams.
         :param tm_timeout:
@@ -33,7 +32,6 @@ class TcpIpUdpComIF(ComInterface):
         :param send_address:
         :param max_recv_size:
         :param recv_addr:
-        :param tmtc_printer:        Printer instance, can be passed optionally to allow packet debugging
         """
         super().__init__(com_if_key=com_if_key)
         self.tm_timeout = tm_timeout
@@ -42,7 +40,6 @@ class TcpIpUdpComIF(ComInterface):
         self.send_address = send_address
         self.recv_addr = recv_addr
         self.max_recv_size = max_recv_size
-        self.init_mode = init_mode
 
     def __del__(self):
         try:
@@ -65,14 +62,6 @@ class TcpIpUdpComIF(ComInterface):
             self.udp_socket.bind(self.recv_addr)
         # Set non-blocking because we use select.
         self.udp_socket.setblocking(False)
-        if self.init_mode == CoreModeList.LISTENER_MODE:
-            # TODO: This is kind of an ugly hack.. find a better solution, maybe by passing
-            #       a CB which does this.. actually, this looks like a userspace problem
-            from tmtccmd.pus.pus_17_test import pack_service17_ping_command
-
-            # Send ping command immediately so the reception address is known for UDP
-            ping_cmd = pack_service17_ping_command(ssc=0)
-            self.send(ping_cmd.pack())
 
     def close(self, args: any = None) -> None:
         if self.udp_socket is not None:

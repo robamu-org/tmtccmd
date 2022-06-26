@@ -13,8 +13,8 @@ from tmtccmd.com_if.serial import (
 from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds, TcpIpType
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if.udp import TcpIpUdpComIF
-from tmtccmd.com_if.tcp import TcpIpTcpComIF, TcpCommunicationType
+from tmtccmd.com_if.udp import UdpComIF
+from tmtccmd.com_if.tcp import TcpComIF, TcpCommunicationType
 
 LOGGER = get_console_logger()
 
@@ -172,17 +172,16 @@ def create_default_tcpip_interface(
     init_mode = get_global(CoreGlobalIds.MODE)
     space_packet_id = ethernet_cfg_dict[TcpIpConfigIds.SPACE_PACKET_ID]
     if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
-        communication_interface = TcpIpUdpComIF(
+        communication_interface = UdpComIF(
             com_if_key=com_if_key,
             tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
             tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             send_address=send_addr,
             recv_addr=recv_addr,
             max_recv_size=max_recv_size,
-            init_mode=init_mode,
         )
     elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
-        communication_interface = TcpIpTcpComIF(
+        communication_interface = TcpComIF(
             com_if_key=com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,
             space_packet_ids=space_packet_ids,
