@@ -150,7 +150,7 @@ def handle_com_if_arg(
     if custom_com_if_dict is not None:
         all_com_ifs = CORE_COM_IF_DICT.update(custom_com_if_dict)
     try:
-        com_if_key = str(args.com_if)
+        com_if_key = str(args.com_if_id)
     except AttributeError:
         LOGGER.warning("No communication interface specified")
         LOGGER.warning("Trying to set from existing configuration..")

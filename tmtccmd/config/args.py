@@ -46,7 +46,7 @@ class TcParams:
 @dataclass
 class BackendParams:
     mode: str = ""
-    com_if: str = ""
+    com_if_id: str = ""
     listener: bool = False
     interactive: bool = False
 
@@ -94,6 +94,14 @@ class SetupParams:
     @mode.setter
     def mode(self, mode: str):
         self.backend_params.mode = mode
+
+    @property
+    def com_if_id(self):
+        return self.backend_params.com_if_id
+
+    @com_if_id.setter
+    def com_if_id(self, com_if_id):
+        self.backend_params.com_if_id = com_if_id
 
 
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
