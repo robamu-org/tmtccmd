@@ -218,7 +218,10 @@ def args_to_params(
     :return: None
     """
     from tmtccmd.com_if.utils import determine_com_if
-
+    if pargs.gui is None:
+        params.app_params.use_gui = False
+    else:
+        params.app_params.use_gui = pargs.gui
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
         if use_prompts:
             params.com_if = determine_com_if(
