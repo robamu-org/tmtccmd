@@ -1,5 +1,6 @@
 import atexit
 import sys
+import threading
 from collections import deque
 from typing import Optional
 
@@ -58,6 +59,7 @@ class CcsdsTmtcBackend(BackendBase):
             tc_handler=tc_handler,
             queue_wrapper=self._queue_wrapper,
         )
+        self._backend_lock: Optional[threading.Lock] = None
         atexit.register(keyboard_interrupt_handler, self)
 
     @property
@@ -73,6 +75,10 @@ class CcsdsTmtcBackend(BackendBase):
         if self.__com_if_active:
             return
         self.__com_if = com_if
+
+    @property
+    def state(self):
+        return self._state
 
     @property
     def tc_mode(self):
@@ -183,7 +189,7 @@ class CcsdsTmtcBackend(BackendBase):
     def mode_to_req(self):
         if self.tc_mode == TcMode.IDLE and self.tm_mode == TmMode.IDLE:
             self._state._req = Request.DELAY_IDLE
-        elif self.tm_mode == TmMode.LISTENER and self.tc_mode == CoreModeList.IDLE:
+        elif self.tm_mode == TmMode.LISTENER and self.tc_mode == TcMode.IDLE:
             self._state._req = Request.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
@@ -213,9 +219,10 @@ class CcsdsTmtcBackend(BackendBase):
             self.__tm_listener.operation()
 
     def tc_operation(self):
-        self.__check_and_execute_seq_send()
+        if self._state.tc_mode != TcMode.IDLE:
+            self.__check_and_execute_queue()
 
-    def __check_and_execute_seq_send(self):
+    def __check_and_execute_queue(self):
         if self._seq_handler.mode == SenderMode.DONE:
             queue = self.__prepare_tc_queue()
             if queue is None:

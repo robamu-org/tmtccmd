@@ -4,6 +4,7 @@
 import enum
 import os
 import sys
+import threading
 import time
 import webbrowser
 from multiprocessing import Process
@@ -28,7 +29,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
 
 from tmtccmd.config.globals import CoreGlobalIds
-from tmtccmd.core import BackendController, TmMode, TcMode
+from tmtccmd.core import BackendController, TmMode, TcMode, Request
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import (
@@ -79,51 +80,90 @@ COMMAND_BUTTON_STYLE = (
 class WorkerOperationsCodes(enum.IntEnum):
     DISCONNECT = 0
     ONE_QUEUE_MODE = 1
-    LISTENING = 2
+    LISTEN_FOR_TM = 2
+    UPDATE_BACKEND_MODE = 3
     IDLE = 4
 
 
+class BackendWrapper:
+    def __init__(self, backend: CcsdsTmtcBackend):
+        self.ctrl = BackendController()
+        self.state_lock = threading.Lock()
+        self.tc_lock = threading.Lock()
+        self.backend = backend
+
+
 class WorkerThread(QObject):
-    disconnected = pyqtSignal()
-    command_executed = pyqtSignal()
+    finished = pyqtSignal()
 
-    def __init__(self, op_code: WorkerOperationsCodes, tmtc_handler: CcsdsTmtcBackend):
+    def __init__(self, op_code: WorkerOperationsCodes, backend_wrapper: BackendWrapper):
         super(QObject, self).__init__()
-        self.op_code = op_code
-        self.backend_ctrl = BackendController()
-        self.tmtc_handler = tmtc_handler
-        self.tmtc_handler.one_shot_operation = True
+        self._op_code = op_code
+        self.finished = pyqtSignal()
+        self.stop_signal = False
+        self._backend_wrapper = backend_wrapper
 
-    def set_op_code(self, op_code: WorkerOperationsCodes):
-        self.op_code = op_code
+    @property
+    def op_code(self):
+        return self._op_code
+
+    @op_code.setter
+    def op_code(self, op_code):
+        self._op_code = op_code
+
+    def __setup_worker(self):
+        self.stop_signal = True
+        if self.op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
+            with self._backend_wrapper.tc_lock:
+                self._backend_wrapper.backend.tc_mode = TcMode.ONE_QUEUE
+        elif self.op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+            self._backend_wrapper.backend.tm_mode = TmMode.LISTENER
 
     def run_worker(self):
+        self.__setup_worker()
         while True:
             op_code = self.op_code
             if op_code == WorkerOperationsCodes.DISCONNECT:
-                self.tmtc_handler.close_listener()
+                self._backend_wrapper.backend.close_listener()
                 while True:
-                    if not self.tmtc_handler.com_if_active():
+                    if not self._backend_wrapper.backend.com_if_active():
                         break
                     else:
                         time.sleep(0.2)
                 self.op_code = WorkerOperationsCodes.IDLE
-                self.disconnected.emit()
+                self.finished.emit()
+                break
             elif op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
-                # It is expected that the TMTC handler is in the according state to perform the
-                # operation
-                self.tmtc_handler.periodic_op(self.backend_ctrl)
-                self.op_code = WorkerOperationsCodes.LISTENING
-                self.command_executed.emit()
-            elif op_code == WorkerOperationsCodes.LISTENING:
-                self.tmtc_handler.one_shot_operation = True
-                self.tmtc_handler.mode = CoreModeList.LISTENER_MODE
-                self.tmtc_handler.periodic_op(self.backend_ctrl)
+                self._backend_wrapper.tc_lock.acquire()
+                self._backend_wrapper.backend.tc_mode = TcMode.ONE_QUEUE
+                self._backend_wrapper.backend.tc_operation()
+                state = self._backend_wrapper.backend.state
+                if state.request == Request.TERMINATION_NO_ERROR:
+                    self._backend_wrapper.tc_lock.release()
+                    self.finished.emit()
+                    break
+                elif state.request == Request.DELAY_CUSTOM:
+                    self._backend_wrapper.tc_lock.release()
+                    time.sleep(state.next_delay)
+                elif state.request == Request.CALL_NEXT:
+                    self._backend_wrapper.tc_lock.release()
+            elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+                if not self.stop_signal:
+                    # We only should run the TM operation here
+                    self._backend_wrapper.backend.tm_operation()
+                else:
+                    pass
             elif op_code == WorkerOperationsCodes.IDLE:
-                pass
+                break
+            elif op_code == WorkerOperationsCodes.UPDATE_BACKEND_MODE:
+                with self._backend_wrapper.state_lock:
+                    self._backend_wrapper.backend.mode_to_req()
             else:
                 # This must be a programming error
                 LOGGER.error("Unknown worker operation code {0}!".format(self.op_code))
+
+    def stop_operation(self):
+        self.stop_signal = True
 
 
 class RunnableThread(QRunnable):
@@ -135,34 +175,35 @@ class RunnableThread(QRunnable):
         pass
 
 
+class FrontendState:
+    def __init__(self):
+        self.current_com_if = CoreComInterfaces.UNSPECIFIED.value
+        self.current_service = ""
+        self.current_op_code = ""
+        self.last_com_if = CoreComInterfaces.UNSPECIFIED.value
+        self.current_com_if_key = CoreComInterfaces.UNSPECIFIED.value
+
+
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(
         self, hook_obj: TmTcCfgHookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str
     ):
         super(TmTcFrontend, self).__init__()
         super(QMainWindow, self).__init__()
-        self._tmtc_handler = tmtc_backend
         self._app_name = app_name
+        self._backend_wrapper = BackendWrapper(tmtc_backend)
         self._hook_obj = hook_obj
         self._service_list = []
         self._op_code_list = []
         self._com_if_list = []
         self._service_op_code_dict = hook_obj.get_tmtc_definitions()
-        self._last_com_if = CoreComInterfaces.UNSPECIFIED.value
-        self._current_com_if = CoreComInterfaces.UNSPECIFIED.value
-        self._current_service = ""
-        self._current_op_code = ""
-        self._current_com_if_key = "unspec"
+        self._state = FrontendState()
         self.__connected = False
-
-        self.__worker = None
-        self.__thread = None
         self.__debug_mode = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
         module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
         self.logo_path = f"{module_path}/logo.png"
-        self.__start_qthread_task(WorkerOperationsCodes.LISTENING)
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start)
@@ -214,7 +255,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__listener_button.setText("Activate TM listener")
         self.__listener_button.setStyleSheet(COMMAND_BUTTON_STYLE)
         self.__listener_button.clicked.connect(self.__start_listener)
-        self.__command_button.setEnabled(False)
+        self.__listener_button.setEnabled(False)
         grid.addWidget(self.__listener_button, row, 0, 1, 2)
         row += 1
         self.show()
@@ -224,32 +265,37 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info("Send command button pressed.")
         if not self.__get_send_button():
             return
-        self.__set_send_button(False)
-        self._tmtc_handler.current_proc_info = DefaultProcedureInfo(
+        self.__disable_send_button()
+        self._backend_wrapper.backend.current_proc_info = DefaultProcedureInfo(
             self._current_service, self._current_op_code
         )
-        self._tmtc_handler.tc_mode = TcMode.IDLE
-        self._tmtc_handler.tm_mode = TmMode.LISTENER
-        self.__worker.set_op_code(WorkerOperationsCodes.ONE_QUEUE_MODE)
-        self.__worker.command_executed.connect(self.__finish_seq_cmd_op)
+        self._backend_wrapper.backend.tc_mode = TcMode.ONE_QUEUE
+        worker = self.__get_worker(WorkerOperationsCodes.ONE_QUEUE_MODE)
+        worker.finished.connect(self.__finish_seq_cmd_op)
 
     def __start_listener(self):
         pass
 
     def __finish_seq_cmd_op(self):
-        self.__set_send_button(True)
+        self.__enable_send_button()
+
+    def __get_worker(self, op_code: WorkerOperationsCodes) -> QThread:
+        thread = QThread()
+        worker = WorkerThread(op_code, self._backend_wrapper)
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run_worker)
+        return thread
 
     def __connect_button_action(self):
         if not self.__connected:
             LOGGER.info("Starting TM listener..")
             # Build and assign new communication interface
-            if self._current_com_if != self._last_com_if:
-                hook_obj = get_global_hook_obj()
-                new_com_if = hook_obj.assign_communication_interface(
+            if self._state.current_com_if != self._state.last_com_if:
+                new_com_if = self._hook_obj.assign_communication_interface(
                     com_if_key=self._current_com_if
                 )
                 self._last_com_if = self._current_com_if
-                self._tmtc_handler.com_if = new_com_if
+                self._backend_wrapper.backend.com_if = new_com_if
             LOGGER.info("Starting listener")
             self.__connect_button.setStyleSheet(DISCONNECT_BTTN_STYLE)
             self.__command_button.setEnabled(True)
@@ -259,7 +305,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info("Closing TM listener..")
             self.__command_button.setEnabled(False)
             self.__connect_button.setEnabled(False)
-            self.__worker.set_op_code(WorkerOperationsCodes.DISCONNECT)
 
     def __finish_disconnect_button_op(self):
         self.__connect_button.setEnabled(True)
@@ -349,7 +394,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         for id, com_if_value in all_com_ifs.items():
             com_if_combo_box.addItem(com_if_value[0])
             self._com_if_list.append((id, com_if_value[0]))
-            if self._tmtc_handler.com_if_id == id:
+            if self._backend_wrapper.backend.com_if_id == id:
                 com_if_combo_box.setCurrentIndex(index)
             index += 1
         com_if_combo_box.currentIndexChanged.connect(self.__com_if_sel_index_changed)
@@ -429,14 +474,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
-    def __start_qthread_task(self, op_code: WorkerOperationsCodes):
-        self.__thread = QThread()
-        self.__worker = WorkerThread(op_code=op_code, tmtc_handler=self._tmtc_handler)
-        self.__worker.moveToThread(self.__thread)
-        self.__thread.started.connect(self.__worker.run_worker)
-        self.__thread.start()
-        self.__worker.disconnected.connect(self.__finish_disconnect_button_op)
-
     @staticmethod
     def __add_vertical_separator(grid: QGridLayout, row: int):
         separator = QFrame()
@@ -484,8 +521,17 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         if self.__debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
 
-    def __set_send_button(self, state: bool):
-        self.__command_button.setEnabled(state)
+    def __enable_send_button(self):
+        self.__command_button.setEnabled(True)
+
+    def __disable_send_button(self):
+        self.__command_button.setDisabled(True)
+
+    def __enable_listener_button(self):
+        self.__listener_button.setEnabled(True)
+
+    def __disable_listener_button(self):
+        self.__listener_button.setDisabled(True)
 
     def __get_send_button(self):
         return self.__command_button.isEnabled()
