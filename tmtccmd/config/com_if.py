@@ -36,8 +36,8 @@ def create_communication_interface_default(
 
     try:
         if (
-            com_if_key == CoreComInterfaces.TCPIP_UDP.value
-            or com_if_key == CoreComInterfaces.TCPIP_TCP.value
+            com_if_key == CoreComInterfaces.UDP.value
+            or com_if_key == CoreComInterfaces.TCP.value
         ):
             communication_interface = create_default_tcpip_interface(
                 com_if_key=com_if_key,
@@ -76,9 +76,9 @@ def create_communication_interface_default(
         return communication_interface
     except ConnectionRefusedError:
         LOGGER.exception("TCP/IP connection refused")
-        if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
+        if com_if_key == CoreComInterfaces.UDP.value:
             LOGGER.warning("Make sure that a UDP server is running")
-        if com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+        if com_if_key == CoreComInterfaces.TCP.value:
             LOGGER.warning("Make sure that a TCP server is running")
         sys.exit(1)
     except (IOError, OSError):
@@ -157,9 +157,9 @@ def create_default_tcpip_interface(
     :return:
     """
     communication_interface = None
-    if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
+    if com_if_key == CoreComInterfaces.UDP.value:
         default_tcpip_cfg_setup(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
-    elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+    elif com_if_key == CoreComInterfaces.TCP.value:
         default_tcpip_cfg_setup(
             tcpip_type=TcpIpType.TCP,
             json_cfg_path=json_cfg_path,
@@ -169,9 +169,7 @@ def create_default_tcpip_interface(
     send_addr = ethernet_cfg_dict[TcpIpConfigIds.SEND_ADDRESS]
     recv_addr = ethernet_cfg_dict[TcpIpConfigIds.RECV_ADDRESS]
     max_recv_size = ethernet_cfg_dict[TcpIpConfigIds.RECV_MAX_SIZE]
-    init_mode = get_global(CoreGlobalIds.MODE)
-    space_packet_id = ethernet_cfg_dict[TcpIpConfigIds.SPACE_PACKET_ID]
-    if com_if_key == CoreComInterfaces.TCPIP_UDP.value:
+    if com_if_key == CoreComInterfaces.UDP.value:
         communication_interface = UdpComIF(
             com_if_key=com_if_key,
             tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
@@ -180,7 +178,7 @@ def create_default_tcpip_interface(
             recv_addr=recv_addr,
             max_recv_size=max_recv_size,
         )
-    elif com_if_key == CoreComInterfaces.TCPIP_TCP.value:
+    elif com_if_key == CoreComInterfaces.TCP.value:
         communication_interface = TcpComIF(
             com_if_key=com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,

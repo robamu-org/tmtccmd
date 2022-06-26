@@ -6,7 +6,7 @@ from tmtccmd import get_console_logger, TcHandlerBase, TmTcCfgHookBase, CcsdsTmt
 from tmtccmd.ccsds.handler import ApidTmHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreServiceList
-from tmtccmd.config.tmtc_defs import TmTcDefWrapper
+from tmtccmd.config.tmtc import TmTcDefWrapper
 from tmtccmd.logging.pus import RawTmtcTimedLogWrapper
 from tmtccmd.tc import (
     TcProcedureBase,

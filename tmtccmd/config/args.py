@@ -199,9 +199,7 @@ def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
         "will try to extract it from the JSON or prompt it from the user\n"
     )
     dummy_line = f"{CORE_COM_IF_DICT[CoreComInterfaces.DUMMY.value]}: Dummy Interface\n"
-    udp_line = (
-        f"{CORE_COM_IF_DICT[CoreComInterfaces.TCPIP_UDP.value]}: " f"UDP client\n"
-    )
+    udp_line = f"{CORE_COM_IF_DICT[CoreComInterfaces.UDP.value]}: " f"UDP client\n"
     ser_dle_line = (
         f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_DLE.value]}: "
         f"Serial with DLE transport layer\n"

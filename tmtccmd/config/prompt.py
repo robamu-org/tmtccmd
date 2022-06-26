@@ -1,7 +1,7 @@
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
-from tmtccmd.config.tmtc_defs import OpCodeEntry, TmTcDefWrapper
+from tmtccmd.config.tmtc import OpCodeEntry, TmTcDefWrapper
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()

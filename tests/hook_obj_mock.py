@@ -5,7 +5,7 @@ import argparse
 
 from tmtccmd.config.com_if import CommunicationInterface
 from tmtccmd.config.definitions import CoreModeList
-from tmtccmd.config.tmtc_defs import TmTcDefWrapper
+from tmtccmd.config.tmtc import TmTcDefWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config.cfg_hook import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger

@@ -21,7 +21,7 @@ from tmtccmd.config import (
     CoreComInterfaces,
     ComIfDictT,
 )
-from tmtccmd.config.tmtc_defs import TmTcDefWrapper, OpCodeEntry
+from tmtccmd.config.tmtc import TmTcDefWrapper, OpCodeEntry
 
 
 LOGGER = get_console_logger()

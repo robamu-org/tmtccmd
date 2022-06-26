@@ -14,7 +14,7 @@ from tmtccmd.config.args import (
     parse_default_tmtccmd_input_arguments,
 )
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
-from tmtccmd.config.tmtc_defs import TmTcDefWrapper
+from tmtccmd.config.tmtc import TmTcDefWrapper
 from tmtccmd.core import ModeWrapper, TmMode, TcMode, BackendBase
 from tmtccmd.utility.obj_id import ObjectIdDictT
 from tmtccmd.utility.retval import RetvalDictT
@@ -34,8 +34,8 @@ def default_json_path() -> str:
 class CoreComInterfaces(enum.Enum):
     DUMMY = "dummy"
     SERIAL_DLE = "ser_dle"
-    TCPIP_UDP = "udp"
-    TCPIP_TCP = "tcp"
+    UDP = "udp"
+    TCP = "tcp"
     SERIAL_FIXED_FRAME = "ser_fixed"
     SERIAL_QEMU = "ser_qemu"
     UNSPECIFIED = "unspec"
@@ -44,8 +44,8 @@ class CoreComInterfaces(enum.Enum):
 CORE_COM_IF_DICT = {
     CoreComInterfaces.DUMMY.value: "Dummy Interface",
     CoreComInterfaces.SERIAL_DLE.value: "Serial Interace with DLE encoding",
-    CoreComInterfaces.TCPIP_UDP.value: "TCP/IP with UDP datagrams",
-    CoreComInterfaces.TCPIP_TCP.value: "TCP/IP with TCP",
+    CoreComInterfaces.UDP.value: "TCP/IP with UDP datagrams",
+    CoreComInterfaces.TCP.value: "TCP/IP with TCP",
     CoreComInterfaces.SERIAL_FIXED_FRAME.value: "Serial Interface with fixed size frames",
     CoreComInterfaces.SERIAL_QEMU.value: "Serial Interface using QEMU",
     CoreComInterfaces.UNSPECIFIED.value: "Unspecified",
