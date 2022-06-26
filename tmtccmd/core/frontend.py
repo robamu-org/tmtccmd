@@ -26,7 +26,15 @@ from PyQt5.QtWidgets import (
     QAction,
 )
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread, QRunnable
+from PyQt5.QtCore import (
+    Qt,
+    pyqtSignal,
+    QObject,
+    QThread,
+    QRunnable,
+    pyqtSlot,
+    QThreadPool,
+)
 
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core import BackendController, TmMode, TcMode, Request
@@ -93,36 +101,34 @@ class BackendWrapper:
         self.backend = backend
 
 
-class WorkerThread(QObject):
+class WorkerSignalWrapper(QObject):
     finished = pyqtSignal()
 
+
+class FrontendWorker(QRunnable):
+    """Runnable thread which can be used with QThreadPool. Not used for now, might be needed
+    in the future.
+    """
+
     def __init__(self, op_code: WorkerOperationsCodes, backend_wrapper: BackendWrapper):
-        super(QObject, self).__init__()
+        super(QRunnable, self).__init__()
         self._op_code = op_code
-        self.finished = pyqtSignal()
-        self.stop_signal = False
         self._backend_wrapper = backend_wrapper
-
-    @property
-    def op_code(self):
-        return self._op_code
-
-    @op_code.setter
-    def op_code(self, op_code):
-        self._op_code = op_code
+        self.signals = WorkerSignalWrapper()
 
     def __setup_worker(self):
         self.stop_signal = True
-        if self.op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
+        if self._op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
             with self._backend_wrapper.tc_lock:
                 self._backend_wrapper.backend.tc_mode = TcMode.ONE_QUEUE
-        elif self.op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+        elif self._op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
             self._backend_wrapper.backend.tm_mode = TmMode.LISTENER
 
-    def run_worker(self):
+    @pyqtSlot()
+    def run(self):
         self.__setup_worker()
         while True:
-            op_code = self.op_code
+            op_code = self._op_code
             if op_code == WorkerOperationsCodes.DISCONNECT:
                 self._backend_wrapper.backend.close_listener()
                 while True:
@@ -130,8 +136,8 @@ class WorkerThread(QObject):
                         break
                     else:
                         time.sleep(0.2)
-                self.op_code = WorkerOperationsCodes.IDLE
-                self.finished.emit()
+                self._op_code = WorkerOperationsCodes.IDLE
+                self.signals.finished.emit()
                 break
             elif op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
                 self._backend_wrapper.tc_lock.acquire()
@@ -140,7 +146,7 @@ class WorkerThread(QObject):
                 state = self._backend_wrapper.backend.state
                 if state.request == Request.TERMINATION_NO_ERROR:
                     self._backend_wrapper.tc_lock.release()
-                    self.finished.emit()
+                    self.signals.finished.emit()
                     break
                 elif state.request == Request.DELAY_CUSTOM:
                     self._backend_wrapper.tc_lock.release()
@@ -160,19 +166,7 @@ class WorkerThread(QObject):
                     self._backend_wrapper.backend.mode_to_req()
             else:
                 # This must be a programming error
-                LOGGER.error("Unknown worker operation code {0}!".format(self.op_code))
-
-    def stop_operation(self):
-        self.stop_signal = True
-
-
-class RunnableThread(QRunnable):
-    """Runnable thread which can be used with QThreadPool. Not used for now, might be needed
-    in the future.
-    """
-
-    def run(self):
-        pass
+                LOGGER.error("Unknown worker operation code {0}!".format(self._op_code))
 
 
 class FrontendState:
@@ -198,6 +192,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._com_if_list = []
         self._service_op_code_dict = hook_obj.get_tmtc_definitions()
         self._state = FrontendState()
+        self._thread_pool = QThreadPool()
         self.__connected = False
         self.__debug_mode = True
 
@@ -270,21 +265,17 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self._current_service, self._current_op_code
         )
         self._backend_wrapper.backend.tc_mode = TcMode.ONE_QUEUE
-        worker = self.__get_worker(WorkerOperationsCodes.ONE_QUEUE_MODE)
-        worker.finished.connect(self.__finish_seq_cmd_op)
+        worker = FrontendWorker(
+            WorkerOperationsCodes.ONE_QUEUE_MODE, self._backend_wrapper
+        )
+        worker.signals.finished.connect(self.__finish_seq_cmd_op)
+        self._thread_pool.start(worker)
 
     def __start_listener(self):
         pass
 
     def __finish_seq_cmd_op(self):
         self.__enable_send_button()
-
-    def __get_worker(self, op_code: WorkerOperationsCodes) -> QThread:
-        thread = QThread()
-        worker = WorkerThread(op_code, self._backend_wrapper)
-        worker.moveToThread(thread)
-        thread.started.connect(worker.run_worker)
-        return thread
 
     def __connect_button_action(self):
         if not self.__connected:

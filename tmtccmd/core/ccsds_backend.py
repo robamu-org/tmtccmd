@@ -4,7 +4,7 @@ import threading
 from collections import deque
 from typing import Optional
 
-from tmtccmd.config import CoreServiceList, CoreModeList
+from tmtccmd.config import CoreServiceList
 from tmtccmd.core import (
     BackendBase,
     BackendState,
@@ -70,12 +70,6 @@ class CcsdsTmtcBackend(BackendBase):
     def com_if(self) -> ComInterface:
         return self.__com_if
 
-    @com_if.setter
-    def com_if(self, com_if: ComInterface):
-        if self.__com_if_active:
-            return
-        self.__com_if = com_if
-
     @property
     def state(self):
         return self._state
@@ -108,15 +102,12 @@ class CcsdsTmtcBackend(BackendBase):
     def tm_listener(self):
         return self.__tm_listener
 
-    def try_set_com_if(self, com_if: ComInterface):
+    def try_set_com_if(self, com_if: ComInterface) -> bool:
         if not self.com_if_active():
             self.__com_if = com_if
-            self.__tm_listener.com_if(self.__com_if)
+            return True
         else:
-            LOGGER.warning(
-                "Communication Interface is active and must be closed first before "
-                "reassigning a new one"
-            )
+            return False
 
     def com_if_active(self):
         return self.__com_if_active
@@ -134,7 +125,7 @@ class CcsdsTmtcBackend(BackendBase):
         if not isinstance(executed_handler, CcsdsTmtcBackend):
             LOGGER.error("Unexpected argument, should be TmTcHandler!")
             sys.exit(1)
-        executed_handler.start_listener(ctrl)
+        executed_handler.open_com_if()
 
     def __listener_io_error_handler(self, ctx: str):
         LOGGER.error(f"Communication Interface could not be {ctx}")
@@ -144,14 +135,14 @@ class CcsdsTmtcBackend(BackendBase):
             self.__com_if.close()
             sys.exit(1)
 
-    def start_listener(self, ctrl: BackendController):
+    def open_com_if(self):
         try:
             self.__com_if.open()
         except IOError:
             self.__listener_io_error_handler("opened")
         self.__com_if_active = True
 
-    def close_listener(self):
+    def close_com_if(self):
         """Closes the TM listener and the communication interface. This is started in a separarate
         thread because the communication interface might still be busy. The completion can be
         checked with :meth:`tmtccmd.core.backend.is_com_if_active`. Alternatively, waiting on
@@ -207,16 +198,13 @@ class CcsdsTmtcBackend(BackendBase):
             else:
                 self._state._request = Request.CALL_NEXT
 
-    def close_com_if(self):
-        self.__com_if.close()
-
     def poll_tm(self):
         """Poll TM, irrespective of current TM mode"""
-        self.__tm_listener.operation()
+        self.__tm_listener.operation(self.__com_if)
 
     def tm_operation(self):
         if self._state.tm_mode == TmMode.LISTENER:
-            self.__tm_listener.operation()
+            self.__tm_listener.operation(self.__com_if)
 
     def tc_operation(self):
         if self._state.tc_mode != TcMode.IDLE:

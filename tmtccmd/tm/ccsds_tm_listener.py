@@ -25,7 +25,6 @@ class CcsdsTmListener:
 
     def __init__(
         self,
-        com_if: ComInterface,
         tm_handler: CcsdsTmHandler,
     ):
         """Initiate a TM listener.
@@ -34,19 +33,10 @@ class CcsdsTmListener:
         :param tm_handler: If valid CCSDS packets are found, they are dispatched to
             the passed handler
         """
-        self.__com_if = com_if
         self.__tm_handler = tm_handler
 
-    @property
-    def com_if(self):
-        return self.__com_if
-
-    @com_if.setter
-    def com_if(self, com_if: ComInterface):
-        self.__com_if = com_if
-
-    def operation(self) -> int:
-        packet_list = self.__com_if.receive()
+    def operation(self, com_if: ComInterface) -> int:
+        packet_list = com_if.receive()
         for tm_packet in packet_list:
             self.__handle_ccsds_space_packet(tm_packet)
         return len(packet_list)

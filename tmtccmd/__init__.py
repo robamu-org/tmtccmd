@@ -96,13 +96,6 @@ def start(
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
 
 
-def init_and_start_daemons(tmtc_backend: BackendBase):
-    if __SETUP_FOR_GUI:
-        LOGGER.error("daemon mode only supported in cli mode")
-        sys.exit(1)
-    __start_tmtc_commander_cli(tmtc_backend=tmtc_backend, perform_op_immediately=False)
-
-
 def __assign_tmtc_commander_hooks(hook_object: TmTcCfgHookBase):
     from tmtccmd.config.globals import CoreGlobalIds
 
@@ -125,11 +118,8 @@ def __handle_cli_args_and_globals(setup_args: SetupWrapper):
     LOGGER.info("Setting up post-globals..")
 
 
-def __start_tmtc_commander_cli(
-    tmtc_backend: BackendBase, perform_op_immediately: bool = True
-):
-    # __get_backend_init_variables()
-    tmtc_backend.start_listener(perform_op_immediately)
+def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
+    tmtc_backend.open_com_if()
 
 
 def __start_tmtc_commander_qt_gui(
@@ -189,7 +179,7 @@ def create_default_tmtc_backend(
     com_if = setup_wrapper.hook_obj.assign_communication_interface(
         com_if_key=setup_wrapper.params.com_if_id
     )
-    tm_listener = CcsdsTmListener(com_if=com_if, tm_handler=tm_handler)
+    tm_listener = CcsdsTmListener(tm_handler)
     mode_wrapper = ModeWrapper()
     backend_mode_conversion(setup_wrapper.params.mode, mode_wrapper)
     # The global variables are set by the argument parser.

@@ -75,8 +75,13 @@ class BackendController:
 
 class BackendBase:
     @abstractmethod
-    def start_listener(self, perform_op_immediately: bool):
+    def open_com_if(self):
         """Start the backend. Raise RuntimeError on failure"""
+        pass
+
+    @abstractmethod
+    def close_com_if(self):
+        pass
 
     @abstractmethod
     def periodic_op(self, ctrl: BackendController) -> BackendState:
