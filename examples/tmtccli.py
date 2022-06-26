@@ -6,8 +6,7 @@ import time
 import tmtccmd
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.config import default_json_path
-from tmtccmd.config.args import ArgParserWrapper
-from tmtccmd.config.setup import SetupArgs
+from tmtccmd.config import ArgParserWrapper, SetupWrapper
 from tmtccmd.core import BackendController, Request
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
@@ -27,8 +26,8 @@ def main():
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     parser_wrapper = ArgParserWrapper()
     parser_wrapper.parse(hook_obj, True)
-    setup_args = SetupArgs(
-        hook_obj=hook_obj, use_gui=False, apid=APID, args_wrapper=parser_wrapper
+    setup_args = SetupWrapper(
+        hook_obj=hook_obj, use_gui=False, apid=APID, setup_params=parser_wrapper.params
     )
     # Create console logger helper and file loggers
     tmtc_logger = RegularTmtcLogWrapper()

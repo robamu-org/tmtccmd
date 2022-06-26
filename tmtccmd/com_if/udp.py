@@ -6,7 +6,7 @@ from typing import Optional
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.config import EthernetAddressT
+from tmtccmd.com_if.tcpip_utils import EthernetAddressT
 
 LOGGER = get_console_logger()
 
@@ -83,15 +83,14 @@ class UdpComIF(ComInterface):
         return False
 
     def receive(self, poll_timeout: float = 0) -> TelemetryListT:
+        packet_list = []
         if self.udp_socket is None:
-            return []
+            return packet_list
         try:
-            ready = self.data_available(poll_timeout)
-            if ready:
+            while self.data_available(poll_timeout):
                 data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
-                packet_list = [bytearray(data)]
-                return packet_list
-            return []
+                packet_list.append(bytearray(data))
+            return packet_list
         except ConnectionResetError:
             LOGGER.warning("Connection reset exception occured!")
             return []

@@ -1,26 +1,34 @@
 """Definitions for the TMTC commander core
 """
+import argparse
 import enum
 from abc import abstractmethod
 from typing import Tuple, Dict, Optional
 
-
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
+from tmtccmd.config.args import (
+    SetupParams,
+    create_default_args_parser,
+    add_default_tmtccmd_args,
+    parse_default_tmtccmd_input_arguments,
+)
+from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.config.tmtc_defs import TmTcDefWrapper
 from tmtccmd.core import ModeWrapper, TmMode, TcMode, BackendBase
 from tmtccmd.utility.obj_id import ObjectIdDictT
 from tmtccmd.utility.retval import RetvalDictT
 
 
-def default_json_path() -> str:
-    return "tmtc_conf.json"
-
+LOGGER = get_console_logger()
 
 # Com Interface Types
 ComIfValueT = Tuple[str, any]
 ComIfDictT = Dict[str, ComIfValueT]
 
-EthernetAddressT = Tuple[str, int]
+
+def default_json_path() -> str:
+    return "tmtc_conf.json"
 
 
 class CoreComInterfaces(enum.Enum):
@@ -191,3 +199,152 @@ def get_global_hook_obj() -> Optional[TmTcCfgHookBase]:
     except AttributeError:
         logger.exception("Attribute error when trying to get global hook handle!")
         return None
+
+
+def args_to_params(
+    args: argparse.Namespace, hook_obj: TmTcCfgHookBase, use_prompts: bool
+) -> SetupParams:
+    """If some arguments are unspecified, they are set here with (variable) default values.
+
+    :param args: Arguments from calling parse method
+    :param hook_obj:
+    :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
+        arguments. For something like a GUI, it might make sense to disable this
+    :return: None
+    """
+    from tmtccmd.com_if.utils import determine_com_if
+
+    group = SetupParams()
+    if args.com_if is None or args.com_if == CoreComInterfaces.UNSPECIFIED.value:
+        if use_prompts:
+            group.com_if = determine_com_if(
+                hook_obj.get_com_if_dict(), hook_obj.json_cfg_path
+            )
+    else:
+        # TODO: Check whether COM IF is valid?
+        group.com_if = args.com_if
+    if args.mode is None:
+        group.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
+    else:
+        group.mode = args.mode
+    tmtc_defs = hook_obj.get_tmtc_definitions()
+    if tmtc_defs is None:
+        LOGGER.warning("Invalid Service to Op-Code dictionary detected")
+        if args.service is None:
+            group.service = "0"
+        if args.op_code is None:
+            group.op_code = "0"
+    else:
+        if args.service is None:
+            if args.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+                if use_prompts:
+                    LOGGER.info(
+                        "No service argument (-s) specified, prompting from user.."
+                    )
+                    # Try to get the service list from the hook base and prompt service from user
+                    group.service = prompt_service(tmtc_defs)
+        else:
+            group.service = args.service
+        if args.op_code is None:
+            current_service = group.service
+            if use_prompts:
+                group.op_code = prompt_op_code(tmtc_defs, current_service)
+        else:
+            group.op_code = args.op_code
+    if args.delay is None:
+        if group.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+            group.delay = 3.0
+        else:
+            group.delay = 0.0
+    else:
+        group.delay = args.delay
+    if args.listener is None:
+        args.listener = False
+    else:
+        group.listener = args.listener
+    return group
+
+
+class ArgParserWrapper:
+    def __init__(
+        self,
+        parser: Optional[argparse.ArgumentParser] = None,
+        descript_txt: Optional[str] = None,
+    ):
+        if parser is None:
+            self.args_parser = create_default_args_parser(descript_txt)
+            add_default_tmtccmd_args(self.args_parser)
+        else:
+            self.args_parser = parser
+        self.print_known_args = False
+        self.print_unknown_args = False
+        self.unknown_args = [""]
+        self._params: SetupParams = SetupParams()
+        self.args_raw = None
+
+    def add_default_tmtccmd_args(self):
+        add_default_tmtccmd_args(self.args_parser)
+
+    def parse(self, hook_obj: TmTcCfgHookBase, use_prompts: bool):
+        self.args_raw, self.unknown_args = parse_default_tmtccmd_input_arguments(
+            self.args_parser,
+            print_known_args=self.print_known_args,
+            print_unknown_args=self.print_unknown_args,
+        )
+        self._params = args_to_params(self.args_raw, hook_obj, use_prompts)
+
+    @property
+    def params(self):
+        return self._params
+
+    @property
+    def delay(self):
+        return self.params.tc_properties.delay
+
+    @property
+    def service(self):
+        return self.params.def_proc_args.service
+
+    @property
+    def op_code(self):
+        return self.params.def_proc_args.op_code
+
+    @property
+    def mode(self):
+        return self.params.backend_params.mode
+
+    @property
+    def com_if(self):
+        return self.params.backend_params.com_if
+
+
+class SetupWrapper:
+    """This class encapsulates various important setup parameters required by tmtccmd components"""
+
+    def __init__(
+        self,
+        hook_obj: TmTcCfgHookBase,
+        use_gui: bool,
+        apid: int,
+        setup_params: SetupParams,
+        json_cfg_path: Optional[str] = None,
+        reduced_printout: bool = False,
+        use_ansi_colors: bool = True,
+    ):
+        """
+        :param hook_obj: User hook object. Needs to be implemented by the user
+        :param setup_params: Optional helper wrapper which contains CLI arguments.
+        :param use_gui: Specify whether a GUI is used.
+        :param reduced_printout:
+        :param use_ansi_colors:
+        """
+        self.hook_obj = hook_obj
+        self.use_gui = use_gui
+        self.apid = apid
+        self.json_cfg_path = json_cfg_path
+        self.reduced_printout = reduced_printout
+        self.ansi_colors = use_ansi_colors
+        self.args_wrapper = setup_params
+        self.json_cfg_path = json_cfg_path
+        if json_cfg_path is None:
+            self.json_cfg_path = default_json_path()

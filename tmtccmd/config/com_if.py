@@ -188,7 +188,6 @@ def create_default_tcpip_interface(
             tm_polling_freqency=0.5,
             target_address=send_addr,
             max_recv_size=max_recv_size,
-            init_mode=init_mode,
         )
     return communication_interface
 

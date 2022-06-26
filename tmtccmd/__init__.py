@@ -5,8 +5,7 @@ from typing import Union, cast
 
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion
-from tmtccmd.config.setup import SetupArgs
+from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion, SetupWrapper
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase
@@ -38,7 +37,7 @@ def version() -> str:
     return __version__
 
 
-def setup(setup_args: SetupArgs):
+def setup(setup_args: SetupWrapper):
     """This function needs to be called first before running the TMTC commander core. The setup
     arguments encapsulate all required arguments for the TMTC commander.
 
@@ -115,7 +114,7 @@ def init_printout(use_gui: bool):
         print(f"-- tmtccmd v{version()} CLI Mode --")
 
 
-def __handle_cli_args_and_globals(setup_args: SetupArgs):
+def __handle_cli_args_and_globals(setup_args: SetupWrapper):
     LOGGER.info("Setting up pre-globals..")
     set_default_globals_pre_args_parsing(setup_args.apid)
     LOGGER.info("Setting up post-globals..")
@@ -158,7 +157,7 @@ def __start_tmtc_commander_qt_gui(
 
 
 def create_default_tmtc_backend(
-    setup_args: SetupArgs, tm_handler: TmHandlerBase, tc_handler: TcHandlerBase
+    setup_args: SetupWrapper, tm_handler: TmHandlerBase, tc_handler: TcHandlerBase
 ) -> BackendBase:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 

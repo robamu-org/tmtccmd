@@ -12,7 +12,7 @@ from spacepackets.ccsds.spacepacket import parse_space_packets
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.config import EthernetAddressT, CoreModeList
+from tmtccmd.com_if.tcpip_utils import EthernetAddressT
 from tmtccmd.utility.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()
@@ -42,7 +42,6 @@ class TcpComIF(ComInterface):
         target_address: EthernetAddressT,
         max_recv_size: int,
         max_packets_stored: int = 50,
-        init_mode: int = CoreModeList.LISTENER_MODE,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP
         :param com_if_key:
@@ -59,7 +58,6 @@ class TcpComIF(ComInterface):
         self.target_address = target_address
         self.max_recv_size = max_recv_size
         self.max_packets_stored = max_packets_stored
-        self.init_mode = init_mode
         self.connected = False
 
         self.__tcp_socket: Optional[socket.socket] = None

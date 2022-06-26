@@ -144,7 +144,7 @@ def handle_mode_arg(
 def handle_com_if_arg(
     args, json_cfg_path: str, custom_com_if_dict: Dict[str, any] = None
 ):
-    from tmtccmd.com_if.com_if_utilities import determine_com_if
+    from tmtccmd.com_if.utils import determine_com_if
 
     all_com_ifs = CORE_COM_IF_DICT
     if custom_com_if_dict is not None:

@@ -2,8 +2,8 @@ import json
 import socket
 import struct
 import enum
+from typing import Tuple
 
-from tmtccmd.config import EthernetAddressT
 from tmtccmd.utility.json import check_json_file, JsonKeyNames
 from tmtccmd.logging import get_console_logger
 
@@ -11,6 +11,9 @@ LOGGER = get_console_logger()
 
 
 DEFAULT_MAX_RECV_SIZE = 1500
+
+
+EthernetAddressT = Tuple[str, int]
 
 
 class TcpIpType(enum.Enum):
