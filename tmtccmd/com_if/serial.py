@@ -47,8 +47,7 @@ class SerialCommunicationType(enum.Enum):
 
 # pylint: disable=arguments-differ
 class SerialComIF(ComInterface):
-    """Communication Interface to use serial communication. This requires the PySerial library.
-    """
+    """Communication Interface to use serial communication. This requires the PySerial library."""
 
     def __init__(
         self,

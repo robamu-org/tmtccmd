@@ -1,4 +1,5 @@
-"""Dummy Communication Interface. Currently serves to provide an example without external hardware
+"""Dummy Virtual Communication Interface. Currently serves to use the TMTC program without needing
+external hardware or an extra socket
 """
 from typing import Optional
 
@@ -6,6 +7,7 @@ from spacepackets.ecss.pus_1_verification import RequestId
 from spacepackets.ecss.tc import PusTelecommand
 
 from tmtccmd.com_if import ComInterface
+from tmtccmd.config import CoreComInterfaces
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.tm.pus_17_test import Subservices, Service17TmExtended
@@ -13,41 +15,6 @@ from tmtccmd.logging import get_console_logger
 
 
 LOGGER = get_console_logger()
-
-
-class DummyComIF(ComInterface):
-
-    def __init__(self, com_if_id: str):
-        super().__init__(com_if_id=com_if_id)
-        self.dummy_handler = DummyHandler()
-        self.last_service = 0
-        self.last_subservice = 0
-        self.tc_ssc = 0
-        self.tc_packet_id = 0
-
-    def initialize(self, args: any = None) -> any:
-        pass
-
-    def open(self, args: any = None) -> None:
-        pass
-
-    def is_open(self) -> bool:
-        return True
-
-    def close(self, args: any = None) -> None:
-        pass
-
-    def data_available(self, timeout: float = 0, parameters: any = 0):
-        if self.dummy_handler.reply_pending:
-            return True
-        return False
-
-    def receive(self, parameters: any = 0) -> TelemetryListT:
-        return self.dummy_handler.receive_reply_package()
-
-    def send(self, data: bytearray):
-        if data is not None:
-            self.dummy_handler.pass_telecommand(data)
 
 
 class DummyHandler:
@@ -63,13 +30,7 @@ class DummyHandler:
         self.generate_reply_package()
 
     def generate_reply_package(self):
-        """
-        Generate the replies. This function will perform the following steps:
-         - Generate an object representation of the telemetry to be generated based on service and subservice
-         - Generate the raw bytearray of the telemetry
-         - Generate the object representation which would otherwise be generated from the raw bytearray received
-           from an external source
-        """
+        """Generate a reply package. Currently, this only generates a reply for a ping telecommand."""
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
                 tm_packer = Service1TmExtended(
@@ -107,3 +68,35 @@ class DummyHandler:
             return return_list
         else:
             return []
+
+
+class DummyComIF(ComInterface):
+    def __init__(self):
+        super().__init__(com_if_id=CoreComInterfaces.DUMMY.value)
+        self.dummy_handler = DummyHandler()
+        self._open = False
+        self.initialized = False
+
+    def initialize(self, args: any = None) -> any:
+        self.initialized = True
+
+    def open(self, args: any = None) -> None:
+        self._open = True
+
+    def is_open(self) -> bool:
+        return self._open
+
+    def close(self, args: any = None) -> None:
+        self._open = False
+
+    def data_available(self, timeout: float = 0, parameters: any = 0):
+        if self.dummy_handler.reply_pending:
+            return True
+        return False
+
+    def receive(self, parameters: any = 0) -> TelemetryListT:
+        return self.dummy_handler.receive_reply_package()
+
+    def send(self, data: bytearray):
+        if data is not None:
+            self.dummy_handler.pass_telecommand(data)

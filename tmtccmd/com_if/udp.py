@@ -16,6 +16,7 @@ UDP_SEND_WIRETAPPING_ENABLED = False
 
 class UdpComIF(ComInterface):
     """Communication interface for UDP communication"""
+
     def __init__(
         self,
         com_if_id: str,

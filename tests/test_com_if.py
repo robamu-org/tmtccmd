@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
+from spacepackets.ecss import PusTelecommand
+from tmtccmd.com_if.dummy import DummyComIF
 from tmtccmd.com_if.utils import determine_com_if
 
 
@@ -42,5 +45,21 @@ class TestComIF(TestCase):
             com_if = determine_com_if(test_dict, self.json_file)
             self.assertEqual(com_if, "test-com-if")
 
+    def test_dummy_if(self):
+        dummy_com_if = DummyComIF()
+        self.assertFalse(dummy_com_if.is_open())
+        dummy_com_if.open()
+        self.assertTrue(dummy_com_if.is_open())
+        self.assertFalse(dummy_com_if.initialized)
+        dummy_com_if.initialize()
+        self.assertTrue(dummy_com_if.initialized)
+        self.assertFalse(dummy_com_if.data_available())
+        dummy_com_if.send(PusTelecommand(service=17, subservice=1).pack())
+        self.assertTrue(dummy_com_if.data_available())
+        replies = dummy_com_if.receive()
+        self.assertEqual(len(replies), 3)
+
     def tearDown(self) -> None:
-        os.remove(self.json_file)
+        path = Path(self.json_file)
+        if path.exists():
+            os.remove(path)
