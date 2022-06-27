@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (
     QMenu,
     QAction,
 )
-from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtGui import QPixmap, QIcon, QFont
 from PyQt5.QtCore import (
     Qt,
     pyqtSignal,
@@ -129,9 +129,9 @@ class SharedArgs:
 
 
 class WorkerSignalWrapper(QObject):
-    finished = pyqtSignal()
-    failure = pyqtSignal(str)
-    stop = pyqtSignal()
+    finished = pyqtSignal(object)
+    failure = pyqtSignal(object)
+    stop = pyqtSignal(object)
 
 
 class FrontendWorker(QRunnable):
@@ -154,80 +154,94 @@ class FrontendWorker(QRunnable):
             ):
                 self._locals.op_args = 0.2
 
-    def __setup_worker(self) -> bool:
-        self._stop_signal = True
-        if self._locals.op_code == WorkerOperationsCodes.CLOSE_COM_IF:
-            if self._shared.com_if_ref_tracker.is_used():
-                self.signals.failure.emit("Can not close COM interface which is used")
-                return False
-        if self._locals.op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
+    def __setup(self, op_code: WorkerOperationsCodes) -> bool:
+        if op_code == WorkerOperationsCodes.OPEN_COM_IF:
+            if self._shared.backend.com_if_active():
+                self._finish_with_info("COM Interface is already active")
+            else:
+                self._shared.backend.open_com_if()
+                self._finish_success()
+            return False
+        if op_code == WorkerOperationsCodes.CLOSE_COM_IF:
+            if not self._shared.backend.com_if_active():
+                self._finish_with_info("COM Interface is not active")
+            elif self._shared.com_if_ref_tracker.is_used():
+                self._failure_with_info("Can not close COM interface which is used")
+            else:
+                self._shared.backend.close_com_if()
+                self._finish_success()
+            return False
+        if op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
             self._shared.com_if_ref_tracker.add_user()
             with self._shared.tc_lock:
                 self._shared.backend.tc_mode = TcMode.ONE_QUEUE
-        elif self._locals.op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+        elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
             self._shared.com_if_ref_tracker.add_user()
             self._shared.backend.tm_mode = TmMode.LISTENER
         return True
 
+    def __loop(self, op_code: WorkerOperationsCodes) -> bool:
+        if op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
+            self._shared.tc_lock.acquire()
+            self._shared.backend.tc_operation()
+            self._update_backend_mode()
+            state = self._shared.backend.state
+            if state.request == Request.TERMINATION_NO_ERROR:
+                self._shared.tc_lock.release()
+                self._shared.com_if_ref_tracker.remove_user()
+                with self._shared.state_lock:
+                    if (
+                        not self._shared.com_if_ref_tracker.is_used()
+                        and self._locals.op_args is not None
+                    ):
+                        self._locals.op_args()
+                self._finish_success()
+                return False
+            elif state.request == Request.DELAY_CUSTOM:
+                self._shared.tc_lock.release()
+                time.sleep(state.next_delay)
+            elif state.request == Request.CALL_NEXT:
+                self._shared.tc_lock.release()
+        elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+            if not self._stop_signal:
+                # We only should run the TM operation here
+                self._shared.backend.tm_operation()
+                # Poll TM every 400 ms for now
+                time.sleep(self._locals.op_args)
+            else:
+                self._shared.com_if_ref_tracker.remove_user()
+                self._finish_success()
+                return False
+        elif op_code == WorkerOperationsCodes.IDLE:
+            return False
+        else:
+            # This must be a programming error
+            LOGGER.error(f"Unknown worker operation code {self._locals.op_code}")
+        return True
+
     @pyqtSlot()
     def run(self):
-        if not self.__setup_worker():
-            return
-        while True:
-            op_code = self._locals.op_code
-            if op_code == WorkerOperationsCodes.OPEN_COM_IF:
-                if self._shared.backend.com_if_active():
+        op_code = self._locals.op_code
+        loop_required = self.__setup(op_code)
+        if loop_required:
+            while True:
+                if not self.__loop(op_code):
                     break
-                else:
-                    self._shared.backend.open_com_if()
-                self.signals.finished.emit()
-            elif op_code == WorkerOperationsCodes.CLOSE_COM_IF:
-                self._shared.backend.close_com_if()
-                # TODO: Maybe there will be cases where closing a COM IF takes time and success
-                #       must be tracked by polling the COM IF / Backend
-                while True:
-                    if not self._shared.backend.com_if_active():
-                        break
-                    else:
-                        # The sleep duration was sanitized before and should be a valid float now
-                        time.sleep(0.2)
-                self.signals.finished.emit()
-                break
-            elif op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
-                self._shared.tc_lock.acquire()
-                self._shared.backend.tc_operation()
-                self._update_backend_mode()
-                state = self._shared.backend.state
-                if state.request == Request.TERMINATION_NO_ERROR:
-                    self._shared.tc_lock.release()
-                    self._shared.com_if_ref_tracker.remove_user()
-                    self.signals.finished.emit()
-                    break
-                elif state.request == Request.DELAY_CUSTOM:
-                    self._shared.tc_lock.release()
 
-                    time.sleep(state.next_delay)
-                elif state.request == Request.CALL_NEXT:
-                    self._shared.tc_lock.release()
-            elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
-                if not self._stop_signal:
-                    # We only should run the TM operation here
-                    self._shared.backend.tm_operation()
-                    # Poll TM every 400 ms for now
-                    time.sleep(self._locals.op_args)
-                else:
-                    self._shared.com_if_ref_tracker.remove_user()
-            elif op_code == WorkerOperationsCodes.IDLE:
-                break
-            else:
-                # This must be a programming error
-                LOGGER.error(f"Unknown worker operation code {self._locals.op_code}")
+    def _finish_success(self):
+        self.signals.finished.emit(None)
+
+    def _finish_with_info(self, info: str):
+        self.signals.finished.emit(info)
+
+    def _failure_with_info(self, info: str):
+        self.signals.failure.emit(info)
 
     def _update_backend_mode(self):
         with self._shared.state_lock:
             self._shared.backend.mode_to_req()
 
-    def _stop_com_if(self):
+    def _stop_com_if(self, _args: any):
         self._stop_signal = True
 
 
@@ -327,31 +341,48 @@ class ConnectButtonWrapper:
 
 
 class TmButtonWrapper:
-    def __init__(self, button: QPushButton, args: ButtonArgs):
+    def __init__(self, button: QPushButton, args: ButtonArgs, conn_button: QPushButton):
         self.button = button
         self.args = args
         self.worker: Optional[QRunnable] = None
         self._listening = False
         self._next_listener_state = False
+        self.button.setStyleSheet(CONNECT_BTTN_STYLE)
+        self.button.setText("Start TM listener")
+        self.button.setEnabled(False)
         self.button.clicked.connect(self.button_op)
+        self._conn_button = conn_button
 
     def button_op(self):
         if not self._listening:
+            LOGGER.info("Starting TM listener")
             self.worker = FrontendWorker(
                 LocalArgs(WorkerOperationsCodes.LISTEN_FOR_TM, 0.4), self.args.shared
             )
             self._next_listener_state = True
-
+            self._conn_button.setDisabled(True)
             self.args.pool.start(self.worker)
+            self.button_op_done()
         else:
-            self.worker.signals.stop.emit()
-        self.worker.signals.finished.connect(self.button_op_done)
+            LOGGER.info("Stopping TM listener")
+            self._next_listener_state = False
+            self.worker.signals.finished.connect(self.button_op_done)
+            self.worker.signals.stop.emit(None)
+            self.button.setEnabled(False)
 
     def button_op_done(self):
         if self._next_listener_state:
+            self.button.setStyleSheet(DISCONNECT_BTTN_STYLE)
+            self.button.setText("Stop TM listener")
             self._listening = True
+            self.button.setEnabled(True)
         else:
+            self.button.setStyleSheet(CONNECT_BTTN_STYLE)
+            if not self.args.shared.com_if_ref_tracker.is_used():
+                self._conn_button.setEnabled(True)
+            self.button.setText("Start TM listener")
             self._listening = False
+        self.button.setEnabled(True)
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
@@ -414,6 +445,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         )
         row = self.__add_vertical_separator(grid=grid, row=row)
 
+        tmtc_ctrl_label = QLabel("TMTC Control")
+        font = QFont()
+        font.setBold(True)
+        tmtc_ctrl_label.setFont(font)
+        grid.addWidget(tmtc_ctrl_label, row, 0, 1, 2)
+        row += 1
         row = self.__set_up_service_op_code_section(grid=grid, row=row)
 
         self.__command_button = QPushButton()
@@ -425,14 +462,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         listener_button = QPushButton()
-        listener_button.setText("Activate TM listener")
-        listener_button.setStyleSheet(COMMAND_BUTTON_STYLE)
-        listener_button.setEnabled(False)
         self.__tm_button_wrapper = TmButtonWrapper(
             button=listener_button,
             args=ButtonArgs(
                 state=self._state, pool=self._thread_pool, shared=self._shared_args
             ),
+            conn_button=self.__connect_button_wrapper.button,
         )
 
         grid.addWidget(listener_button, row, 0, 1, 2)
@@ -457,6 +492,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __finish_seq_cmd_op(self):
         self.__enable_send_button()
+        if not self._shared_args.com_if_ref_tracker.is_used():
+            self.__connect_button_wrapper.button.setEnabled(True)
 
     def __create_menu_bar(self):
         menu_bar = self.menuBar()
@@ -475,7 +512,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         webbrowser.open("https://tmtccmd.readthedocs.io/en/latest/")
 
     def __set_up_config_section(self, grid: QGridLayout, row: int) -> int:
-        grid.addWidget(QLabel("Configuration:"), row, 0, 1, 2)
+        label = QLabel("Configuration")
+        font = QFont()
+        font.setBold(True)
+        label.setFont(font)
+        grid.addWidget(label, row, 0, 1, 2)
         row += 1
         checkbox_console = QCheckBox("Print output to console")
         checkbox_console.stateChanged.connect(self.__checkbox_console_update)
@@ -532,7 +573,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __set_up_com_if_section(
         self, grid: QGridLayout, row: int
     ) -> (int, ConnectButtonWrapper):
-        grid.addWidget(QLabel("Communication Interface:"), row, 0, 1, 1)
+        font = QFont()
+        font.setBold(True)
+        label = QLabel("Communication Interface")
+        label.setFont(font)
+        grid.addWidget(label, row, 0, 1, 1)
         com_if_combo_box = QComboBox()
         all_com_ifs = self._hook_obj.get_com_if_dict()
         index = 0
@@ -566,9 +611,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row, conn_bttn_wrapper
 
+    def __disable_conn_bttn(self):
+        self.__connect_button_wrapper.button.setDisabled(True)
+
+    def __enable_conn_bttn(self):
+        self.__connect_button_wrapper.button.setEnabled(True)
+
     def __connected_com_if_cb(self):
         self.__enable_send_button()
-        self.__enable_listener_button()
+        self.__enable_listener_button(None)
 
     def __disconnect_com_if_cb(self):
         self.__disable_send_button()
@@ -686,7 +737,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     def __disable_send_button(self):
         self.__command_button.setDisabled(True)
 
-    def __enable_listener_button(self):
+    def __enable_listener_button(self, _args: any):
         self.__tm_button_wrapper.button.setEnabled(True)
 
     def __disable_listener_button(self):
