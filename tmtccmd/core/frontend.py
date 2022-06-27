@@ -385,6 +385,36 @@ class TmButtonWrapper:
         self.button.setEnabled(True)
 
 
+class SendButtonWrapper:
+    def __init__(self, button: QPushButton, args: ButtonArgs, conn_button: QPushButton):
+        self.button = button
+        self._args = args
+        self._conn_button = conn_button
+        self.debug_mode = False
+        self.button.setText("Send Command")
+        self.button.setStyleSheet(COMMAND_BUTTON_STYLE)
+        self.button.setEnabled(False)
+        self.button.clicked.connect(self._button_op)
+
+    def _button_op(self):
+        if self.debug_mode:
+            LOGGER.info("Send command button pressed.")
+        self.button.setDisabled(True)
+        self._args.shared.backend.current_proc_info = DefaultProcedureInfo(
+            self._args.state.current_service, self._args.state.current_op_code
+        )
+        worker = FrontendWorker(
+            LocalArgs(WorkerOperationsCodes.ONE_QUEUE_MODE, None), self._args.shared
+        )
+        worker.signals.finished.connect(self._finish_op)
+        self._args.pool.start(worker)
+
+    def _finish_op(self):
+        self.button.setEnabled(True)
+        if not self._args.shared.com_if_ref_tracker.is_used():
+            self._conn_button.setEnabled(True)
+
+
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(
         self, hook_obj: TmTcCfgHookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str
@@ -453,47 +483,25 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         row = self.__set_up_service_op_code_section(grid=grid, row=row)
 
-        self.__command_button = QPushButton()
-        self.__command_button.setText("Send Command")
-        self.__command_button.setStyleSheet(COMMAND_BUTTON_STYLE)
-        self.__command_button.clicked.connect(self.__start_seq_cmd_op)
-        self.__command_button.setEnabled(False)
-        grid.addWidget(self.__command_button, row, 0, 1, 2)
-        row += 1
-
-        listener_button = QPushButton()
-        self.__tm_button_wrapper = TmButtonWrapper(
-            button=listener_button,
-            args=ButtonArgs(
-                state=self._state, pool=self._thread_pool, shared=self._shared_args
-            ),
+        button_args = ButtonArgs(
+            state=self._state, pool=self._thread_pool, shared=self._shared_args
+        )
+        self.__send_bttn_wrapper = SendButtonWrapper(
+            button=QPushButton(),
+            args=button_args,
             conn_button=self.__connect_button_wrapper.button,
         )
+        grid.addWidget(self.__send_bttn_wrapper.button, row, 0, 1, 2)
+        row += 1
 
-        grid.addWidget(listener_button, row, 0, 1, 2)
+        self.__tm_button_wrapper = TmButtonWrapper(
+            button=QPushButton(),
+            args=button_args,
+            conn_button=self.__connect_button_wrapper.button,
+        )
+        grid.addWidget(self.__tm_button_wrapper.button, row, 0, 1, 2)
         row += 1
         self.show()
-
-    def __start_seq_cmd_op(self):
-        if self.__debug_mode:
-            LOGGER.info("Send command button pressed.")
-        if not self.__get_send_button():
-            return
-        self.__disable_send_button()
-        self._shared_args.backend.current_proc_info = DefaultProcedureInfo(
-            self._current_service, self._current_op_code
-        )
-        worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.ONE_QUEUE_MODE, None), self._shared_args
-        )
-        # worker.signals.stop.emit()
-        worker.signals.finished.connect(self.__finish_seq_cmd_op)
-        self._thread_pool.start(worker)
-
-    def __finish_seq_cmd_op(self):
-        self.__enable_send_button()
-        if not self._shared_args.com_if_ref_tracker.is_used():
-            self.__connect_button_wrapper.button.setEnabled(True)
 
     def __create_menu_bar(self):
         menu_bar = self.menuBar()
@@ -618,12 +626,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__connect_button_wrapper.button.setEnabled(True)
 
     def __connected_com_if_cb(self):
-        self.__enable_send_button()
-        self.__enable_listener_button(None)
+        self.__send_bttn_wrapper.button.setEnabled(True)
+        self.__tm_button_wrapper.button.setEnabled(True)
 
     def __disconnect_com_if_cb(self):
-        self.__disable_send_button()
-        self.__disable_listener_button()
+        self.__send_bttn_wrapper.button.setDisabled(True)
+        self.__tm_button_wrapper.button.setDisabled(True)
 
     def __set_up_service_op_code_section(self, grid: QGridLayout, row: int):
         grid.addWidget(QLabel("Service: "), row, 0, 1, 2)
@@ -648,13 +656,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self._service_list.append(service_key)
             index += 1
         combo_box_services.setCurrentIndex(default_index)
-        self._current_service = self._service_list[default_index]
+        self._state.current_service = self._service_list[default_index]
 
         combo_box_services.currentIndexChanged.connect(self.__service_index_changed)
         grid.addWidget(combo_box_services, row, 0, 1, 1)
 
         self.__combo_box_op_codes = QComboBox()
-        self._current_service = self._service_list[default_index]
+        self._state.current_service = self._service_list[default_index]
         self.__update_op_code_combo_box()
         self.__combo_box_op_codes.currentIndexChanged.connect(
             self.__op_code_index_changed
@@ -699,14 +707,16 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info("Service changed")
 
     def __op_code_index_changed(self, index: int):
-        self._current_op_code = self._op_code_list[index]
+        self._state.current_op_code = self._op_code_list[index]
         if self.__debug_mode:
             LOGGER.info("Op Code changed")
 
     def __update_op_code_combo_box(self):
         self.__combo_box_op_codes.clear()
         self._op_code_list = []
-        op_code_entry = self._service_op_code_dict.op_code_entry(self._current_service)
+        op_code_entry = self._service_op_code_dict.op_code_entry(
+            self._state.current_service
+        )
         if op_code_entry is not None:
             for op_code_key, op_code_value in op_code_entry.op_code_dict.items():
                 try:
@@ -714,7 +724,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
                     self.__combo_box_op_codes.addItem(op_code_value[0])
                 except TypeError:
                     LOGGER.warning(f"Invalid op code entry {op_code_value}, skipping..")
-            self._current_op_code = self._op_code_list[0]
+            self._state.current_op_code = self._op_code_list[0]
 
     def __checkbox_log_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_TO_FILE, state)
@@ -730,21 +740,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         update_global(CoreGlobalIds.PRINT_RAW_TM, state)
         if self.__debug_mode:
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
-
-    def __enable_send_button(self):
-        self.__command_button.setEnabled(True)
-
-    def __disable_send_button(self):
-        self.__command_button.setDisabled(True)
-
-    def __enable_listener_button(self, _args: any):
-        self.__tm_button_wrapper.button.setEnabled(True)
-
-    def __disable_listener_button(self):
-        self.__tm_button_wrapper.button.setDisabled(True)
-
-    def __get_send_button(self):
-        return self.__command_button.isEnabled()
 
     def __com_if_sel_index_changed(self, index: int):
         self._current_com_if = self._com_if_list[index][0]
