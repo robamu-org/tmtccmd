@@ -107,7 +107,7 @@ class TestSendReceive(TestCase):
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
         call_args = self.tc_handler_mock.send_cb.call_args
         self.assertEqual(call_args.args[0].delay_secs, inter_packet_delay)
-        self.assertFalse(res.longest_rem_delay > 0.08)
+        self.assertTrue(0.008 < res.longest_rem_delay < 0.01)
         res = self.seq_sender.operation()
         # No TC sent
         self.assertFalse(res.tc_sent)
@@ -121,3 +121,11 @@ class TestSendReceive(TestCase):
         # No TC sent, delay after each packet
         self.assertFalse(res.tc_sent)
         self.assertEqual(len(self.queue_wrapper.queue), 1)
+        self.assertTrue(0.008 < res.longest_rem_delay < 0.01)
+        # Delay 10 ms
+        time.sleep(0.01)
+        res = self.seq_sender.operation()
+        self.assertTrue(res.tc_sent)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
+        self.assertEqual(call_args.args[0].tc, bytes([0, 1, 2]))
