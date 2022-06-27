@@ -49,9 +49,6 @@ def setup(setup_args: SetupWrapper):
         import colorama
 
         colorama.init()
-
-    __assign_tmtc_commander_hooks(hook_object=setup_args.hook_obj)
-
     if setup_args.params.use_gui:
         set_default_globals_pre_args_parsing(setup_args.params.apid)
     if not setup_args.params.use_gui:
@@ -94,16 +91,6 @@ def start(
         )
     else:
         __start_tmtc_commander_cli(tmtc_backend=tmtc_backend)
-
-
-def __assign_tmtc_commander_hooks(hook_object: TmTcCfgHookBase):
-    from tmtccmd.config.globals import CoreGlobalIds
-
-    if hook_object is None:
-        raise ValueError
-    # Insert hook object handle into global dictionary so it can be used by the TMTC commander
-    # TODO: Remove globals altogether
-    update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
 
 
 def init_printout(use_gui: bool):
