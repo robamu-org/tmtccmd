@@ -56,6 +56,7 @@ class SequentialCcsdsSender:
 
     @queue_wrapper.setter
     def queue_wrapper(self, queue_wrapper: QueueWrapper):
+        """This setter throws a ValueError if the sequential sender is busy with another queue"""
         if self._mode == SenderMode.BUSY:
             raise ValueError("Busy with other queue")
         self._mode = SenderMode.BUSY
@@ -143,8 +144,8 @@ class SequentialCcsdsSender:
         cast_wrapper = PacketCastWrapper(queue_entry)
         if queue_entry.etype == TcQueueEntryType.WAIT:
             wait_entry = cast_wrapper.to_wait_entry()
-            LOGGER.info(f"Waiting for {wait_entry.wait_time} seconds.")
-            self._wait_cd.reset(new_timeout=wait_entry.wait_time)
+            LOGGER.info(f"Waiting for {wait_entry.wait_secs} seconds.")
+            self._wait_cd.reset(new_timeout=wait_entry.wait_secs)
             self._current_res.longest_rem_delay = max(
                 self._wait_cd.rem_time(), self._send_cd.rem_time()
             )

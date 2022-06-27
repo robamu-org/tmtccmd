@@ -118,8 +118,8 @@ class HostFilestore(VirtualFilestore):
         try:
             os.remove(file_path)
             return FilestoreResponseStatusCode.DELETE_SUCCESS
-        except IsADirectoryError:
-            LOGGER.exception(f"{file_path} is a directory")
+        except IsADirectoryError as e:
+            LOGGER.exception(e)
             return FilestoreResponseStatusCode.DELETE_NOT_ALLOWED
 
     def rename_file(

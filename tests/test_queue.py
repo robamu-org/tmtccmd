@@ -23,9 +23,9 @@ class TestTcQueue(TestCase):
         self.assertTrue(wait_entry)
         self.assertFalse(wait_entry.is_tc())
         self.assertTrue(
-            math.isclose(wait_entry.wait_time, eval(f"{wait_entry!r}").wait_time)
+            math.isclose(wait_entry.wait_secs, eval(f"{wait_entry!r}").wait_secs)
         )
-        self.assertEqual(wait_entry.wait_time, 2.0)
+        self.assertEqual(wait_entry.wait_secs, 2.0)
         self.assertEqual(len(queue_wrapper.queue), 0)
         pus_cmd = PusTelecommand(service=17, subservice=1)
         queue_helper.add_pus_tc(pus_cmd)

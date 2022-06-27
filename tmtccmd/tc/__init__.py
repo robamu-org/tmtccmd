@@ -76,10 +76,10 @@ class RawTcEntry(TcQueueEntryBase):
 class WaitEntry(TcQueueEntryBase):
     def __init__(self, wait_secs: float):
         super().__init__(TcQueueEntryType.WAIT)
-        self.wait_time = wait_secs
+        self.wait_secs = wait_secs
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.wait_time!r})"
+        return f"{self.__class__.__name__}({self.wait_secs!r})"
 
 
 class PacketDelayEntry(TcQueueEntryBase):
