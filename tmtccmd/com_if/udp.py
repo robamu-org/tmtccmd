@@ -15,8 +15,7 @@ UDP_SEND_WIRETAPPING_ENABLED = False
 
 
 class UdpComIF(ComInterface):
-    """Communication interface for UDP communication."""
-
+    """Communication interface for UDP communication"""
     def __init__(
         self,
         com_if_id: str,
@@ -52,7 +51,7 @@ class UdpComIF(ComInterface):
 
     def open(self, args: any = None):
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # Bind is possible but should not be necessary, and introduces risk of port alread
+        # Bind is possible but should not be necessary, and introduces risk of port already
         # being used.
         # See: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-bind
         if self.recv_addr is not None:
@@ -60,8 +59,11 @@ class UdpComIF(ComInterface):
                 f"Binding UDP socket to {self.recv_addr[0]} and port {self.recv_addr[1]}"
             )
             self.udp_socket.bind(self.recv_addr)
-        # Set non-blocking because we use select.
+        # Set non-blocking because we use select
         self.udp_socket.setblocking(False)
+
+    def is_open(self) -> bool:
+        return self.udp_socket is not None
 
     def close(self, args: any = None) -> None:
         if self.udp_socket is not None:

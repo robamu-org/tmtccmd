@@ -16,6 +16,7 @@ LOGGER = get_console_logger()
 
 
 class DummyComIF(ComInterface):
+
     def __init__(self, com_if_id: str):
         super().__init__(com_if_id=com_if_id)
         self.dummy_handler = DummyHandler()
@@ -29,6 +30,9 @@ class DummyComIF(ComInterface):
 
     def open(self, args: any = None) -> None:
         pass
+
+    def is_open(self) -> bool:
+        return True
 
     def close(self, args: any = None) -> None:
         pass

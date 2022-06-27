@@ -47,8 +47,7 @@ class SerialCommunicationType(enum.Enum):
 
 # pylint: disable=arguments-differ
 class SerialComIF(ComInterface):
-    """
-    Communication Interface to use serial communication. This requires the PySerial library.
+    """Communication Interface to use serial communication. This requires the PySerial library.
     """
 
     def __init__(
@@ -130,6 +129,9 @@ class SerialComIF(ComInterface):
         """
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             self.reception_thread.start()
+
+    def is_open(self) -> bool:
+        return self.serial is not None
 
     def close(self, args: any = None) -> None:
         try:

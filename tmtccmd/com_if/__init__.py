@@ -34,6 +34,12 @@ class ComInterface:
         """
 
     @abstractmethod
+    def is_open(self) -> bool:
+        """Can be used to check whether the communication interface is open. This is useful if
+        opening a COM interface takes a longer time and is non-blocking
+        """
+
+    @abstractmethod
     def close(self, args: any = None) -> None:
         """Closes the ComIF and releases any held resources (for example a Communication Port).
 

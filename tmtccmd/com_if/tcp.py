@@ -92,6 +92,9 @@ class TcpComIF(ComInterface):
         self.set_up_tcp_thread()
         self.__tcp_conn_thread.start()
 
+    def is_open(self) -> bool:
+        return self.connected
+
     def set_up_socket(self):
         if self.__tcp_socket is None:
             self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -99,6 +102,8 @@ class TcpComIF(ComInterface):
             self.connected = True
 
     def set_up_tcp_thread(self):
+        # TODO: Do we really need a thread here? This could probably be implemented as a polled
+        #       interface like UDP, using the select API
         if self.__tcp_conn_thread is None:
             self.__tcp_conn_thread = threading.Thread(
                 target=self.__tcp_tm_client, daemon=True
