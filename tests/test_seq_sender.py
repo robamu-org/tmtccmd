@@ -33,6 +33,7 @@ class TestSendReceive(TestCase):
         print(call_args)
         self.assertEqual(call_args.args[0].tc, bytes([0, 1, 2]))
         # Queue should be empty now
+        tc_handler_mock.queue_finished_cb.assert_called_once()
         self.assertFalse(queue_wrapper.queue)
         self.assertEqual(seq_sender.mode, SenderMode.DONE)
         queue_helper.add_raw_tc(bytes([3, 2, 1]))
