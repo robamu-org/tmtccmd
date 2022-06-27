@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import webbrowser
+from abc import abstractmethod
 from multiprocessing import Process
 from typing import Union, Callable, Optional
 
@@ -37,7 +38,6 @@ from PyQt5.QtCore import (
 
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core import BackendController, TmMode, TcMode, Request
-from tmtccmd.core.frontend_base import FrontendBase
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import (
     TmTcCfgHookBase,
@@ -50,6 +50,15 @@ import tmtccmd.config as config_module
 from tmtccmd.tc import DefaultProcedureInfo
 
 LOGGER = get_console_logger()
+
+
+class FrontendBase:
+    @abstractmethod
+    def start(self, args: any):
+        """
+        Start the frontend.
+        :return:
+        """
 
 
 CONNECT_BTTN_STYLE = (
@@ -250,6 +259,7 @@ class FrontendState:
         self.current_com_if = CoreComInterfaces.UNSPECIFIED.value
         self.current_service = ""
         self.current_op_code = ""
+        self.auto_connect_tm_listener = True
         self.last_com_if = CoreComInterfaces.UNSPECIFIED.value
         self.current_com_if_key = CoreComInterfaces.UNSPECIFIED.value
 
@@ -266,23 +276,30 @@ class ButtonArgs:
         self.shared = shared
 
 
-class ConnectButtonWrapper:
+class ConnectButtonParams:
     def __init__(
         self,
-        button: QPushButton,
-        args: ButtonArgs,
         hook_obj: TmTcCfgHookBase,
         connect_cb: Callable[[], None],
         disconnect_cb: Callable[[], None],
+        tm_listener_bttn: Optional[QPushButton],
+    ):
+        self.hook_obj = hook_obj
+        self.connect_cb = connect_cb
+        self.disconnect_cb = disconnect_cb
+        self.tm_listener_bttn = tm_listener_bttn
+
+
+class ConnectButtonWrapper:
+    def __init__(
+        self, button: QPushButton, args: ButtonArgs, bttn_params: ConnectButtonParams
     ):
         self.button = button
-        self.args = args
-        self.hook_obj = hook_obj
+        self._args = args
+        self._bttn_params = bttn_params
         self._connected = False
         self._next_con_state = False
         self.button.clicked.connect(self._button_op)
-        self._connect_cb = connect_cb
-        self._disconnect_cb = disconnect_cb
 
     def _button_op(self):
         if not self._connected:
@@ -293,21 +310,21 @@ class ConnectButtonWrapper:
     def _connect_button_pressed(self):
         LOGGER.info("Opening COM Interface")
         # Build and assign new communication interface
-        if self.args.state.current_com_if != self.args.state.last_com_if:
+        if self._args.state.current_com_if != self._args.state.last_com_if:
             LOGGER.info("Switching COM Interface")
-            new_com_if = self.hook_obj.assign_communication_interface(
-                com_if_key=self.args.state.current_com_if
+            new_com_if = self._bttn_params.hook_obj.assign_communication_interface(
+                com_if_key=self._args.state.current_com_if
             )
-            self.args.state.last_com_if = self.args.state.current_com_if
-            self.args.shared.backend.try_set_com_if(new_com_if)
+            self._args.state.last_com_if = self._args.state.current_com_if
+            self._args.shared.backend.try_set_com_if(new_com_if)
         self.button.setEnabled(False)
         worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.OPEN_COM_IF, None), self.args.shared
+            LocalArgs(WorkerOperationsCodes.OPEN_COM_IF, None), self._args.shared
         )
         self._next_con_state = True
         worker.signals.finished.connect(self._button_op_done)
         # TODO: Connect failure signal as well
-        self.args.pool.start(worker)
+        self._args.pool.start(worker)
 
     def _button_op_done(self):
         if self._next_con_state:
@@ -320,23 +337,28 @@ class ConnectButtonWrapper:
         self.button.setStyleSheet(DISCONNECT_BTTN_STYLE)
         self.button.setText("Disconnect")
         self.button.setEnabled(True)
-        self._connect_cb()
+        self._bttn_params.connect_cb()
+        if (
+            self._args.state.auto_connect_tm_listener
+            and self._bttn_params.tm_listener_bttn is not None
+        ):
+            self._bttn_params.tm_listener_bttn.click()
         LOGGER.info("Connected")
 
     def _disconnect_button_pressed(self):
         self.button.setEnabled(False)
         self._next_con_state = False
         worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.CLOSE_COM_IF, None), self.args.shared
+            LocalArgs(WorkerOperationsCodes.CLOSE_COM_IF, None), self._args.shared
         )
         worker.signals.finished.connect(self._button_op_done)
-        self.args.pool.start(worker)
+        self._args.pool.start(worker)
 
     def _disconnect_button_finished(self):
         self.button.setEnabled(True)
         self.button.setStyleSheet(CONNECT_BTTN_STYLE)
         self.button.setText("Connect")
-        self._disconnect_cb()
+        self._bttn_params.disconnect_cb()
         LOGGER.info("Disconnected")
 
 
@@ -469,9 +491,16 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row = self.__set_up_config_section(grid=grid, row=row)
         row = self.__add_vertical_separator(grid=grid, row=row)
 
+        tm_listener_button = QPushButton()
+        conn_bttn_params = ConnectButtonParams(
+            hook_obj=self._hook_obj,
+            connect_cb=self.__connected_com_if_cb,
+            disconnect_cb=self.__disconnect_com_if_cb,
+            tm_listener_bttn=tm_listener_button,
+        )
         # com if configuration
         row, self.__connect_button_wrapper = self.__set_up_com_if_section(
-            grid=grid, row=row
+            conn_bttn_params=conn_bttn_params, grid=grid, row=row
         )
         row = self.__add_vertical_separator(grid=grid, row=row)
 
@@ -495,7 +524,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         self.__tm_button_wrapper = TmButtonWrapper(
-            button=QPushButton(),
+            button=tm_listener_button,
             args=button_args,
             conn_button=self.__connect_button_wrapper.button,
         )
@@ -526,60 +555,39 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         label.setFont(font)
         grid.addWidget(label, row, 0, 1, 2)
         row += 1
-        checkbox_console = QCheckBox("Print output to console")
-        checkbox_console.stateChanged.connect(self.__checkbox_console_update)
 
-        checkbox_log = QCheckBox("Print output to log file")
-        checkbox_log.stateChanged.connect(self.__checkbox_log_update)
-
-        checkbox_raw_tm = QCheckBox("Print all raw TM data directly")
-        checkbox_raw_tm.stateChanged.connect(self.__checkbox_print_raw_data_update)
-
-        checkbox_hk = QCheckBox("Print Housekeeping Data")
-        # checkbox_hk.setChecked(tmtcc_config.G_PRINT_HK_DATA)
-        checkbox_hk.stateChanged.connect(checkbox_print_hk_data)
-
-        checkbox_short = QCheckBox("Short Display Mode")
-        # checkbox_short.setChecked(tmtcc_config.G_DISPLAY_MODE == "short")
-        checkbox_short.stateChanged.connect(checkbox_short_display_mode)
-
-        grid.addWidget(checkbox_log, row, 0, 1, 1)
-        grid.addWidget(checkbox_console, row, 1, 1, 1)
-        row += 1
-        grid.addWidget(checkbox_raw_tm, row, 0, 1, 1)
-        grid.addWidget(checkbox_hk, row, 1, 1, 1)
-        row += 1
-        grid.addWidget(checkbox_short, row, 0, 1, 1)
+        start_listener_on_connect = QCheckBox("Auto-Connect TM listener")
+        start_listener_on_connect.setChecked(True)
+        start_listener_on_connect.stateChanged.connect(
+            lambda: self._tm_auto_connect_changed(start_listener_on_connect)
+        )
+        grid.addWidget(start_listener_on_connect, row, 0, 1, 1)
         row += 1
 
-        grid.addWidget(QLabel("TM Timeout:"), row, 0, 1, 1)
-        grid.addWidget(QLabel("TM Timeout Factor:"), row, 1, 1, 1)
+        grid.addWidget(QLabel("Inter-Packet Delay Seconds [0 - 500]"), row, 0, 1, 2)
         row += 1
 
         spin_timeout = QDoubleSpinBox()
-        spin_timeout.setValue(4)
+        spin_timeout.setValue(0.1)
         # TODO: set sensible min/max values
         spin_timeout.setSingleStep(0.1)
-        spin_timeout.setMinimum(0.25)
-        spin_timeout.setMaximum(60)
+        spin_timeout.setMinimum(0.0)
+        spin_timeout.setMaximum(500.0)
         # https://youtrack.jetbrains.com/issue/PY-22908
         # Ignore those warnings for now.
         spin_timeout.valueChanged.connect(number_timeout)
         grid.addWidget(spin_timeout, row, 0, 1, 1)
-
-        spin_timeout_factor = QDoubleSpinBox()
-        # spin_timeout_factor.setValue(tmtcc_config.G_TC_SEND_TIMEOUT_FACTOR)
-        # TODO: set sensible min/max values
-        spin_timeout_factor.setSingleStep(0.1)
-        spin_timeout_factor.setMinimum(0.25)
-        spin_timeout_factor.setMaximum(10)
-        spin_timeout_factor.valueChanged.connect(number_timeout_factor)
-        grid.addWidget(spin_timeout_factor, row, 1, 1, 1)
         row += 1
         return row
 
+    def _tm_auto_connect_changed(self, box: QCheckBox):
+        if box.isChecked():
+            self._state.auto_connect_tm_listener = True
+        else:
+            self._state.auto_connect_tm_listener = False
+
     def __set_up_com_if_section(
-        self, grid: QGridLayout, row: int
+        self, conn_bttn_params: ConnectButtonParams, grid: QGridLayout, row: int
     ) -> (int, ConnectButtonWrapper):
         font = QFont()
         font.setBold(True)
@@ -609,11 +617,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         connect_button.setText("Connect")
         connect_button.setStyleSheet(CONNECT_BTTN_STYLE)
         conn_bttn_wrapper = ConnectButtonWrapper(
-            hook_obj=self._hook_obj,
             button=connect_button,
             args=ButtonArgs(self._state, self._thread_pool, self._shared_args),
-            connect_cb=self.__connected_com_if_cb,
-            disconnect_cb=self.__disconnect_com_if_cb,
+            bttn_params=conn_bttn_params,
         )
         grid.addWidget(connect_button, row, 0, 1, 2)
         row += 1

@@ -53,7 +53,7 @@ class CcsdsTmtcBackend(BackendBase):
             CoreServiceList.SERVICE_17.value, "0"
         )
         self.exit_on_com_if_init_failure = True
-        self._queue_wrapper = QueueWrapper(deque())
+        self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
             com_if=self.__com_if,
             tc_handler=tc_handler,
@@ -223,6 +223,7 @@ class CcsdsTmtcBackend(BackendBase):
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
         self.__tc_handler.feed_cb(self.current_proc_info, feed_wrapper)
+        self._queue_wrapper.info = self.current_proc_info
         if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_helper.queue_wrapper

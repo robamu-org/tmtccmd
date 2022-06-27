@@ -7,7 +7,7 @@ from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion, SetupWrapper
 from tmtccmd.core.ccsds_backend import BackendBase
-from tmtccmd.core.frontend_base import FrontendBase
+from tmtccmd.gui import FrontendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
@@ -137,7 +137,7 @@ def __start_tmtc_commander_qt_gui(
             sys.exit(1)
         app = QApplication([app_name])
         if tmtc_frontend is None:
-            from tmtccmd.core.frontend import TmTcFrontend
+            from tmtccmd.gui import TmTcFrontend
             from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 
             tmtc_frontend = TmTcFrontend(

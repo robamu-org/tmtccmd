@@ -10,17 +10,24 @@ from tmtccmd.tc import (
     WaitEntry,
     SpacePacketEntry,
     PacketDelayEntry,
+    TcProcedureBase,
 )
 
 
 class QueueWrapper:
-    def __init__(self, queue: Optional[QueueDequeT], inter_cmd_delay: float = 0.0):
+    def __init__(
+        self,
+        info: Optional[TcProcedureBase],
+        queue: Optional[QueueDequeT],
+        inter_cmd_delay: float = 0.0,
+    ):
+        self.info = info
         self.queue = queue
         self.inter_cmd_delay = inter_cmd_delay
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}(queue={self.queue!r}, "
+            f"{self.__class__.__name__}(info={self.info!r}, queue={self.queue!r}, "
             f"inter_cmd_delay={self.inter_cmd_delay!r})"
         )
 

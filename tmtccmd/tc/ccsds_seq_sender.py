@@ -91,6 +91,7 @@ class SequentialCcsdsSender:
         if not self.queue_wrapper.queue:
             if self.no_delay_remaining():
                 # cache this for last wait time
+                self._tc_handler.queue_finished_cb(self._queue_wrapper.info)
                 self._mode = SenderMode.DONE
                 return
         else:
