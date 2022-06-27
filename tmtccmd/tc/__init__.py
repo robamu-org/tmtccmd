@@ -83,12 +83,12 @@ class WaitEntry(TcQueueEntryBase):
 
 
 class PacketDelayEntry(TcQueueEntryBase):
-    def __init__(self, timeout_secs: float):
+    def __init__(self, delay_secs: float):
         super().__init__(TcQueueEntryType.PACKET_DELAY)
-        self.timeout_secs = timeout_secs
+        self.delay_secs = delay_secs
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.timeout_secs!r})"
+        return f"{self.__class__.__name__}({self.delay_secs!r})"
 
 
 class PacketCastWrapper:

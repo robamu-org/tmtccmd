@@ -40,19 +40,19 @@ class QueueHelper:
         return f"{self.__class__.__name__}(queue_wrapper={self.queue_wrapper!r})"
 
     def add_log_cmd(self, print_str: str):
-        self.queue_wrapper.queue.appendleft(LogQueueEntry(print_str))
+        self.queue_wrapper.queue.append(LogQueueEntry(print_str))
 
     def add_pus_tc(self, pus_tc: PusTelecommand):
-        self.queue_wrapper.queue.appendleft(PusTcEntry(pus_tc))
+        self.queue_wrapper.queue.append(PusTcEntry(pus_tc))
 
     def add_ccsds_tc(self, space_packet: SpacePacket):
-        self.queue_wrapper.queue.appendleft(SpacePacketEntry(space_packet))
+        self.queue_wrapper.queue.append(SpacePacketEntry(space_packet))
 
     def add_raw_tc(self, tc: bytes):
-        self.queue_wrapper.queue.appendleft(RawTcEntry(tc))
+        self.queue_wrapper.queue.append(RawTcEntry(tc))
 
     def add_wait(self, wait_secs: float):
-        self.queue_wrapper.queue.appendleft(WaitEntry(wait_secs))
+        self.queue_wrapper.queue.append(WaitEntry(wait_secs))
 
     def add_packet_delay(self, delay: float):
-        self.queue_wrapper.queue.appendleft(PacketDelayEntry(delay))
+        self.queue_wrapper.queue.append(PacketDelayEntry(delay))

@@ -37,7 +37,7 @@ class TestTcQueue(TestCase):
         print(queue_wrapper.queue)
         self.assertEqual(len(queue_wrapper.queue), 5)
 
-        pus_entry = queue_wrapper.queue.pop()
+        pus_entry = queue_wrapper.queue.popleft()
         self.assertTrue(pus_entry.is_tc())
         cast_wrapper = PacketCastWrapper(pus_entry)
         pus_entry = cast_wrapper.to_pus_tc_entry()
@@ -45,7 +45,7 @@ class TestTcQueue(TestCase):
         self.assertTrue(pus_entry)
         with self.assertRaises(TypeError):
             cast_wrapper.to_wait_entry()
-        log_entry = queue_wrapper.queue.pop()
+        log_entry = queue_wrapper.queue.popleft()
         self.assertFalse(log_entry.is_tc())
         cast_wrapper.base = log_entry
         log_entry = cast_wrapper.to_log_entry()
@@ -56,7 +56,7 @@ class TestTcQueue(TestCase):
         test_obj = eval(f"{log_entry!r}")
         self.assertEqual(test_obj.log_str, log_entry.log_str)
 
-        raw_entry = queue_wrapper.queue.pop()
+        raw_entry = queue_wrapper.queue.popleft()
         self.assertTrue(raw_entry.is_tc())
         cast_wrapper.base = raw_entry
         raw_entry = cast_wrapper.to_raw_tc_entry()
@@ -65,7 +65,7 @@ class TestTcQueue(TestCase):
         test_obj = eval(f"{raw_entry!r}")
         self.assertEqual(raw_entry.tc, test_obj.tc)
 
-        space_packet_entry = queue_wrapper.queue.pop()
+        space_packet_entry = queue_wrapper.queue.popleft()
         self.assertTrue(space_packet_entry.is_tc())
         cast_wrapper.base = space_packet_entry
         space_packet_entry = cast_wrapper.to_space_packet_entry()
@@ -76,4 +76,4 @@ class TestTcQueue(TestCase):
         self.assertFalse(packet_delay.is_tc())
         cast_wrapper.base = packet_delay
         packet_delay = cast_wrapper.to_packet_delay_entry()
-        self.assertEqual(packet_delay.timeout_secs, 3.0)
+        self.assertEqual(packet_delay.delay_secs, 3.0)

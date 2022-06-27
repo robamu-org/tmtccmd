@@ -96,8 +96,7 @@ class SequentialCcsdsSender:
                 self._mode = SenderMode.DONE
                 return
         else:
-            if self.no_delay_remaining():
-                self._send_next_telecommand()
+            self._check_next_telecommand()
         self.__print_rem_timeout(op_divider=self._op_divider)
         self._op_divider += 1
 
@@ -107,17 +106,27 @@ class SequentialCcsdsSender:
             if self._wait_cd.rem_time() > 0:
                 LOGGER.info(f"{rem_time:.01f} seconds wait time remaining")
 
-    def _send_next_telecommand(self):
+    def _check_next_telecommand(self):
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
-        next_queue_entry = self.queue_wrapper.queue.pop()
-        if self.check_queue_entry(next_queue_entry):
-            self._current_res.tc_sent = True
-            if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
-                self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)
-            self._send_cd.reset()
+        next_queue_entry = self.queue_wrapper.queue[0]
+        is_tc = self.handle_non_tc_entry(next_queue_entry)
+        call_send_cb = True
+        if is_tc:
+            if self.no_delay_remaining():
+                self._current_res.tc_sent = True
+            else:
+                self._current_res.tc_sent = False
+                call_send_cb = False
         else:
             self._current_res.tc_sent = False
-        self._tc_handler.send_cb(next_queue_entry, self._com_if)
+        if call_send_cb:
+            self._tc_handler.send_cb(next_queue_entry, self._com_if)
+            if is_tc:
+                if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
+                    self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)
+                else:
+                    self._send_cd.reset()
+            self.queue_wrapper.queue.popleft()
         if not self.queue_wrapper.queue and self.no_delay_remaining():
             self._mode = SenderMode.DONE
 
@@ -132,7 +141,7 @@ class SequentialCcsdsSender:
         """Internal wrapper API to allow easier testing"""
         return self._wait_cd.timed_out()
 
-    def check_queue_entry(self, queue_entry: TcQueueEntryBase) -> bool:
+    def handle_non_tc_entry(self, queue_entry: TcQueueEntryBase) -> bool:
         """
         Checks whether the entry in the pus_tc queue is a telecommand.
         :param queue_entry: Generic queue entry
@@ -151,17 +160,12 @@ class SequentialCcsdsSender:
             )
         elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:
             timeout_entry = cast_wrapper.to_packet_delay_entry()
-            self._send_cd.reset(new_timeout=timeout_entry.timeout_secs)
+            self._send_cd.reset(new_timeout=timeout_entry.delay_secs)
             self._current_res.longest_rem_delay = max(
                 self._wait_cd.rem_time(), self._send_cd.rem_time()
             )
-        is_tc = False
-        if (
-            queue_entry.etype == TcQueueEntryType.RAW_TC
-            or queue_entry.etype == TcQueueEntryType.PUS_TC
-            or queue_entry.etype == TcQueueEntryType.CCSDS_TC
-        ):
+        is_tc = queue_entry.is_tc()
+        if is_tc:
             self._last_tc = queue_entry
-            is_tc = True
         self._last_queue_entry = queue_entry
         return is_tc

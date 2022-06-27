@@ -11,62 +11,113 @@ from tmtccmd.tc.queue import QueueWrapper, QueueHelper
 
 
 class TestSendReceive(TestCase):
+    def setUp(self) -> None:
+        self.queue_wrapper = QueueWrapper(info=None, queue=deque())
+        self.queue_helper = QueueHelper(self.queue_wrapper)
+        self.tc_handler_mock = MagicMock(spec=TcHandlerBase)
+        self.com_if = MagicMock(spec=ComInterface)
+        self.seq_sender = SequentialCcsdsSender(
+            self.queue_wrapper, self.com_if, self.tc_handler_mock
+        )
+
     def test_basic(self):
-        queue_wrapper = QueueWrapper(info=None, queue=deque())
-        queue_helper = QueueHelper(queue_wrapper)
-        tc_handler_mock = MagicMock(spec=TcHandlerBase)
-        com_if = MagicMock(spec=ComInterface)
-        seq_sender = SequentialCcsdsSender(queue_wrapper, com_if, tc_handler_mock)
-        res = seq_sender.operation()
+        res = self.seq_sender.operation()
         # Queue is empty initially
         self.assertEqual(res.mode, SenderMode.DONE)
-        self.assertEqual(seq_sender.mode, SenderMode.DONE)
-        self.assertTrue(seq_sender.no_delay_remaining())
-        queue_helper.add_raw_tc(bytes([0, 1, 2]))
+        self.assertEqual(self.seq_sender.mode, SenderMode.DONE)
+        self.assertTrue(self.seq_sender.no_delay_remaining())
+        self.queue_helper.add_raw_tc(bytes([0, 1, 2]))
         # One queue entry which should be handled immediately
-        seq_sender.queue_wrapper = queue_wrapper
-        self.assertEqual(seq_sender.mode, SenderMode.BUSY)
+        self.seq_sender.queue_wrapper = self.queue_wrapper
+        self.assertEqual(self.seq_sender.mode, SenderMode.BUSY)
         # Is busy now, so does not accept new queue unless forced
         with self.assertRaises(ValueError):
-            seq_sender.queue_wrapper = queue_wrapper
-        seq_sender.operation()
-        tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
-        call_args = tc_handler_mock.send_cb.call_args
+            self.seq_sender.queue_wrapper = self.queue_wrapper
+        self.seq_sender.operation()
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
         self.assertEqual(call_args.args[0].tc, bytes([0, 1, 2]))
         # Queue should be empty now
-        tc_handler_mock.queue_finished_cb.assert_called_once()
-        self.assertFalse(queue_wrapper.queue)
-        self.assertEqual(seq_sender.mode, SenderMode.DONE)
-        queue_helper.add_raw_tc(bytes([3, 2, 1]))
-        seq_sender.resume()
-        self.assertEqual(seq_sender.mode, SenderMode.BUSY)
-        queue_helper.add_wait(0.01)
-        queue_helper.add_raw_tc(bytes([1, 2, 3]))
-        res = seq_sender.operation()
-        self.assertEqual(res.mode, SenderMode.BUSY)
+        self.tc_handler_mock.queue_finished_cb.assert_called_once()
+        self.assertFalse(self.queue_wrapper.queue)
+        self.assertEqual(self.seq_sender.mode, SenderMode.DONE)
+        self.queue_helper.add_raw_tc(bytes([3, 2, 1]))
+        self.seq_sender.resume()
+        self.assertEqual(self.seq_sender.mode, SenderMode.BUSY)
+        res = self.seq_sender.operation()
         self.assertTrue(res.tc_sent)
-        tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
-        call_args = tc_handler_mock.send_cb.call_args
+        call_args = self.tc_handler_mock.send_cb.call_args
         self.assertEqual(call_args.args[0].tc, bytes([3, 2, 1]))
-        queue_wrapper.inter_cmd_delay = 0.1
-        self.assertTrue(seq_sender.no_delay_remaining())
-        # 2 queue entries remaining
-        self.assertEqual(len(queue_helper.queue_wrapper.queue), 2)
-        res = seq_sender.operation()
-        self.assertFalse(res.tc_sent)
-        tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
-        call_args = tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args.args[0].wait_secs, 0.01)
-        # Now no TCs should be sent for 0.05 seconds
-        self.assertEqual(len(queue_helper.queue_wrapper.queue), 1)
+
+    def test_with_wait_entry(self):
+        wait_delay = 0.01
+        self.queue_helper.add_raw_tc(bytes([3, 2, 1]))
+        self.queue_helper.add_wait(wait_delay)
+        self.queue_helper.add_raw_tc(bytes([1, 2, 3]))
+        # Resume call necessary
+        self.assertEqual(self.seq_sender.mode, SenderMode.DONE)
+        self.seq_sender.resume()
+        res = self.seq_sender.operation()
         self.assertEqual(res.mode, SenderMode.BUSY)
-        # No TC sent, 10 ms delay
-        res = seq_sender.operation()
-        self.assertFalse(res.tc_sent)
-        self.assertEqual(len(queue_helper.queue_wrapper.queue), 1)
-        # After a delay, TC should be sent
-        time.sleep(0.01)
-        res = seq_sender.operation()
         self.assertTrue(res.tc_sent)
-        self.assertEqual(len(queue_helper.queue_wrapper.queue), 0)
-        # queue_helper.add_pus_tc(PusTelecommand(service=17, subservice=1))
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
+        self.assertEqual(call_args.args[0].tc, bytes([3, 2, 1]))
+        self.assertTrue(self.seq_sender.no_delay_remaining())
+        # 2 queue entries remaining
+        self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 2)
+        # Now the wait entry should be handled
+        res = self.seq_sender.operation()
+        self.assertFalse(self.seq_sender.no_delay_remaining())
+        self.assertFalse(res.tc_sent)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
+        self.assertEqual(call_args.args[0].wait_secs, wait_delay)
+        # Now no TCs should be sent for 10 ms
+        self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 1)
+        self.assertEqual(res.mode, SenderMode.BUSY)
+        res = self.seq_sender.operation()
+        self.assertFalse(res.tc_sent)
+        self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 1)
+        # After a delay, TC should be sent
+        time.sleep(wait_delay)
+        res = self.seq_sender.operation()
+        self.assertTrue(res.tc_sent)
+        self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 0)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
+        self.assertEqual(call_args.args[0].tc, bytes([1, 2, 3]))
+
+    def test_interpacket_delay(self):
+        inter_packet_delay = 0.01
+        ping_cmd = PusTelecommand(service=17, subservice=1)
+        self.queue_helper.add_pus_tc(ping_cmd)
+        self.queue_helper.add_packet_delay(inter_packet_delay)
+        self.queue_helper.add_ccsds_tc(ping_cmd.to_space_packet())
+        self.queue_helper.add_raw_tc(bytes([0, 1, 2]))
+        # Send first TC, assert delay of 10 ms, then send last packet
+        res = self.seq_sender.operation()
+        self.assertEqual(res.longest_rem_delay, 0.0)
+        self.assertTrue(res.tc_sent)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
+        self.assertEqual(call_args.args[0].pus_tc.pack(), ping_cmd.pack())
+        res = self.seq_sender.operation()
+        self.assertFalse(res.tc_sent)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        call_args = self.tc_handler_mock.send_cb.call_args
+        self.assertEqual(call_args.args[0].delay_secs, inter_packet_delay)
+        self.assertFalse(res.longest_rem_delay > 0.08)
+        res = self.seq_sender.operation()
+        # No TC sent
+        self.assertFalse(res.tc_sent)
+        self.assertEqual(len(self.queue_wrapper.queue), 2)
+        time.sleep(inter_packet_delay)
+        res = self.seq_sender.operation()
+        # TC sent
+        self.assertTrue(res.tc_sent)
+        self.assertEqual(len(self.queue_wrapper.queue), 1)
+        res = self.seq_sender.operation()
+        # No TC sent, delay after each packet
+        self.assertFalse(res.tc_sent)
+        self.assertEqual(len(self.queue_wrapper.queue), 1)
