@@ -28,8 +28,6 @@ class CcsdsTmListener:
         tm_handler: CcsdsTmHandler,
     ):
         """Initiate a TM listener.
-        :param com_if: Type of communication interface,
-            e.g. a serial or ethernet interface
         :param tm_handler: If valid CCSDS packets are found, they are dispatched to
             the passed handler
         """
