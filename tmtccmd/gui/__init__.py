@@ -7,7 +7,6 @@ import sys
 import threading
 import time
 import webbrowser
-from abc import abstractmethod
 from multiprocessing import Process
 from typing import Union, Callable, Optional
 
@@ -50,15 +49,6 @@ import tmtccmd.config as config_module
 from tmtccmd.tc import DefaultProcedureInfo
 
 LOGGER = get_console_logger()
-
-
-class FrontendBase:
-    @abstractmethod
-    def start(self, args: any):
-        """
-        Start the frontend.
-        :return:
-        """
 
 
 CONNECT_BTTN_STYLE = (

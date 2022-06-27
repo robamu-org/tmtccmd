@@ -4,7 +4,6 @@ import threading
 from collections import deque
 from typing import Optional
 
-from tmtccmd.config import CoreServiceList
 from tmtccmd.core import (
     BackendBase,
     BackendState,
@@ -13,8 +12,9 @@ from tmtccmd.core import (
     TcMode,
     TmMode,
 )
-from tmtccmd.tc import DefaultProcedureInfo, TcProcedureBase
+from tmtccmd.tc import TcProcedureBase
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
+from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.ccsds_seq_sender import (
@@ -38,7 +38,6 @@ class CcsdsTmtcBackend(BackendBase):
         tm_listener: CcsdsTmListener,
         tc_handler: TcHandlerBase,
     ):
-        from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 
         self._state = BackendState()
         self._state.mode_wrapper.tc_mode = tc_mode
@@ -58,6 +57,10 @@ class CcsdsTmtcBackend(BackendBase):
             queue_wrapper=self._queue_wrapper,
         )
         self._backend_lock: Optional[threading.Lock] = None
+
+    def register_keyboard_interrupt_handler(self):
+        """Register a keyboard interrupt handler which closes the COM interface and prints
+        a small message"""
         atexit.register(keyboard_interrupt_handler, self)
 
     @property

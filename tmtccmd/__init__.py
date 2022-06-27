@@ -1,13 +1,13 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
 import sys
 import os
-from typing import Union, cast
+from typing import Union, cast, Optional
 
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
+from tmtccmd.core.base import FrontendBase
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion, SetupWrapper
 from tmtccmd.core.ccsds_backend import BackendBase
-from tmtccmd.gui import FrontendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase
 from tmtccmd.ccsds.handler import CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
@@ -60,7 +60,7 @@ def setup(setup_args: SetupWrapper):
 def start(
     tmtc_backend: BackendBase,
     hook_obj: TmTcCfgHookBase,
-    tmtc_frontend: Union[FrontendBase, None] = None,
+    tmtc_frontend: Optional[FrontendBase] = None,
     app_name: str = "TMTC Commander",
 ):
     """This is the primary function to run the TMTC commander. Users should call this function to
