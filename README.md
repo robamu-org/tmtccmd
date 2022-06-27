@@ -1,4 +1,4 @@
-<p align="center"> <img src="docs/logo_tmtccmd_smaller.png" width="40%"> </p>
+<p align="center"> <img src="misc/logo.png" width="40%"> </p>
 
 TMTC Commander Core [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 [![package](https://github.com/spacefisch/tmtccmd/actions/workflows/package.yml/badge.svg)](https://github.com/spacefisch/tmtccmd/actions/workflows/package.yml)
