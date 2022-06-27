@@ -269,7 +269,7 @@ def args_to_params(
     else:
         params.tc_params.delay = pargs.delay
     if pargs.listener is None:
-        args.listener = False
+        params.backend_params.listener = False
     else:
         params.backend_params.listener = pargs.listener
 
