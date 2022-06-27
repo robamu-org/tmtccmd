@@ -11,6 +11,11 @@ from tmtccmd.config.globals import (
     CoreModeList,
     CoreGlobalIds,
 )
+from tmtccmd.core.globals_manager import (
+    lock_global_pool,
+    unlock_global_pool,
+    set_lock_timeout,
+)
 
 
 class TestGlobalManager(TestCase):
@@ -40,3 +45,6 @@ class TestGlobalManager(TestCase):
         result = check_and_set_core_mode_arg(mode_arg="seqcmd")
         self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.ONE_QUEUE_MODE)
         self.assertTrue(result == CoreModeList.ONE_QUEUE_MODE)
+        lock_global_pool()
+        unlock_global_pool()
+        set_lock_timeout(0.5)

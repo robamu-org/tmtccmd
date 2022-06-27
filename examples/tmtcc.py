@@ -18,7 +18,7 @@ from tmtccmd.config import (
     CoreServiceList,
 )
 from tmtccmd.config import ArgParserWrapper, SetupWrapper
-from tmtccmd.core import BackendController, Request
+from tmtccmd.core import BackendController, BackendRequest
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
@@ -156,16 +156,16 @@ def main():
     try:
         while True:
             state = tmtc_backend.periodic_op(ctrl)
-            if state.request == Request.TERMINATION_NO_ERROR:
+            if state.request == BackendRequest.TERMINATION_NO_ERROR:
                 sys.exit(0)
-            elif state.request == Request.DELAY_IDLE:
+            elif state.request == BackendRequest.DELAY_IDLE:
                 LOGGER.info("TMTC Client in IDLE mode")
                 time.sleep(3.0)
-            elif state.request == Request.DELAY_LISTENER:
+            elif state.request == BackendRequest.DELAY_LISTENER:
                 time.sleep(0.8)
-            elif state.request == Request.DELAY_CUSTOM:
+            elif state.request == BackendRequest.DELAY_CUSTOM:
                 time.sleep(state.next_delay)
-            elif state.request == Request.CALL_NEXT:
+            elif state.request == BackendRequest.CALL_NEXT:
                 pass
     except KeyboardInterrupt:
         sys.exit(0)

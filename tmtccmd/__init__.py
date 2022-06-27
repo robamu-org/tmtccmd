@@ -102,6 +102,7 @@ def __assign_tmtc_commander_hooks(hook_object: TmTcCfgHookBase):
     if hook_object is None:
         raise ValueError
     # Insert hook object handle into global dictionary so it can be used by the TMTC commander
+    # TODO: Remove globals altogether
     update_global(CoreGlobalIds.TMTC_HOOK, hook_object)
 
 
@@ -112,10 +113,9 @@ def init_printout(use_gui: bool):
         print(f"-- tmtccmd v{version()} CLI Mode --")
 
 
+# TODO: Remove globals altogether
 def __handle_cli_args_and_globals(setup_args: SetupWrapper):
-    LOGGER.info("Setting up pre-globals..")
     set_default_globals_pre_args_parsing(setup_args.params.apid)
-    LOGGER.info("Setting up post-globals..")
 
 
 def __start_tmtc_commander_cli(tmtc_backend: BackendBase):

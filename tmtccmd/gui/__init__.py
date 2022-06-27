@@ -37,7 +37,7 @@ from PyQt5.QtCore import (
 )
 
 from tmtccmd.config.globals import CoreGlobalIds
-from tmtccmd.core import BackendController, TmMode, TcMode, Request
+from tmtccmd.core import BackendController, TmMode, TcMode, BackendRequest
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import (
     TmTcCfgHookBase,
@@ -195,7 +195,7 @@ class FrontendWorker(QRunnable):
             self._shared.backend.tc_operation()
             self._update_backend_mode()
             state = self._shared.backend.state
-            if state.request == Request.TERMINATION_NO_ERROR:
+            if state.request == BackendRequest.TERMINATION_NO_ERROR:
                 self._shared.tc_lock.release()
                 self._shared.com_if_ref_tracker.remove_user()
                 with self._shared.state_lock:
@@ -206,10 +206,10 @@ class FrontendWorker(QRunnable):
                         self._locals.op_args()
                 self._finish_success()
                 return False
-            elif state.request == Request.DELAY_CUSTOM:
+            elif state.request == BackendRequest.DELAY_CUSTOM:
                 self._shared.tc_lock.release()
                 time.sleep(state.next_delay)
-            elif state.request == Request.CALL_NEXT:
+            elif state.request == BackendRequest.CALL_NEXT:
                 self._shared.tc_lock.release()
         elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
             if not self._stop_signal:

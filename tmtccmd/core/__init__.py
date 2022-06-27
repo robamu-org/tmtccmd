@@ -24,7 +24,7 @@ class ModeWrapper:
         return f"{self.__class__.__name__}: tc_mode={self.tc_mode!r}, tm_mode={self.tm_mode!r}"
 
 
-class Request(enum.IntEnum):
+class BackendRequest(enum.IntEnum):
     NONE = 0
     TERMINATION_NO_ERROR = 1
     DELAY_IDLE = 2
@@ -35,7 +35,9 @@ class Request(enum.IntEnum):
 
 class BackendState:
     def __init__(
-        self, mode_wrapper: ModeWrapper = ModeWrapper(), req: Request = Request.NONE
+        self,
+        mode_wrapper: ModeWrapper = ModeWrapper(),
+        req: BackendRequest = BackendRequest.NONE,
     ):
         self._mode_wrapper = mode_wrapper
         self._req = req

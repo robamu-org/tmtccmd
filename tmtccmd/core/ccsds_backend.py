@@ -8,12 +8,12 @@ from tmtccmd.config import CoreServiceList
 from tmtccmd.core import (
     BackendBase,
     BackendState,
-    Request,
+    BackendRequest,
     BackendController,
     TcMode,
     TmMode,
 )
-from tmtccmd.tc import DefaultProcedureInfo
+from tmtccmd.tc import DefaultProcedureInfo, TcProcedureBase
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger
@@ -49,9 +49,7 @@ class CcsdsTmtcBackend(BackendBase):
 
         self.__com_if = com_if
         self.__tm_listener = tm_listener
-        self._current_proc_info = DefaultProcedureInfo(
-            CoreServiceList.SERVICE_17.value, "0"
-        )
+        self._current_procedure: Optional[TcProcedureBase] = None
         self.exit_on_com_if_init_failure = True
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
@@ -113,19 +111,15 @@ class CcsdsTmtcBackend(BackendBase):
         return self.__com_if_active
 
     @property
-    def current_proc_info(self) -> DefaultProcedureInfo:
-        return self._current_proc_info
+    def current_proc_info(self) -> TcProcedureBase:
+        return self._current_procedure
 
     @current_proc_info.setter
-    def current_proc_info(self, proc_info: DefaultProcedureInfo):
-        self._current_proc_info = proc_info
+    def current_proc_info(self, proc_info: TcProcedureBase):
+        self._current_procedure = proc_info
 
-    @staticmethod
-    def start_handler(executed_handler, ctrl: BackendController):
-        if not isinstance(executed_handler, CcsdsTmtcBackend):
-            LOGGER.error("Unexpected argument, should be TmTcHandler!")
-            sys.exit(1)
-        executed_handler.open_com_if()
+    def start(self):
+        self.open_com_if()
 
     def __listener_io_error_handler(self, ctx: str):
         LOGGER.error(f"Communication Interface could not be {ctx}")
@@ -161,15 +155,8 @@ class CcsdsTmtcBackend(BackendBase):
         :raises KeyboardInterrupt: Yields info output and then propagates the exception
         :raises IOError: Yields informative output and propagates exception
         :"""
-        try:
-            self.default_operation()
-            return self._state
-        except KeyboardInterrupt as e:
-            LOGGER.info("Keyboard Interrupt")
-            raise e
-        except IOError as e:
-            LOGGER.exception("IO Error occured")
-            raise e
+        self.default_operation()
+        return self._state
 
     def default_operation(self):
         """Command handling."""
@@ -179,24 +166,24 @@ class CcsdsTmtcBackend(BackendBase):
 
     def mode_to_req(self):
         if self.tc_mode == TcMode.IDLE and self.tm_mode == TmMode.IDLE:
-            self._state._req = Request.DELAY_IDLE
+            self._state._req = BackendRequest.DELAY_IDLE
         elif self.tm_mode == TmMode.LISTENER and self.tc_mode == TcMode.IDLE:
-            self._state._req = Request.DELAY_LISTENER
+            self._state._req = BackendRequest.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
                 self.tc_mode = TcMode.IDLE
-                self._state._req = Request.TERMINATION_NO_ERROR
+                self._state._req = BackendRequest.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
                 self._state.mode_wrapper.tc_mode = TcMode.IDLE
-                self._state._req = Request.CALL_NEXT
+                self._state._req = BackendRequest.CALL_NEXT
         else:
             if self._state.sender_res.longest_rem_delay > 0:
                 self._state._recommended_delay = (
                     self._state.sender_res.longest_rem_delay
                 )
-                self._state._req = Request.DELAY_CUSTOM
+                self._state._req = BackendRequest.DELAY_CUSTOM
             else:
-                self._state._req = Request.CALL_NEXT
+                self._state._req = BackendRequest.CALL_NEXT
 
     def poll_tm(self):
         """Poll TM, irrespective of current TM mode"""
