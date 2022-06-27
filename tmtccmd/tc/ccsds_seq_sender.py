@@ -160,6 +160,7 @@ class SequentialCcsdsSender:
             )
         elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:
             timeout_entry = cast_wrapper.to_packet_delay_entry()
+            self.queue_wrapper.inter_cmd_delay = timeout_entry.delay_secs
             self._send_cd.reset(new_timeout=timeout_entry.delay_secs)
             self._current_res.longest_rem_delay = max(
                 self._wait_cd.rem_time(), self._send_cd.rem_time()
