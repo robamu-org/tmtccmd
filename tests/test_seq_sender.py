@@ -10,7 +10,7 @@ from tmtccmd.tc.queue import QueueWrapper, QueueHelper
 
 class TestSendReceive(TestCase):
     def test_basic(self):
-        queue_wrapper = QueueWrapper(queue=deque())
+        queue_wrapper = QueueWrapper(info=None, queue=deque())
         queue_helper = QueueHelper(queue_wrapper)
         tc_handler_mock = MagicMock(spec=TcHandlerBase)
         com_if = MagicMock(spec=ComInterface)
@@ -31,7 +31,7 @@ class TestSendReceive(TestCase):
         tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
         call_args = tc_handler_mock.send_cb.call_args
         print(call_args)
-        self.assertEqual(call_args._args[0].tc, bytes([0, 1, 2]))
+        self.assertEqual(call_args.args[0].tc, bytes([0, 1, 2]))
         # Queue should be empty now
         self.assertFalse(queue_wrapper.queue)
         self.assertEqual(seq_sender.mode, SenderMode.DONE)
@@ -44,4 +44,4 @@ class TestSendReceive(TestCase):
         self.assertEqual(res.mode, SenderMode.BUSY)
         tc_handler_mock.send_cb.assert_called_with(ANY, com_if)
         call_args = tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args._args[0].tc, bytes([3, 2, 1]))
+        self.assertEqual(call_args.args[0].tc, bytes([3, 2, 1]))

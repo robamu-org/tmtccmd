@@ -14,7 +14,7 @@ from tmtccmd.tc.queue import QueueWrapper, QueueHelper
 
 class TestTcQueue(TestCase):
     def test_queue(self):
-        queue_wrapper = QueueWrapper(queue=deque())
+        queue_wrapper = QueueWrapper(info=None, queue=deque())
         self.assertEqual(queue_wrapper.queue, deque())
         queue_helper = QueueHelper(queue_wrapper)
         queue_helper.add_wait(2.0)
