@@ -184,7 +184,7 @@ class CcsdsTmtcBackend(BackendBase):
             self._state._req = Request.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
-                self._state.mode_wrapper.tc_mode = TcMode.IDLE
+                self.tc_mode = TcMode.IDLE
                 self._state._req = Request.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
                 self._state.mode_wrapper.tc_mode = TcMode.IDLE
@@ -194,9 +194,9 @@ class CcsdsTmtcBackend(BackendBase):
                 self._state._recommended_delay = (
                     self._state.sender_res.longest_rem_delay
                 )
-                self._state._request = Request.DELAY_CUSTOM
+                self._state._req = Request.DELAY_CUSTOM
             else:
-                self._state._request = Request.CALL_NEXT
+                self._state._req = Request.CALL_NEXT
 
     def poll_tm(self):
         """Poll TM, irrespective of current TM mode"""

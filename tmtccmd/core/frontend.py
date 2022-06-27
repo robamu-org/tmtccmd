@@ -8,7 +8,7 @@ import threading
 import time
 import webbrowser
 from multiprocessing import Process
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -166,9 +166,6 @@ class FrontendWorker(QRunnable):
                 self._shared.backend.tc_mode = TcMode.ONE_QUEUE
         elif self._locals.op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
             self._shared.com_if_ref_tracker.add_user()
-            with self._shared.state_lock:
-                if not self._shared.com_if_used:
-                    self._shared.com_if_used = True
             self._shared.backend.tm_mode = TmMode.LISTENER
         return True
 
@@ -198,8 +195,8 @@ class FrontendWorker(QRunnable):
                 break
             elif op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
                 self._shared.tc_lock.acquire()
-                self._shared.backend.tc_mode = TcMode.ONE_QUEUE
                 self._shared.backend.tc_operation()
+                self._update_backend_mode()
                 state = self._shared.backend.state
                 if state.request == Request.TERMINATION_NO_ERROR:
                     self._shared.tc_lock.release()
@@ -208,7 +205,7 @@ class FrontendWorker(QRunnable):
                     break
                 elif state.request == Request.DELAY_CUSTOM:
                     self._shared.tc_lock.release()
-                    self._update_backend_mode()
+
                     time.sleep(state.next_delay)
                 elif state.request == Request.CALL_NEXT:
                     self._shared.tc_lock.release()
@@ -329,6 +326,34 @@ class ConnectButtonWrapper:
         LOGGER.info("Disconnected")
 
 
+class TmButtonWrapper:
+    def __init__(self, button: QPushButton, args: ButtonArgs):
+        self.button = button
+        self.args = args
+        self.worker: Optional[QRunnable] = None
+        self._listening = False
+        self._next_listener_state = False
+        self.button.clicked.connect(self.button_op)
+
+    def button_op(self):
+        if not self._listening:
+            self.worker = FrontendWorker(
+                LocalArgs(WorkerOperationsCodes.LISTEN_FOR_TM, 0.4), self.args.shared
+            )
+            self._next_listener_state = True
+
+            self.args.pool.start(self.worker)
+        else:
+            self.worker.signals.stop.emit()
+        self.worker.signals.finished.connect(self.button_op_done)
+
+    def button_op_done(self):
+        if self._next_listener_state:
+            self._listening = True
+        else:
+            self._listening = False
+
+
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(
         self, hook_obj: TmTcCfgHookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str
@@ -399,12 +424,18 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(self.__command_button, row, 0, 1, 2)
         row += 1
 
-        self.__listener_button = QPushButton()
-        self.__listener_button.setText("Activate TM listener")
-        self.__listener_button.setStyleSheet(COMMAND_BUTTON_STYLE)
-        self.__listener_button.clicked.connect(self.__start_listener)
-        self.__listener_button.setEnabled(False)
-        grid.addWidget(self.__listener_button, row, 0, 1, 2)
+        listener_button = QPushButton()
+        listener_button.setText("Activate TM listener")
+        listener_button.setStyleSheet(COMMAND_BUTTON_STYLE)
+        listener_button.setEnabled(False)
+        self.__tm_button_wrapper = TmButtonWrapper(
+            button=listener_button,
+            args=ButtonArgs(
+                state=self._state, pool=self._thread_pool, shared=self._shared_args
+            ),
+        )
+
+        grid.addWidget(listener_button, row, 0, 1, 2)
         row += 1
         self.show()
 
@@ -417,17 +448,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._shared_args.backend.current_proc_info = DefaultProcedureInfo(
             self._current_service, self._current_op_code
         )
-        self._shared_args.backend.tc_mode = TcMode.ONE_QUEUE
         worker = FrontendWorker(
             LocalArgs(WorkerOperationsCodes.ONE_QUEUE_MODE, None), self._shared_args
         )
-        # We need to call this stop signal on a button press..
         # worker.signals.stop.emit()
         worker.signals.finished.connect(self.__finish_seq_cmd_op)
         self._thread_pool.start(worker)
-
-    def __start_listener(self):
-        pass
 
     def __finish_seq_cmd_op(self):
         self.__enable_send_button()
@@ -661,10 +687,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__command_button.setDisabled(True)
 
     def __enable_listener_button(self):
-        self.__listener_button.setEnabled(True)
+        self.__tm_button_wrapper.button.setEnabled(True)
 
     def __disable_listener_button(self):
-        self.__listener_button.setDisabled(True)
+        self.__tm_button_wrapper.button.setDisabled(True)
 
     def __get_send_button(self):
         return self.__command_button.isEnabled()
