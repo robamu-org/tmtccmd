@@ -35,6 +35,7 @@ from PyQt5.QtCore import (
     QThreadPool,
 )
 
+from tmtccmd.core.base import FrontendBase
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core import BackendController, TmMode, TcMode, BackendRequest
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
