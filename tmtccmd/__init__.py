@@ -1,6 +1,7 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
 import sys
 import os
+from datetime import timedelta
 from typing import Union, cast, Optional
 
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
@@ -175,7 +176,9 @@ def create_default_tmtc_backend(
         tc_mode=mode_wrapper.tc_mode,
         tm_mode=mode_wrapper.tm_mode,
     )
-    tmtc_backend.inter_cmd_delay = setup_wrapper.params.tc_params.delay
+    tmtc_backend.inter_cmd_delay = timedelta(
+        seconds=setup_wrapper.params.tc_params.delay
+    )
     tmtc_backend.current_proc_info = DefaultProcedureInfo(
         setup_wrapper.params.def_proc_args.service,
         setup_wrapper.params.def_proc_args.op_code,

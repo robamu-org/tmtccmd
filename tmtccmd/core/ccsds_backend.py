@@ -2,6 +2,7 @@ import atexit
 import sys
 import threading
 from collections import deque
+from datetime import timedelta
 from typing import Optional
 
 from tmtccmd.core import (
@@ -88,7 +89,7 @@ class CcsdsTmtcBackend(BackendBase):
         return self._queue_wrapper.inter_cmd_delay
 
     @inter_cmd_delay.setter
-    def inter_cmd_delay(self, delay: float):
+    def inter_cmd_delay(self, delay: timedelta):
         self._queue_wrapper.inter_cmd_delay = delay
 
     @tc_mode.setter
@@ -180,7 +181,7 @@ class CcsdsTmtcBackend(BackendBase):
                 self._state.mode_wrapper.tc_mode = TcMode.IDLE
                 self._state._req = BackendRequest.CALL_NEXT
         else:
-            if self._state.sender_res.longest_rem_delay > 0:
+            if self._state.sender_res.longest_rem_delay.total_seconds() * 1000 > 0:
                 self._state._recommended_delay = (
                     self._state.sender_res.longest_rem_delay
                 )
