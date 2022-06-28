@@ -214,7 +214,6 @@ class CcsdsTmtcBackend(BackendBase):
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
         self.__tc_handler.feed_cb(self.current_proc_info, feed_wrapper)
-        self._queue_wrapper.info = self.current_proc_info
         if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_helper.queue_wrapper
