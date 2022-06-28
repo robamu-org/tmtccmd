@@ -1,6 +1,4 @@
-"""
-Argument parser modules for the TMTC commander core
-"""
+"""Argument parser module"""
 import argparse
 import sys
 from typing import Optional, List
@@ -224,12 +222,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         f"{CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]}: "
         f"Multi Queue and Interactive Command Mode\n"
     )
-    gui_help = (
-        f"{CoreModeList.GUI_MODE} or "
-        f"{CoreModeStrings[CoreModeList.GUI_MODE]}: "
-        f"GUI mode\n"
-    )
-    help_text += one_q + listener_help + gui_help + multi_q
+    help_text += one_q + listener_help + multi_q
     arg_parser.add_argument(
         "-m",
         "--mode",

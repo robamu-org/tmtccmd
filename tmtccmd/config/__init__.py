@@ -58,13 +58,18 @@ CORE_COM_IF_DICT = {
 
 # Mode options, set by args parser
 class CoreModeList(enum.IntEnum):
-    # This mode is optimized to handle one queue. It will configure the backend to request
-    # program termination upon finishing the queue handling. This is also the appropriate solution
-    # for single commands where the queue only consists of one telecommand.
+    """These are the core modes which will be translated to different TC and TM modes
+    for the CCSDS backend
+
+    1. ONE_QUEUE_MODE: This mode is optimized to handle one queue. It will configure the backend
+       to request program termination upon finishing the queue handling. This is also the
+       appropriate solution for single commands where the queue only consists of one telecommand.
+    2. LISTENER_MODE: Only listen to TM
+    3. MULTI_INTERACTIVE_QUEUE_MODE:
+    """
+    #
     ONE_QUEUE_MODE = 0
     LISTENER_MODE = 1
-    # Interactive GUI mode which allows sending and handling procedures interactively
-    GUI_MODE = 2
     # This mode is optimized for the handling of multiple queues. It will configure the backend
     # to request additional queues or a mode change from the user instead of requesting program
     # termination
@@ -77,8 +82,7 @@ CoreModeStrings = {
     CoreModeList.ONE_QUEUE_MODE: "one-q",
     CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE: "multi-q",
     CoreModeList.LISTENER_MODE: "listener",
-    CoreModeList.IDLE: "idle",
-    CoreModeList.GUI_MODE: "gui",
+    CoreModeList.IDLE: "idle"
 }
 
 
@@ -92,9 +96,6 @@ def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
     elif mode == CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]:
         mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
         mode_wrapper.tm_mode = TmMode.LISTENER
-    elif mode == CoreModeStrings[CoreModeList.GUI_MODE]:
-        mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
-        mode_wrapper.tm_mode = TmMode.IDLE
 
 
 class CoreServiceList(enum.Enum):
@@ -332,9 +333,14 @@ class ArgParserWrapper:
     def set_params_with_prompts(self, params: SetupParams):
         if not self._parse_was_called:
             raise ValueError("Call the parse function first")
-        args_to_params(
-            pargs=self.args_raw, params=params, hook_obj=self.hook_obj, use_prompts=True
-        )
+        try:
+            args_to_params(
+                pargs=self.args_raw, params=params, hook_obj=self.hook_obj, use_prompts=True
+            )
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt(
+                "Keyboard interrupt while converting CLI args to application parameters"
+            )
 
 
 class SetupWrapper:
