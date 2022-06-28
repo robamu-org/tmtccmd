@@ -33,7 +33,7 @@ class DefaultProcedureInfo(TcProcedureBase):
         self.op_code = op_code
 
     def __repr__(self):
-        return f"CmdInfo(service={self.service!r}, op_code={self.op_code!r}"
+        return f"CmdInfo(service={self.service!r}, op_code={self.op_code!r})"
 
 
 class ProcedureCastWrapper:

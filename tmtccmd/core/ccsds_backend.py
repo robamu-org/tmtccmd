@@ -49,7 +49,6 @@ class CcsdsTmtcBackend(BackendBase):
 
         self.__com_if = com_if
         self.__tm_listener = tm_listener
-        self._current_procedure: Optional[TcProcedureBase] = None
         self.exit_on_com_if_init_failure = True
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
@@ -116,11 +115,11 @@ class CcsdsTmtcBackend(BackendBase):
 
     @property
     def current_proc_info(self) -> TcProcedureBase:
-        return self._current_procedure
+        return self._queue_wrapper.info
 
     @current_proc_info.setter
     def current_proc_info(self, proc_info: TcProcedureBase):
-        self._current_procedure = proc_info
+        self._queue_wrapper.info = proc_info
 
     def start(self):
         self.open_com_if()
@@ -213,7 +212,7 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
-        self.__tc_handler.feed_cb(self.current_proc_info, feed_wrapper)
+        self.__tc_handler.feed_cb(self._queue_wrapper.info, feed_wrapper)
         if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_helper.queue_wrapper
