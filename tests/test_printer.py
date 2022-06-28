@@ -47,5 +47,5 @@ class TestPrintersLoggers(TestCase):
 
     def tearDown(self) -> None:
         """Reset the hook object"""
-        if self.regular_file_name.exists():
-            os.remove(self.regular_file_name)
+        # if self.regular_file_name.exists():
+            # os.remove(self.regular_file_name)
