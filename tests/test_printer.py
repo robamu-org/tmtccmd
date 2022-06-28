@@ -31,7 +31,7 @@ class TestPrintersLoggers(TestCase):
 
     def test_pus_loggers(self):
         regular_tmtc_logger = RegularTmtcLogWrapper(self.regular_file_name)
-        raw_tmtc_log = RawTmtcRotatingLogWrapper(max_bytes=2048, backup_count=10)
+        raw_tmtc_log = RawTmtcRotatingLogWrapper(max_bytes=1024, backup_count=10)
         pus_tc = pack_service_17_ping_command(ssc=0)
         raw_tmtc_log.log_tc(pus_tc)
         pus_tm = Service1TmExtended(
