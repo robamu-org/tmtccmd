@@ -16,14 +16,13 @@ from tmtccmd.core import ModeWrapper
 from tmtccmd.tc import DefaultProcedureInfo
 from tmtccmd.tc.handler import TcHandlerBase
 
-VERSION_NAME = "tmtccmd"
-VERSION_MAJOR = 2
-VERSION_MINOR = 2
-VERSION_REVISION = 2
+VERSION_MAJOR = 3
+VERSION_MINOR = 0
+VERSION_REVISION = 0
 
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
-__version__ = "2.2.2"
+__version__ = "3.0.0"
 
 
 LOGGER = get_console_logger()
