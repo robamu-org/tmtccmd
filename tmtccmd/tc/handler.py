@@ -33,14 +33,14 @@ class TcHandlerBase:
         In general, an implementation will perform the following steps:
 
         1. Determine the concrete queue entry. The
-           :py:class:`tmtccmd.tc.definition.PacketCastWrapper` helper class can be used to do this
+           :py:class:`tmtccmd.tc.PacketCastWrapper` helper class can be used to do this
         2. If applicable, retrieve the raw data to send from the queue entry and send it using
            the generic communication interface
 
         :param tc_queue_entry: Queue entry base type. The user can cast this back to the concrete
             type or just use duck typing if the concrete type is known
         :param com_if: Communication interface. Will generally be used to send the packet,
-            using the py:meth:`tmtccmd.com_if.CommunicationInterface.send` method
+            using the py:meth:`tmtccmd.com_if.ComInterface.send` method
         """
         pass
 
@@ -55,7 +55,7 @@ class TcHandlerBase:
         parameter like the inter packet delay.
 
         :param info: Generic base class for a procedure. For example, the
-            py:class:`tmtccmd.tc.definitions.DefaultProcedureInfo` class uses a service string
+            py:class:`tmtccmd.tc.DefaultProcedureInfo` class uses a service string
             and op code string which can be used in the user code to select between different
             telecommand queues being packed
         :param wrapper: Wrapper type around the queue. It also contains a queue helper class

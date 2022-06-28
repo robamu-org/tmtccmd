@@ -44,7 +44,7 @@ class TcHandlerMock(TcHandlerBase):
             wrapper.queue_helper.add_pus_tc(PusTelecommand(service=17, subservice=1))
 
 
-class TestCore(TestCase):
+class TestBackend(TestCase):
     def test_backend(self):
         com_if = DummyComIF()
         tm_listener = MagicMock(specs=CcsdsTmListener)
@@ -91,5 +91,7 @@ class TestCore(TestCase):
         res = backend.periodic_op(ctrl)
         self.assertEqual(res.request, BackendRequest.TERMINATION_NO_ERROR)
         self.assertEqual(res.sender_res.mode, SenderMode.DONE)
+        backend.tc_mode = TcMode.ONE_QUEUE
         backend.current_proc_info = DefaultProcedureInfo(service="17", op_code="0")
         res = backend.periodic_op(ctrl)
+        self.assertEqual(res.request, BackendRequest.TERMINATION_NO_ERROR)

@@ -1,6 +1,5 @@
 import atexit
 import sys
-import threading
 from collections import deque
 from datetime import timedelta
 from typing import Optional
@@ -28,6 +27,10 @@ from tmtccmd.com_if import ComInterface
 LOGGER = get_console_logger()
 
 
+class NoValidProcedureSet(Exception):
+    pass
+
+
 class CcsdsTmtcBackend(BackendBase):
     """This is the primary class which handles TMTC reception and sending"""
 
@@ -39,24 +42,22 @@ class CcsdsTmtcBackend(BackendBase):
         tm_listener: CcsdsTmListener,
         tc_handler: TcHandlerBase,
     ):
-
         self._state = BackendState()
         self._state.mode_wrapper.tc_mode = tc_mode
         self._state.mode_wrapper.tm_mode = tm_mode
 
-        self.__com_if_active = False
-        self.__tc_handler = tc_handler
+        self._com_if_active = False
+        self._tc_handler = tc_handler
 
-        self.__com_if = com_if
-        self.__tm_listener = tm_listener
+        self._com_if = com_if
+        self._tm_listener = tm_listener
         self.exit_on_com_if_init_failure = True
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
-            com_if=self.__com_if,
+            com_if=self._com_if,
             tc_handler=tc_handler,
             queue_wrapper=self._queue_wrapper,
         )
-        self._backend_lock: Optional[threading.Lock] = None
 
     def register_keyboard_interrupt_handler(self):
         """Register a keyboard interrupt handler which closes the COM interface and prints
@@ -65,15 +66,19 @@ class CcsdsTmtcBackend(BackendBase):
 
     @property
     def com_if_id(self):
-        return self.__com_if.get_id()
+        return self._com_if.get_id()
 
     @property
     def com_if(self) -> ComInterface:
-        return self.__com_if
+        return self._com_if
 
     @property
     def state(self):
         return self._state
+
+    @property
+    def request(self):
+        return self._state.request
 
     @property
     def tc_mode(self):
@@ -101,17 +106,17 @@ class CcsdsTmtcBackend(BackendBase):
 
     @property
     def tm_listener(self):
-        return self.__tm_listener
+        return self._tm_listener
 
     def try_set_com_if(self, com_if: ComInterface) -> bool:
         if not self.com_if_active():
-            self.__com_if = com_if
+            self._com_if = com_if
             return True
         else:
             return False
 
     def com_if_active(self):
-        return self.__com_if_active
+        return self._com_if_active
 
     @property
     def current_proc_info(self) -> TcProcedureBase:
@@ -129,32 +134,28 @@ class CcsdsTmtcBackend(BackendBase):
         LOGGER.info("TM listener will not be started")
         if self.exit_on_com_if_init_failure:
             LOGGER.error("Closing TMTC commander..")
-            self.__com_if.close()
+            self._com_if.close()
             sys.exit(1)
 
     def open_com_if(self):
         try:
-            self.__com_if.open()
+            self._com_if.open()
         except IOError:
             self.__listener_io_error_handler("opened")
-        self.__com_if_active = True
+        self._com_if_active = True
 
     def close_com_if(self):
-        """Closes the TM listener and the communication interface. This is started in a separarate
-        thread because the communication interface might still be busy. The completion can be
-        checked with :meth:`tmtccmd.core.backend.is_com_if_active`. Alternatively, waiting on
-        completion is possible by specifying the join argument and a timeout in
-        floating point second.
+        """Closes the TM listener and the communication interface
         :return:
         """
         try:
-            self.__com_if.close()
+            self._com_if.close()
         except IOError:
             self.__listener_io_error_handler("close")
-        self.__com_if_active = False
+        self._com_if_active = False
 
-    def periodic_op(self, ctrl: BackendController) -> BackendState:
-        """Periodic operation
+    def periodic_op(self) -> BackendState:
+        """Periodic operation. Simply calls the :py:meth:`default_operation` function.
         :raises KeyboardInterrupt: Yields info output and then propagates the exception
         :raises IOError: Yields informative output and propagates exception
         :"""
@@ -162,12 +163,23 @@ class CcsdsTmtcBackend(BackendBase):
         return self._state
 
     def default_operation(self):
-        """Command handling."""
+        """Command handling. This is a convenience function to call the TM and the TC operation
+        and then auto-determine the internal mode with the :py:meth:`mode_to_req` method.
+
+        :raises NoValidProcedureSet: No valid procedure set to be passed to the feed callback of
+            the TC handler
+        """
         self.tm_operation()
         self.tc_operation()
         self.mode_to_req()
 
     def mode_to_req(self):
+        """This function will convert the internal state of the backend to a backend
+        :py:attr:`request`,  which can be used to determine the next operation. These requests can
+        be treated like recommendations.
+        For example, for if both the TC and the TM mode are IDLE, the request will be set to
+        :py:attr:`BackendRequest.DELAY_IDLE` field.
+        """
         if self.tc_mode == TcMode.IDLE and self.tm_mode == TmMode.IDLE:
             self._state._req = BackendRequest.DELAY_IDLE
         elif self.tm_mode == TmMode.LISTENER and self.tc_mode == TcMode.IDLE:
@@ -190,13 +202,27 @@ class CcsdsTmtcBackend(BackendBase):
 
     def poll_tm(self):
         """Poll TM, irrespective of current TM mode"""
-        self.__tm_listener.operation(self.__com_if)
+        self._tm_listener.operation(self._com_if)
 
     def tm_operation(self):
+        """This function will fetch and forward TM data from the current communication interface
+        to the user TM handler. It only does so if the :py:attr:`tm_mode` is set to the LISTENER
+        mode
+        """
         if self._state.tm_mode == TmMode.LISTENER:
-            self.__tm_listener.operation(self.__com_if)
+            self._tm_listener.operation(self._com_if)
 
     def tc_operation(self):
+        """This function will handle consuming the current TC queue
+        if one is available, or attempting to fetch a new one if it is not. This function will only
+        do something if the :py:attr:`tc_mode` is set to a non IDLE value.
+
+        It is necessary to set a valid procedure before calling this by using the
+        :py:attr:`current_proc_info` setter function.
+
+        :raises NoValidProcedureSet: No valid procedure set to be passed to the feed callback of
+            the TC handler
+        """
         if self._state.tc_mode != TcMode.IDLE:
             self.__check_and_execute_queue()
 
@@ -212,7 +238,9 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
-        self.__tc_handler.feed_cb(self._queue_wrapper.info, feed_wrapper)
-        if not self.__com_if.valid or not feed_wrapper.dispatch_next_queue:
+        if self._queue_wrapper.info is None:
+            raise NoValidProcedureSet("No procedure was set to pass to the feed callback function")
+        self._tc_handler.feed_cb(self._queue_wrapper.info, feed_wrapper)
+        if not self._com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_helper.queue_wrapper
