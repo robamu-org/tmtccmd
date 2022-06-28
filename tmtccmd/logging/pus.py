@@ -159,15 +159,18 @@ class RegularTmtcLogWrapper:
         else:
             self.file_name = file_name
         self.logger = logging.getLogger(TMTC_LOGGER_NAME)
-        file_handler = FileHandler(self.file_name)
+        self.file_handler = FileHandler(self.file_name)
         formatter = logging.Formatter()
-        file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
+        self.file_handler.setFormatter(formatter)
+        self.logger.addHandler(self.file_handler)
         self.logger.setLevel(logging.INFO)
 
     @classmethod
-    def get_current_tmtc_file_name(cls) -> str:
-        return (
+    def get_current_tmtc_file_name(cls) -> Path:
+        return Path(
             f"{LOG_DIR}/{TMTC_FILE_BASE_NAME}_{datetime.now().date()}_"
             f"{datetime.now().time().strftime('%H%M%S')}.log"
         )
+
+    def __del__(self):
+        self.logger.removeHandler(self.file_handler)
