@@ -21,3 +21,7 @@ class CountdownTest(TestCase):
         self.assertTrue(test_cd.rem_time() > 0.045)
         self.assertTrue(test_cd.busy())
         self.assertFalse(test_cd.timed_out())
+        test_cd.reset(0.05)
+        self.assertTrue(test_cd.busy())
+        test_cd.time_out()
+        self.assertTrue(test_cd.timed_out())

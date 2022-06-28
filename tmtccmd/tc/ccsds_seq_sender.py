@@ -1,5 +1,6 @@
 """Used to send multiple TCs in sequence"""
 import enum
+import math
 from typing import Optional
 
 from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
@@ -42,8 +43,10 @@ class SequentialCcsdsSender:
         self._tc_handler = tc_handler
         self._queue_wrapper = queue_wrapper
         self._mode = SenderMode.DONE
-        self._wait_cd = Countdown(0)
+        self._wait_cd = Countdown(None)
         self._send_cd = Countdown(queue_wrapper.inter_cmd_delay)
+        if math.isclose(queue_wrapper.inter_cmd_delay, 0.0):
+            self._send_cd.time_out()
         self._current_res = SeqResultWrapper(self._mode)
         self._current_res.longest_rem_delay = queue_wrapper.inter_cmd_delay
         self._op_divider = 0
@@ -122,12 +125,15 @@ class SequentialCcsdsSender:
         if call_send_cb:
             self._tc_handler.send_cb(next_queue_entry, self._com_if)
             if is_tc:
-                if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
+                if not math.isclose(
+                    self.queue_wrapper.inter_cmd_delay, self._send_cd.timeout
+                ):
                     self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)
                 else:
                     self._send_cd.reset()
             self.queue_wrapper.queue.popleft()
         if not self.queue_wrapper.queue and self.no_delay_remaining():
+            self._tc_handler.queue_finished_cb(self._queue_wrapper.info)
             self._mode = SenderMode.DONE
 
     def no_delay_remaining(self) -> bool:

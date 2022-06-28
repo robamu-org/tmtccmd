@@ -1,6 +1,7 @@
 from __future__ import annotations
 import enum
 import logging
+from pathlib import Path
 from typing import Optional, Union
 from datetime import datetime
 
@@ -84,7 +85,7 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         self,
         when: TimedLogWhen,
         interval: int,
-        file_name: str = f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}.log",
+        file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}.log"),
     ):
         """Create a raw TMTC timed rotating log wrapper.
         See the official Python documentation at
@@ -116,7 +117,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
         self,
         max_bytes: int,
         backup_count: int,
-        file_name: str = f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}",
+        file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}"),
         suffix: str = date_suffix(),
     ):
         """Create a raw TMTC rotating log wrapper.
@@ -152,7 +153,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
 
 
 class RegularTmtcLogWrapper:
-    def __init__(self, file_name: Optional[str] = None):
+    def __init__(self, file_name: Optional[Path] = None):
         if file_name is None:
             self.file_name = self.get_current_tmtc_file_name()
         else:

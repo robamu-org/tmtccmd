@@ -6,9 +6,10 @@ class Countdown:
     def __init__(self, init_timeout_secs: Optional[float]):
         if init_timeout_secs is not None:
             self._timeout = init_timeout_secs
+            self._start_time = time.time()
         else:
             self._timeout = 0
-        self._start_time = time.time()
+            self._start_time = 0
 
     @property
     def timeout(self):
@@ -19,7 +20,7 @@ class Countdown:
         self._timeout = timeout
 
     def timed_out(self) -> bool:
-        if time.time() - self._start_time > self._timeout:
+        if time.time() - self._start_time >= self._timeout:
             return True
         else:
             return False
@@ -38,7 +39,7 @@ class Countdown:
         self._start_time = time.time()
 
     def time_out(self):
-        self._start_time = time.time() - self._timeout
+        self._start_time = 0
 
     def rem_time(self) -> float:
         end_time = self._start_time + self._timeout
