@@ -3,7 +3,12 @@ import argparse
 import sys
 from typing import Optional, List
 from dataclasses import dataclass
+
+from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.logging import get_console_logger
+
+from .defs import CoreModeStrings, CoreModeList, CoreComInterfaces
+from .hook import TmTcCfgHookBase
 
 
 LOGGER = get_console_logger()
@@ -266,3 +271,148 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "--t-ip", help="Target IP. Default: Localhost 127.0.0.1", default="127.0.0.1"
     )
+
+
+def args_to_params(
+    pargs: argparse.Namespace,
+    params: SetupParams,
+    hook_obj: TmTcCfgHookBase,
+    use_prompts: bool,
+):
+    """If some arguments are unspecified, they are set here with (variable) default values.
+
+    :param pargs: Parsed arguments from calling parse method
+    :param params: Setup parameter object which will be set by this function
+    :param hook_obj:
+    :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
+        arguments. For something like a GUI, it might make sense to disable this
+    :return: None
+    """
+    from tmtccmd.com_if.utils import determine_com_if
+
+    if pargs.gui is None:
+        params.app_params.use_gui = False
+    else:
+        params.app_params.use_gui = pargs.gui
+    if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
+        if use_prompts:
+            params.com_if = determine_com_if(
+                hook_obj.get_com_if_dict(), hook_obj.json_cfg_path
+            )
+    else:
+        # TODO: Check whether COM IF is valid?
+        params.com_if = pargs.com_if
+    if pargs.mode is None:
+        params.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
+    else:
+        params.mode = pargs.mode
+    tmtc_defs = hook_obj.get_tmtc_definitions()
+    params.def_proc_args = DefProcedureParams("0", "0")
+    if tmtc_defs is None:
+        LOGGER.warning("Invalid Service to Op-Code dictionary detected")
+    else:
+        if pargs.service is None:
+            if pargs.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+                if use_prompts:
+                    print("No service argument (-s) specified, prompting from user")
+                    # Try to get the service list from the hook base and prompt service from user
+                    params.def_proc_args.service = prompt_service(tmtc_defs)
+        else:
+            params.def_proc_args.service = pargs.service
+        if pargs.op_code is None:
+            current_service = params.def_proc_args.service
+            if use_prompts:
+                params.def_proc_args.op_code = prompt_op_code(
+                    tmtc_defs, current_service
+                )
+        else:
+            params.def_proc_args.op_code = pargs.op_code
+    if pargs.delay is None:
+        if params.backend_params.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+            params.tc_params.delay = 3.0
+        else:
+            params.tc_params.delay = 0.0
+    else:
+        params.tc_params.delay = pargs.delay
+    if pargs.listener is None:
+        params.backend_params.listener = False
+    else:
+        params.backend_params.listener = pargs.listener
+
+
+class ArgParserWrapper:
+    def __init__(
+        self,
+        hook_obj: TmTcCfgHookBase,
+        parser: Optional[argparse.ArgumentParser] = None,
+        descript_txt: Optional[str] = None,
+    ):
+        if parser is None:
+            self.args_parser = create_default_args_parser(descript_txt)
+            add_default_tmtccmd_args(self.args_parser)
+        else:
+            self.args_parser = parser
+        self.print_known_args = False
+        self.print_unknown_args = False
+        self.hook_obj = hook_obj
+        self.unknown_args = [""]
+        self.args_raw = None
+        self._parse_was_called = False
+
+    def add_default_tmtccmd_args(self):
+        add_default_tmtccmd_args(self.args_parser)
+
+    def parse(self):
+        """Parse all CLI arguments with the given argument parser"""
+        if not self._parse_was_called:
+            self.args_raw, self.unknown_args = parse_default_tmtccmd_input_arguments(
+                self.args_parser,
+                print_known_args=self.print_known_args,
+                print_unknown_args=self.print_unknown_args,
+            )
+        self._parse_was_called = True
+
+    @property
+    def use_gui(self):
+        """This only yields valid values if :py:meth:`parse` was called once"""
+        if not self._parse_was_called:
+            return False
+        return self.args_raw.gui
+
+    def set_params(self, params: SetupParams):
+        """Set up the parameter object from the parsed arguments. This call auto-determines whether
+        prompts should be used depending on whether the GUI flag was passed or not.
+
+        :raise Value Error: Parse function call missing
+        """
+        if not self._parse_was_called:
+            raise ValueError("Call the parse function first")
+        if self.args_raw.gui:
+            self.set_params_without_prompts(params)
+        else:
+            self.set_params_with_prompts(params)
+
+    def set_params_without_prompts(self, params: SetupParams):
+        if not self._parse_was_called:
+            raise ValueError("Call the parse function first")
+        args_to_params(
+            pargs=self.args_raw,
+            params=params,
+            hook_obj=self.hook_obj,
+            use_prompts=False,
+        )
+
+    def set_params_with_prompts(self, params: SetupParams):
+        if not self._parse_was_called:
+            raise ValueError("Call the parse function first")
+        try:
+            args_to_params(
+                pargs=self.args_raw,
+                params=params,
+                hook_obj=self.hook_obj,
+                use_prompts=True,
+            )
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt(
+                "Keyboard interrupt while converting CLI args to application parameters"
+            )
