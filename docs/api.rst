@@ -33,7 +33,6 @@ CCSDS & ECSS Submodules
 .. toctree::
    :maxdepth: 4
 
-   api/tmtccmd.ccsds
    api/tmtccmd.cfdp
    api/tmtccmd.pus
    api/tmtccmd.tc

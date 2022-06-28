@@ -2,9 +2,8 @@
 from typing import Dict, List, Tuple
 
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
-from tmtccmd.ccsds.handler import CcsdsTmHandler
 
-from tmtccmd.tm import TelemetryQueueT
+from tmtccmd.tm import TelemetryQueueT, CcsdsTmHandler
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 

@@ -1,16 +1,16 @@
 tmtccmd.config package
 ======================
 
-Submodules
-----------
+Module contents
+---------------
 
-tmtccmd.config.hook module
---------------------------
-
-.. automodule:: tmtccmd.config.cfg_hook
+.. automodule:: tmtccmd.config
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodules
+----------
 
 tmtccmd.config.args module
 --------------------------
@@ -28,14 +28,6 @@ tmtccmd.config.com\_if module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.config.definitions module
----------------------------------
-
-.. automodule:: tmtccmd.config.definitions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.config.globals module
 -----------------------------
 
@@ -48,14 +40,6 @@ tmtccmd.config.objects module
 -----------------------------
 
 .. automodule:: tmtccmd.config.objects
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: tmtccmd.config
    :members:
    :undoc-members:
    :show-inheritance:

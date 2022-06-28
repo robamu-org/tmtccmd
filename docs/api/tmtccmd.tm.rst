@@ -1,16 +1,16 @@
 tmtccmd.tm package
 =======================
 
-Submodules
-----------
+Module contents
+---------------
 
-tmtccmd.tm.definitions module
-----------------------------------
-
-.. automodule:: tmtccmd.tm.definitions
+.. automodule:: tmtccmd.tm
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodules
+----------
 
 tmtccmd.tm.ccsds_tm_listener module
 ------------------------------------
@@ -88,14 +88,6 @@ tmtccmd.tm.base module
 ----------------------------------
 
 .. automodule:: tmtccmd.tm.base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: tmtccmd.tm
    :members:
    :undoc-members:
    :show-inheritance:

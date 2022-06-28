@@ -8,8 +8,7 @@ from tmtccmd.core.base import FrontendBase
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion, SetupWrapper
 from tmtccmd.core.ccsds_backend import BackendBase
-from tmtccmd.tm import TmTypes, TmHandlerBase
-from tmtccmd.ccsds.handler import CcsdsTmHandler
+from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
 from tmtccmd.logging import get_console_logger
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing

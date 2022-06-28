@@ -1,16 +1,16 @@
 tmtccmd.tc package
 =======================
 
-Submodules
-----------
+Module contents
+---------------
 
-tmtccmd.tc.definitions module
-----------------------------------
-
-.. automodule:: tmtccmd.tc.definitions
+.. automodule:: tmtccmd.tc
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodules
+----------
 
 tmtccmd.tc.handler module
 -----------------------------
@@ -72,14 +72,6 @@ tmtccmd.tc.pus\_8\_funccmd module
 --------------------------------------------------
 
 .. automodule:: tmtccmd.tc.pus_8_funccmd
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: tmtccmd.tc
    :members:
    :undoc-members:
    :show-inheritance:

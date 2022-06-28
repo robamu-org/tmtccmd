@@ -8,7 +8,7 @@ import tmtccmd
 from spacepackets.ecss import PusTelemetry, PusTelecommand
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
-from tmtccmd.ccsds.handler import CcsdsTmHandler, ApidTmHandlerBase
+from tmtccmd.tm import CcsdsTmHandler, ApidTmHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
     default_json_path,
@@ -34,7 +34,7 @@ from tmtccmd.tc import (
     TcProcedureType,
 )
 from tmtccmd.tc.handler import FeedWrapper
-from tmtccmd.tm import Service5Tm
+from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.utility.obj_id import ObjectIdDictT
@@ -151,7 +151,7 @@ def main():
     tmtc_backend = tmtccmd.create_default_tmtc_backend(
         setup_wrapper=setup_args, tm_handler=ccsds_handler, tc_handler=tc_handler
     )
-    tmtccmd.start(tmtc_backend=tmtc_backend)
+    tmtccmd.start(tmtc_backend=tmtc_backend, hook_obj=hook_obj)
     ctrl = BackendController()
     try:
         while True:
