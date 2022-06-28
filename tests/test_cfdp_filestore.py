@@ -19,22 +19,6 @@ class TestCfdpHostFilestore(TestCase):
 
     def test_filestore(self):
         filestore = HostFilestore()
-        """
-                if os.path.exists(TEST_FILE_NAME_0):
-            if os.path.isdir(TEST_DIR_NAME_0):
-                os.rmdir(TEST_FILE_NAME_0)
-            else:
-                os.remove(TEST_FILE_NAME_0)
-        if os.path.exists(TEST_FILE_NAME_1):
-            if os.path.isdir(TEST_DIR_NAME_1):
-                os.rmdir(TEST_FILE_NAME_1)
-            else:
-                os.remove(TEST_FILE_NAME_1)
-        if os.path.exists(TEST_DIR_NAME_0):
-            shutil.rmtree(TEST_DIR_NAME_0)
-        if os.path.exists(TEST_DIR_NAME_1):
-            shutil.rmtree(TEST_DIR_NAME_1)
-        """
 
         res = filestore.create_file(self.test_file_name_0)
         self.assertTrue(res == FilestoreResult.CREATE_SUCCESS)

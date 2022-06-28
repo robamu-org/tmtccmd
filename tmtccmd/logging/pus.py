@@ -174,3 +174,4 @@ class RegularTmtcLogWrapper:
 
     def __del__(self):
         self.logger.removeHandler(self.file_handler)
+        self.file_handler.close()

@@ -154,7 +154,7 @@ class CcsdsTmtcBackend(BackendBase):
             self.__listener_io_error_handler("close")
         self._com_if_active = False
 
-    def periodic_op(self) -> BackendState:
+    def periodic_op(self, _args: Optional[any] = None) -> BackendState:
         """Periodic operation. Simply calls the :py:meth:`default_operation` function.
         :raises KeyboardInterrupt: Yields info output and then propagates the exception
         :raises IOError: Yields informative output and propagates exception
@@ -239,7 +239,9 @@ class CcsdsTmtcBackend(BackendBase):
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
         if self._queue_wrapper.info is None:
-            raise NoValidProcedureSet("No procedure was set to pass to the feed callback function")
+            raise NoValidProcedureSet(
+                "No procedure was set to pass to the feed callback function"
+            )
         self._tc_handler.feed_cb(self._queue_wrapper.info, feed_wrapper)
         if not self._com_if.valid or not feed_wrapper.dispatch_next_queue:
             return None

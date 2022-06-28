@@ -11,14 +11,13 @@ from spacepackets.ecss.pus_1_verification import RequestId
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
 from tmtccmd.logging import get_console_logger, LOG_DIR
-from tmtccmd.config.globals import update_global, CoreGlobalIds
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
     RawTmtcRotatingLogWrapper,
 )
 
 
-# TODO: Use temp files to test loggers?gitas
+# TODO: Use temp files to test loggers?
 class TestPrintersLoggers(TestCase):
     def setUp(self):
         self.log_path = Path(LOG_DIR)

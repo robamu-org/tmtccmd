@@ -8,6 +8,7 @@ from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.dummy import DummyComIF
 from tmtccmd.core import TcMode, TmMode, BackendRequest, BackendController
+from tmtccmd.core.ccsds_backend import NoValidProcedureSet
 from tmtccmd.tc import (
     TcProcedureBase,
     DefaultProcedureInfo,
@@ -76,22 +77,19 @@ class TestBackend(TestCase):
         self.assertTrue(com_if.is_open())
         self.assertTrue(backend.com_if_active())
 
-        res = backend.periodic_op(ctrl)
+        res = backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.DELAY_IDLE)
         backend.tm_mode = TmMode.LISTENER
         self.assertEqual(backend.tm_mode, TmMode.LISTENER)
-        res = backend.periodic_op(ctrl)
+        res = backend.periodic_op()
         tm_listener.operation.assert_called_once()
         backend.poll_tm()
         self.assertEqual(tm_listener.operation.call_count, 2)
         self.assertEqual(res.request, BackendRequest.DELAY_LISTENER)
         backend.tm_mode = TmMode.IDLE
         backend.tc_mode = TcMode.ONE_QUEUE
-        # Our mock does not return a queue, so this operation is done immediately
-        res = backend.periodic_op(ctrl)
-        self.assertEqual(res.request, BackendRequest.TERMINATION_NO_ERROR)
-        self.assertEqual(res.sender_res.mode, SenderMode.DONE)
-        backend.tc_mode = TcMode.ONE_QUEUE
+        with self.assertRaises(NoValidProcedureSet):
+            backend.periodic_op()
         backend.current_proc_info = DefaultProcedureInfo(service="17", op_code="0")
-        res = backend.periodic_op(ctrl)
+        res = backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.TERMINATION_NO_ERROR)

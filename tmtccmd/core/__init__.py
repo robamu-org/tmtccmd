@@ -1,6 +1,7 @@
 from abc import abstractmethod
 import enum
 from datetime import timedelta
+from typing import Optional
 
 from tmtccmd.tc.ccsds_seq_sender import SeqResultWrapper, SenderMode
 
@@ -38,6 +39,7 @@ class BackendRequest(enum.IntEnum):
     5. CALL_NEXT: It is recommended to call the handler functions immediately, for example to
        handle the next entry in the TC queue
     """
+
     NONE = 0
     TERMINATION_NO_ERROR = 1
     DELAY_IDLE = 2
@@ -99,5 +101,5 @@ class BackendBase:
         pass
 
     @abstractmethod
-    def periodic_op(self, ctrl: BackendController) -> BackendState:
+    def periodic_op(self, args: Optional[any]) -> BackendState:
         pass
