@@ -3,11 +3,11 @@ from typing import Optional
 from unittest.mock import MagicMock
 import argparse
 
-from tmtccmd.config.com_if import CommunicationInterface
-from tmtccmd.config.definitions import CoreModeList
+from tmtccmd.com_if import ComInterface
+from tmtccmd.config import CoreModeList
 from tmtccmd.config.tmtc import TmTcDefWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-from tmtccmd.config.cfg_hook import TmTcCfgHookBase
+from tmtccmd.config import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
 from tmtccmd.utility.obj_id import ObjectIdDictT
 
@@ -61,7 +61,7 @@ class TestHookObj(TmTcCfgHookBase):
     @abstractmethod
     def assign_communication_interface(
         self, com_if_key: str
-    ) -> Optional[CommunicationInterface]:
+    ) -> Optional[ComInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
 
