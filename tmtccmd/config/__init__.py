@@ -248,9 +248,7 @@ def args_to_params(
         if pargs.service is None:
             if pargs.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
                 if use_prompts:
-                    LOGGER.info(
-                        "No service argument (-s) specified, prompting from user.."
-                    )
+                    print("No service argument (-s) specified, prompting from user")
                     # Try to get the service list from the hook base and prompt service from user
                     params.def_proc_args.service = prompt_service(tmtc_defs)
         else:
@@ -307,6 +305,13 @@ class ArgParserWrapper:
                 print_unknown_args=self.print_unknown_args,
             )
         self._parse_was_called = True
+
+    @property
+    def use_gui(self):
+        """This only yields valid values if :py:meth:`parse` was called once"""
+        if not self._parse_was_called:
+            return False
+        return self.args_raw.gui
 
     def set_params(self, params: SetupParams):
         """Set up the parameter object from the parsed arguments. This call auto-determines whether

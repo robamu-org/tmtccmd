@@ -121,9 +121,7 @@ def parse_default_tmtccmd_input_arguments(
     """
 
     if len(sys.argv) == 1:
-        LOGGER.info(
-            "No input arguments specified. Run with -h to get list of arguments"
-        )
+        print("No input arguments specified. Run with -h to get list of arguments")
 
     args, unknown = parser.parse_known_args()
 
