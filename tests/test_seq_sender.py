@@ -124,7 +124,7 @@ class TestSendReceive(TestCase):
         self.assertEqual(len(self.queue_wrapper.queue), 1)
         self.assertTrue(0.8 * inter_packet_delay < res.longest_rem_delay < inter_packet_delay)
         # Delay 10 ms
-        time.sleep(inter_packet_delay)
+        time.sleep(inter_packet_delay * 1.1)
         res = self.seq_sender.operation()
         self.assertTrue(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
