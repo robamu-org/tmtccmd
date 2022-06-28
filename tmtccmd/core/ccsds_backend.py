@@ -94,11 +94,11 @@ class CcsdsTmtcBackend(BackendBase):
 
     @tc_mode.setter
     def tc_mode(self, tc_mode: TcMode):
-        self._state.mode_wrapper._tc_mode = tc_mode
+        self._state.mode_wrapper.tc_mode = tc_mode
 
     @tm_mode.setter
     def tm_mode(self, tm_mode: TmMode):
-        self._state.mode_wrapper._tm_mode = tm_mode
+        self._state.mode_wrapper.tm_mode = tm_mode
 
     @property
     def tm_listener(self):
