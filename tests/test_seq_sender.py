@@ -1,6 +1,7 @@
 import time
 from collections import deque
 from unittest import TestCase
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, ANY
 
 from spacepackets.ecss import PusTelecommand
@@ -53,7 +54,7 @@ class TestSendReceive(TestCase):
     def test_with_wait_entry(self):
         wait_delay = 0.01
         self.queue_helper.add_raw_tc(bytes([3, 2, 1]))
-        self.queue_helper.add_wait(wait_delay)
+        self.queue_helper.add_wait(timedelta(seconds=wait_delay))
         self.queue_helper.add_raw_tc(bytes([1, 2, 3]))
         # Resume call necessary
         self.assertEqual(self.seq_sender.mode, SenderMode.DONE)
@@ -73,7 +74,7 @@ class TestSendReceive(TestCase):
         self.assertFalse(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
         call_args = self.tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args.args[0].wait_secs, wait_delay)
+        self.assertEqual(call_args.args[0].wait_time, timedelta(seconds=wait_delay))
         # Now no TCs should be sent for 10 ms
         self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 1)
         self.assertEqual(res.mode, SenderMode.BUSY)
@@ -90,15 +91,16 @@ class TestSendReceive(TestCase):
         self.assertEqual(call_args.args[0].tc, bytes([1, 2, 3]))
 
     def test_interpacket_delay(self):
-        inter_packet_delay = 0.02
+        delay_ms = 20
+        inter_packet_delay = timedelta(milliseconds=delay_ms)
         ping_cmd = PusTelecommand(service=17, subservice=1)
         self.queue_helper.add_pus_tc(ping_cmd)
-        self.queue_helper.add_packet_delay(inter_packet_delay)
+        self.queue_helper.add_packet_delay_ms(delay_ms)
         self.queue_helper.add_ccsds_tc(ping_cmd.to_space_packet())
         self.queue_helper.add_raw_tc(bytes([0, 1, 2]))
         # Send first TC, assert delay of 10 ms, then send last packet
         res = self.seq_sender.operation()
-        self.assertEqual(res.longest_rem_delay, 0.0)
+        self.assertEqual(res.longest_rem_delay, timedelta())
         self.assertTrue(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
         call_args = self.tc_handler_mock.send_cb.call_args
@@ -107,13 +109,18 @@ class TestSendReceive(TestCase):
         self.assertFalse(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
         call_args = self.tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args.args[0].delay_secs, inter_packet_delay)
-        self.assertTrue(0.8 * inter_packet_delay < res.longest_rem_delay < inter_packet_delay)
+        self.assertEqual(
+            call_args.args[0].delay_time.total_seconds(),
+            inter_packet_delay.total_seconds(),
+        )
+        self.assertTrue(
+            inter_packet_delay <= res.longest_rem_delay <= inter_packet_delay
+        )
         res = self.seq_sender.operation()
         # No TC sent
         self.assertFalse(res.tc_sent)
         self.assertEqual(len(self.queue_wrapper.queue), 2)
-        time.sleep(inter_packet_delay * 1.1)
+        time.sleep(inter_packet_delay.total_seconds())
         res = self.seq_sender.operation()
         # TC sent
         self.assertTrue(res.tc_sent)
@@ -122,9 +129,11 @@ class TestSendReceive(TestCase):
         # No TC sent, delay after each packet
         self.assertFalse(res.tc_sent)
         self.assertEqual(len(self.queue_wrapper.queue), 1)
-        self.assertTrue(0.8 * inter_packet_delay < res.longest_rem_delay < inter_packet_delay)
+        self.assertTrue(
+            0.8 * inter_packet_delay < res.longest_rem_delay <= inter_packet_delay
+        )
         # Delay 10 ms
-        time.sleep(inter_packet_delay * 1.1)
+        time.sleep(inter_packet_delay.total_seconds())
         res = self.seq_sender.operation()
         self.assertTrue(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)

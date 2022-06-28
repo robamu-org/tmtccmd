@@ -59,9 +59,7 @@ class TestHookObj(TmTcCfgHookBase):
         return super().get_object_ids()
 
     @abstractmethod
-    def assign_communication_interface(
-        self, com_if_key: str
-    ) -> Optional[ComInterface]:
+    def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
 

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -22,11 +23,11 @@ class TestCore(TestCase):
         self.assertEqual(backend.tc_mode, TcMode.IDLE)
         self.assertEqual(backend.com_if.get_id(), "dummy")
         self.assertEqual(backend.com_if_id, "dummy")
-        self.assertEqual(backend.inter_cmd_delay, 0.0)
+        self.assertEqual(backend.inter_cmd_delay, timedelta())
         state = backend.state
         self.assertEqual(state.tc_mode, TcMode.IDLE)
         self.assertEqual(state.tm_mode, TmMode.IDLE)
-        self.assertEqual(state.next_delay, 0.0)
+        self.assertEqual(state.next_delay, timedelta())
         self.assertEqual(state.request, BackendRequest.NONE)
         backend.mode_to_req()
         self.assertEqual(state.request, BackendRequest.DELAY_IDLE)

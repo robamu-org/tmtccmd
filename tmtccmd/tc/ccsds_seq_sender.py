@@ -1,6 +1,7 @@
 """Used to send multiple TCs in sequence"""
 import enum
 import math
+from datetime import timedelta
 from typing import Optional
 
 from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
@@ -21,7 +22,7 @@ class SenderMode(enum.IntEnum):
 class SeqResultWrapper:
     def __init__(self, mode: SenderMode):
         self.mode = mode
-        self.longest_rem_delay: float = 0.0
+        self.longest_rem_delay: timedelta = timedelta()
         self.tc_sent: bool = False
 
 
@@ -45,8 +46,6 @@ class SequentialCcsdsSender:
         self._mode = SenderMode.DONE
         self._wait_cd = Countdown(None)
         self._send_cd = Countdown(queue_wrapper.inter_cmd_delay)
-        if math.isclose(queue_wrapper.inter_cmd_delay, 0.0):
-            self._send_cd.time_out()
         self._current_res = SeqResultWrapper(self._mode)
         self._current_res.longest_rem_delay = queue_wrapper.inter_cmd_delay
         self._op_divider = 0
@@ -65,7 +64,7 @@ class SequentialCcsdsSender:
         self._mode = SenderMode.BUSY
         # There is no need to delay sending of the first entry, the send delay is inter-packet
         # only
-        self._send_cd.timeout = 0
+        self._send_cd.timeout = timedelta()
         self._queue_wrapper = queue_wrapper
 
     def handle_new_queue_forced(self, queue_wrapper: QueueWrapper):
@@ -106,8 +105,10 @@ class SequentialCcsdsSender:
     def __print_rem_timeout(self, op_divider: int, divisor: int = 15):
         if not self.__wait_cd_timed_out() and op_divider % divisor == 0:
             rem_time = self._wait_cd.rem_time()
-            if self._wait_cd.rem_time() > 0:
-                LOGGER.info(f"{rem_time:.01f} seconds wait time remaining")
+            if self._wait_cd.rem_time() > timedelta():
+                LOGGER.info(
+                    f"{rem_time.total_seconds():.01f} seconds wait time remaining"
+                )
 
     def _check_next_telecommand(self):
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
@@ -125,9 +126,7 @@ class SequentialCcsdsSender:
         if call_send_cb:
             self._tc_handler.send_cb(next_queue_entry, self._com_if)
             if is_tc:
-                if not math.isclose(
-                    self.queue_wrapper.inter_cmd_delay, self._send_cd.timeout
-                ):
+                if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
                     self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)
                 else:
                     self._send_cd.reset()
@@ -159,15 +158,17 @@ class SequentialCcsdsSender:
         cast_wrapper = PacketCastWrapper(queue_entry)
         if queue_entry.etype == TcQueueEntryType.WAIT:
             wait_entry = cast_wrapper.to_wait_entry()
-            LOGGER.info(f"Waiting for {wait_entry.wait_secs} seconds.")
-            self._wait_cd.reset(new_timeout=wait_entry.wait_secs)
+            LOGGER.info(
+                f"Waiting for {wait_entry.wait_time.total_seconds() * 1000} milliseconds."
+            )
+            self._wait_cd.reset(new_timeout=wait_entry.wait_time)
             self._current_res.longest_rem_delay = max(
                 self._wait_cd.rem_time(), self._send_cd.rem_time()
             )
         elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:
             timeout_entry = cast_wrapper.to_packet_delay_entry()
-            self.queue_wrapper.inter_cmd_delay = timeout_entry.delay_secs
-            self._send_cd.reset(new_timeout=timeout_entry.delay_secs)
+            self.queue_wrapper.inter_cmd_delay = timeout_entry.delay_time
+            self._send_cd.reset(new_timeout=timeout_entry.delay_time)
             self._current_res.longest_rem_delay = max(
                 self._wait_cd.rem_time(), self._send_cd.rem_time()
             )

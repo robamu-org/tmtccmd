@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import enum
+from datetime import timedelta
 
 from tmtccmd.tc.ccsds_seq_sender import SeqResultWrapper, SenderMode
 
@@ -41,7 +42,7 @@ class BackendState:
     ):
         self._mode_wrapper = mode_wrapper
         self._req = req
-        self._recommended_delay = 0
+        self._recommended_delay = timedelta()
         self._sender_res = SeqResultWrapper(SenderMode.DONE)
 
     @property

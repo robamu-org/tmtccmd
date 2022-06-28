@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional
 
 from spacepackets.ccsds.spacepacket import SpacePacket
@@ -19,7 +20,7 @@ class QueueWrapper:
         self,
         info: Optional[TcProcedureBase],
         queue: Optional[QueueDequeT],
-        inter_cmd_delay: float = 0.0,
+        inter_cmd_delay: timedelta = timedelta(milliseconds=0),
     ):
         self.info = info
         self.queue = queue
@@ -51,8 +52,14 @@ class QueueHelper:
     def add_raw_tc(self, tc: bytes):
         self.queue_wrapper.queue.append(RawTcEntry(tc))
 
-    def add_wait(self, wait_secs: float):
-        self.queue_wrapper.queue.append(WaitEntry(wait_secs))
+    def add_wait(self, wait_time: timedelta):
+        self.queue_wrapper.queue.append(WaitEntry(wait_time))
 
-    def add_packet_delay(self, delay: float):
+    def add_wait_ms(self, wait_ms: int):
+        self.queue_wrapper.queue.append(WaitEntry.from_millis(wait_ms))
+
+    def add_packet_delay(self, delay: timedelta):
         self.queue_wrapper.queue.append(PacketDelayEntry(delay))
+
+    def add_packet_delay_ms(self, delay_ms: int):
+        self.queue_wrapper.queue.append(PacketDelayEntry.from_millis(delay_ms))

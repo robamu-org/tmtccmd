@@ -1,5 +1,6 @@
 import math
 from collections import deque
+from datetime import timedelta
 from typing import cast
 from unittest import TestCase
 
@@ -17,15 +18,12 @@ class TestTcQueue(TestCase):
         queue_wrapper = QueueWrapper(info=None, queue=deque())
         self.assertEqual(queue_wrapper.queue, deque())
         queue_helper = QueueHelper(queue_wrapper)
-        queue_helper.add_wait(2.0)
+        queue_helper.add_wait(timedelta(seconds=2))
         self.assertEqual(len(queue_wrapper.queue), 1)
         wait_entry = cast(WaitEntry, queue_wrapper.queue.pop())
         self.assertTrue(wait_entry)
         self.assertFalse(wait_entry.is_tc())
-        self.assertTrue(
-            math.isclose(wait_entry.wait_secs, eval(f"{wait_entry!r}").wait_secs)
-        )
-        self.assertEqual(wait_entry.wait_secs, 2.0)
+        self.assertEqual(wait_entry.wait_time.total_seconds(), 2.0)
         self.assertEqual(len(queue_wrapper.queue), 0)
         pus_cmd = PusTelecommand(service=17, subservice=1)
         queue_helper.add_pus_tc(pus_cmd)
@@ -33,7 +31,7 @@ class TestTcQueue(TestCase):
         queue_helper.add_log_cmd("Test String")
         queue_helper.add_raw_tc(bytes([0, 1, 2]))
         queue_helper.add_ccsds_tc(pus_cmd.to_space_packet())
-        queue_helper.add_packet_delay(3.0)
+        queue_helper.add_packet_delay(timedelta(seconds=3.0))
         print(queue_wrapper.queue)
         self.assertEqual(len(queue_wrapper.queue), 5)
 
@@ -76,4 +74,4 @@ class TestTcQueue(TestCase):
         self.assertFalse(packet_delay.is_tc())
         cast_wrapper.base = packet_delay
         packet_delay = cast_wrapper.to_packet_delay_entry()
-        self.assertEqual(packet_delay.delay_secs, 3.0)
+        self.assertEqual(packet_delay.delay_time.total_seconds(), 3.0)

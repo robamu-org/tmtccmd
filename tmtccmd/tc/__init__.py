@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+from datetime import timedelta
 from enum import Enum
 from typing import Deque, cast, Type, Any
 from spacepackets.ccsds.spacepacket import SpacePacket
@@ -74,21 +75,29 @@ class RawTcEntry(TcQueueEntryBase):
 
 
 class WaitEntry(TcQueueEntryBase):
-    def __init__(self, wait_secs: float):
+    def __init__(self, wait_time: timedelta):
         super().__init__(TcQueueEntryType.WAIT)
-        self.wait_secs = wait_secs
+        self.wait_time = wait_time
+
+    @classmethod
+    def from_millis(cls, millis: int) -> WaitEntry:
+        return cls(timedelta(milliseconds=millis))
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.wait_secs!r})"
+        return f"{self.__class__.__name__}({self.wait_time!r})"
 
 
 class PacketDelayEntry(TcQueueEntryBase):
-    def __init__(self, delay_secs: float):
+    def __init__(self, delay_time: timedelta):
         super().__init__(TcQueueEntryType.PACKET_DELAY)
-        self.delay_secs = delay_secs
+        self.delay_time = delay_time
+
+    @classmethod
+    def from_millis(cls, millis: int) -> PacketDelayEntry:
+        return cls(timedelta(milliseconds=millis))
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.delay_secs!r})"
+        return f"{self.__class__.__name__}({self.delay_time!r})"
 
 
 class PacketCastWrapper:
