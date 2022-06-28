@@ -113,7 +113,7 @@ class TestSendReceive(TestCase):
         # No TC sent
         self.assertFalse(res.tc_sent)
         self.assertEqual(len(self.queue_wrapper.queue), 2)
-        time.sleep(inter_packet_delay)
+        time.sleep(inter_packet_delay * 2)
         res = self.seq_sender.operation()
         # TC sent
         self.assertTrue(res.tc_sent)
