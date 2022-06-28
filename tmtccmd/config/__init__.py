@@ -67,6 +67,7 @@ class CoreModeList(enum.IntEnum):
     2. LISTENER_MODE: Only listen to TM
     3. MULTI_INTERACTIVE_QUEUE_MODE:
     """
+
     #
     ONE_QUEUE_MODE = 0
     LISTENER_MODE = 1
@@ -82,7 +83,7 @@ CoreModeStrings = {
     CoreModeList.ONE_QUEUE_MODE: "one-q",
     CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE: "multi-q",
     CoreModeList.LISTENER_MODE: "listener",
-    CoreModeList.IDLE: "idle"
+    CoreModeList.IDLE: "idle",
 }
 
 
@@ -335,7 +336,10 @@ class ArgParserWrapper:
             raise ValueError("Call the parse function first")
         try:
             args_to_params(
-                pargs=self.args_raw, params=params, hook_obj=self.hook_obj, use_prompts=True
+                pargs=self.args_raw,
+                params=params,
+                hook_obj=self.hook_obj,
+                use_prompts=True,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
