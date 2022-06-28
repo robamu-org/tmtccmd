@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelemetry
-from tmtccmd.ccsds.handler import (
+from tmtccmd.tm import (
     ApidTmHandlerBase,
     CcsdsTmHandler,
     UnknownApidHandlerBase,
