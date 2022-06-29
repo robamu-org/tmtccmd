@@ -64,7 +64,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
             service=3,
             subservice=subservice_id,
             time=time,
-            ssc=ssc,
+            seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,

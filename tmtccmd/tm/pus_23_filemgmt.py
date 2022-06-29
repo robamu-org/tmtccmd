@@ -53,7 +53,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
             service=PusServices.SERVICE_23_FILE_MGMT,
             subservice=subservice_id,
             time=time,
-            ssc=ssc,
+            seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,

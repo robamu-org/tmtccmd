@@ -3,14 +3,16 @@ external hardware or an extra socket
 """
 from typing import Optional
 
-from spacepackets.ecss.pus_1_verification import RequestId
+from spacepackets.ecss.pus_1_verification import RequestId, VerificationParams
 from spacepackets.ecss.tc import PusTelecommand
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreComInterfaces
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
-from tmtccmd.tm.pus_17_test import Subservices, Service17TmExtended
+from tmtccmd.tm.pus_1_verification import Subservices as Pus1Subservices
+from tmtccmd.tm.pus_17_test import Service17TmExtended
+from tmtccmd.tm.pus_17_test import Subservices as Pus17Subservices
 from tmtccmd.logging import get_console_logger
 
 
@@ -34,10 +36,12 @@ class DummyHandler:
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
                 tm_packer = Service1TmExtended(
-                    subservice=1,
-                    ssc=self.current_ssc,
-                    tc_request_id=RequestId(
-                        self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                    subservice=Pus1Subservices.TM_ACCEPTANCE_SUCCESS,
+                    seq_count=self.current_ssc,
+                    verif_params=VerificationParams(
+                        req_id=RequestId(
+                            self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                        )
                     ),
                 )
 
@@ -45,17 +49,19 @@ class DummyHandler:
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 tm_packer = Service1TmExtended(
-                    subservice=7,
-                    ssc=self.current_ssc,
-                    tc_request_id=RequestId(
-                        self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                    subservice=Pus1Subservices.TM_START_SUCCESS,
+                    seq_count=self.current_ssc,
+                    verif_params=VerificationParams(
+                        req_id=RequestId(
+                            self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                        )
                     ),
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17TmExtended(subservice=Subservices.TM_REPLY)
+                tm_packer = Service17TmExtended(subservice=Pus17Subservices.TM_REPLY)
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1

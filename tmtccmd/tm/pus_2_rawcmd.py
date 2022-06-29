@@ -24,7 +24,7 @@ class Service2Tm(PusTmInfoBase, PusTmBase):
             service=2,
             subservice=subservice,
             time=time,
-            ssc=ssc,
+            seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,

@@ -3,15 +3,12 @@ import os
 import struct
 from typing import Optional
 
+from spacepackets.ecss.field import Ptc, PfcUnsigned, PfcSigned, PfcReal
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.definitions import PusServices
 
 from tmtccmd.utility.obj_id import ObjectId
 from tmtccmd.pus.pus_20_params import (
-    EcssPtc,
-    EcssPfcUnsigned,
-    EcssPfcReal,
-    EcssPfcSigned,
     CustomSubservices,
 )
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
@@ -60,7 +57,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
             service=PusServices.S20_PARAMETER,
             subservice=subservice_id,
             time=time,
-            ssc=ssc,
+            seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
@@ -193,23 +190,23 @@ def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[any
     len_error_str = "Invalid parameter data size, smaller than "
     if param_len == 0:
         return None
-    if ptc == EcssPtc.UNSIGNED:
-        if pfc == EcssPfcUnsigned.ONE_BYTE:
+    if ptc == Ptc.UNSIGNED:
+        if pfc == PfcUnsigned.ONE_BYTE:
             if param_len < 1:
                 LOGGER.warning(f"{len_error_str} 1")
                 raise None
             return tm_data[12]
-        elif pfc == EcssPfcUnsigned.TWO_BYTES:
+        elif pfc == PfcUnsigned.TWO_BYTES:
             if param_len < 2:
                 LOGGER.warning(f"{len_error_str} 2")
                 return None
             return struct.unpack("!H", tm_data[12:14])[0]
-        if pfc == EcssPfcUnsigned.FOUR_BYTES:
+        if pfc == PfcUnsigned.FOUR_BYTES:
             if param_len < 4:
                 LOGGER.warning(f"{len_error_str} 4")
                 return None
             return struct.unpack("!I", tm_data[12:16])[0]
-        elif pfc == EcssPfcUnsigned.EIGHT_BYTES:
+        elif pfc == PfcUnsigned.EIGHT_BYTES:
             if param_len < 8:
                 LOGGER.warning(f"{len_error_str} 8")
                 return None
@@ -219,23 +216,23 @@ def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[any
                 f"Parsing of unsigned PTC {ptc} not implemented for PFC {pfc}"
             )
             return None
-    elif ptc == EcssPtc.SIGNED:
-        if pfc == EcssPfcSigned.ONE_BYTE:
+    elif ptc == Ptc.SIGNED:
+        if pfc == PfcSigned.ONE_BYTE:
             if param_len < 1:
                 LOGGER.warning(f"{len_error_str} 1")
                 return None
             return struct.unpack("!b", tm_data[12:13])[0]
-        elif pfc == EcssPfcSigned.TWO_BYTES:
+        elif pfc == PfcSigned.TWO_BYTES:
             if param_len < 2:
                 LOGGER.warning(f"{len_error_str} 2")
                 return None
             return struct.unpack("!h", tm_data[12:14])[0]
-        elif pfc == EcssPfcSigned.FOUR_BYTES:
+        elif pfc == PfcSigned.FOUR_BYTES:
             if param_len < 4:
                 LOGGER.warning(f"{len_error_str} 4")
                 return None
             return struct.unpack("!i", tm_data[12:16])[0]
-        elif pfc == EcssPfcSigned.EIGHT_BYTES:
+        elif pfc == PfcSigned.EIGHT_BYTES:
             if param_len < 8:
                 LOGGER.warning(f"{len_error_str} 8")
                 return None
@@ -243,13 +240,13 @@ def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[any
         else:
             LOGGER.warning(f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}")
             return None
-    if ptc == EcssPtc.REAL:
-        if pfc == EcssPfcReal.FLOAT_SIMPLE_PRECISION_IEEE:
+    if ptc == Ptc.REAL:
+        if pfc == PfcReal.FLOAT_SIMPLE_PRECISION_IEEE:
             if param_len < 4:
                 LOGGER.warning(f"{len_error_str} 4")
                 return None
             return struct.unpack("!f", tm_data[12:16])[0]
-        elif pfc == EcssPfcReal.DOUBLE_PRECISION_IEEE:
+        elif pfc == PfcReal.DOUBLE_PRECISION_IEEE:
             if param_len < 8:
                 LOGGER.warning(f"{len_error_str} 8")
                 return None

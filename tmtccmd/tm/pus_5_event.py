@@ -56,7 +56,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
             service=PusServices.S5_EVENT,
             subservice=subservice,
             time=time,
-            ssc=ssc,
+            seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,

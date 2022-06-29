@@ -39,7 +39,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
             service=CustomPusServices.SERVICE_200_MODE,
             subservice=subservice_id,
             time=time,
-            ssc=ssc,
+            seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,

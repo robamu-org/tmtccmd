@@ -2,10 +2,9 @@
 """
 import struct
 from typing import Optional
+
+from spacepackets.ecss.field import Ptc, PfcUnsigned, PfcReal
 from tmtccmd.pus.pus_20_params import (
-    EcssPtc,
-    EcssPfcUnsigned,
-    EcssPfcReal,
     CustomSubservices,
 )
 from spacepackets.ecss.tc import PusTelecommand
@@ -41,8 +40,8 @@ def pack_boolean_parameter_app_data(
         object_id=object_id,
         domain_id=domain_id,
         unique_id=unique_id,
-        ptc=EcssPtc.UNSIGNED,
-        pfc=EcssPfcUnsigned.ONE_BYTE,
+        ptc=Ptc.UNSIGNED,
+        pfc=PfcUnsigned.ONE_BYTE,
         rows=1,
         columns=1,
     )
@@ -58,8 +57,8 @@ def pack_scalar_double_param_app_data(
         object_id=object_id,
         domain_id=domain_id,
         unique_id=unique_id,
-        ptc=EcssPtc.REAL,
-        pfc=EcssPfcReal.DOUBLE_PRECISION_IEEE,
+        ptc=Ptc.REAL,
+        pfc=PfcReal.DOUBLE_PRECISION_IEEE,
         rows=1,
         columns=1,
     )
@@ -75,8 +74,8 @@ def pack_scalar_float_param_app_data(
         object_id=object_id,
         domain_id=domain_id,
         unique_id=unique_id,
-        ptc=EcssPtc.REAL,
-        pfc=EcssPfcReal.FLOAT_SIMPLE_PRECISION_IEEE,
+        ptc=Ptc.REAL,
+        pfc=PfcReal.FLOAT_SIMPLE_PRECISION_IEEE,
         rows=1,
         columns=1,
     )
@@ -89,7 +88,7 @@ def prepare_param_packet_header(
     object_id: bytes,
     domain_id: int,
     unique_id: int,
-    ptc: EcssPtc,
+    ptc: Ptc,
     pfc: int,
     rows: int,
     columns: int,

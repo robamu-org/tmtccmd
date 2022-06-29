@@ -1,12 +1,13 @@
 import os
-import shutil
-import time
 from pathlib import Path
-from tempfile import TemporaryFile
 from unittest import TestCase
 
 from spacepackets.ccsds.time import CdsShortTimestamp
-from spacepackets.ecss.pus_1_verification import RequestId
+from spacepackets.ecss.pus_1_verification import (
+    RequestId,
+    VerificationParams,
+    Subservices,
+)
 
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
@@ -34,9 +35,11 @@ class TestPrintersLoggers(TestCase):
         pus_tc = pack_service_17_ping_command(ssc=0)
         raw_tmtc_log.log_tc(pus_tc)
         pus_tm = Service1TmExtended(
-            subservice=1,
+            subservice=Subservices.TM_START_SUCCESS,
             time=CdsShortTimestamp.init_from_current_time(),
-            tc_request_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl),
+            verif_params=VerificationParams(
+                req_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl)
+            ),
         )
         raw_tmtc_log.log_tm(pus_tm.pus_tm)
         self.assertTrue(Path(self.regular_file_name).exists())

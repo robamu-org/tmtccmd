@@ -46,7 +46,7 @@ class PusVerificator:
         pass
 
     def add_tc(self, tc: PusTelecommand) -> bool:
-        req_id = RequestId.from_raw(tc.sp_header)
+        req_id = RequestId.from_sp_header(tc.sp_header)
         if req_id in self._verif_dict:
             return False
         self._verif_dict.update(
@@ -91,7 +91,7 @@ class PusVerificator:
                 verif_status.all_verifs_recvd = True
             verif_status.started = StatusField.FAILURE
         elif pus_1_tm.subservice == Subservices.TM_STEP_SUCCESS:
-            verif_status.step = pus_1_tm.step_number
+            verif_status.step = pus_1_tm.step_id
         elif pus_1_tm.subservice == Subservices.TM_STEP_FAILURE:
             self._check_all_replies_recvd_after_step(verif_status)
             verif_status.step = -1
