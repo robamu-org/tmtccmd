@@ -72,10 +72,10 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
         # FSFW specific
         if service_1_tm.has_failure_notice:
             service_1_tm._error_param_1 = struct.unpack(
-                "!I", service_1_tm.failure_notice.data[1:5]
+                "!I", service_1_tm.failure_notice.data[0:4]
             )
             service_1_tm._error_param_1 = struct.unpack(
-                "!I", service_1_tm.failure_notice.data[6:10]
+                "!I", service_1_tm.failure_notice.data[4:8]
             )
         return service_1_tm
 
