@@ -20,7 +20,10 @@ LOGGER = get_console_logger()
 
 
 class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
-    """Service 1 TM class representation. Can be used to deserialize raw service 1 packets."""
+    """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
+    Only PUS C is supported.
+    TODO: Do not use subclassing here, use a wrapper class..
+    """
 
     def __init__(
         self,
@@ -30,7 +33,6 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
         seq_count: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
         secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
@@ -43,7 +45,6 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
             seq_count=seq_count,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,

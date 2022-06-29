@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 from unittest import TestCase
 
-from spacepackets.ccsds.spacepacket import get_sp_psc_raw
 from spacepackets.ccsds.time import CdsShortTimestamp
-from spacepackets.ecss.conf import get_pus_tm_version, PusVersion, set_default_tm_apid
 from spacepackets.util import PrintFormats
 
 from tmtccmd.tm.pus_17_test import Service17TmExtended
@@ -28,7 +26,6 @@ class TestTelemetry(TestCase):
         self.assertRaises(ValueError, tm_func, None)
 
         pus_17_telemetry = Service17TmExtended.unpack(raw_telemetry=pus_17_raw)
-        self.assertTrue(get_pus_tm_version() == PusVersion.PUS_C)
         self.assertTrue(pus_17_telemetry.service == 17)
         self.assertTrue(pus_17_telemetry.apid == 0xEF)
         self.assertTrue(pus_17_telemetry.subservice == 1)

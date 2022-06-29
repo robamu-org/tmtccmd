@@ -4,11 +4,8 @@ import pprint
 from typing import Union, List, Dict
 
 from spacepackets.ecss.conf import (
-    PusVersion,
     set_default_tc_apid,
     set_default_tm_apid,
-    set_pus_tc_version,
-    set_pus_tm_version,
 )
 
 from tmtccmd.logging import get_console_logger
@@ -88,8 +85,6 @@ def get_glob_com_if_dict() -> ComIfDictT:
 
 def set_default_globals_pre_args_parsing(
     apid: int,
-    pus_tc_version: PusVersion = PusVersion.PUS_C,
-    pus_tm_version: PusVersion = PusVersion.PUS_C,
     com_if_id: str = CoreComInterfaces.DUMMY.value,
     custom_com_if_dict=None,
     display_mode="long",
@@ -101,8 +96,6 @@ def set_default_globals_pre_args_parsing(
         custom_com_if_dict = dict()
     set_default_tc_apid(tc_apid=apid)
     set_default_tm_apid(tm_apid=apid)
-    set_pus_tc_version(pus_tc_version)
-    set_pus_tm_version(pus_tm_version)
     update_global(CoreGlobalIds.COM_IF, com_if_id)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, tc_send_timeout_factor)
     update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)
