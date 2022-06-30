@@ -34,6 +34,8 @@ def create_communication_interface_default(
     from tmtccmd.com_if.dummy import DummyComIF
     from tmtccmd.com_if.qemu import QEMUComIF
 
+    if com_if_key == "":
+        LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
     try:
         if (
             com_if_key == CoreComInterfaces.UDP.value

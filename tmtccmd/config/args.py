@@ -296,12 +296,12 @@ def args_to_params(
         params.app_params.use_gui = pargs.gui
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
         if use_prompts:
-            params.com_if = determine_com_if(
+            params.com_if_id = determine_com_if(
                 hook_obj.get_com_if_dict(), hook_obj.json_cfg_path
             )
     else:
         # TODO: Check whether COM IF is valid?
-        params.com_if = pargs.com_if
+        params.com_if_id = pargs.com_if
     if pargs.mode is None:
         params.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
     else:
