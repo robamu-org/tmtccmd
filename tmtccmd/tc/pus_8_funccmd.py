@@ -19,7 +19,7 @@ def generate_action_command(
     return PusTelecommand(
         service=8,
         subservice=Subservices.FUNCTIONAL_CMD,
-        ssc=ssc,
+        seq_count=ssc,
         app_data=data_to_pack,
         apid=apid,
     )

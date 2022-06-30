@@ -46,7 +46,9 @@ def __generate_periodic_hk_command(
             subservice = Subservices.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
             subservice = Subservices.TC_DISABLE_PERIODIC_HK_GEN
-    return PusTelecommand(service=3, subservice=subservice, ssc=ssc, app_data=app_data)
+    return PusTelecommand(
+        service=3, subservice=subservice, seq_count=ssc, app_data=app_data
+    )
 
 
 def modify_collection_interval(
@@ -58,14 +60,16 @@ def modify_collection_interval(
         subservice = Subservices.TC_MODIFY_DIAGNOSTICS_REPORT_COLLECTION_INTERVAL
     else:
         subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
-    return PusTelecommand(service=3, subservice=subservice, ssc=ssc, app_data=app_data)
+    return PusTelecommand(
+        service=3, subservice=subservice, seq_count=ssc, app_data=app_data
+    )
 
 
 def generate_one_hk_command(sid: bytes, ssc: int) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservices.TC_GENERATE_ONE_PARAMETER_REPORT,
-        ssc=ssc,
+        seq_count=ssc,
         app_data=sid,
     )
 
@@ -74,6 +78,6 @@ def generate_one_diag_command(sid: bytes, ssc: int) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservices.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
-        ssc=ssc,
+        seq_count=ssc,
         app_data=sid,
     )

@@ -21,7 +21,7 @@ def pack_fsfw_load_param_cmd(
         subservice=CustomSubservices.LOAD,
         app_data=app_data,
         apid=apid,
-        ssc=ssc,
+        seq_count=ssc,
     )
 
 

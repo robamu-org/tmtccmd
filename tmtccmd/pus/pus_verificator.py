@@ -125,7 +125,9 @@ class PusVerificator:
 
     def remove_completed_entries(self):
         self._verif_dict = {
-            key: val for key, val in self._verif_dict.items() if val.all_verifs_recvd
+            key: val
+            for key, val in self._verif_dict.items()
+            if not val.all_verifs_recvd
         }
 
     def remove_entry(self, req_id: RequestId) -> bool:

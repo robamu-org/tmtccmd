@@ -13,21 +13,26 @@ from spacepackets.ecss.pus_1_verification import (
 from tmtccmd.pus.pus_verificator import PusVerificator, StatusField, VerificationStatus
 
 
+class TestSuccessSet:
+    def __init__(self, pus_tc: PusTelecommand):
+        self.pus_tc = pus_tc
+        self.req_id = RequestId.from_pus_tc(pus_tc)
+        self.acc_suc_tm = create_acceptance_success_tm(pus_tc)
+        self.sta_suc_tm = create_start_success_tm(pus_tc)
+        self.ste_suc_tm = create_step_success_tm(
+            pus_tc, step_id=StepId.from_byte_size(1, 1)
+        )
+        self.fin_suc_tm = create_completion_success_tm(pus_tc)
+
+
 class TestPusVerificator(TestCase):
     def setUp(self) -> None:
         self.pus_verificator = PusVerificator()
-        self.ping_tc = PusTelecommand(service=17, subservice=1)
-        self.req_id = RequestId.from_pus_tc(self.ping_tc)
-        self.acc_suc_tm = create_acceptance_success_tm(self.ping_tc)
-        self.sta_suc_tm = create_start_success_tm(self.ping_tc)
-        self.ste_suc_tm = create_step_success_tm(
-            self.ping_tc, step_id=StepId.from_byte_size(1, 1)
-        )
-        self.fin_suc_tm = create_completion_success_tm(self.ping_tc)
 
     def test_basic(self):
-        self.pus_verificator.add_tc(self.ping_tc)
-        check_res = self.pus_verificator.add_tm(self.acc_suc_tm)
+        suc_set = TestSuccessSet(PusTelecommand(service=17, subservice=1))
+        self.pus_verificator.add_tc(suc_set.pus_tc)
+        check_res = self.pus_verificator.add_tm(suc_set.acc_suc_tm)
         self.assertEqual(check_res.completed, False)
         status = check_res.status
         self._check_status(
@@ -42,7 +47,7 @@ class TestPusVerificator(TestCase):
         verif_dict = self.pus_verificator.verif_dict
         self.assertEqual(len(verif_dict), 1)
         for key, val in verif_dict.items():
-            self.assertEqual(key, self.req_id)
+            self.assertEqual(key, suc_set.req_id)
             self._check_status(
                 val,
                 False,
@@ -53,9 +58,32 @@ class TestPusVerificator(TestCase):
                 StatusField.UNSET,
             )
 
-    def test_complete_verification(self):
-        self.pus_verificator.add_tc(self.ping_tc)
-        check_res = self.pus_verificator.add_tm(self.acc_suc_tm)
+    def test_complete_verification_clear_completed(self):
+        self._regular_success_seq(
+            TestSuccessSet(PusTelecommand(service=17, subservice=1))
+        )
+        self.pus_verificator.remove_completed_entries()
+        self.assertEqual(len(self.pus_verificator.verif_dict), 0)
+
+    def test_complete_verification_clear_completed_multi(self):
+        self._regular_success_seq(
+            TestSuccessSet(PusTelecommand(service=17, subservice=1, seq_count=0))
+        )
+        self._regular_success_seq(
+            TestSuccessSet(PusTelecommand(service=5, subservice=4, seq_count=1))
+        )
+        self.pus_verificator.remove_completed_entries()
+        self.assertEqual(len(self.pus_verificator.verif_dict), 0)
+
+    def test_complete_verification_remove_manually(self):
+        suc_set = TestSuccessSet(PusTelecommand(service=17, subservice=1))
+        self._regular_success_seq(suc_set)
+        self.pus_verificator.remove_entry(suc_set.req_id)
+        self.assertEqual(len(self.pus_verificator.verif_dict), 0)
+
+    def _regular_success_seq(self, suc_set: TestSuccessSet):
+        self.pus_verificator.add_tc(suc_set.pus_tc)
+        check_res = self.pus_verificator.add_tm(suc_set.acc_suc_tm)
         status = check_res.status
         self._check_status(
             status,
@@ -66,7 +94,7 @@ class TestPusVerificator(TestCase):
             [],
             StatusField.UNSET,
         )
-        check_res = self.pus_verificator.add_tm(self.sta_suc_tm)
+        check_res = self.pus_verificator.add_tm(suc_set.sta_suc_tm)
         status = check_res.status
         self._check_status(
             status,
@@ -77,7 +105,7 @@ class TestPusVerificator(TestCase):
             [],
             StatusField.UNSET,
         )
-        check_res = self.pus_verificator.add_tm(self.ste_suc_tm)
+        check_res = self.pus_verificator.add_tm(suc_set.ste_suc_tm)
         status = check_res.status
         self._check_status(
             status,
@@ -88,7 +116,7 @@ class TestPusVerificator(TestCase):
             [1],
             StatusField.UNSET,
         )
-        check_res = self.pus_verificator.add_tm(self.fin_suc_tm)
+        check_res = self.pus_verificator.add_tm(suc_set.fin_suc_tm)
         status = check_res.status
         self._check_status(
             status,

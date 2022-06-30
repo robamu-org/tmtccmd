@@ -16,7 +16,7 @@ def pack_service_17_ping_command(ssc: int, apid: int = -1) -> PusTelecommand:
     if apid == -1:
         apid = get_default_tc_apid()
     return PusTelecommand(
-        service=17, subservice=Subservices.TC_PING.value, ssc=ssc, apid=apid
+        service=17, subservice=Subservices.TC_PING.value, seq_count=ssc, apid=apid
     )
 
 
@@ -31,7 +31,7 @@ def pack_generic_service17_test(init_ssc: int, q: QueueHelper, apid: int = -1) -
     new_ssc += 1
     # enable event
     q.add_log_cmd("Testing Service 17: Enable Event")
-    q.add_pus_tc(PusTelecommand(service=5, subservice=5, ssc=new_ssc, apid=apid))
+    q.add_pus_tc(PusTelecommand(service=5, subservice=5, seq_count=new_ssc, apid=apid))
     new_ssc += 1
     # test event
     q.add_log_cmd("Testing Service 17: Trigger event")
@@ -39,13 +39,15 @@ def pack_generic_service17_test(init_ssc: int, q: QueueHelper, apid: int = -1) -
         PusTelecommand(
             service=17,
             subservice=CustomSubservices.TC_GEN_EVENT,
-            ssc=new_ssc,
+            seq_count=new_ssc,
             apid=apid,
         )
     )
     new_ssc += 1
     # invalid subservice
     q.add_log_cmd("Testing Service 17: Invalid subservice")
-    q.add_pus_tc(PusTelecommand(service=17, subservice=243, ssc=new_ssc, apid=apid))
+    q.add_pus_tc(
+        PusTelecommand(service=17, subservice=243, seq_count=new_ssc, apid=apid)
+    )
     new_ssc += 1
     return new_ssc

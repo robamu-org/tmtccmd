@@ -8,7 +8,10 @@ def __generic_param_less_tc_sched_cmd(
     subservice: int, ssc: int, apid: int = -1
 ) -> PusTelecommand:
     return PusTelecommand(
-        service=PusServices.S11_TC_SCHED, subservice=subservice, ssc=ssc, apid=apid
+        service=PusServices.S11_TC_SCHED,
+        subservice=subservice,
+        seq_count=ssc,
+        apid=apid,
     )
 
 
@@ -46,7 +49,7 @@ def generate_time_tagged_cmd(
         service=PusServices.S11_TC_SCHED,
         subservice=Subservices.TC_INSERT,
         app_data=pack_time_tagged_tc_app_data(release_time, tc_to_insert),
-        ssc=ssc,
+        seq_count=ssc,
         apid=apid,
     )
 
