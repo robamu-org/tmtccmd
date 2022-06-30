@@ -88,6 +88,17 @@ class TestPusVerificator(TestCase):
             [1],
             StatusField.UNSET,
         )
+        check_res = self.pus_verificator.add_tm(self.fin_suc_tm)
+        status = check_res.status
+        self._check_status(
+            status,
+            True,
+            StatusField.SUCCESS,
+            StatusField.SUCCESS,
+            StatusField.SUCCESS,
+            [1],
+            StatusField.SUCCESS,
+        )
 
     def _check_status(
         self,
