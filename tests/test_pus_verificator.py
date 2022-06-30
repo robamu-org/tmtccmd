@@ -9,6 +9,12 @@ from spacepackets.ecss.pus_1_verification import (
     create_step_success_tm,
     StepId,
     create_completion_success_tm,
+    FailureNotice,
+    create_acceptance_failure_tm,
+    create_start_failure_tm,
+    create_step_failure_tm,
+    create_completion_failure_tm,
+    ErrorCode,
 )
 from tmtccmd.pus.pus_verificator import PusVerificator, StatusField, VerificationStatus
 
@@ -20,9 +26,33 @@ class TestSuccessSet:
         self.acc_suc_tm = create_acceptance_success_tm(pus_tc)
         self.sta_suc_tm = create_start_success_tm(pus_tc)
         self.ste_suc_tm = create_step_success_tm(
-            pus_tc, step_id=StepId.from_byte_size(1, 1)
+            pus_tc, step_id=StepId.with_byte_size(1, 1)
         )
         self.fin_suc_tm = create_completion_success_tm(pus_tc)
+
+
+class TestFailureSet:
+    def __init__(self, pus_tc: PusTelecommand, failure_notice: FailureNotice):
+        self.suc_set = TestSuccessSet(pus_tc)
+        self.failure_notice = failure_notice
+        self.acc_fail_tm = create_acceptance_failure_tm(pus_tc, self.failure_notice)
+        self.sta_fail_tm = create_start_failure_tm(pus_tc, self.failure_notice)
+        self.ste_fail_tm = create_step_failure_tm(
+            pus_tc,
+            failure_notice=self.failure_notice,
+            step_id=StepId.with_byte_size(1, 1),
+        )
+        self.fin_fail_tm = create_completion_failure_tm(
+            failure_notice=self.failure_notice, pus_tc=self.suc_set.pus_tc
+        )
+
+    @property
+    def pus_tc(self):
+        return self.suc_set.pus_tc
+
+    @property
+    def req_id(self):
+        return self.suc_set.req_id
 
 
 class TestPusVerificator(TestCase):
@@ -91,9 +121,72 @@ class TestPusVerificator(TestCase):
         self.assertTrue(self.pus_verificator.remove_entry(set_1.req_id))
         self.assertEqual(len(self.pus_verificator.verif_dict), 0)
 
+    def test_acceptance_failure(self):
+        notice = FailureNotice(ErrorCode.with_byte_size(1, 8), data=bytes([0, 1]))
+        fail_set = TestFailureSet(
+            PusTelecommand(service=17, subservice=1, seq_count=0), notice
+        )
+        self.assertTrue(self.pus_verificator.add_tc(fail_set.pus_tc))
+        status = self.pus_verificator.add_tm(fail_set.acc_fail_tm)
+        self.assertTrue(status.completed)
+        self.assertTrue(status.req_id_in_dict)
+        self._check_status(
+            status.status,
+            True,
+            StatusField.FAILURE,
+            StatusField.UNSET,
+            StatusField.UNSET,
+            [],
+            StatusField.UNSET,
+        )
+
+    def test_step_failure(self):
+        notice = FailureNotice(ErrorCode.with_byte_size(1, 8), data=bytes([0, 1]))
+        fail_set = TestFailureSet(
+            PusTelecommand(service=17, subservice=1, seq_count=0), notice
+        )
+        self.assertTrue(self.pus_verificator.add_tc(fail_set.pus_tc))
+        status = self.pus_verificator.add_tm(fail_set.suc_set.acc_suc_tm)
+        self.assertFalse(status.completed)
+        self.assertTrue(status.req_id_in_dict)
+        self._check_status(
+            status.status,
+            False,
+            StatusField.SUCCESS,
+            StatusField.UNSET,
+            StatusField.UNSET,
+            [],
+            StatusField.UNSET,
+        )
+        status = self.pus_verificator.add_tm(fail_set.suc_set.sta_suc_tm)
+        self.assertFalse(status.completed)
+        self.assertTrue(status.req_id_in_dict)
+        self._check_status(
+            status.status,
+            False,
+            StatusField.SUCCESS,
+            StatusField.SUCCESS,
+            StatusField.UNSET,
+            [],
+            StatusField.UNSET,
+        )
+        status = self.pus_verificator.add_tm(fail_set.ste_fail_tm)
+        self.assertTrue(status.completed)
+        self.assertTrue(status.req_id_in_dict)
+        self._check_status(
+            status.status,
+            True,
+            StatusField.SUCCESS,
+            StatusField.SUCCESS,
+            StatusField.FAILURE,
+            [1],
+            StatusField.UNSET,
+        )
+
     def _regular_success_seq(self, suc_set: TestSuccessSet):
-        self.pus_verificator.add_tc(suc_set.pus_tc)
+        self.assertTrue(self.pus_verificator.add_tc(suc_set.pus_tc))
         check_res = self.pus_verificator.add_tm(suc_set.acc_suc_tm)
+        self.assertTrue(check_res.req_id_in_dict)
         status = check_res.status
         self._check_status(
             status,
@@ -105,6 +198,7 @@ class TestPusVerificator(TestCase):
             StatusField.UNSET,
         )
         check_res = self.pus_verificator.add_tm(suc_set.sta_suc_tm)
+        self.assertTrue(check_res.req_id_in_dict)
         status = check_res.status
         self._check_status(
             status,
@@ -116,6 +210,7 @@ class TestPusVerificator(TestCase):
             StatusField.UNSET,
         )
         check_res = self.pus_verificator.add_tm(suc_set.ste_suc_tm)
+        self.assertTrue(check_res.req_id_in_dict)
         status = check_res.status
         self._check_status(
             status,
@@ -127,6 +222,7 @@ class TestPusVerificator(TestCase):
             StatusField.UNSET,
         )
         check_res = self.pus_verificator.add_tm(suc_set.fin_suc_tm)
+        self.assertTrue(check_res.req_id_in_dict)
         status = check_res.status
         self._check_status(
             status,

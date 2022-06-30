@@ -97,10 +97,7 @@ class PusVerificator:
                 verif_status.step = StatusField.SUCCESS
             verif_status.step_list.append(pus_1_tm.step_id.val)
         elif subservice == Subservices.TM_STEP_FAILURE:
-            self._check_all_replies_recvd_after_step(verif_status)
-            verif_status.step = StatusField.FAILURE
-            verif_status.step_list.append(pus_1_tm.step_id.val)
-            res.completed = True
+            self._handle_step_failure(verif_status, res, pus_1_tm)
         elif subservice == Subservices.TM_COMPLETION_SUCCESS:
             self._check_all_replies_recvd_after_step(verif_status)
             verif_status.completed = StatusField.SUCCESS
@@ -114,6 +111,14 @@ class PusVerificator:
     @property
     def verif_dict(self):
         return self._verif_dict
+
+    def _handle_step_failure(
+        self, verif_status: VerificationStatus, res: TmCheckResult, pus_1_tm: Service1Tm
+    ):
+        self._check_all_replies_recvd_after_step(verif_status)
+        verif_status.step = StatusField.FAILURE
+        verif_status.step_list.append(pus_1_tm.step_id.val)
+        res.completed = True
 
     @staticmethod
     def _check_all_replies_recvd_after_step(verif_stat: VerificationStatus):
