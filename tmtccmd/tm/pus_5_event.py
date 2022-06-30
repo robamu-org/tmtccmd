@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import struct
 
-from spacepackets.ecss.definitions import PusServices
+from spacepackets.ecss.defs import PusServices
 from spacepackets.ecss.pus_5_event import Subservices
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry

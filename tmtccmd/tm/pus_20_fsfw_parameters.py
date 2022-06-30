@@ -5,7 +5,7 @@ from typing import Optional
 
 from spacepackets.ecss.field import Ptc, PfcUnsigned, PfcSigned, PfcReal
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
-from spacepackets.ecss.definitions import PusServices
+from spacepackets.ecss.defs import PusServices
 
 from tmtccmd.utility.obj_id import ObjectId
 from tmtccmd.pus.pus_20_params import (

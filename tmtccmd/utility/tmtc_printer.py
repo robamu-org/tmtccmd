@@ -5,7 +5,7 @@ import enum
 from typing import List, Optional
 
 from spacepackets.util import get_printable_data_string, PrintFormats
-from spacepackets.ecss.definitions import PusServices
+from spacepackets.ecss.defs import PusServices
 
 from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface

@@ -1,5 +1,5 @@
 from enum import IntEnum
-from spacepackets.ecss.definitions import PusServices
+from spacepackets.ecss.defs import PusServices
 
 
 class CustomPusServices(IntEnum):
