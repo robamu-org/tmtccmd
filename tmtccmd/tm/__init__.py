@@ -1,5 +1,5 @@
 import enum
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Deque, List, Union, Dict, Optional
 
 from spacepackets.ecss import PusTelemetry
@@ -38,7 +38,7 @@ class TmHandlerBase:
         return self._tm_type
 
 
-class ApidTmHandlerBase:
+class ApidTmHandlerBase(ABC):
     """Handler base for space packets with an APID. If a packet is received for a certain APID,
     the :py:func:`handle_tm` function will be called"""
 
@@ -51,11 +51,16 @@ class ApidTmHandlerBase:
         LOGGER.warning(f"No TM handling implemented for APID {self.apid}")
 
 
-class UnknownApidHandlerBase:
+class UnknownApidHandlerBase(ABC):
     def __init__(self, user_args: any):
         self.user_args: any = user_args
 
     @abstractmethod
+    def handle_tm(self, apid: int, _packet: bytes, _user_args: any):
+        pass
+
+
+class DefaultUnknownHandler(UnknownApidHandlerBase):
     def handle_tm(self, apid: int, _packet: bytes, _user_args: any):
         LOGGER.warning(f"No TM handling implemented for unknown APID {apid}")
 

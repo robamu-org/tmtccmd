@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tc import TcQueueEntryBase, TcProcedureBase
@@ -15,7 +15,7 @@ class FeedWrapper:
         self.modes = ModeWrapper()
 
 
-class TcHandlerBase:
+class TcHandlerBase(ABC):
     """Generic abstraction for a TC handler object. This object then takes care of sending
     packets by providing a send callback. It also provides telecommand queues by providing
     a queue fedder callback.

@@ -1,5 +1,5 @@
 from typing import Optional
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from tmtccmd.utility.obj_id import ObjectIdDictT
 from tmtccmd.com_if import ComInterface
@@ -11,7 +11,7 @@ from .tmtc import TmTcDefWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfDictT
 
 
-class TmTcCfgHookBase:
+class TmTcCfgHookBase(ABC):
     """This hook allows users to adapt the TMTC commander core to the unique mission requirements.
     It is used by implementing all abstract functions and then passing the instance to the
     TMTC commander core.
