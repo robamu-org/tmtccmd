@@ -22,10 +22,14 @@ class CustomPusServices(IntEnum):
 
 
 class VerificationWrapper:
-    def __init__(self, console_logger: logging.Logger):
+    def __init__(
+        self,
+        console_logger: Optional[logging.Logger],
+        file_logger: Optional[logging.Logger],
+    ):
         self.pus_verificator = PusVerificator()
         self.console_logger = console_logger
-        self.file_logger: Optional[logging.Logger] = None
+        self.file_logger = file_logger
         self.with_colors = True
 
     @property
@@ -46,7 +50,18 @@ class VerificationWrapper:
     ):
         return self.log_progress_to_console_from_status(res.status, req_id, subservice)
 
-    def log_progress_to_file_from_status(
+    def log_to_file(self, srv_1_tm: pus_1.Service1Tm, res: TmCheckResult):
+        self.log_to_file_from_req_id(srv_1_tm.tc_req_id, res, srv_1_tm.subservice)
+
+    def log_to_file_from_req_id(
+        self,
+        req_id: RequestId,
+        res: TmCheckResult,
+        subservice: Optional[pus_1.Subservices] = None,
+    ):
+        self.log_to_file_from_status(res.status, req_id, subservice)
+
+    def log_to_file_from_status(
         self,
         status: VerificationStatus,
         req_id: RequestId,
@@ -61,10 +76,14 @@ class VerificationWrapper:
         step_num = self.step_num(status)
         first_str = self._get_info_string(subservice)
         second_str = f"Request ID {req_id.as_u32():#04x}"
+        completion_str = ""
+        if status.completed == StatusField.SUCCESS:
+            completion_str = " S"
         third_str = (
             f"acc ({acc_char}) sta ({start_char}) ste ({step_char}, {step_num}) "
-            f"fin ({fin_char})"
+            f"fin ({fin_char}){completion_str}"
         )
+
         self.file_logger.info(f"{first_str} | {second_str} | {third_str}")
 
     def log_progress_to_console_from_status(
@@ -73,6 +92,8 @@ class VerificationWrapper:
         req_id: RequestId,
         subservice: Optional[pus_1.Subservices] = None,
     ):
+        if self.console_logger is None:
+            raise ValueError("Invalid console logger")
         acc_char = gen_console_char_from_status(status.accepted, self.with_colors)
         start_char = gen_console_char_from_status(status.started, self.with_colors)
         step_char = gen_console_char_from_status(status.step, self.with_colors)
