@@ -24,10 +24,11 @@ class CustomPusServices(IntEnum):
 class VerificationWrapper:
     def __init__(
         self,
+        pus_verificator: PusVerificator,
         console_logger: Optional[logging.Logger],
         file_logger: Optional[logging.Logger],
     ):
-        self.pus_verificator = PusVerificator()
+        self.pus_verificator = pus_verificator
         self.console_logger = console_logger
         self.file_logger = file_logger
         self.with_colors = True

@@ -26,12 +26,12 @@ class TestPusVerifLog(TestCase):
 
     def test_console_log_success(self):
         logger = get_console_logger()
-        wrapper = VerificationWrapper(logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), logger, None)
         self._test_success(wrapper)
 
     def test_console_log_success_without_colors(self):
         logger = get_console_logger()
-        wrapper = VerificationWrapper(logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), logger, None)
         wrapper.with_colors = False
         self._test_success(wrapper)
 
@@ -54,12 +54,12 @@ class TestPusVerifLog(TestCase):
 
     def test_console_log_acc_failure(self):
         logger = get_console_logger()
-        wrapper = VerificationWrapper(logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), logger, None)
         self._test_acc_failure(wrapper)
 
     def test_console_log_acc_failure_without_colors(self):
         logger = get_console_logger()
-        wrapper = VerificationWrapper(logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), logger, None)
         wrapper.with_colors = False
         self._test_acc_failure(wrapper)
 
@@ -75,7 +75,7 @@ class TestPusVerifLog(TestCase):
 
     def test_console_log_start_failure(self):
         logger = get_console_logger()
-        wrapper = VerificationWrapper(logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), logger, None)
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=2)
         verificator.add_tc(tc)
@@ -92,7 +92,7 @@ class TestPusVerifLog(TestCase):
 
     def test_file_logger(self):
         tmtc_logger = RegularTmtcLogWrapper(self.log_file_name)
-        wrapper = VerificationWrapper(None, tmtc_logger.logger)
+        wrapper = VerificationWrapper(PusVerificator(), None, tmtc_logger.logger)
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=0)
         verificator.add_tc(tc)
