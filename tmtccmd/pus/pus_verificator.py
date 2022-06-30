@@ -1,6 +1,6 @@
 import enum
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import RequestId, Service1Tm, Subservices
@@ -17,7 +17,7 @@ class VerificationStatus:
     all_verifs_recvd: bool
     accepted: StatusField
     started: StatusField
-    step: int
+    step: (StatusField, List[int])
     completed: StatusField
 
 
@@ -104,7 +104,7 @@ class PusVerificator:
             verif_status.step = pus_1_tm.step_id.val
         elif subservice == Subservices.TM_STEP_FAILURE:
             self._check_all_replies_recvd_after_step(verif_status)
-            verif_status.step = -1
+            verif_status.step = pus_1_tm.step_id.val
             res.completed = True
         elif subservice == Subservices.TM_COMPLETION_SUCCESS:
             self._check_all_replies_recvd_after_step(verif_status)
