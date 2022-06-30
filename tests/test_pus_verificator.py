@@ -78,7 +78,17 @@ class TestPusVerificator(TestCase):
     def test_complete_verification_remove_manually(self):
         suc_set = TestSuccessSet(PusTelecommand(service=17, subservice=1))
         self._regular_success_seq(suc_set)
-        self.pus_verificator.remove_entry(suc_set.req_id)
+        self.assertTrue(self.pus_verificator.remove_entry(suc_set.req_id))
+        self.assertEqual(len(self.pus_verificator.verif_dict), 0)
+
+    def test_complete_verification_multi_remove_manually(self):
+        set_0 = TestSuccessSet(PusTelecommand(service=17, subservice=1, seq_count=0))
+        self._regular_success_seq(set_0)
+        set_1 = TestSuccessSet(PusTelecommand(service=5, subservice=4, seq_count=1))
+        self._regular_success_seq(set_1)
+        self.assertTrue(self.pus_verificator.remove_entry(set_0.req_id))
+        self.assertEqual(len(self.pus_verificator.verif_dict), 1)
+        self.assertTrue(self.pus_verificator.remove_entry(set_1.req_id))
         self.assertEqual(len(self.pus_verificator.verif_dict), 0)
 
     def _regular_success_seq(self, suc_set: TestSuccessSet):
