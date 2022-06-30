@@ -1,5 +1,5 @@
 import enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Optional, List
 
 from spacepackets.ecss import PusTelecommand
@@ -14,11 +14,12 @@ class StatusField(enum.IntEnum):
 
 @dataclass
 class VerificationStatus:
-    all_verifs_recvd: bool
-    accepted: StatusField
-    started: StatusField
-    step: (StatusField, List[int])
-    completed: StatusField
+    all_verifs_recvd: bool = False
+    accepted: StatusField = StatusField.UNSET
+    started: StatusField = StatusField.UNSET
+    step: StatusField = StatusField.UNSET
+    step_list: List[int] = field(default_factory=lambda: [])
+    completed: StatusField = StatusField.UNSET
 
 
 VerifDictT = Dict[RequestId, VerificationStatus]
@@ -49,17 +50,7 @@ class PusVerificator:
         req_id = RequestId.from_sp_header(tc.sp_header)
         if req_id in self._verif_dict:
             return False
-        self._verif_dict.update(
-            {
-                req_id: VerificationStatus(
-                    all_verifs_recvd=False,
-                    accepted=StatusField.UNSET,
-                    started=StatusField.UNSET,
-                    step=0,
-                    completed=StatusField.UNSET,
-                )
-            }
-        )
+        self._verif_dict.update({req_id: VerificationStatus()})
         return True
 
     def add_tm(self, pus_1_tm: Service1Tm) -> TmCheckResult:
@@ -100,16 +91,15 @@ class PusVerificator:
             if verif_status.accepted != StatusField.UNSET:
                 verif_status.all_verifs_recvd = True
             verif_status.started = StatusField.FAILURE
-        # TODO: Extract step handling into separate function
         elif subservice == Subservices.TM_STEP_SUCCESS:
-            verif_status.step[1].append(pus_1_tm.step_id.val)
             # Do not overwrite a failed step status
-            if verif_status.step[0] == StatusField.UNSET:
-                verif_status.step[0] = StatusField.SUCCESS
+            if verif_status.step == StatusField.UNSET:
+                verif_status.step = StatusField.SUCCESS
+            verif_status.step_list.append(pus_1_tm.step_id.val)
         elif subservice == Subservices.TM_STEP_FAILURE:
             self._check_all_replies_recvd_after_step(verif_status)
-            verif_status.step[0] = StatusField.FAILURE
-            verif_status.step[1].append(pus_1_tm.step_id.val)
+            verif_status.step = StatusField.FAILURE
+            verif_status.step_list.append(pus_1_tm.step_id.val)
             res.completed = True
         elif subservice == Subservices.TM_COMPLETION_SUCCESS:
             self._check_all_replies_recvd_after_step(verif_status)
