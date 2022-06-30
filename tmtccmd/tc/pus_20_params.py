@@ -3,7 +3,7 @@
 import struct
 from typing import Optional
 
-from spacepackets.ecss.field import Ptc, PfcUnsigned, PfcReal
+from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
 from tmtccmd.pus.pus_20_params import (
     CustomSubservices,
 )

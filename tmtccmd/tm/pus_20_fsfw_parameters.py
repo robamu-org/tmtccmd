@@ -3,7 +3,7 @@ import os
 import struct
 from typing import Optional
 
-from spacepackets.ecss.field import Ptc, PfcUnsigned, PfcSigned, PfcReal
+from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcSigned, PfcReal
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from spacepackets.ecss.defs import PusServices
 
