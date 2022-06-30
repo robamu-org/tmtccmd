@@ -66,6 +66,19 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
+                tm_packer = Service1TmExtended(
+                    subservice=Pus1Subservices.TM_COMPLETION_SUCCESS,
+                    seq_count=self.current_ssc,
+                    verif_params=VerificationParams(
+                        req_id=RequestId(
+                            self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                        )
+                    ),
+                )
+                tm_packet_raw = tm_packer.pack()
+                self.next_telemetry_package.append(tm_packet_raw)
+                self.current_ssc += 1
+
     def receive_reply_package(self) -> TelemetryListT:
         if self.reply_pending:
             return_list = self.next_telemetry_package.copy()

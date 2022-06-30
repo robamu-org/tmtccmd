@@ -104,7 +104,7 @@ class VerificationWrapper:
         second_str = f"Request ID {req_id.as_u32():#04x}"
         completion_str = ""
         if status.completed == StatusField.SUCCESS:
-            completion_str = f" \U0001F31F"
+            completion_str = f" {AnsiColors.BOLD}{AnsiColors.YELLOW}\u2728"
         third_str = (
             f"acc ({acc_char}) sta ({start_char}) ste ({step_char}, {step_num}) "
             f"fin ({fin_char}){completion_str}"

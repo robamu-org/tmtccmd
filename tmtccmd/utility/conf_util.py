@@ -21,6 +21,7 @@ class AnsiColors:
     MAGNETA = "\x1b[35m"
     CYAN = "\x1b[36m"
     RESET = "\x1b[0m"
+    BOLD = "\033[1m"
 
 
 def check_args_in_dict(

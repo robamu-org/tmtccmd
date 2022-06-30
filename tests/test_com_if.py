@@ -57,7 +57,8 @@ class TestComIF(TestCase):
         dummy_com_if.send(PusTelecommand(service=17, subservice=1).pack())
         self.assertTrue(dummy_com_if.data_available())
         replies = dummy_com_if.receive()
-        self.assertEqual(len(replies), 3)
+        # Full verification set (acceptance, start and completion) and ping reply
+        self.assertEqual(len(replies), 4)
 
     def tearDown(self) -> None:
         path = Path(self.json_file)
