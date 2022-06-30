@@ -100,11 +100,16 @@ class PusVerificator:
             if verif_status.accepted != StatusField.UNSET:
                 verif_status.all_verifs_recvd = True
             verif_status.started = StatusField.FAILURE
+        # TODO: Extract step handling into separate function
         elif subservice == Subservices.TM_STEP_SUCCESS:
-            verif_status.step = pus_1_tm.step_id.val
+            verif_status.step[1].append(pus_1_tm.step_id.val)
+            # Do not overwrite a failed step status
+            if verif_status.step[0] == StatusField.UNSET:
+                verif_status.step[0] = StatusField.SUCCESS
         elif subservice == Subservices.TM_STEP_FAILURE:
             self._check_all_replies_recvd_after_step(verif_status)
-            verif_status.step = pus_1_tm.step_id.val
+            verif_status.step[0] = StatusField.FAILURE
+            verif_status.step[1].append(pus_1_tm.step_id.val)
             res.completed = True
         elif subservice == Subservices.TM_COMPLETION_SUCCESS:
             self._check_all_replies_recvd_after_step(verif_status)
