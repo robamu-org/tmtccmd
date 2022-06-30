@@ -22,9 +22,10 @@ class CustomPusServices(IntEnum):
 
 
 class VerificationWrapper:
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, console_logger: logging.Logger):
         self.pus_verificator = PusVerificator()
-        self.logger = logger
+        self.console_logger = console_logger
+        self.file_logger: Optional[logging.Logger] = None
         self.with_colors = True
 
     @property
@@ -45,20 +46,58 @@ class VerificationWrapper:
     ):
         return self.log_progress_to_console_from_status(res.status, req_id, subservice)
 
+    def log_progress_to_file_from_status(
+        self,
+        status: VerificationStatus,
+        req_id: RequestId,
+        subservice: Optional[pus_1.Subservices] = None,
+    ):
+        if self.file_logger is None:
+            raise ValueError("No valid file logger was set")
+        acc_char = gen_file_char_from_status(status.accepted)
+        start_char = gen_file_char_from_status(status.started)
+        step_char = gen_file_char_from_status(status.step)
+        fin_char = gen_file_char_from_status(status.completed)
+        step_num = self.step_num(status)
+        first_str = self._get_info_string(subservice)
+        second_str = f"Request ID {req_id.as_u32():#04x}"
+        third_str = (
+            f"acc ({acc_char}) sta ({start_char}) ste ({step_char}, {step_num}) "
+            f"fin ({fin_char})"
+        )
+        self.file_logger.info(f"{first_str} | {second_str} | {third_str}")
+
     def log_progress_to_console_from_status(
         self,
         status: VerificationStatus,
         req_id: RequestId,
         subservice: Optional[pus_1.Subservices] = None,
     ):
-        acc_char = gen_char_from_status(status.accepted, self.with_colors)
-        start_char = gen_char_from_status(status.started, self.with_colors)
-        step_char = gen_char_from_status(status.step, self.with_colors)
-        fin_char = gen_char_from_status(status.completed, self.with_colors)
+        acc_char = gen_console_char_from_status(status.accepted, self.with_colors)
+        start_char = gen_console_char_from_status(status.started, self.with_colors)
+        step_char = gen_console_char_from_status(status.step, self.with_colors)
+        fin_char = gen_console_char_from_status(status.completed, self.with_colors)
+        step_num = self.step_num(status)
+        first_str = self._get_info_string(subservice)
+        second_str = f"Request ID {req_id.as_u32():#04x}"
+        completion_str = ""
+        if status.completed == StatusField.SUCCESS:
+            completion_str = f" \U0001F31F"
+        third_str = (
+            f"acc ({acc_char}) sta ({start_char}) ste ({step_char}, {step_num}) "
+            f"fin ({fin_char}){completion_str}"
+        )
+        self.console_logger.info(f"{first_str} | {second_str} | {third_str}")
+
+    @staticmethod
+    def step_num(status: VerificationStatus):
         if not status.step_list:
-            step_num = 0
+            return "0"
         else:
-            step_num = max(status.step_list)
+            return f"{max(status.step_list)}"
+
+    @staticmethod
+    def _get_info_string(subservice: pus_1.Subservices):
         status_str = "Status"
         if subservice is not None:
             if subservice == pus_1.Subservices.TM_ACCEPTANCE_SUCCESS:
@@ -77,19 +116,19 @@ class VerificationWrapper:
                 status_str = "Completion success"
             elif subservice == pus_1.Subservices.TM_COMPLETION_FAILURE:
                 status_str = "Completion failure"
-        first_str = f"{status_str} of TC".ljust(25)
-        second_str = f"Request ID {req_id.as_u32():#04x}"
-        completion_str = ""
-        if status.completed == StatusField.SUCCESS:
-            completion_str = f" \U0001F31F"
-        third_str = (
-            f"acc ({acc_char}) sta ({start_char}) ste ({step_char}, {step_num}) "
-            f"fin ({fin_char}){completion_str}"
-        )
-        self.logger.info(f"{first_str} | {second_str} | {third_str}")
+        return f"{status_str} of TC".ljust(25)
 
 
-def gen_char_from_status(status: StatusField, with_color: bool):
+def gen_file_char_from_status(status: StatusField):
+    if status == StatusField.UNSET:
+        return "-"
+    elif status == StatusField.FAILURE:
+        return "F"
+    elif status == StatusField.SUCCESS:
+        return "S"
+
+
+def gen_console_char_from_status(status: StatusField, with_color: bool):
     if status == StatusField.UNSET:
         return dash_unicode(with_color)
     elif status == StatusField.SUCCESS:

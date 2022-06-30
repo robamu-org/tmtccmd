@@ -21,6 +21,15 @@ class TestPusVerifLog(TestCase):
     def test_console_log_success(self):
         logger = get_console_logger()
         wrapper = VerificationWrapper(logger)
+        self._test_success(wrapper)
+
+    def test_console_log_success_without_colors(self):
+        logger = get_console_logger()
+        wrapper = VerificationWrapper(logger)
+        wrapper.with_colors = False
+        self._test_success(wrapper)
+
+    def _test_success(self, wrapper: VerificationWrapper):
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=0)
         verificator.add_tc(tc)
@@ -40,6 +49,15 @@ class TestPusVerifLog(TestCase):
     def test_console_log_acc_failure(self):
         logger = get_console_logger()
         wrapper = VerificationWrapper(logger)
+        self._test_acc_failure(wrapper)
+
+    def test_console_log_acc_failure_without_colors(self):
+        logger = get_console_logger()
+        wrapper = VerificationWrapper(logger)
+        wrapper.with_colors = False
+        self._test_acc_failure(wrapper)
+
+    def _test_acc_failure(self, wrapper: VerificationWrapper):
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=1)
         verificator.add_tc(tc)
