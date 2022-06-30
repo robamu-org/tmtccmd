@@ -11,7 +11,7 @@ class ProvidesSeqCount(ABC):
 
 
 class FileSeqCountProvider(ProvidesSeqCount):
-    def __init__(self, file_name: Path = "seqcnt.txt"):
+    def __init__(self, file_name: Path = Path("seqcnt.txt")):
         self.file_name = file_name
         if not self.file_name.exists():
             self.create_new()
