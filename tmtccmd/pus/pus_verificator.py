@@ -101,7 +101,7 @@ class PusVerificator:
                 verif_status.all_verifs_recvd = True
             verif_status.started = StatusField.FAILURE
         elif subservice == Subservices.TM_STEP_SUCCESS:
-            verif_status.step = pus_1_tm.step_id
+            verif_status.step = pus_1_tm.step_id.val
         elif subservice == Subservices.TM_STEP_FAILURE:
             self._check_all_replies_recvd_after_step(verif_status)
             verif_status.step = -1
