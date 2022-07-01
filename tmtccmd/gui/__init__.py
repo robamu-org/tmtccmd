@@ -8,6 +8,7 @@ import threading
 import time
 import webbrowser
 from multiprocessing import Process
+from pathlib import Path
 from typing import Union, Callable, Optional
 
 from PyQt5.QtWidgets import (
@@ -46,7 +47,7 @@ from tmtccmd.config import (
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds
-import tmtccmd.config as config_module
+import tmtccmd as mod_root
 from tmtccmd.tc import DefaultProcedureInfo
 
 LOGGER = get_console_logger()
@@ -447,8 +448,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__debug_mode = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
-        module_path = os.path.abspath(config_module.__file__).replace("__init__.py", "")
-        self.logo_path = f"{module_path}/logo.png"
+        self.logo_path = Path(f"{Path(mod_root.__file__).parent.parent}/misc/logo.png")
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start)
@@ -472,7 +472,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         win.setLayout(grid)
         row = 0
         self.setWindowTitle(self._app_name)
-        self.setWindowIcon(QIcon(self.logo_path))
+        print(self.logo_path)
+        self.setWindowIcon(QIcon(self.logo_path.as_posix()))
 
         add_pixmap = False
 

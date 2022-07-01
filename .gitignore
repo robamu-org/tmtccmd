@@ -18,5 +18,7 @@ build
 .idea
 venv
 
+/misc/.xdp-logo.png*
+
 # CodeCov
 .coverage
