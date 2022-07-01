@@ -448,7 +448,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__debug_mode = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
-        self.logo_path = Path(f"{Path(mod_root.__file__).parent.parent}/misc/logo.png")
+        self.logo_path = Path(f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png")
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start)

@@ -7,6 +7,8 @@ include docs/conf.py
 include docs/Makefile
 include docs/*.md
 
+include misc/logo-tiny.png
+
 include tests/*
 
 include pycharm/*

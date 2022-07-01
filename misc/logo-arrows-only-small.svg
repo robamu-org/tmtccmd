@@ -8,10 +8,10 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.2 (56b05e47e7, 2022-06-09, custom)"
-   sodipodi:docname="logo.svg"
-   inkscape:export-filename="../110c1131/logo-tiny.png"
-   inkscape:export-xdpi="10.848658"
-   inkscape:export-ydpi="10.848658"
+   sodipodi:docname="logo-arrows-only.svg"
+   inkscape:export-filename="../9331ca8d/logo-arrows-only-small.svg"
+   inkscape:export-xdpi="42.377571"
+   inkscape:export-ydpi="42.377571"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -29,7 +29,7 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1"
-     inkscape:cx="354"
+     inkscape:cx="357"
      inkscape:cy="726.5"
      inkscape:window-width="2486"
      inkscape:window-height="1376"
@@ -541,26 +541,6 @@
          stdDeviation="0.70669691"
          id="feGaussianBlur17186" />
     </filter>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient15548"
-       id="linearGradient1179"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="translate(0.22895935,4.9378341)"
-       x1="140.3958"
-       y1="155.24629"
-       x2="173.15543"
-       y2="155.24629" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient15554"
-       id="linearGradient1181"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="translate(0.22895935,4.9378341)"
-       x1="140.3958"
-       y1="155.24629"
-       x2="173.15543"
-       y2="155.24629" />
   </defs>
   <g
      inkscape:groupmode="layer"
@@ -573,7 +553,7 @@
        cy="173.27208"
        rx="77.994766"
        ry="63.344616"
-       transform="matrix(-0.94015462,0,0,1.1536426,5.0055807,-27.783568)" />
+       transform="matrix(-0.94015462,0,0,1.1536426,9.5345027,-23.426211)" />
   </g>
   <g
      inkscape:label="Layer Up"
@@ -581,59 +561,19 @@
      id="layer1">
     <g
        id="g1555"
-       inkscape:label="g1555">
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:200;font-stretch:normal;font-size:29.9072px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono Ultra-Light';fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-         x="81.503525"
-         y="210.10712"
-         id="text1063"
-         transform="scale(0.95756971,1.0443104)"><tspan
-           sodipodi:role="line"
-           id="tspan1061"
-           style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono Light';stroke-width:1.5;stroke-dasharray:none"
-           x="81.503525"
-           y="210.10712">CMD</tspan></text>
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono Light';fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         x="40.161972"
-         y="169.23914"
-         id="text1063-3"
-         transform="scale(0.95756971,1.0443104)"><tspan
-           sodipodi:role="line"
-           id="tspan1061-6"
-           style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono Light';fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-           x="40.161972"
-           y="169.23914">TM</tspan></text>
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:200;font-stretch:normal;font-size:29.9072px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono Ultra-Light';fill:url(#linearGradient1179);fill-opacity:1;stroke:url(#linearGradient1181);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-         x="139.49393"
-         y="171.10025"
-         id="text1063-3-7"
-         transform="scale(0.95756971,1.0443104)"><tspan
-           sodipodi:role="line"
-           id="tspan1061-6-5"
-           style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:31.75px;font-family:'JetBrains Mono';-inkscape-font-specification:'JetBrains Mono Light';fill:url(#linearGradient1179);fill-opacity:1;stroke:url(#linearGradient1181);stroke-width:1.5;stroke-dasharray:none;stroke-opacity:1"
-           x="139.49393"
-           y="171.10025">TC</tspan><tspan
-           sodipodi:role="line"
-           style="font-size:29.9072px;fill:url(#linearGradient1179);fill-opacity:1;stroke:url(#linearGradient1181);stroke-width:1.5;stroke-dasharray:none"
-           x="139.49393"
-           y="209.13342"
-           id="tspan1322" /></text>
+       inkscape:label="g1555"
+       transform="translate(-0.60151368,-0.88676758)">
       <g
          id="g3465-4"
-         transform="matrix(1.7104628,0,0,-0.7510209,-49.879139,243.64475)"
-         style="stroke-width:1.05876218;stroke-dasharray:none">
+         transform="matrix(2.8534662,0,0,-1.2108111,-147.46262,311.43435)"
+         style="stroke-width:1.05876;stroke-dasharray:none">
         <path
-           style="opacity:1;fill:none;fill-opacity:1;paint-order:normal;stroke:url(#linearGradient15580);stroke-opacity:1;stroke-width:1.76460363;stroke-dasharray:none"
+           style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient15580);stroke-width:2.15196611;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
            d="m 76.763063,75.768705 9.790277,-2.427732 2.601601,20.775122 -4.131254,-5.952469 c -2.183117,7.28006 -3.108883,9.411082 -4.083093,14.881144 -0.664292,3.72991 -1.155348,7.81005 -1.13758,11.87298 0.02669,6.10315 0.903492,12.10228 1.864406,17.74306 0.779767,4.57741 3.118383,12.78867 3.118383,12.78867 l -4.780743,5.15655 c 0,0 -2.213826,-9.36661 -3.0047,-14.38943 -1.074466,-6.82391 -2.187135,-13.87639 -2.329828,-21.17298 -0.103441,-5.28943 0.270954,-10.75172 1.082375,-15.667637 1.066857,-6.463452 4.830897,-17.289462 4.830897,-17.289462 z"
            id="path3441-1"
            sodipodi:nodetypes="ccccaaaccaaacc" />
         <path
-           style="fill:none;fill-opacity:1;paint-order:normal;stroke:url(#linearGradient2681);stroke-opacity:1;stroke-width:1.76460363;stroke-dasharray:none"
+           style="fill:none;fill-opacity:1;stroke:url(#linearGradient2681);stroke-width:2.15196611;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
            d="m 103.58629,145.9926 -9.790278,2.42773 -2.6016,-20.77512 4.13125,5.95247 c 2.18312,-7.28006 3.10888,-9.41109 4.08309,-14.88115 0.664288,-3.72991 1.155358,-7.81005 1.137588,-11.87298 -0.0267,-6.10315 -0.903497,-12.102276 -1.864408,-17.743056 -0.77977,-4.57741 -3.11839,-12.78867 -3.11839,-12.78867 l 4.780758,-5.15655 c 0,0 2.21382,9.36661 3.0047,14.38943 1.07446,6.82391 2.18713,13.87639 2.32983,21.172976 0.10344,5.28943 -0.27096,10.75172 -1.08238,15.66764 -1.06686,6.46345 -4.830907,17.28946 -4.830907,17.28946 z"
            id="path3441-1-0"
            sodipodi:nodetypes="ccccaaaccaaacc" />
