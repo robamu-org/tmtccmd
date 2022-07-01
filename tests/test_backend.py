@@ -46,50 +46,53 @@ class TcHandlerMock(TcHandlerBase):
 
 
 class TestBackend(TestCase):
-    def test_backend(self):
-        com_if = DummyComIF()
-        tm_listener = MagicMock(specs=CcsdsTmListener)
-        tc_handler = TcHandlerMock()
-        backend = CcsdsTmtcBackend(
+    def setUp(self) -> None:
+        self.com_if = DummyComIF()
+        self.tm_listener = MagicMock(specs=CcsdsTmListener)
+        self.tc_handler = TcHandlerMock()
+        self.backend = CcsdsTmtcBackend(
             tc_mode=TcMode.IDLE,
             tm_mode=TmMode.IDLE,
-            com_if=com_if,
-            tm_listener=tm_listener,
-            tc_handler=tc_handler,
+            com_if=self.com_if,
+            tm_listener=self.tm_listener,
+            tc_handler=self.tc_handler,
         )
-        ctrl = BackendController()
-        self.assertEqual(backend.tm_mode, TmMode.IDLE)
-        self.assertEqual(backend.tc_mode, TcMode.IDLE)
-        self.assertEqual(backend.com_if.get_id(), "dummy")
-        self.assertEqual(backend.com_if_id, "dummy")
-        self.assertEqual(backend.inter_cmd_delay, timedelta())
-        state = backend.state
+
+    def test_backend(self):
+        self.assertEqual(self.backend.tm_mode, TmMode.IDLE)
+        self.assertEqual(self.backend.tc_mode, TcMode.IDLE)
+        self.assertEqual(self.backend.com_if.get_id(), "dummy")
+        self.assertEqual(self.backend.com_if_id, "dummy")
+        self.assertEqual(self.backend.inter_cmd_delay, timedelta())
+        state = self.backend.state
         self.assertEqual(state.tc_mode, TcMode.IDLE)
         self.assertEqual(state.tm_mode, TmMode.IDLE)
         self.assertEqual(state.next_delay, timedelta())
         self.assertEqual(state.request, BackendRequest.NONE)
-        backend.mode_to_req()
+        self.backend.mode_to_req()
         self.assertEqual(state.request, BackendRequest.DELAY_IDLE)
-        self.assertEqual(backend.inter_cmd_delay, timedelta())
-        self.assertFalse(backend.com_if_active())
-        self.assertFalse(com_if.is_open())
-        backend.start()
-        self.assertTrue(com_if.is_open())
-        self.assertTrue(backend.com_if_active())
+        self.assertEqual(self.backend.inter_cmd_delay, timedelta())
+        self.assertFalse(self.backend.com_if_active())
+        self.assertFalse(self.com_if.is_open())
 
-        res = backend.periodic_op()
+    def test_com_if_start(self):
+        self.backend.start()
+        self.assertTrue(self.com_if.is_open())
+        self.assertTrue(self.backend.com_if_active())
+
+        res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.DELAY_IDLE)
-        backend.tm_mode = TmMode.LISTENER
-        self.assertEqual(backend.tm_mode, TmMode.LISTENER)
-        res = backend.periodic_op()
-        tm_listener.operation.assert_called_once()
-        backend.poll_tm()
-        self.assertEqual(tm_listener.operation.call_count, 2)
+        self.backend.tm_mode = TmMode.LISTENER
+        self.assertEqual(self.backend.tm_mode, TmMode.LISTENER)
+        res = self.backend.periodic_op()
+        self.tm_listener.operation.assert_called_once()
+        self.backend.poll_tm()
+        self.assertEqual(self.tm_listener.operation.call_count, 2)
         self.assertEqual(res.request, BackendRequest.DELAY_LISTENER)
-        backend.tm_mode = TmMode.IDLE
-        backend.tc_mode = TcMode.ONE_QUEUE
+        self.backend.tm_mode = TmMode.IDLE
+        self.backend.tc_mode = TcMode.ONE_QUEUE
         with self.assertRaises(NoValidProcedureSet):
-            backend.periodic_op()
-        backend.current_proc_info = DefaultProcedureInfo(service="17", op_code="0")
-        res = backend.periodic_op()
+            self.backend.periodic_op()
+        self.backend.current_proc_info = DefaultProcedureInfo(service="17", op_code="0")
+        res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.TERMINATION_NO_ERROR)
