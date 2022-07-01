@@ -3,7 +3,7 @@ from datetime import timedelta
 from enum import Enum
 from typing import Optional, Deque, cast, Any, Type
 
-from spacepackets.ccsds.spacepacket import SpacePacket
+from spacepackets.ccsds import SpacePacket
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.tc.procedure import TcProcedureBase
 
