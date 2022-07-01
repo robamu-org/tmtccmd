@@ -3,8 +3,15 @@ import os
 import struct
 from typing import Optional
 
-from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcSigned, PfcReal
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss import (
+    Ptc,
+    PfcUnsigned,
+    PfcSigned,
+    PfcReal,
+    PusVersion,
+    PusTelemetry,
+)
 from spacepackets.ecss.defs import PusServices
 
 from tmtccmd.utility.obj_id import ObjectId
@@ -61,7 +68,6 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -132,9 +138,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service20FsfwTm:
         service_20_tm = cls.__empty()
-        service_20_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
-        )
+        service_20_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         if service_20_tm.custom_fsfw_handling:
             if len(service_20_tm.pus_tm.tm_data) < 4:
                 LOGGER.warning("Invalid data length, less than 4")
