@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v3.0.0rc1] 03.07.2022
+
+- Overhaul of application architecture
+- Significant simplification of various modules to increase testability
+- Test coverage increased
+- Reduced number of modules significantly by moving code into the repective `__init__` files where
+  possible
+- GUI improved, added separate TM listening button
+- Documentation improved
+- New logo
+- Simplified general package structure, remove `src` folder and have `tmtccmd` package and `tests`
+  package in repo root
+- First CFDP handler components
+- Reduce usage of globals. The end goal is to remove them altogether
+- Reduce overall number of spawned threads
+- Added Sequence Count handling modules
+
 ## [v2.2.2]
 
 - Improve internal structure of sequential sender receiver object
