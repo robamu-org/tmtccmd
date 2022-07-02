@@ -12,11 +12,14 @@ build
 *.egg-info
 
 /examples/log
-/src/log
-/src/tests/log
+/log
+/tests/log
+/tmtccmd/log
 
 .idea
 venv
+
+/misc/.xdp-*
 
 # CodeCov
 .coverage

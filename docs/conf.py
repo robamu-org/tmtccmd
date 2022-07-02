@@ -13,8 +13,8 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../src"))
-import tmtccmd
+sys.path.insert(0, os.path.abspath(".."))
+from tmtccmd import __version__
 
 # -- Project information -----------------------------------------------------
 
@@ -23,7 +23,7 @@ copyright = "2021, Robin Mueller"
 author = "Robin Mueller"
 
 # The full version, including alpha/beta/rc tags
-version = release = tmtccmd.__version__
+version = release = __version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -58,7 +58,7 @@ html_theme = "alabaster"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "logo_tmtccmd.png"
+html_logo = "../misc/logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -69,4 +69,4 @@ html_static_path = []
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = "logo_tmtccmd.png"
+latex_logo = "../misc/logo.png"

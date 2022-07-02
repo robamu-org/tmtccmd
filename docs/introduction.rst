@@ -5,15 +5,14 @@
 Overview
 =========
 
-This commander was written for the `SOURCE`_ project as a way to simplify the
-software testing. The goal was to make it as easy as possible to send telecommands (TCs)
+The goal of this framework is to make it as easy to send telecommands (TCs)
 to the On-Board Software (OBSW) running on an external On-Board Computer (OBC) and to analyse
 the telemetry (TMs) coming back. The following graph shows two possible ways to use
 the TMTC commander
 
 .. image:: images/tmtccmd_usage.PNG
-	:align: center
-	
+    :align: center
+
 The first way assumes that the OBSW can be run on a host computer and starts a TPC/IP
 server internally. The TMTC commander can then be used to send telecommands via the TCP/IP
 interface. The second way assumes that the OBSW is run on an external microcontroller.
@@ -22,28 +21,34 @@ via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 
 .. _`SOURCE`: https://www.ksat-stuttgart.de/en/our-missions/source/
 
-The application is configured by passing an instance of a special hook object to the commander core
-using the ``initialize_tmtc_commander`` function and then running the ``run_tmtc_commander``
-function which also allows to specify whether the CLI or the GUI functionality is used. It is
-recommended to implement the class ``TmTcHookBase`` for the hook object instantiation
-because this class contains all important functions as abstract functions.
+..
+    TODO: More docs here, general information how components are used
 
 Features
 =========
 
-- `Packet Utilisation Standard (PUS)`_ TMTC stack to simplify the packaging of PUS telecommand
-  packets and the analysis and deserialization of raw PUS telemetry
-- Common communication interfaces like a serial interface or a TCP/IP interfaces
-  to send and receive TMTC packets.
-- Listener mode to display incoming packets
-- Sequential mode which allows inserting telecommands into a queue
-  and sending them in a sequential way, allowing to analyse the telemetry 
-  generated for each telecommand separately
-- Special internal queue commands which allow operations like informative printouts or send delays
-- Components to simplify the handling of housekeeping replies (PUS Service 8) or action command 
-  replies (PUS Service 3)
-- Components to automatically deserialize telecommand verification replies (PUS Service 1)
-  or Event replies (PUS Service 5)
+- Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
+  This library uses the `spacepackets`_ library for most packet implementations.
+- Support for both CLI and GUI usage
+- Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
+  This is done by requiring the user to specify callbacks for both TC specification and TM handling.
+- One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences
+- Listener mode to only listen to incoming telemetry
+- Basic logger components which can be used to store sent Telecommands and incoming Telemetry
+  in files
+- Some components are tailored towards usage with the
+  `Flight Software Framework (FSFW) <https://egit.irs.uni-stuttgart.de/fsfw/fsfw/>`_.
+
+This framework also has a communication interface abstraction which allows to exchange TMTC through
+different channels. The framework currently supports the following communication interfaces:
+
+1. TCP/IP with the :py:class:`tmtccmd.com_if.udp.UdpComIF` and :py:class:`tmtccmd.com_if.tcp.TcpComIF`.
+2. Serial Communication with the :py:class:`tmtccmd.com_if.serial.SerialComIF` using fixed frames
+   or a simple ASCII based transport layer
+3. QEMU, using a virtual serial interface
+
+It is also possible to supply custom interfaces.
 
 .. _`Packet Utilisation Standard (PUS)`: https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
-
+.. _`CCSDS Space Packets`: https://public.ccsds.org/Pubs/133x0b2e1.pdf
+.. _`spacepackets`: https://github.com/us-irs/py-spacepackets

@@ -1,85 +1,77 @@
 tmtccmd.com\_if package
 =======================
 
-Submodules
-----------
-
-tmtccmd.com\_if.com\_if\_utilities module
------------------------------------------
-
-.. automodule:: tmtccmd.com_if.com_if_utilities
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.com\_interface\_base module
--------------------------------------------
-
-.. automodule:: tmtccmd.com_if.com_interface_base
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.dummy\_com\_if module
--------------------------------------
-
-.. automodule:: tmtccmd.com_if.dummy_com_if
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.qemu\_com\_if module
-------------------------------------
-
-.. automodule:: tmtccmd.com_if.qemu_com_if
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.serial\_com\_if module
---------------------------------------
-
-.. automodule:: tmtccmd.com_if.serial_com_if
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.serial\_utilities module
-----------------------------------------
-
-.. automodule:: tmtccmd.com_if.serial_utilities
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.tcpip\_tcp\_com\_if module
-------------------------------------------
-
-.. automodule:: tmtccmd.com_if.tcpip_tcp_com_if
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.tcpip\_udp\_com\_if module
-------------------------------------------
-
-.. automodule:: tmtccmd.com_if.tcpip_udp_com_if
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com\_if.tcpip\_utilities module
----------------------------------------
-
-.. automodule:: tmtccmd.com_if.tcpip_utilities
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
 .. automodule:: tmtccmd.com_if
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+tmtccmd.com\_if.utils module
+-----------------------------------------
+
+.. automodule:: tmtccmd.com_if.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.tcp module
+-------------------------------------------
+
+.. automodule:: tmtccmd.com_if.tcp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.udp module
+-------------------------------------
+
+.. automodule:: tmtccmd.com_if.udp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.tcpip\_utils module
+-------------------------------------
+
+.. automodule:: tmtccmd.com_if.tcpip_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.qemu module
+------------------------------------
+
+.. automodule:: tmtccmd.com_if.qemu
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.serial module
+--------------------------------------
+
+.. automodule:: tmtccmd.com_if.serial
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.ser\_utils module
+----------------------------------------
+
+.. automodule:: tmtccmd.com_if.ser_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.dummy module
+------------------------------------------
+
+.. automodule:: tmtccmd.com_if.dummy
    :members:
    :undoc-members:
    :show-inheritance:
