@@ -7,17 +7,15 @@ from spacepackets.ecss import PusTelecommand
 from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.dummy import DummyComIF
-from tmtccmd.core import TcMode, TmMode, BackendRequest, BackendController
+from tmtccmd.core import TcMode, TmMode, BackendRequest
 from tmtccmd.core.ccsds_backend import NoValidProcedureSet
 from tmtccmd.tc import (
     TcProcedureBase,
     DefaultProcedureInfo,
     TcProcedureType,
-    ProcedureCastWrapper,
+    ProcedureHelper,
     TcQueueEntryBase,
-    QueueEntryHelper,
 )
-from tmtccmd.tc.ccsds_seq_sender import SenderMode
 from tmtccmd.tc.handler import FeedWrapper
 
 
@@ -32,22 +30,21 @@ class TcHandlerMock(TcHandlerBase):
         self.send_cb_service_arg: Optional[str] = None
         self.send_cb_op_code_arg: Optional[str] = None
 
-    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: ComInterface):
+    def send_cb(self, entry_helper: ProcedureHelper, com_if: ComInterface):
         self.send_cb_call_count += 1
-        self.send_cb_call_args = (tc_queue_entry, com_if)
+        self.send_cb_call_args = (entry_helper, com_if)
 
     def queue_finished_cb(self, info: TcProcedureBase):
         pass
 
-    def feed_cb(self, info: Optional[TcProcedureBase], wrapper: FeedWrapper):
+    def feed_cb(self, info: ProcedureHelper, wrapper: FeedWrapper):
         self.feed_cb_call_count += 1
-        cast_wrapper = ProcedureCastWrapper(info)
         self.send_cb_service_arg = None
         self.send_cb_op_code_arg = None
         if info is not None:
-            if info.ptype == TcProcedureType.DEFAULT:
+            if info.proc_type == TcProcedureType.DEFAULT:
                 self.feed_cb_def_proc_count += 1
-                def_info = cast_wrapper.to_def_procedure()
+                def_info = info.to_def_procedure()
                 if def_info.service != "17":
                     self.is_feed_cb_valid = False
                 self.send_cb_service_arg = def_info.service
@@ -184,15 +181,14 @@ class TestBackend(TestCase):
     def test_procedure_handling(self):
         def_proc = DefaultProcedureInfo(service="17", op_code="0")
         self.backend.current_procedure = def_proc
-        self.assertEqual(self.backend.current_procedure.ptype, TcProcedureType.DEFAULT)
-        cast_wrapper = ProcedureCastWrapper(self.backend.current_procedure)
-        def_proc = cast_wrapper.to_def_procedure()
+        self.assertEqual(
+            self.backend.current_procedure.proc_type, TcProcedureType.DEFAULT
+        )
+        proc_helper = self.backend.current_procedure
+        def_proc = proc_helper.to_def_procedure()
         self.assertIsNotNone(def_proc)
         self.assertEqual(def_proc.service, "17")
         self.assertEqual(def_proc.op_code, "0")
-        wrapper = self.backend.current_procedure_in_cast_wrapper
-        self.assertEqual(wrapper.proc_type, TcProcedureType.DEFAULT)
-        self.assertIsNotNone(wrapper.to_def_procedure())
 
     def _check_tc_req_recvd(self, service: int, subservice: int):
         self.assertEqual(self.tc_handler.send_cb_call_args[1], self.com_if)

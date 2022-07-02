@@ -36,8 +36,9 @@ class DefaultProcedureInfo(TcProcedureBase):
         return f"CmdInfo(service={self.service!r}, op_code={self.op_code!r})"
 
 
-class ProcedureCastWrapper:
-    """Cast wrapper to cast the procedure base type back to a concrete type easily"""
+class ProcedureHelper:
+    """Procedure helper class. It wraps the concrete procedure object but allows easily casting
+    it to concrete types supported by the framework."""
 
     def __init__(self, base: TcProcedureBase):
         self.base = base

@@ -8,11 +8,10 @@ from tmtccmd.core import (
     BackendBase,
     BackendState,
     BackendRequest,
-    BackendController,
     TcMode,
     TmMode,
 )
-from tmtccmd.tc import TcProcedureBase, ProcedureCastWrapper
+from tmtccmd.tc import TcProcedureBase, ProcedureHelper
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 from tmtccmd.tc.queue import QueueWrapper
@@ -121,12 +120,8 @@ class CcsdsTmtcBackend(BackendBase):
         return self._com_if_active
 
     @property
-    def current_procedure(self) -> TcProcedureBase:
-        return self._queue_wrapper.info
-
-    @property
-    def current_procedure_in_cast_wrapper(self) -> ProcedureCastWrapper:
-        return ProcedureCastWrapper(self.current_procedure)
+    def current_procedure(self) -> ProcedureHelper:
+        return ProcedureHelper(self._queue_wrapper.info)
 
     @current_procedure.setter
     def current_procedure(self, proc_info: TcProcedureBase):
@@ -249,7 +244,9 @@ class CcsdsTmtcBackend(BackendBase):
             raise NoValidProcedureSet(
                 "No procedure was set to pass to the feed callback function"
             )
-        self._tc_handler.feed_cb(self._queue_wrapper.info, feed_wrapper)
+        self._tc_handler.feed_cb(
+            ProcedureHelper(self._queue_wrapper.info), feed_wrapper
+        )
         if not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_helper.queue_wrapper

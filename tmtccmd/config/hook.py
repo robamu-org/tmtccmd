@@ -61,7 +61,8 @@ class TmTcCfgHookBase(ABC):
 
     @abstractmethod
     def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
-        """Perform custom mode operations
+        """Perform custom mode operations.
+
         :param tmtc_backend:
         :param mode:
         :return:

@@ -9,8 +9,8 @@ from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
 from spacepackets.ecss.pus_1_verification import UnpackParams
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
-from tmtccmd.pus import VerificationWrapper
-from tmtccmd.tm import CcsdsTmHandler, ApidTmHandlerBase
+from tmtccmd.pus import VerificationWrapper, FileSeqCountProvider
+from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
     default_json_path,
@@ -28,14 +28,12 @@ from tmtccmd.logging.pus import (
     TimedLogWhen,
 )
 from tmtccmd.tc import (
-    TcQueueEntryBase,
     QueueEntryHelper,
     TcQueueEntryType,
-    TcProcedureBase,
-    ProcedureCastWrapper,
+    ProcedureHelper,
     TcProcedureType,
+    FeedWrapper,
 )
-from tmtccmd.tc.handler import FeedWrapper
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
@@ -75,7 +73,7 @@ class ExampleHookClass(TmTcCfgHookBase):
         return get_core_object_ids()
 
 
-class PusHandler(ApidTmHandlerBase):
+class PusHandler(SpecificApidHandlerBase):
     def __init__(
         self,
         verif_wrapper: VerificationWrapper,
@@ -128,28 +126,40 @@ class PusHandler(ApidTmHandlerBase):
 
 
 class TcHandler(TcHandlerBase):
-    def __init__(self, verif_wrapper: VerificationWrapper):
+    def __init__(
+        self,
+        seq_count_provider: FileSeqCountProvider,
+        verif_wrapper: VerificationWrapper,
+    ):
         super(TcHandler, self).__init__()
+        self.seq_count_provider = seq_count_provider
         self.verif_wrapper = verif_wrapper
 
     def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
         if entry_helper.is_tc:
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = entry_helper.to_pus_tc_entry()
+                pus_tc_wrapper.pus_tc.seq_count = (
+                    self.seq_count_provider.next_seq_count()
+                )
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
                 com_if.send(raw_tc)
 
-    def queue_finished_cb(self, info: TcProcedureBase):
-        LOGGER.info("Queue handling finished")
+    def queue_finished_cb(self, helper: ProcedureHelper):
+        if helper.proc_type == TcProcedureType.DEFAULT:
+            def_proc = helper.to_def_procedure()
+            LOGGER.info(
+                f"Queue handling finished for service {def_proc.service} and "
+                f"op code {def_proc.op_code}"
+            )
 
-    def feed_cb(self, info: TcProcedureBase, wrapper: FeedWrapper):
-        proc_caster = ProcedureCastWrapper(info)
-        if info.ptype == TcProcedureType.DEFAULT:
-            info = proc_caster.to_def_procedure()
+    def feed_cb(self, helper: ProcedureHelper, wrapper: FeedWrapper):
+        if helper.proc_type == TcProcedureType.DEFAULT:
+            def_proc = helper.to_def_procedure()
             queue_helper = wrapper.queue_helper
-            service = info.service
+            service = def_proc.service
             if service == CoreServiceList.SERVICE_17.value:
                 return queue_helper.add_pus_tc(PusTelecommand(service=17, subservice=1))
 
@@ -171,11 +181,12 @@ def main():
     verification_wrapper = VerificationWrapper(verificator, LOGGER, printer.file_logger)
     # Create primary TM handler and add it to the CCSDS Packet Handler
     tm_handler = PusHandler(verification_wrapper, printer, raw_logger)
-    ccsds_handler = CcsdsTmHandler(unknown_handler=None)
+    ccsds_handler = CcsdsTmHandler(generic_handler=None)
     ccsds_handler.add_apid_handler(tm_handler)
 
     # Create TC handler
-    tc_handler = TcHandler(verification_wrapper)
+    seq_count_provider = FileSeqCountProvider()
+    tc_handler = TcHandler(seq_count_provider, verification_wrapper)
     tmtccmd.setup(setup_args=setup_args)
 
     tmtc_backend = tmtccmd.create_default_tmtc_backend(

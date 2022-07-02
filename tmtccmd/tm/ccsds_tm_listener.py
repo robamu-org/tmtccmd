@@ -16,10 +16,9 @@ QueueListT = List[Tuple[int, TelemetryQueueT]]
 
 
 class CcsdsTmListener:
-    """Performs all TM listening operations.
-    This listener to have a permanent means to receive data. A background thread is used
-    to poll data with the provided communication interface. Dedicated sender and receiver object
-    or any other software component can get the received packets from the internal deque container.
+    """Simple helper object which can be used for retrieving and routing CCSDS packets.
+    It can be used to poll CCSDS packets from a provided :py:class:`tmtccmd.com_if.ComInterface`
+    and then route them using a provided CCSDS TM handler.
     """
 
     def __init__(
@@ -27,6 +26,7 @@ class CcsdsTmListener:
         tm_handler: CcsdsTmHandler,
     ):
         """Initiate a TM listener.
+
         :param tm_handler: If valid CCSDS packets are found, they are dispatched to
             the passed handler
         """

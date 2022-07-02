@@ -4,15 +4,15 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelemetry
 from tmtccmd.tm import (
-    ApidTmHandlerBase,
+    SpecificApidHandlerBase,
     CcsdsTmHandler,
-    UnknownApidHandlerBase,
+    GenericApidHandlerBase,
 )
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 
 
-class ApidHandler(ApidTmHandlerBase):
+class ApidHandler(SpecificApidHandlerBase):
     def __init__(self, apid: int):
         super().__init__(apid, None)
         self.was_called = False
@@ -30,7 +30,7 @@ class TestTmHandler(TestCase):
     def test_basic(self):
         tm_handler = ApidHandler(0x01)
         com_if = MagicMock(specs=ComInterface)
-        unknown_handler = MagicMock(specs=UnknownApidHandlerBase)
+        unknown_handler = MagicMock(specs=GenericApidHandlerBase)
         ccsds_handler = CcsdsTmHandler(unknown_handler)
         ccsds_handler.add_apid_handler(tm_handler)
         tm_listener = CcsdsTmListener(tm_handler=ccsds_handler)

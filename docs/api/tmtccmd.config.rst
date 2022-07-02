@@ -20,6 +20,14 @@ tmtccmd.config.args module
    :undoc-members:
    :show-inheritance:
 
+tmtccmd.config.hook module
+-----------------------------
+
+.. automodule:: tmtccmd.config.hook
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tmtccmd.config.com\_if module
 -----------------------------
 

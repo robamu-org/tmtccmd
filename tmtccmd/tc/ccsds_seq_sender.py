@@ -1,10 +1,14 @@
 """Used to send multiple TCs in sequence"""
 import enum
-import math
 from datetime import timedelta
 from typing import Optional
 
-from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, QueueEntryHelper
+from tmtccmd.tc import (
+    TcQueueEntryBase,
+    TcQueueEntryType,
+    QueueEntryHelper,
+    ProcedureHelper,
+)
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if import ComInterface
@@ -37,7 +41,6 @@ class SequentialCcsdsSender:
         """
         :param queue_wrapper: Wrapper object containing the queue and queue handling properties
         :param tc_handler:
-        :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
         """
         self._tc_handler = tc_handler
         self._queue_wrapper = queue_wrapper
@@ -76,6 +79,11 @@ class SequentialCcsdsSender:
             self._mode = SenderMode.BUSY
 
     def operation(self, com_if: ComInterface) -> SeqResultWrapper:
+        """Primary function which should be called periodically to consume a TC queue.
+
+        :param com_if: Communication interface used to send telecommands. Will be passed to the
+            user send function
+        """
         self._handle_current_tc_queue(com_if)
         self._current_res.mode = self._mode
         return self._current_res
@@ -92,7 +100,9 @@ class SequentialCcsdsSender:
         if not self.queue_wrapper.queue:
             if self.no_delay_remaining():
                 # cache this for last wait time
-                self._tc_handler.queue_finished_cb(self._queue_wrapper.info)
+                self._tc_handler.queue_finished_cb(
+                    ProcedureHelper(self._queue_wrapper.info)
+                )
                 self._mode = SenderMode.DONE
                 return
         else:
@@ -130,7 +140,9 @@ class SequentialCcsdsSender:
                     self._send_cd.reset()
             self.queue_wrapper.queue.popleft()
         if not self.queue_wrapper.queue and self.no_delay_remaining():
-            self._tc_handler.queue_finished_cb(self._queue_wrapper.info)
+            self._tc_handler.queue_finished_cb(
+                ProcedureHelper(self._queue_wrapper.info)
+            )
             self._mode = SenderMode.DONE
 
     def no_delay_remaining(self) -> bool:
