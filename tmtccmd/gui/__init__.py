@@ -414,7 +414,7 @@ class SendButtonWrapper:
         if self.debug_mode:
             LOGGER.info("Send command button pressed.")
         self.button.setDisabled(True)
-        self._args.shared.backend.current_proc_info = DefaultProcedureInfo(
+        self._args.shared.backend.current_procedure = DefaultProcedureInfo(
             self._args.state.current_service, self._args.state.current_op_code
         )
         worker = FrontendWorker(
@@ -448,7 +448,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__debug_mode = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
-        self.logo_path = Path(f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png")
+        self.logo_path = Path(
+            f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png"
+        )
 
     def prepare_start(self, args: any) -> Process:
         return Process(target=self.start)

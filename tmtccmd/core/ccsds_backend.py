@@ -12,7 +12,7 @@ from tmtccmd.core import (
     TcMode,
     TmMode,
 )
-from tmtccmd.tc import TcProcedureBase
+from tmtccmd.tc import TcProcedureBase, ProcedureCastWrapper
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
 from tmtccmd.tc.queue import QueueWrapper
@@ -52,6 +52,9 @@ class CcsdsTmtcBackend(BackendBase):
         self._com_if = com_if
         self._tm_listener = tm_listener
         self.exit_on_com_if_init_failure = True
+        # This can be used to keep the TC mode in multi queue mode after finishing the handling
+        # of a queue
+        self.keep_multi_queue_mode = False
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
             com_if=self._com_if,
@@ -119,11 +122,15 @@ class CcsdsTmtcBackend(BackendBase):
         return self._com_if_active
 
     @property
-    def current_proc_info(self) -> TcProcedureBase:
+    def current_procedure(self) -> TcProcedureBase:
         return self._queue_wrapper.info
 
-    @current_proc_info.setter
-    def current_proc_info(self, proc_info: TcProcedureBase):
+    @property
+    def current_procedure_in_cast_wrapper(self) -> ProcedureCastWrapper:
+        return ProcedureCastWrapper(self.current_procedure)
+
+    @current_procedure.setter
+    def current_procedure(self, proc_info: TcProcedureBase):
         self._queue_wrapper.info = proc_info
 
     def start(self):
@@ -189,7 +196,8 @@ class CcsdsTmtcBackend(BackendBase):
                 self.tc_mode = TcMode.IDLE
                 self._state._req = BackendRequest.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
-                self._state.mode_wrapper.tc_mode = TcMode.IDLE
+                if not self.keep_multi_queue_mode:
+                    self._state.mode_wrapper.tc_mode = TcMode.IDLE
                 self._state._req = BackendRequest.CALL_NEXT
         else:
             if self._state.sender_res.longest_rem_delay.total_seconds() * 1000 > 0:
@@ -243,6 +251,6 @@ class CcsdsTmtcBackend(BackendBase):
                 "No procedure was set to pass to the feed callback function"
             )
         self._tc_handler.feed_cb(self._queue_wrapper.info, feed_wrapper)
-        if not self._com_if.valid or not feed_wrapper.dispatch_next_queue:
+        if not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_helper.queue_wrapper

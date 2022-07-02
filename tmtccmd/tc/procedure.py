@@ -42,6 +42,10 @@ class ProcedureCastWrapper:
     def __init__(self, base: TcProcedureBase):
         self.base = base
 
+    @property
+    def proc_type(self):
+        return self.base.ptype
+
     def __cast_internally(
         self,
         obj_type: Type[TcProcedureBase],

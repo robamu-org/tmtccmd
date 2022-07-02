@@ -179,7 +179,7 @@ def create_default_tmtc_backend(
     tmtc_backend.inter_cmd_delay = timedelta(
         seconds=setup_wrapper.params.tc_params.delay
     )
-    tmtc_backend.current_proc_info = DefaultProcedureInfo(
+    tmtc_backend.current_procedure = DefaultProcedureInfo(
         setup_wrapper.params.def_proc_args.service,
         setup_wrapper.params.def_proc_args.op_code,
     )

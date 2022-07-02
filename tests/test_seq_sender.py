@@ -104,7 +104,7 @@ class TestSendReceive(TestCase):
         self.assertTrue(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
         call_args = self.tc_handler_mock.send_cb.call_args
-        self.assertEqual(call_args.args[0].pus_tc.pack(), ping_cmd.pack())
+        self.assertEqual(call_args.args[0].pus_tc, ping_cmd)
         res = self.seq_sender.operation()
         self.assertFalse(res.tc_sent)
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
@@ -139,3 +139,21 @@ class TestSendReceive(TestCase):
         self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
         call_args = self.tc_handler_mock.send_cb.call_args
         self.assertEqual(call_args.args[0].tc, bytes([0, 1, 2]))
+
+    def test_delay_at_end(self):
+        delay_at_end = timedelta(milliseconds=20)
+        self.queue_helper.add_raw_tc(bytes([3, 2, 1]))
+        self.queue_helper.add_wait(delay_at_end)
+        self.seq_sender.resume()
+        res = self.seq_sender.operation()
+        self.assertTrue(res.tc_sent)
+        self.assertEqual(res.longest_rem_delay, timedelta())
+        res = self.seq_sender.operation()
+        self.assertFalse(res.tc_sent)
+        self.assertFalse(self.seq_sender.no_delay_remaining())
+        self.assertTrue(0.8 * delay_at_end < res.longest_rem_delay <= delay_at_end)
+        self.assertEqual(self.seq_sender.mode, SenderMode.BUSY)
+        time.sleep(delay_at_end.total_seconds())
+        self.assertTrue(self.seq_sender.no_delay_remaining())
+        self.seq_sender.operation()
+        self.assertEqual(self.seq_sender.mode, SenderMode.DONE)
