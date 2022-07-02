@@ -8,32 +8,48 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 
 ## Overview
 
-- Documentation: https://tmtccmd.readthedocs.io/en/latest/
-- Project Homepage: https://github.com/robamu-org/tmtccmd
+- [Documentation](https://tmtccmd.readthedocs.io/en/latest/)
+- [Project Homepage](https://github.com/robamu-org/tmtccmd)
 
-This commander application was first developed for the
-[SOURCE](https://www.ksat-stuttgart.de/en/our-missions/source/) project to test the on-board
-software but has evolved into a small Python framework for satellite developers to perform TMTC
+This is a small Python framework for satellite developers to perform TMTC
 (Telemetry and Telecommand) handling and testing via different communication interfaces.
 This tool can be used either as a command line tool or as a GUI tool. The GUI features require a
 PyQt5 installation. This package also has dedicated support to send and receive ECSS PUS packets
 or other generic CCSDS packets.
 
-This client currently supports the following communication interfaces:
+The TMTC commander also includes some telemetry handling components and telecommand packaging
+helpers. Some of those components are tailored towards usage with the
+[Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/).
+
+## Features
+
+- Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
+  This library uses the `spacepackets`_ library for most packet implementations.
+- Support for both CLI and GUI usage
+- Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
+  This is done by requiring the user to specify callbacks for both TC specification and TM handling.
+- One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences
+- Listener mode to only listen to incoming telemetry
+- Basic logger components which can be used to store sent Telecommands and incoming Telemetry
+  in files
+- Some components are tailored towards usage with the
+  `Flight Software Framework (FSFW) <https://egit.irs.uni-stuttgart.de/fsfw/fsfw/>`_.
+
+This has a communication interface abstraction which allows to exchange TMTC through different
+channels. The framework currently supports the following communication interfaces:
 
 1. TCP/IP with UDP and TCP
 2. Serial Communication using fixed frames or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
 
-The TMTC commander also includes some telemetry handling components and telecommand packaging
-helpers. Some of those components are tailored towards usage with the
-[Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/).
+It is also possible to supply custom interfaces.
 
 ## Examples 
 
-The `examples` folder contains a simple example using a dummy communication interface.
-It sends a PUS ping telecommand and then reads the ping reply and the verification
-replies back from the dummy interface. It can be run like this on Linux:
+The [`examples`](https://github.com/robamu-org/tmtccmd/tree/main/examples) folder contains a simple
+example using a  dummy communication interface. It sends a PUS ping telecommand and then reads the
+ping reply and  the verification replies back from the dummy interface. It can be run like this
+on Linux:
 
 ```sh
 cd examples
@@ -46,6 +62,8 @@ or on Windows:
 cd examples
 py tmtcc.py
 ```
+
+You can run the GUI mode by supplying `-g` to the commands above.
 
 The [EIVE](https://egit.irs.uni-stuttgart.de/eive/eive-tmtc) and
 [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) project implementation of the TMTC commander

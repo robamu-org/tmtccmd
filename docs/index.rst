@@ -14,16 +14,6 @@ This tool can be used either as a command line tool or as a GUI tool. The GUI fe
 PyQt5 installation. This package also has dedicated support to send and receive ECSS PUS packets
 or other generic CCSDS packets.
 
-This client currently supports the following communication interfaces:
-
-1. TCP/IP with UDP and TCP
-2. Serial Communication using fixed frames or a simple ASCII based transport layer
-3. QEMU, using a virtual serial interface
-
-The TMTC commander also includes some telemetry handling components and telecommand packaging
-helpers. Some of those components are tailored towards usage with the
-`Flight Software Framework (FSFW) <https://egit.irs.uni-stuttgart.de/fsfw/fsfw/>`_.
-
 Other pages (online)
 
 - `project page on GitHub`_
