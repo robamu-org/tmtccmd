@@ -11,11 +11,11 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 - [Documentation](https://tmtccmd.readthedocs.io/en/latest/)
 - [Project Homepage](https://github.com/robamu-org/tmtccmd)
 
-This is a small Python framework for satellite developers to perform TMTC
-(Telemetry and Telecommand) handling and testing via different communication interfaces.
-This tool can be used either as a command line tool or as a GUI tool. The GUI features require a
-PyQt5 installation. This package also has dedicated support to send and receive ECSS PUS packets
-or other generic CCSDS packets.
+This is a small Python framework targeted towards remote system software developers to
+perform TMTC (Telemetry and Telecommand) handling and testing via different communication
+interfaces. Examples for such systems are CubeSats or Rovers. This tool can be used either as a
+command line tool or as a GUI tool. The GUI features require a PyQt5 installation. This package
+also has dedicated support to send and receive ECSS PUS packets or other generic CCSDS packets.
 
 The TMTC commander also includes some telemetry handling components and telecommand packaging
 helpers. Some of those components are tailored towards usage with the
