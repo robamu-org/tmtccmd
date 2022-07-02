@@ -5,7 +5,7 @@ from typing import cast
 from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.tc import WaitEntry, PacketCastWrapper
+from tmtccmd.tc import WaitEntry, QueueEntryHelper
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
@@ -37,7 +37,7 @@ class TestTcQueue(TestCase):
 
         pus_entry = queue_wrapper.queue.popleft()
         self.assertTrue(pus_entry.is_tc())
-        cast_wrapper = PacketCastWrapper(pus_entry)
+        cast_wrapper = QueueEntryHelper(pus_entry)
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(pus_entry.pus_tc, pus_cmd)
         self.assertTrue(pus_entry)

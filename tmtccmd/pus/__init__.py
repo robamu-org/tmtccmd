@@ -40,6 +40,9 @@ class VerificationWrapper:
     def add_tc(self, pus_tc: PusTelecommand) -> bool:
         return self.pus_verificator.add_tc(pus_tc)
 
+    def add_tm(self, srv_1_tm: pus_1.Service1Tm) -> TmCheckResult:
+        return self.pus_verificator.add_tm(srv_1_tm)
+
     def log_to_console(self, srv_1_tm: pus_1.Service1Tm, res: TmCheckResult):
         self.log_to_console_from_req_id(srv_1_tm.tc_req_id, res, srv_1_tm.subservice)
 

@@ -2,7 +2,7 @@ from abc import abstractmethod, ABC
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tc import TcQueueEntryBase, TcProcedureBase
-from tmtccmd.tc.queue import QueueHelper, QueueWrapper
+from tmtccmd.tc.queue import QueueHelper, QueueWrapper, QueueEntryHelper
 
 
 class FeedWrapper:
@@ -25,7 +25,7 @@ class TcHandlerBase(ABC):
         pass
 
     @abstractmethod
-    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: ComInterface):
+    def send_cb(self, tc_queue_entry: QueueEntryHelper, com_if: ComInterface):
         """This function callback will be called for each queue entry. This also includes
         miscellaneous queue entries, for example the ones used to log additional information.
         It is up to the user code implementation to determine the concrete queue entry.

@@ -4,7 +4,7 @@ import math
 from datetime import timedelta
 from typing import Optional
 
-from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, PacketCastWrapper
+from tmtccmd.tc import TcQueueEntryBase, TcQueueEntryType, QueueEntryHelper
 from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if import ComInterface
@@ -122,7 +122,7 @@ class SequentialCcsdsSender:
         else:
             self._current_res.tc_sent = False
         if call_send_cb:
-            self._tc_handler.send_cb(next_queue_entry, com_if)
+            self._tc_handler.send_cb(QueueEntryHelper(next_queue_entry), com_if)
             if is_tc:
                 if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
                     self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)
@@ -153,7 +153,7 @@ class SequentialCcsdsSender:
         if not isinstance(queue_entry, TcQueueEntryBase):
             LOGGER.warning("Invalid queue entry detected")
             raise ValueError("Invalid queue entry detected")
-        cast_wrapper = PacketCastWrapper(queue_entry)
+        cast_wrapper = QueueEntryHelper(queue_entry)
         if queue_entry.etype == TcQueueEntryType.WAIT:
             wait_entry = cast_wrapper.to_wait_entry()
             LOGGER.info(

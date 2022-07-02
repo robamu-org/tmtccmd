@@ -5,9 +5,11 @@ import time
 from typing import Optional
 
 import tmtccmd
-from spacepackets.ecss import PusTelemetry, PusTelecommand
+from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
+from spacepackets.ecss.pus_1_verification import UnpackParams
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
+from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, ApidTmHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
@@ -27,7 +29,7 @@ from tmtccmd.logging.pus import (
 )
 from tmtccmd.tc import (
     TcQueueEntryBase,
-    PacketCastWrapper,
+    QueueEntryHelper,
     TcQueueEntryType,
     TcProcedureBase,
     ProcedureCastWrapper,
@@ -74,10 +76,16 @@ class ExampleHookClass(TmTcCfgHookBase):
 
 
 class PusHandler(ApidTmHandlerBase):
-    def __init__(self, printer: FsfwTmTcPrinter, raw_logger: RawTmtcTimedLogWrapper):
+    def __init__(
+        self,
+        verif_wrapper: VerificationWrapper,
+        printer: FsfwTmTcPrinter,
+        raw_logger: RawTmtcTimedLogWrapper,
+    ):
         super().__init__(EXAMPLE_APID, None)
         self.printer = printer
         self.raw_logger = raw_logger
+        self.verif_wrapper = verif_wrapper
 
     def handle_tm(self, packet: bytes, _user_args: any):
         try:
@@ -87,8 +95,24 @@ class PusHandler(ApidTmHandlerBase):
             LOGGER.warning(f"Raw Packet: [{packet.hex(sep=',')}], REPR: {packet!r}")
             return
         service = tm_packet.service
+        dedicated_handler = False
         if service == 1:
-            tm_packet = Service1TmExtended.unpack(packet)
+            tm_packet = Service1TmExtended.unpack(
+                data=packet, params=UnpackParams(1, 1)
+            )
+            res = self.verif_wrapper.add_tm(tm_packet)
+            if res is None:
+                LOGGER.info(
+                    f"Received Verification TM[{tm_packet.service}, {tm_packet.subservice}] "
+                    f"with Request ID {tm_packet.tc_req_id.as_u32():#08x}"
+                )
+                LOGGER.warning(
+                    f"No matching telecommand found for {tm_packet.tc_req_id}"
+                )
+            else:
+                self.verif_wrapper.log_to_console(tm_packet, res)
+                self.verif_wrapper.log_to_file(tm_packet, res)
+            dedicated_handler = True
         if service == 5:
             tm_packet = Service5Tm.unpack(packet)
         if service == 17:
@@ -99,21 +123,26 @@ class PusHandler(ApidTmHandlerBase):
             )
             tm_packet = PusTelemetry.unpack(packet)
         self.raw_logger.log_tm(tm_packet)
-        self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
+        if not dedicated_handler and tm_packet is not None:
+            self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
 
 
 class TcHandler(TcHandlerBase):
-    def send_cb(self, tc_queue_entry: TcQueueEntryBase, com_if: ComInterface):
-        cast_wrapper = PacketCastWrapper(tc_queue_entry)
-        if tc_queue_entry.is_tc():
-            if tc_queue_entry.etype == TcQueueEntryType.PUS_TC:
-                pus_tc_wrapper = cast_wrapper.to_pus_tc_entry()
+    def __init__(self, verif_wrapper: VerificationWrapper):
+        super(TcHandler, self).__init__()
+        self.verif_wrapper = verif_wrapper
+
+    def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
+        if entry_helper.is_tc:
+            if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
+                pus_tc_wrapper = entry_helper.to_pus_tc_entry()
+                self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
                 com_if.send(raw_tc)
 
     def queue_finished_cb(self, info: TcProcedureBase):
-        pass
+        LOGGER.info("Queue handling finished")
 
     def feed_cb(self, info: TcProcedureBase, wrapper: FeedWrapper):
         proc_caster = ProcedureCastWrapper(info)
@@ -138,14 +167,15 @@ def main():
     tmtc_logger = RegularTmtcLogWrapper()
     printer = FsfwTmTcPrinter(tmtc_logger.logger)
     raw_logger = RawTmtcTimedLogWrapper(when=TimedLogWhen.PER_HOUR, interval=1)
-
+    verificator = PusVerificator()
+    verification_wrapper = VerificationWrapper(verificator, LOGGER, printer.file_logger)
     # Create primary TM handler and add it to the CCSDS Packet Handler
-    tm_handler = PusHandler(printer, raw_logger)
+    tm_handler = PusHandler(verification_wrapper, printer, raw_logger)
     ccsds_handler = CcsdsTmHandler(unknown_handler=None)
     ccsds_handler.add_apid_handler(tm_handler)
 
     # Create TC handler
-    tc_handler = TcHandler()
+    tc_handler = TcHandler(verification_wrapper)
     tmtccmd.setup(setup_args=setup_args)
 
     tmtc_backend = tmtccmd.create_default_tmtc_backend(

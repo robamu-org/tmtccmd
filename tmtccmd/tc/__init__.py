@@ -3,7 +3,7 @@ from .queue import (
     QueueWrapper,
     TcQueueEntryType,
     TcQueueEntryBase,
-    PacketCastWrapper,
+    QueueEntryHelper,
     WaitEntry,
     SpacePacketEntry,
     PusTcEntry,

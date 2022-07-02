@@ -15,7 +15,7 @@ from tmtccmd.tc import (
     TcProcedureType,
     ProcedureCastWrapper,
     TcQueueEntryBase,
-    PacketCastWrapper,
+    QueueEntryHelper,
 )
 from tmtccmd.tc.ccsds_seq_sender import SenderMode
 from tmtccmd.tc.handler import FeedWrapper
@@ -135,7 +135,7 @@ class TestBackend(TestCase):
         self.assertIsNotNone(self.tc_handler.send_cb_call_args[0])
         self.assertIsNotNone(self.tc_handler.send_cb_call_args[1])
         self.assertEqual(self.tc_handler.send_cb_call_args[1], self.com_if)
-        cast_wrapper = PacketCastWrapper(base=self.tc_handler.send_cb_call_args[0])
+        cast_wrapper = self.tc_handler.send_cb_call_args[0]
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(pus_entry.pus_tc, PusTelecommand(service=17, subservice=1))
         self.backend.close_com_if()
@@ -196,7 +196,7 @@ class TestBackend(TestCase):
 
     def _check_tc_req_recvd(self, service: int, subservice: int):
         self.assertEqual(self.tc_handler.send_cb_call_args[1], self.com_if)
-        cast_wrapper = PacketCastWrapper(base=self.tc_handler.send_cb_call_args[0])
+        cast_wrapper = self.tc_handler.send_cb_call_args[0]
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(
             pus_entry.pus_tc, PusTelecommand(service=service, subservice=subservice)

@@ -100,9 +100,17 @@ class PacketDelayEntry(TcQueueEntryBase):
         return f"{self.__class__.__name__}({self.delay_time!r})"
 
 
-class PacketCastWrapper:
+class QueueEntryHelper:
     def __init__(self, base: TcQueueEntryBase):
         self.base = base
+
+    @property
+    def is_tc(self) -> bool:
+        return self.base.is_tc()
+
+    @property
+    def entry_type(self) -> TcQueueEntryType:
+        return self.base.etype
 
     def __cast_internally(
         self,

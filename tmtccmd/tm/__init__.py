@@ -76,7 +76,7 @@ class CcsdsTmHandler(TmHandlerBase):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
         if unknown_handler is None:
-            self.unknown_handler = UnknownApidHandlerBase(None)
+            self.unknown_handler = DefaultUnknownHandler(None)
         else:
             self.unknown_handler = unknown_handler
 
