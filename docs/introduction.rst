@@ -5,8 +5,7 @@
 Overview
 =========
 
-This commander was written for the `SOURCE`_ project as a way to simplify the
-software testing. The goal was to make it as easy as possible to send telecommands (TCs)
+The goal of this framework is to make it as easy to send telecommands (TCs)
 to the On-Board Software (OBSW) running on an external On-Board Computer (OBC) and to analyse
 the telemetry (TMs) coming back. The following graph shows two possible ways to use
 the TMTC commander
@@ -43,8 +42,9 @@ Features
 This framework also has a communication interface abstraction which allows to exchange TMTC through
 different channels. The framework currently supports the following communication interfaces:
 
-1. TCP/IP with UDP and TCP
-2. Serial Communication using fixed frames or a simple ASCII based transport layer
+1. TCP/IP with the :py:class:`tmtccmd.com_if.udp.UdpComIF` and :py:class:`tmtccmd.com_if.tcp.TcpComIF`.
+2. Serial Communication with the :py:class:`tmtccmd.com_if.serial.SerialComIF` using fixed frames
+   or a simple ASCII based transport layer
 3. QEMU, using a virtual serial interface
 
 It is also possible to supply custom interfaces.
