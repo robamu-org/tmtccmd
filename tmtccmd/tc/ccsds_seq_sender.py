@@ -32,7 +32,6 @@ class SequentialCcsdsSender:
     def __init__(
         self,
         queue_wrapper: QueueWrapper,
-        com_if: ComInterface,
         tc_handler: TcHandlerBase,
     ):
         """
@@ -40,7 +39,6 @@ class SequentialCcsdsSender:
         :param tc_handler:
         :param com_if:          CommunicationInterface object, passed on to CommandSenderReceiver
         """
-        self._com_if = com_if
         self._tc_handler = tc_handler
         self._queue_wrapper = queue_wrapper
         self._mode = SenderMode.DONE
@@ -77,8 +75,8 @@ class SequentialCcsdsSender:
         if self._mode == SenderMode.DONE and self.queue_wrapper.queue:
             self._mode = SenderMode.BUSY
 
-    def operation(self) -> SeqResultWrapper:
-        self._handle_current_tc_queue()
+    def operation(self, com_if: ComInterface) -> SeqResultWrapper:
+        self._handle_current_tc_queue(com_if)
         self._current_res.mode = self._mode
         return self._current_res
 
@@ -86,7 +84,7 @@ class SequentialCcsdsSender:
     def mode(self):
         return self._mode
 
-    def _handle_current_tc_queue(self):
+    def _handle_current_tc_queue(self, com_if: ComInterface):
         """Primary function which is called for sequential transfer.
         :return:
         """
@@ -98,7 +96,7 @@ class SequentialCcsdsSender:
                 self._mode = SenderMode.DONE
                 return
         else:
-            self._check_next_telecommand()
+            self._check_next_telecommand(com_if)
         self.__print_rem_timeout(op_divider=self._op_divider)
         self._op_divider += 1
 
@@ -110,7 +108,7 @@ class SequentialCcsdsSender:
                     f"{rem_time.total_seconds():.01f} seconds wait time remaining"
                 )
 
-    def _check_next_telecommand(self):
+    def _check_next_telecommand(self, com_if: ComInterface):
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         next_queue_entry = self.queue_wrapper.queue[0]
         is_tc = self.handle_non_tc_entry(next_queue_entry)
@@ -124,7 +122,7 @@ class SequentialCcsdsSender:
         else:
             self._current_res.tc_sent = False
         if call_send_cb:
-            self._tc_handler.send_cb(next_queue_entry, self._com_if)
+            self._tc_handler.send_cb(next_queue_entry, com_if)
             if is_tc:
                 if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
                     self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)

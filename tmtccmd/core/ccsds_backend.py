@@ -57,7 +57,6 @@ class CcsdsTmtcBackend(BackendBase):
         self.keep_multi_queue_mode = False
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
-            com_if=self._com_if,
             tc_handler=tc_handler,
             queue_wrapper=self._queue_wrapper,
         )
@@ -242,7 +241,7 @@ class CcsdsTmtcBackend(BackendBase):
             LOGGER.info("Loading TC queue")
             self._seq_handler.queue_wrapper = queue
             self._seq_handler.resume()
-        self._state._sender_res = self._seq_handler.operation()
+        self._state._sender_res = self._seq_handler.operation(self._com_if)
 
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)

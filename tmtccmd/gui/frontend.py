@@ -57,6 +57,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         super(QMainWindow, self).__init__()
         self._app_name = app_name
         self._shared_args = SharedArgs(tmtc_backend)
+        tmtc_backend.exit_on_com_if_init_failure = False
         self._hook_obj = hook_obj
         self._service_list = []
         self._op_code_list = []
@@ -362,7 +363,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
 
     def __com_if_sel_index_changed(self, index: int):
-        self._current_com_if = self._com_if_list[index][0]
+        self._state.current_com_if = self._com_if_list[index][0]
         if self.__debug_mode:
             LOGGER.info(f"Communication IF updated: {self._com_if_list[index][1]}")
 

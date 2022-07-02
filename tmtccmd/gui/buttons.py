@@ -70,7 +70,11 @@ class ConnectButtonWrapper:
                 com_if_key=self._args.state.current_com_if
             )
             self._args.state.last_com_if = self._args.state.current_com_if
-            self._args.shared.backend.try_set_com_if(new_com_if)
+            set_success = self._args.shared.backend.try_set_com_if(new_com_if)
+            if not set_success:
+                LOGGER.warning(
+                    f"Could not set new communication interface {new_com_if}"
+                )
         self.button.setEnabled(False)
         worker = FrontendWorker(
             LocalArgs(WorkerOperationsCodes.OPEN_COM_IF, None), self._args.shared
