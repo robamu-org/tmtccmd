@@ -23,8 +23,10 @@ helpers. Some of those components are tailored towards usage with the
 
 ## Features
 
-- Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
-  This library uses the `spacepackets`_ library for most packet implementations.
+- Special support for [Packet Utilisation Standard (PUS)](https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/)
+  packets and [CCSDS Space Packets](https://public.ccsds.org/Pubs/133x0b2e1.pdf).
+  This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
+  packet implementations.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
@@ -33,7 +35,7 @@ helpers. Some of those components are tailored towards usage with the
 - Basic logger components which can be used to store sent Telecommands and incoming Telemetry
   in files
 - Some components are tailored towards usage with the
-  `Flight Software Framework (FSFW) <https://egit.irs.uni-stuttgart.de/fsfw/fsfw/>`_.
+  [Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/)
 
 This has a communication interface abstraction which allows to exchange TMTC through different
 channels. The framework currently supports the following communication interfaces:
@@ -71,6 +73,13 @@ provide more complex implementations.
 
 ## Tests
 
+To run the tests, install the test requirements first with the following command, assuming
+a virtual environment:
+
+```sh
+pip install .[gui,test]
+```
+
 All tests are provided in the `src/test` folder and can be run with coverage information
 by running
 
@@ -86,37 +95,18 @@ python3 -m pip install coverage pytest
 
 ## Installation
 
-On Ubuntu, if `pip` is not installed yet, you can install it with
+It is recommended to use a virtual environment when installing this library. The steps here
+assume you have [set up and activated the environment](https://docs.python.org/3/tutorial/venv.html).
+
+To install the full version with GUI support, run the following command to install from the cloned
+source code
 
 ```sh
-sudo apt-get install python3-pip
+pip install .[gui]
 ```
 
-The minimum allowed Python version is 3.8.
-For developers, it is recommended to add this repostiory as a submodule
-with the following command:
-
-```sh
-git submodule add https://github.com/robamu-org/tmtccmd.git
-```
-
-For the following commands, replace `python3` with `py` on Windows.
-After that, you can install the package in an editable mode with the following command:
-
-```sh
-cd tmtccmd
-python3 -m pip install -e .
-```
-
-To also install the requirements for the GUI mode, run this command instead
-
-```sh
-cd tmtccmd
-python3 -m pip install -e .[gui]
-```
-
-Omit the `-e` for a regular installation. Alternatively you can now install the package
-from PyPI with `python3 -m pip install -e tmtccmd[gui]`.
+You can omit `[gui]` for a CLI only installation. Alternatively you can also install the package
+from PyPI with `pip install -e tmtccmd[gui]`.
 
 ## Using PyCharm
 
