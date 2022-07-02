@@ -1,4 +1,4 @@
-![](https://github.com/robamu-org/tmtccmd/blob/master/misc/logo.png)
+![](https://github.com/robamu-org/tmtccmd/blob/main/misc/logo.png)
 
 TMTC Commander[![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
 [![package](https://github.com/spacefisch/tmtccmd/actions/workflows/package.yml/badge.svg)](https://github.com/spacefisch/tmtccmd/actions/workflows/package.yml)
