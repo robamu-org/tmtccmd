@@ -15,7 +15,7 @@ class TestComIF(TestCase):
     def test_com_if_utils(self):
         with patch("tmtccmd.com_if.utils.wrapped_prompt", side_effect=["0", "yes"]):
             test_dict = {"test-com-if": ("Some more info", None)}
-            com_if = determine_com_if(test_dict, self.json_file)
+            com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
             with open(self.json_file) as file:
                 lines = file.readlines()
@@ -25,7 +25,7 @@ class TestComIF(TestCase):
             os.remove(self.json_file)
         with patch("tmtccmd.com_if.utils.wrapped_prompt", side_effect=["0", "no"]):
             test_dict = {"test-com-if": ("Some more info", None)}
-            com_if = determine_com_if(test_dict, self.json_file)
+            com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
             with open(self.json_file) as file:
                 lines = file.readlines()
@@ -35,14 +35,14 @@ class TestComIF(TestCase):
             side_effect=["1", "0", "no"],
         ):
             test_dict = {"test-com-if": ("Some more info", None)}
-            com_if = determine_com_if(test_dict, self.json_file)
+            com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
         with patch(
             "tmtccmd.com_if.utils.wrapped_prompt",
             side_effect=["blub", "0", "no"],
         ):
             test_dict = {"test-com-if": ("Some more info", None)}
-            com_if = determine_com_if(test_dict, self.json_file)
+            com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
 
     def test_dummy_if(self):

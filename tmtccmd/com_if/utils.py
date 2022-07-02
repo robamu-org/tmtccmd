@@ -8,7 +8,9 @@ from tmtccmd.config import ComIfDictT
 LOGGER = get_console_logger()
 
 
-def determine_com_if(com_if_dict: ComIfDictT, json_cfg_path: str) -> str:
+def determine_com_if(
+    com_if_dict: ComIfDictT, json_cfg_path: str, use_prompts: bool
+) -> str:
     do_prompt_com_if = False
     com_if_string = ""
     if not check_json_file(json_cfg_path):
@@ -22,7 +24,7 @@ def determine_com_if(com_if_dict: ComIfDictT, json_cfg_path: str) -> str:
             except KeyError:
                 do_prompt_com_if = True
             com_if_string = str(com_if_string)
-    if do_prompt_com_if:
+    if do_prompt_com_if and use_prompts:
         com_if_string = prompt_com_if(com_if_dict)
         save_to_json = wrapped_prompt(
             "Do you want to store the communication interface? ([Y]/n): "
