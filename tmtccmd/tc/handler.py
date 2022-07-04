@@ -46,6 +46,12 @@ class TcHandlerBase(ABC):
         2. If applicable, retrieve the raw data to send from the queue entry and send it using
            the generic communication interface
 
+        All delay related entries will generally be handled by the send queue consumer so there
+        is no need to manually delay the application in this callback. However, the queue consumer
+        will not handle log entries so the user needs to take care of handling these
+        entries and log the content to a console, file logger or any other system used to log
+        something.
+
         :param entry_helper: Queue entry base type. The user can cast this back to the concrete
             type or just use duck typing if the concrete type is known
         :param com_if: Communication interface. Will generally be used to send the packet,

@@ -14,14 +14,12 @@ logger = get_console_logger()
 
 
 def pack_fsfw_load_param_cmd(
-    app_data: bytes, ssc: int, apid: int = -1
+    app_data: bytes
 ) -> PusTelecommand:
     return PusTelecommand(
         service=20,
         subservice=CustomSubservices.LOAD,
-        app_data=app_data,
-        apid=apid,
-        seq_count=ssc,
+        app_data=app_data
     )
 
 

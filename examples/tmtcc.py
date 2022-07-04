@@ -146,6 +146,9 @@ class TcHandler(TcHandlerBase):
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
                 com_if.send(raw_tc)
+        elif entry_helper.entry_type == TcQueueEntryType.LOG:
+            log_entry = entry_helper.to_log_entry()
+            LOGGER.info(log_entry.log_str)
 
     def queue_finished_cb(self, helper: ProcedureHelper):
         if helper.proc_type == TcProcedureType.DEFAULT:

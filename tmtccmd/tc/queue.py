@@ -188,6 +188,9 @@ class QueueHelper:
     def add_wait_ms(self, wait_ms: int):
         self.queue_wrapper.queue.append(WaitEntry.from_millis(wait_ms))
 
+    def add_wait_seconds(self, wait_seconds: float):
+        self.queue_wrapper.queue.append(WaitEntry(timedelta(seconds=wait_seconds)))
+
     def add_packet_delay(self, delay: timedelta):
         self.queue_wrapper.queue.append(PacketDelayEntry(delay))
 

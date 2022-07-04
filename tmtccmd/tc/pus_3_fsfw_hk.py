@@ -28,8 +28,8 @@ def enable_periodic_hk_command_with_interval(
     return cmd0, cmd1
 
 
-def disable_periodic_hk_command(diag: bool, sid: bytes, ssc: int) -> PusTelecommand:
-    return __generate_periodic_hk_command(diag=diag, enable=False, sid=sid, ssc=ssc)
+def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
+    return __generate_periodic_hk_command(diag=diag, enable=False, sid=sid)
 
 
 def __generate_periodic_hk_command(
