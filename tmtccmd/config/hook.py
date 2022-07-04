@@ -59,7 +59,6 @@ class TmTcCfgHookBase(ABC):
 
         return get_default_tmtc_defs()
 
-    @abstractmethod
     def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
         """Perform custom mode operations.
 
@@ -67,7 +66,7 @@ class TmTcCfgHookBase(ABC):
         :param mode:
         :return:
         """
-        pass
+        print("No custom mode operation implemented")
 
     def get_retval_dict(self) -> RetvalDictT:
         from tmtccmd import get_console_logger

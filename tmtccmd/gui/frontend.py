@@ -95,7 +95,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         win.setLayout(grid)
         row = 0
         self.setWindowTitle(self._app_name)
-        print(self.logo_path)
         self.setWindowIcon(QIcon(self.logo_path.as_posix()))
 
         add_pixmap = False

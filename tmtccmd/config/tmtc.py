@@ -42,7 +42,7 @@ class OpCodeEntry:
             return entry_tuple[0]
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(init_dict={self._op_code_dict!r}"
+        return f"{self.__class__.__name__}(init_dict={self._op_code_dict!r})"
 
     @property
     def op_code_dict(self):
