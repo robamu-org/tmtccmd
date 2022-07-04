@@ -22,7 +22,7 @@ class ObjectId:
         self.id.__hash__()
 
     def __eq__(self, other: ObjectId):
-        return self.name == other.name
+        return self.id == other.id
 
     @classmethod
     def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectId:

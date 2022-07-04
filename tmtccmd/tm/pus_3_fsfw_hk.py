@@ -39,8 +39,6 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
         minimum_structure_report_header_size: int = STRUCTURE_REPORT_FIXED_HEADER_SIZE,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-        pus_tm_version: int = 0b0001,
         secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
@@ -68,7 +66,6 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -112,7 +109,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service3FsfwTm:
         return cls(
-            subservice_id=-1,
+            subservice_id=0,
             time=CdsShortTimestamp.init_from_current_time(),
             hk_data=bytearray(),
         )
@@ -125,9 +122,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service3FsfwTm:
         service_3_tm = cls.__empty()
-        service_3_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
-        )
+        service_3_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         service_3_tm.__init_without_base(
             instance=service_3_tm,
             custom_hk_handling=custom_hk_handling,
