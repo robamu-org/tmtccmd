@@ -7,7 +7,13 @@ from typing import Union, cast, Optional
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.core.base import FrontendBase
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.config import TmTcCfgHookBase, backend_mode_conversion, SetupWrapper
+from tmtccmd.config import (
+    TmTcCfgHookBase,
+    backend_mode_conversion,
+    SetupWrapper,
+    SetupParams,
+    ArgParserWrapper,
+)
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
