@@ -66,11 +66,11 @@ class TmTcDefWrapper:
 
     def add_service(
         self,
-        service_name: str,
+        name: str,
         info: str,
         op_code_entry: OpCodeEntry,
     ):
-        self.defs.update({service_name: (info, op_code_entry)})
+        self.defs.update({name: (info, op_code_entry)})
 
     def op_code_entry(self, service_name: str) -> Optional[OpCodeEntry]:
         srv_entry = self.defs.get(service_name)
