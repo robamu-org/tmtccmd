@@ -1,12 +1,15 @@
 include LICENSE
 include NOTICE
+include CHANGELOG.md
 
-include docs/*.rst
-include docs/logo_tmtccmd.png
-include docs/conf.py
-include docs/Makefile
-include docs/*.md
+graft docs
+prune docs/_build
 
-include tests/*
+graft tests
+prune tests/log
 
-include pycharm/*
+include requirements.txt
+
+recursive-exclude * *.pyc *.pyo
+
+include misc/logo-tiny.png

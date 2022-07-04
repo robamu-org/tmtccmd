@@ -1,0 +1,57 @@
+import os
+from pathlib import Path
+from unittest import TestCase
+
+from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss.pus_1_verification import (
+    RequestId,
+    VerificationParams,
+    Subservices,
+)
+
+from tmtccmd.tm.pus_1_verification import Service1TmExtended
+from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
+from tmtccmd.logging import get_console_logger, LOG_DIR
+from tmtccmd.logging.pus import (
+    RegularTmtcLogWrapper,
+    RawTmtcRotatingLogWrapper,
+)
+
+
+# TODO: Use temp files to test loggers?
+class TestPrintersLoggers(TestCase):
+    def setUp(self):
+        self.log_path = Path(LOG_DIR)
+        if not self.log_path.exists():
+            self.log_path.mkdir()
+        self.regular_file_name = Path(
+            RegularTmtcLogWrapper.get_current_tmtc_file_name()
+        )
+        self.logger = get_console_logger()
+
+    def test_pus_loggers(self):
+        regular_tmtc_logger = RegularTmtcLogWrapper(self.regular_file_name)
+        raw_tmtc_log = RawTmtcRotatingLogWrapper(max_bytes=1024, backup_count=10)
+        pus_tc = pack_service_17_ping_command(ssc=0)
+        raw_tmtc_log.log_tc(pus_tc)
+        pus_tm = Service1TmExtended(
+            subservice=Subservices.TM_START_SUCCESS,
+            time=CdsShortTimestamp.init_from_current_time(),
+            verif_params=VerificationParams(
+                req_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl)
+            ),
+        )
+        raw_tmtc_log.log_tm(pus_tm.pus_tm)
+        self.assertTrue(Path(self.regular_file_name).exists())
+        regular_tmtc_logger.logger.info("Test")
+        # There should be 2 files now because 1024 bytes are not enough to accomate all info
+        self.assertTrue(Path(raw_tmtc_log.file_name).exists())
+        self.assertTrue(Path(f"{raw_tmtc_log.file_name}.1").exists())
+
+    def test_print_functions(self):
+        pass
+
+    def tearDown(self):
+        """Reset the hook object"""
+        if self.regular_file_name.exists():
+            os.remove(self.regular_file_name)

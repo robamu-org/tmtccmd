@@ -20,10 +20,10 @@ tmtccmd.utility.hammingcode module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.json\_handler module
+tmtccmd.utility.json module
 ------------------------------------
 
-.. automodule:: tmtccmd.utility.json_handler
+.. automodule:: tmtccmd.utility.json
    :members:
    :undoc-members:
    :show-inheritance:

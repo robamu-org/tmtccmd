@@ -5,10 +5,10 @@ API
 Core Submodules
 ===============
 
-tmtccmd.runner module
+tmtccmd module
 ---------------------
 
-.. automodule:: tmtccmd.runner
+.. automodule:: tmtccmd
    :members:
    :undoc-members:
    :show-inheritance:
@@ -17,7 +17,6 @@ tmtccmd.runner module
    :maxdepth: 4
 
    api/tmtccmd.core
-   api/tmtccmd.sendreceive
 
 Configuration Submodules
 =========================
@@ -34,11 +33,10 @@ CCSDS & ECSS Submodules
 .. toctree::
    :maxdepth: 4
 
-   api/tmtccmd.ccsds
+   api/tmtccmd.cfdp
    api/tmtccmd.pus
    api/tmtccmd.tc
    api/tmtccmd.tm
-   api/tmtccmd.cfdp
 
 Other Submodules
 =========================
@@ -48,3 +46,4 @@ Other Submodules
 
    api/tmtccmd.utility
    api/tmtccmd.logging
+   api/tmtccmd.fsfw
