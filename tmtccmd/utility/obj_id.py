@@ -8,14 +8,21 @@ LOGGER = get_console_logger()
 
 class ObjectId:
     def __init__(self, object_id: int, name: str = ""):
+        self._id_as_bytes = bytes()
         self.id = object_id
-        self.name = ""
+        self.name = name
 
     def __str__(self):
-        return f"Object ID 0x{self.as_string} with name {self.name}"
+        return f"Object ID 0x{self.as_hex_string} with name {self.name}"
 
     def __repr__(self):
-        return self.as_string
+        return f"{self.__class__.__name__}(object_id={self.id!r}, name={self.name!r})"
+
+    def __hash__(self):
+        self.id.__hash__()
+
+    def __eq__(self, other: ObjectId):
+        return self.name == other.name
 
     @classmethod
     def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectId:
@@ -50,8 +57,8 @@ class ObjectId:
         return self._id_as_bytes
 
     @property
-    def as_string(self) -> str:
-        return f"0x{self._object_id:08x}"
+    def as_hex_string(self) -> str:
+        return f"{self._object_id:#08x}"
 
 
 ObjectIdDictT = Dict[bytes, ObjectId]

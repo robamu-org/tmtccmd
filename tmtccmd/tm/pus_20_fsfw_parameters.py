@@ -151,7 +151,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(self.object_id.as_string)
+        content_list.append(self.object_id.as_hex_string)
 
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)

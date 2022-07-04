@@ -111,7 +111,7 @@ class FsfwTmTcPrinter:
         if object_id.name == "":
             object_id.name = "Unknown Name"
         generic_info = (
-            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_string}) with "
+            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_hex_string}) with "
             f"Set ID {set_id} and {len(hk_data)} bytes of HK data"
         )
         LOGGER.info(generic_info)

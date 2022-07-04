@@ -100,7 +100,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(self._object_id.as_string)
+        content_list.append(self._object_id.as_hex_string)
         content_list.append(self._action_id)
 
     def append_telemetry_column_headers(self, header_list: list):

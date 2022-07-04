@@ -138,7 +138,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     @abstractmethod
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(self.object_id.as_string)
+        content_list.append(self.object_id.as_hex_string)
         content_list.append(hex(self.set_id))
         content_list.append(int(self._param_length))
 
@@ -154,7 +154,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         if len(tm_data) < self.hk_structure_report_header_size:
             LOGGER.warning(
                 f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {self.object_id.as_string}, is shorter "
+                f"from {self.object_id.as_hex_string}, is shorter "
                 f"than {self.hk_structure_report_header_size}"
             )
             return [], []
@@ -173,7 +173,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         if len(tm_data) < self.hk_structure_report_header_size + num_params * 4:
             LOGGER.warning(
                 f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {self.object_id.as_string}, is shorter than "
+                f"from {self.object_id.as_hex_string}, is shorter than "
                 f"{self.hk_structure_report_header_size + num_params * 4}"
             )
             return [], []
@@ -198,7 +198,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         else:
             valid_string = "No"
         definitions_content = [
-            self.object_id.as_string,
+            self.object_id.as_hex_string,
             self._set_id,
             status_string,
             valid_string,

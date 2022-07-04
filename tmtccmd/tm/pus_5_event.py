@@ -98,7 +98,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
         content_list.append(str(self._event_id))
-        content_list.append(self._object_id.as_string)
+        content_list.append(self._object_id.as_hex_string)
         content_list.append(str(hex(self._param_1)) + ", " + str(self._param_1))
         content_list.append(str(hex(self._param_2)) + ", " + str(self._param_2))
 
@@ -113,7 +113,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
     def __str__(self):
         return (
             f"Subservice {self.subservice} | Event ID {self.event_id} | "
-            f"Reporter ID 0x{self.reporter_id.as_string} | "
+            f"Reporter ID 0x{self.reporter_id.as_hex_string} | "
             f"Param 1 {self.param_1} | Param 2 {self.param_2}"
         )
 
