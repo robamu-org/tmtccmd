@@ -65,19 +65,17 @@ def modify_collection_interval(
     )
 
 
-def generate_one_hk_command(sid: bytes, ssc: int) -> PusTelecommand:
+def generate_one_hk_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservices.TC_GENERATE_ONE_PARAMETER_REPORT,
-        seq_count=ssc,
         app_data=sid,
     )
 
 
-def generate_one_diag_command(sid: bytes, ssc: int) -> PusTelecommand:
+def generate_one_diag_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservices.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
-        seq_count=ssc,
         app_data=sid,
     )
