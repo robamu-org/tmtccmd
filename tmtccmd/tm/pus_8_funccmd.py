@@ -5,7 +5,7 @@ import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.utility.obj_id import ObjectId
+from tmtccmd.utility.obj_id import ObjectIdU32
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
@@ -36,7 +36,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         :param call_srv8_hook:
         :raises ValueError: If the length of the passed bytearray is too short.
         """
-        self._object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
+        self._object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=object_id)
         self._action_id = action_id
         self._custom_data = custom_data
         source_data = bytearray()
@@ -70,7 +70,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
                 )
                 raise ValueError
             instance.set_packet_info("Functional Data Reply")
-            instance._object_id = ObjectId.from_bytes(obj_id_as_bytes=tm_data[0:4])
+            instance._object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=tm_data[0:4])
             instance._action_id = struct.unpack("!I", tm_data[4:8])[0]
             instance._custom_data = tm_data[8:]
         else:

@@ -1,19 +1,24 @@
 from __future__ import annotations
-from typing import Union, Dict
+from typing import Union, Dict, Optional
 import struct
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
 
-class ObjectId:
-    def __init__(self, object_id: int, name: str = ""):
+class ObjectIdU32:
+    """A helper object for a unique object identifier which has a raw unsigned 32-bit representation"""
+
+    def __init__(self, object_id: int, name: Optional[str] = None):
         self._id_as_bytes = bytes()
         self.id = object_id
-        self.name = name
+        if name is None:
+            self.name = "Unknown"
+        else:
+            self.name = name
 
     def __str__(self):
-        return f"Object ID 0x{self.as_hex_string} with name {self.name}"
+        return f"32-bit Object ID {self.name} with ID {self.as_hex_string}"
 
     def __repr__(self):
         return f"{self.__class__.__name__}(object_id={self.id!r}, name={self.name!r})"
@@ -21,12 +26,12 @@ class ObjectId:
     def __hash__(self):
         self.id.__hash__()
 
-    def __eq__(self, other: ObjectId):
+    def __eq__(self, other: ObjectIdU32):
         return self.id == other.id
 
     @classmethod
-    def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectId:
-        obj_id = ObjectId(object_id=0)
+    def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectIdU32:
+        obj_id = ObjectIdU32(object_id=0)
         obj_id.id = obj_id_as_bytes
         return obj_id
 
@@ -41,12 +46,11 @@ class ObjectId:
             self._id_as_bytes = struct.pack("!I", self._object_id)
         elif isinstance(new_id, bytes) or isinstance(new_id, bytearray):
             if len(new_id) != 4:
-                LOGGER.warning(f"Invalid object ID length {len(new_id)}")
-                raise ValueError
+                raise ValueError(f"Invalid object ID length {len(new_id)}")
             self._id_as_bytes = bytes(new_id)
             self._object_id = struct.unpack("!I", self._id_as_bytes[:])[0]
         else:
-            raise ValueError
+            raise TypeError("Is not integer of bytes type")
 
     @property
     def as_int(self) -> int:
@@ -58,7 +62,7 @@ class ObjectId:
 
     @property
     def as_hex_string(self) -> str:
-        return f"{self._object_id:#08x}"
+        return f"{self._object_id:#010x}"
 
 
-ObjectIdDictT = Dict[bytes, ObjectId]
+ObjectIdDictT = Dict[bytes, ObjectIdU32]

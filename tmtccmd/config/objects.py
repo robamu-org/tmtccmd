@@ -1,4 +1,4 @@
-from tmtccmd.utility.obj_id import ObjectIdDictT, ObjectId
+from tmtccmd.utility.obj_id import ObjectIdDictT, ObjectIdU32
 
 
 INVALID_ID = bytes([0xFF, 0xFF, 0xFF, 0xFF])
@@ -10,7 +10,7 @@ def get_core_object_ids() -> ObjectIdDictT:
 
     :return Dictionary of the core object IDs
     """
-    invalid_id = ObjectId.from_bytes(obj_id_as_bytes=INVALID_ID)
+    invalid_id = ObjectIdU32.from_bytes(obj_id_as_bytes=INVALID_ID)
     invalid_id.name = "Invalid ID"
     object_id_dict = {INVALID_ID: invalid_id}
     return object_id_dict

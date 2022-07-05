@@ -9,7 +9,7 @@ from spacepackets.ecss.defs import PusServices
 from spacepackets.ecss.pus_5_event import Subservices
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
-from tmtccmd.utility.obj_id import ObjectId
+from tmtccmd.utility.obj_id import ObjectIdU32
 from tmtccmd.logging import get_console_logger
 
 
@@ -40,7 +40,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         :param object_id: 4 byte object ID
         :raises ValueError: Invalid input arguments
         """
-        self._object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
+        self._object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=object_id)
         self._event_id = event_id
         self._param_1 = param_1
         self._param_2 = param_2
@@ -118,7 +118,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         )
 
     @property
-    def reporter_id(self) -> ObjectId:
+    def reporter_id(self) -> ObjectIdU32:
         return self._object_id
 
     @property
@@ -154,6 +154,6 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
             raise ValueError
         if set_attrs_from_tm_data:
             instance._event_id = struct.unpack(">H", tm_data[0:2])[0]
-            instance._object_id = ObjectId.from_bytes(tm_data[2:6])
+            instance._object_id = ObjectIdU32.from_bytes(tm_data[2:6])
             instance._param_1 = struct.unpack(">I", tm_data[6:10])[0]
             instance._param_2 = struct.unpack(">I", tm_data[10:14])[0]
