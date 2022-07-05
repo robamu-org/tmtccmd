@@ -10,7 +10,7 @@ from tmtccmd.utility.retval import RetvalDictT, RetvalInfo
 def parse_fsfw_objects_csv(csv_file: str) -> Optional[ObjectIdDictT]:
     if os.path.exists(csv_file):
         obj_id_dict = dict()
-        obj_id = ObjectIdU32(object_id=0)
+        obj_id = ObjectIdU32(obj_id=0)
         with open(csv_file) as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=";")
             for row in csv_reader:

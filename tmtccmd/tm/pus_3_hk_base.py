@@ -19,7 +19,7 @@ class Service3Base:
     """
 
     def __init__(self, object_id: int, custom_hk_handling: bool = False):
-        self._object_id = ObjectIdU32(object_id=object_id)
+        self._object_id = ObjectIdU32(obj_id=object_id)
         self._set_id = 0
         self._param_length = 0
         self._custom_hk_handling = custom_hk_handling
