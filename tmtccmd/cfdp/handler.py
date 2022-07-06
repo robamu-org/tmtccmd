@@ -11,7 +11,7 @@ from spacepackets.cfdp.defs import (
     ChecksumTypes,
     Direction,
     CrcFlag,
-    FileSize,
+    LargeFileFlag,
 )
 from .user import CfdpUserBase
 
@@ -60,7 +60,7 @@ class CfdpHandler:
                     crc_flag=CrcFlag.GLOBAL_CONFIG,
                     direction=Direction.TOWARDS_RECEIVER,
                     transaction_seq_num=self.__get_next_seq_num(),
-                    file_size=FileSize.GLOBAL_CONFIG,
+                    file_size=LargeFileFlag.GLOBAL_CONFIG,
                     trans_mode=self.__current_put_request.trans_mode,
                 )
                 self.create_metadata_pdu(
