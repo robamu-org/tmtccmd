@@ -1,4 +1,4 @@
-from tmtccmd.utility.obj_id import ObjectIdDictT, ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdDictT, ObjectIdU32
 
 
 INVALID_ID = bytes([0xFF, 0xFF, 0xFF, 0xFF])

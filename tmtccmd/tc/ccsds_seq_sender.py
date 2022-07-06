@@ -13,7 +13,7 @@ from tmtccmd.tc.handler import TcHandlerBase
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if import ComInterface
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.countdown import Countdown
+from tmtccmd.util.countdown import Countdown
 
 LOGGER = get_console_logger()
 

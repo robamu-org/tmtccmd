@@ -9,7 +9,7 @@ from spacepackets.ecss.defs import PusServices
 
 from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
-from tmtccmd.utility.obj_id import ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.tm.pus_3_hk_base import HkContentType
 from tmtccmd.logging import get_console_logger, get_current_time_string
 

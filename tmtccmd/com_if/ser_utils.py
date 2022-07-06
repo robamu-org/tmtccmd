@@ -4,7 +4,7 @@ from typing import TextIO
 import serial
 import serial.tools.list_ports
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.json import (
+from tmtccmd.util.json import (
     check_json_file,
     JsonKeyNames,
     save_to_json_with_prompt,

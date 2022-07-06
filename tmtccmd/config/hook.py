@@ -1,11 +1,11 @@
 from typing import Optional
 from abc import abstractmethod, ABC
 
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util.obj_id import ObjectIdDictT
 from tmtccmd.com_if import ComInterface
 
 from tmtccmd.core import BackendBase
-from tmtccmd.utility.retval import RetvalDictT
+from tmtccmd.util.retval import RetvalDictT
 
 from .tmtc import TmTcDefWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfDictT

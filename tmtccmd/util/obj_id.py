@@ -103,7 +103,9 @@ class ObjectIdBase(ABC):
 
 
 class ObjectIdU32(ObjectIdBase):
-    """A helper object for a unique object identifier which has a raw unsigned 32-bit representation"""
+    """A helper object for a unique object identifier which has a raw unsigned
+    32-bit representation.
+    """
 
     def __init__(self, obj_id: int, name: Optional[str] = None):
         super().__init__(obj_id, 4, name)
@@ -121,7 +123,9 @@ class ObjectIdU32(ObjectIdBase):
 
 
 class ObjectIdU16(ObjectIdBase):
-    """A helper object for a unique object identifier which has a raw unsigned 16-bit representation"""
+    """A helper object for a unique object identifier which has a raw unsigned
+    16-bit representation.
+    """
 
     def __init__(self, obj_id: int, name: Optional[str] = None):
         super().__init__(obj_id, 2, name)
@@ -139,7 +143,9 @@ class ObjectIdU16(ObjectIdBase):
 
 
 class ObjectIdU8(ObjectIdBase):
-    """A helper object for a unique object identifier which has a raw unsigned 8-bit representation"""
+    """A helper object for a unique object identifier which has a raw unsigned
+    8-bit representation.
+    """
 
     def __init__(self, obj_id: int, name: Optional[str] = None):
         super().__init__(obj_id, 1, name)

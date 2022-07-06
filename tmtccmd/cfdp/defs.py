@@ -1,15 +1,5 @@
 import dataclasses
 import enum
-from pathlib import Path
-from typing import Optional, List
-
-from spacepackets.cfdp.defs import SegmentationControl, TransmissionModes
-from spacepackets.cfdp.tlv import (
-    FaultHandlerOverrideTlv,
-    FlowLabelTlv,
-    MessageToUserTlv,
-    FileStoreRequestTlv,
-)
 
 
 class CfdpRequest(enum.Enum):
@@ -34,28 +24,31 @@ class CfdpIndication(enum.Enum):
     EOF_RECV = 10
 
 
-@dataclasses.dataclass
-class PutRequest:
-    destination_id: bytes
-    source_file: Path
-    dest_file: str
-    seg_ctrl: SegmentationControl
-    trans_mode: TransmissionModes
-    closure_requested: bool
-    fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
-    flow_label_tlv: Optional[FlowLabelTlv] = None
-    msgs_to_user: Optional[List[MessageToUserTlv]] = None
-    fs_requests: Optional[List[FileStoreRequestTlv]] = None
+class CfdpTransferState(enum.Enum):
+    IDLE = 0
+    INITIALIZE = 1
+    CRC_PROCEDURE = 2
+    # The following three are used for the Copy File Procedure
+    SENDING_METADATA = 3
+    SENDING_FILE_DATA = 4
+    SENDING_EOF = 5
+    SENDING_FINISH = 6
 
 
+class CfdpReceptionState(enum.Enum):
+    pass
+
+
+# TODO: It might become necessary to introduce substates for handling CFDP requests
 class CfdpStates(enum.Enum):
     IDLE = 0
-    CRC_PROCEDURE = 1
-    SENDING_METADATA = 2
-    SENDING_FILE_DATA_PDUS = 3
-    SENDING_EOF_DATA_PDU = 4
-    SENDING_FINISH_PDU = 5
-    SEND_ACK_PDU = 6
+    OP_PENDING = 1
+
+
+@dataclasses.dataclass
+class CfdpStateWrapper:
+    state: CfdpStates
+    transfer_state: CfdpTransferState
 
 
 class ByteFlowControl:

@@ -13,7 +13,7 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.com_if.tcpip_utils import EthernetAddressT
-from tmtccmd.utility.conf_util import acquire_timeout
+from tmtccmd.util.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()
 

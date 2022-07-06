@@ -1,7 +1,7 @@
 from typing import Tuple, List
 import enum
 
-from tmtccmd.utility.obj_id import ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdU32
 
 
 class HkContentType(enum.Enum):

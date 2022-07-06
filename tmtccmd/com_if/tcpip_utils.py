@@ -4,7 +4,7 @@ import struct
 import enum
 from typing import Tuple
 
-from tmtccmd.utility.json import check_json_file, JsonKeyNames
+from tmtccmd.util.json import check_json_file, JsonKeyNames
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()

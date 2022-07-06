@@ -2,9 +2,9 @@ import csv
 import os
 import copy
 from typing import Optional
-from tmtccmd.utility.obj_id import ObjectIdU32, ObjectIdDictT
+from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdDictT
 from tmtccmd.pus.pus_5_event import EventInfo, EventDictT
-from tmtccmd.utility.retval import RetvalDictT, RetvalInfo
+from tmtccmd.util.retval import RetvalDictT, RetvalInfo
 
 
 def parse_fsfw_objects_csv(csv_file: str) -> Optional[ObjectIdDictT]:

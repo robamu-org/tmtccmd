@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from tmtccmd.utility import ObjectIdU32
-from tmtccmd.utility.obj_id import ObjectIdU8, ObjectIdU16
+from tmtccmd.util import ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdU8, ObjectIdU16
 
 
 class TestObjectId(TestCase):

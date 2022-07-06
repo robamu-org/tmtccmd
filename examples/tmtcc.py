@@ -37,9 +37,9 @@ from tmtccmd.tc import (
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util.obj_id import ObjectIdDictT
 
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
 EXAMPLE_APID = 0xEF

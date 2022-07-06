@@ -13,7 +13,7 @@ from tmtccmd.core import (
 )
 from tmtccmd.tc import TcProcedureBase, ProcedureHelper
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
-from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
+from tmtccmd.util.exit import keyboard_interrupt_handler
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.ccsds_seq_sender import (

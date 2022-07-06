@@ -14,7 +14,7 @@ from spacepackets.ecss import (
 )
 from spacepackets.ecss.defs import PusServices
 
-from tmtccmd.utility.obj_id import ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.pus.pus_20_params import (
     CustomSubservices,
 )

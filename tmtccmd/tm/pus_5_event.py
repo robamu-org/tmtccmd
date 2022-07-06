@@ -9,7 +9,7 @@ from spacepackets.ecss.defs import PusServices
 from spacepackets.ecss.pus_5_event import Subservices
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase, PusTelemetry
-from tmtccmd.utility.obj_id import ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.logging import get_console_logger
 
 

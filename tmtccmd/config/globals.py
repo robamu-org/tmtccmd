@@ -183,7 +183,7 @@ def check_and_set_core_mode_arg(
     mode_arg: any,
     custom_modes_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None,
 ) -> int:
-    from tmtccmd.utility.conf_util import check_args_in_dict
+    from tmtccmd.util.conf_util import check_args_in_dict
 
     """Checks whether the mode argument is contained inside the core mode list integer enumeration
     or a custom mode list integer which can be passed optionally.
@@ -231,7 +231,7 @@ def check_and_set_core_mode_arg(
 def check_and_set_core_service_arg(
     service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
-    from tmtccmd.utility.conf_util import check_args_in_dict
+    from tmtccmd.util.conf_util import check_args_in_dict
 
     in_enum, service_value = check_args_in_dict(
         param=service_arg, iterable=CoreServiceList, warning_hint="service"
