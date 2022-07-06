@@ -1,18 +1,15 @@
 import struct
-from pathlib import Path
 from typing import Optional
 
 from spacepackets.cfdp.pdu import PduWrapper
 from spacepackets.cfdp.pdu.file_data import FileDataPdu
 from tmtccmd.logging import get_console_logger
-from tmtccmd.util.seqcnt import ProvidesSeqCount
 
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
 from spacepackets.cfdp.conf import PduConfig
 from spacepackets.cfdp.defs import (
     ChecksumTypes,
     Direction,
-    CrcFlag,
 )
 from .defs import (
     CfdpStates,
@@ -62,12 +59,12 @@ class CfdpHandler:
         self,
         local_cfg: LocalEntityCfg,
         remote_cfg: RemoteEntityTable,
-        seq_cnt_provider: ProvidesSeqCount,
         cfdp_user: CfdpUserBase,
     ):
         """
 
-        :param cfg: Local entity configuration
+        :param local_cfg: Local entity configuration
+        :param remote_cfg: Configuration table for remote entities
         :param cfdp_user: CFDP user which will receive indication messages and which also contains
             the virtual filestore implementation
         """
@@ -75,8 +72,6 @@ class CfdpHandler:
         self.id = local_cfg.local_entity_id
         self.cfg = local_cfg
         self.remote_cfg_table = remote_cfg
-        self.seq_cnt_provider = seq_cnt_provider
-        self.seq_cnt_provider.max_bit_width = self.cfg.length_seq_num * 8
         self.cfdp_user = cfdp_user
         self.state = CfdpStateWrapper(
             state=CfdpStates.IDLE, transfer_state=CfdpTransferState.IDLE
