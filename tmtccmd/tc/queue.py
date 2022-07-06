@@ -115,34 +115,29 @@ class QueueEntryHelper:
     def __cast_internally(
         self,
         obj_type: Type[TcQueueEntryBase],
-        obj: TcQueueEntryBase,
         expected_type: TcQueueEntryType,
     ) -> Any:
-        if obj.etype != expected_type:
-            raise TypeError(f"Invalid object {obj} for type {self.base.etype}")
-        return cast(obj_type, obj)
+        if self.base.etype != expected_type:
+            raise TypeError(f"Invalid object {self.base} for type {self.base.etype}")
+        return cast(obj_type, self.base)
 
     def to_log_entry(self) -> LogQueueEntry:
-        return self.__cast_internally(LogQueueEntry, self.base, TcQueueEntryType.LOG)
+        return self.__cast_internally(LogQueueEntry, TcQueueEntryType.LOG)
 
     def to_pus_tc_entry(self) -> PusTcEntry:
-        return self.__cast_internally(PusTcEntry, self.base, TcQueueEntryType.PUS_TC)
+        return self.__cast_internally(PusTcEntry, TcQueueEntryType.PUS_TC)
 
     def to_raw_tc_entry(self) -> RawTcEntry:
-        return self.__cast_internally(RawTcEntry, self.base, TcQueueEntryType.RAW_TC)
+        return self.__cast_internally(RawTcEntry, TcQueueEntryType.RAW_TC)
 
     def to_wait_entry(self) -> WaitEntry:
-        return self.__cast_internally(WaitEntry, self.base, TcQueueEntryType.WAIT)
+        return self.__cast_internally(WaitEntry, TcQueueEntryType.WAIT)
 
     def to_packet_delay_entry(self) -> PacketDelayEntry:
-        return self.__cast_internally(
-            PacketDelayEntry, self.base, TcQueueEntryType.PACKET_DELAY
-        )
+        return self.__cast_internally(PacketDelayEntry, TcQueueEntryType.PACKET_DELAY)
 
     def to_space_packet_entry(self) -> SpacePacketEntry:
-        return self.__cast_internally(
-            SpacePacketEntry, self.base, TcQueueEntryType.CCSDS_TC
-        )
+        return self.__cast_internally(SpacePacketEntry, TcQueueEntryType.CCSDS_TC)
 
 
 class QueueWrapper:

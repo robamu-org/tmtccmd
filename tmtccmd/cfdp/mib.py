@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable
-from spacepackets.cfdp.definitions import FaultHandlerCodes
+from spacepackets.cfdp.defs import FaultHandlerCodes
 
 # User can specify a function which takes the fault handler code as an argument and returns nothing
 FaultHandlerT = Callable[[FaultHandlerCodes], None]

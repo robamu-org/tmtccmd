@@ -12,7 +12,7 @@ LOGGER = get_console_logger()
 FilestoreResult = FilestoreResponseStatusCode
 
 
-class VirtualFilestore:
+class VirtualFilestore(abc.ABC):
     @abc.abstractmethod
     def append_data_to_file(
         self, file: Path, offset: int, data: bytes
@@ -70,7 +70,6 @@ class HostFilestore(VirtualFilestore):
     def __init__(self):
         pass
 
-    @abc.abstractmethod
     def append_data_to_file(
         self, file: Path, offset: int, data: bytes
     ) -> FilestoreResponseStatusCode:
