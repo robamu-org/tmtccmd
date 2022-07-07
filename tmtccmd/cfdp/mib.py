@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable
-from spacepackets.cfdp.defs import FaultHandlerCodes
+from spacepackets.cfdp.defs import FaultHandlerCodes, ChecksumTypes
 
 # User can specify a function which takes the fault handler code as an argument and returns nothing
 FaultHandlerT = Callable[[FaultHandlerCodes], None]
@@ -26,6 +26,8 @@ class RemoteEntityCfg:
     remote_entity_id: bytes
     max_file_segment_len: int
     crc_on_transmission: bool
+    # TODO: Hardcoded for now
+    crc_type: ChecksumTypes = ChecksumTypes.CRC_32
 
 
 class RemoteEntityTable:
