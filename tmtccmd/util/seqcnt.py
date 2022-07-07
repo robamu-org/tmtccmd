@@ -14,17 +14,23 @@ class ProvidesSeqCount(ABC):
         pass
 
     @abstractmethod
-    def next_seq_count(self) -> int:
-        """Contract: Retrieve the current sequence count and then increment it"""
+    def get_and_increment(self) -> int:
+        """Contract: Retrieve the current sequence count and then increment it. The first call
+        should yield 0"""
         raise NotImplementedError(
             "Please use a concrete class implementing this method"
         )
 
     def __next__(self):
-        return self.next_seq_count()
+        return self.get_and_increment()
 
 
 class FileSeqCountProvider(ProvidesSeqCount):
+    """Sequence count provider which uses a disk file to store the current sequence count
+    in a non-volatile way. The first call with the next built-in or using the base
+    class :py:method:`get` call will yield a 0
+    """
+
     def __init__(self, max_bit_width: int, file_name: Path = Path("seqcnt.txt")):
         self.file_name = file_name
         self._max_bit_width = max_bit_width
@@ -49,15 +55,13 @@ class FileSeqCountProvider(ProvidesSeqCount):
         with open(self.file_name) as file:
             return self.check_count(file.readline())
 
-    def next_seq_count(self) -> int:
+    def get_and_increment(self) -> int:
         if not self.file_name.exists():
             raise FileNotFoundError(f"{self.file_name} file does not exist")
         with open(self.file_name, "r+") as file:
-            curr_seq_cnt = self.increment_with_rollover(
-                self.check_count(file.readline())
-            )
+            curr_seq_cnt = self.check_count(file.readline())
             file.seek(0)
-            file.write(f"{curr_seq_cnt}\n")
+            file.write(f"{self.increment_with_rollover(curr_seq_cnt)}\n")
             return curr_seq_cnt
 
     def check_count(self, line: str) -> int:

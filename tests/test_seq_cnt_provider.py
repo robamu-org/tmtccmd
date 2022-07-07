@@ -19,19 +19,21 @@ class TestSeqCount(TestCase):
                 seq_cnt_provider = PusFileSeqCountProvider(Path(file.name))
                 seq_cnt = seq_cnt_provider.current()
                 self.assertEqual(seq_cnt, 0)
-                self.assertEqual(next(seq_cnt_provider), 1)
-                self.assertEqual(seq_cnt_provider.next_seq_count(), 2)
+                # The first call will start at 0
+                self.assertEqual(next(seq_cnt_provider), 0)
+                self.assertEqual(seq_cnt_provider.get_and_increment(), 1)
                 file.seek(0)
                 file.write(f"{pow(2, 14) - 1}\n")
                 file.flush()
                 # Assert rollover
+                self.assertEqual(next(seq_cnt_provider), pow(2, 14) - 1)
                 self.assertEqual(next(seq_cnt_provider), 0)
 
     def test_with_real_file(self):
         seq_cnt_provider = PusFileSeqCountProvider(self.file_name)
         self.assertTrue(self.file_name.exists())
         self.assertEqual(seq_cnt_provider.current(), 0)
-        self.assertEqual(next(seq_cnt_provider), 1)
+        self.assertEqual(next(seq_cnt_provider), 0)
         pass
 
     def test_file_deleted_runtime(self):

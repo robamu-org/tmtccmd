@@ -140,7 +140,7 @@ class TcHandler(TcHandlerBase):
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = entry_helper.to_pus_tc_entry()
                 pus_tc_wrapper.pus_tc.seq_count = (
-                    self.seq_count_provider.next_seq_count()
+                    self.seq_count_provider.get_and_increment()
                 )
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()

@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import dataclasses
 import enum
+
+from spacepackets.cfdp.defs import UnsignedByteField
 
 
 class CfdpRequestType(enum.Enum):
@@ -67,8 +71,25 @@ class StateWrapper:
 
 
 class TransactionId:
-    def __init__(self, source_entity_id: bytes, transaction_seq_num: bytes):
-        pass
+    def __init__(
+        self,
+        source_entity_id: UnsignedByteField,
+        transaction_seq_num: UnsignedByteField,
+    ):
+        self.source_id = source_entity_id
+        self.seq_num = transaction_seq_num
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(source_entity_id={self.source_id!r}, "
+            f"transaction_seq_num={self.seq_num!r})"
+        )
+
+    def __eq__(self, other: TransactionId):
+        return self.source_id == other.source_id and self.seq_num == other.seq_num
+
+    def __hash__(self):
+        return hash((self.source_id, self.seq_num))
 
 
 class ByteFlowControl:

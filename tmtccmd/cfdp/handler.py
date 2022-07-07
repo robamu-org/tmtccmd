@@ -1,5 +1,4 @@
 import dataclasses
-import struct
 from pathlib import Path
 from typing import Optional
 from crcmod.predefined import PredefinedCrc
@@ -10,21 +9,28 @@ from tmtccmd.logging import get_console_logger
 
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
 from spacepackets.cfdp.conf import PduConfig
-from spacepackets.cfdp.defs import ChecksumTypes, Direction
+from spacepackets.cfdp.defs import (
+    ChecksumTypes,
+    Direction,
+    UnsignedByteField,
+    ByteFieldU8,
+    ByteFieldU16,
+    ByteFieldU32,
+)
 from .defs import (
     CfdpStates,
-    SequenceNumberOverflow,
     BusyError,
     CfdpRequestType,
     SourceTransactionState,
     SourceState,
     SourceStateWrapper,
     StateWrapper,
+    TransactionId,
 )
 from .mib import LocalEntityCfg, RemoteEntityTable, RemoteEntityCfg
 from .request import CfdpRequestWrapper, PutRequest
 from .user import CfdpUserBase
-
+from ..util import ProvidesSeqCount
 
 LOGGER = get_console_logger()
 
@@ -49,10 +55,10 @@ class FileParams:
 
 
 class TransferFieldWrapper:
-    def __init__(self, local_entity_id: bytes):
+    def __init__(self, local_entity_id: UnsignedByteField):
         self.pdu_wrapper = PduWrapper(None)
+        self.transaction: Optional[TransactionId] = None
         self.fp = FileParams()
-        self.seq_num = 0
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self.pdu_conf = PduConfig.empty()
         self.pdu_conf.source_entity_id = local_entity_id
@@ -76,11 +82,17 @@ class ChecksumNotImplemented(Exception):
 
 
 class CfdpSourceHandler:
-    def __init__(self, local_entity_id: bytes, cfg: LocalEntityCfg, user: CfdpUserBase):
+    def __init__(
+        self,
+        cfg: LocalEntityCfg,
+        seq_num_provider: ProvidesSeqCount,
+        user: CfdpUserBase,
+    ):
         self.states = SourceStateWrapper()
         self.cfg = cfg
         self.user = user
-        self.params = TransferFieldWrapper(local_entity_id)
+        self.params = TransferFieldWrapper(cfg.local_entity_id)
+        self.seq_num_provider = seq_num_provider
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self._request_wrapper = CfdpRequestWrapper(None)
         self._current_req = CfdpRequestType
@@ -111,7 +123,11 @@ class CfdpSourceHandler:
                     raise NoRemoteEntityCfgFound()
                 self.params.file_segment_len = self.remote_cfg.max_file_segment_len
                 self.params.remote_cfg = self.remote_cfg
-                self.user.transaction_indication()
+                self.params.transaction = TransactionId(
+                    source_entity_id=self.cfg.local_entity_id,
+                    transaction_seq_num=self._get_next_transfer_seq_num(),
+                )
+                self.user.transaction_indication(self.params.transaction)
                 self.states.transfer_state = SourceTransactionState.CRC_PROCEDURE
             if self.states.transfer_state == SourceTransactionState.CRC_PROCEDURE:
                 self.params.fp.crc32 = self.calc_cfdp_file_crc(
@@ -138,8 +154,7 @@ class CfdpSourceHandler:
                     # TODO: Hardcode this checksum for now. Standard-Conformance requires that this
                     #       is determined by the remote entity configuration
                     checksum_type=self.remote_cfg.crc_type,
-                    # TODO: Likewise: This is probably some sort of managed parameter
-                    closure_requested=False,
+                    closure_requested=self.remote_cfg.closure_reuested,
                 )
                 self.states.transfer_state = SourceTransactionState.SENDING_FILE_DATA
                 return
@@ -227,28 +242,18 @@ class CfdpSourceHandler:
         )
         pass
 
-    def _get_next_transfer_seq_num(self) -> bytes:
-        seq_num_raw = bytes()
-        if self.cfg.length_seq_num == 1:
-            if self.params.seq_num >= pow(2, 8) - 1:
-                raise SequenceNumberOverflow(
-                    "8-bit transaction sequence number overflowed"
-                )
-            seq_num_raw = bytes([self.params.seq_num])
-        elif self.cfg.length_seq_num == 2:
-            if self.params.seq_num == pow(2, 16) - 1:
-                raise SequenceNumberOverflow(
-                    "16-bit transaction sequence number overflowed"
-                )
-            seq_num_raw = struct.pack("!H", self.params.seq_num)
-        elif self.cfg.length_seq_num == 4:
-            if self.params.seq_num == pow(2, 32) - 1:
-                raise SequenceNumberOverflow(
-                    "32-bit transaction sequence number overflowed"
-                )
-            seq_num_raw = struct.pack("!I", self.params.seq_num)
-        self.params.seq_num += 1
-        return seq_num_raw
+    def _get_next_transfer_seq_num(self) -> UnsignedByteField:
+        next_seq_num = self.seq_num_provider.get_and_increment()
+        if self.seq_num_provider.max_bit_width == 8:
+            return ByteFieldU8(next_seq_num)
+        elif self.seq_num_provider.max_bit_width == 16:
+            return ByteFieldU16(next_seq_num)
+        elif self.seq_num_provider.max_bit_width == 32:
+            return ByteFieldU32(next_seq_num)
+        else:
+            raise ValueError(
+                "Invalid bit width for sequence number provider, must be one of [8, 16, 32]"
+            )
 
 
 class CfdpRxHandler:
@@ -260,6 +265,7 @@ class CfdpHandler:
         self,
         local_cfg: LocalEntityCfg,
         remote_cfg: RemoteEntityTable,
+        seq_num_provider: ProvidesSeqCount,
         cfdp_user: CfdpUserBase,
     ):
         """
@@ -274,7 +280,7 @@ class CfdpHandler:
         self.cfg = local_cfg
         self.remote_cfg_table = remote_cfg
         self.cfdp_user = cfdp_user
-        self._tx_handler = CfdpSourceHandler(self.cfg.local_entity_id, self.cfg)
+        self._tx_handler = CfdpSourceHandler(self.cfg, seq_num_provider, cfdp_user)
         self.state = StateWrapper(
             state=CfdpStates.IDLE, source_handler_state=self._tx_handler.states
         )
