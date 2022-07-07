@@ -40,35 +40,42 @@ class SourceTransactionState(enum.Enum):
     NOTICE_OF_COMPLETION = 7
 
 
-class SourceState(enum.Enum):
+class DestTransactionState(enum.Enum):
+    IDLE = 0
+    # Metadata was received
+    TRANSACTION_START = 1
+    CRC_PROCEDURE = 2
+    RECEIVING_FILE_DATA = 3
+    # EOF was received. Perform checksum verification and notice of completion
+    TRANSFER_COMPLETION = 4
+    SEINDING_FINISHED_PDU = 5
+
+
+class CfdpState(enum.Enum):
     IDLE = 0
     BUSY_CLASS_1_NACKED = 1
     BUSY_CLASS_2_ACKED = 2
     SUSPENDED = 3
 
 
-class CfdpDestState(enum.Enum):
-    pass
-
-
-# TODO: It might become necessary to introduce substates for handling CFDP requests
-class CfdpStates(enum.Enum):
-    IDLE = 0
-    TX_PENDING = 1
-    RX_PENDING = 2
-
-
 @dataclasses.dataclass
 class SourceStateWrapper:
-    state = SourceState.IDLE
+    state = CfdpState.IDLE
     transaction = SourceTransactionState.IDLE
     packet_ready = True
 
 
 @dataclasses.dataclass
+class DestStateWrapper:
+    state = CfdpState.IDLE
+    transaction = DestTransactionState.IDLE
+    packet_ready = True
+
+
+@dataclasses.dataclass
 class StateWrapper:
-    state: CfdpStates
-    source_handler_state: SourceStateWrapper()
+    source_handler_state = SourceStateWrapper()
+    dest_handler_state = DestStateWrapper()
 
 
 class TransactionId:

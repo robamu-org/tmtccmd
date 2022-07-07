@@ -24,7 +24,7 @@ from .defs import (
     BusyError,
     CfdpRequestType,
     SourceTransactionState,
-    SourceState,
+    CfdpState,
     SourceStateWrapper,
     StateWrapper,
     TransactionId,
@@ -116,9 +116,9 @@ class CfdpSourceHandler:
         self.send_wrapper(com_if)
 
     def operation(self):
-        if self.states.state == SourceState.IDLE:
+        if self.states.state == CfdpState.IDLE:
             return
-        elif self.states.transaction == SourceState.BUSY_CLASS_1_NACKED:
+        elif self.states.transaction == CfdpState.BUSY_CLASS_1_NACKED:
             put_req = self._request_wrapper.to_put_request()
             if self.states.transaction == SourceTransactionState.IDLE:
                 self.states.transaction = SourceTransactionState.TRANSACTION_START
@@ -191,10 +191,10 @@ class CfdpSourceHandler:
                     delivery_code=DeliveryCode.DATA_COMPLETE,
                 )
                 self.states.transfer_state = SourceTransactionState.IDLE
-                self.states.state = SourceState.IDLE
+                self.states.state = CfdpState.IDLE
 
     def send_wrapper(self, com_if: ComInterface):
-        if self.states.state == SourceState.BUSY_CLASS_1_NACKED:
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             if self.states.transaction == SourceTransactionState.SENDING_METADATA:
                 metadata_pdu = self.params.pdu_wrapper.to_metadata_pdu()
                 com_if.send(metadata_pdu.pack())
@@ -221,7 +221,7 @@ class CfdpSourceHandler:
                 f"Must send current packet {self.params.pdu_wrapper.base} before "
                 f"advancing state machine"
             )
-        if self.states.state == SourceState.BUSY_CLASS_1_NACKED:
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             if self.states.transaction == SourceTransactionState.SENDING_METADATA:
                 self.states.transaction = SourceTransactionState.SENDING_EOF
             elif self.states.transaction == SourceTransactionState.SENDING_FILE_DATA:
