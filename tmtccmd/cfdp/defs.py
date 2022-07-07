@@ -2,7 +2,7 @@ import dataclasses
 import enum
 
 
-class CfdpRequest(enum.Enum):
+class CfdpRequestType(enum.Enum):
     PUT = 0
     REPORT = 1
     CANCEL = 2
@@ -24,7 +24,7 @@ class CfdpIndication(enum.Enum):
     EOF_RECV = 10
 
 
-class CfdpTransferState(enum.Enum):
+class SourceTransactionState(enum.Enum):
     IDLE = 0
     INITIALIZE = 1
     CRC_PROCEDURE = 2
@@ -32,23 +32,38 @@ class CfdpTransferState(enum.Enum):
     SENDING_METADATA = 3
     SENDING_FILE_DATA = 4
     SENDING_EOF = 5
-    SENDING_FINISH = 6
+    SENDING_ACK = 6
+    DONE = 7
 
 
-class CfdpReceptionState(enum.Enum):
+class SourceState(enum.Enum):
+    IDLE = 0
+    BUSY_CLASS_1_NACKED = 1
+    BUSY_CLASS_2_ACKED = 2
+    SUSPENDED = 3
+
+
+class CfdpDestState(enum.Enum):
     pass
 
 
 # TODO: It might become necessary to introduce substates for handling CFDP requests
 class CfdpStates(enum.Enum):
     IDLE = 0
-    OP_PENDING = 1
+    TX_PENDING = 1
+    RX_PENDING = 2
 
 
 @dataclasses.dataclass
-class CfdpStateWrapper:
+class SourceStateWrapper:
+    state = SourceState.IDLE
+    transaction = SourceTransactionState.IDLE
+
+
+@dataclasses.dataclass
+class StateWrapper:
     state: CfdpStates
-    transfer_state: CfdpTransferState
+    source_handler_state: SourceStateWrapper()
 
 
 class ByteFlowControl:

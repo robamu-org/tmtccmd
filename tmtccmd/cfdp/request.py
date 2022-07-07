@@ -9,13 +9,13 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
-from tmtccmd.cfdp.defs import CfdpRequest
+from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
 
 
 class CfdpRequestBase:
-    def __init__(self, request: CfdpRequest):
-        self.request = request
+    def __init__(self, req_type: CfdpRequestType):
+        self.req_type = req_type
 
 
 @dataclasses.dataclass
@@ -34,7 +34,7 @@ class PutRequestCfg:
 
 class PutRequest(CfdpRequestBase):
     def __init__(self, cfg: PutRequestCfg):
-        super().__init__(CfdpRequest.PUT)
+        super().__init__(CfdpRequestType.PUT)
         self.cfg = cfg
 
 
@@ -43,10 +43,14 @@ class CfdpRequestWrapper:
         self.base = base
 
     @property
-    def request(self) -> CfdpRequest:
-        return self.base.request
+    def request_type(self) -> CfdpRequestType:
+        return self.base.req_type
+
+    @property
+    def request(self) -> CfdpRequestType:
+        return self.base.req_type
 
     def to_put_request(self) -> PutRequest:
-        if self.base.request != CfdpRequest.PUT:
+        if self.base.req_type != CfdpRequestType.PUT:
             raise TypeError(f"Request is not a {PutRequest.__name__}: {self.base!r}")
         return cast(PutRequest, self.base)
