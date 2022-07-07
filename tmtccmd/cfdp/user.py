@@ -23,12 +23,12 @@ class CfdpUserBase(abc.ABC):
     @abc.abstractmethod
     def transaction_finished_indication(
         self,
-        transaction_id: int,
+        transaction_id: TransactionId,
         condition_code: ConditionCode,
         file_status: FileDeliveryStatus,
         delivery_code: DeliveryCode,
-        _fs_responses: Optional[List[FileStoreResponseTlv]],
-        _status_report: Optional[any],
+        _fs_responses: Optional[List[FileStoreResponseTlv]] = None,
+        _status_report: Optional[any] = None,
     ):
         LOGGER.info(f"Transaction with ID {transaction_id} finished")
         LOGGER.info(

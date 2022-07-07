@@ -5,6 +5,7 @@ from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp.pdu import PduWrapper, EofPdu
 from spacepackets.cfdp.pdu.file_data import FileDataPdu
+from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
 from tmtccmd.logging import get_console_logger
 
 from spacepackets.cfdp.pdu.metadata import MetadataPdu
@@ -16,6 +17,7 @@ from spacepackets.cfdp.defs import (
     ByteFieldU8,
     ByteFieldU16,
     ByteFieldU32,
+    ConditionCode,
 )
 from .defs import (
     CfdpStates,
@@ -30,6 +32,7 @@ from .defs import (
 from .mib import LocalEntityCfg, RemoteEntityTable, RemoteEntityCfg
 from .request import CfdpRequestWrapper, PutRequest
 from .user import CfdpUserBase
+from ..com_if import ComInterface
 from ..util import ProvidesSeqCount
 
 LOGGER = get_console_logger()
@@ -81,6 +84,10 @@ class ChecksumNotImplemented(Exception):
     pass
 
 
+class PacketSendNotConfirmed(Exception):
+    pass
+
+
 class CfdpSourceHandler:
     def __init__(
         self,
@@ -104,14 +111,18 @@ class CfdpSourceHandler:
             self._current_req = wrapper.request_type
             self.remote_cfg = remote_cfg
 
+    def operation_with_send(self, com_if: ComInterface):
+        self.operation()
+        self.send_wrapper(com_if)
+
     def operation(self):
         if self.states.state == SourceState.IDLE:
             return
         elif self.states.transaction == SourceState.BUSY_CLASS_1_NACKED:
             put_req = self._request_wrapper.to_put_request()
             if self.states.transaction == SourceTransactionState.IDLE:
-                self.states.transaction = SourceTransactionState.INITIALIZE
-            if self.states.transaction == SourceTransactionState.INITIALIZE:
+                self.states.transaction = SourceTransactionState.TRANSACTION_START
+            if self.states.transaction == SourceTransactionState.TRANSACTION_START:
                 if not put_req.cfg.source_file.exists():
                     # TODO: Handle this exception in the handler, reset CFDP state machine
                     raise SourceFileDoesNotExist()
@@ -136,15 +147,21 @@ class CfdpSourceHandler:
                     file_sz=self.params.fp.size,
                     segment_len=self.params.fp.segment_len,
                 )
-                self.states.transfer_state = SourceTransactionState.SENDING_METADATA
+
             if self.states.transfer_state == SourceTransactionState.SENDING_METADATA:
+                if self.states.packet_ready:
+                    raise PacketSendNotConfirmed(
+                        f"Must send current packet {self.params.pdu_wrapper.base} first"
+                    )
                 # TODO: CRC flag is derived from remote entity ID configuration
                 # TODO: Determine file size and check whether source file is valid
                 self.params.pdu_conf.seg_ctrl = put_req.cfg.seg_ctrl
                 self.params.pdu_conf.dest_entity_id = put_req.cfg.destination_id
                 self.params.pdu_conf.crc_flag = self.remote_cfg.crc_on_transmission
                 self.params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
-                self.params.pdu_conf.transaction_seq_num = 0
+                self.params.pdu_conf.transaction_seq_num = (
+                    self.params.transaction.seq_num
+                )
                 self.params.pdu_conf.trans_mode = put_req.cfg.trans_mode
                 self.params.pdu_wrapper.base = MetadataPdu(
                     pdu_conf=self.params.pdu_conf,
@@ -163,6 +180,55 @@ class CfdpSourceHandler:
                     return
             if self.states.transfer_state == SourceTransactionState.SENDING_EOF:
                 return self._prepare_eof_pdu()
+            if (
+                self.states.transfer_state
+                == SourceTransactionState.NOTICE_OF_COMPLETION
+            ):
+                self.user.transaction_finished_indication(
+                    transaction_id=self.params.transaction,
+                    condition_code=ConditionCode.NO_ERROR,
+                    file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                    delivery_code=DeliveryCode.DATA_COMPLETE,
+                )
+                self.states.transfer_state = SourceTransactionState.IDLE
+                self.states.state = SourceState.IDLE
+
+    def send_wrapper(self, com_if: ComInterface):
+        if self.states.state == SourceState.BUSY_CLASS_1_NACKED:
+            if self.states.transaction == SourceTransactionState.SENDING_METADATA:
+                metadata_pdu = self.params.pdu_wrapper.to_metadata_pdu()
+                com_if.send(metadata_pdu.pack())
+                self.states.transaction = SourceTransactionState.SENDING_EOF
+                return self.confirm_packet_sent()
+            if self.states.transaction == SourceTransactionState.SENDING_FILE_DATA:
+                file_data_pdu = self.params.pdu_wrapper.to_file_data_pdu()
+                com_if.send(file_data_pdu.pack())
+                if self.params.fp.offset == self.params.fp.size:
+                    self.states.transaction = SourceTransactionState.SENDING_EOF
+                return self.confirm_packet_sent()
+            if self.states.transaction == SourceTransactionState.SENDING_EOF:
+                eof_pdu = self.params.pdu_wrapper.to_eof_pdu()
+                com_if.send(eof_pdu.pack())
+                self.states.transaction = SourceTransactionState.NOTICE_OF_COMPLETION
+                return self.confirm_packet_sent()
+
+    def confirm_packet_sent(self):
+        self.states.packet_ready = False
+
+    def advance_state_machine(self):
+        if self.states.packet_ready:
+            raise PacketSendNotConfirmed(
+                f"Must send current packet {self.params.pdu_wrapper.base} before "
+                f"advancing state machine"
+            )
+        if self.states.state == SourceState.BUSY_CLASS_1_NACKED:
+            if self.states.transaction == SourceTransactionState.SENDING_METADATA:
+                self.states.transaction = SourceTransactionState.SENDING_EOF
+            elif self.states.transaction == SourceTransactionState.SENDING_FILE_DATA:
+                if self.params.fp.offset == self.params.fp.size:
+                    self.states.transaction = SourceTransactionState.SENDING_EOF
+            elif self.states.transaction == SourceTransactionState.SENDING_EOF:
+                self.states.transaction = SourceTransactionState.NOTICE_OF_COMPLETION
 
     @classmethod
     def calc_cfdp_file_crc(
@@ -213,8 +279,11 @@ class CfdpSourceHandler:
         with open(request.cfg.source_file, "rb") as of:
             next_offset = self.params.fp.offset + self.params.fp.segment_len
             if self.params.fp.offset == self.params.fp.size:
-                self.states.transaction = SourceTransactionState.SENDING_EOF
                 return False
+            if self.states.packet_ready:
+                raise PacketSendNotConfirmed(
+                    f"Must send current packet {self.params.pdu_wrapper.base} first"
+                )
             if next_offset > self.params.fp.size:
                 read_len = next_offset % self.params.fp.size
             else:
@@ -235,12 +304,15 @@ class CfdpSourceHandler:
         return True
 
     def _prepare_eof_pdu(self):
+        if self.states.packet_ready:
+            raise PacketSendNotConfirmed(
+                f"Must send current packet {self.params.pdu_wrapper.base} first"
+            )
         self.params.pdu_wrapper.base = EofPdu(
             file_checksum=self.params.fp.crc32,
             file_size=self.params.fp.size,
             pdu_conf=self.params.pdu_conf,
         )
-        pass
 
     def _get_next_transfer_seq_num(self) -> UnsignedByteField:
         next_seq_num = self.seq_num_provider.get_and_increment()

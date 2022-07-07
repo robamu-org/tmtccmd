@@ -30,14 +30,14 @@ class CfdpIndication(enum.Enum):
 
 class SourceTransactionState(enum.Enum):
     IDLE = 0
-    INITIALIZE = 1
+    TRANSACTION_START = 1
     CRC_PROCEDURE = 2
     # The following three are used for the Copy File Procedure
     SENDING_METADATA = 3
     SENDING_FILE_DATA = 4
     SENDING_EOF = 5
     SENDING_ACK = 6
-    DONE = 7
+    NOTICE_OF_COMPLETION = 7
 
 
 class SourceState(enum.Enum):
@@ -62,6 +62,7 @@ class CfdpStates(enum.Enum):
 class SourceStateWrapper:
     state = SourceState.IDLE
     transaction = SourceTransactionState.IDLE
+    packet_ready = True
 
 
 @dataclasses.dataclass
