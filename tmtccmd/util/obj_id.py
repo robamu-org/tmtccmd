@@ -4,7 +4,7 @@ from abc import ABC
 from typing import Union, Dict, Optional
 import struct
 
-from spacepackets.ecss.fields import byte_num_to_unsigned_struct_specifier
+from spacepackets.util import IntByteConversion
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
@@ -60,9 +60,8 @@ class ObjectIdBase(ABC):
                     f"Invalid Object ID {obj_id}, not unsigned or too large"
                 )
             self._id = obj_id
-            self._id_as_bytes = struct.pack(
-                byte_num_to_unsigned_struct_specifier(self.byte_width), self._id
-            )
+            self._id_as_bytes = IntByteConversion.to_unsigned(self.byte_width, self._id)
+
         elif isinstance(obj_id, bytes) or isinstance(obj_id, bytearray):
             if len(obj_id) < self.byte_width:
                 raise ValueError(
@@ -70,7 +69,7 @@ class ObjectIdBase(ABC):
                 )
             self._id_as_bytes = bytes(obj_id[0 : self.byte_width])
             self._id = struct.unpack(
-                byte_num_to_unsigned_struct_specifier(self.byte_width),
+                IntByteConversion.unsigned_struct_specifier(self.byte_width),
                 self._id_as_bytes,
             )[0]
         else:

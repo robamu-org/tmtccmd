@@ -66,6 +66,11 @@ class StateWrapper:
     source_handler_state: SourceStateWrapper()
 
 
+class TransactionId:
+    def __init__(self, source_entity_id: bytes, transaction_seq_num: bytes):
+        pass
+
+
 class ByteFlowControl:
     period: float
     max_bytes: int

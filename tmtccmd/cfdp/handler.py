@@ -76,9 +76,10 @@ class ChecksumNotImplemented(Exception):
 
 
 class CfdpSourceHandler:
-    def __init__(self, local_entity_id: bytes, cfg: LocalEntityCfg):
+    def __init__(self, local_entity_id: bytes, cfg: LocalEntityCfg, user: CfdpUserBase):
         self.states = SourceStateWrapper()
         self.cfg = cfg
+        self.user = user
         self.params = TransferFieldWrapper(local_entity_id)
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self._request_wrapper = CfdpRequestWrapper(None)
@@ -110,6 +111,7 @@ class CfdpSourceHandler:
                     raise NoRemoteEntityCfgFound()
                 self.params.file_segment_len = self.remote_cfg.max_file_segment_len
                 self.params.remote_cfg = self.remote_cfg
+                self.user.transaction_indication()
                 self.states.transfer_state = SourceTransactionState.CRC_PROCEDURE
             if self.states.transfer_state == SourceTransactionState.CRC_PROCEDURE:
                 self.params.fp.crc32 = self.calc_cfdp_file_crc(
