@@ -1,14 +1,13 @@
+import abc
+from abc import ABC
 from dataclasses import dataclass
-from typing import Callable
-from spacepackets.cfdp.defs import (
-    FaultHandlerCodes,
-    ChecksumTypes,
-    UnsignedByteField,
-    LenInBytes,
-)
+from spacepackets.cfdp.defs import FaultHandlerCodes, ChecksumTypes, UnsignedByteField
 
-# User can specify a function which takes the fault handler code as an argument and returns nothing
-FaultHandlerT = Callable[[FaultHandlerCodes], None]
+
+class DefaultFaultHandlerBase(ABC):
+    @abc.abstractmethod
+    def handle_fault(self, code: FaultHandlerCodes):
+        pass
 
 
 @dataclass
@@ -25,13 +24,14 @@ class LocalIndicationCfg:
 class LocalEntityCfg:
     local_entity_id: UnsignedByteField
     indication_cfg: LocalIndicationCfg
-    default_fault_handlers: FaultHandlerT
+    default_fault_handlers: DefaultFaultHandlerBase
 
 
 @dataclass
 class RemoteEntityCfg:
     remote_entity_id: UnsignedByteField
     max_file_segment_len: int
+    closure_reuested: bool
     crc_on_transmission: bool
     # TODO: Hardcoded for now
     crc_type: ChecksumTypes = ChecksumTypes.CRC_32
