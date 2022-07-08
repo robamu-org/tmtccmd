@@ -60,7 +60,6 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -87,7 +86,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
     ) -> Service5Tm:
         service_5_tm = cls.__empty()
         service_5_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
+            raw_telemetry=raw_telemetry
         )
         service_5_tm.__init_without_base(
             instance=service_5_tm, set_attrs_from_tm_data=True
