@@ -1,6 +1,4 @@
-from spacepackets.ecss import PusTelecommand
-from spacepackets.ecss.conf import FETCH_GLOBAL_APID
-from tmtccmd.pus import PusServices
+from spacepackets.ecss import PusTelecommand, PusServices
 from tmtccmd.pus.pus_11_tc_sched import Subservices
 
 
