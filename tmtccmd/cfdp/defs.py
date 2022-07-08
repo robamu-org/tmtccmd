@@ -74,8 +74,8 @@ class DestStateWrapper:
 
 @dataclasses.dataclass
 class StateWrapper:
-    source_handler_state = SourceStateWrapper()
-    dest_handler_state = DestStateWrapper()
+    source_handler_state: SourceStateWrapper = SourceStateWrapper()
+    dest_handler_state: DestStateWrapper = DestStateWrapper()
 
 
 class TransactionId:

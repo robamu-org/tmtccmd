@@ -85,9 +85,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service5Tm:
         service_5_tm = cls.__empty()
-        service_5_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry
-        )
+        service_5_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         service_5_tm.__init_without_base(
             instance=service_5_tm, set_attrs_from_tm_data=True
         )

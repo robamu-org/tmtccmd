@@ -47,5 +47,5 @@ class RemoteEntityTable:
         self._remote_entity_dict.update({cfg.remote_entity_id: cfg})
         return True
 
-    def get_remote_entity(self, remote_entity_id: bytes) -> RemoteEntityCfg:
+    def get_remote_entity(self, remote_entity_id: UnsignedByteField) -> RemoteEntityCfg:
         return self._remote_entity_dict.get(remote_entity_id)
