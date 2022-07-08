@@ -31,7 +31,7 @@ class LocalEntityCfg:
 class RemoteEntityCfg:
     remote_entity_id: UnsignedByteField
     max_file_segment_len: int
-    closure_reuested: bool
+    closure_requested: bool
     crc_on_transmission: bool
     # TODO: Hardcoded for now
     crc_type: ChecksumTypes = ChecksumTypes.CRC_32

@@ -5,14 +5,15 @@ from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv
 from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
 from tmtccmd import get_console_logger
 from tmtccmd.cfdp.defs import TransactionId
-from tmtccmd.cfdp.filestore import VirtualFilestore
-
+from tmtccmd.cfdp.filestore import VirtualFilestore, HostFilestore
 
 LOGGER = get_console_logger()
 
 
 class CfdpUserBase(abc.ABC):
-    def __init__(self, vfs: VirtualFilestore):
+    def __init__(self, vfs: Optional[VirtualFilestore] = None):
+        if vfs is None:
+            vfs = HostFilestore()
         self.vfs = vfs
 
     @abc.abstractmethod

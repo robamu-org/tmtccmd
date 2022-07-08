@@ -84,3 +84,22 @@ class FileSeqCountProvider(ProvidesSeqCount):
 class PusFileSeqCountProvider(FileSeqCountProvider):
     def __init__(self, file_name: Path = Path("seqcnt.txt")):
         super().__init__(max_bit_width=14, file_name=file_name)
+
+
+class SeqCountProvider(ProvidesSeqCount):
+    def __init__(self, bit_width: int):
+        self.count = 0
+        self._max_bit_width = bit_width
+
+    @property
+    def max_bit_width(self) -> int:
+        return self._max_bit_width
+
+    @max_bit_width.setter
+    def max_bit_width(self, width: int):
+        self._max_bit_width = width
+
+    def get_and_increment(self) -> int:
+        curr_count = self.count
+        self.count += 1
+        return curr_count

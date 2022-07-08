@@ -9,6 +9,7 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
+from spacepackets.cfdp.defs import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
 
@@ -20,12 +21,16 @@ class CfdpRequestBase:
 
 @dataclasses.dataclass
 class PutRequestCfg:
-    destination_id: bytes
-    source_file: Path
-    dest_file: str
-    seg_ctrl: SegmentationControl
-    trans_mode: TransmissionModes
-    closure_requested: bool
+    destination_id: UnsignedByteField
+    # All the following fields are optional because a put request can also be a metadata-only
+    # request
+    source_file: Optional[Path]
+    dest_file: Optional[str]
+    trans_mode: Optional[TransmissionModes]
+    closure_requested: Optional[bool]
+    seg_ctrl: SegmentationControl = Optional[
+        SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
+    ]
     fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
     flow_label_tlv: Optional[FlowLabelTlv] = None
     msgs_to_user: Optional[List[MessageToUserTlv]] = None
