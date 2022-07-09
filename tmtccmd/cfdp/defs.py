@@ -61,7 +61,7 @@ class CfdpStates(enum.Enum):
 @dataclasses.dataclass
 class SourceStateWrapper:
     state = CfdpStates.IDLE
-    transaction = SourceTransactionState.IDLE
+    step = SourceTransactionState.IDLE
     packet_ready = True
 
 

@@ -139,12 +139,12 @@ class CfdpSourceHandler:
             return FsmResult(self.pdu_wrapper, self.states)
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             put_req = self._current_req.to_put_request()
-            if self.states.transaction == SourceTransactionState.IDLE:
-                self.states.transaction = SourceTransactionState.TRANSACTION_START
-            if self.states.transaction == SourceTransactionState.TRANSACTION_START:
+            if self.states.step == SourceTransactionState.IDLE:
+                self.states.step = SourceTransactionState.TRANSACTION_START
+            if self.states.step == SourceTransactionState.TRANSACTION_START:
                 self._transaction_start(put_req)
-                self.states.transfer_state = SourceTransactionState.CRC_PROCEDURE
-            if self.states.transfer_state == SourceTransactionState.CRC_PROCEDURE:
+                self.states.step = SourceTransactionState.CRC_PROCEDURE
+            if self.states.step == SourceTransactionState.CRC_PROCEDURE:
                 if self.params.fp.size == 0:
                     # Empty file, use null checksum
                     self.params.fp.crc32 = CfdpSourceHandler.NULL_CHECKSUM
@@ -155,33 +155,30 @@ class CfdpSourceHandler:
                         file_sz=self.params.fp.size,
                         segment_len=self.params.fp.segment_len,
                     )
-                self.states.transfer_state = SourceTransactionState.SENDING_METADATA
-            if self.states.transfer_state == SourceTransactionState.SENDING_METADATA:
+                self.states.step = SourceTransactionState.SENDING_METADATA
+            if self.states.step == SourceTransactionState.SENDING_METADATA:
                 self._prepare_metadata_pdu(put_req)
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.transfer_state == SourceTransactionState.SENDING_FILE_DATA:
+            if self.states.step == SourceTransactionState.SENDING_FILE_DATA:
                 if self._prepare_next_file_data_pdu(put_req):
                     self.states.packet_ready = True
                     return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.transfer_state == SourceTransactionState.SENDING_EOF:
+            if self.states.step == SourceTransactionState.SENDING_EOF:
                 self._prepare_eof_pdu()
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if (
-                self.states.transfer_state
-                == SourceTransactionState.NOTICE_OF_COMPLETION
-            ):
+            if self.states.step == SourceTransactionState.NOTICE_OF_COMPLETION:
                 self.user.transaction_finished_indication(
                     transaction_id=self.params.transaction,
                     condition_code=ConditionCode.NO_ERROR,
                     file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
                     delivery_code=DeliveryCode.DATA_COMPLETE,
                 )
-                self.states.transfer_state = SourceTransactionState.IDLE
+                self.states.step = SourceTransactionState.IDLE
                 self.states.state = CfdpStates.IDLE
 
-    def confirm_packet_advance_fsm(self):
+    def confirm_packet_sent_advance_fsm(self):
         """Helper method which performs both :py:method:`confirm_packet_sent` and
         :py:method:`advance_fsm`
         """
@@ -206,13 +203,13 @@ class CfdpSourceHandler:
                 f"advancing state machine"
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
-            if self.states.transaction == SourceTransactionState.SENDING_METADATA:
-                self.states.transaction = SourceTransactionState.SENDING_EOF
-            elif self.states.transaction == SourceTransactionState.SENDING_FILE_DATA:
+            if self.states.step == SourceTransactionState.SENDING_METADATA:
+                self.states.step = SourceTransactionState.SENDING_EOF
+            elif self.states.step == SourceTransactionState.SENDING_FILE_DATA:
                 if self.params.fp.offset == self.params.fp.size:
-                    self.states.transaction = SourceTransactionState.SENDING_EOF
-            elif self.states.transaction == SourceTransactionState.SENDING_EOF:
-                self.states.transaction = SourceTransactionState.NOTICE_OF_COMPLETION
+                    self.states.step = SourceTransactionState.SENDING_EOF
+            elif self.states.step == SourceTransactionState.SENDING_EOF:
+                self.states.step = SourceTransactionState.NOTICE_OF_COMPLETION
 
     @classmethod
     def calc_cfdp_file_crc(
