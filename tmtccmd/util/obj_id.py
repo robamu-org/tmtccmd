@@ -42,17 +42,6 @@ class ObjectIdBase(UnsignedByteField):
         """
         self.value = obj_id
 
-    def _verify_id(self, obj_id: int) -> bool:
-        if obj_id < 0:
-            return False
-        if self.byte_len == 1 and obj_id > pow(2, 8) - 1:
-            return False
-        elif self.byte_len == 2 and obj_id > pow(2, 16) - 1:
-            return False
-        elif self.byte_len == 4 and obj_id > pow(2, 32) - 1:
-            return False
-        return True
-
 
 class ObjectIdU32(ObjectIdBase):
     """A helper object for a unique object identifier which has a raw unsigned
