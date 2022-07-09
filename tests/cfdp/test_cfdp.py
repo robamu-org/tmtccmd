@@ -94,7 +94,7 @@ class TestCfdp(TestCase):
         wrapper = CfdpRequestWrapper(PutRequest(put_req_cfg))
         source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = source_handler.state_machine()
-        self.assertTrue(fsm_res.pdu_wrapper.file_directive)
+        self.assertTrue(fsm_res.pdu_wrapper.is_file_directive)
         self.assertEqual(
             fsm_res.pdu_wrapper.pdu_directive_type, DirectiveType.METADATA_PDU
         )
@@ -105,7 +105,7 @@ class TestCfdp(TestCase):
         self.assertEqual(metadata_pdu.dest_file_name, dest_path)
         source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = source_handler.state_machine()
-        self.assertTrue(fsm_res.pdu_wrapper.file_directive)
+        self.assertTrue(fsm_res.pdu_wrapper.is_file_directive)
         self.assertEqual(fsm_res.pdu_wrapper.pdu_directive_type, DirectiveType.EOF_PDU)
         pass
 
