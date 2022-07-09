@@ -1,7 +1,12 @@
 import abc
 from abc import ABC
 from dataclasses import dataclass
-from spacepackets.cfdp.defs import FaultHandlerCodes, ChecksumTypes, UnsignedByteField
+from spacepackets.cfdp.defs import (
+    FaultHandlerCodes,
+    ChecksumTypes,
+    UnsignedByteField,
+    TransmissionModes,
+)
 
 
 class DefaultFaultHandlerBase(ABC):
@@ -33,6 +38,7 @@ class RemoteEntityCfg:
     max_file_segment_len: int
     closure_requested: bool
     crc_on_transmission: bool
+    default_transmission_mode: TransmissionModes
     # TODO: Hardcoded for now
     crc_type: ChecksumTypes = ChecksumTypes.CRC_32
 

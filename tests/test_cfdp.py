@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional, List
 from unittest import TestCase
@@ -63,11 +64,15 @@ class TestCfdp(TestCase):
         self.seq_num_provider = SeqCountProvider(bit_width=8)
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
+        self.file_path = Path("/tmp/hello.txt")
+        with open(self.file_path, "w"):
+            pass
         self.remote_cfg = RemoteEntityCfg(
             remote_entity_id=self.dest_id,
             max_file_segment_len=256,
             closure_requested=False,
             crc_on_transmission=False,
+            default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
         )
 
     def test_source_handler(self):
@@ -75,18 +80,22 @@ class TestCfdp(TestCase):
         source_handler = CfdpSourceHandler(
             self.local_cfg, self.seq_num_provider, self.cfdp_user
         )
-        file_path = Path("hello.txt")
-        with open(file_path):
-            pass
+
         put_req_cfg = PutRequestCfg(
             destination_id=ByteFieldU16(2),
-            source_file=file_path,
-            dest_file="/tmp/hello.txt",
-            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            source_file=self.file_path,
+            dest_file="/tmp/hello_copy.txt",
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
             closure_requested=False,
         )
         wrapper = CfdpRequestWrapper(PutRequest(put_req_cfg))
         source_handler.start_transaction(wrapper, self.remote_cfg)
+        fsm_res = source_handler.state_machine()
         pass
+
+    def tearDown(self) -> None:
+        if self.file_path.exists():
+            os.remove(self.file_path)
 
     pass

@@ -28,9 +28,9 @@ class PutRequestCfg:
     dest_file: Optional[str]
     trans_mode: Optional[TransmissionModes]
     closure_requested: Optional[bool]
-    seg_ctrl: SegmentationControl = Optional[
-        SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
-    ]
+    seg_ctrl: Optional[
+        SegmentationControl
+    ] = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
     fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
     flow_label_tlv: Optional[FlowLabelTlv] = None
     msgs_to_user: Optional[List[MessageToUserTlv]] = None
@@ -41,6 +41,9 @@ class PutRequest(CfdpRequestBase):
     def __init__(self, cfg: PutRequestCfg):
         super().__init__(CfdpRequestType.PUT)
         self.cfg = cfg
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(cfg={self.cfg})"
 
 
 class CfdpRequestWrapper:

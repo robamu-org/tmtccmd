@@ -51,7 +51,7 @@ class DestTransactionState(enum.Enum):
     SEINDING_FINISHED_PDU = 5
 
 
-class CfdpState(enum.Enum):
+class CfdpStates(enum.Enum):
     IDLE = 0
     BUSY_CLASS_1_NACKED = 1
     BUSY_CLASS_2_ACKED = 2
@@ -60,14 +60,14 @@ class CfdpState(enum.Enum):
 
 @dataclasses.dataclass
 class SourceStateWrapper:
-    state = CfdpState.IDLE
+    state = CfdpStates.IDLE
     transaction = SourceTransactionState.IDLE
     packet_ready = True
 
 
 @dataclasses.dataclass
 class DestStateWrapper:
-    state = CfdpState.IDLE
+    state = CfdpStates.IDLE
     transaction = DestTransactionState.IDLE
     packet_ready = True
 
