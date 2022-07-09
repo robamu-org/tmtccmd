@@ -3,9 +3,6 @@ from __future__ import annotations
 from typing import Union, Dict, Optional
 
 from spacepackets.util import UnsignedByteField
-from tmtccmd.logging import get_console_logger
-
-LOGGER = get_console_logger()
 
 
 class ObjectIdBase(UnsignedByteField):
