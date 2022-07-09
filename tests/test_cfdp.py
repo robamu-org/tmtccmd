@@ -4,8 +4,9 @@ from typing import Optional, List
 from unittest import TestCase
 
 from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv
-from spacepackets.cfdp.defs import ByteFieldU16, FaultHandlerCodes, TransmissionModes
+from spacepackets.cfdp.defs import FaultHandlerCodes, TransmissionModes
 from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
+from spacepackets.util import ByteFieldU16
 from tmtccmd.cfdp import CfdpUserBase
 from tmtccmd.cfdp.defs import TransactionId
 from tmtccmd.cfdp.handler import CfdpSourceHandler

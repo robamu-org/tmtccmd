@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from spacepackets.cfdp.defs import (
     FaultHandlerCodes,
     ChecksumTypes,
-    UnsignedByteField,
     TransmissionModes,
 )
+from spacepackets.util import UnsignedByteField
 
 
 class DefaultFaultHandlerBase(ABC):

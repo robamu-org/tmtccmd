@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from spacepackets.cfdp.defs import UnsignedByteField
+from spacepackets.util import UnsignedByteField
 
 
 class CfdpRequestType(enum.Enum):

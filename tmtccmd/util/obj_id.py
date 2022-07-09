@@ -1,25 +1,18 @@
 from __future__ import annotations
 
-from abc import ABC
 from typing import Union, Dict, Optional
-import struct
 
-from spacepackets.util import IntByteConversion
+from spacepackets.util import UnsignedByteField
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
 
-class ObjectIdBase(ABC):
+class ObjectIdBase(UnsignedByteField):
     """Base class for unsigned object IDs with different byte sizes"""
 
-    def __init__(self, obj_id: int, byte_width: int, name: Optional[str] = None):
-        self._id_as_bytes = bytes()
-        if byte_width not in [1, 2, 4, 8]:
-            raise ValueError("Only byte widths 1, 2, 4 and 8 are allowed for Object ID")
-        self._byte_width = byte_width
-        self._id = 0
-        self.obj_id = obj_id
+    def __init__(self, obj_id: int, byte_len: int, name: Optional[str] = None):
+        super().__init__(val=obj_id, byte_len=byte_len)
         if name is None:
             self.name = "Unknown"
         else:
@@ -29,23 +22,19 @@ class ObjectIdBase(ABC):
         return f"Object ID {self.name} with ID {self.as_hex_string}"
 
     @property
-    def byte_width(self):
-        return self._byte_width
-
-    @property
     def as_hex_string(self) -> str:
-        if self.byte_width == 1:
+        if self.byte_len == 1:
             return f"{self.obj_id:#04x}"
-        elif self.byte_width == 2:
+        elif self.byte_len == 2:
             return f"{self.obj_id:#06x}"
-        elif self.byte_width == 4:
+        elif self.byte_len == 4:
             return f"{self.obj_id:#010x}"
-        elif self.byte_width == 8:
+        elif self.byte_len == 8:
             return f"{self.obj_id:#018x}"
 
     @property
-    def obj_id(self):
-        return self._id
+    def obj_id(self) -> int:
+        return int(self)
 
     @obj_id.setter
     def obj_id(self, obj_id: Union[int, bytes]):
@@ -54,51 +43,18 @@ class ObjectIdBase(ABC):
 
         :raise ValueError: Invalid ID
         """
-        if isinstance(obj_id, int):
-            if not self._verify_id(obj_id):
-                raise ValueError(
-                    f"Invalid Object ID {obj_id}, not unsigned or too large"
-                )
-            self._id = obj_id
-            self._id_as_bytes = IntByteConversion.to_unsigned(self.byte_width, self._id)
-
-        elif isinstance(obj_id, bytes) or isinstance(obj_id, bytearray):
-            if len(obj_id) < self.byte_width:
-                raise ValueError(
-                    f"Supplied bytes not large enough for object ID of width {self.byte_width}"
-                )
-            self._id_as_bytes = bytes(obj_id[0 : self.byte_width])
-            self._id = struct.unpack(
-                IntByteConversion.unsigned_struct_specifier(self.byte_width),
-                self._id_as_bytes,
-            )[0]
-        else:
-            raise TypeError("Is not integer of bytes type")
+        self.value = obj_id
 
     def _verify_id(self, obj_id: int) -> bool:
         if obj_id < 0:
             return False
-        if self.byte_width == 1 and obj_id > pow(2, 8) - 1:
+        if self.byte_len == 1 and obj_id > pow(2, 8) - 1:
             return False
-        elif self.byte_width == 2 and obj_id > pow(2, 16) - 1:
+        elif self.byte_len == 2 and obj_id > pow(2, 16) - 1:
             return False
-        elif self.byte_width == 4 and obj_id > pow(2, 32) - 1:
+        elif self.byte_len == 4 and obj_id > pow(2, 32) - 1:
             return False
         return True
-
-    @property
-    def as_int(self) -> int:
-        return self.obj_id
-
-    @property
-    def as_bytes(self) -> bytes:
-        return self._id_as_bytes
-
-    def __hash__(self):
-        return hash((self._id, self.byte_width))
-
-    def __eq__(self, other: ObjectIdBase):
-        return self.obj_id == other.obj_id and self.byte_width == other.byte_width
 
 
 class ObjectIdU32(ObjectIdBase):

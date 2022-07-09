@@ -6,6 +6,7 @@ from crcmod.predefined import PredefinedCrc
 from spacepackets.cfdp.pdu import PduWrapper, EofPdu
 from spacepackets.cfdp.pdu.file_data import FileDataPdu
 from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
+from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd.logging import get_console_logger
 from tmtccmd.util import ProvidesSeqCount
 
@@ -14,10 +15,6 @@ from spacepackets.cfdp.conf import PduConfig
 from spacepackets.cfdp.defs import (
     ChecksumTypes,
     Direction,
-    UnsignedByteField,
-    ByteFieldU8,
-    ByteFieldU16,
-    ByteFieldU32,
     ConditionCode,
     TransmissionModes,
 )
@@ -355,16 +352,13 @@ class CfdpSourceHandler:
 
     def _get_next_transfer_seq_num(self) -> UnsignedByteField:
         next_seq_num = self.seq_num_provider.get_and_increment()
-        if self.seq_num_provider.max_bit_width == 8:
-            return ByteFieldU8(next_seq_num)
-        elif self.seq_num_provider.max_bit_width == 16:
-            return ByteFieldU16(next_seq_num)
-        elif self.seq_num_provider.max_bit_width == 32:
-            return ByteFieldU32(next_seq_num)
-        else:
+        if self.seq_num_provider.max_bit_width not in [8, 16, 32]:
             raise ValueError(
                 "Invalid bit width for sequence number provider, must be one of [8, 16, 32]"
             )
+        return ByteFieldGenerator.from_int(
+            self.seq_num_provider.max_bit_width // 8, next_seq_num
+        )
 
 
 class CfdpRxHandler:

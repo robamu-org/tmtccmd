@@ -9,7 +9,7 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
-from spacepackets.cfdp.defs import UnsignedByteField
+from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
 
