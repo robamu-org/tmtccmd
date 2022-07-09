@@ -9,7 +9,7 @@ from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
 from spacepackets.ecss.pus_1_verification import UnpackParams
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
-from tmtccmd.pus import VerificationWrapper, FileSeqCountProvider
+from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
@@ -37,6 +37,7 @@ from tmtccmd.tc import (
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
+from tmtccmd.util import FileSeqCountProvider
 from tmtccmd.util.obj_id import ObjectIdDictT
 
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter

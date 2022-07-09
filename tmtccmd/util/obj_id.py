@@ -57,6 +57,16 @@ class ObjectIdBase(UnsignedByteField):
 class ObjectIdU32(ObjectIdBase):
     """A helper object for a unique object identifier which has a raw unsigned
     32-bit representation.
+
+    >>> obj_id = ObjectIdU32(42, "Object with the answer to everything")
+    >>> int(obj_id)
+    42
+    >>> obj_id.name
+    'Object with the answer to everything'
+    >>> obj_id.as_bytes.hex(sep=",")
+    '00,00,00,2a'
+    >>> obj_id.as_hex_string
+    '0x0000002a'
     """
 
     def __init__(self, obj_id: int, name: Optional[str] = None):
