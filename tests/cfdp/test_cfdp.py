@@ -5,7 +5,12 @@ from typing import Optional, List
 from unittest import TestCase
 
 from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv
-from spacepackets.cfdp.defs import FaultHandlerCodes, TransmissionModes, ChecksumTypes
+from spacepackets.cfdp.defs import (
+    FaultHandlerCodes,
+    TransmissionModes,
+    ChecksumTypes,
+    NULL_CHECKSUM_U32,
+)
 from spacepackets.cfdp.pdu import DirectiveType
 from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
 from spacepackets.util import ByteFieldU16
@@ -95,19 +100,25 @@ class TestCfdp(TestCase):
         wrapper = CfdpRequestWrapper(PutRequest(put_req_cfg))
         source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = source_handler.state_machine()
-        self.assertTrue(fsm_res.pdu_wrapper.is_file_directive)
+        self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(
-            fsm_res.pdu_wrapper.pdu_directive_type, DirectiveType.METADATA_PDU
+            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
         )
-        metadata_pdu = fsm_res.pdu_wrapper.to_metadata_pdu()
+        metadata_pdu = fsm_res.pdu_holder.to_metadata_pdu()
         self.assertEqual(metadata_pdu.params.closure_requested, False)
         self.assertEqual(metadata_pdu.checksum_type, ChecksumTypes.CRC_32)
         self.assertEqual(metadata_pdu.source_file_name, self.file_path.as_posix())
         self.assertEqual(metadata_pdu.dest_file_name, dest_path)
         source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = source_handler.state_machine()
-        self.assertTrue(fsm_res.pdu_wrapper.is_file_directive)
-        self.assertEqual(fsm_res.pdu_wrapper.pdu_directive_type, DirectiveType.EOF_PDU)
+        self.assertTrue(fsm_res.pdu_holder.is_file_directive)
+        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
+        eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
+        self.assertEqual(eof_pdu.file_checksum, NULL_CHECKSUM_U32)
+        self.assertEqual(eof_pdu.file_size, 0)
+        self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
+        self.assertEqual(eof_pdu.fault_location, None)
+        print(eof_pdu)
         pass
 
     def tearDown(self) -> None:

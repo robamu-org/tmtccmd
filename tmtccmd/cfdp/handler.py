@@ -17,6 +17,7 @@ from spacepackets.cfdp.defs import (
     Direction,
     ConditionCode,
     TransmissionModes,
+    NULL_CHECKSUM_U32,
 )
 from .defs import (
     BusyError,
@@ -83,14 +84,12 @@ class PacketSendNotConfirmed(Exception):
 
 
 class FsmResult:
-    def __init__(self, pdu_wrapper: PduHolder, states: SourceStateWrapper):
-        self.pdu_wrapper = pdu_wrapper
+    def __init__(self, pdu_holder: PduHolder, states: SourceStateWrapper):
+        self.pdu_holder = pdu_holder
         self.states = states
 
 
 class CfdpSourceHandler:
-    NULL_CHECKSUM = bytes([0x00, 0x00, 0x00, 0x00])
-
     def __init__(
         self,
         cfg: LocalEntityCfg,
@@ -147,7 +146,7 @@ class CfdpSourceHandler:
             if self.states.step == SourceTransactionState.CRC_PROCEDURE:
                 if self.params.fp.size == 0:
                     # Empty file, use null checksum
-                    self.params.fp.crc32 = CfdpSourceHandler.NULL_CHECKSUM
+                    self.params.fp.crc32 = NULL_CHECKSUM_U32
                 else:
                     self.params.fp.crc32 = self.calc_cfdp_file_crc(
                         crc_type=self.params.remote_cfg.crc_type,
