@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional, List
 from unittest import TestCase
@@ -66,7 +67,7 @@ class TestCfdp(TestCase):
         self.seq_num_provider = SeqCountProvider(bit_width=8)
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
-        self.file_path = Path("/tmp/hello.txt")
+        self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
         with open(self.file_path, "w"):
             pass
         self.remote_cfg = RemoteEntityCfg(

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 from crcmod.predefined import PredefinedCrc
 
-from spacepackets.cfdp.pdu import PduWrapper, EofPdu
+from spacepackets.cfdp.pdu import PduHolder, EofPdu
 from spacepackets.cfdp.pdu.file_data import FileDataPdu
 from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
@@ -83,7 +83,7 @@ class PacketSendNotConfirmed(Exception):
 
 
 class FsmResult:
-    def __init__(self, pdu_wrapper: PduWrapper, states: SourceStateWrapper):
+    def __init__(self, pdu_wrapper: PduHolder, states: SourceStateWrapper):
         self.pdu_wrapper = pdu_wrapper
         self.states = states
 
@@ -98,7 +98,7 @@ class CfdpSourceHandler:
         user: CfdpUserBase,
     ):
         self.states = SourceStateWrapper()
-        self.pdu_wrapper = PduWrapper(None)
+        self.pdu_wrapper = PduHolder(None)
         self.cfg = cfg
         self.user = user
         self.params = TransferFieldWrapper(cfg.local_entity_id)
@@ -385,7 +385,7 @@ class CfdpHandler:
         self._tx_handler = CfdpSourceHandler(self.cfg, seq_num_provider, cfdp_user)
         self.state = StateWrapper(source_handler_state=self._tx_handler.states)
         self._request_wrapper = CfdpRequestWrapper(None)
-        self._next_reception_pdu_wrapper = PduWrapper(None)
+        self._next_reception_pdu_wrapper = PduHolder(None)
         self._cfdp_result = CfdpResult()
 
     def state_machine(self) -> CfdpResult:
@@ -435,12 +435,12 @@ class CfdpHandler:
         return False
 
     @property
-    def transfer_packet_wrapper(self) -> PduWrapper:
+    def transfer_packet_wrapper(self) -> PduHolder:
         """Yield the next packet required to transfer a file"""
         return self._tx_handler.pdu_wrapper
 
     @property
-    def reception_packet_wrapper(self) -> PduWrapper:
+    def reception_packet_wrapper(self) -> PduHolder:
         """Yield the next packed required to receive a file"""
         return self._next_reception_pdu_wrapper
 
