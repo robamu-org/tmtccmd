@@ -2,4 +2,6 @@ from .test_src_handler import TestCfdpSourceHandler
 
 
 class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
-    pass
+
+    def setUp(self) -> None:
+        self.common_setup(True)

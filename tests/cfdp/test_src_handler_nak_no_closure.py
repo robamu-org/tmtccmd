@@ -15,7 +15,7 @@ from .test_src_handler import TestCfdpSourceHandler
 
 class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
-        super().setUp()
+        self.common_setup(False)
 
     def test_empty_file(self):
         dest_path = "/tmp/hello_copy.txt"

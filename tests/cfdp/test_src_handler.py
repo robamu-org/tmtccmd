@@ -12,7 +12,7 @@ from .cfdp_user_mock import CfdpUser
 
 
 class TestCfdpSourceHandler(TestCase):
-    def setUp(self) -> None:
+    def common_setup(self, closure_requested: bool):
         self.indication_cfg = LocalIndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
         self.local_cfg = LocalEntityCfg(
@@ -29,7 +29,7 @@ class TestCfdpSourceHandler(TestCase):
         self.remote_cfg = RemoteEntityCfg(
             remote_entity_id=self.dest_id,
             max_file_segment_len=self.file_segment_len,
-            closure_requested=False,
+            closure_requested=closure_requested,
             crc_on_transmission=False,
             default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
         )
