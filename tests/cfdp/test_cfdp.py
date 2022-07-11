@@ -183,38 +183,11 @@ class TestCfdp(TestCase):
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
         dest_path = "/tmp/hello_two_segments_copy.txt"
-        put_req_cfg = PutRequestCfg(
-            destination_id=self.dest_id,
-            source_file=self.file_path,
-            dest_file=dest_path,
-            # Let the transmission mode be auto-determined by the remote MIB
-            trans_mode=None,
-            closure_requested=False,
+        file_size, crc32, source_handler = self._transaction_with_file_data_wrapper(
+            dest_path, rand_data
         )
-        with open(self.file_path, "wb") as of:
-            crc32 = PredefinedCrc("crc32")
-            crc32.update(rand_data)
-            crc32 = crc32.digest()
-            of.write(rand_data)
-        file_size = self.file_path.stat().st_size
-        self.local_cfg.local_entity_id = self.source_id
-        source_handler = self._start_source_transaction(
-            self.dest_id, PutRequest(put_req_cfg)
-        )
-        fsm_res = source_handler.state_machine()
-        file_data_pdu = self._check_file_data(fsm_res)
-        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
-        self.assertEqual(
-            file_data_pdu.file_data[0 : self.file_segment_len],
-            rand_data[0 : self.file_segment_len],
-        )
-        self.assertEqual(file_data_pdu.offset, 0)
-        source_handler.confirm_packet_sent_advance_fsm()
-        fsm_res = source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
-        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
-        file_data_pdu = fsm_res.pdu_holder.to_file_data_pdu()
+        self._first_file_segment_handling(source_handler, rand_data)
+        file_data_pdu = self._second_file_segment_handling(source_handler)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
         self.assertEqual(
             file_data_pdu.file_data[0 : self.file_segment_len],
@@ -234,38 +207,11 @@ class TestCfdp(TestCase):
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
         dest_path = "/tmp/hello_two_segments_imperfect_copy.txt"
-        put_req_cfg = PutRequestCfg(
-            destination_id=self.dest_id,
-            source_file=self.file_path,
-            dest_file=dest_path,
-            # Let the transmission mode be auto-determined by the remote MIB
-            trans_mode=None,
-            closure_requested=False,
+        file_size, crc32, source_handler = self._transaction_with_file_data_wrapper(
+            dest_path, rand_data
         )
-        with open(self.file_path, "wb") as of:
-            crc32 = PredefinedCrc("crc32")
-            crc32.update(rand_data)
-            crc32 = crc32.digest()
-            of.write(rand_data)
-        file_size = self.file_path.stat().st_size
-        self.local_cfg.local_entity_id = self.source_id
-        source_handler = self._start_source_transaction(
-            self.dest_id, PutRequest(put_req_cfg)
-        )
-        fsm_res = source_handler.state_machine()
-        file_data_pdu = self._check_file_data(fsm_res)
-        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
-        self.assertEqual(
-            file_data_pdu.file_data[0 : self.file_segment_len],
-            rand_data[0 : self.file_segment_len],
-        )
-        self.assertEqual(file_data_pdu.offset, 0)
-        source_handler.confirm_packet_sent_advance_fsm()
-        fsm_res = source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
-        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
-        file_data_pdu = fsm_res.pdu_holder.to_file_data_pdu()
+        self._first_file_segment_handling(source_handler, rand_data)
+        file_data_pdu = self._second_file_segment_handling(source_handler)
         self.assertEqual(len(file_data_pdu.file_data), remainder_len)
         self.assertEqual(
             file_data_pdu.file_data[:],
@@ -282,6 +228,49 @@ class TestCfdp(TestCase):
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
         self.assertFalse(fsm_res.pdu_holder.is_file_directive)
         return fsm_res.pdu_holder.to_file_data_pdu()
+
+    def _second_file_segment_handling(self, source_handler: CfdpSourceHandler):
+        source_handler.confirm_packet_sent_advance_fsm()
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
+        return fsm_res.pdu_holder.to_file_data_pdu()
+
+    def _transaction_with_file_data_wrapper(
+            self, dest_path: str, data: bytes
+    ) -> (int, bytes, CfdpSourceHandler):
+        put_req_cfg = PutRequestCfg(
+            destination_id=self.dest_id,
+            source_file=self.file_path,
+            dest_file=dest_path,
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
+            closure_requested=False,
+        )
+        with open(self.file_path, "wb") as of:
+            crc32 = PredefinedCrc("crc32")
+            crc32.update(data)
+            crc32 = crc32.digest()
+            of.write(data)
+        file_size = self.file_path.stat().st_size
+        self.local_cfg.local_entity_id = self.source_id
+        source_handler = self._start_source_transaction(
+            self.dest_id, PutRequest(put_req_cfg)
+        )
+        return file_size, crc32, source_handler
+
+    def _first_file_segment_handling(
+            self, source_handler: CfdpSourceHandler, data: bytes
+    ):
+        fsm_res = source_handler.state_machine()
+        file_data_pdu = self._check_file_data(fsm_res)
+        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
+        self.assertEqual(
+            file_data_pdu.file_data[0 : self.file_segment_len],
+            data[0 : self.file_segment_len],
+        )
+        self.assertEqual(file_data_pdu.offset, 0)
 
     def _test_eof_file_pdu(self, fsm_res: FsmResult, file_size: int, crc32: bytes):
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
