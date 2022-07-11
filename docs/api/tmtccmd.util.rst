@@ -1,13 +1,13 @@
-tmtccmd.utility package
+tmtccmd.util package
 =======================
 
 Submodules
 ----------
 
-tmtccmd.utility.exit\_handler module
+tmtccmd.utility.exit module
 ------------------------------------
 
-.. automodule:: tmtccmd.utility.exit_handler
+.. automodule:: tmtccmd.util.exit
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ tmtccmd.utility.exit\_handler module
 tmtccmd.utility.hammingcode module
 ----------------------------------
 
-.. automodule:: tmtccmd.utility.hammingcode
+.. automodule:: tmtccmd.util.hammingcode
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ tmtccmd.utility.hammingcode module
 tmtccmd.utility.json module
 ------------------------------------
 
-.. automodule:: tmtccmd.utility.json
+.. automodule:: tmtccmd.util.json
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ tmtccmd.utility.json module
 tmtccmd.utility.tmtc\_printer module
 ------------------------------------
 
-.. automodule:: tmtccmd.utility.tmtc_printer
+.. automodule:: tmtccmd.util.tmtc_printer
    :members:
    :undoc-members:
    :show-inheritance:
@@ -39,7 +39,7 @@ tmtccmd.utility.tmtc\_printer module
 tmtccmd.utility.conf\_util module
 ---------------------------------
 
-.. automodule:: tmtccmd.utility.conf_util
+.. automodule:: tmtccmd.util.conf_util
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ tmtccmd.utility.conf\_util module
 Module contents
 ---------------
 
-.. automodule:: tmtccmd.utility
+.. automodule:: tmtccmd.util
    :members:
    :undoc-members:
    :show-inheritance:

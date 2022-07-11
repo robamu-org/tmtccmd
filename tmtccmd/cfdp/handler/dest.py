@@ -5,9 +5,9 @@ from tmtccmd.cfdp.defs import CfdpStates, DestTransactionState
 
 @dataclass
 class DestStateWrapper:
-    state = CfdpStates.IDLE
-    transaction = DestTransactionState.IDLE
-    packet_ready = True
+    state: CfdpStates = CfdpStates.IDLE
+    transaction: DestTransactionState = DestTransactionState.IDLE
+    packet_ready: bool = True
 
 
 class DestHandler:

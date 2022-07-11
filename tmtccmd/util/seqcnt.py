@@ -28,7 +28,7 @@ class ProvidesSeqCount(ABC):
 class FileSeqCountProvider(ProvidesSeqCount):
     """Sequence count provider which uses a disk file to store the current sequence count
     in a non-volatile way. The first call with the next built-in or using the base
-    class :py:method:`get` call will yield a 0
+    class :py:meth:`get` call will yield a 0
     """
 
     def __init__(self, max_bit_width: int, file_name: Path = Path("seqcnt.txt")):
