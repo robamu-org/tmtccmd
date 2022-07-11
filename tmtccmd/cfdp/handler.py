@@ -22,7 +22,7 @@ from spacepackets.cfdp.defs import (
 from .defs import (
     BusyError,
     CfdpRequestType,
-    SourceTransactionState,
+    SourceTransactionStep,
     CfdpStates,
     SourceStateWrapper,
     StateWrapper,
@@ -65,6 +65,8 @@ class TransferFieldWrapper:
     def reset(self):
         self.fp.reset()
         self.remote_cfg = None
+        self.transaction = None
+        self.pdu_conf = PduConfig.empty()
 
 
 class NoRemoteEntityCfgFound(Exception):
@@ -138,12 +140,12 @@ class CfdpSourceHandler:
             return FsmResult(self.pdu_wrapper, self.states)
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             put_req = self._current_req.to_put_request()
-            if self.states.step == SourceTransactionState.IDLE:
-                self.states.step = SourceTransactionState.TRANSACTION_START
-            if self.states.step == SourceTransactionState.TRANSACTION_START:
+            if self.states.step == SourceTransactionStep.IDLE:
+                self.states.step = SourceTransactionStep.TRANSACTION_START
+            if self.states.step == SourceTransactionStep.TRANSACTION_START:
                 self._transaction_start(put_req)
-                self.states.step = SourceTransactionState.CRC_PROCEDURE
-            if self.states.step == SourceTransactionState.CRC_PROCEDURE:
+                self.states.step = SourceTransactionStep.CRC_PROCEDURE
+            if self.states.step == SourceTransactionStep.CRC_PROCEDURE:
                 if self.params.fp.size == 0:
                     # Empty file, use null checksum
                     self.params.fp.crc32 = NULL_CHECKSUM_U32
@@ -154,28 +156,29 @@ class CfdpSourceHandler:
                         file_sz=self.params.fp.size,
                         segment_len=self.params.fp.segment_len,
                     )
-                self.states.step = SourceTransactionState.SENDING_METADATA
-            if self.states.step == SourceTransactionState.SENDING_METADATA:
+                self.states.step = SourceTransactionStep.SENDING_METADATA
+            if self.states.step == SourceTransactionStep.SENDING_METADATA:
                 self._prepare_metadata_pdu(put_req)
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.step == SourceTransactionState.SENDING_FILE_DATA:
+            if self.states.step == SourceTransactionStep.SENDING_FILE_DATA:
                 if self._prepare_next_file_data_pdu(put_req):
                     self.states.packet_ready = True
                     return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.step == SourceTransactionState.SENDING_EOF:
+            if self.states.step == SourceTransactionStep.SENDING_EOF:
                 self._prepare_eof_pdu()
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.step == SourceTransactionState.NOTICE_OF_COMPLETION:
+            if self.states.step == SourceTransactionStep.NOTICE_OF_COMPLETION:
                 self.user.transaction_finished_indication(
                     transaction_id=self.params.transaction,
                     condition_code=ConditionCode.NO_ERROR,
                     file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
                     delivery_code=DeliveryCode.DATA_COMPLETE,
                 )
-                self.states.step = SourceTransactionState.IDLE
-                self.states.state = CfdpStates.IDLE
+                # Transaction finished
+                self.reset()
+        return FsmResult(self.pdu_wrapper, self.states)
 
     def confirm_packet_sent_advance_fsm(self):
         """Helper method which performs both :py:method:`confirm_packet_sent` and
@@ -202,13 +205,19 @@ class CfdpSourceHandler:
                 f"advancing state machine"
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
-            if self.states.step == SourceTransactionState.SENDING_METADATA:
-                self.states.step = SourceTransactionState.SENDING_EOF
-            elif self.states.step == SourceTransactionState.SENDING_FILE_DATA:
+            if self.states.step == SourceTransactionStep.SENDING_METADATA:
+                self.states.step = SourceTransactionStep.SENDING_EOF
+            elif self.states.step == SourceTransactionStep.SENDING_FILE_DATA:
                 if self.params.fp.offset == self.params.fp.size:
-                    self.states.step = SourceTransactionState.SENDING_EOF
-            elif self.states.step == SourceTransactionState.SENDING_EOF:
-                self.states.step = SourceTransactionState.NOTICE_OF_COMPLETION
+                    self.states.step = SourceTransactionStep.SENDING_EOF
+            elif self.states.step == SourceTransactionStep.SENDING_EOF:
+                self.user.eof_sent_indication(self.params.transaction)
+                self.states.step = SourceTransactionStep.NOTICE_OF_COMPLETION
+
+    def reset(self):
+        self.states.step = SourceTransactionStep.IDLE
+        self.states.state = CfdpStates.IDLE
+        self.params.reset()
 
     @classmethod
     def calc_cfdp_file_crc(

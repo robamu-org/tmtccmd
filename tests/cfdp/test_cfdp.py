@@ -15,7 +15,7 @@ from spacepackets.cfdp.pdu import DirectiveType
 from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
 from spacepackets.util import ByteFieldU16
 from tmtccmd.cfdp import CfdpUserBase
-from tmtccmd.cfdp.defs import TransactionId
+from tmtccmd.cfdp.defs import TransactionId, CfdpStates, SourceTransactionStep
 from tmtccmd.cfdp.handler import CfdpSourceHandler
 from tmtccmd.cfdp.mib import (
     LocalEntityCfg,
@@ -38,8 +38,18 @@ class FaultHandler(DefaultFaultHandlerBase):
 
 
 class CfdpUser(CfdpUserBase):
+    def __init__(self):
+        super().__init__()
+        self.transaction_inidcation_was_called = False
+        self.transaction_inidcation_call_count = 0
+        self.transaction_finished_was_called = False
+        self.transaction_finished_call_count = 0
+        self.eof_sent_indication_was_called = False
+        self.eof_sent_indication_call_count = 0
+
     def transaction_indication(self, transaction_id: TransactionId):
-        pass
+        self.transaction_inidcation_was_called = True
+        self.transaction_inidcation_call_count += 1
 
     def transaction_finished_indication(
         self,
@@ -50,10 +60,12 @@ class CfdpUser(CfdpUserBase):
         _fs_responses: Optional[List[FileStoreResponseTlv]] = None,
         _status_report: Optional[any] = None,
     ):
-        pass
+        self.transaction_finished_was_called = True
+        self.transaction_finished_call_count += 1
 
     def eof_sent_indication(self, transaction_id: TransactionId):
-        pass
+        self.eof_sent_indication_was_called = True
+        self.eof_sent_indication_call_count += 1
 
     def abandon_indication(
         self, transaction_id: int, cond_code: ConditionCode, progress: int
@@ -83,7 +95,7 @@ class TestCfdp(TestCase):
             default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
         )
 
-    def test_source_handler(self):
+    def test_source_handler_empty_file(self):
         # Create an empty file and send it via CFDP
         source_handler = CfdpSourceHandler(
             self.local_cfg, self.seq_num_provider, self.cfdp_user
@@ -100,6 +112,10 @@ class TestCfdp(TestCase):
         wrapper = CfdpRequestWrapper(PutRequest(put_req_cfg))
         source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_METADATA)
+        self.assertTrue(self.cfdp_user.transaction_inidcation_was_called)
+        self.assertEqual(self.cfdp_user.transaction_inidcation_call_count, 1)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(
             fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
@@ -111,6 +127,8 @@ class TestCfdp(TestCase):
         self.assertEqual(metadata_pdu.dest_file_name, dest_path)
         source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
@@ -118,8 +136,34 @@ class TestCfdp(TestCase):
         self.assertEqual(eof_pdu.file_size, 0)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(eof_pdu.fault_location, None)
-        print(eof_pdu)
+        # This indication will be called if the EOF send was confirmed
+        self.assertFalse(self.cfdp_user.eof_sent_indication_was_called)
+        source_handler.confirm_packet_sent_advance_fsm()
+        self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
+        self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
+        fsm_res = source_handler.state_machine()
+        self.assertTrue(self.cfdp_user.transaction_finished_was_called)
+        self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
         pass
+
+    def test_source_handler_small_file(self):
+        # Create an empty file and send it via CFDP
+        source_handler = CfdpSourceHandler(
+            self.local_cfg, self.seq_num_provider, self.cfdp_user
+        )
+        dest_path = "/tmp/hello_copy.txt"
+        put_req_cfg = PutRequestCfg(
+            destination_id=ByteFieldU16(2),
+            source_file=self.file_path,
+            dest_file=dest_path,
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
+            closure_requested=False,
+        )
+        with open(self.file_path, "w") as of:
+            of.write("Hello World")
 
     def tearDown(self) -> None:
         if self.file_path.exists():

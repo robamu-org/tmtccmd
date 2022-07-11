@@ -28,7 +28,7 @@ class CfdpIndication(enum.Enum):
     EOF_RECV = 10
 
 
-class SourceTransactionState(enum.Enum):
+class SourceTransactionStep(enum.Enum):
     IDLE = 0
     TRANSACTION_START = 1
     CRC_PROCEDURE = 2
@@ -61,7 +61,7 @@ class CfdpStates(enum.Enum):
 @dataclasses.dataclass
 class SourceStateWrapper:
     state = CfdpStates.IDLE
-    step = SourceTransactionState.IDLE
+    step = SourceTransactionStep.IDLE
     packet_ready = True
 
 
