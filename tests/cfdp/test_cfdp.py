@@ -233,6 +233,13 @@ class TestCfdp(TestCase):
             rand_data[self.file_segment_len :],
         )
         self.assertEqual(file_data_pdu.offset, self.file_segment_len)
+        source_handler.confirm_packet_sent_advance_fsm()
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
+        eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
+        self.assertEqual(eof_pdu.file_size, file_size)
+        self.assertEqual(eof_pdu.file_checksum, crc32)
 
     def _start_source_transaction(
         self, dest_id: UnsignedByteField, put_request: PutRequest

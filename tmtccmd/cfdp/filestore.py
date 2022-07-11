@@ -20,7 +20,7 @@ class InvalidOffsetException(Exception):
 
 class VirtualFilestore(abc.ABC):
     @abc.abstractmethod
-    def read_data(self, file: Path, offset: int, read_len: int) -> bytes:
+    def read_data(self, file: Path, offset: Optional[int], read_len: int) -> bytes:
         """This is not used as part of a filestore request, it is used to read a file, for example
         to send it"""
         raise NotImplementedError("Reading file not implemented in virtual filestore")
@@ -89,12 +89,19 @@ class HostFilestore(VirtualFilestore):
     def __init__(self):
         pass
 
-    def read_data(self, file: Path, offset: int, read_len: int) -> bytes:
+    def read_data(
+        self, file: Path, offset: Optional[int], read_len: Optional[int] = None
+    ) -> bytes:
         if not file.exists():
             raise FileNotFoundError(file)
         file_size = file.stat().st_size
-        if offset > file_size:
-            raise InvalidOffsetException(offset)
+        if read_len is None:
+            read_len = file_size
+        if offset is None:
+            offset = 0
+        else:
+            if offset > file_size:
+                raise InvalidOffsetException(offset)
         with open(file, "rb") as rf:
             rf.seek(offset)
             return rf.read(read_len)
