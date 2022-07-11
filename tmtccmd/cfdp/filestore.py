@@ -2,7 +2,9 @@ import abc
 import os
 import shutil
 import platform
+from io import BytesIO
 from pathlib import Path
+from typing import Optional, BinaryIO
 
 from tmtccmd.logging import get_console_logger
 from spacepackets.cfdp.tlv import FilestoreResponseStatusCode
@@ -12,15 +14,32 @@ LOGGER = get_console_logger()
 FilestoreResult = FilestoreResponseStatusCode
 
 
+class InvalidOffsetException(Exception):
+    pass
+
+
 class VirtualFilestore(abc.ABC):
     @abc.abstractmethod
-    def append_data_to_file(
-        self, file: Path, offset: int, data: bytes
+    def read_data(self, file: Path, offset: int, read_len: int) -> bytes:
+        """This is not used as part of a filestore request, it is used to read a file, for example
+        to send it"""
+        raise NotImplementedError("Reading file not implemented in virtual filestore")
+
+    @abc.abstractmethod
+    def read_from_opened_file(self, bytes_io: BinaryIO, offset: int, read_len: int):
+        raise NotImplementedError(
+            "Reading from opened file not implemented in virtual filestore"
+        )
+
+    @abc.abstractmethod
+    def write_data(
+        self, file: Path, data: bytes, offset: Optional[int]
     ) -> FilestoreResponseStatusCode:
         """This is not used as part of a filestore request, it is used to build up the received
         file"""
-        LOGGER.warning("Appending to file not implemented in virtual filestore")
-        return FilestoreResponseStatusCode.NOT_PERFORMED
+        raise NotImplementedError(
+            "Writing to data not implemented in virtual filestore"
+        )
 
     @abc.abstractmethod
     def create_file(self, file: Path) -> FilestoreResponseStatusCode:
@@ -70,8 +89,22 @@ class HostFilestore(VirtualFilestore):
     def __init__(self):
         pass
 
-    def append_data_to_file(
-        self, file: Path, offset: int, data: bytes
+    def read_data(self, file: Path, offset: int, read_len: int) -> bytes:
+        if not file.exists():
+            raise FileNotFoundError(file)
+        file_size = file.stat().st_size
+        if offset > file_size:
+            raise InvalidOffsetException(offset)
+        with open(file, "rb") as rf:
+            rf.seek(offset)
+            return rf.read(read_len)
+
+    def read_from_opened_file(self, bytes_io: BinaryIO, offset: int, read_len: int):
+        bytes_io.seek(offset)
+        return bytes_io.read(read_len)
+
+    def write_data(
+        self, file: Path, data: bytes, offset: Optional[int]
     ) -> FilestoreResponseStatusCode:
         """Primary function used to perform the CFDP Copy Procedure. This will also create a new
         file as long as no other file with the same name exists
@@ -81,12 +114,13 @@ class HostFilestore(VirtualFilestore):
          - FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET: Invalid offset
         """
         if not file.exists():
-            return FilestoreResponseStatusCode.APPEND_FROM_DATA_FILE_NOT_EXISTS
+            raise FileNotFoundError(file)
         with open(file, "r+b") as of:
             file_size = file.stat().st_size
-            if offset > file_size:
-                return FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET
-            of.seek(offset)
+            if offset is not None:
+                if offset > file_size:
+                    raise InvalidOffsetException(offset)
+                of.seek(offset)
             of.write(data)
         return FilestoreResponseStatusCode.SUCCESS
 

@@ -165,6 +165,8 @@ class CfdpSourceHandler:
                 if self._prepare_next_file_data_pdu(put_req):
                     self.states.packet_ready = True
                     return FsmResult(self.pdu_wrapper, self.states)
+                else:
+                    self.states.step = SourceTransactionStep.SENDING_EOF
             if self.states.step == SourceTransactionStep.SENDING_EOF:
                 self._prepare_eof_pdu()
                 self.states.packet_ready = True
@@ -184,7 +186,7 @@ class CfdpSourceHandler:
         """Helper method which performs both :py:method:`confirm_packet_sent` and
         :py:method:`advance_fsm`
         """
-        self.states.packet_ready = False
+        self.confirm_packet_sent()
         self.advance_fsm()
 
     def confirm_packet_sent(self):
@@ -206,7 +208,7 @@ class CfdpSourceHandler:
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.step == SourceTransactionStep.SENDING_METADATA:
-                self.states.step = SourceTransactionStep.SENDING_EOF
+                self.states.step = SourceTransactionStep.SENDING_FILE_DATA
             elif self.states.step == SourceTransactionStep.SENDING_FILE_DATA:
                 if self.params.fp.offset == self.params.fp.size:
                     self.states.step = SourceTransactionStep.SENDING_EOF
@@ -219,24 +221,22 @@ class CfdpSourceHandler:
         self.states.state = CfdpStates.IDLE
         self.params.reset()
 
-    @classmethod
     def calc_cfdp_file_crc(
-        cls, crc_type: ChecksumTypes, file: Path, file_sz: int, segment_len: int
+        self, crc_type: ChecksumTypes, file: Path, file_sz: int, segment_len: int
     ) -> bytes:
         if crc_type == ChecksumTypes.CRC_32:
-            return cls.calc_crc_for_file_crcmod(
+            return self.calc_crc_for_file_crcmod(
                 PredefinedCrc("crc32"), file, file_sz, segment_len
             )
         elif crc_type == ChecksumTypes.CRC_32C:
-            return cls.calc_crc_for_file_crcmod(
+            return self.calc_crc_for_file_crcmod(
                 PredefinedCrc("crc32c"), file, file_sz, segment_len
             )
         else:
             raise ChecksumNotImplemented(f"Checksum {crc_type} not implemented")
 
-    @classmethod
     def calc_crc_for_file_crcmod(
-        cls, crc_obj: PredefinedCrc, file: Path, file_sz: int, segment_len: int
+        self, crc_obj: PredefinedCrc, file: Path, file_sz: int, segment_len: int
     ):
         if not file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
@@ -247,14 +247,20 @@ class CfdpSourceHandler:
             while True:
                 if current_offset == file_sz:
                     break
-                next_offset = current_offset + segment_len
-                if next_offset > file_sz:
-                    read_len = next_offset % file_sz
+                if file_sz < segment_len:
+                    read_len = file_sz
                 else:
-                    read_len = segment_len
+                    next_offset = current_offset + segment_len
+                    if next_offset > file_sz:
+                        read_len = next_offset % file_sz
+                    else:
+                        read_len = segment_len
                 if read_len > 0:
-                    of.seek(current_offset)
-                    crc_obj.update(of.read(read_len))
+                    crc_obj.update(
+                        self.user.vfs.read_from_opened_file(
+                            of, current_offset, read_len
+                        )
+                    )
                 current_offset += read_len
             return crc_obj.digest()
 
@@ -271,13 +277,13 @@ class CfdpSourceHandler:
         if not put_req.cfg.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
             raise SourceFileDoesNotExist()
-        self.params.file_size = put_req.cfg.source_file.stat().st_size
+        self.params.fp.size = put_req.cfg.source_file.stat().st_size
         if self.params.remote_cfg is None:
             # It is actually not specified what to do if there is no remote configuration
             # for a given destination ID. I will treat this as a configuration error now
             # and raise an exception
             raise NoRemoteEntityCfgFound()
-        self.params.file_segment_len = self.params.remote_cfg.max_file_segment_len
+        self.params.fp.segment_len = self.params.remote_cfg.max_file_segment_len
         self.params.remote_cfg = self.params.remote_cfg
         self.params.transaction = TransactionId(
             source_entity_id=self.cfg.local_entity_id,
@@ -318,19 +324,23 @@ class CfdpSourceHandler:
         if self.params.fp.size == 0:
             return False
         with open(request.cfg.source_file, "rb") as of:
-            next_offset = self.params.fp.offset + self.params.fp.segment_len
             if self.params.fp.offset == self.params.fp.size:
                 return False
             if self.states.packet_ready:
                 raise PacketSendNotConfirmed(
                     f"Must send current packet {self.pdu_wrapper.base} first"
                 )
-            if next_offset > self.params.fp.size:
-                read_len = next_offset % self.params.fp.size
+            if self.params.fp.size < self.params.fp.segment_len:
+                read_len = self.params.fp.size
             else:
-                read_len = self.params.fp.segment_len
-            of.seek(self.params.fp.offset)
-            file_data = of.read(read_len)
+                next_offset = self.params.fp.offset + self.params.fp.segment_len
+                if next_offset > self.params.fp.size:
+                    read_len = next_offset % self.params.fp.size
+                else:
+                    read_len = self.params.fp.segment_len
+            file_data = self.user.vfs.read_from_opened_file(
+                of, self.params.fp.offset, read_len
+            )
             self.params.pdu_conf.transaction_seq_num = self._get_next_transfer_seq_num()
             # NOTE: Support for record continuation state not implemented yet. Segment metadata
             #       flag is therefore always set to False
@@ -340,7 +350,7 @@ class CfdpSourceHandler:
                 offset=self.params.fp.offset,
                 segment_metadata_flag=False,
             )
-            self.params.fp.offset = next_offset
+            self.params.fp.offset += read_len
             self.pdu_wrapper.base = file_data_pdu
         return True
 

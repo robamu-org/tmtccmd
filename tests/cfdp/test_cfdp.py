@@ -1,5 +1,7 @@
 import os
+import random
 import tempfile
+from crcmod.predefined import PredefinedCrc
 from pathlib import Path
 from typing import Optional, List
 from unittest import TestCase
@@ -10,13 +12,14 @@ from spacepackets.cfdp.defs import (
     TransmissionModes,
     ChecksumTypes,
     NULL_CHECKSUM_U32,
+    PduType,
 )
 from spacepackets.cfdp.pdu import DirectiveType
 from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
-from spacepackets.util import ByteFieldU16
+from spacepackets.util import ByteFieldU16, ByteFieldU32, UnsignedByteField, ByteFieldU8
 from tmtccmd.cfdp import CfdpUserBase
 from tmtccmd.cfdp.defs import TransactionId, CfdpStates, SourceTransactionStep
-from tmtccmd.cfdp.handler import CfdpSourceHandler
+from tmtccmd.cfdp.handler import CfdpSourceHandler, FsmResult, PacketSendNotConfirmed
 from tmtccmd.cfdp.mib import (
     LocalEntityCfg,
     LocalIndicationCfg,
@@ -87,45 +90,29 @@ class TestCfdp(TestCase):
         self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
         with open(self.file_path, "w"):
             pass
+        self.file_segment_len = 256
         self.remote_cfg = RemoteEntityCfg(
             remote_entity_id=self.dest_id,
-            max_file_segment_len=256,
+            max_file_segment_len=self.file_segment_len,
             closure_requested=False,
             crc_on_transmission=False,
             default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
         )
 
     def test_source_handler_empty_file(self):
-        # Create an empty file and send it via CFDP
-        source_handler = CfdpSourceHandler(
-            self.local_cfg, self.seq_num_provider, self.cfdp_user
-        )
         dest_path = "/tmp/hello_copy.txt"
+        dest_id = ByteFieldU16(2)
         put_req_cfg = PutRequestCfg(
-            destination_id=ByteFieldU16(2),
+            destination_id=dest_id,
             source_file=self.file_path,
             dest_file=dest_path,
             # Let the transmission mode be auto-determined by the remote MIB
             trans_mode=None,
             closure_requested=False,
         )
-        wrapper = CfdpRequestWrapper(PutRequest(put_req_cfg))
-        source_handler.start_transaction(wrapper, self.remote_cfg)
-        fsm_res = source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_METADATA)
-        self.assertTrue(self.cfdp_user.transaction_inidcation_was_called)
-        self.assertEqual(self.cfdp_user.transaction_inidcation_call_count, 1)
-        self.assertTrue(fsm_res.pdu_holder.is_file_directive)
-        self.assertEqual(
-            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
+        source_handler = self._start_source_transaction(
+            dest_id, PutRequest(put_req_cfg)
         )
-        metadata_pdu = fsm_res.pdu_holder.to_metadata_pdu()
-        self.assertEqual(metadata_pdu.params.closure_requested, False)
-        self.assertEqual(metadata_pdu.checksum_type, ChecksumTypes.CRC_32)
-        self.assertEqual(metadata_pdu.source_file_name, self.file_path.as_posix())
-        self.assertEqual(metadata_pdu.dest_file_name, dest_path)
-        source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
@@ -144,26 +131,139 @@ class TestCfdp(TestCase):
         fsm_res = source_handler.state_machine()
         self.assertTrue(self.cfdp_user.transaction_finished_was_called)
         self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
+        source_handler.confirm_packet_sent_advance_fsm()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
-        pass
 
     def test_source_handler_small_file(self):
-        # Create an empty file and send it via CFDP
-        source_handler = CfdpSourceHandler(
-            self.local_cfg, self.seq_num_provider, self.cfdp_user
-        )
         dest_path = "/tmp/hello_copy.txt"
+        self.source_id = ByteFieldU32(1)
+        self.dest_id = ByteFieldU32(2)
         put_req_cfg = PutRequestCfg(
-            destination_id=ByteFieldU16(2),
+            destination_id=self.dest_id,
             source_file=self.file_path,
             dest_file=dest_path,
             # Let the transmission mode be auto-determined by the remote MIB
             trans_mode=None,
             closure_requested=False,
         )
-        with open(self.file_path, "w") as of:
-            of.write("Hello World")
+        with open(self.file_path, "wb") as of:
+            crc32 = PredefinedCrc("crc32")
+            data = "Hello World\n".encode()
+            crc32.update(data)
+            crc32 = crc32.digest()
+            of.write(data)
+        file_size = self.file_path.stat().st_size
+        self.local_cfg.local_entity_id = self.source_id
+        source_handler = self._start_source_transaction(
+            self.dest_id, PutRequest(put_req_cfg)
+        )
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
+        file_data_pdu = fsm_res.pdu_holder.to_file_data_pdu()
+        self.assertFalse(file_data_pdu.has_segment_metadata)
+        self.assertEqual(file_data_pdu.file_data, "Hello World\n".encode())
+        self.assertEqual(file_data_pdu.offset, 0)
+        source_handler.confirm_packet_sent_advance_fsm()
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
+        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
+        eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
+        self.assertEqual(crc32, eof_pdu.file_checksum)
+        self.assertEqual(eof_pdu.file_size, file_size)
+        self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
+        with self.assertRaises(PacketSendNotConfirmed):
+            source_handler.state_machine()
+        source_handler.confirm_packet_sent_advance_fsm()
+        self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
+        self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+        self.assertTrue(self.cfdp_user.transaction_finished_was_called)
+        self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
+
+    def test_source_handler_segmented_file(self):
+        # This tests generates two file data PDUs
+        rand_data = random.randbytes(self.file_segment_len * 2)
+        self.source_id = ByteFieldU8(1)
+        self.dest_id = ByteFieldU8(2)
+        dest_path = "/tmp/hello_two_segments_copy.txt"
+        put_req_cfg = PutRequestCfg(
+            destination_id=self.dest_id,
+            source_file=self.file_path,
+            dest_file=dest_path,
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
+            closure_requested=False,
+        )
+        with open(self.file_path, "wb") as of:
+            crc32 = PredefinedCrc("crc32")
+            crc32.update(rand_data)
+            crc32 = crc32.digest()
+            of.write(rand_data)
+        file_size = self.file_path.stat().st_size
+        self.local_cfg.local_entity_id = self.source_id
+        source_handler = self._start_source_transaction(
+            self.dest_id, PutRequest(put_req_cfg)
+        )
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
+        file_data_pdu = fsm_res.pdu_holder.to_file_data_pdu()
+        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
+        self.assertEqual(
+            file_data_pdu.file_data[0 : self.file_segment_len],
+            rand_data[0 : self.file_segment_len],
+        )
+        self.assertEqual(file_data_pdu.offset, 0)
+        source_handler.confirm_packet_sent_advance_fsm()
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
+        file_data_pdu = fsm_res.pdu_holder.to_file_data_pdu()
+        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
+        self.assertEqual(
+            file_data_pdu.file_data[0 : self.file_segment_len],
+            rand_data[self.file_segment_len :],
+        )
+        self.assertEqual(file_data_pdu.offset, self.file_segment_len)
+
+    def _start_source_transaction(
+        self, dest_id: UnsignedByteField, put_request: PutRequest
+    ) -> CfdpSourceHandler:
+        # Create an empty file and send it via CFDP
+        source_handler = CfdpSourceHandler(
+            self.local_cfg, self.seq_num_provider, self.cfdp_user
+        )
+
+        wrapper = CfdpRequestWrapper(put_request)
+        source_handler.start_transaction(wrapper, self.remote_cfg)
+        fsm_res = source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_METADATA)
+        self.assertTrue(self.cfdp_user.transaction_inidcation_was_called)
+        self.assertEqual(self.cfdp_user.transaction_inidcation_call_count, 1)
+        self.assertTrue(fsm_res.pdu_holder.is_file_directive)
+        self.assertEqual(
+            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
+        )
+        metadata_pdu = fsm_res.pdu_holder.to_metadata_pdu()
+        if put_request.cfg.closure_requested is not None:
+            self.assertEqual(
+                metadata_pdu.params.closure_requested, put_request.cfg.closure_requested
+            )
+        self.assertEqual(metadata_pdu.checksum_type, ChecksumTypes.CRC_32)
+        self.assertEqual(metadata_pdu.source_file_name, self.file_path.as_posix())
+        self.assertEqual(metadata_pdu.dest_file_name, put_request.cfg.dest_file)
+        self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
+        source_handler.confirm_packet_sent_advance_fsm()
+        return source_handler
 
     def tearDown(self) -> None:
         if self.file_path.exists():
