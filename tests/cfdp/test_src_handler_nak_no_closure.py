@@ -1,106 +1,23 @@
-import os
 import random
-import tempfile
 from crcmod.predefined import PredefinedCrc
-from pathlib import Path
-from typing import Optional, List
-from unittest import TestCase
 
-from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv
-from spacepackets.cfdp.defs import (
-    FaultHandlerCodes,
-    TransmissionModes,
-    ChecksumTypes,
-    NULL_CHECKSUM_U32,
-    PduType,
-)
+from spacepackets.cfdp import ConditionCode
+from spacepackets.cfdp.defs import ChecksumTypes, NULL_CHECKSUM_U32
 from spacepackets.cfdp.pdu import DirectiveType
 from spacepackets.cfdp.pdu.file_data import FileDataPdu
-from spacepackets.cfdp.pdu.finished import FileDeliveryStatus, DeliveryCode
 from spacepackets.util import ByteFieldU16, ByteFieldU32, UnsignedByteField, ByteFieldU8
-from tmtccmd.cfdp import CfdpUserBase
-from tmtccmd.cfdp.defs import TransactionId, CfdpStates, SourceTransactionStep
+
+from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
 from tmtccmd.cfdp.handler import CfdpSourceHandler, FsmResult, PacketSendNotConfirmed
-from tmtccmd.cfdp.mib import (
-    LocalEntityCfg,
-    LocalIndicationCfg,
-    DefaultFaultHandlerBase,
-    RemoteEntityCfg,
-)
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest, PutRequestCfg
-from tmtccmd.util.seqcnt import SeqCountProvider
+from .test_src_handler import TestCfdpSourceHandler
 
 
-class FaultHandler(DefaultFaultHandlerBase):
-    def __init__(self):
-        self.was_called = False
-        self.call_count = 0
-
-    def handle_fault(self, code: FaultHandlerCodes):
-        self.was_called = True
-        self.call_count += 1
-
-
-class CfdpUser(CfdpUserBase):
-    def __init__(self):
-        super().__init__()
-        self.transaction_inidcation_was_called = False
-        self.transaction_inidcation_call_count = 0
-        self.transaction_finished_was_called = False
-        self.transaction_finished_call_count = 0
-        self.eof_sent_indication_was_called = False
-        self.eof_sent_indication_call_count = 0
-
-    def transaction_indication(self, transaction_id: TransactionId):
-        self.transaction_inidcation_was_called = True
-        self.transaction_inidcation_call_count += 1
-
-    def transaction_finished_indication(
-        self,
-        transaction_id: TransactionId,
-        condition_code: ConditionCode,
-        file_status: FileDeliveryStatus,
-        delivery_code: DeliveryCode,
-        _fs_responses: Optional[List[FileStoreResponseTlv]] = None,
-        _status_report: Optional[any] = None,
-    ):
-        self.transaction_finished_was_called = True
-        self.transaction_finished_call_count += 1
-
-    def eof_sent_indication(self, transaction_id: TransactionId):
-        self.eof_sent_indication_was_called = True
-        self.eof_sent_indication_call_count += 1
-
-    def abandon_indication(
-        self, transaction_id: int, cond_code: ConditionCode, progress: int
-    ):
-        pass
-
-
-class TestCfdp(TestCase):
+class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
-        self.indication_cfg = LocalIndicationCfg(True, True, True, True, True, True)
-        self.fault_handler = FaultHandler()
-        self.local_cfg = LocalEntityCfg(
-            ByteFieldU16(1), self.indication_cfg, self.fault_handler
-        )
-        self.cfdp_user = CfdpUser()
-        self.seq_num_provider = SeqCountProvider(bit_width=8)
-        self.source_id = ByteFieldU16(1)
-        self.dest_id = ByteFieldU16(2)
-        self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
-        with open(self.file_path, "w"):
-            pass
-        self.file_segment_len = 256
-        self.remote_cfg = RemoteEntityCfg(
-            remote_entity_id=self.dest_id,
-            max_file_segment_len=self.file_segment_len,
-            closure_requested=False,
-            crc_on_transmission=False,
-            default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
-        )
+        super().setUp()
 
-    def test_source_handler_empty_file(self):
+    def test_empty_file(self):
         dest_path = "/tmp/hello_copy.txt"
         dest_id = ByteFieldU16(2)
         put_req_cfg = PutRequestCfg(
@@ -136,7 +53,7 @@ class TestCfdp(TestCase):
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
 
-    def test_source_handler_small_file(self):
+    def test_small_file(self):
         dest_path = "/tmp/hello_copy.txt"
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
@@ -177,7 +94,7 @@ class TestCfdp(TestCase):
             source_handler.state_machine()
         self._test_transaction_completion(source_handler)
 
-    def test_source_handler_perfectly_segmented_file(self):
+    def test_perfectly_segmented_file(self):
         # This tests generates two file data PDUs
         rand_data = random.randbytes(self.file_segment_len * 2)
         self.source_id = ByteFieldU8(1)
@@ -199,7 +116,7 @@ class TestCfdp(TestCase):
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
         self._test_transaction_completion(source_handler)
 
-    def test_source_handler_segmented_file(self):
+    def test_segmented_file(self):
         # This tests generates two file data PDUs, but the second one does not have a
         # full segment length
         rand_data = random.randbytes(round(self.file_segment_len * 1.5))
@@ -238,7 +155,7 @@ class TestCfdp(TestCase):
         return fsm_res.pdu_holder.to_file_data_pdu()
 
     def _transaction_with_file_data_wrapper(
-            self, dest_path: str, data: bytes
+        self, dest_path: str, data: bytes
     ) -> (int, bytes, CfdpSourceHandler):
         put_req_cfg = PutRequestCfg(
             destination_id=self.dest_id,
@@ -261,7 +178,7 @@ class TestCfdp(TestCase):
         return file_size, crc32, source_handler
 
     def _first_file_segment_handling(
-            self, source_handler: CfdpSourceHandler, data: bytes
+        self, source_handler: CfdpSourceHandler, data: bytes
     ):
         fsm_res = source_handler.state_machine()
         file_data_pdu = self._check_file_data(fsm_res)
@@ -319,7 +236,3 @@ class TestCfdp(TestCase):
         self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
         source_handler.confirm_packet_sent_advance_fsm()
         return source_handler
-
-    def tearDown(self) -> None:
-        if self.file_path.exists():
-            os.remove(self.file_path)
