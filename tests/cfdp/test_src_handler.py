@@ -6,7 +6,7 @@ from unittest import TestCase
 from spacepackets.cfdp import TransmissionModes
 from spacepackets.util import ByteFieldU16
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, RemoteEntityCfg
-from tmtccmd.cfdp.handler import CfdpSourceHandler
+from tmtccmd.cfdp.handler import SourceHandler
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -35,7 +35,7 @@ class TestCfdpSourceHandler(TestCase):
             default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
         )
         # Create an empty file and send it via CFDP
-        self.source_handler = CfdpSourceHandler(
+        self.source_handler = SourceHandler(
             self.local_cfg, self.seq_num_provider, self.cfdp_user
         )
 

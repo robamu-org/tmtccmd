@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import enum
 
 from spacepackets.util import UnsignedByteField
@@ -58,26 +57,6 @@ class CfdpStates(enum.Enum):
     SUSPENDED = 3
 
 
-@dataclasses.dataclass
-class SourceStateWrapper:
-    state = CfdpStates.IDLE
-    step = SourceTransactionStep.IDLE
-    packet_ready = True
-
-
-@dataclasses.dataclass
-class DestStateWrapper:
-    state = CfdpStates.IDLE
-    transaction = DestTransactionState.IDLE
-    packet_ready = True
-
-
-@dataclasses.dataclass
-class StateWrapper:
-    source_handler_state: SourceStateWrapper = SourceStateWrapper()
-    dest_handler_state: DestStateWrapper = DestStateWrapper()
-
-
 class TransactionId:
     def __init__(
         self,
@@ -103,10 +82,6 @@ class TransactionId:
 class ByteFlowControl:
     period: float
     max_bytes: int
-
-
-class BusyError(Exception):
-    pass
 
 
 class SequenceNumberOverflow(Exception):

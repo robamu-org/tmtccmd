@@ -8,7 +8,8 @@ from spacepackets.cfdp.pdu.file_data import FileDataPdu
 from spacepackets.util import ByteFieldU16, ByteFieldU32, UnsignedByteField, ByteFieldU8
 
 from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
-from tmtccmd.cfdp.handler import CfdpSourceHandler, FsmResult, PacketSendNotConfirmed
+from tmtccmd.cfdp.handler import SourceHandler, FsmResult
+from tmtccmd.cfdp.handler.defs import PacketSendNotConfirmed
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest, PutRequestCfg
 from .test_src_handler import TestCfdpSourceHandler
 
@@ -144,7 +145,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertFalse(fsm_res.pdu_holder.is_file_directive)
         return fsm_res.pdu_holder.to_file_data_pdu()
 
-    def _second_file_segment_handling(self, source_handler: CfdpSourceHandler):
+    def _second_file_segment_handling(self, source_handler: SourceHandler):
         source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
@@ -173,9 +174,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
         return file_size, crc32
 
-    def _first_file_segment_handling(
-        self, source_handler: CfdpSourceHandler, data: bytes
-    ):
+    def _first_file_segment_handling(self, source_handler: SourceHandler, data: bytes):
         fsm_res = source_handler.state_machine()
         file_data_pdu = self._check_file_data(fsm_res)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
@@ -192,7 +191,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(eof_pdu.file_size, file_size)
         self.assertEqual(eof_pdu.file_checksum, crc32)
 
-    def _test_transaction_completion(self, source_handler: CfdpSourceHandler):
+    def _test_transaction_completion(self, source_handler: SourceHandler):
         source_handler.confirm_packet_sent_advance_fsm()
         self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
         self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
