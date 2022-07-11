@@ -59,14 +59,42 @@ class TransferFieldWrapper:
         self.transaction: Optional[TransactionId] = None
         self.fp = FileParams()
         self.remote_cfg: Optional[RemoteEntityCfg] = None
-        self.pdu_conf = PduConfig.empty()
-        self.pdu_conf.source_entity_id = local_entity_id
+        self._pdu_conf = PduConfig.empty()
+        self._pdu_conf.source_entity_id = local_entity_id
+
+    @property
+    def pdu_conf(self) -> PduConfig:
+        return self._pdu_conf
+
+    @property
+    def source_id(self):
+        return self._pdu_conf.source_entity_id
+
+    @source_id.setter
+    def source_id(self, source_id: UnsignedByteField):
+        self._pdu_conf.source_entity_id = source_id
+
+    @property
+    def transmission_mode(self) -> TransmissionModes:
+        return self._pdu_conf.trans_mode
+
+    @transmission_mode.setter
+    def transmission_mode(self, trans_mode: TransmissionModes):
+        self._pdu_conf.trans_mode = trans_mode
+
+    @property
+    def transaction_seq_num(self) -> UnsignedByteField:
+        return self._pdu_conf.transaction_seq_num
+
+    @transaction_seq_num.setter
+    def transaction_seq_num(self, seq_num: UnsignedByteField):
+        self._pdu_conf.transaction_seq_num = seq_num
 
     def reset(self):
         self.fp.reset()
         self.remote_cfg = None
         self.transaction = None
-        self.pdu_conf = PduConfig.empty()
+        self._pdu_conf = PduConfig.empty()
 
 
 class NoRemoteEntityCfgFound(Exception):
@@ -106,6 +134,15 @@ class CfdpSourceHandler:
         self.seq_num_provider = seq_num_provider
         self._current_req = CfdpRequestWrapper(None)
 
+    @property
+    def source_id(self) -> UnsignedByteField:
+        return self.cfg.local_entity_id
+
+    @source_id.setter
+    def source_id(self, source_id: UnsignedByteField):
+        self.cfg.local_entity_id = source_id
+        self.params.source_id = source_id
+
     def start_transaction(
         self, wrapper: CfdpRequestWrapper, remote_cfg: RemoteEntityCfg
     ) -> bool:
@@ -122,13 +159,13 @@ class CfdpSourceHandler:
             self.params.remote_cfg = remote_cfg
             self.states.packet_ready = False
             self._setup_transmission_mode()
-            if self.params.pdu_conf.trans_mode == TransmissionModes.UNACKNOWLEDGED:
+            if self.params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
                 self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
-            elif self.params.pdu_conf.trans_mode == TransmissionModes.ACKNOWLEDGED:
+            elif self.params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
                 self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
             else:
                 raise ValueError(
-                    f"Invalid transmission mode {self.params.pdu_conf.trans_mode} passed"
+                    f"Invalid transmission mode {self.params.transmission_mode} passed"
                 )
             return True
 
@@ -271,7 +308,7 @@ class CfdpSourceHandler:
             trans_mode_to_set = put_req.cfg.trans_mode
         else:
             trans_mode_to_set = self.params.remote_cfg.default_transmission_mode
-        self.params.pdu_conf.trans_mode = trans_mode_to_set
+        self.params.transmission_mode = trans_mode_to_set
 
     def _transaction_start(self, put_req: PutRequest):
         if not put_req.cfg.source_file.exists():
