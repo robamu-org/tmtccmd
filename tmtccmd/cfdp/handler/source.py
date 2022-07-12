@@ -144,6 +144,10 @@ class SourceHandler:
         self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
     @property
+    def pdu_conf(self) -> PduConfig:
+        return self._params.pdu_conf
+
+    @property
     def source_id(self) -> UnsignedByteField:
         return self.cfg.local_entity_id
 
@@ -181,23 +185,28 @@ class SourceHandler:
                 )
             return True
 
-    def pass_packet(self, wrapper: PduHolder):
-        if not wrapper.is_file_directive:
+    def pass_packet(self, packet: AbstractFileDirectiveBase):
+        """Pass PDU file directives going towards the file sender to the CFDP source handler
+
+        :raises InvalidPduDirection: PDU direction field wrong
+        :raises InvalidPduForSourceHandler: Invalid PDU file directive type
+        """
+        if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
             raise InvalidPduForSourceHandler(
-                "CFDP source handler can not process file data PDUs"
+                f"Direction {packet.pdu_header.direction} invalid"
             )
+        # TODO: What about prompt and keep alive PDU?
+        if packet.directive_type in [DirectiveType.METADATA_PDU, DirectiveType.EOF_PDU]:
+            raise InvalidPduForSourceHandler(
+                f"CFDP source handler can not handle {packet.directive_type}"
+            )
+        # A dictionary is used to allow passing multiple received packets and store them until
+        # they are processed by the state machine.
+        if packet.directive_type in self._rec_dict:
+            pdu_directive_list = self._rec_dict.get(packet.directive_type)
+            pdu_directive_list.append(packet)
         else:
-            if wrapper.pdu_directive_type == DirectiveType.METADATA_PDU:
-                raise InvalidPduForSourceHandler(
-                    f"CFDP source handler can not {wrapper.pdu_directive_type}"
-                )
-            # A dictionary is used to allow passing multiple received packets and store them until
-            # they are processed by the state machine.
-            if wrapper.pdu_directive_type in self._rec_dict:
-                pdu_directive_list = self._rec_dict.get(wrapper.pdu_directive_type)
-                pdu_directive_list.append(wrapper.base)
-            else:
-                self._rec_dict.update({wrapper.pdu_directive_type: [wrapper.base]})
+            self._rec_dict.update({packet.directive_type: [packet]})
 
     def state_machine(self) -> FsmResult:
         """This is the primary state machine which performs the CFDP procedures like CRC calculation

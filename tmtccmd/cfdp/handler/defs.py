@@ -17,6 +17,10 @@ class PacketSendNotConfirmed(Exception):
     pass
 
 
+class InvalidPduDirection(Exception):
+    pass
+
+
 class BusyError(Exception):
     pass
 
