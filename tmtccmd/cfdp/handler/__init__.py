@@ -7,6 +7,7 @@ from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.cfdp import LocalEntityCfg, RemoteEntityTable, CfdpUserBase
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
 from tmtccmd.cfdp.defs import CfdpStates, CfdpRequestType
+from .defs import NoRemoteEntityCfgFound, BusyError
 
 from .dest import DestStateWrapper
 from .source import SourceHandler, SourceStateWrapper, FsmResult
@@ -118,7 +119,7 @@ class CfdpHandler:
             put_request.cfg.destination_id
         )
         if remote_cfg is None:
-            raise NoRemoteEntityCfgFound()
+            raise NoRemoteEntityCfgFound(put_request.cfg.destination_id)
         self._tx_handler.start_transaction(
             remote_cfg=remote_cfg, wrapper=self._request_wrapper
         )

@@ -1,4 +1,3 @@
-from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Dict, List
@@ -11,7 +10,6 @@ from spacepackets.cfdp import (
     ChecksumTypes,
     Direction,
     PduConfig,
-    PduType,
 )
 from spacepackets.cfdp.pdu import (
     PduHolder,
@@ -24,7 +22,6 @@ from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
 )
-from spacepackets.cfdp.pdu.helper import GenericPduPacket
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd import get_console_logger
 from tmtccmd.cfdp import (
@@ -40,6 +37,8 @@ from tmtccmd.cfdp.handler.defs import (
     ChecksumNotImplemented,
     SourceFileDoesNotExist,
     InvalidPduDirection,
+    InvalidSourceId,
+    InvalidDestinationId,
 )
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
 from tmtccmd.util import ProvidesSeqCount
@@ -194,7 +193,13 @@ class SourceHandler:
         """
         if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
             raise InvalidPduDirection(
-                f"Direction {packet.pdu_header.direction} invalid"
+                Direction.TOWARDS_SENDER, packet.pdu_header.direction
+            )
+        if packet.source_entity_id != self.source_id:
+            raise InvalidSourceId(self.source_id, packet.source_entity_id)
+        if packet.dest_entity_id != self._params.remote_cfg.remote_entity_id:
+            raise InvalidDestinationId(
+                self._params.remote_cfg.remote_entity_id, packet.dest_entity_id
             )
         # TODO: What about prompt and keep alive PDU?
         if packet.directive_type in [DirectiveType.METADATA_PDU, DirectiveType.EOF_PDU]:
@@ -334,7 +339,7 @@ class SourceHandler:
                 PredefinedCrc("crc32c"), file, file_sz, segment_len
             )
         else:
-            raise ChecksumNotImplemented(f"Checksum {crc_type} not implemented")
+            raise ChecksumNotImplemented(crc_type)
 
     def calc_crc_for_file_crcmod(
         self, crc_obj: PredefinedCrc, file: Path, file_sz: int, segment_len: int
@@ -427,7 +432,7 @@ class SourceHandler:
     def _transaction_start(self, put_req: PutRequest):
         if not put_req.cfg.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
-            raise SourceFileDoesNotExist()
+            raise SourceFileDoesNotExist(put_req.cfg.source_file)
         self._params.fp.size = put_req.cfg.source_file.stat().st_size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
         self._params.remote_cfg = self._params.remote_cfg
