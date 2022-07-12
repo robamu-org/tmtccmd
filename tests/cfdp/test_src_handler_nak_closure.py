@@ -25,6 +25,10 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
             pdu_conf=reply_conf,
         )
         self.source_handler.pass_packet(finish_pdu)
+        # Transaction should be finished
+        fsm_res = self.source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
 
     def test_small_file(self):
         pass
