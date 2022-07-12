@@ -59,42 +59,39 @@ class TransferFieldWrapper:
         self.transaction: Optional[TransactionId] = None
         self.fp = FileParams()
         self.remote_cfg: Optional[RemoteEntityCfg] = None
-        self._pdu_conf = PduConfig.empty()
-        self._pdu_conf.source_entity_id = local_entity_id
-
-    @property
-    def pdu_conf(self) -> PduConfig:
-        return self._pdu_conf
+        self.closure_requested: bool = False
+        self.pdu_conf = PduConfig.empty()
+        self.pdu_conf.source_entity_id = local_entity_id
 
     @property
     def source_id(self):
-        return self._pdu_conf.source_entity_id
+        return self.pdu_conf.source_entity_id
 
     @source_id.setter
     def source_id(self, source_id: UnsignedByteField):
-        self._pdu_conf.source_entity_id = source_id
+        self.pdu_conf.source_entity_id = source_id
 
     @property
     def transmission_mode(self) -> TransmissionModes:
-        return self._pdu_conf.trans_mode
+        return self.pdu_conf.trans_mode
 
     @transmission_mode.setter
     def transmission_mode(self, trans_mode: TransmissionModes):
-        self._pdu_conf.trans_mode = trans_mode
+        self.pdu_conf.trans_mode = trans_mode
 
     @property
     def transaction_seq_num(self) -> UnsignedByteField:
-        return self._pdu_conf.transaction_seq_num
+        return self.pdu_conf.transaction_seq_num
 
     @transaction_seq_num.setter
     def transaction_seq_num(self, seq_num: UnsignedByteField):
-        self._pdu_conf.transaction_seq_num = seq_num
+        self.pdu_conf.transaction_seq_num = seq_num
 
     def reset(self):
         self.fp.reset()
         self.remote_cfg = None
         self.transaction = None
-        self._pdu_conf = PduConfig.empty()
+        self.pdu_conf = PduConfig.empty()
 
 
 class FsmResult:
@@ -141,8 +138,8 @@ class SourceHandler:
         self.pdu_wrapper = PduHolder(None)
         self.cfg = cfg
         self.user = user
-        self.params = TransferFieldWrapper(cfg.local_entity_id)
         self.seq_num_provider = seq_num_provider
+        self._params = TransferFieldWrapper(cfg.local_entity_id)
         self._current_req = CfdpRequestWrapper(None)
         self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
@@ -153,7 +150,7 @@ class SourceHandler:
     @source_id.setter
     def source_id(self, source_id: UnsignedByteField):
         self.cfg.local_entity_id = source_id
-        self.params.source_id = source_id
+        self._params.source_id = source_id
 
     def start_transaction(
         self, wrapper: CfdpRequestWrapper, remote_cfg: RemoteEntityCfg
@@ -169,18 +166,18 @@ class SourceHandler:
                 LOGGER.debug("CFDP source handler is busy, can't process put request")
                 return False
             self._current_req = wrapper
-            self.params.remote_cfg = remote_cfg
+            self._params.remote_cfg = remote_cfg
             self.states.packet_ready = False
             self._setup_transmission_mode()
-            if self.params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
+            if self._params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
                 LOGGER.debug("Starting Put Request handling in NAK mode")
                 self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
-            elif self.params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
+            elif self._params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
                 LOGGER.debug("Starting Put Request handling in ACK mode")
                 self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
             else:
                 raise ValueError(
-                    f"Invalid transmission mode {self.params.transmission_mode} passed"
+                    f"Invalid transmission mode {self._params.transmission_mode} passed"
                 )
             return True
 
@@ -230,15 +227,15 @@ class SourceHandler:
                 self._transaction_start(put_req)
                 self.states.step = SourceTransactionStep.CRC_PROCEDURE
             if self.states.step == SourceTransactionStep.CRC_PROCEDURE:
-                if self.params.fp.size == 0:
+                if self._params.fp.size == 0:
                     # Empty file, use null checksum
-                    self.params.fp.crc32 = NULL_CHECKSUM_U32
+                    self._params.fp.crc32 = NULL_CHECKSUM_U32
                 else:
-                    self.params.fp.crc32 = self.calc_cfdp_file_crc(
-                        crc_type=self.params.remote_cfg.crc_type,
+                    self._params.fp.crc32 = self.calc_cfdp_file_crc(
+                        crc_type=self._params.remote_cfg.crc_type,
                         file=put_req.cfg.source_file,
-                        file_sz=self.params.fp.size,
-                        segment_len=self.params.fp.segment_len,
+                        file_sz=self._params.fp.size,
+                        segment_len=self._params.fp.segment_len,
                     )
                 self.states.step = SourceTransactionStep.SENDING_METADATA
             if self.states.step == SourceTransactionStep.SENDING_METADATA:
@@ -261,7 +258,7 @@ class SourceHandler:
                 self._handle_wait_for_finish()
             if self.states.step == SourceTransactionStep.NOTICE_OF_COMPLETION:
                 self.user.transaction_finished_indication(
-                    transaction_id=self.params.transaction,
+                    transaction_id=self._params.transaction,
                     condition_code=ConditionCode.NO_ERROR,
                     file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
                     delivery_code=DeliveryCode.DATA_COMPLETE,
@@ -298,12 +295,12 @@ class SourceHandler:
             if self.states.step == SourceTransactionStep.SENDING_METADATA:
                 self.states.step = SourceTransactionStep.SENDING_FILE_DATA
             elif self.states.step == SourceTransactionStep.SENDING_FILE_DATA:
-                if self.params.fp.offset == self.params.fp.size:
+                if self._params.fp.offset == self._params.fp.size:
                     self.states.step = SourceTransactionStep.SENDING_EOF
             elif self.states.step == SourceTransactionStep.SENDING_EOF:
-                self.user.eof_sent_indication(self.params.transaction)
+                self.user.eof_sent_indication(self._params.transaction)
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
-                    if self.params.remote_cfg.closure_requested:
+                    if self._params.closure_requested:
                         self.states.step = SourceTransactionStep.WAIT_FOR_FINISH
                     else:
                         self.states.step = SourceTransactionStep.NOTICE_OF_COMPLETION
@@ -313,7 +310,7 @@ class SourceHandler:
     def reset(self):
         self.states.step = SourceTransactionStep.IDLE
         self.states.state = CfdpStates.IDLE
-        self.params.reset()
+        self._params.reset()
 
     def calc_cfdp_file_crc(
         self, crc_type: ChecksumTypes, file: Path, file_sz: int, segment_len: int
@@ -378,7 +375,7 @@ class SourceHandler:
                 self.states.step = SourceTransactionStep.WAIT_FOR_FINISH
 
     def _handle_wait_for_finish(self):
-        if not self.params.remote_cfg.closure_requested:
+        if not self._params.closure_requested:
             LOGGER.error(
                 f"Invalid Finish PDU waiting function call, no closure requested"
             )
@@ -387,7 +384,7 @@ class SourceHandler:
         #       so it might make sense to think about storing the current state of
         #       the transaction in a source state config file which can be restored
         #       when re-starting the application
-        if self.params.remote_cfg.closure_requested:
+        if self._params.closure_requested:
             # Check all entries for some robustness against out-of-order reception
             if DirectiveType.FINISHED_PDU in self._rec_dict:
                 pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
@@ -409,42 +406,47 @@ class SourceHandler:
         if put_req.cfg.trans_mode is not None:
             trans_mode_to_set = put_req.cfg.trans_mode
         else:
-            trans_mode_to_set = self.params.remote_cfg.default_transmission_mode
-        self.params.transmission_mode = trans_mode_to_set
+            trans_mode_to_set = self._params.remote_cfg.default_transmission_mode
+        self._params.transmission_mode = trans_mode_to_set
+        if put_req.cfg.closure_requested is not None:
+            closure_req_to_set = put_req.cfg.closure_requested
+        else:
+            closure_req_to_set = self._params.remote_cfg.closure_requested
+        self._params.closure_requested = closure_req_to_set
 
     def _transaction_start(self, put_req: PutRequest):
         if not put_req.cfg.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
             raise SourceFileDoesNotExist()
-        self.params.fp.size = put_req.cfg.source_file.stat().st_size
-        self.params.fp.segment_len = self.params.remote_cfg.max_file_segment_len
-        self.params.remote_cfg = self.params.remote_cfg
-        self.params.transaction = TransactionId(
+        self._params.fp.size = put_req.cfg.source_file.stat().st_size
+        self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
+        self._params.remote_cfg = self._params.remote_cfg
+        self._params.transaction = TransactionId(
             source_entity_id=self.cfg.local_entity_id,
             transaction_seq_num=self._get_next_transfer_seq_num(),
         )
-        self.user.transaction_indication(self.params.transaction)
+        self.user.transaction_indication(self._params.transaction)
 
     def _prepare_metadata_pdu(self, put_req: PutRequest):
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
                 f"Must send current packet {self.pdu_wrapper.base} first"
             )
-        self.params.pdu_conf.seg_ctrl = put_req.cfg.seg_ctrl
-        self.params.pdu_conf.dest_entity_id = put_req.cfg.destination_id
-        self.params.pdu_conf.crc_flag = self.params.remote_cfg.crc_on_transmission
-        self.params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
-        self.params.pdu_conf.transaction_seq_num = self.params.transaction.seq_num
+        self._params.pdu_conf.seg_ctrl = put_req.cfg.seg_ctrl
+        self._params.pdu_conf.dest_entity_id = put_req.cfg.destination_id
+        self._params.pdu_conf.crc_flag = self._params.remote_cfg.crc_on_transmission
+        self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
+        self._params.pdu_conf.transaction_seq_num = self._params.transaction.seq_num
         params = MetadataParams(
             dest_file_name=put_req.cfg.dest_file,
             source_file_name=put_req.cfg.source_file.as_posix(),
-            # TODO: These two can be overriden by PutRequest configuration
-            checksum_type=self.params.remote_cfg.crc_type,
-            closure_requested=self.params.remote_cfg.closure_requested,
-            file_size=self.params.fp.size,
+            # TODO: Checksum type can be overriden by Put Request
+            checksum_type=self._params.remote_cfg.crc_type,
+            closure_requested=self._params.closure_requested,
+            file_size=self._params.fp.size,
         )
         self.pdu_wrapper.base = MetadataPdu(
-            pdu_conf=self.params.pdu_conf, params=params
+            pdu_conf=self._params.pdu_conf, params=params
         )
 
     def _prepare_next_file_data_pdu(self, request: PutRequest) -> bool:
@@ -455,36 +457,38 @@ class SourceHandler:
             in the Copy File procedure can be performed
         """
         # No need to send a file data PDU for an empty file
-        if self.params.fp.size == 0:
+        if self._params.fp.size == 0:
             return False
         with open(request.cfg.source_file, "rb") as of:
-            if self.params.fp.offset == self.params.fp.size:
+            if self._params.fp.offset == self._params.fp.size:
                 return False
             if self.states.packet_ready:
                 raise PacketSendNotConfirmed(
                     f"Must send current packet {self.pdu_wrapper.base} first"
                 )
-            if self.params.fp.size < self.params.fp.segment_len:
-                read_len = self.params.fp.size
+            if self._params.fp.size < self._params.fp.segment_len:
+                read_len = self._params.fp.size
             else:
-                next_offset = self.params.fp.offset + self.params.fp.segment_len
-                if next_offset > self.params.fp.size:
-                    read_len = next_offset % self.params.fp.size
+                next_offset = self._params.fp.offset + self._params.fp.segment_len
+                if next_offset > self._params.fp.size:
+                    read_len = next_offset % self._params.fp.size
                 else:
-                    read_len = self.params.fp.segment_len
+                    read_len = self._params.fp.segment_len
             file_data = self.user.vfs.read_from_opened_file(
-                of, self.params.fp.offset, read_len
+                of, self._params.fp.offset, read_len
             )
-            self.params.pdu_conf.transaction_seq_num = self._get_next_transfer_seq_num()
+            self._params.pdu_conf.transaction_seq_num = (
+                self._get_next_transfer_seq_num()
+            )
             # NOTE: Support for record continuation state not implemented yet. Segment metadata
             #       flag is therefore always set to False
             file_data_pdu = FileDataPdu(
-                pdu_conf=self.params.pdu_conf,
+                pdu_conf=self._params.pdu_conf,
                 file_data=file_data,
-                offset=self.params.fp.offset,
+                offset=self._params.fp.offset,
                 segment_metadata_flag=False,
             )
-            self.params.fp.offset += read_len
+            self._params.fp.offset += read_len
             self.pdu_wrapper.base = file_data_pdu
         return True
 
@@ -494,9 +498,9 @@ class SourceHandler:
                 f"Must send current packet {self.pdu_wrapper.base} first"
             )
         self.pdu_wrapper.base = EofPdu(
-            file_checksum=self.params.fp.crc32,
-            file_size=self.params.fp.size,
-            pdu_conf=self.params.pdu_conf,
+            file_checksum=self._params.fp.crc32,
+            file_size=self._params.fp.size,
+            pdu_conf=self._params.pdu_conf,
         )
 
     def _get_next_transfer_seq_num(self) -> UnsignedByteField:

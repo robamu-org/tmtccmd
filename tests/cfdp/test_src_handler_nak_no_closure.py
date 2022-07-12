@@ -14,10 +14,16 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
 
     def test_empty_file(self):
         self._common_empty_file_test()
+        fsm_res = self.source_handler.state_machine()
+        self.assertTrue(self.cfdp_user.transaction_finished_was_called)
+        self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
+        self.source_handler.confirm_packet_sent_advance_fsm()
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
 
     def test_small_file(self):
         self._common_small_file_test()
-        self._test_transaction_completion(self.source_handler)
+        self._test_transaction_completion()
 
     def test_perfectly_segmented_file(self):
         # This tests generates two file data PDUs
@@ -40,7 +46,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
-        self._test_transaction_completion(self.source_handler)
+        self._test_transaction_completion()
 
     def test_segmented_file(self):
         # This tests generates two file data PDUs, but the second one does not have a
@@ -65,7 +71,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
-        self._test_transaction_completion(self.source_handler)
+        self._test_transaction_completion()
 
     def _second_file_segment_handling(self, source_handler: SourceHandler):
         source_handler.confirm_packet_sent_advance_fsm()
@@ -113,11 +119,11 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(eof_pdu.file_size, file_size)
         self.assertEqual(eof_pdu.file_checksum, crc32)
 
-    def _test_transaction_completion(self, source_handler: SourceHandler):
-        source_handler.confirm_packet_sent_advance_fsm()
+    def _test_transaction_completion(self):
+        self.source_handler.confirm_packet_sent_advance_fsm()
         self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
         self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
-        fsm_res = source_handler.state_machine()
+        fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
         self.assertTrue(self.cfdp_user.transaction_finished_was_called)

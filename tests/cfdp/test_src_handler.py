@@ -76,12 +76,6 @@ class TestCfdpSourceHandler(TestCase):
         self.source_handler.confirm_packet_sent_advance_fsm()
         self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
         self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
-        fsm_res = self.source_handler.state_machine()
-        self.assertTrue(self.cfdp_user.transaction_finished_was_called)
-        self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
-        self.source_handler.confirm_packet_sent_advance_fsm()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
 
     def _common_small_file_test(self):
         dest_path = "/tmp/hello_copy.txt"
