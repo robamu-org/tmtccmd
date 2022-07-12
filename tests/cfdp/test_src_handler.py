@@ -2,6 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 from unittest import TestCase
+from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import (
     TransmissionModes,
@@ -9,11 +10,12 @@ from spacepackets.cfdp import (
     ConditionCode,
     ChecksumTypes,
 )
-from spacepackets.cfdp.pdu import DirectiveType
-from spacepackets.util import ByteFieldU16, UnsignedByteField
+from spacepackets.cfdp.pdu import DirectiveType, FileDataPdu
+from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, RemoteEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
-from tmtccmd.cfdp.handler import SourceHandler
+from tmtccmd.cfdp.handler import SourceHandler, FsmResult
+from tmtccmd.cfdp.handler.defs import PacketSendNotConfirmed
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest, CfdpRequestWrapper
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
@@ -80,6 +82,50 @@ class TestCfdpSourceHandler(TestCase):
         self.source_handler.confirm_packet_sent_advance_fsm()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+
+    def _common_small_file_test(self):
+        dest_path = "/tmp/hello_copy.txt"
+        self.source_id = ByteFieldU32(1)
+        self.dest_id = ByteFieldU32(2)
+        self.source_handler.source_id = self.source_id
+        put_req_cfg = PutRequestCfg(
+            destination_id=self.dest_id,
+            source_file=self.file_path,
+            dest_file=dest_path,
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
+            closure_requested=False,
+        )
+        with open(self.file_path, "wb") as of:
+            crc32 = PredefinedCrc("crc32")
+            data = "Hello World\n".encode()
+            crc32.update(data)
+            crc32 = crc32.digest()
+            of.write(data)
+        file_size = self.file_path.stat().st_size
+        self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
+        fsm_res = self.source_handler.state_machine()
+        file_data_pdu = self._check_file_data(fsm_res)
+        self.assertFalse(file_data_pdu.has_segment_metadata)
+        self.assertEqual(file_data_pdu.file_data, "Hello World\n".encode())
+        self.assertEqual(file_data_pdu.offset, 0)
+        self.source_handler.confirm_packet_sent_advance_fsm()
+        fsm_res = self.source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
+        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
+        eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
+        self.assertEqual(crc32, eof_pdu.file_checksum)
+        self.assertEqual(eof_pdu.file_size, file_size)
+        self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
+        with self.assertRaises(PacketSendNotConfirmed):
+            self.source_handler.state_machine()
+
+    def _check_file_data(self, fsm_res: FsmResult) -> FileDataPdu:
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
+        return fsm_res.pdu_holder.to_file_data_pdu()
 
     def _start_source_transaction(
         self, dest_id: UnsignedByteField, put_request: PutRequest

@@ -7,3 +7,6 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def test_empty_file(self):
         self._common_empty_file_test()
+
+    def test_small_file(self):
+        pass
