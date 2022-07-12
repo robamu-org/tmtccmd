@@ -1,3 +1,4 @@
+import enum
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Dict, List
@@ -30,7 +31,7 @@ from tmtccmd.cfdp import (
     TransactionId,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.defs import CfdpRequestType, CfdpStates, SourceTransactionStep
+from tmtccmd.cfdp.defs import CfdpRequestType, CfdpStates
 from tmtccmd.cfdp.handler.defs import (
     FileParams,
     PacketSendNotConfirmed,
@@ -47,10 +48,23 @@ from tmtccmd.util import ProvidesSeqCount
 LOGGER = get_console_logger()
 
 
+class TransactionStep(enum.Enum):
+    IDLE = 0
+    TRANSACTION_START = 1
+    CRC_PROCEDURE = 2
+    # The following three are used for the Copy File Procedure
+    SENDING_METADATA = 3
+    SENDING_FILE_DATA = 4
+    SENDING_EOF = 5
+    WAIT_FOR_ACK = 6
+    WAIT_FOR_FINISH = 7
+    NOTICE_OF_COMPLETION = 8
+
+
 @dataclass
 class SourceStateWrapper:
     state: CfdpStates = CfdpStates.IDLE
-    step: SourceTransactionStep = SourceTransactionStep.IDLE
+    step: TransactionStep = TransactionStep.IDLE
     packet_ready: bool = False
 
 
@@ -109,7 +123,12 @@ class FsmResult:
 
 
 class InvalidPduForSourceHandler(Exception):
-    pass
+    def __init__(self, packet: AbstractFileDirectiveBase, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.packet = packet
+
+    def __str__(self):
+        return f"Invalid packet {self.packet} for source handler"
 
 
 class SourceHandler:
@@ -212,9 +231,7 @@ class SourceHandler:
             )
         # TODO: What about prompt and keep alive PDU?
         if packet.directive_type in [DirectiveType.METADATA_PDU, DirectiveType.EOF_PDU]:
-            raise InvalidPduForSourceHandler(
-                f"CFDP source handler can not handle {packet.directive_type}"
-            )
+            raise InvalidPduForSourceHandler(packet)
         # A dictionary is used to allow passing multiple received packets and store them until
         # they are processed by the state machine.
         if packet.directive_type in self._rec_dict:
@@ -245,12 +262,12 @@ class SourceHandler:
             return FsmResult(self.pdu_wrapper, self.states)
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             put_req = self._current_req.to_put_request()
-            if self.states.step == SourceTransactionStep.IDLE:
-                self.states.step = SourceTransactionStep.TRANSACTION_START
-            if self.states.step == SourceTransactionStep.TRANSACTION_START:
+            if self.states.step == TransactionStep.IDLE:
+                self.states.step = TransactionStep.TRANSACTION_START
+            if self.states.step == TransactionStep.TRANSACTION_START:
                 self._transaction_start(put_req)
-                self.states.step = SourceTransactionStep.CRC_PROCEDURE
-            if self.states.step == SourceTransactionStep.CRC_PROCEDURE:
+                self.states.step = TransactionStep.CRC_PROCEDURE
+            if self.states.step == TransactionStep.CRC_PROCEDURE:
                 if self._params.fp.size == 0:
                     # Empty file, use null checksum
                     self._params.fp.crc32 = NULL_CHECKSUM_U32
@@ -261,26 +278,26 @@ class SourceHandler:
                         file_sz=self._params.fp.size,
                         segment_len=self._params.fp.segment_len,
                     )
-                self.states.step = SourceTransactionStep.SENDING_METADATA
-            if self.states.step == SourceTransactionStep.SENDING_METADATA:
+                self.states.step = TransactionStep.SENDING_METADATA
+            if self.states.step == TransactionStep.SENDING_METADATA:
                 self._prepare_metadata_pdu(put_req)
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.step == SourceTransactionStep.SENDING_FILE_DATA:
+            if self.states.step == TransactionStep.SENDING_FILE_DATA:
                 if self._prepare_next_file_data_pdu(put_req):
                     self.states.packet_ready = True
                     return FsmResult(self.pdu_wrapper, self.states)
                 else:
-                    self.states.step = SourceTransactionStep.SENDING_EOF
-            if self.states.step == SourceTransactionStep.SENDING_EOF:
+                    self.states.step = TransactionStep.SENDING_EOF
+            if self.states.step == TransactionStep.SENDING_EOF:
                 self._prepare_eof_pdu()
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.step == SourceTransactionStep.WAIT_FOR_ACK:
+            if self.states.step == TransactionStep.WAIT_FOR_ACK:
                 self._handle_wait_for_ack()
-            if self.states.step == SourceTransactionStep.WAIT_FOR_FINISH:
+            if self.states.step == TransactionStep.WAIT_FOR_FINISH:
                 self._handle_wait_for_finish()
-            if self.states.step == SourceTransactionStep.NOTICE_OF_COMPLETION:
+            if self.states.step == TransactionStep.NOTICE_OF_COMPLETION:
                 self.user.transaction_finished_indication(
                     transaction_id=self._params.transaction,
                     condition_code=ConditionCode.NO_ERROR,
@@ -316,23 +333,23 @@ class SourceHandler:
                 f"advancing state machine"
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
-            if self.states.step == SourceTransactionStep.SENDING_METADATA:
-                self.states.step = SourceTransactionStep.SENDING_FILE_DATA
-            elif self.states.step == SourceTransactionStep.SENDING_FILE_DATA:
+            if self.states.step == TransactionStep.SENDING_METADATA:
+                self.states.step = TransactionStep.SENDING_FILE_DATA
+            elif self.states.step == TransactionStep.SENDING_FILE_DATA:
                 if self._params.fp.offset == self._params.fp.size:
-                    self.states.step = SourceTransactionStep.SENDING_EOF
-            elif self.states.step == SourceTransactionStep.SENDING_EOF:
+                    self.states.step = TransactionStep.SENDING_EOF
+            elif self.states.step == TransactionStep.SENDING_EOF:
                 self.user.eof_sent_indication(self._params.transaction)
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
                     if self._params.closure_requested:
-                        self.states.step = SourceTransactionStep.WAIT_FOR_FINISH
+                        self.states.step = TransactionStep.WAIT_FOR_FINISH
                     else:
-                        self.states.step = SourceTransactionStep.NOTICE_OF_COMPLETION
+                        self.states.step = TransactionStep.NOTICE_OF_COMPLETION
                 else:
-                    self.states.step = SourceTransactionStep.WAIT_FOR_ACK
+                    self.states.step = TransactionStep.WAIT_FOR_ACK
 
     def reset(self):
-        self.states.step = SourceTransactionStep.IDLE
+        self.states.step = TransactionStep.IDLE
         self.states.state = CfdpStates.IDLE
         self._params.reset()
 
@@ -396,7 +413,7 @@ class SourceHandler:
                     #       to remember the condition code of the sent EOF PDU for a basic
                     #       equality check here
                     pass
-                self.states.step = SourceTransactionStep.WAIT_FOR_FINISH
+                self.states.step = TransactionStep.WAIT_FOR_FINISH
 
     def _handle_wait_for_finish(self):
         if not self._params.closure_requested:
@@ -416,7 +433,7 @@ class SourceHandler:
                     holder = PduHolder(pdu)
                     finish_pdu = holder.to_finished_pdu()
                     if finish_pdu.condition_code == ConditionCode.NO_ERROR:
-                        self.states.step = SourceTransactionStep.NOTICE_OF_COMPLETION
+                        self.states.step = TransactionStep.NOTICE_OF_COMPLETION
                     else:
                         # TODO: Implement error handling
                         LOGGER.warning(

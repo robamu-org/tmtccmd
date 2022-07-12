@@ -1,11 +1,10 @@
 import random
 from crcmod.predefined import PredefinedCrc
 
-from spacepackets.cfdp.pdu import FileDataPdu, FinishedPdu
 from spacepackets.util import ByteFieldU16, ByteFieldU8
-from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
+from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
-from tmtccmd.cfdp.handler.defs import InvalidPduDirection
+from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequest, PutRequestCfg
 from .test_src_handler import TestCfdpSourceHandler
 
@@ -21,7 +20,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
         self.source_handler.confirm_packet_sent_advance_fsm()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
     def test_small_file(self):
         self._common_small_file_test(False)
@@ -82,7 +81,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_FILE_DATA)
         self.assertFalse(fsm_res.pdu_holder.is_file_directive)
         return fsm_res.pdu_holder.to_file_data_pdu()
 
@@ -119,7 +118,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
 
     def _test_eof_file_pdu(self, fsm_res: FsmResult, file_size: int, crc32: bytes):
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
+        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_EOF)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
         self.assertEqual(eof_pdu.file_size, file_size)
         self.assertEqual(eof_pdu.file_checksum, crc32)
@@ -127,6 +126,6 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
     def _test_transaction_completion(self):
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
         self.assertTrue(self.cfdp_user.transaction_finished_was_called)
         self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)

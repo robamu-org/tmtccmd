@@ -2,8 +2,13 @@ from spacepackets.cfdp import ConditionCode, Direction
 from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField, ByteFieldU16, ByteFieldEmpty
-from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
-from tmtccmd.cfdp.handler.defs import InvalidPduDirection, InvalidSourceId, InvalidDestinationId
+from tmtccmd.cfdp.defs import CfdpStates
+from tmtccmd.cfdp.handler.defs import (
+    InvalidPduDirection,
+    InvalidSourceId,
+    InvalidDestinationId,
+)
+from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
 from .test_src_handler import TestCfdpSourceHandler
 
@@ -18,7 +23,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
     def test_small_file(self):
         self._common_small_file_test(True)
@@ -28,7 +33,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -77,7 +82,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
             self.source_handler.states.state, CfdpStates.BUSY_CLASS_1_NACKED
         )
         self.assertEqual(
-            self.source_handler.states.step, SourceTransactionStep.WAIT_FOR_FINISH
+            self.source_handler.states.step, TransactionStep.WAIT_FOR_FINISH
         )
         self.source_handler.pass_packet(self._prepare_finish_pdu())
 

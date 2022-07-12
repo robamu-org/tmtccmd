@@ -27,30 +27,6 @@ class CfdpIndication(enum.Enum):
     EOF_RECV = 10
 
 
-class SourceTransactionStep(enum.Enum):
-    IDLE = 0
-    TRANSACTION_START = 1
-    CRC_PROCEDURE = 2
-    # The following three are used for the Copy File Procedure
-    SENDING_METADATA = 3
-    SENDING_FILE_DATA = 4
-    SENDING_EOF = 5
-    WAIT_FOR_ACK = 6
-    WAIT_FOR_FINISH = 7
-    NOTICE_OF_COMPLETION = 8
-
-
-class DestTransactionState(enum.Enum):
-    IDLE = 0
-    # Metadata was received
-    TRANSACTION_START = 1
-    CRC_PROCEDURE = 2
-    RECEIVING_FILE_DATA = 3
-    # EOF was received. Perform checksum verification and notice of completion
-    TRANSFER_COMPLETION = 4
-    SEINDING_FINISHED_PDU = 5
-
-
 class CfdpStates(enum.Enum):
     IDLE = 0
     BUSY_CLASS_1_NACKED = 1
@@ -78,11 +54,6 @@ class TransactionId:
 
     def __hash__(self):
         return hash((self.source_id, self.seq_num))
-
-
-class ByteFlowControl:
-    period: float
-    max_bytes: int
 
 
 class SequenceNumberOverflow(Exception):

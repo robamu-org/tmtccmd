@@ -11,6 +11,8 @@ from .defs import NoRemoteEntityCfgFound, BusyError
 
 from .dest import DestStateWrapper
 from .source import SourceHandler, SourceStateWrapper, FsmResult
+from .source import TransactionStep as SourceTransactionStep
+from .dest import TransactionStep as DestTransactionStep
 
 LOGGER = get_console_logger()
 

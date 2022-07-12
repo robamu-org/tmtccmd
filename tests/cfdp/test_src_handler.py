@@ -13,9 +13,10 @@ from spacepackets.cfdp import (
 from spacepackets.cfdp.pdu import DirectiveType, FileDataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, RemoteEntityCfg
-from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
+from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.defs import PacketSendNotConfirmed
+from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest, CfdpRequestWrapper
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
@@ -63,7 +64,7 @@ class TestCfdpSourceHandler(TestCase):
         self._start_source_transaction(dest_id, PutRequest(put_req_cfg))
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
+        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_EOF)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
@@ -106,7 +107,7 @@ class TestCfdpSourceHandler(TestCase):
         self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_EOF)
+        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_EOF)
         self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
         self.assertEqual(crc32, eof_pdu.file_checksum)
@@ -117,7 +118,7 @@ class TestCfdpSourceHandler(TestCase):
 
     def _check_file_data(self, fsm_res: FsmResult) -> FileDataPdu:
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_FILE_DATA)
+        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_FILE_DATA)
         self.assertFalse(fsm_res.pdu_holder.is_file_directive)
         return fsm_res.pdu_holder.to_file_data_pdu()
 
@@ -129,7 +130,7 @@ class TestCfdpSourceHandler(TestCase):
         self.source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.SENDING_METADATA)
+        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_METADATA)
         self.assertTrue(self.cfdp_user.transaction_inidcation_was_called)
         self.assertEqual(self.cfdp_user.transaction_inidcation_call_count, 1)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
