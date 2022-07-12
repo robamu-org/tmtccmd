@@ -35,8 +35,9 @@ class SourceTransactionStep(enum.Enum):
     SENDING_METADATA = 3
     SENDING_FILE_DATA = 4
     SENDING_EOF = 5
-    SENDING_ACK = 6
-    NOTICE_OF_COMPLETION = 7
+    WAIT_FOR_ACK = 6
+    WAIT_FOR_FINISH = 7
+    NOTICE_OF_COMPLETION = 8
 
 
 class DestTransactionState(enum.Enum):

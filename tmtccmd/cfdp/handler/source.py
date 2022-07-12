@@ -1,7 +1,7 @@
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, List
 from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import (
@@ -11,6 +11,7 @@ from spacepackets.cfdp import (
     ChecksumTypes,
     Direction,
     PduConfig,
+    PduType,
 )
 from spacepackets.cfdp.pdu import (
     PduHolder,
@@ -21,8 +22,11 @@ from spacepackets.cfdp.pdu import (
     MetadataPdu,
     MetadataParams,
     DirectiveType,
+    AbstractFileDirectiveBase,
 )
+from spacepackets.cfdp.pdu.helper import GenericPduPacket
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
+from tmtccmd import get_console_logger
 from tmtccmd.cfdp import (
     LocalEntityCfg,
     CfdpUserBase,
@@ -38,6 +42,9 @@ from tmtccmd.cfdp.handler.defs import (
 )
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
 from tmtccmd.util import ProvidesSeqCount
+
+
+LOGGER = get_console_logger()
 
 
 @dataclass
@@ -114,7 +121,7 @@ class SourceHandler:
         self.params = TransferFieldWrapper(cfg.local_entity_id)
         self.seq_num_provider = seq_num_provider
         self._current_req = CfdpRequestWrapper(None)
-        self._rec_queue = deque()
+        self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
     @property
     def source_id(self) -> UnsignedByteField:
@@ -136,14 +143,17 @@ class SourceHandler:
         """
         if wrapper.request_type == CfdpRequestType.PUT:
             if self.states.state != CfdpStates.IDLE:
+                LOGGER.debug("CFDP source handler is busy, can't process put request")
                 return False
             self._current_req = wrapper
             self.params.remote_cfg = remote_cfg
             self.states.packet_ready = False
             self._setup_transmission_mode()
             if self.params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
+                LOGGER.debug("Starting Put Request handling in NAK mode")
                 self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
             elif self.params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
+                LOGGER.debug("Starting Put Request handling in ACK mode")
                 self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
             else:
                 raise ValueError(
@@ -161,9 +171,13 @@ class SourceHandler:
                 raise InvalidPduForSourceHandler(
                     f"CFDP source handler can not {wrapper.pdu_directive_type}"
                 )
-            # A queue is used to allow passing multiple received packets and stoe them until they
-            # are processed by the state machine
-            self._rec_queue.append(wrapper.base)
+            # A dictionary is used to allow passing multiple received packets and store them until
+            # they are processed by the state machine.
+            if wrapper.pdu_directive_type in self._rec_dict:
+                pdu_directive_list = self._rec_dict.get(wrapper.pdu_directive_type)
+                pdu_directive_list.append(wrapper.base)
+            else:
+                self._rec_dict.update({wrapper.pdu_directive_type: [wrapper.base]})
 
     def state_machine(self) -> FsmResult:
         """This is the primary state machine which performs the CFDP procedures like CRC calculation
@@ -218,26 +232,56 @@ class SourceHandler:
                 self._prepare_eof_pdu()
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_wrapper, self.states)
-            if self.states.step == SourceTransactionStep.NOTICE_OF_COMPLETION:
+            if self.states.step == SourceTransactionStep.WAIT_FOR_ACK:
+                pdu_list = self._rec_dict.get(DirectiveType.ACK_PDU)
+                if pdu_list is None:
+                    return FsmResult(self.pdu_wrapper, self.states)
+                for pdu in pdu_list:
+                    holder = PduHolder(pdu)
+                    ack_pdu = holder.to_ack_pdu()
+                    if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
+                        if (
+                            ack_pdu.condition_code_of_acked_pdu
+                            != ConditionCode.NO_ERROR
+                        ):
+                            # TODO: This is required for class 2 transfers. It might make sense
+                            #       to remember the condition code of the sent EOF PDU for a basic
+                            #       equality check here
+                            pass
+                        self.states.step = SourceTransactionStep.WAIT_FOR_FINISH
+            if self.states.step == SourceTransactionStep.WAIT_FOR_FINISH:
                 # TODO: If transaction closure is requested, a user transaction can only be marked
                 #       as finished if TX finished PDU was received. This might take a long time
                 #       so it might make sense to think about storing the current state of
                 #       the transaction in a source state config file which can be restored
                 #       when re-starting the application
                 if self.params.remote_cfg.closure_requested:
-                    holder = PduHolder(self._rec_queue[0])
-                    # TODO: Need to check whether a Finished PDU was received. What if it is another
-                    #       PDU? Discard? Throw exception? Simple solution for now: Discard
+                    # Check all entries for some robustness against out-of-order reception
+                    if DirectiveType.FINISHED_PDU in self._rec_dict:
+                        pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
+                        for pdu in pdu_list:
+                            holder = PduHolder(pdu)
+                            finish_pdu = holder.to_finished_pdu()
+                            if finish_pdu.condition_code == ConditionCode.NO_ERROR:
+                                self.states.step = (
+                                    SourceTransactionStep.NOTICE_OF_COMPLETION
+                                )
+                            else:
+                                # TODO: Implement error handling
+                                LOGGER.warning(
+                                    f"Received condition code {finish_pdu.condition_code} in "
+                                    f"Finished PDU"
+                                )
                     pass
-                else:
-                    self.user.transaction_finished_indication(
-                        transaction_id=self.params.transaction,
-                        condition_code=ConditionCode.NO_ERROR,
-                        file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
-                        delivery_code=DeliveryCode.DATA_COMPLETE,
-                    )
-                    # Transaction finished
-                    self.reset()
+            if self.states.step == SourceTransactionStep.NOTICE_OF_COMPLETION:
+                self.user.transaction_finished_indication(
+                    transaction_id=self.params.transaction,
+                    condition_code=ConditionCode.NO_ERROR,
+                    file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                    delivery_code=DeliveryCode.DATA_COMPLETE,
+                )
+                # Transaction finished
+                self.reset()
         return FsmResult(self.pdu_wrapper, self.states)
 
     def confirm_packet_sent_advance_fsm(self):
@@ -272,7 +316,13 @@ class SourceHandler:
                     self.states.step = SourceTransactionStep.SENDING_EOF
             elif self.states.step == SourceTransactionStep.SENDING_EOF:
                 self.user.eof_sent_indication(self.params.transaction)
-                self.states.step = SourceTransactionStep.NOTICE_OF_COMPLETION
+                if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+                    if self.params.remote_cfg.closure_requested:
+                        self.states.step = SourceTransactionStep.WAIT_FOR_FINISH
+                    else:
+                        self.states.step = SourceTransactionStep.NOTICE_OF_COMPLETION
+                else:
+                    self.states.step = SourceTransactionStep.WAIT_FOR_ACK
 
     def reset(self):
         self.states.step = SourceTransactionStep.IDLE
