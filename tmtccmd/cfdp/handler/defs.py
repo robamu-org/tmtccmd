@@ -10,17 +10,26 @@ class NoRemoteEntityCfgFound(Exception):
         super().__init__(args, kwargs)
         self.remote_entity_id = entity_id
 
+    def __str__(self):
+        return f"No remote entity found for entity ID {self.remote_entity_id}"
+
 
 class SourceFileDoesNotExist(Exception):
     def __init__(self, file: Path, *args, **kwargs):
         super().__init__(args, kwargs)
         self.file = file
 
+    def __str__(self):
+        return f"Source file {self.file} does not exist"
+
 
 class ChecksumNotImplemented(Exception):
     def __init__(self, checksum_type: ChecksumTypes, *args, **kwargs):
         super().__init__(args, kwargs)
         self.checksum_type = checksum_type
+
+    def __str__(self):
+        return f"{self.checksum_type} not implemented"
 
 
 class PacketSendNotConfirmed(Exception):
