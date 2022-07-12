@@ -39,6 +39,7 @@ from tmtccmd.cfdp.handler.defs import (
     PacketSendNotConfirmed,
     ChecksumNotImplemented,
     SourceFileDoesNotExist,
+    InvalidPduDirection,
 )
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
 from tmtccmd.util import ProvidesSeqCount
@@ -192,7 +193,7 @@ class SourceHandler:
         :raises InvalidPduForSourceHandler: Invalid PDU file directive type
         """
         if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
-            raise InvalidPduForSourceHandler(
+            raise InvalidPduDirection(
                 f"Direction {packet.pdu_header.direction} invalid"
             )
         # TODO: What about prompt and keep alive PDU?
