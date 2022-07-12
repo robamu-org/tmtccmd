@@ -1,4 +1,7 @@
+import os
 import random
+import sys
+
 from crcmod.predefined import PredefinedCrc
 
 from spacepackets.util import ByteFieldU16, ByteFieldU8
@@ -29,7 +32,10 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
 
     def test_perfectly_segmented_file(self):
         # This tests generates two file data PDUs
-        rand_data = random.randbytes(self.file_segment_len * 2)
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(self.file_segment_len * 2)
+        else:
+            rand_data = os.urandom(self.file_segment_len * 2)
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
         self.source_handler.source_id = self.source_id
@@ -54,7 +60,10 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
     def test_segmented_file(self):
         # This tests generates two file data PDUs, but the second one does not have a
         # full segment length
-        rand_data = random.randbytes(round(self.file_segment_len * 1.5))
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(round(self.file_segment_len * 1.5))
+        else:
+            rand_data = os.urandom(round(self.file_segment_len * 1.5))
         remainder_len = len(rand_data) - self.file_segment_len
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
