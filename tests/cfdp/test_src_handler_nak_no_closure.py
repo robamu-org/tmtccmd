@@ -22,7 +22,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
 
     def test_small_file(self):
-        self._common_small_file_test()
+        self._common_small_file_test(False)
+        self._verify_eof_indication()
         self._test_transaction_completion()
 
     def test_perfectly_segmented_file(self):
@@ -46,6 +47,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
+        self.source_handler.confirm_packet_sent_advance_fsm()
         self._test_transaction_completion()
 
     def test_segmented_file(self):
@@ -71,6 +73,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
+        self.source_handler.confirm_packet_sent_advance_fsm()
         self._test_transaction_completion()
 
     def _second_file_segment_handling(self, source_handler: SourceHandler):
@@ -120,9 +123,6 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(eof_pdu.file_checksum, crc32)
 
     def _test_transaction_completion(self):
-        self.source_handler.confirm_packet_sent_advance_fsm()
-        self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
-        self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)

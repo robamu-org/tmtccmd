@@ -43,7 +43,7 @@ class InvalidSourceId(Exception):
         expected_src_id: UnsignedByteField,
         found_src_id: UnsignedByteField,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(args, kwargs)
         self.expected_src_id = expected_src_id
@@ -59,11 +59,14 @@ class InvalidDestinationId(Exception):
         expected_dest_id: UnsignedByteField,
         found_dest_id: UnsignedByteField,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(args, kwargs)
         self.expected_dest_id = expected_dest_id
         self.found_dest_id = found_dest_id
+
+    def __str__(self):
+        return f"Expected destination {self.expected_dest_id!r}, got {self.found_dest_id!r}"
 
 
 class BusyError(Exception):

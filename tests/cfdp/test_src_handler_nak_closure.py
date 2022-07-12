@@ -11,6 +11,23 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def test_empty_file(self):
         self._common_empty_file_test()
+        self._simple_finish_pdu_handling()
+        # Transaction should be finished
+        fsm_res = self.source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+
+    def test_small_file(self):
+        self._common_small_file_test(True)
+        self._verify_eof_indication()
+        self.source_handler.state_machine()
+        self._simple_finish_pdu_handling()
+        # Transaction should be finished
+        fsm_res = self.source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
+
+    def _simple_finish_pdu_handling(self):
         self.assertEqual(
             self.source_handler.states.state, CfdpStates.BUSY_CLASS_1_NACKED
         )
@@ -29,10 +46,3 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
             pdu_conf=reply_conf,
         )
         self.source_handler.pass_packet(finish_pdu)
-        # Transaction should be finished
-        fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, SourceTransactionStep.IDLE)
-
-    def test_small_file(self):
-        pass

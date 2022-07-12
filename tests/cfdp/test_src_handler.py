@@ -77,7 +77,7 @@ class TestCfdpSourceHandler(TestCase):
         self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
         self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
 
-    def _common_small_file_test(self):
+    def _common_small_file_test(self, closure_requested: bool):
         dest_path = "/tmp/hello_copy.txt"
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
@@ -88,7 +88,7 @@ class TestCfdpSourceHandler(TestCase):
             dest_file=dest_path,
             # Let the transmission mode be auto-determined by the remote MIB
             trans_mode=None,
-            closure_requested=False,
+            closure_requested=closure_requested,
         )
         with open(self.file_path, "wb") as of:
             crc32 = PredefinedCrc("crc32")
@@ -125,6 +125,7 @@ class TestCfdpSourceHandler(TestCase):
         self, dest_id: UnsignedByteField, put_request: PutRequest
     ):
         wrapper = CfdpRequestWrapper(put_request)
+        self.remote_cfg.remote_entity_id = dest_id
         self.source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
@@ -145,6 +146,11 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(metadata_pdu.dest_file_name, put_request.cfg.dest_file)
         self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
         self.source_handler.confirm_packet_sent_advance_fsm()
+
+    def _verify_eof_indication(self):
+        self.source_handler.confirm_packet_sent_advance_fsm()
+        self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
+        self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
 
     def tearDown(self) -> None:
         if self.file_path.exists():
