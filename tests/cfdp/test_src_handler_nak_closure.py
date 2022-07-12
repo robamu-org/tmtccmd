@@ -3,7 +3,7 @@ from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField, ByteFieldU16, ByteFieldEmpty
 from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
-from tmtccmd.cfdp.handler.defs import InvalidPduDirection, InvalidSourceId
+from tmtccmd.cfdp.handler.defs import InvalidPduDirection, InvalidSourceId, InvalidDestinationId
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
 from .test_src_handler import TestCfdpSourceHandler
 
@@ -43,8 +43,22 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
         finish_pdu = self._prepare_finish_pdu()
         finish_pdu.pdu_file_directive.pdu_conf.source_entity_id = ByteFieldEmpty()
-        with self.assertRaises(InvalidSourceId):
+        with self.assertRaises(InvalidSourceId) as cm:
             self.source_handler.pass_packet(finish_pdu)
+        exception = cm.exception
+        self.assertEqual(exception.found_src_id, ByteFieldEmpty())
+        self.assertEqual(exception.expected_src_id, ByteFieldU16(1))
+
+    def test_invalid_dest_id_pdu_passed(self):
+        dest_id = ByteFieldU16(3)
+        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
+        finish_pdu = self._prepare_finish_pdu()
+        finish_pdu.pdu_file_directive.pdu_conf.dest_entity_id = ByteFieldEmpty()
+        with self.assertRaises(InvalidDestinationId) as cm:
+            self.source_handler.pass_packet(finish_pdu)
+        exception = cm.exception
+        self.assertEqual(exception.found_dest_id, ByteFieldEmpty())
+        self.assertEqual(exception.expected_dest_id, ByteFieldU16(3))
 
     def _prepare_dummy_put_req(self, dest_id: UnsignedByteField) -> PutRequest:
         return PutRequest(
