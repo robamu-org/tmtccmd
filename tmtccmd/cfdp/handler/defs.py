@@ -33,6 +33,9 @@ class InvalidPduDirection(Exception):
         self.expected_dir = expected_dir
         self.found_dir = found_dir
 
+    def __str__(self):
+        return f"Expected direction {self.expected_dir}, got {self.found_dir}"
+
 
 class InvalidSourceId(Exception):
     """Invalid source entity ID. This is not necessarily the sender of a packet but actually the
@@ -48,6 +51,9 @@ class InvalidSourceId(Exception):
         super().__init__(args, kwargs)
         self.expected_src_id = expected_src_id
         self.found_src_id = found_src_id
+
+    def __str__(self):
+        return f"Expected source {self.expected_src_id}, got {self.found_src_id}"
 
 
 class InvalidDestinationId(Exception):
@@ -66,7 +72,7 @@ class InvalidDestinationId(Exception):
         self.found_dest_id = found_dest_id
 
     def __str__(self):
-        return f"Expected destination {self.expected_dest_id!r}, got {self.found_dest_id!r}"
+        return f"Expected destination {self.expected_dest_id}, got {self.found_dest_id}"
 
 
 class BusyError(Exception):
