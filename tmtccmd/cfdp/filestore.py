@@ -14,10 +14,6 @@ LOGGER = get_console_logger()
 FilestoreResult = FilestoreResponseStatusCode
 
 
-class InvalidOffsetException(Exception):
-    pass
-
-
 class VirtualFilestore(abc.ABC):
     @abc.abstractmethod
     def read_data(self, file: Path, offset: Optional[int], read_len: int) -> bytes:
@@ -99,9 +95,6 @@ class HostFilestore(VirtualFilestore):
             read_len = file_size
         if offset is None:
             offset = 0
-        else:
-            if offset > file_size:
-                raise InvalidOffsetException(offset)
         with open(file, "rb") as rf:
             rf.seek(offset)
             return rf.read(read_len)
@@ -119,14 +112,12 @@ class HostFilestore(VirtualFilestore):
         :return:
          - FilestoreResponseStatusCode.APPEND_FROM_DATA_FILE_NOT_EXISTS: File does not exist yet
          - FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET: Invalid offset
+        :raises InvalidOffsetException: Offset is invalid because it is past the end of the file
         """
         if not file.exists():
             raise FileNotFoundError(file)
         with open(file, "r+b") as of:
-            file_size = file.stat().st_size
             if offset is not None:
-                if offset > file_size:
-                    raise InvalidOffsetException(offset)
                 of.seek(offset)
             of.write(data)
         return FilestoreResponseStatusCode.SUCCESS

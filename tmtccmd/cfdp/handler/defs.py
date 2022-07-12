@@ -89,11 +89,15 @@ class BusyError(Exception):
 
 
 @dataclass
-class FileParams:
-    offset: int = 0
-    segment_len: int = 0
-    crc32: bytes = bytes()
-    size: int = 0
+class FileParamsBase:
+    offset: int
+    segment_len: int
+    crc32: bytes
+    size: int
+
+    @classmethod
+    def empty(cls):
+        return cls(offset=0, segment_len=0, crc32=bytes(), size=0)
 
     def reset(self):
         self.offset = 0

@@ -33,7 +33,7 @@ from tmtccmd.cfdp import (
 )
 from tmtccmd.cfdp.defs import CfdpRequestType, CfdpStates
 from tmtccmd.cfdp.handler.defs import (
-    FileParams,
+    FileParamsBase,
     PacketSendNotConfirmed,
     ChecksumNotImplemented,
     SourceFileDoesNotExist,
@@ -71,7 +71,7 @@ class SourceStateWrapper:
 class TransferFieldWrapper:
     def __init__(self, local_entity_id: UnsignedByteField):
         self.transaction: Optional[TransactionId] = None
-        self.fp = FileParams()
+        self.fp = FileParamsBase.empty()
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self.closure_requested: bool = False
         self.pdu_conf = PduConfig.empty()

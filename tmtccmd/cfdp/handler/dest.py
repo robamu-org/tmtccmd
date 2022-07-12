@@ -1,25 +1,45 @@
+from __future__ import annotations
 import enum
 from collections import deque
 from dataclasses import dataclass
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict, List, Deque, cast
 
 from spacepackets.cfdp import PduType, ChecksumTypes, TransmissionModes
-from spacepackets.cfdp.pdu import DirectiveType, AbstractFileDirectiveBase, MetadataPdu
+from spacepackets.cfdp.pdu import (
+    DirectiveType,
+    AbstractFileDirectiveBase,
+    MetadataPdu,
+    FileDataPdu,
+)
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
-from tmtccmd.cfdp import RemoteEntityCfg
+from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase
 from tmtccmd.cfdp.defs import CfdpStates
-from tmtccmd.cfdp.handler.defs import FileParams
+from tmtccmd.cfdp.handler.defs import FileParamsBase
+
+
+@dataclass
+class DestFileParams(FileParamsBase):
+    file_name: Path
+
+    @classmethod
+    def empty(cls) -> DestFileParams:
+        return cls(offset=0, segment_len=0, crc32=bytes(), size=0, file_name=Path())
+
+    def reset(self):
+        super().reset()
+        self.file_name = Path()
 
 
 class TransactionStep(enum.Enum):
     IDLE = 0
     # Metadata was received
     TRANSACTION_START = 1
-    CRC_PROCEDURE = 2
-    RECEIVING_FILE_DATA = 3
-    # EOF was received. Perform checksum verification and notice of completion
+    RECEIVING_FILE_DATA = 2
+    SENDING_ACK_PDU = 3
+    # File transfer complete. Perform checksum verification and notice of completion
     TRANSFER_COMPLETION = 4
-    SEINDING_FINISHED_PDU = 5
+    SENDING_FINISHED_PDU = 5
 
 
 @dataclass
@@ -36,28 +56,32 @@ class FsmResult:
 
 
 class DestHandler:
-    def __init__(self, cfg: RemoteEntityCfg):
+    def __init__(self, cfg: RemoteEntityCfg, user: CfdpUserBase):
         self.cfg = cfg
         self.states = DestStateWrapper()
+        self.user = user
         self._pdu_holder = PduHolder(None)
         self._checksum_type = ChecksumTypes.NULL_CHECKSUM
         self._closure_requested = False
-        self._fp = FileParams()
+        self._fp = DestFileParams.empty()
         self._file_directives_dict: Dict[
             DirectiveType, List[AbstractFileDirectiveBase]
         ] = dict()
-        self._file_data_deque = deque()
+        self._file_data_deque: Deque[FileDataPdu] = deque()
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
         if self.states.state != CfdpStates.IDLE:
             return False
+        self.states.transaction = TransactionStep.TRANSACTION_START
         if metadata_pdu.pdu_header.trans_mode == TransmissionModes.UNACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
         elif metadata_pdu.pdu_header.trans_mode == TransmissionModes.ACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
         self._checksum_type = metadata_pdu.checksum_type
         self._closure_requested = metadata_pdu.closure_requested
+        self._fp.file_name = Path(metadata_pdu.dest_file_name)
         self._fp.size = metadata_pdu.file_size
+        self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
         return True
 
     def state_machine(self) -> FsmResult:
@@ -72,13 +96,21 @@ class DestHandler:
             if not transaction_was_started:
                 return FsmResult(self.states, self._pdu_holder)
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+            if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
+                # TODO: Sequence count check
+                for file_data_pdu in self._file_data_deque:
+                    data = file_data_pdu.file_data
+                    offset = file_data_pdu.offset
+                    self.user.vfs.write_data(self._fp.file_name, data, offset)
+            if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
+                pass
             pass
         return FsmResult(self.states, self._pdu_holder)
 
     def pass_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
         if packet.pdu_type == PduType.FILE_DATA:
-            self._file_data_deque.append(packet)
+            self._file_data_deque.append(cast(FileDataPdu, packet))
         else:
             if packet.directive_type in self._file_directives_dict:
                 self._file_directives_dict.get(packet.directive_type).append(packet)
