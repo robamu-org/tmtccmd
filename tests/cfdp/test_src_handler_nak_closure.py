@@ -1,5 +1,6 @@
 from spacepackets.cfdp import ConditionCode, Direction
 from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
+from spacepackets.cfdp.pdu.finished import FinishedParams
 from tmtccmd.cfdp.defs import CfdpStates, SourceTransactionStep
 from .test_src_handler import TestCfdpSourceHandler
 
@@ -18,10 +19,13 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         )
         reply_conf = self.source_handler.pdu_conf
         reply_conf.direction = Direction.TOWARDS_SENDER
-        finish_pdu = FinishedPdu(
+        params = FinishedParams(
             delivery_code=DeliveryCode.DATA_COMPLETE,
             condition_code=ConditionCode.NO_ERROR,
-            file_delivery_status=FileDeliveryStatus.FILE_RETAINED,
+            delivery_status=FileDeliveryStatus.FILE_RETAINED,
+        )
+        finish_pdu = FinishedPdu(
+            params=params,
             pdu_conf=reply_conf,
         )
         self.source_handler.pass_packet(finish_pdu)
