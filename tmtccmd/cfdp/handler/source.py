@@ -72,6 +72,14 @@ class TransferFieldWrapper:
         self.pdu_conf.source_entity_id = source_id
 
     @property
+    def dest_id(self):
+        return self.pdu_conf.dest_entity_id
+
+    @dest_id.setter
+    def dest_id(self, dest_id: UnsignedByteField):
+        self.pdu_conf.dest_entity_id = dest_id
+
+    @property
     def transmission_mode(self) -> TransmissionModes:
         return self.pdu_conf.trans_mode
 
@@ -171,6 +179,7 @@ class SourceHandler:
                 return False
             self._current_req = wrapper
             self._params.remote_cfg = remote_cfg
+            self._params.dest_id = remote_cfg.remote_entity_id
             self.states.packet_ready = False
             self._setup_transmission_mode()
             if self._params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
