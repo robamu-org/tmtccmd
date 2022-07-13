@@ -341,7 +341,8 @@ class SourceHandler:
                 if self._params.fp.offset == self._params.fp.size:
                     self.states.step = TransactionStep.SENDING_EOF
             elif self.states.step == TransactionStep.SENDING_EOF:
-                self.user.eof_sent_indication(self._params.transaction)
+                if self.cfg.indication_cfg.eof_sent_indication_required:
+                    self.user.eof_sent_indication(self._params.transaction)
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
                     if self._params.closure_requested:
                         self.states.step = TransactionStep.WAIT_FOR_FINISH

@@ -20,7 +20,7 @@ from spacepackets.cfdp.pdu import (
     EofPdu,
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
-from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase
+from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.defs import FileParamsBase
 from tmtccmd.cfdp.user import MetadataRecvParams, FileSegmentRecvParams
@@ -64,7 +64,7 @@ class FsmResult:
 
 
 class DestHandler:
-    def __init__(self, cfg: RemoteEntityCfg, user: CfdpUserBase):
+    def __init__(self, cfg: LocalEntityCfg, user: CfdpUserBase):
         self.cfg = cfg
         self.states = DestStateWrapper()
         self.user = user
@@ -129,16 +129,17 @@ class DestHandler:
                 for file_data_pdu in self._file_data_deque:
                     data = file_data_pdu.file_data
                     offset = file_data_pdu.offset
-                    file_segment_indic_params = FileSegmentRecvParams(
-                        transaction_id=self._transaction_id,
-                        length=len(file_data_pdu.file_data),
-                        offset=offset,
-                        record_cont_state=file_data_pdu.record_continuation_state,
-                        segment_metadata=file_data_pdu.segment_metadata,
-                    )
-                    self.user.file_segment_recv_indication(
-                        params=file_segment_indic_params
-                    )
+                    if self.cfg.indication_cfg.file_segment_recvd_indication_required:
+                        file_segment_indic_params = FileSegmentRecvParams(
+                            transaction_id=self._transaction_id,
+                            length=len(file_data_pdu.file_data),
+                            offset=offset,
+                            record_cont_state=file_data_pdu.record_continuation_state,
+                            segment_metadata=file_data_pdu.segment_metadata,
+                        )
+                        self.user.file_segment_recv_indication(
+                            params=file_segment_indic_params
+                        )
                     self.user.vfs.write_data(self._fp.file_name, data, offset)
                 eof_pdus = self._file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
@@ -182,7 +183,8 @@ class DestHandler:
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             self._fp.crc32 = eof_pdu.file_checksum
             self._fp.size = eof_pdu.file_size
-            self.user.eof_recv_indication(self._transaction_id)
+            if self.cfg.indication_cfg.eof_recv_indication_required:
+                self.user.eof_recv_indication(self._transaction_id)
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
                     self.states.transaction = TransactionStep.TRANSFER_COMPLETION
