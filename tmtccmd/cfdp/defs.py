@@ -49,6 +49,12 @@ class TransactionId:
             f"transaction_seq_num={self.seq_num!r})"
         )
 
+    def __str__(self):
+        return (
+            f"Transaction ID with source ID {self.source_id} and sequence "
+            f"number {self.seq_num.value}"
+        )
+
     def __eq__(self, other: TransactionId):
         return self.source_id == other.source_id and self.seq_num == other.seq_num
 

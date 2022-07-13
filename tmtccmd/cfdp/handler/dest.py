@@ -5,12 +5,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Deque, cast
 
-from spacepackets.cfdp import PduType, ChecksumTypes, TransmissionModes
+from spacepackets.cfdp import PduType, ChecksumTypes, TransmissionModes, ConditionCode
 from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
     MetadataPdu,
     FileDataPdu,
+    EofPdu,
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase
@@ -82,6 +83,7 @@ class DestHandler:
         self._fp.file_name = Path(metadata_pdu.dest_file_name)
         self._fp.size = metadata_pdu.file_size
         self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
+        self.user.metadata_recv_indication()
         return True
 
     def state_machine(self) -> FsmResult:
@@ -102,9 +104,17 @@ class DestHandler:
                     data = file_data_pdu.file_data
                     offset = file_data_pdu.offset
                     self.user.vfs.write_data(self._fp.file_name, data, offset)
+                eof_pdus = self._file_directives_dict.get(DirectiveType.EOF_PDU)
+                if eof_pdus is not None:
+                    for pdu in eof_pdus:
+                        eof_pdu = PduHolder(pdu).to_eof_pdu()
+                        self._handle_eof_pdu(eof_pdu)
             if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
-                pass
-            pass
+                self._checksum_verify()
+                self._notice_of_completion()
+                self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
+            if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
+                self._prepare_finished_pdu()
         return FsmResult(self.states, self._pdu_holder)
 
     def pass_packet(self, packet: GenericPduPacket):
@@ -116,7 +126,6 @@ class DestHandler:
                 self._file_directives_dict.get(packet.directive_type).append(packet)
             else:
                 self._file_directives_dict.update({packet.directive_type: [packet]})
-        pass
 
     def confirm_packet_sent_advance_fsm(self):
         """Helper method which performs both :py:meth:`confirm_packet_sent` and
@@ -130,4 +139,24 @@ class DestHandler:
         self.states.packet_ready = False
 
     def advance_fsm(self):
+        pass
+
+    def _handle_eof_pdu(self, eof_pdu: EofPdu):
+        # TODO: Error handling
+        if eof_pdu.condition_code == ConditionCode.NO_ERROR:
+            self._fp.crc32 = eof_pdu.file_checksum
+            self._fp.size = eof_pdu.file_size
+            if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
+                if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+                    self.states.transaction = TransactionStep.TRANSFER_COMPLETION
+                elif self.states.state == CfdpStates.BUSY_CLASS_2_ACKED:
+                    self.states.transaction = TransactionStep.SENDING_ACK_PDU
+
+    def _checksum_verify(self):
+        pass
+
+    def _notice_of_completion(self):
+        pass
+
+    def _prepare_finished_pdu(self):
         pass

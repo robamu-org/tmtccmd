@@ -110,9 +110,7 @@ class HostFilestore(VirtualFilestore):
         file as long as no other file with the same name exists
 
         :return:
-         - FilestoreResponseStatusCode.APPEND_FROM_DATA_FILE_NOT_EXISTS: File does not exist yet
-         - FilestoreResponseStatusCode.APPEND_FROM_DATA_INVALID_OFFSET: Invalid offset
-        :raises InvalidOffsetException: Offset is invalid because it is past the end of the file
+        :raises FileNotFoundError: File not found
         """
         if not file.exists():
             raise FileNotFoundError(file)

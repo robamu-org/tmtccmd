@@ -42,6 +42,7 @@ from tmtccmd.cfdp.handler.defs import (
     InvalidDestinationId,
 )
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
+from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
 
 
@@ -298,12 +299,13 @@ class SourceHandler:
             if self.states.step == TransactionStep.WAIT_FOR_FINISH:
                 self._handle_wait_for_finish()
             if self.states.step == TransactionStep.NOTICE_OF_COMPLETION:
-                self.user.transaction_finished_indication(
+                indication_params = TransactionFinishedParams(
                     transaction_id=self._params.transaction,
                     condition_code=ConditionCode.NO_ERROR,
                     file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
                     delivery_code=DeliveryCode.DATA_COMPLETE,
                 )
+                self.user.transaction_finished_indication(indication_params)
                 # Transaction finished
                 self.reset()
         return FsmResult(self.pdu_wrapper, self.states)
