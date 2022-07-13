@@ -3,9 +3,9 @@ import enum
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Deque, cast
+from typing import Dict, List, Deque, cast, Optional
 
-from spacepackets.cfdp import PduType, ChecksumTypes, TransmissionModes, ConditionCode
+from spacepackets.cfdp import PduType, ChecksumTypes, TransmissionModes, ConditionCode, TlvTypes
 from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
@@ -15,8 +15,9 @@ from spacepackets.cfdp.pdu import (
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase
-from tmtccmd.cfdp.defs import CfdpStates
+from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.defs import FileParamsBase
+from tmtccmd.cfdp.user import MetadataRecvParams
 
 
 @dataclass
@@ -62,6 +63,7 @@ class DestHandler:
         self.states = DestStateWrapper()
         self.user = user
         self._pdu_holder = PduHolder(None)
+        self._transaction_id: Optional[TransactionId] = None
         self._checksum_type = ChecksumTypes.NULL_CHECKSUM
         self._closure_requested = False
         self._fp = DestFileParams.empty()
@@ -82,8 +84,27 @@ class DestHandler:
         self._closure_requested = metadata_pdu.closure_requested
         self._fp.file_name = Path(metadata_pdu.dest_file_name)
         self._fp.size = metadata_pdu.file_size
+        self._transaction_id = TransactionId(
+            source_entity_id=metadata_pdu.source_entity_id,
+            transaction_seq_num=metadata_pdu.transaction_seq_num,
+        )
         self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
-        self.user.metadata_recv_indication()
+        msgs_to_user_list = None
+        if metadata_pdu.options is not None:
+            msgs_to_user_list = []
+            for tlv in metadata_pdu.options:
+                if tlv.tlv_type == TlvTypes.MESSAGE_TO_USER:
+                    msgs_to_user_list.append(tlv)
+        params = MetadataRecvParams(
+            transaction_id=self._transaction_id,
+            file_size=metadata_pdu.file_size,
+            source_id=metadata_pdu.source_entity_id,
+            dest_file_name=metadata_pdu.dest_file_name,
+            source_file_name=metadata_pdu.source_file_name,
+            # TODO: Build a list of messages to user from the metadata PDU options
+            msgs_to_user=msgs_to_user_list
+        )
+        self.user.metadata_recv_indication(params=params)
         return True
 
     def state_machine(self) -> FsmResult:

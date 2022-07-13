@@ -1,7 +1,4 @@
-from typing import Optional, List
-
-from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv
-from spacepackets.cfdp.pdu import FileDeliveryStatus, DeliveryCode
+from spacepackets.cfdp import ConditionCode
 from tmtccmd.cfdp import CfdpUserBase, TransactionId
 from tmtccmd.cfdp.user import (
     FileSegmentRecvParams,
