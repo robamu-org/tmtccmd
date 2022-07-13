@@ -5,7 +5,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Deque, cast, Optional
 
-from spacepackets.cfdp import PduType, ChecksumTypes, TransmissionModes, ConditionCode, TlvTypes
+from spacepackets.cfdp import (
+    PduType,
+    ChecksumTypes,
+    TransmissionModes,
+    ConditionCode,
+    TlvTypes,
+)
 from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
@@ -17,7 +23,7 @@ from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.defs import FileParamsBase
-from tmtccmd.cfdp.user import MetadataRecvParams
+from tmtccmd.cfdp.user import MetadataRecvParams, FileSegmentRecvParams
 
 
 @dataclass
@@ -101,8 +107,7 @@ class DestHandler:
             source_id=metadata_pdu.source_entity_id,
             dest_file_name=metadata_pdu.dest_file_name,
             source_file_name=metadata_pdu.source_file_name,
-            # TODO: Build a list of messages to user from the metadata PDU options
-            msgs_to_user=msgs_to_user_list
+            msgs_to_user=msgs_to_user_list,
         )
         self.user.metadata_recv_indication(params=params)
         return True
@@ -124,6 +129,16 @@ class DestHandler:
                 for file_data_pdu in self._file_data_deque:
                     data = file_data_pdu.file_data
                     offset = file_data_pdu.offset
+                    file_segment_indic_params = FileSegmentRecvParams(
+                        transaction_id=self._transaction_id,
+                        length=len(file_data_pdu.file_data),
+                        offset=offset,
+                        record_cont_state=file_data_pdu.record_continuation_state,
+                        segment_metadata=file_data_pdu.segment_metadata,
+                    )
+                    self.user.file_segment_recv_indication(
+                        params=file_segment_indic_params
+                    )
                     self.user.vfs.write_data(self._fp.file_name, data, offset)
                 eof_pdus = self._file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
@@ -167,6 +182,7 @@ class DestHandler:
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             self._fp.crc32 = eof_pdu.file_checksum
             self._fp.size = eof_pdu.file_size
+            self.user.eof_recv_indication(self._transaction_id)
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
                     self.states.transaction = TransactionStep.TRANSFER_COMPLETION
