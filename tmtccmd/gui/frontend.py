@@ -66,7 +66,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._state = FrontendState()
         self._thread_pool = QThreadPool()
         self.__connected = False
-        self.__debug_mode = True
 
         self.__combo_box_op_codes: Union[None, QComboBox] = None
         self.logo_path = Path(
@@ -321,15 +320,13 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         return row
 
     def __service_index_changed(self, index: int):
-        self._current_service = self._service_list[index]
+        self._state.current_service = self._service_list[index]
         self.__update_op_code_combo_box()
-        if self.__debug_mode:
-            LOGGER.info("Service changed")
+        LOGGER.debug("Service changed")
 
     def __op_code_index_changed(self, index: int):
         self._state.current_op_code = self._op_code_list[index]
-        if self.__debug_mode:
-            LOGGER.info("Op Code changed")
+        LOGGER.debug("Op Code changed")
 
     def __update_op_code_combo_box(self):
         self.__combo_box_op_codes.clear()
@@ -348,23 +345,19 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __checkbox_log_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_TO_FILE, state)
-        if self.__debug_mode:
-            LOGGER.info(["Enabled", "Disabled"][state == 0] + " print to log.")
+        LOGGER.debug(["Enabled", "Disabled"][state == 0] + " print to log.")
 
     def __checkbox_console_update(self, state: bool):
         update_global(CoreGlobalIds.PRINT_TM, state)
-        if self.__debug_mode:
-            LOGGER.info(["enabled", "disabled"][state == 0] + " console print")
+        LOGGER.debug(["enabled", "disabled"][state == 0] + " console print")
 
     def __checkbox_print_raw_data_update(self, state: int):
         update_global(CoreGlobalIds.PRINT_RAW_TM, state)
-        if self.__debug_mode:
-            LOGGER.info(["enabled", "disabled"][state == 0] + " printing of raw data")
+        LOGGER.debug(["enabled", "disabled"][state == 0] + " printing of raw data")
 
     def __com_if_sel_index_changed(self, index: int):
         self._state.current_com_if = self._com_if_list[index][0]
-        if self.__debug_mode:
-            LOGGER.info(f"Communication IF updated: {self._com_if_list[index][1]}")
+        LOGGER.debug(f"Communication IF updated: {self._com_if_list[index][1]}")
 
 
 class SingleCommandTable(QTableWidget):
