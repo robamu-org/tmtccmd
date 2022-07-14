@@ -1,16 +1,14 @@
 import enum
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Optional, Dict, List
-from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import (
     TransmissionModes,
     NULL_CHECKSUM_U32,
     ConditionCode,
-    ChecksumTypes,
     Direction,
     PduConfig,
+    ChecksumTypes,
 )
 from spacepackets.cfdp.pdu import (
     PduHolder,
@@ -32,10 +30,11 @@ from tmtccmd.cfdp import (
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpRequestType, CfdpStates
+from tmtccmd.cfdp.filestore import VirtualFilestore
+from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
     PacketSendNotConfirmed,
-    ChecksumNotImplemented,
     SourceFileDoesNotExist,
     InvalidPduDirection,
     InvalidSourceId,
@@ -70,7 +69,8 @@ class SourceStateWrapper:
 
 
 class TransferFieldWrapper:
-    def __init__(self, local_entity_id: UnsignedByteField):
+    def __init__(self, local_entity_id: UnsignedByteField, vfs: VirtualFilestore):
+        self.crc_helper = Crc32Helper(ChecksumTypes.NULL_CHECKSUM, vfs)
         self.transaction: Optional[TransactionId] = None
         self.fp = FileParamsBase.empty()
         self.remote_cfg: Optional[RemoteEntityCfg] = None
@@ -167,7 +167,7 @@ class SourceHandler:
         self.cfg = cfg
         self.user = user
         self.seq_num_provider = seq_num_provider
-        self._params = TransferFieldWrapper(cfg.local_entity_id)
+        self._params = TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
         self._current_req = CfdpRequestWrapper(None)
         self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
@@ -273,8 +273,7 @@ class SourceHandler:
                     # Empty file, use null checksum
                     self._params.fp.crc32 = NULL_CHECKSUM_U32
                 else:
-                    self._params.fp.crc32 = self.calc_cfdp_file_crc(
-                        crc_type=self._params.remote_cfg.crc_type,
+                    self._params.fp.crc32 = self._params.crc_helper.calc_for_file(
                         file=put_req.cfg.source_file,
                         file_sz=self._params.fp.size,
                         segment_len=self._params.fp.segment_len,
@@ -356,49 +355,6 @@ class SourceHandler:
         self.states.state = CfdpStates.IDLE
         self._params.reset()
 
-    def calc_cfdp_file_crc(
-        self, crc_type: ChecksumTypes, file: Path, file_sz: int, segment_len: int
-    ) -> bytes:
-        if crc_type == ChecksumTypes.CRC_32:
-            return self.calc_crc_for_file_crcmod(
-                PredefinedCrc("crc32"), file, file_sz, segment_len
-            )
-        elif crc_type == ChecksumTypes.CRC_32C:
-            return self.calc_crc_for_file_crcmod(
-                PredefinedCrc("crc32c"), file, file_sz, segment_len
-            )
-        else:
-            raise ChecksumNotImplemented(crc_type)
-
-    def calc_crc_for_file_crcmod(
-        self, crc_obj: PredefinedCrc, file: Path, file_sz: int, segment_len: int
-    ):
-        if not file.exists():
-            # TODO: Handle this exception in the handler, reset CFDP state machine
-            raise SourceFileDoesNotExist(file)
-        current_offset = 0
-        # Calculate the file CRC
-        with open(file, "rb") as of:
-            while True:
-                if current_offset == file_sz:
-                    break
-                if file_sz < segment_len:
-                    read_len = file_sz
-                else:
-                    next_offset = current_offset + segment_len
-                    if next_offset > file_sz:
-                        read_len = next_offset % file_sz
-                    else:
-                        read_len = segment_len
-                if read_len > 0:
-                    crc_obj.update(
-                        self.user.vfs.read_from_opened_file(
-                            of, current_offset, read_len
-                        )
-                    )
-                current_offset += read_len
-            return crc_obj.digest()
-
     def _handle_wait_for_ack(self):
         if self.states.state != CfdpStates.BUSY_CLASS_2_ACKED:
             LOGGER.error(
@@ -456,6 +412,7 @@ class SourceHandler:
             closure_req_to_set = put_req.cfg.closure_requested
         else:
             closure_req_to_set = self._params.remote_cfg.closure_requested
+        self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
         self._params.closure_requested = closure_req_to_set
 
     def _transaction_start(self, put_req: PutRequest):
@@ -484,8 +441,7 @@ class SourceHandler:
         params = MetadataParams(
             dest_file_name=put_req.cfg.dest_file,
             source_file_name=put_req.cfg.source_file.as_posix(),
-            # TODO: Checksum type can be overriden by Put Request
-            checksum_type=self._params.remote_cfg.crc_type,
+            checksum_type=self._params.crc_helper.checksum_type,
             closure_requested=self._params.closure_requested,
             file_size=self._params.fp.size,
         )

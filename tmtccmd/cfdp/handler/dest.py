@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import dataclasses
 import enum
 from collections import deque
 from dataclasses import dataclass
@@ -20,8 +22,9 @@ from spacepackets.cfdp.pdu import (
     EofPdu,
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
-from tmtccmd.cfdp import RemoteEntityCfg, CfdpUserBase, LocalEntityCfg
+from tmtccmd.cfdp import CfdpUserBase, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
+from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import FileParamsBase
 from tmtccmd.cfdp.user import MetadataRecvParams, FileSegmentRecvParams
 
@@ -57,6 +60,17 @@ class DestStateWrapper:
     packet_ready: bool = False
 
 
+@dataclass
+class DestFieldWrapper:
+    transaction_id: Optional[TransactionId] = None
+    closure_requested = False
+    fp = DestFileParams.empty()
+    file_directives_dict: Dict[
+        DirectiveType, List[AbstractFileDirectiveBase]
+    ] = dataclasses.field(default_factory=lambda: dict())
+    file_data_deque: Deque[FileDataPdu] = deque()
+
+
 class FsmResult:
     def __init__(self, states: DestStateWrapper, pdu_holder: PduHolder):
         self.states = states
@@ -69,14 +83,10 @@ class DestHandler:
         self.states = DestStateWrapper()
         self.user = user
         self._pdu_holder = PduHolder(None)
-        self._transaction_id: Optional[TransactionId] = None
-        self._checksum_type = ChecksumTypes.NULL_CHECKSUM
-        self._closure_requested = False
-        self._fp = DestFileParams.empty()
-        self._file_directives_dict: Dict[
-            DirectiveType, List[AbstractFileDirectiveBase]
-        ] = dict()
-        self._file_data_deque: Deque[FileDataPdu] = deque()
+        self._params = DestFieldWrapper()
+        self._crc_helper: Crc32Helper = Crc32Helper(
+            ChecksumTypes.NULL_CHECKSUM, user.vfs
+        )
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
         if self.states.state != CfdpStates.IDLE:
@@ -86,10 +96,10 @@ class DestHandler:
             self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
         elif metadata_pdu.pdu_header.trans_mode == TransmissionModes.ACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
-        self._checksum_type = metadata_pdu.checksum_type
+        self._crc_helper.checksum_type = metadata_pdu.checksum_type
         self._closure_requested = metadata_pdu.closure_requested
-        self._fp.file_name = Path(metadata_pdu.dest_file_name)
-        self._fp.size = metadata_pdu.file_size
+        self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
+        self._params.fp.size = metadata_pdu.file_size
         self._transaction_id = TransactionId(
             source_entity_id=metadata_pdu.source_entity_id,
             transaction_seq_num=metadata_pdu.transaction_seq_num,
@@ -115,8 +125,10 @@ class DestHandler:
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
             transaction_was_started = False
-            if DirectiveType.METADATA_PDU in self._file_directives_dict:
-                for pdu in self._file_directives_dict.get(DirectiveType.METADATA_PDU):
+            if DirectiveType.METADATA_PDU in self._params.file_directives_dict:
+                for pdu in self._params.file_directives_dict.get(
+                    DirectiveType.METADATA_PDU
+                ):
                     metadata_pdu = PduHolder(pdu).to_metadata_pdu()
                     transaction_was_started = self._start_transaction(metadata_pdu)
                     if transaction_was_started:
@@ -126,7 +138,7 @@ class DestHandler:
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 # TODO: Sequence count check
-                for file_data_pdu in self._file_data_deque:
+                for file_data_pdu in self._params.file_data_deque:
                     data = file_data_pdu.file_data
                     offset = file_data_pdu.offset
                     if self.cfg.indication_cfg.file_segment_recvd_indication_required:
@@ -140,8 +152,8 @@ class DestHandler:
                         self.user.file_segment_recv_indication(
                             params=file_segment_indic_params
                         )
-                    self.user.vfs.write_data(self._fp.file_name, data, offset)
-                eof_pdus = self._file_directives_dict.get(DirectiveType.EOF_PDU)
+                    self.user.vfs.write_data(self._params.fp.file_name, data, offset)
+                eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
                     for pdu in eof_pdus:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
@@ -157,12 +169,16 @@ class DestHandler:
     def pass_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
         if packet.pdu_type == PduType.FILE_DATA:
-            self._file_data_deque.append(cast(FileDataPdu, packet))
+            self._params.file_data_deque.append(cast(FileDataPdu, packet))
         else:
-            if packet.directive_type in self._file_directives_dict:
-                self._file_directives_dict.get(packet.directive_type).append(packet)
+            if packet.directive_type in self._params.file_directives_dict:
+                self._params.file_directives_dict.get(packet.directive_type).append(
+                    packet
+                )
             else:
-                self._file_directives_dict.update({packet.directive_type: [packet]})
+                self._params.file_directives_dict.update(
+                    {packet.directive_type: [packet]}
+                )
 
     def confirm_packet_sent_advance_fsm(self):
         """Helper method which performs both :py:meth:`confirm_packet_sent` and
@@ -181,8 +197,8 @@ class DestHandler:
     def _handle_eof_pdu(self, eof_pdu: EofPdu):
         # TODO: Error handling
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
-            self._fp.crc32 = eof_pdu.file_checksum
-            self._fp.size = eof_pdu.file_size
+            self._params.fp.crc32 = eof_pdu.file_checksum
+            self._params.fp.size = eof_pdu.file_size
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._transaction_id)
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
@@ -192,6 +208,7 @@ class DestHandler:
                     self.states.transaction = TransactionStep.SENDING_ACK_PDU
 
     def _checksum_verify(self):
+        # self._crc_helper.calc_for_file(self._params.fp.f)
         pass
 
     def _notice_of_completion(self):
