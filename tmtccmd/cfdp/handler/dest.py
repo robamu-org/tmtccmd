@@ -159,7 +159,8 @@ class DestHandler:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
                         self._handle_eof_pdu(eof_pdu)
             if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
-                self._checksum_verify()
+                if self._crc_helper.checksum_type != ChecksumTypes.NULL_CHECKSUM:
+                    self._checksum_verify()
                 self._notice_of_completion()
                 self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
             if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
@@ -208,8 +209,12 @@ class DestHandler:
                     self.states.transaction = TransactionStep.SENDING_ACK_PDU
 
     def _checksum_verify(self):
-        # self._crc_helper.calc_for_file(self._params.fp.f)
-        pass
+        crc32 = self._crc_helper.calc_for_file(
+            self._params.fp.file_name, self._params.fp.size, self._params.fp.segment_len
+        )
+        if crc32 != self._params.fp.crc32:
+            # TODO: CFDP Checksum error
+            pass
 
     def _notice_of_completion(self):
         pass
