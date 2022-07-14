@@ -12,15 +12,16 @@ from spacepackets.cfdp import (
     ChecksumTypes,
     TransmissionModes,
     ConditionCode,
-    TlvTypes,
+    TlvTypes, PduConfig, Direction,
 )
 from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
     MetadataPdu,
     FileDataPdu,
-    EofPdu,
+    EofPdu, FinishedPdu,
 )
+from spacepackets.cfdp.pdu.finished import FinishedParams, DeliveryCode, FileDeliveryStatus
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from tmtccmd.cfdp import CfdpUserBase, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
@@ -64,6 +65,7 @@ class DestStateWrapper:
 class DestFieldWrapper:
     transaction_id: Optional[TransactionId] = None
     closure_requested = False
+    pdu_conf = PduConfig.empty()
     fp = DestFileParams.empty()
     file_directives_dict: Dict[
         DirectiveType, List[AbstractFileDirectiveBase]
@@ -100,6 +102,8 @@ class DestHandler:
         self._closure_requested = metadata_pdu.closure_requested
         self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
         self._params.fp.size = metadata_pdu.file_size
+        self._params.pdu_conf = metadata_pdu.pdu_conf
+        self._params.pdu_conf.direction = Direction.TOWARDS_SENDER
         self._transaction_id = TransactionId(
             source_entity_id=metadata_pdu.source_entity_id,
             transaction_seq_num=metadata_pdu.transaction_seq_num,
@@ -193,7 +197,9 @@ class DestHandler:
         self.states.packet_ready = False
 
     def advance_fsm(self):
-        pass
+        if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
+            self.states.transaction = TransactionStep.IDLE
+            self.states.state = CfdpStates.IDLE
 
     def _handle_eof_pdu(self, eof_pdu: EofPdu):
         # TODO: Error handling
@@ -217,7 +223,19 @@ class DestHandler:
             pass
 
     def _notice_of_completion(self):
+        # TODO: Transaction finished indication
         pass
 
     def _prepare_finished_pdu(self):
-        pass
+        # TODO: Use according error code, e.g. for checksum failure
+        finished_params = FinishedParams(
+            condition_code=ConditionCode.NO_ERROR,
+            delivery_code=DeliveryCode.DATA_COMPLETE,
+            delivery_status=FileDeliveryStatus.FILE_RETAINED
+        )
+        finished_pdu = FinishedPdu(
+            params=finished_params,
+            # The configuration was cached when the first metadata arrived
+            pdu_conf=self._params.pdu_conf
+        )
+        self._pdu_holder.base = finished_pdu
