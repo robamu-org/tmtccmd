@@ -9,7 +9,7 @@ from tmtccmd.tc import (
     QueueEntryHelper,
     ProcedureHelper,
 )
-from tmtccmd.tc.handler import TcHandlerBase
+from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if import ComInterface
 from tmtccmd.logging import get_console_logger
@@ -44,6 +44,7 @@ class SequentialCcsdsSender:
         """
         self._tc_handler = tc_handler
         self._queue_wrapper = queue_wrapper
+        self._proc_wrapper = ProcedureHelper(None)
         self._mode = SenderMode.DONE
         self._wait_cd = Countdown(None)
         self._send_cd = Countdown(queue_wrapper.inter_cmd_delay)
@@ -66,11 +67,13 @@ class SequentialCcsdsSender:
         # There is no need to delay sending of the first entry, the send delay is inter-packet
         # only
         self._send_cd.timeout = timedelta()
+        self._proc_wrapper.base = self._queue_wrapper.info
         self._queue_wrapper = queue_wrapper
 
     def handle_new_queue_forced(self, queue_wrapper: QueueWrapper):
         self._mode = SenderMode.DONE
         self.queue_wrapper = queue_wrapper
+        self._proc_wrapper.base = self._queue_wrapper.info
 
     def resume(self):
         """Can be used to resume a finished sequential sender it the provided queue is
@@ -99,10 +102,9 @@ class SequentialCcsdsSender:
         # Do not use continue anywhere in this while loop for now
         if not self.queue_wrapper.queue:
             if self.no_delay_remaining():
+                self._proc_wrapper.base = self._queue_wrapper.info
                 # cache this for last wait time
-                self._tc_handler.queue_finished_cb(
-                    ProcedureHelper(self._queue_wrapper.info)
-                )
+                self._tc_handler.queue_finished_cb(self._proc_wrapper)
                 self._mode = SenderMode.DONE
                 return
         else:
@@ -132,7 +134,11 @@ class SequentialCcsdsSender:
         else:
             self._current_res.tc_sent = False
         if call_send_cb:
-            self._tc_handler.send_cb(QueueEntryHelper(next_queue_entry), com_if)
+            self._tc_handler.send_cb(
+                SendCbParams(
+                    self._proc_wrapper, QueueEntryHelper(next_queue_entry), com_if
+                )
+            )
             if is_tc:
                 if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
                     self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)

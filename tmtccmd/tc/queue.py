@@ -118,7 +118,7 @@ class QueueEntryHelper:
         expected_type: TcQueueEntryType,
     ) -> Any:
         if self.base.etype != expected_type:
-            raise TypeError(f"Invalid object {self.base} for type {self.base.etype}")
+            raise TypeError(f"Invalid object {self.base} for type {expected_type}")
         return cast(obj_type, self.base)
 
     def to_log_entry(self) -> LogQueueEntry:
