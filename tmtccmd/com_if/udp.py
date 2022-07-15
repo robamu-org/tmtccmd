@@ -6,12 +6,9 @@ from typing import Optional
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.tcpip_utils import EthernetAddressT
+from tmtccmd.com_if.tcpip_utils import EthAddr
 
 LOGGER = get_console_logger()
-
-UDP_RECV_WIRETAPPING_ENABLED = False
-UDP_SEND_WIRETAPPING_ENABLED = False
 
 
 class UdpComIF(ComInterface):
@@ -20,22 +17,17 @@ class UdpComIF(ComInterface):
     def __init__(
         self,
         com_if_id: str,
-        tm_timeout: float,
-        tc_timeout_factor: float,
-        send_address: EthernetAddressT,
+        send_address: EthAddr,
         max_recv_size: int,
-        recv_addr: Optional[EthernetAddressT] = None,
+        recv_addr: Optional[EthAddr] = None,
     ):
         """Initialize a communication interface to send and receive UDP datagrams.
-        :param tm_timeout:
-        :param tc_timeout_factor:
+
         :param send_address:
         :param max_recv_size:
         :param recv_addr:
         """
         super().__init__(com_if_id=com_if_id)
-        self.tm_timeout = tm_timeout
-        self.tc_timeout_factor = tc_timeout_factor
         self.udp_socket = None
         self.send_address = send_address
         self.recv_addr = recv_addr
@@ -45,7 +37,7 @@ class UdpComIF(ComInterface):
         try:
             self.close()
         except IOError:
-            LOGGER.warning("Could not close UDP communication interface!")
+            LOGGER.warning("Could not close UDP communication interface")
 
     def initialize(self, args: any = None) -> any:
         pass
@@ -57,9 +49,9 @@ class UdpComIF(ComInterface):
         # See: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-bind
         if self.recv_addr is not None:
             LOGGER.info(
-                f"Binding UDP socket to {self.recv_addr[0]} and port {self.recv_addr[1]}"
+                f"Binding UDP socket to {self.recv_addr.ip_addr} and port {self.recv_addr.port}"
             )
-            self.udp_socket.bind(self.recv_addr)
+            self.udp_socket.bind(self.recv_addr.to_tuple)
         # Set non-blocking because we use select
         self.udp_socket.setblocking(False)
 
@@ -70,10 +62,10 @@ class UdpComIF(ComInterface):
         if self.udp_socket is not None:
             self.udp_socket.close()
 
-    def send(self, data: bytearray):
+    def send(self, data: bytes):
         if self.udp_socket is None:
             return
-        bytes_sent = self.udp_socket.sendto(data, self.send_address)
+        bytes_sent = self.udp_socket.sendto(data, self.send_address.to_tuple)
         if bytes_sent != len(data):
             LOGGER.warning("Not all bytes were sent!")
 

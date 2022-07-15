@@ -174,8 +174,6 @@ def create_default_tcpip_interface(
     if com_if_key == CoreComInterfaces.UDP.value:
         communication_interface = UdpComIF(
             com_if_id=com_if_key,
-            tm_timeout=get_global(CoreGlobalIds.TM_TIMEOUT),
-            tc_timeout_factor=get_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR),
             send_address=send_addr,
             recv_addr=recv_addr,
             max_recv_size=max_recv_size,

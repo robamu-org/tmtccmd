@@ -12,7 +12,7 @@ from spacepackets.ccsds.spacepacket import parse_space_packets
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.tcpip_utils import EthernetAddressT
+from tmtccmd.com_if.tcpip_utils import EthAddr
 from tmtccmd.util.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()
@@ -28,7 +28,11 @@ class TcpCommunicationType(enum.Enum):
 
 
 class TcpComIF(ComInterface):
-    """Communication interface for TCP communication."""
+    """Communication interface for TCP communication.
+    TODO: This class should not be tied to space packet IDs. Instead, let the parsing be done
+          by an upper layer. Also, do we really need an extra thread here? Using select like
+          with the UDP ComIF should be sufficient..
+    """
 
     DEFAULT_LOCK_TIMEOUT = 0.4
     TM_LOOP_DELAY = 0.2
@@ -39,7 +43,7 @@ class TcpComIF(ComInterface):
         com_type: TcpCommunicationType,
         space_packet_ids: Tuple[int],
         tm_polling_freqency: float,
-        target_address: EthernetAddressT,
+        target_address: EthAddr,
         max_recv_size: int,
         max_packets_stored: int = 50,
     ):
@@ -98,7 +102,7 @@ class TcpComIF(ComInterface):
     def set_up_socket(self):
         if self.__tcp_socket is None:
             self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__tcp_socket.connect(self.target_address)
+            self.__tcp_socket.connect(self.target_address.to_tuple)
             self.connected = True
 
     def set_up_tcp_thread(self):
@@ -129,7 +133,7 @@ class TcpComIF(ComInterface):
         try:
             if not self.connected:
                 self.set_up_socket()
-            self.__tcp_socket.sendto(data, self.target_address)
+            self.__tcp_socket.sendto(data, self.target_address.to_tuple)
         except BrokenPipeError:
             LOGGER.exception("Communication Interface setup might have failed")
         except ConnectionRefusedError or OSError:

@@ -1,7 +1,9 @@
+from __future__ import annotations
 import json
 import socket
 import struct
 import enum
+from dataclasses import dataclass
 from typing import Tuple
 
 from tmtccmd.util.json import check_json_file, JsonKeyNames
@@ -13,7 +15,18 @@ LOGGER = get_console_logger()
 DEFAULT_MAX_RECV_SIZE = 1500
 
 
-EthernetAddressT = Tuple[str, int]
+@dataclass
+class EthAddr:
+    ip_addr: str
+    port: int
+
+    @property
+    def to_tuple(self) -> Tuple[str, int]:
+        return self.ip_addr, self.port
+
+    @classmethod
+    def from_tuple(cls, addr: Tuple[str, int]) -> EthAddr:
+        return cls(addr[0], addr[1])
 
 
 class TcpIpType(enum.Enum):
@@ -32,27 +45,25 @@ class TcpIpConfigIds(enum.Enum):
     SPACE_PACKET_ID = auto()
 
 
-def determine_udp_send_address(json_cfg_path: str) -> EthernetAddressT:
+def determine_udp_send_address(json_cfg_path: str) -> EthAddr:
     return determine_tcpip_address(
         tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path
     )
 
 
-def determine_tcp_send_address(json_cfg_path: str) -> EthernetAddressT:
+def determine_tcp_send_address(json_cfg_path: str) -> EthAddr:
     return determine_tcpip_address(
         tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path
     )
 
 
-def determine_udp_recv_address(json_cfg_path: str) -> EthernetAddressT:
+def determine_udp_recv_address(json_cfg_path: str) -> EthAddr:
     return determine_tcpip_address(
         tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=json_cfg_path
     )
 
 
-def determine_tcpip_address(
-    tcpip_type: TcpIpType, json_cfg_path: str
-) -> EthernetAddressT:
+def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAddr:
     address_tuple = ()
     reconfigure_ip_address = False
     if not check_json_file(json_cfg_path=json_cfg_path):
@@ -82,7 +93,7 @@ def determine_tcpip_address(
         else:
             ip_address = load_data[json_key_address]
             port = int(load_data[json_key_port])
-            address_tuple = ip_address, port
+            addr = EthAddr(ip_address, port)
 
     if reconfigure_ip_address:
         address_tuple = prompt_ip_address(type_str=info_string)
@@ -92,8 +103,8 @@ def determine_tcpip_address(
         if save_to_json.lower() in ["y", "yes", ""]:
             with open(json_cfg_path, "r+") as file:
                 json_dict = json.load(file)
-                json_dict[json_key_address] = address_tuple[0]
-                json_dict[json_key_port] = address_tuple[1]
+                json_dict[json_key_address] = addr.ip_addr
+                json_dict[json_key_port] = addr.port
                 file.seek(0)
                 json.dump(json_dict, file, indent=4)
             LOGGER.info(
@@ -107,9 +118,9 @@ def determine_tcpip_address(
     return address_tuple
 
 
-def prompt_ip_address(type_str: str) -> EthernetAddressT:
+def prompt_ip_address(type_str: str) -> EthAddr:
     """Prompt a valid IP address from the user"""
-    address_tuple = ()
+    addr = EthAddr("", 0)
     while True:
         ip_address = input(
             f"Configuring {type_str} IP address. "
@@ -131,7 +142,7 @@ def prompt_ip_address(type_str: str) -> EthernetAddressT:
                 continue
 
         port = input(f"Please enter {type_str} port: ")
-        address_tuple = (ip_address, int(port))
+        addr = EthAddr(ip_address, int(port))
 
         LOGGER.info(f"Specified {type_str} IP address: {ip_address}")
         LOGGER.info(f"Specified {type_str} port: {port}")
@@ -140,7 +151,7 @@ def prompt_ip_address(type_str: str) -> EthernetAddressT:
         if not confirm.lower() in ["y", "yes", 1, ""]:
             continue
         break
-    return address_tuple
+    return addr
 
 
 def determine_recv_buffer_len(json_cfg_path: str, tcpip_type: TcpIpType):

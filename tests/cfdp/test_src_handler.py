@@ -84,7 +84,7 @@ class TestCfdpSourceHandler(TestCase):
         self.cfdp_user.eof_sent_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
 
-    def _common_small_file_test(self, closure_requested: bool):
+    def _common_small_file_test(self, closure_requested: bool, file_content: str):
         dest_path = "/tmp/hello_copy.txt"
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
@@ -99,7 +99,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         with open(self.file_path, "wb") as of:
             crc32 = PredefinedCrc("crc32")
-            data = "Hello World\n".encode()
+            data = file_content.encode()
             crc32.update(data)
             crc32 = crc32.digest()
             of.write(data)

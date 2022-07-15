@@ -26,7 +26,8 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
     def test_small_file(self):
-        self._common_small_file_test(True)
+        file_content = "Hello World\n"
+        self._common_small_file_test(True, file_content)
         self._verify_eof_indication()
         self.source_handler.state_machine()
         self._simple_finish_pdu_handling()
@@ -34,6 +35,9 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
+        self.assertTrue(self.file_path.exists())
+        with open(self.file_path) as f:
+            self.assertEqual(f.read(), file_content)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)

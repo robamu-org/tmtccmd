@@ -34,12 +34,10 @@ class Crc32Helper:
         return PredefinedCrc(self.checksum_type_to_crcmod_str())
 
     def calc_for_file(self, file: Path, file_sz: int, segment_len: int) -> bytes:
-        # TODO: Unittest
         if self.checksum_type == ChecksumTypes.NULL_CHECKSUM:
             return NULL_CHECKSUM_U32
         crc_obj = self.generate_crc_calculator()
         if not file.exists():
-            # TODO: Handle this exception in the handler, reset CFDP state machine
             raise SourceFileDoesNotExist(file)
         current_offset = 0
         # Calculate the file CRC

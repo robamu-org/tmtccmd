@@ -26,9 +26,13 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
     def test_small_file(self):
-        self._common_small_file_test(False)
+        file_content = "Hello World\n"
+        self._common_small_file_test(False, file_content)
         self._verify_eof_indication()
         self._test_transaction_completion()
+        self.assertTrue(self.file_path.exists())
+        with open(self.file_path) as f:
+            self.assertEqual(f.read(), file_content)
 
     def test_perfectly_segmented_file(self):
         # This tests generates two file data PDUs
@@ -61,9 +65,9 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         # This tests generates two file data PDUs, but the second one does not have a
         # full segment length
         if sys.version_info >= (3, 9):
-            rand_data = random.randbytes(round(self.file_segment_len * 1.5))
+            rand_data = random.randbytes(round(self.file_segment_len * 1.3))
         else:
-            rand_data = os.urandom(round(self.file_segment_len * 1.5))
+            rand_data = os.urandom(round(self.file_segment_len * 1.3))
         remainder_len = len(rand_data) - self.file_segment_len
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
