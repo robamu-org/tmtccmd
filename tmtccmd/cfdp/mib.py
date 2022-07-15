@@ -1,17 +1,38 @@
 import abc
+import enum
 from abc import ABC
 from dataclasses import dataclass
+from typing import Optional
+
 from spacepackets.cfdp.defs import (
     FaultHandlerCodes,
     ChecksumTypes,
     TransmissionModes,
+    CFDP_VERSION_2,
 )
 from spacepackets.util import UnsignedByteField
+from tmtccmd.util.countdown import Countdown
 
 
 class DefaultFaultHandlerBase(ABC):
     @abc.abstractmethod
     def handle_fault(self, code: FaultHandlerCodes):
+        pass
+
+
+class EntityType(enum.IntEnum):
+    SENDING = 0
+    RECEIVING = 1
+
+
+class CheckLimitProvider(ABC):
+    @abc.abstractmethod
+    def provide_check_limit(
+        self,
+        local_entity_id: UnsignedByteField,
+        remote_entity_id: UnsignedByteField,
+        entity_type: EntityType,
+    ) -> Countdown:
         pass
 
 
@@ -39,8 +60,10 @@ class RemoteEntityCfg:
     closure_requested: bool
     crc_on_transmission: bool
     default_transmission_mode: TransmissionModes
-    # TODO: Hardcoded for now
-    crc_type: ChecksumTypes = ChecksumTypes.CRC_32
+    crc_type: ChecksumTypes
+    check_limit: Optional[CheckLimitProvider]
+    # NOTE: Only this version is supported
+    cfdp_version: int = CFDP_VERSION_2
 
 
 class RemoteEntityTable:

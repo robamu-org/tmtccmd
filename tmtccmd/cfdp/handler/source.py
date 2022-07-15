@@ -480,8 +480,11 @@ class SourceHandler:
             self._params.pdu_conf.transaction_seq_num = (
                 self._get_next_transfer_seq_num()
             )
-            # NOTE: Support for record continuation state not implemented yet. Segment metadata
-            #       flag is therefore always set to False
+            # TODO: Support for record continuation state not implemented yet. Segment metadata
+            #       flag is therefore always set to False. Segment metadata support also omitted
+            #       for now. Implementing those generically could be done in form of a callback,
+            #       e.g. abstractmethod of this handler as a first way, another one being
+            #       to expect the user to supply some helper class to split up a file
             file_data_pdu = FileDataPdu(
                 pdu_conf=self._params.pdu_conf,
                 file_data=file_data,
