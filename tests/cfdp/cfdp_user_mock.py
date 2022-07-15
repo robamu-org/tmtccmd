@@ -10,24 +10,15 @@ from tmtccmd.cfdp.user import (
 class CfdpUser(CfdpUserBase):
     def __init__(self):
         super().__init__()
-        self.transaction_inidcation_was_called = False
-        self.transaction_inidcation_call_count = 0
-        self.transaction_finished_was_called = False
-        self.transaction_finished_call_count = 0
-        self.eof_sent_indication_was_called = False
-        self.eof_sent_indication_call_count = 0
 
     def transaction_indication(self, transaction_id: TransactionId):
-        self.transaction_inidcation_was_called = True
-        self.transaction_inidcation_call_count += 1
+        pass
 
     def transaction_finished_indication(self, params: TransactionFinishedParams):
-        self.transaction_finished_was_called = True
-        self.transaction_finished_call_count += 1
+        pass
 
     def eof_sent_indication(self, transaction_id: TransactionId):
-        self.eof_sent_indication_was_called = True
-        self.eof_sent_indication_call_count += 1
+        pass
 
     def abandon_indication(
         self, transaction_id: int, cond_code: ConditionCode, progress: int

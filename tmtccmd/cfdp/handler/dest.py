@@ -184,16 +184,13 @@ class DestHandler:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
                         self._handle_eof_pdu(eof_pdu)
             if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
-                if self._crc_helper.checksum_type != ChecksumTypes.NULL_CHECKSUM:
-                    self._checksum_verify()
-                self._notice_of_completion()
-                self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
+                self._handle_transfer_completion()
             if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
                 self._prepare_finished_pdu()
                 self.states.packet_ready = True
         return FsmResult(self.states, self.pdu_holder)
 
-    def reset(self):
+    def finish(self):
         self._params.reset()
         self.states.state = CfdpStates.IDLE
         self.states.transaction = TransactionStep.IDLE
@@ -224,9 +221,24 @@ class DestHandler:
         self.states.packet_ready = False
 
     def advance_fsm(self):
+        if self.states.packet_ready:
+            raise PacketSendNotConfirmed(
+                f"Must send current packet {self.pdu_holder.base} first"
+            )
         if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
-            self.states.transaction = TransactionStep.IDLE
-            self.states.state = CfdpStates.IDLE
+            self.finish()
+
+    def _handle_transfer_completion(self):
+        if self._crc_helper.checksum_type != ChecksumTypes.NULL_CHECKSUM:
+            self._checksum_verify()
+        self._notice_of_completion()
+        if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+            if self._params.closure_requested:
+                self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
+            else:
+                self.finish()
+        elif self.states.state == CfdpStates.BUSY_CLASS_2_ACKED:
+            self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
 
     def _handle_eof_pdu(self, eof_pdu: EofPdu):
         # TODO: Error handling

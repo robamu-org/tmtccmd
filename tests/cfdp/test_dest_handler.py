@@ -2,11 +2,17 @@ import os
 import tempfile
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import MagicMock
 
-from spacepackets.cfdp import ChecksumTypes, PduConfig, TransmissionModes
-from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams
+from spacepackets.cfdp import (
+    ChecksumTypes,
+    PduConfig,
+    TransmissionModes,
+    NULL_CHECKSUM_U32,
+)
+from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu
 from spacepackets.util import ByteFieldU16, ByteFieldU8
-from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg
+from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, CfdpUserBase
 from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler.dest import DestHandler, TransactionStep
 
@@ -54,6 +60,12 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(
             self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
         )
+        eof_pdu = EofPdu(
+            file_size=0, file_checksum=NULL_CHECKSUM_U32, pdu_conf=self.src_pdu_conf
+        )
+        self.dest_handler.pass_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        # self.cfdp_user.eof_recv_indication.assert_called_once()
         pass
 
     def tearDown(self) -> None:

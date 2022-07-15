@@ -2,6 +2,8 @@ import os
 import tempfile
 from pathlib import Path
 from unittest import TestCase
+from unittest.mock import MagicMock
+
 from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import (
@@ -31,6 +33,9 @@ class TestCfdpSourceHandler(TestCase):
             ByteFieldU16(1), self.indication_cfg, self.fault_handler
         )
         self.cfdp_user = CfdpUser()
+        self.cfdp_user.eof_sent_indication = MagicMock()
+        self.cfdp_user.transaction_indication = MagicMock()
+        self.cfdp_user.transaction_finished_indication = MagicMock()
         self.seq_num_provider = SeqCountProvider(bit_width=8)
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
@@ -74,11 +79,10 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.file_size, 0)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(eof_pdu.fault_location, None)
-        # This indication will be called if the EOF send was confirmed
-        self.assertFalse(self.cfdp_user.eof_sent_indication_was_called)
         self.source_handler.confirm_packet_sent_advance_fsm()
-        self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
-        self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
+        # This indication will be called if the EOF send was confirmed
+        self.cfdp_user.eof_sent_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
 
     def _common_small_file_test(self, closure_requested: bool):
         dest_path = "/tmp/hello_copy.txt"
@@ -133,8 +137,8 @@ class TestCfdpSourceHandler(TestCase):
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
         self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_METADATA)
-        self.assertTrue(self.cfdp_user.transaction_inidcation_was_called)
-        self.assertEqual(self.cfdp_user.transaction_inidcation_call_count, 1)
+        self.cfdp_user.transaction_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(
             fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
@@ -152,8 +156,8 @@ class TestCfdpSourceHandler(TestCase):
 
     def _verify_eof_indication(self):
         self.source_handler.confirm_packet_sent_advance_fsm()
-        self.assertTrue(self.cfdp_user.eof_sent_indication_was_called)
-        self.assertEqual(self.cfdp_user.eof_sent_indication_call_count, 1)
+        self.cfdp_user.eof_sent_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
 
     def tearDown(self) -> None:
         if self.file_path.exists():

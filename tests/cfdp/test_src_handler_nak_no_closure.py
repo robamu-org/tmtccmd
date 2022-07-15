@@ -19,8 +19,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
     def test_empty_file(self):
         self._common_empty_file_test()
         fsm_res = self.source_handler.state_machine()
-        self.assertTrue(self.cfdp_user.transaction_finished_was_called)
-        self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
         self.source_handler.confirm_packet_sent_advance_fsm()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
@@ -136,5 +136,5 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         fsm_res = self.source_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
-        self.assertTrue(self.cfdp_user.transaction_finished_was_called)
-        self.assertEqual(self.cfdp_user.transaction_finished_call_count, 1)
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
