@@ -495,9 +495,11 @@ class SourceHandler:
             if self._params.fp.size < self._params.fp.segment_len:
                 read_len = self._params.fp.size
             else:
-                next_offset = self._params.fp.offset + self._params.fp.segment_len
-                if next_offset > self._params.fp.size:
-                    read_len = next_offset % self._params.fp.size
+                if (
+                    self._params.fp.offset + self._params.fp.segment_len
+                    > self._params.fp.size
+                ):
+                    read_len = self._params.fp.size - self._params.fp.offset
                 else:
                     read_len = self._params.fp.segment_len
             file_data = self.user.vfs.read_from_opened_file(

@@ -34,6 +34,7 @@ class Crc32Helper:
         return PredefinedCrc(self.checksum_type_to_crcmod_str())
 
     def calc_for_file(self, file: Path, file_sz: int, segment_len: int) -> bytes:
+        # TODO: Unittest
         if self.checksum_type == ChecksumTypes.NULL_CHECKSUM:
             return NULL_CHECKSUM_U32
         crc_obj = self.generate_crc_calculator()
@@ -43,15 +44,12 @@ class Crc32Helper:
         current_offset = 0
         # Calculate the file CRC
         with open(file, "rb") as of:
-            while True:
-                if current_offset == file_sz:
-                    break
+            while current_offset < file_sz:
                 if file_sz < segment_len:
                     read_len = file_sz
                 else:
-                    next_offset = current_offset + segment_len
-                    if next_offset > file_sz:
-                        read_len = next_offset % file_sz
+                    if current_offset + segment_len > file_sz:
+                        read_len = file_sz - current_offset
                     else:
                         read_len = segment_len
                 if read_len > 0:
