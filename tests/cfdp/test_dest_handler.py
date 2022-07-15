@@ -1,5 +1,6 @@
 import os
 import tempfile
+from typing import cast
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -13,8 +14,9 @@ from spacepackets.cfdp import (
 from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, CfdpUserBase
-from tmtccmd.cfdp.defs import CfdpStates
+from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.dest import DestHandler, TransactionStep
+from tmtccmd.cfdp.user import TransactionFinishedParams
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -28,12 +30,14 @@ class TestCfdpDestHandler(TestCase):
         self.local_cfg = LocalEntityCfg(
             self.entity_id, self.indication_cfg, self.fault_handler
         )
+        self.src_entity_id = ByteFieldU16(1)
         self.src_pdu_conf = PduConfig(
-            source_entity_id=ByteFieldU16(1),
+            source_entity_id=self.src_entity_id,
             dest_entity_id=self.entity_id,
             transaction_seq_num=ByteFieldU8(1),
             trans_mode=TransmissionModes.UNACKNOWLEDGED,
         )
+        self.transaction_id = TransactionId(self.src_entity_id, ByteFieldU8(1))
         self.cfdp_user = CfdpUser()
         self.cfdp_user.eof_recv_indication = MagicMock()
         self.cfdp_user.file_segment_recv_indication = MagicMock()
@@ -71,7 +75,15 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.transaction, TransactionStep.IDLE)
         self.cfdp_user.eof_recv_indication.assert_called_once()
-        pass
+        self.assertEqual(
+            self.cfdp_user.eof_recv_indication.call_args.args[0], self.transaction_id
+        )
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        finished_params = cast(
+            TransactionFinishedParams,
+            self.cfdp_user.transaction_finished_indication.call_args.args[0],
+        )
+        self.assertEqual(finished_params.transaction_id, self.transaction_id)
 
     def tearDown(self) -> None:
         if self.file_path.exists():
