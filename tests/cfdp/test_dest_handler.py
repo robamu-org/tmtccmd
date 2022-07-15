@@ -35,6 +35,9 @@ class TestCfdpDestHandler(TestCase):
             trans_mode=TransmissionModes.UNACKNOWLEDGED,
         )
         self.cfdp_user = CfdpUser()
+        self.cfdp_user.eof_recv_indication = MagicMock()
+        self.cfdp_user.file_segment_recv_indication = MagicMock()
+        self.cfdp_user.transaction_finished_indication = MagicMock()
         self.file_path = Path(f"{tempfile.gettempdir()}/hello_dest.txt")
         with open(self.file_path, "w"):
             pass
@@ -65,7 +68,9 @@ class TestCfdpDestHandler(TestCase):
         )
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
-        # self.cfdp_user.eof_recv_indication.assert_called_once()
+        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.transaction, TransactionStep.IDLE)
+        self.cfdp_user.eof_recv_indication.assert_called_once()
         pass
 
     def tearDown(self) -> None:
