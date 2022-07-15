@@ -51,6 +51,9 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.pass_packet(file_transfer_init)
         fsm_res = self.dest_handler.state_machine()
         self.assertFalse(fsm_res.states.packet_ready)
+        self.assertEqual(
+            self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
+        )
         pass
 
     def tearDown(self) -> None:

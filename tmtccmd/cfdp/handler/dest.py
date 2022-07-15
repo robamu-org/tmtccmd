@@ -34,7 +34,11 @@ from tmtccmd.cfdp import CfdpUserBase, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import FileParamsBase, PacketSendNotConfirmed
-from tmtccmd.cfdp.user import MetadataRecvParams, FileSegmentRecvParams
+from tmtccmd.cfdp.user import (
+    MetadataRecvParams,
+    FileSegmentRecvParams,
+    TransactionFinishedParams,
+)
 
 
 @dataclass
@@ -71,13 +75,23 @@ class DestStateWrapper:
 @dataclass
 class DestFieldWrapper:
     transaction_id: Optional[TransactionId] = None
-    closure_requested = False
-    pdu_conf = PduConfig.empty()
-    fp = DestFileParams.empty()
+    closure_requested: bool = False
+    pdu_conf: PduConfig = PduConfig.empty()
+    condition_code: ConditionCode = ConditionCode.NO_CONDITION_FIELD
+    fp: DestFileParams = DestFileParams.empty()
     file_directives_dict: Dict[
         DirectiveType, List[AbstractFileDirectiveBase]
     ] = dataclasses.field(default_factory=lambda: dict())
     file_data_deque: Deque[FileDataPdu] = deque()
+
+    def reset(self):
+        self.transaction_id = None
+        self.closure_requested = False
+        self.condition_code = ConditionCode.NO_CONDITION_FIELD
+        self.pdu_conf = PduConfig.empty()
+        self.fp.reset()
+        self.file_directives_dict = dict()
+        self.file_data_deque = deque()
 
 
 class FsmResult:
@@ -111,7 +125,7 @@ class DestHandler:
         self._params.fp.size = metadata_pdu.file_size
         self._params.pdu_conf = metadata_pdu.pdu_conf
         self._params.pdu_conf.direction = Direction.TOWARDS_SENDER
-        self._transaction_id = TransactionId(
+        self._params.transaction_id = TransactionId(
             source_entity_id=metadata_pdu.source_entity_id,
             transaction_seq_num=metadata_pdu.transaction_seq_num,
         )
@@ -123,7 +137,7 @@ class DestHandler:
                 if tlv.tlv_type == TlvTypes.MESSAGE_TO_USER:
                     msgs_to_user_list.append(tlv)
         params = MetadataRecvParams(
-            transaction_id=self._transaction_id,
+            transaction_id=self._params.transaction_id,
             file_size=metadata_pdu.file_size,
             source_id=metadata_pdu.source_entity_id,
             dest_file_name=metadata_pdu.dest_file_name,
@@ -154,7 +168,7 @@ class DestHandler:
                     offset = file_data_pdu.offset
                     if self.cfg.indication_cfg.file_segment_recvd_indication_required:
                         file_segment_indic_params = FileSegmentRecvParams(
-                            transaction_id=self._transaction_id,
+                            transaction_id=self._params.transaction_id,
                             length=len(file_data_pdu.file_data),
                             offset=offset,
                             record_cont_state=file_data_pdu.record_continuation_state,
@@ -178,6 +192,11 @@ class DestHandler:
                 self._prepare_finished_pdu()
                 self.states.packet_ready = True
         return FsmResult(self.states, self.pdu_holder)
+
+    def reset(self):
+        self._params.reset()
+        self.states.state = CfdpStates.IDLE
+        self.states.transaction = TransactionStep.IDLE
 
     def pass_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
@@ -215,7 +234,7 @@ class DestHandler:
             self._params.fp.crc32 = eof_pdu.file_checksum
             self._params.fp.size = eof_pdu.file_size
             if self.cfg.indication_cfg.eof_recv_indication_required:
-                self.user.eof_recv_indication(self._transaction_id)
+                self.user.eof_recv_indication(self._params.transaction_id)
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
                     self.states.transaction = TransactionStep.TRANSFER_COMPLETION
@@ -228,20 +247,30 @@ class DestHandler:
         )
         if crc32 != self._params.fp.crc32:
             # TODO: CFDP Checksum error
-            pass
+            self._params.condition_code = ConditionCode.FILE_CHECKSUM_FAILURE
+        else:
+            self._params.condition_code = ConditionCode.NO_ERROR
 
     def _notice_of_completion(self):
-        # TODO: Transaction finished indication
-        pass
+        if self.cfg.indication_cfg.transaction_finished_indication_required:
+            finished_indic_params = TransactionFinishedParams(
+                transaction_id=self._params.transaction_id,
+                condition_code=self._params.condition_code,
+                # TODO: Find out how those are used
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+                file_status=FileDeliveryStatus.FILE_RETAINED,
+                status_report=None,
+            )
+            self.user.transaction_finished_indication(finished_indic_params)
 
     def _prepare_finished_pdu(self):
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
                 f"Must send current packet {self.pdu_holder.base} first"
             )
-        # TODO: Use according error code, e.g. for checksum failure
         finished_params = FinishedParams(
-            condition_code=ConditionCode.NO_ERROR,
+            condition_code=self._params.condition_code,
+            # TODO: Find out how those are used
             delivery_code=DeliveryCode.DATA_COMPLETE,
             delivery_status=FileDeliveryStatus.FILE_RETAINED,
         )
