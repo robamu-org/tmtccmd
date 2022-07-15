@@ -149,18 +149,13 @@ class DestHandler:
 
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
-            transaction_was_started = False
             if DirectiveType.METADATA_PDU in self._params.file_directives_dict:
                 for pdu in self._params.file_directives_dict.get(
                     DirectiveType.METADATA_PDU
                 ):
                     metadata_pdu = PduHolder(pdu).to_metadata_pdu()
-                    transaction_was_started = self._start_transaction(metadata_pdu)
-                    if transaction_was_started:
-                        break
-            if not transaction_was_started:
-                return FsmResult(self.states, self.pdu_holder)
-        elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+                    self._start_transaction(metadata_pdu)
+        if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 # TODO: Sequence count check
                 for file_data_pdu in self._params.file_data_deque:

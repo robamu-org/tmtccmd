@@ -11,7 +11,7 @@ from spacepackets.cfdp import (
     TransmissionModes,
     NULL_CHECKSUM_U32,
 )
-from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu
+from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu, FileDataPdu
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
@@ -97,7 +97,7 @@ class TestCfdpDestHandler(TestCase):
             closure_requested=False,
             source_file_name=src_file.as_posix(),
             dest_file_name=self.file_path.as_posix(),
-            file_size=file_size
+            file_size=file_size,
         )
 
         file_transfer_init = MetadataPdu(
@@ -106,6 +106,17 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(self.dest_handler.states.state, CfdpStates.IDLE)
         self.assertEqual(self.dest_handler.states.transaction, TransactionStep.IDLE)
         self.dest_handler.pass_packet(file_transfer_init)
+        with open(src_file, "rb") as rf:
+            read_data = rf.read()
+        file_data_pdu = FileDataPdu(
+            file_data=read_data, offset=0, pdu_conf=self.src_pdu_conf
+        )
+        self.dest_handler.pass_packet(file_data_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(
+            fsm_res.states.transaction, TransactionStep.RECEIVING_FILE_DATA
+        )
 
     def tearDown(self) -> None:
         if self.file_path.exists():
