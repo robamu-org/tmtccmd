@@ -13,7 +13,7 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu
 from spacepackets.util import ByteFieldU16, ByteFieldU8
-from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, CfdpUserBase
+from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.dest import DestHandler, TransactionStep
 from tmtccmd.cfdp.user import TransactionFinishedParams
@@ -84,6 +84,11 @@ class TestCfdpDestHandler(TestCase):
             self.cfdp_user.transaction_finished_indication.call_args.args[0],
         )
         self.assertEqual(finished_params.transaction_id, self.transaction_id)
+        self.assertTrue(self.file_path.exists())
+        self.assertEqual(self.file_path.stat().st_size, 0)
+
+    def test_small_file_reception(self):
+        pass
 
     def tearDown(self) -> None:
         if self.file_path.exists():
