@@ -12,21 +12,28 @@ from spacepackets.cfdp import (
     ChecksumTypes,
     TransmissionModes,
     ConditionCode,
-    TlvTypes, PduConfig, Direction,
+    TlvTypes,
+    PduConfig,
+    Direction,
 )
 from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
     MetadataPdu,
     FileDataPdu,
-    EofPdu, FinishedPdu,
+    EofPdu,
+    FinishedPdu,
 )
-from spacepackets.cfdp.pdu.finished import FinishedParams, DeliveryCode, FileDeliveryStatus
+from spacepackets.cfdp.pdu.finished import (
+    FinishedParams,
+    DeliveryCode,
+    FileDeliveryStatus,
+)
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from tmtccmd.cfdp import CfdpUserBase, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.crc import Crc32Helper
-from tmtccmd.cfdp.handler.defs import FileParamsBase
+from tmtccmd.cfdp.handler.defs import FileParamsBase, PacketSendNotConfirmed
 from tmtccmd.cfdp.user import MetadataRecvParams, FileSegmentRecvParams
 
 
@@ -84,7 +91,7 @@ class DestHandler:
         self.cfg = cfg
         self.states = DestStateWrapper()
         self.user = user
-        self._pdu_holder = PduHolder(None)
+        self.pdu_holder = PduHolder(None)
         self._params = DestFieldWrapper()
         self._crc_helper: Crc32Helper = Crc32Helper(
             ChecksumTypes.NULL_CHECKSUM, user.vfs
@@ -138,7 +145,7 @@ class DestHandler:
                     if transaction_was_started:
                         break
             if not transaction_was_started:
-                return FsmResult(self.states, self._pdu_holder)
+                return FsmResult(self.states, self.pdu_holder)
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 # TODO: Sequence count check
@@ -169,7 +176,8 @@ class DestHandler:
                 self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
             if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
                 self._prepare_finished_pdu()
-        return FsmResult(self.states, self._pdu_holder)
+                self.states.packet_ready = True
+        return FsmResult(self.states, self.pdu_holder)
 
     def pass_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
@@ -227,15 +235,19 @@ class DestHandler:
         pass
 
     def _prepare_finished_pdu(self):
+        if self.states.packet_ready:
+            raise PacketSendNotConfirmed(
+                f"Must send current packet {self.pdu_holder.base} first"
+            )
         # TODO: Use according error code, e.g. for checksum failure
         finished_params = FinishedParams(
             condition_code=ConditionCode.NO_ERROR,
             delivery_code=DeliveryCode.DATA_COMPLETE,
-            delivery_status=FileDeliveryStatus.FILE_RETAINED
+            delivery_status=FileDeliveryStatus.FILE_RETAINED,
         )
         finished_pdu = FinishedPdu(
             params=finished_params,
             # The configuration was cached when the first metadata arrived
-            pdu_conf=self._params.pdu_conf
+            pdu_conf=self._params.pdu_conf,
         )
-        self._pdu_holder.base = finished_pdu
+        self.pdu_holder.base = finished_pdu

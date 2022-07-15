@@ -91,7 +91,7 @@ class CfdpHandler:
 
     @property
     def transfer_packet_ready(self):
-        if self._tx_handler.pdu_wrapper.base is not None:
+        if self._tx_handler.pdu_holder.base is not None:
             return True
         return False
 
@@ -104,7 +104,7 @@ class CfdpHandler:
     @property
     def transfer_packet_wrapper(self) -> PduHolder:
         """Yield the next packet required to transfer a file"""
-        return self._tx_handler.pdu_wrapper
+        return self._tx_handler.pdu_holder
 
     @property
     def reception_packet_wrapper(self) -> PduHolder:

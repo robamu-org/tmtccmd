@@ -163,7 +163,7 @@ class SourceHandler:
         user: CfdpUserBase,
     ):
         self.states = SourceStateWrapper()
-        self.pdu_wrapper = PduHolder(None)
+        self.pdu_holder = PduHolder(None)
         self.cfg = cfg
         self.user = user
         self.seq_num_provider = seq_num_provider
@@ -260,7 +260,7 @@ class SourceHandler:
             does not exist.
         """
         if self.states.state == CfdpStates.IDLE:
-            return FsmResult(self.pdu_wrapper, self.states)
+            return FsmResult(self.pdu_holder, self.states)
         elif self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             put_req = self._current_req.to_put_request()
             if self.states.step == TransactionStep.IDLE:
@@ -282,17 +282,17 @@ class SourceHandler:
             if self.states.step == TransactionStep.SENDING_METADATA:
                 self._prepare_metadata_pdu(put_req)
                 self.states.packet_ready = True
-                return FsmResult(self.pdu_wrapper, self.states)
+                return FsmResult(self.pdu_holder, self.states)
             if self.states.step == TransactionStep.SENDING_FILE_DATA:
                 if self._prepare_next_file_data_pdu(put_req):
                     self.states.packet_ready = True
-                    return FsmResult(self.pdu_wrapper, self.states)
+                    return FsmResult(self.pdu_holder, self.states)
                 else:
                     self.states.step = TransactionStep.SENDING_EOF
             if self.states.step == TransactionStep.SENDING_EOF:
                 self._prepare_eof_pdu()
                 self.states.packet_ready = True
-                return FsmResult(self.pdu_wrapper, self.states)
+                return FsmResult(self.pdu_holder, self.states)
             if self.states.step == TransactionStep.WAIT_FOR_ACK:
                 self._handle_wait_for_ack()
             if self.states.step == TransactionStep.WAIT_FOR_FINISH:
@@ -307,7 +307,7 @@ class SourceHandler:
                 self.user.transaction_finished_indication(indication_params)
                 # Transaction finished
                 self.reset()
-        return FsmResult(self.pdu_wrapper, self.states)
+        return FsmResult(self.pdu_holder, self.states)
 
     def confirm_packet_sent_advance_fsm(self):
         """Helper method which performs both :py:meth:`confirm_packet_sent` and
@@ -330,7 +330,7 @@ class SourceHandler:
         """
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
-                f"Must send current packet {self.pdu_wrapper.base} before "
+                f"Must send current packet {self.pdu_holder.base} before "
                 f"advancing state machine"
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
@@ -362,7 +362,7 @@ class SourceHandler:
             )
         pdu_list = self._rec_dict.get(DirectiveType.ACK_PDU)
         if pdu_list is None:
-            return FsmResult(self.pdu_wrapper, self.states)
+            return FsmResult(self.pdu_holder, self.states)
         for pdu in pdu_list:
             holder = PduHolder(pdu)
             ack_pdu = holder.to_ack_pdu()
@@ -431,7 +431,7 @@ class SourceHandler:
     def _prepare_metadata_pdu(self, put_req: PutRequest):
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
-                f"Must send current packet {self.pdu_wrapper.base} first"
+                f"Must send current packet {self.pdu_holder.base} first"
             )
         self._params.pdu_conf.seg_ctrl = put_req.cfg.seg_ctrl
         self._params.pdu_conf.dest_entity_id = put_req.cfg.destination_id
@@ -445,7 +445,7 @@ class SourceHandler:
             closure_requested=self._params.closure_requested,
             file_size=self._params.fp.size,
         )
-        self.pdu_wrapper.base = MetadataPdu(
+        self.pdu_holder.base = MetadataPdu(
             pdu_conf=self._params.pdu_conf, params=params
         )
 
@@ -464,7 +464,7 @@ class SourceHandler:
                 return False
             if self.states.packet_ready:
                 raise PacketSendNotConfirmed(
-                    f"Must send current packet {self.pdu_wrapper.base} first"
+                    f"Must send current packet {self.pdu_holder.base} first"
                 )
             if self._params.fp.size < self._params.fp.segment_len:
                 read_len = self._params.fp.size
@@ -489,15 +489,15 @@ class SourceHandler:
                 segment_metadata_flag=False,
             )
             self._params.fp.offset += read_len
-            self.pdu_wrapper.base = file_data_pdu
+            self.pdu_holder.base = file_data_pdu
         return True
 
     def _prepare_eof_pdu(self):
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
-                f"Must send current packet {self.pdu_wrapper.base} first"
+                f"Must send current packet {self.pdu_holder.base} first"
             )
-        self.pdu_wrapper.base = EofPdu(
+        self.pdu_holder.base = EofPdu(
             file_checksum=self._params.fp.crc32,
             file_size=self._params.fp.size,
             pdu_conf=self._params.pdu_conf,
