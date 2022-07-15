@@ -88,7 +88,24 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(self.file_path.stat().st_size, 0)
 
     def test_small_file_reception(self):
-        pass
+        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
+        with open(src_file, "w") as of:
+            of.write("Hello World\n")
+        file_size = src_file.stat().st_size
+        metadata_params = MetadataParams(
+            checksum_type=ChecksumTypes.NULL_CHECKSUM,
+            closure_requested=False,
+            source_file_name=src_file.as_posix(),
+            dest_file_name=self.file_path.as_posix(),
+            file_size=file_size
+        )
+
+        file_transfer_init = MetadataPdu(
+            params=metadata_params, pdu_conf=self.src_pdu_conf
+        )
+        self.assertEqual(self.dest_handler.states.state, CfdpStates.IDLE)
+        self.assertEqual(self.dest_handler.states.transaction, TransactionStep.IDLE)
+        self.dest_handler.pass_packet(file_transfer_init)
 
     def tearDown(self) -> None:
         if self.file_path.exists():
