@@ -44,6 +44,8 @@ class TestCfdpSourceHandler(TestCase):
             closure_requested=closure_requested,
             crc_on_transmission=False,
             default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
+            crc_type=ChecksumTypes.CRC_32,
+            check_limit=None,
         )
         # Create an empty file and send it via CFDP
         self.source_handler = SourceHandler(

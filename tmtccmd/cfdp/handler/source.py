@@ -9,6 +9,7 @@ from spacepackets.cfdp import (
     Direction,
     PduConfig,
     ChecksumTypes,
+    FaultHandlerCodes,
 )
 from spacepackets.cfdp.pdu import (
     PduHolder,
@@ -40,10 +41,11 @@ from tmtccmd.cfdp.handler.defs import (
     InvalidSourceId,
     InvalidDestinationId,
 )
+from tmtccmd.cfdp.mib import EntityType
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
-
+from tmtccmd.util.countdown import Countdown
 
 LOGGER = get_console_logger()
 
@@ -72,6 +74,7 @@ class TransferFieldWrapper:
     def __init__(self, local_entity_id: UnsignedByteField, vfs: VirtualFilestore):
         self.crc_helper = Crc32Helper(ChecksumTypes.NULL_CHECKSUM, vfs)
         self.transaction: Optional[TransactionId] = None
+        self.check_limit: Optional[Countdown] = None
         self.fp = FileParamsBase.empty()
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self.closure_requested: bool = False
@@ -114,6 +117,8 @@ class TransferFieldWrapper:
         self.fp.reset()
         self.remote_cfg = None
         self.transaction = None
+        self.check_limit = None
+        self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
 
 
@@ -298,15 +303,8 @@ class SourceHandler:
             if self.states.step == TransactionStep.WAIT_FOR_FINISH:
                 self._handle_wait_for_finish()
             if self.states.step == TransactionStep.NOTICE_OF_COMPLETION:
-                indication_params = TransactionFinishedParams(
-                    transaction_id=self._params.transaction,
-                    condition_code=ConditionCode.NO_ERROR,
-                    file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
-                    delivery_code=DeliveryCode.DATA_COMPLETE,
-                )
-                self.user.transaction_finished_indication(indication_params)
-                # Transaction finished
-                self.reset()
+                self._notice_of_completion()
+
         return FsmResult(self.pdu_holder, self.states)
 
     def confirm_packet_sent_advance_fsm(self):
@@ -340,20 +338,31 @@ class SourceHandler:
                 if self._params.fp.offset == self._params.fp.size:
                     self.states.step = TransactionStep.SENDING_EOF
             elif self.states.step == TransactionStep.SENDING_EOF:
-                if self.cfg.indication_cfg.eof_sent_indication_required:
-                    self.user.eof_sent_indication(self._params.transaction)
-                if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
-                    if self._params.closure_requested:
-                        self.states.step = TransactionStep.WAIT_FOR_FINISH
-                    else:
-                        self.states.step = TransactionStep.NOTICE_OF_COMPLETION
-                else:
-                    self.states.step = TransactionStep.WAIT_FOR_ACK
+                self._handle_eof_sent()
 
     def reset(self):
         self.states.step = TransactionStep.IDLE
         self.states.state = CfdpStates.IDLE
         self._params.reset()
+
+    def _handle_eof_sent(self):
+        if self.cfg.indication_cfg.eof_sent_indication_required:
+            self.user.eof_sent_indication(self._params.transaction)
+        if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+            if self._params.closure_requested:
+                if self._params.remote_cfg.check_limit is not None:
+                    self._params.check_limit = (
+                        self._params.remote_cfg.check_limit.provide_check_limit(
+                            local_entity_id=self.cfg.local_entity_id,
+                            remote_entity_id=self._params.remote_cfg.remote_entity_id,
+                            entity_type=EntityType.SENDING,
+                        )
+                    )
+                self.states.step = TransactionStep.WAIT_FOR_FINISH
+            else:
+                self.states.step = TransactionStep.NOTICE_OF_COMPLETION
+        else:
+            self.states.step = TransactionStep.WAIT_FOR_ACK
 
     def _handle_wait_for_ack(self):
         if self.states.state != CfdpStates.BUSY_CLASS_2_ACKED:
@@ -374,6 +383,17 @@ class SourceHandler:
                     pass
                 self.states.step = TransactionStep.WAIT_FOR_FINISH
 
+    def _notice_of_completion(self):
+        indication_params = TransactionFinishedParams(
+            transaction_id=self._params.transaction,
+            condition_code=ConditionCode.NO_ERROR,
+            file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+            delivery_code=DeliveryCode.DATA_COMPLETE,
+        )
+        self.user.transaction_finished_indication(indication_params)
+        # Transaction finished
+        self.reset()
+
     def _handle_wait_for_finish(self):
         if not self._params.closure_requested:
             LOGGER.error(
@@ -385,12 +405,18 @@ class SourceHandler:
         #       the transaction in a source state config file which can be restored
         #       when re-starting the application
         if self._params.closure_requested:
+            if self._params.check_limit is not None:
+                if self._params.check_limit.timed_out():
+                    self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
+                    LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
             # Check all entries for some robustness against out-of-order reception
             if DirectiveType.FINISHED_PDU in self._rec_dict:
                 pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
                 for pdu in pdu_list:
                     holder = PduHolder(pdu)
                     finish_pdu = holder.to_finished_pdu()
+                    # TODO: I think there are some more conditions where we can issue a notice
+                    #       of completion
                     if finish_pdu.condition_code == ConditionCode.NO_ERROR:
                         self.states.step = TransactionStep.NOTICE_OF_COMPLETION
                     else:
@@ -515,3 +541,29 @@ class SourceHandler:
         return ByteFieldGenerator.from_int(
             self.seq_num_provider.max_bit_width // 8, next_seq_num
         )
+
+    def _declare_fault(self, cond: ConditionCode):
+        LOGGER.warning(
+            f"Fault with condition code {cond} was declared for "
+            f"transaction {self._params.transaction}"
+        )
+        fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
+        if fh == FaultHandlerCodes.NOTICE_OF_CANCELLATION:
+            self._notice_of_cancellation()
+        elif fh == FaultHandlerCodes.NOTICE_OF_SUSPENSION:
+            self._notice_of_suspension()
+        elif fh == FaultHandlerCodes.ABANDON_TRANSACTION:
+            self._abandon_transaction()
+        self.cfg.default_fault_handlers.fault_callback(cond)
+
+    def _notice_of_cancellation(self):
+        # TODO: Implement
+        pass
+
+    def _notice_of_suspension(self):
+        # TODO: Implement
+        pass
+
+    def _abandon_transaction(self):
+        # TODO: Implement
+        pass
