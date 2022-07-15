@@ -166,7 +166,7 @@ class DestHandler:
                             transaction_id=self._params.transaction_id,
                             length=len(file_data_pdu.file_data),
                             offset=offset,
-                            record_cont_state=file_data_pdu.record_continuation_state,
+                            record_cont_state=file_data_pdu.record_cont_state,
                             segment_metadata=file_data_pdu.segment_metadata,
                         )
                         self.user.file_segment_recv_indication(

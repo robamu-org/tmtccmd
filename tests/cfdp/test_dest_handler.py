@@ -12,6 +12,7 @@ from spacepackets.cfdp import (
     NULL_CHECKSUM_U32,
 )
 from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu, FileDataPdu
+from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
@@ -108,9 +109,8 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.pass_packet(file_transfer_init)
         with open(src_file, "rb") as rf:
             read_data = rf.read()
-        file_data_pdu = FileDataPdu(
-            file_data=read_data, offset=0, pdu_conf=self.src_pdu_conf
-        )
+        fd_params = FileDataParams(file_data=read_data, offset=0)
+        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
         self.dest_handler.pass_packet(file_data_pdu)
         fsm_res = self.dest_handler.state_machine()
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)

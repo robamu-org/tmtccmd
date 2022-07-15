@@ -22,6 +22,7 @@ from spacepackets.cfdp.pdu import (
     DirectiveType,
     AbstractFileDirectiveBase,
 )
+from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd import get_console_logger
 from tmtccmd.cfdp import (
@@ -513,11 +514,13 @@ class SourceHandler:
             #       for now. Implementing those generically could be done in form of a callback,
             #       e.g. abstractmethod of this handler as a first way, another one being
             #       to expect the user to supply some helper class to split up a file
-            file_data_pdu = FileDataPdu(
-                pdu_conf=self._params.pdu_conf,
+            fd_params = FileDataParams(
                 file_data=file_data,
                 offset=self._params.fp.offset,
                 segment_metadata_flag=False,
+            )
+            file_data_pdu = FileDataPdu(
+                pdu_conf=self._params.pdu_conf, params=fd_params
             )
             self._params.fp.offset += read_len
             self.pdu_holder.base = file_data_pdu
