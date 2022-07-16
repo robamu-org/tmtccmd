@@ -116,7 +116,7 @@ class RemoteEntityCfg:
     cfdp_version: int = CFDP_VERSION_2
 
 
-class RemoteEntityTable:
+class RemoteEntityCfgTable:
     def __init__(self):
         self._remote_entity_dict = dict()
 

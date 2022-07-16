@@ -4,7 +4,7 @@ from spacepackets.cfdp.pdu import PduHolder
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.util import ProvidesSeqCount
-from tmtccmd.cfdp import LocalEntityCfg, RemoteEntityTable, CfdpUserBase
+from tmtccmd.cfdp import LocalEntityCfg, RemoteEntityCfgTable, CfdpUserBase
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
 from tmtccmd.cfdp.defs import CfdpStates, CfdpRequestType
 from .defs import NoRemoteEntityCfgFound, BusyError
@@ -32,7 +32,7 @@ class CfdpHandler:
     def __init__(
         self,
         local_cfg: LocalEntityCfg,
-        remote_cfg: RemoteEntityTable,
+        remote_cfg: RemoteEntityCfgTable,
         seq_num_provider: ProvidesSeqCount,
         cfdp_user: CfdpUserBase,
     ):

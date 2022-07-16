@@ -30,7 +30,12 @@ from spacepackets.cfdp.pdu.finished import (
     FileDeliveryStatus,
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
-from tmtccmd.cfdp import CfdpUserBase, LocalEntityCfg
+from tmtccmd.cfdp import (
+    CfdpUserBase,
+    LocalEntityCfg,
+    RemoteEntityCfgTable,
+    RemoteEntityCfg,
+)
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import FileParamsBase, PacketSendNotConfirmed
@@ -75,6 +80,7 @@ class DestStateWrapper:
 @dataclass
 class DestFieldWrapper:
     transaction_id: Optional[TransactionId] = None
+    remote_cfg: Optional[RemoteEntityCfg] = None
     closure_requested: bool = False
     pdu_conf: PduConfig = PduConfig.empty()
     condition_code: ConditionCode = ConditionCode.NO_CONDITION_FIELD
@@ -92,6 +98,7 @@ class DestFieldWrapper:
         self.fp.reset()
         self.file_directives_dict = dict()
         self.file_data_deque = deque()
+        self.remote_cfg = None
 
 
 class FsmResult:
@@ -101,8 +108,14 @@ class FsmResult:
 
 
 class DestHandler:
-    def __init__(self, cfg: LocalEntityCfg, user: CfdpUserBase):
+    def __init__(
+        self,
+        cfg: LocalEntityCfg,
+        user: CfdpUserBase,
+        remote_cfg_table: RemoteEntityCfgTable,
+    ):
         self.cfg = cfg
+        self.remote_cfg_table = remote_cfg_table
         self.states = DestStateWrapper()
         self.user = user
         self.pdu_holder = PduHolder(None)
