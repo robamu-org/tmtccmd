@@ -1,6 +1,8 @@
 import os
 import random
+import struct
 import sys
+from crcmod.predefined import mkPredefinedCrcFun
 import tempfile
 from typing import cast, Optional
 from pathlib import Path
@@ -16,14 +18,19 @@ from spacepackets.cfdp import (
 from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu, FileDataPdu
 from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
-from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, RemoteEntityCfgTable
+from tmtccmd.cfdp import (
+    LocalIndicationCfg,
+    LocalEntityCfg,
+    RemoteEntityCfgTable,
+    RemoteEntityCfg,
+)
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.dest import (
     DestHandler,
     TransactionStep,
     FsmResult,
 )
-from tmtccmd.cfdp.user import TransactionFinishedParams
+from tmtccmd.cfdp.user import TransactionFinishedParams, FileSegmentRecvParams
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -55,6 +62,16 @@ class TestCfdpDestHandler(TestCase):
         with open(self.file_path, "w"):
             pass
         self.remote_cfg_table = RemoteEntityCfgTable()
+        self.remote_cfg = RemoteEntityCfg(
+            entity_id=self.src_entity_id,
+            check_limit=None,
+            crc_type=ChecksumTypes.CRC_32,
+            closure_requested=False,
+            crc_on_transmission=False,
+            default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
+            max_file_segment_len=self.file_segment_len,
+        )
+        self.remote_cfg_table.add_remote_entity(self.remote_cfg)
         self.dest_handler = DestHandler(
             self.local_cfg, self.cfdp_user, self.remote_cfg_table
         )
@@ -120,6 +137,8 @@ class TestCfdpDestHandler(TestCase):
         else:
             rand_data = os.urandom(round(self.file_segment_len * 1.3))
         file_size = len(rand_data)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(rand_data))
         src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
         metadata_params = MetadataParams(
             checksum_type=ChecksumTypes.CRC_32,
@@ -142,6 +161,12 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
+        self.cfdp_user.file_segment_recv_indication.assert_called_once()
+        seg_recv_params = cast(
+            FileSegmentRecvParams,
+            self.cfdp_user.file_segment_recv_indication.call_args.args[0],
+        )
+        self.assertEqual(seg_recv_params.transaction_id, self.transaction_id)
         fd_params = FileDataParams(
             file_data=rand_data[self.file_segment_len :], offset=self.file_segment_len
         )
@@ -151,6 +176,12 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
+        eof_pdu = EofPdu(
+            file_size=file_size, file_checksum=crc32, pdu_conf=self.src_pdu_conf
+        )
+        self.dest_handler.pass_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
     def _state_checker(
         self,

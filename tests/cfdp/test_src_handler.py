@@ -141,7 +141,7 @@ class TestCfdpSourceHandler(TestCase):
         self, dest_id: UnsignedByteField, put_request: PutRequest
     ):
         wrapper = CfdpRequestWrapper(put_request)
-        self.remote_cfg.remote_entity_id = dest_id
+        self.remote_cfg.entity_id = dest_id
         self.source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(

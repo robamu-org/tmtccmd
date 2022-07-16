@@ -37,19 +37,18 @@ class Crc32Helper:
         if self.checksum_type == ChecksumTypes.NULL_CHECKSUM:
             return NULL_CHECKSUM_U32
         crc_obj = self.generate_crc_calculator()
+        if segment_len == 0:
+            raise ValueError("Segment length can not be 0")
         if not file.exists():
             raise SourceFileDoesNotExist(file)
         current_offset = 0
         # Calculate the file CRC
         with open(file, "rb") as of:
             while current_offset < file_sz:
-                if file_sz < segment_len:
-                    read_len = file_sz
+                if current_offset + segment_len > file_sz:
+                    read_len = file_sz - current_offset
                 else:
-                    if current_offset + segment_len > file_sz:
-                        read_len = file_sz - current_offset
-                    else:
-                        read_len = segment_len
+                    read_len = segment_len
                 if read_len > 0:
                     crc_obj.update(
                         self.vfs.read_from_opened_file(of, current_offset, read_len)

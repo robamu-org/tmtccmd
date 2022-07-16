@@ -105,7 +105,7 @@ class LocalEntityCfg:
 
 @dataclass
 class RemoteEntityCfg:
-    remote_entity_id: UnsignedByteField
+    entity_id: UnsignedByteField
     max_file_segment_len: int
     closure_requested: bool
     crc_on_transmission: bool
@@ -121,9 +121,9 @@ class RemoteEntityCfgTable:
         self._remote_entity_dict = dict()
 
     def add_remote_entity(self, cfg: RemoteEntityCfg) -> bool:
-        if cfg.remote_entity_id in self._remote_entity_dict:
+        if cfg.entity_id in self._remote_entity_dict:
             return False
-        self._remote_entity_dict.update({cfg.remote_entity_id: cfg})
+        self._remote_entity_dict.update({cfg.entity_id: cfg})
         return True
 
     def get_remote_entity(self, remote_entity_id: UnsignedByteField) -> RemoteEntityCfg:

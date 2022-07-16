@@ -205,7 +205,7 @@ class SourceHandler:
                 return False
             self._current_req = wrapper
             self._params.remote_cfg = remote_cfg
-            self._params.dest_id = remote_cfg.remote_entity_id
+            self._params.dest_id = remote_cfg.entity_id
             self.states.packet_ready = False
             self._setup_transmission_mode()
             if self._params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
@@ -232,9 +232,9 @@ class SourceHandler:
             )
         if packet.source_entity_id != self.source_id:
             raise InvalidSourceId(self.source_id, packet.source_entity_id)
-        if packet.dest_entity_id != self._params.remote_cfg.remote_entity_id:
+        if packet.dest_entity_id != self._params.remote_cfg.entity_id:
             raise InvalidDestinationId(
-                self._params.remote_cfg.remote_entity_id, packet.dest_entity_id
+                self._params.remote_cfg.entity_id, packet.dest_entity_id
             )
         # TODO: What about prompt and keep alive PDU?
         if packet.directive_type in [DirectiveType.METADATA_PDU, DirectiveType.EOF_PDU]:
@@ -355,7 +355,7 @@ class SourceHandler:
                     self._params.check_limit = (
                         self._params.remote_cfg.check_limit.provide_check_limit(
                             local_entity_id=self.cfg.local_entity_id,
-                            remote_entity_id=self._params.remote_cfg.remote_entity_id,
+                            remote_entity_id=self._params.remote_cfg.entity_id,
                             entity_type=EntityType.SENDING,
                         )
                     )

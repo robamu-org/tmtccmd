@@ -30,6 +30,7 @@ from spacepackets.cfdp.pdu.finished import (
     FileDeliveryStatus,
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
+from tmtccmd import get_console_logger
 from tmtccmd.cfdp import (
     CfdpUserBase,
     LocalEntityCfg,
@@ -38,12 +39,19 @@ from tmtccmd.cfdp import (
 )
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.crc import Crc32Helper
-from tmtccmd.cfdp.handler.defs import FileParamsBase, PacketSendNotConfirmed
+from tmtccmd.cfdp.handler.defs import (
+    FileParamsBase,
+    PacketSendNotConfirmed,
+    NoRemoteEntityCfgFound,
+)
 from tmtccmd.cfdp.user import (
     MetadataRecvParams,
     FileSegmentRecvParams,
     TransactionFinishedParams,
 )
+
+
+LOGGER = get_console_logger()
 
 
 @dataclass
@@ -142,6 +150,18 @@ class DestHandler:
             source_entity_id=metadata_pdu.source_entity_id,
             transaction_seq_num=metadata_pdu.transaction_seq_num,
         )
+        self._params.remote_cfg = self.remote_cfg_table.get_remote_entity(
+            metadata_pdu.source_entity_id
+        )
+        # I am not fully sure whether a remote configuration is strictly required for
+        # a destination handler. I think to be fully standard-compliant or at least allow
+        # the flexibility to be standard-compliant in the future, we should require that
+        # a remote entity configuration exists for each CFDP sender.
+        if self._params.remote_cfg is None:
+            LOGGER.warning(
+                f"No remote configuration found for remote ID {metadata_pdu.dest_entity_id}"
+            )
+            raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
@@ -183,7 +203,7 @@ class DestHandler:
                             segment_metadata=file_data_pdu.segment_metadata,
                         )
                         self.user.file_segment_recv_indication(
-                            params=file_segment_indic_params
+                            file_segment_indic_params
                         )
                     self.user.vfs.write_data(self._params.fp.file_name, data, offset)
                 eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
@@ -253,6 +273,7 @@ class DestHandler:
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             self._params.fp.crc32 = eof_pdu.file_checksum
             self._params.fp.size = eof_pdu.file_size
+            self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
