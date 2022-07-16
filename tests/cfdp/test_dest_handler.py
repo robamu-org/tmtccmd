@@ -118,7 +118,11 @@ class TestCfdpDestHandler(TestCase):
         with open(src_file, "w") as of:
             of.write("Hello World\n")
         file_size = src_file.stat().st_size
-
+        self._source_simulator_transfer_init_with_metadata(
+            checksum=ChecksumTypes.CRC_32,
+            file_size=file_size,
+            file_path=src_file.as_posix(),
+        )
         with open(src_file, "rb") as rf:
             read_data = rf.read()
         fd_params = FileDataParams(file_data=read_data, offset=0)
@@ -140,18 +144,12 @@ class TestCfdpDestHandler(TestCase):
         crc32_func = mkPredefinedCrcFun("crc32")
         crc32 = struct.pack("!I", crc32_func(rand_data))
         src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
-        metadata_params = MetadataParams(
-            checksum_type=ChecksumTypes.CRC_32,
-            closure_requested=False,
-            source_file_name=src_file.as_posix(),
-            dest_file_name=self.file_path.as_posix(),
-            file_size=file_size,
-        )
-        file_transfer_init = MetadataPdu(
-            params=metadata_params, pdu_conf=self.src_pdu_conf
-        )
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
-        self.dest_handler.pass_packet(file_transfer_init)
+        self._source_simulator_transfer_init_with_metadata(
+            checksum=ChecksumTypes.CRC_32,
+            file_size=file_size,
+            file_path=src_file.as_posix(),
+        )
         fd_params = FileDataParams(
             file_data=rand_data[0 : self.file_segment_len], offset=0
         )
@@ -198,6 +196,10 @@ class TestCfdpDestHandler(TestCase):
     def _source_simulator_transfer_init_with_metadata(
         self, checksum: ChecksumTypes, file_path: str, file_size: int
     ):
+        """A file transfer on the receiving side is always initiated by sending a metadata PDU.
+        This function simulates a CFDP source entity which initiates a file transfer by sending
+        this PDU.
+        """
         metadata_params = MetadataParams(
             checksum_type=checksum,
             closure_requested=self.closure_requested,

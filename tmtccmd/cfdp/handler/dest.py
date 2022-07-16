@@ -177,7 +177,7 @@ class DestHandler:
             source_file_name=metadata_pdu.source_file_name,
             msgs_to_user=msgs_to_user_list,
         )
-        self.user.metadata_recv_indication(params=params)
+        self.user.metadata_recv_indication(params)
         return True
 
     def state_machine(self) -> FsmResult:

@@ -50,7 +50,7 @@ class TestCfdpSourceHandler(TestCase):
             pass
         self.file_segment_len = 256
         self.remote_cfg = RemoteEntityCfg(
-            remote_entity_id=self.dest_id,
+            entity_id=self.dest_id,
             max_file_segment_len=self.file_segment_len,
             closure_requested=closure_requested,
             crc_on_transmission=False,
