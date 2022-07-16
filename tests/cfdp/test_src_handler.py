@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import Optional
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -26,6 +27,11 @@ from .cfdp_user_mock import CfdpUser
 
 
 class TestCfdpSourceHandler(TestCase):
+    """It should be noted that this only verifies the correct generation of PDUs. There is
+    no reception handler in play here which would be responsible for generating the files
+    from these PDUs
+    """
+
     def common_setup(self, closure_requested: bool):
         self.indication_cfg = LocalIndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
@@ -70,8 +76,9 @@ class TestCfdpSourceHandler(TestCase):
         )
         self._start_source_transaction(dest_id, PutRequest(put_req_cfg))
         fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_EOF)
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
+        )
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
@@ -112,8 +119,9 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(file_data_pdu.offset, 0)
         self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_EOF)
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
+        )
         self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
         self.assertEqual(crc32, eof_pdu.file_checksum)
@@ -123,8 +131,9 @@ class TestCfdpSourceHandler(TestCase):
             self.source_handler.state_machine()
 
     def _check_fsm_and_contained_file_data(self, fsm_res: FsmResult) -> FileDataPdu:
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_FILE_DATA)
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_FILE_DATA
+        )
         self.assertFalse(fsm_res.pdu_holder.is_file_directive)
         return fsm_res.pdu_holder.to_file_data_pdu()
 
@@ -135,8 +144,9 @@ class TestCfdpSourceHandler(TestCase):
         self.remote_cfg.remote_entity_id = dest_id
         self.source_handler.start_transaction(wrapper, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
-        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_METADATA)
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_METADATA
+        )
         self.cfdp_user.transaction_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
@@ -158,6 +168,18 @@ class TestCfdpSourceHandler(TestCase):
         self.source_handler.confirm_packet_sent_advance_fsm()
         self.cfdp_user.eof_sent_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
+
+    def _state_checker(
+        self,
+        fsm_res: Optional[FsmResult],
+        expected_state: CfdpStates,
+        expected_step: TransactionStep,
+    ):
+        if fsm_res is not None:
+            self.assertEqual(fsm_res.states.state, expected_state)
+            self.assertEqual(fsm_res.states.step, expected_step)
+        self.assertEqual(self.source_handler.states.state, expected_state)
+        self.assertEqual(self.source_handler.states.step, expected_step)
 
     def tearDown(self) -> None:
         if self.file_path.exists():

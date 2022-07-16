@@ -17,27 +17,22 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
         self.common_setup(True)
 
-    def test_empty_file(self):
+    def test_empty_file_pdu_generation(self):
         self._common_empty_file_test()
-        self._simple_finish_pdu_handling()
+        self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
-    def test_small_file(self):
+    def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
         self._common_small_file_test(True, file_content)
         self._verify_eof_indication()
         self.source_handler.state_machine()
-        self._simple_finish_pdu_handling()
+        self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
-        self.assertTrue(self.file_path.exists())
-        with open(self.file_path) as f:
-            self.assertEqual(f.read(), file_content)
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -49,8 +44,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def test_invalid_source_id_pdu_passed(self):
         dest_id = ByteFieldU16(2)
-        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
-        finish_pdu = self._prepare_finish_pdu()
+        finish_pdu = self._regular_transaction_start(dest_id)
         finish_pdu.pdu_file_directive.pdu_conf.source_entity_id = ByteFieldEmpty()
         with self.assertRaises(InvalidSourceId) as cm:
             self.source_handler.pass_packet(finish_pdu)
@@ -60,14 +54,18 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def test_invalid_dest_id_pdu_passed(self):
         dest_id = ByteFieldU16(3)
-        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
-        finish_pdu = self._prepare_finish_pdu()
+        finish_pdu = self._regular_transaction_start(dest_id)
         finish_pdu.pdu_file_directive.pdu_conf.dest_entity_id = ByteFieldEmpty()
         with self.assertRaises(InvalidDestinationId) as cm:
             self.source_handler.pass_packet(finish_pdu)
         exception = cm.exception
         self.assertEqual(exception.found_dest_id, ByteFieldEmpty())
         self.assertEqual(exception.expected_dest_id, ByteFieldU16(3))
+
+    def _regular_transaction_start(self, dest_id: UnsignedByteField) -> FinishedPdu:
+        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
+        finish_pdu = self._prepare_finish_pdu()
+        return finish_pdu
 
     def _prepare_dummy_put_req(self, dest_id: UnsignedByteField) -> PutRequest:
         return PutRequest(
@@ -81,12 +79,9 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
             )
         )
 
-    def _simple_finish_pdu_handling(self):
-        self.assertEqual(
-            self.source_handler.states.state, CfdpStates.BUSY_CLASS_1_NACKED
-        )
-        self.assertEqual(
-            self.source_handler.states.step, TransactionStep.WAIT_FOR_FINISH
+    def _pass_simple_finish_pdu_to_source_handler(self):
+        self._state_checker(
+            None, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.WAIT_FOR_FINISH
         )
         self.source_handler.pass_packet(self._prepare_finish_pdu())
 

@@ -2,7 +2,7 @@ import os
 import random
 import sys
 import tempfile
-from typing import cast
+from typing import cast, Optional
 from pathlib import Path
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -18,7 +18,12 @@ from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
-from tmtccmd.cfdp.handler.dest import DestHandler, TransactionStep
+from tmtccmd.cfdp.handler.dest import (
+    DestHandler,
+    TransactionStep,
+    DestStateWrapper,
+    FsmResult,
+)
 from tmtccmd.cfdp.user import TransactionFinishedParams
 
 from .cfdp_fault_handler_mock import FaultHandler
@@ -62,8 +67,7 @@ class TestCfdpDestHandler(TestCase):
         file_transfer_init = MetadataPdu(
             params=metadata_params, pdu_conf=self.src_pdu_conf
         )
-        self.assertEqual(self.dest_handler.states.state, CfdpStates.IDLE)
-        self.assertEqual(self.dest_handler.states.transaction, TransactionStep.IDLE)
+        self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
         self.dest_handler.pass_packet(file_transfer_init)
         fsm_res = self.dest_handler.state_machine()
         self.assertFalse(fsm_res.states.packet_ready)
@@ -75,8 +79,7 @@ class TestCfdpDestHandler(TestCase):
         )
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
-        self.assertEqual(fsm_res.states.transaction, TransactionStep.IDLE)
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self.cfdp_user.eof_recv_indication.assert_called_once()
         self.assertEqual(
             self.cfdp_user.eof_recv_indication.call_args.args[0], self.transaction_id
@@ -106,8 +109,7 @@ class TestCfdpDestHandler(TestCase):
         file_transfer_init = MetadataPdu(
             params=metadata_params, pdu_conf=self.src_pdu_conf
         )
-        self.assertEqual(self.dest_handler.states.state, CfdpStates.IDLE)
-        self.assertEqual(self.dest_handler.states.transaction, TransactionStep.IDLE)
+        self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
         self.dest_handler.pass_packet(file_transfer_init)
         with open(src_file, "rb") as rf:
             read_data = rf.read()
@@ -119,6 +121,18 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(
             fsm_res.states.transaction, TransactionStep.RECEIVING_FILE_DATA
         )
+
+    def _state_checker(
+        self,
+        fsm_res: Optional[FsmResult],
+        expected_state: CfdpStates,
+        expected_transaction: TransactionStep,
+    ):
+        if fsm_res is not None:
+            self.assertEqual(fsm_res.states.state, expected_state)
+            self.assertEqual(fsm_res.states.transaction, expected_transaction)
+        self.assertEqual(self.dest_handler.states.state, expected_state)
+        self.assertEqual(self.dest_handler.states.transaction, expected_transaction)
 
     def test_larger_file_reception(self):
         # This tests generates two file data PDUs, but the second one does not have a
