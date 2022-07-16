@@ -1,4 +1,6 @@
 import os
+import random
+import sys
 import tempfile
 from typing import cast
 from pathlib import Path
@@ -117,6 +119,16 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(
             fsm_res.states.transaction, TransactionStep.RECEIVING_FILE_DATA
         )
+
+    def test_larger_file_reception(self):
+        # This tests generates two file data PDUs, but the second one does not have a
+        # full segment length
+        segment_len = 1024
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(round(segment_len * 1.3))
+        else:
+            rand_data = os.urandom(round(segment_len * 1.3))
+        pass
 
     def tearDown(self) -> None:
         if self.file_path.exists():

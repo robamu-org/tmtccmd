@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+from pathlib import Path
 
 from crcmod.predefined import PredefinedCrc
 
@@ -25,16 +26,13 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
-    def test_small_file(self):
+    def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
         self._common_small_file_test(False, file_content)
         self._verify_eof_indication()
         self._test_transaction_completion()
-        self.assertTrue(self.file_path.exists())
-        with open(self.file_path) as f:
-            self.assertEqual(f.read(), file_content)
 
-    def test_perfectly_segmented_file(self):
+    def test_perfectly_segmented_file_pdu_generation(self):
         # This tests generates two file data PDUs
         if sys.version_info >= (3, 9):
             rand_data = random.randbytes(self.file_segment_len * 2)
@@ -61,7 +59,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_handler.confirm_packet_sent_advance_fsm()
         self._test_transaction_completion()
 
-    def test_segmented_file(self):
+    def test_segmented_file_pdu_generation(self):
         # This tests generates two file data PDUs, but the second one does not have a
         # full segment length
         if sys.version_info >= (3, 9):
@@ -80,7 +78,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         file_data_pdu = self._second_file_segment_handling(self.source_handler)
         self.assertEqual(len(file_data_pdu.file_data), remainder_len)
         self.assertEqual(
-            file_data_pdu.file_data[:],
+            file_data_pdu.file_data,
             rand_data[self.file_segment_len :],
         )
         self.assertEqual(file_data_pdu.offset, self.file_segment_len)
@@ -119,13 +117,15 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
         return file_size, crc32
 
-    def _first_file_segment_handling(self, source_handler: SourceHandler, data: bytes):
+    def _first_file_segment_handling(
+        self, source_handler: SourceHandler, all_data: bytes
+    ):
         fsm_res = source_handler.state_machine()
-        file_data_pdu = self._check_file_data(fsm_res)
+        file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
         self.assertEqual(
             file_data_pdu.file_data[0 : self.file_segment_len],
-            data[0 : self.file_segment_len],
+            all_data[0 : self.file_segment_len],
         )
         self.assertEqual(file_data_pdu.offset, 0)
 

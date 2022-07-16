@@ -106,7 +106,7 @@ class TestCfdpSourceHandler(TestCase):
         file_size = self.file_path.stat().st_size
         self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
         fsm_res = self.source_handler.state_machine()
-        file_data_pdu = self._check_file_data(fsm_res)
+        file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res)
         self.assertFalse(file_data_pdu.has_segment_metadata)
         self.assertEqual(file_data_pdu.file_data, "Hello World\n".encode())
         self.assertEqual(file_data_pdu.offset, 0)
@@ -122,7 +122,7 @@ class TestCfdpSourceHandler(TestCase):
         with self.assertRaises(PacketSendNotConfirmed):
             self.source_handler.state_machine()
 
-    def _check_file_data(self, fsm_res: FsmResult) -> FileDataPdu:
+    def _check_fsm_and_contained_file_data(self, fsm_res: FsmResult) -> FileDataPdu:
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
         self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_FILE_DATA)
         self.assertFalse(fsm_res.pdu_holder.is_file_directive)
