@@ -4,6 +4,7 @@ from __future__ import annotations
 import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.util import UnsignedByteField
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.logging import get_console_logger
@@ -110,8 +111,8 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         return bytes(self._object_id.as_bytes)
 
     @property
-    def source_object_id(self) -> int:
-        return int(self._object_id)
+    def source_object_id(self) -> UnsignedByteField:
+        return self._object_id
 
     @property
     def action_id(self) -> int:

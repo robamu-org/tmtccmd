@@ -15,7 +15,7 @@ def parse_fsfw_objects_csv(csv_file: str) -> Optional[ObjectIdDictT]:
             csv_reader = csv.reader(csvfile, delimiter=";")
             for row in csv_reader:
                 # Parse hex string
-                obj_id.id = int(row[0], 16)
+                obj_id.obj_id = int(row[0], 16)
                 obj_id.name = row[1]
                 obj_id_dict.update({obj_id.as_bytes: copy.copy(obj_id)})
         return obj_id_dict
