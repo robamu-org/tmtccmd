@@ -107,7 +107,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
 
     @property
     def source_object_id_as_bytes(self) -> bytes:
-        return self._object_id.as_bytes
+        return bytes(self._object_id.as_bytes)
 
     @property
     def source_object_id(self) -> int:
