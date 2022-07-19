@@ -26,7 +26,6 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         ssc: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
         secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
@@ -51,7 +50,6 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -93,7 +91,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     ):
         service_8_tm = cls.__empty()
         service_8_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
+            raw_telemetry=raw_telemetry
         )
         service_8_tm.__init_without_base(instance=service_8_tm)
         return service_8_tm
@@ -114,7 +112,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
 
     @property
     def source_object_id(self) -> int:
-        return self._object_id.as_int
+        return int(self._object_id)
 
     @property
     def action_id(self) -> int:
