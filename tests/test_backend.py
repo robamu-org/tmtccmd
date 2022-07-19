@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
-from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.dummy import DummyComIF
 from tmtccmd.core import TcMode, TmMode, BackendRequest
 from tmtccmd.core.ccsds_backend import NoValidProcedureSet
@@ -14,9 +13,8 @@ from tmtccmd.tc import (
     DefaultProcedureInfo,
     TcProcedureType,
     ProcedureHelper,
-    TcQueueEntryBase,
 )
-from tmtccmd.tc.handler import FeedWrapper
+from tmtccmd.tc.handler import FeedWrapper, SendCbParams
 
 
 class TcHandlerMock(TcHandlerBase):
@@ -26,13 +24,13 @@ class TcHandlerMock(TcHandlerBase):
         self.feed_cb_call_count = 0
         self.feed_cb_def_proc_count = 0
         self.send_cb_call_count = 0
-        self.send_cb_call_args = None
+        self.send_cb_call_args: Optional[SendCbParams] = None
         self.send_cb_service_arg: Optional[str] = None
         self.send_cb_op_code_arg: Optional[str] = None
 
-    def send_cb(self, entry_helper: ProcedureHelper, com_if: ComInterface):
+    def send_cb(self, send_params: SendCbParams):
         self.send_cb_call_count += 1
-        self.send_cb_call_args = (entry_helper, com_if)
+        self.send_cb_call_args = send_params
 
     def queue_finished_cb(self, info: TcProcedureBase):
         pass
@@ -129,10 +127,10 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.feed_cb_call_count, 1)
         self.assertEqual(self.tc_handler.send_cb_call_count, 1)
         self.assertIsNotNone(self.tc_handler.send_cb_call_args)
-        self.assertIsNotNone(self.tc_handler.send_cb_call_args[0])
-        self.assertIsNotNone(self.tc_handler.send_cb_call_args[1])
-        self.assertEqual(self.tc_handler.send_cb_call_args[1], self.com_if)
-        cast_wrapper = self.tc_handler.send_cb_call_args[0]
+        self.assertIsNotNone(self.tc_handler.send_cb_call_args.info)
+        self.assertIsNotNone(self.tc_handler.send_cb_call_args.entry)
+        self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
+        cast_wrapper = self.tc_handler.send_cb_call_args.entry
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(pus_entry.pus_tc, PusTelecommand(service=17, subservice=1))
         self.backend.close_com_if()
@@ -191,8 +189,8 @@ class TestBackend(TestCase):
         self.assertEqual(def_proc.op_code, "0")
 
     def _check_tc_req_recvd(self, service: int, subservice: int):
-        self.assertEqual(self.tc_handler.send_cb_call_args[1], self.com_if)
-        cast_wrapper = self.tc_handler.send_cb_call_args[0]
+        self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
+        cast_wrapper = self.tc_handler.send_cb_call_args.entry
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(
             pus_entry.pus_tc, PusTelecommand(service=service, subservice=subservice)

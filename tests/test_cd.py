@@ -1,7 +1,7 @@
 import time
 from datetime import timedelta
 from unittest import TestCase
-from tmtccmd.utility.countdown import Countdown
+from tmtccmd.util.countdown import Countdown
 
 
 class CountdownTest(TestCase):

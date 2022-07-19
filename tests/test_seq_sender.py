@@ -2,13 +2,13 @@ import time
 from collections import deque
 from typing import cast
 from unittest import TestCase
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import MagicMock, ANY
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
-from tmtccmd.tc.handler import TcHandlerBase
+from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tc.queue import QueueWrapper, QueueHelper, QueueEntryHelper
 
 
@@ -36,10 +36,11 @@ class TestSendReceive(TestCase):
         with self.assertRaises(ValueError):
             self.seq_sender.queue_wrapper = self.queue_wrapper
         self.seq_sender.operation(self.com_if)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
-        raw_tc_entry = cast_wrapper.to_raw_tc_entry()
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertIsNone(send_cb_params.info.base)
+        raw_tc_entry = send_cb_params.entry.to_raw_tc_entry()
         self.assertEqual(raw_tc_entry.tc, bytes([0, 1, 2]))
         # Queue should be empty now
         # Called twice for each operation call
@@ -52,8 +53,8 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         self.assertTrue(res.tc_sent)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
-        self.assertEqual(cast_wrapper.to_raw_tc_entry().tc, bytes([3, 2, 1]))
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertEqual(send_cb_params.entry.to_raw_tc_entry().tc, bytes([3, 2, 1]))
 
     def test_with_wait_entry(self):
         wait_delay = 0.01
@@ -66,10 +67,10 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         self.assertEqual(res.mode, SenderMode.BUSY)
         self.assertTrue(res.tc_sent)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
-        self.assertEqual(cast_wrapper.to_raw_tc_entry().tc, bytes([3, 2, 1]))
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertEqual(send_cb_params.entry.to_raw_tc_entry().tc, bytes([3, 2, 1]))
         self.assertTrue(self.seq_sender.no_delay_remaining())
         # 2 queue entries remaining
         self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 2)
@@ -77,11 +78,12 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         self.assertFalse(self.seq_sender.no_delay_remaining())
         self.assertFalse(res.tc_sent)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
+        send_cb_params = cast(SendCbParams, call_args.args[0])
         self.assertEqual(
-            cast_wrapper.to_wait_entry().wait_time, timedelta(seconds=wait_delay)
+            send_cb_params.entry.to_wait_entry().wait_time,
+            timedelta(seconds=wait_delay),
         )
         # Now no TCs should be sent for 10 ms
         self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 1)
@@ -94,10 +96,10 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         self.assertTrue(res.tc_sent)
         self.assertEqual(len(self.queue_helper.queue_wrapper.queue), 0)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
-        self.assertEqual(cast_wrapper.to_raw_tc_entry().tc, bytes([1, 2, 3]))
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertEqual(send_cb_params.entry.to_raw_tc_entry().tc, bytes([1, 2, 3]))
 
     def test_interpacket_delay(self):
         delay_ms = 20
@@ -111,17 +113,20 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         self.assertEqual(res.longest_rem_delay, timedelta())
         self.assertTrue(res.tc_sent)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
-        self.assertEqual(cast_wrapper.to_pus_tc_entry().pus_tc, ping_cmd)
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertEqual(send_cb_params.com_if, self.com_if)
+        self.assertIsNone(send_cb_params.info.base)
+        self.assertEqual(send_cb_params.entry.to_pus_tc_entry().pus_tc, ping_cmd)
         res = self.seq_sender.operation(self.com_if)
         self.assertFalse(res.tc_sent)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertIsNone(send_cb_params.info.base)
         self.assertEqual(
-            cast_wrapper.to_packet_delay_entry().delay_time.total_seconds(),
+            send_cb_params.entry.to_packet_delay_entry().delay_time.total_seconds(),
             inter_packet_delay.total_seconds(),
         )
         self.assertTrue(
@@ -147,10 +152,10 @@ class TestSendReceive(TestCase):
         time.sleep(inter_packet_delay.total_seconds())
         res = self.seq_sender.operation(self.com_if)
         self.assertTrue(res.tc_sent)
-        self.tc_handler_mock.send_cb.assert_called_with(ANY, self.com_if)
+        self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
-        cast_wrapper = cast(QueueEntryHelper, call_args.args[0])
-        self.assertEqual(cast_wrapper.to_raw_tc_entry().tc, bytes([0, 1, 2]))
+        send_cb_params = cast(SendCbParams, call_args.args[0])
+        self.assertEqual(send_cb_params.entry.to_raw_tc_entry().tc, bytes([0, 1, 2]))
 
     def test_delay_at_end(self):
         delay_at_end = timedelta(milliseconds=20)

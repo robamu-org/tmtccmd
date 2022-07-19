@@ -9,7 +9,7 @@ from tmtccmd.config.tmtc import TmTcDefWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util.obj_id import ObjectIdDictT
 
 LOGGER = get_console_logger()
 

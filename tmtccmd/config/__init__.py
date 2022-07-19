@@ -22,7 +22,7 @@ from .defs import (
     ComIfDictT,
 )
 from .prompt import prompt_op_code, prompt_service
-from .tmtc import TmTcDefWrapper
+from .tmtc import TmTcDefWrapper, OpCodeEntry, OpCodeOptionBase
 from .hook import TmTcCfgHookBase
 
 

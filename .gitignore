@@ -13,7 +13,6 @@ build
 
 /examples/log
 /log
-/tests/log
 /tmtccmd/log
 
 .idea

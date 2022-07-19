@@ -2,7 +2,6 @@ from enum import IntEnum
 from typing import Optional
 
 from spacepackets.ecss import PusTelecommand
-from spacepackets.ecss.defs import PusServices
 from spacepackets.ecss.pus_1_verification import RequestId
 import spacepackets.ecss.pus_1_verification as pus_1
 from spacepackets.ecss.pus_verificator import (
@@ -11,10 +10,9 @@ from spacepackets.ecss.pus_verificator import (
     PusVerificator,
     TmCheckResult,
 )
-from .seqcnt import FileSeqCountProvider, ProvidesSeqCount
 import logging
 
-from tmtccmd.utility.conf_util import AnsiColors
+from tmtccmd.util.conf_util import AnsiColors
 
 
 class CustomPusServices(IntEnum):

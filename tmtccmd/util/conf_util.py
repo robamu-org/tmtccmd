@@ -2,7 +2,6 @@ import collections.abc
 from typing import Tuple, Union
 from contextlib import contextmanager
 
-from tmtccmd.core.globals_manager import get_global
 from tmtccmd.logging import get_console_logger
 
 
@@ -85,22 +84,6 @@ def __handle_iterable_non_dict(
                 return True, int(param)
         return False, 0
     return init_res_tuple
-
-
-def print_core_globals():
-    """Prints an imporant set of global parameters. Can be used for debugging function
-    or as an optional information output
-    :return:
-    """
-    from tmtccmd.config.globals import CoreGlobalIds
-
-    service_param = get_global(CoreGlobalIds.CURRENT_SERVICE)
-    mode_param = get_global(CoreGlobalIds.MODE)
-    com_if_param = get_global(CoreGlobalIds.COM_IF)
-    print(
-        f"Current globals | Mode(-m): {mode_param} | Service(-s): {service_param} | "
-        f"ComIF(-c): {com_if_param}"
-    )
 
 
 @contextmanager

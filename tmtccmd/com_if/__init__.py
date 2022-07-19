@@ -3,12 +3,12 @@
 Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 :author:     R. Mueller
 """
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from tmtccmd.tm import TelemetryListT
 
 
-class ComInterface:
+class ComInterface(ABC):
     """Generic form of a communication interface to separate communication logic from
     the underlying interface.
     """
@@ -66,6 +66,7 @@ class ComInterface:
     def data_available(self, timeout: float, parameters: any) -> int:
         """Check whether TM data is available.
 
+        :param timeout:
         :param parameters: Can be an arbitrary parameter like a timeout
         :return: 0 if no data is available, number of bytes or anything > 0 otherwise.
         """

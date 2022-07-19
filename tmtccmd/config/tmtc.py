@@ -42,7 +42,7 @@ class OpCodeEntry:
             return entry_tuple[0]
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(init_dict={self._op_code_dict!r}"
+        return f"{self.__class__.__name__}(init_dict={self._op_code_dict!r})"
 
     @property
     def op_code_dict(self):
@@ -66,11 +66,11 @@ class TmTcDefWrapper:
 
     def add_service(
         self,
-        service_name: str,
+        name: str,
         info: str,
         op_code_entry: OpCodeEntry,
     ):
-        self.defs.update({service_name: (info, op_code_entry)})
+        self.defs.update({name: (info, op_code_entry)})
 
     def op_code_entry(self, service_name: str) -> Optional[OpCodeEntry]:
         srv_entry = self.defs.get(service_name)

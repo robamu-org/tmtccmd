@@ -10,9 +10,9 @@ def time_ms() -> int:
 
 
 class Countdown:
-    def __init__(self, init_timeout_secs: Optional[timedelta]):
-        if init_timeout_secs is not None:
-            self._timeout_ms = int(init_timeout_secs / timedelta(milliseconds=1))
+    def __init__(self, init_timeout: Optional[timedelta]):
+        if init_timeout is not None:
+            self._timeout_ms = int(init_timeout / timedelta(milliseconds=1))
             self._start_time_ms = time_ms()
         else:
             self._timeout_ms = 0
@@ -56,3 +56,12 @@ class Countdown:
         if end_time < current:
             return timedelta()
         return timedelta(milliseconds=end_time - current)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(init_timeout={timedelta(milliseconds=self._timeout_ms)})"
+
+    def __str__(self):
+        return (
+            f"{self.__class__.__class__} with {timedelta(milliseconds=self._timeout_ms)} "
+            f"ms timeout, {self.rem_time()} time remaining"
+        )

@@ -23,6 +23,24 @@ class FeedWrapper:
         self.modes = ModeWrapper()
 
 
+class SendCbParams:
+    """Wrapper for all important parameters passed to the TC send callback"""
+
+    def __init__(
+        self, info: ProcedureHelper, entry: QueueEntryHelper, com_if: ComInterface
+    ):
+        """
+        :param info: Procedure info about the procedure this queue entry is related too
+        :param entry: Queue entry base type. The user can cast this back to the concrete
+                type or just use duck typing if the concrete type is known
+        :param com_if: Communication interface. Will generally be used to send the packet,
+                using the :py:func:`tmtccmd.com_if.ComInterface.send` method
+        """
+        self.info = info
+        self.entry = entry
+        self.com_if = com_if
+
+
 class TcHandlerBase(ABC):
     """Generic abstract class for a TC handler object. Should be implemented by the user.
     This object then takes care of sending packets by providing the :py:meth:`send_cb`
@@ -34,7 +52,7 @@ class TcHandlerBase(ABC):
         pass
 
     @abstractmethod
-    def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
+    def send_cb(self, send_params: SendCbParams):
         """This function callback will be called for each queue entry. This also includes
         miscellaneous queue entries, for example the ones used to log additional information.
         It is up to the user code implementation to determine the concrete queue entry and what
@@ -46,10 +64,13 @@ class TcHandlerBase(ABC):
         2. If applicable, retrieve the raw data to send from the queue entry and send it using
            the generic communication interface
 
-        :param entry_helper: Queue entry base type. The user can cast this back to the concrete
-            type or just use duck typing if the concrete type is known
-        :param com_if: Communication interface. Will generally be used to send the packet,
-            using the :py:func:`tmtccmd.com_if.ComInterface.send` method
+        All delay related entries will generally be handled by the send queue consumer so there
+        is no need to manually delay the application in this callback. However, the queue consumer
+        will not handle log entries so the user needs to take care of handling these
+        entries and log the content to a console, file logger or any other system used to log
+        something.
+
+        :param send_params:
         """
         pass
 

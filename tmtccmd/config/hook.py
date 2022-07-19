@@ -1,11 +1,11 @@
 from typing import Optional
 from abc import abstractmethod, ABC
 
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util.obj_id import ObjectIdDictT
 from tmtccmd.com_if import ComInterface
 
 from tmtccmd.core import BackendBase
-from tmtccmd.utility.retval import RetvalDictT
+from tmtccmd.util.retval import RetvalDictT
 
 from .tmtc import TmTcDefWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfDictT
@@ -59,7 +59,6 @@ class TmTcCfgHookBase(ABC):
 
         return get_default_tmtc_defs()
 
-    @abstractmethod
     def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
         """Perform custom mode operations.
 
@@ -67,7 +66,7 @@ class TmTcCfgHookBase(ABC):
         :param mode:
         :return:
         """
-        pass
+        print("No custom mode operation implemented")
 
     def get_retval_dict(self) -> RetvalDictT:
         from tmtccmd import get_console_logger

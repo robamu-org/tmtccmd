@@ -1,5 +1,5 @@
 import enum
-from typing import Any, cast, Type
+from typing import Any, cast, Type, Optional
 
 
 class TcProcedureType(enum.Enum):
@@ -40,7 +40,7 @@ class ProcedureHelper:
     """Procedure helper class. It wraps the concrete procedure object but allows easily casting
     it to concrete types supported by the framework."""
 
-    def __init__(self, base: TcProcedureBase):
+    def __init__(self, base: Optional[TcProcedureBase]):
         self.base = base
 
     @property

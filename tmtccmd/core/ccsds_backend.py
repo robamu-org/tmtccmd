@@ -13,7 +13,7 @@ from tmtccmd.core import (
 )
 from tmtccmd.tc import TcProcedureBase, ProcedureHelper
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
-from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
+from tmtccmd.util.exit import keyboard_interrupt_handler
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.ccsds_seq_sender import (
@@ -54,6 +54,7 @@ class CcsdsTmtcBackend(BackendBase):
         # This can be used to keep the TC mode in multi queue mode after finishing the handling
         # of a queue
         self.keep_multi_queue_mode = False
+        self.keep_listener_mode = False
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
             tc_handler=tc_handler,
@@ -187,8 +188,13 @@ class CcsdsTmtcBackend(BackendBase):
             self._state._req = BackendRequest.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
-                self.tc_mode = TcMode.IDLE
-                self._state._req = BackendRequest.TERMINATION_NO_ERROR
+                if self.keep_listener_mode:
+                    self._state._req = BackendRequest.DELAY_LISTENER
+                    self.tm_mode = TmMode.LISTENER
+                    self.tc_mode = TcMode.IDLE
+                else:
+                    self.tc_mode = TcMode.IDLE
+                    self._state._req = BackendRequest.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
                 if not self.keep_multi_queue_mode:
                     self._state.mode_wrapper.tc_mode = TcMode.IDLE

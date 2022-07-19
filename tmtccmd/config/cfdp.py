@@ -1,4 +1,4 @@
-from spacepackets.cfdp.definitions import Direction
+from spacepackets.cfdp.defs import Direction
 
 
 class CfdpCfg:

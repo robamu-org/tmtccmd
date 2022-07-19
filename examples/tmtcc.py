@@ -9,7 +9,7 @@ from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
 from spacepackets.ecss.pus_1_verification import UnpackParams
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
-from tmtccmd.pus import VerificationWrapper, FileSeqCountProvider
+from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
@@ -37,9 +37,10 @@ from tmtccmd.tc import (
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util import FileSeqCountProvider
+from tmtccmd.util.obj_id import ObjectIdDictT
 
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
 EXAMPLE_APID = 0xEF
@@ -140,12 +141,15 @@ class TcHandler(TcHandlerBase):
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = entry_helper.to_pus_tc_entry()
                 pus_tc_wrapper.pus_tc.seq_count = (
-                    self.seq_count_provider.next_seq_count()
+                    self.seq_count_provider.get_and_increment()
                 )
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
                 com_if.send(raw_tc)
+        elif entry_helper.entry_type == TcQueueEntryType.LOG:
+            log_entry = entry_helper.to_log_entry()
+            LOGGER.info(log_entry.log_str)
 
     def queue_finished_cb(self, helper: ProcedureHelper):
         if helper.proc_type == TcProcedureType.DEFAULT:

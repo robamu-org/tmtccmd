@@ -183,7 +183,7 @@ def check_and_set_core_mode_arg(
     mode_arg: any,
     custom_modes_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None,
 ) -> int:
-    from tmtccmd.utility.conf_util import check_args_in_dict
+    from tmtccmd.util.conf_util import check_args_in_dict
 
     """Checks whether the mode argument is contained inside the core mode list integer enumeration
     or a custom mode list integer which can be passed optionally.
@@ -231,7 +231,7 @@ def check_and_set_core_mode_arg(
 def check_and_set_core_service_arg(
     service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
-    from tmtccmd.utility.conf_util import check_args_in_dict
+    from tmtccmd.util.conf_util import check_args_in_dict
 
     in_enum, service_value = check_args_in_dict(
         param=service_arg, iterable=CoreServiceList, warning_hint="service"
@@ -271,14 +271,14 @@ def get_default_tmtc_defs() -> TmTcDefWrapper:
         srv_5 = OpCodeEntry()
         srv_5.add("0", "Event Test")
         DEF_WRAPPER.add_service(
-            service_name=CoreServiceList.SERVICE_5.value,
+            name=CoreServiceList.SERVICE_5.value,
             info="PUS Service 5 Event",
             op_code_entry=srv_5,
         )
         srv_17 = OpCodeEntry()
         srv_17.add("0", "Ping Test")
         DEF_WRAPPER.add_service(
-            service_name=CoreServiceList.SERVICE_17.value,
+            name=CoreServiceList.SERVICE_17.value,
             info="PUS Service 17 Test",
             op_code_entry=srv_17,
         )

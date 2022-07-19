@@ -11,11 +11,11 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 - [Documentation](https://tmtccmd.readthedocs.io/en/latest/)
 - [Project Homepage](https://github.com/robamu-org/tmtccmd)
 
-This is a small Python framework for satellite developers to perform TMTC
-(Telemetry and Telecommand) handling and testing via different communication interfaces.
-This tool can be used either as a command line tool or as a GUI tool. The GUI features require a
-PyQt5 installation. This package also has dedicated support to send and receive ECSS PUS packets
-or other generic CCSDS packets.
+This is a small Python framework targeted towards remote system software developers to
+perform TMTC (Telemetry and Telecommand) handling and testing via different communication
+interfaces. Examples for such systems are CubeSats or Rovers. This tool can be used either as a
+command line tool or as a GUI tool. The GUI features require a PyQt5 installation. This package
+also has dedicated support to send and receive ECSS PUS packets or other generic CCSDS packets.
 
 The TMTC commander also includes some telemetry handling components and telecommand packaging
 helpers. Some of those components are tailored towards usage with the
@@ -50,22 +50,21 @@ It is also possible to supply custom interfaces.
 
 The [`examples`](https://github.com/robamu-org/tmtccmd/tree/main/examples) folder contains a simple
 example using a  dummy communication interface. It sends a PUS ping telecommand and then reads the
-ping reply and  the verification replies back from the dummy interface. It can be run like this
-on Linux:
+ping reply and  the verification replies back from the dummy interface. Assuming, the package was
+installed in a virtual environment like shown in the [installation chapter](#install), it can be
+run like this for the CLI mode:
 
 ```sh
 cd examples
 ./tmtcc.py
 ```
 
-or on Windows:
+or like this for the GUI mode:
 
 ```sh
 cd examples
-py tmtcc.py
+./tmtcc.py -g
 ```
-
-You can run the GUI mode by supplying `-g` to the commands above.
 
 The [EIVE](https://egit.irs.uni-stuttgart.de/eive/eive-tmtc) and
 [SOURCE](https://git.ksat-stuttgart.de/source/tmtc) project implementation of the TMTC commander
@@ -93,7 +92,7 @@ provided that `pytest` and `coverage` were installed with
 python3 -m pip install coverage pytest
 ```
 
-## Installation
+## <a id="install"></a> Installation
 
 It is recommended to use a virtual environment when installing this library. The steps here
 assume you have [set up and activated the environment](https://docs.python.org/3/tutorial/venv.html).
