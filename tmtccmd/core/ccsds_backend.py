@@ -54,6 +54,7 @@ class CcsdsTmtcBackend(BackendBase):
         # This can be used to keep the TC mode in multi queue mode after finishing the handling
         # of a queue
         self.keep_multi_queue_mode = False
+        self.keep_listener_mode = False
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
             tc_handler=tc_handler,

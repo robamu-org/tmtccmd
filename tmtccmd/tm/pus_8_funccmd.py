@@ -77,7 +77,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service8FsfwTm:
         return cls(
-            subservice_id=-1,
+            subservice_id=0,
             object_id=bytearray(4),
             action_id=0,
             custom_data=bytearray(),
@@ -86,8 +86,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     @classmethod
     def unpack(
         cls,
-        raw_telemetry: bytes,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        raw_telemetry: bytes
     ):
         service_8_tm = cls.__empty()
         service_8_tm.pus_tm = PusTelemetry.unpack(
