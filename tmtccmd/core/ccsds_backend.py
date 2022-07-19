@@ -188,8 +188,13 @@ class CcsdsTmtcBackend(BackendBase):
             self._state._req = BackendRequest.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
-                self.tc_mode = TcMode.IDLE
-                self._state._req = BackendRequest.TERMINATION_NO_ERROR
+                if self.keep_listener_mode:
+                    self._state._req = BackendRequest.DELAY_LISTENER
+                    self.tm_mode = TmMode.LISTENER
+                    self.tc_mode = TcMode.IDLE
+                else:
+                    self.tc_mode = TcMode.IDLE
+                    self._state._req = BackendRequest.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
                 if not self.keep_multi_queue_mode:
                     self._state.mode_wrapper.tc_mode = TcMode.IDLE

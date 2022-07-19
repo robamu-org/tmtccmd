@@ -182,6 +182,8 @@ def create_default_tmtc_backend(
         tc_mode=mode_wrapper.tc_mode,
         tm_mode=mode_wrapper.tm_mode,
     )
+    if setup_wrapper.params.backend_params.listener:
+        tmtc_backend.keep_listener_mode = True
     tmtc_backend.inter_cmd_delay = timedelta(
         seconds=setup_wrapper.params.tc_params.delay
     )
