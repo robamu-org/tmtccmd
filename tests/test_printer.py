@@ -36,7 +36,7 @@ class TestPrintersLoggers(TestCase):
         raw_tmtc_log.log_tc(pus_tc)
         pus_tm = Service1TmExtended(
             subservice=Subservices.TM_START_SUCCESS,
-            time=CdsShortTimestamp.init_from_current_time(),
+            time=CdsShortTimestamp.from_current_time(),
             verif_params=VerificationParams(
                 req_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl)
             ),

@@ -110,7 +110,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     def __empty(cls) -> Service3FsfwTm:
         return cls(
             subservice_id=0,
-            time=CdsShortTimestamp.init_from_current_time(),
+            time=CdsShortTimestamp.from_current_time(),
             hk_data=bytearray(),
         )
 
