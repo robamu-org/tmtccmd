@@ -24,7 +24,7 @@ class ComIfCfgBase:
         self,
         com_if_key: str,
         json_cfg_path: str,
-        space_packet_ids: Optional[Tuple[int]] = None
+        space_packet_ids: Optional[Tuple[int]] = None,
     ):
         self.com_if_key = com_if_key
         self.json_cfg_path = json_cfg_path
@@ -40,7 +40,7 @@ class TcpipCfg(ComIfCfgBase):
         send_addr: EthAddr,
         max_recv_buf_len: int,
         space_packet_ids: Optional[Tuple[int]] = None,
-        recv_addr: Optional[EthAddr] = None
+        recv_addr: Optional[EthAddr] = None,
     ):
         super().__init__(com_if_key, json_cfg_path, space_packet_ids)
         self.if_type = if_type
@@ -50,26 +50,28 @@ class TcpipCfg(ComIfCfgBase):
 
 
 def create_com_interface_cfg_default(
-        com_if_key: str,
-        json_cfg_path: str,
-        space_packet_ids: Optional[Tuple[int]]
+    com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Tuple[int]]
 ) -> ComIfCfgBase:
     if com_if_key == CoreComInterfaces.UDP.value:
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
             json_cfg_path=json_cfg_path,
             tcpip_type=TcpIpType.UDP,
-            space_packet_ids=space_packet_ids
+            space_packet_ids=space_packet_ids,
         )
     elif com_if_key == CoreComInterfaces.TCP.value:
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
             json_cfg_path=json_cfg_path,
             tcpip_type=TcpIpType.TCP,
-            space_packet_ids=space_packet_ids
+            space_packet_ids=space_packet_ids,
         )
-    elif com_if_key in [CoreComInterfaces.SERIAL_DLE.value, CoreComInterfaces.SERIAL_FIXED_FRAME.value]:
+    elif com_if_key in [
+        CoreComInterfaces.SERIAL_DLE.value,
+        CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+    ]:
         pass
+
 
 def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
     """Return the desired communication interface object
@@ -87,7 +89,9 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
             cfg.com_if_key == CoreComInterfaces.UDP.value
             or cfg.com_if_key == CoreComInterfaces.TCP.value
         ):
-            communication_interface = create_default_tcpip_interface(cast(TcpipCfg, cfg))
+            communication_interface = create_default_tcpip_interface(
+                cast(TcpipCfg, cfg)
+            )
         elif (
             cfg.com_if_key == CoreComInterfaces.SERIAL_DLE.value
             or cfg.com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
@@ -131,7 +135,10 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
 
 
 def default_tcpip_cfg_setup(
-    com_if_key: str, tcpip_type: TcpIpType, json_cfg_path: str, space_packet_ids: Tuple[int] = (0,)
+    com_if_key: str,
+    tcpip_type: TcpIpType,
+    json_cfg_path: str,
+    space_packet_ids: Tuple[int] = (0,),
 ) -> TcpipCfg:
     """Default setup for TCP/IP communication interfaces. This intantiates all required data in the
     globals manager so a TCP/IP communication interface can be built with
@@ -148,6 +155,7 @@ def default_tcpip_cfg_setup(
         determine_tcp_send_address,
         determine_recv_buffer_len,
     )
+
     # TODO: Is this necessary? Where is it used?
     update_global(CoreGlobalIds.USE_ETHERNET, True)
     if tcpip_type == TcpIpType.UDP:
@@ -165,7 +173,7 @@ def default_tcpip_cfg_setup(
         json_cfg_path=json_cfg_path,
         send_addr=send_addr,
         space_packet_ids=space_packet_ids,
-        max_recv_buf_len=max_recv_buf_size
+        max_recv_buf_len=max_recv_buf_size,
     )
     return cfg
 
@@ -187,9 +195,7 @@ def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
     )
 
 
-def create_default_tcpip_interface(
-    tcpip_cfg: TcpipCfg
-) -> Optional[ComInterface]:
+def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface]:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :py:func:`default_tcpip_cfg_setup` for more details.
 
@@ -202,7 +208,7 @@ def create_default_tcpip_interface(
             com_if_id=tcpip_cfg.com_if_key,
             send_address=tcpip_cfg.send_addr,
             recv_addr=tcpip_cfg.recv_addr,
-            max_recv_size=tcpip_cfg.max_recv_buf_len
+            max_recv_size=tcpip_cfg.max_recv_buf_len,
         )
     elif tcpip_cfg.com_if_key == CoreComInterfaces.TCP.value:
         communication_interface = TcpComIF(
@@ -211,7 +217,7 @@ def create_default_tcpip_interface(
             space_packet_ids=tcpip_cfg.space_packet_ids,
             tm_polling_freqency=0.5,
             target_address=tcpip_cfg.send_addr,
-            max_recv_size=tcpip_cfg.max_recv_buf_len
+            max_recv_size=tcpip_cfg.max_recv_buf_len,
         )
     return communication_interface
 

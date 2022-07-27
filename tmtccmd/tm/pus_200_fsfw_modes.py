@@ -43,7 +43,6 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -91,9 +90,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service200FsfwTm:
         service_200_tm = cls.__empty()
-        service_200_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
-        )
+        service_200_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         service_200_tm.__init_without_base(instance=service_200_tm)
         return service_200_tm
 
