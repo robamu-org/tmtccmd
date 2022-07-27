@@ -51,10 +51,10 @@ class ExampleHookClass(TmTcCfgHookBase):
         super().__init__(json_cfg_path=json_cfg_path)
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
-        from tmtccmd.config.com_if import create_communication_interface_default
+        from tmtccmd.config.com_if import create_com_interface_default
 
         LOGGER.info("Communication interface assignment function was called")
-        return create_communication_interface_default(
+        return create_com_interface_default(
             com_if_key=com_if_key,
             json_cfg_path=self.json_cfg_path,
         )
