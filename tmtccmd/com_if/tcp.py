@@ -193,6 +193,9 @@ class TcpComIF(ComInterface):
                             "Overwriting old packets.."
                         )
                         self.__tm_queue.pop()
+                        # TODO: If segments are received but the receiver is unable to parse packets
+                        #       properly, it might make sense to have a timeout which then also
+                        #       logs that there might be an issue reading packets
                     self.__tm_queue.appendleft(bytes(bytes_recvd))
         except ConnectionResetError:
             self.__close_tcp_socket()
