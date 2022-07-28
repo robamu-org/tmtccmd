@@ -228,7 +228,7 @@ class DefaultPusQueueHelper(QueueHelperBase):
             ):
                 try:
                     time_tagged_tc = PusTelecommand.unpack(
-                        pus_entry.pus_tc.app_data[4:]
+                        pus_entry.pus_tc.app_data[self.tc_sched_timestamp_len:]
                     )
                     self._pus_packet_handler(time_tagged_tc)
                     pus_entry.pus_tc.app_data[self.tc_sched_timestamp_len:] = time_tagged_tc.pack()
