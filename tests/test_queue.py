@@ -10,14 +10,14 @@ from tmtccmd.tc import WaitEntry, QueueEntryHelper
 # Required for eval calls
 # noinspection PyUnresolvedReferences
 from tmtccmd.tc import LogQueueEntry, RawTcEntry
-from tmtccmd.tc.queue import QueueWrapper, QueueHelperBase
+from tmtccmd.tc.queue import QueueWrapper, QueueHelperBase, DefaultPusQueueHelper
 
 
 class TestTcQueue(TestCase):
     def test_queue(self):
         queue_wrapper = QueueWrapper(info=None, queue=deque())
         self.assertEqual(queue_wrapper.queue, deque())
-        queue_helper = QueueHelperBase(queue_wrapper)
+        queue_helper = DefaultPusQueueHelper(queue_wrapper)
         queue_helper.add_wait(timedelta(seconds=2))
         self.assertEqual(len(queue_wrapper.queue), 1)
         wait_entry = cast(WaitEntry, queue_wrapper.queue.pop())

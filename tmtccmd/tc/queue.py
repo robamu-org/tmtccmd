@@ -213,13 +213,14 @@ class DefaultPusQueueHelper(QueueHelperBase):
     This queue helper also has special support for PUS 11 time tagged PUS telecommands and will
     perform its core functionality for the time-tagged telecommands as well.
     """
+
     def __init__(
         self,
         queue_wrapper: Optional[QueueWrapper],
-        pus_apid: Optional[int],
-        seq_cnt_provider: Optional[ProvidesSeqCount],
-        pus_verificator: Optional[PusVerificator],
-        tc_sched_timestamp_len: int = 4
+        pus_apid: Optional[int] = None,
+        seq_cnt_provider: Optional[ProvidesSeqCount] = None,
+        pus_verificator: Optional[PusVerificator] = None,
+        tc_sched_timestamp_len: int = 4,
     ):
         """
         :param queue_wrapper: Queue Wrapper. All entries are inserted here
@@ -246,10 +247,10 @@ class DefaultPusQueueHelper(QueueHelperBase):
     def _handle_time_tagged_tc(self, pus_tc: PusTelecommand):
         try:
             time_tagged_tc = PusTelecommand.unpack(
-                pus_tc.app_data[self.tc_sched_timestamp_len:]
+                pus_tc.app_data[self.tc_sched_timestamp_len :]
             )
             self._pus_packet_handler(time_tagged_tc)
-            pus_tc.app_data[self.tc_sched_timestamp_len:] = time_tagged_tc.pack()
+            pus_tc.app_data[self.tc_sched_timestamp_len :] = time_tagged_tc.pack()
         except ValueError as e:
             LOGGER.warning(
                 f"Attempt of unpacking time tagged TC failed with exception {e}"

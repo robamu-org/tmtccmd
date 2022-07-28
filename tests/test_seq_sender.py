@@ -9,13 +9,13 @@ from spacepackets.ecss import PusTelecommand
 from tmtccmd.com_if import ComInterface
 from tmtccmd.tc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
 from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
-from tmtccmd.tc.queue import QueueWrapper, QueueHelperBase, QueueEntryHelper
+from tmtccmd.tc.queue import QueueWrapper, DefaultPusQueueHelper
 
 
 class TestSendReceive(TestCase):
     def setUp(self) -> None:
         self.queue_wrapper = QueueWrapper(info=None, queue=deque())
-        self.queue_helper = QueueHelperBase(self.queue_wrapper)
+        self.queue_helper = DefaultPusQueueHelper(self.queue_wrapper)
         self.tc_handler_mock = MagicMock(spec=TcHandlerBase)
         self.com_if = MagicMock(spec=ComInterface)
         self.seq_sender = SequentialCcsdsSender(

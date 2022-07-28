@@ -15,6 +15,7 @@ from tmtccmd.tc import (
     ProcedureHelper,
 )
 from tmtccmd.tc.handler import FeedWrapper, SendCbParams
+from tmtccmd.tc.queue import DefaultPusQueueHelper
 
 
 class TcHandlerMock(TcHandlerBase):
@@ -24,6 +25,7 @@ class TcHandlerMock(TcHandlerBase):
         self.feed_cb_call_count = 0
         self.feed_cb_def_proc_count = 0
         self.send_cb_call_count = 0
+        self.queue_helper = DefaultPusQueueHelper(None)
         self.send_cb_call_args: Optional[SendCbParams] = None
         self.send_cb_service_arg: Optional[str] = None
         self.send_cb_op_code_arg: Optional[str] = None
@@ -36,6 +38,7 @@ class TcHandlerMock(TcHandlerBase):
         pass
 
     def feed_cb(self, info: ProcedureHelper, wrapper: FeedWrapper):
+        self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         self.feed_cb_call_count += 1
         self.send_cb_service_arg = None
         self.send_cb_op_code_arg = None
@@ -49,22 +52,22 @@ class TcHandlerMock(TcHandlerBase):
                 self.send_cb_op_code_arg = def_info.op_code
                 if def_info.service == "17":
                     if def_info.op_code == "0":
-                        wrapper.queue_helper.add_pus_tc(
+                        self.queue_helper.add_pus_tc(
                             PusTelecommand(service=17, subservice=1)
                         )
                     elif def_info.op_code == "1":
-                        wrapper.queue_helper.add_pus_tc(
+                        self.queue_helper.add_pus_tc(
                             PusTelecommand(service=17, subservice=1)
                         )
-                        wrapper.queue_helper.add_pus_tc(
+                        self.queue_helper.add_pus_tc(
                             PusTelecommand(service=5, subservice=1)
                         )
                     elif def_info.op_code == "2":
-                        wrapper.queue_helper.add_pus_tc(
+                        self.queue_helper.add_pus_tc(
                             PusTelecommand(service=17, subservice=1)
                         )
-                        wrapper.queue_helper.add_wait(timedelta(milliseconds=20))
-                        wrapper.queue_helper.add_pus_tc(
+                        self.queue_helper.add_wait(timedelta(milliseconds=20))
+                        self.queue_helper.add_pus_tc(
                             PusTelecommand(service=5, subservice=1)
                         )
 
