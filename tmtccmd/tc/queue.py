@@ -206,7 +206,7 @@ class QueueHelperBase(ABC):
 
 class DefaultPusQueueHelper(QueueHelperBase):
     """Default PUS Queue Helper which simplifies inserting PUS telecommands
-    into the queue. It also provides a way to optionally stamp common PUS TCfields which would
+    into the queue. It also provides a way to optionally stamp common PUS TC fields which would
     otherwise add boilerplate code during the packet creation process. This includes the following
     packet properties and it is also able to add the telecommand into a provided PUS verificator.
 
