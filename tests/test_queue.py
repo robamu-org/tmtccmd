@@ -18,6 +18,7 @@ class TestTcQueue(TestCase):
         self.queue_wrapper = QueueWrapper(info=None, queue=deque())
         self.assertEqual(self.queue_wrapper.queue, deque())
         self.queue_helper = DefaultPusQueueHelper(self.queue_wrapper)
+        self.pus_cmd = PusTelecommand(service=17, subservice=1)
 
     def test_wait_entry(self):
         queue_helper.add_wait(timedelta(seconds=2))
@@ -28,6 +29,25 @@ class TestTcQueue(TestCase):
         self.assertEqual(wait_entry.wait_time.total_seconds(), 2.0)
         self.assertEqual(len(self.queue_wrapper.queue), 0)
 
+    def test_apid_stamper(self):
+        self.queue_helper.pus_apid = 0x22
+        self.queue_helper.add_pus_tc(self.pus_cmd)
+        cast_wrapper = QueueEntryHelper(self.queue_wrapper.queue.popleft())
+        pus_entry = cast_wrapper.to_pus_tc_entry()
+        self.assertTrue(pus_entry.is_tc())
+        self.assertEqual(pus_entry.pus_tc, self.pus_cmd)
+        self.assertTrue(pus_entry)
+        self.assertEqual(pus_entry.pus_tc.apid, 0x22)
+
+    def test_faulty_cast(self):
+        self.queue_helper.add_pus_tc(self.pus_cmd)
+        cast_wrapper = QueueEntryHelper(self.queue_wrapper.queue.popleft())
+        pus_entry = cast_wrapper.to_pus_tc_entry()
+        self.assertEqual(pus_entry.pus_tc, self.pus_cmd)
+        self.assertTrue(pus_entry)
+        with self.assertRaises(TypeError):
+            cast_wrapper.to_wait_entry()
+
     def test_multi_entry(self):
         pus_cmd = PusTelecommand(service=17, subservice=1)
         self.queue_helper.add_pus_tc(pus_cmd)
@@ -36,17 +56,12 @@ class TestTcQueue(TestCase):
         self.queue_helper.add_raw_tc(bytes([0, 1, 2]))
         self.queue_helper.add_ccsds_tc(pus_cmd.to_space_packet())
         self.queue_helper.add_packet_delay(timedelta(seconds=3.0))
-        print(self.queue_wrapper.queue)
         self.assertEqual(len(self.queue_wrapper.queue), 5)
-
         pus_entry = self.queue_wrapper.queue.popleft()
-        self.assertTrue(pus_entry.is_tc())
         cast_wrapper = QueueEntryHelper(pus_entry)
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(pus_entry.pus_tc, pus_cmd)
         self.assertTrue(pus_entry)
-        with self.assertRaises(TypeError):
-            cast_wrapper.to_wait_entry()
         log_entry = self.queue_wrapper.queue.popleft()
         self.assertFalse(log_entry.is_tc())
         cast_wrapper.base = log_entry
