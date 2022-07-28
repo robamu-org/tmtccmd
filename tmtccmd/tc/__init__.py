@@ -1,5 +1,5 @@
 from .queue import (
-    QueueHelper,
+    QueueHelperBase,
     QueueWrapper,
     TcQueueEntryType,
     TcQueueEntryBase,

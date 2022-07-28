@@ -3,7 +3,7 @@ import enum
 
 from spacepackets.ecss import PusTelecommand, PusServices
 from spacepackets.ecss.pus_17_test import Subservices
-from tmtccmd.tc.queue import QueueHelper
+from tmtccmd.tc.queue import QueueHelperBase
 
 
 class CustomSubservices(enum.IntEnum):
@@ -17,7 +17,7 @@ def pack_service_17_ping_command() -> PusTelecommand:
     )
 
 
-def pack_generic_service17_test(q: QueueHelper):
+def pack_generic_service17_test(q: QueueHelperBase):
     q.add_log_cmd("Testing Service 17")
     # ping test
     q.add_log_cmd("Testing Service 17: Ping Test")

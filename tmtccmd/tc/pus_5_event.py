@@ -4,7 +4,7 @@ from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.conf import get_default_tc_apid
 from spacepackets.ecss.pus_5_event import Subservices
 
-from tmtccmd.tc.queue import QueueHelper
+from tmtccmd.tc.queue import QueueHelperBase
 
 
 def pack_enable_event_reporting_command(ssc: int, apid: int = -1):
@@ -29,7 +29,7 @@ def pack_disable_event_reporting_command(ssc: int, apid: int = -1):
     )
 
 
-def pack_generic_service_5_test_into(q: QueueHelper):
+def pack_generic_service_5_test_into(q: QueueHelperBase):
     q.add_log_cmd("Testing Service 5")
     # invalid subservice
     q.add_log_cmd("Testing Service 5: Invalid subservice")

@@ -255,4 +255,4 @@ class CcsdsTmtcBackend(BackendBase):
         )
         if not feed_wrapper.dispatch_next_queue:
             return None
-        return feed_wrapper.queue_helper.queue_wrapper
+        return feed_wrapper.queue_wrapper
