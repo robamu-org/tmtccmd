@@ -211,11 +211,13 @@ class DefaultPusQueueHelper(QueueHelperBase):
         seq_cnt_provider: Optional[ProvidesSeqCount],
         pus_verificator: Optional[PusVerificator],
         apid: Optional[int],
+        tc_sched_timestamp_len: int = 4
     ):
         super().__init__(queue_wrapper)
         self.seq_cnt_provider = seq_cnt_provider
         self.pus_verificator = pus_verificator
         self.apid = apid
+        self.tc_sched_timestamp_len = tc_sched_timestamp_len
 
     def pre_add_cb(self, entry: TcQueueEntryBase):
         if entry.etype == TcQueueEntryType.PUS_TC:
@@ -229,6 +231,7 @@ class DefaultPusQueueHelper(QueueHelperBase):
                         pus_entry.pus_tc.app_data[4:]
                     )
                     self._pus_packet_handler(time_tagged_tc)
+                    pus_entry.pus_tc.app_data[self.tc_sched_timestamp_len:] = time_tagged_tc.pack()
                 except ValueError as e:
                     LOGGER.warning(
                         f"Attempt of unpacking time tagged TC failed with exception {e}"
