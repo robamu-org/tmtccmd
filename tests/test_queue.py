@@ -3,6 +3,7 @@ from collections import deque
 from datetime import timedelta
 from typing import cast
 from unittest import TestCase
+from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.tc import WaitEntry, QueueEntryHelper
@@ -11,6 +12,7 @@ from tmtccmd.tc import WaitEntry, QueueEntryHelper
 # noinspection PyUnresolvedReferences
 from tmtccmd.tc import LogQueueEntry, RawTcEntry
 from tmtccmd.tc.queue import QueueWrapper, QueueHelperBase, DefaultPusQueueHelper
+from tmtccmd.util import ProvidesSeqCount
 
 
 class TestTcQueue(TestCase):
@@ -34,10 +36,17 @@ class TestTcQueue(TestCase):
         self.queue_helper.add_pus_tc(self.pus_cmd)
         cast_wrapper = QueueEntryHelper(self.queue_wrapper.queue.popleft())
         pus_entry = cast_wrapper.to_pus_tc_entry()
-        self.assertTrue(pus_entry.is_tc())
         self.assertEqual(pus_entry.pus_tc, self.pus_cmd)
         self.assertTrue(pus_entry)
         self.assertEqual(pus_entry.pus_tc.apid, 0x22)
+
+    def test_seq_count_stamper(self):
+        self.queue_helper.seq_cnt_provider = MagicMock(spec=ProvidesSeqCount)
+        self.queue_helper.seq_cnt_provider.get_and_increment.return_value = 5
+        self.queue_helper.add_pus_tc(self.pus_cmd)
+        cast_wrapper = QueueEntryHelper(self.queue_wrapper.queue.popleft())
+        pus_entry = cast_wrapper.to_pus_tc_entry()
+        self.assertEqual(pus_entry.pus_tc.seq_count, 5)
 
     def test_faulty_cast(self):
         self.queue_helper.add_pus_tc(self.pus_cmd)
