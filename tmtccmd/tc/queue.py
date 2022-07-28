@@ -205,18 +205,32 @@ class QueueHelperBase(ABC):
 
 
 class DefaultPusQueueHelper(QueueHelperBase):
+    """Default PUS Queue Helper which simplifies inserting PUS telecommands
+    into the queue. It also provides a way to optionally stamp common PUS TCfields which would
+    otherwise add boilerplate code during the packet creation process. This includes the following
+    packet properties and it is also able to add the telecommand into a provided PUS verificator.
+
+    This queue helper also has special support for PUS 11 time tagged PUS telecommands and will
+    perform its core functionality for the time-tagged telecommands as well.
+    """
     def __init__(
         self,
         queue_wrapper: Optional[QueueWrapper],
+        pus_apid: Optional[int],
         seq_cnt_provider: Optional[ProvidesSeqCount],
         pus_verificator: Optional[PusVerificator],
-        apid: Optional[int],
         tc_sched_timestamp_len: int = 4
     ):
+        """
+        :param queue_wrapper: Queue Wrapper. All entries are inserted here
+        :param pus_apid: Default APID which will be stamped onto all provided PUS TC packets
+        :param seq_cnt_provider: The sequence count will be stamped onto all provided PUS TC packets
+        :param pus_verificator: All provided PUS TCs will be added to this verificator
+        """
         super().__init__(queue_wrapper)
         self.seq_cnt_provider = seq_cnt_provider
         self.pus_verificator = pus_verificator
-        self.apid = apid
+        self.pus_apid = pus_apid
         self.tc_sched_timestamp_len = tc_sched_timestamp_len
 
     def pre_add_cb(self, entry: TcQueueEntryBase):
@@ -226,23 +240,26 @@ class DefaultPusQueueHelper(QueueHelperBase):
                 pus_entry.pus_tc.service == PusServices.S11_TC_SCHED
                 and pus_entry.pus_tc.subservice == Pus11Subservices.TC_INSERT
             ):
-                try:
-                    time_tagged_tc = PusTelecommand.unpack(
-                        pus_entry.pus_tc.app_data[self.tc_sched_timestamp_len:]
-                    )
-                    self._pus_packet_handler(time_tagged_tc)
-                    pus_entry.pus_tc.app_data[self.tc_sched_timestamp_len:] = time_tagged_tc.pack()
-                except ValueError as e:
-                    LOGGER.warning(
-                        f"Attempt of unpacking time tagged TC failed with exception {e}"
-                    )
+                self._handle_time_tagged_tc(pus_entry.pus_tc)
             self._pus_packet_handler(pus_entry.pus_tc)
+
+    def _handle_time_tagged_tc(self, pus_tc: PusTelecommand):
+        try:
+            time_tagged_tc = PusTelecommand.unpack(
+                pus_tc.app_data[self.tc_sched_timestamp_len:]
+            )
+            self._pus_packet_handler(time_tagged_tc)
+            pus_tc.app_data[self.tc_sched_timestamp_len:] = time_tagged_tc.pack()
+        except ValueError as e:
+            LOGGER.warning(
+                f"Attempt of unpacking time tagged TC failed with exception {e}"
+            )
 
     def _pus_packet_handler(self, pus_tc: PusTelecommand):
         recalc_crc = False
-        if self.apid is not None:
+        if self.pus_apid is not None:
             recalc_crc = True
-            pus_tc.apid = self.apid
+            pus_tc.apid = self.pus_apid
         if self.seq_cnt_provider is not None:
             recalc_crc = True
             pus_tc.seq_count = self.seq_cnt_provider.get_and_increment()
