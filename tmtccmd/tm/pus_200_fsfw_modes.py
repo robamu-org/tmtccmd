@@ -19,11 +19,8 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
         submode: int = 0,
         time: CdsShortTimestamp = None,
         ssc: int = 0,
-        source_data: bytearray = bytearray([]),
         apid: int = -1,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-        pus_tm_version: int = 0b0001,
         secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
@@ -43,7 +40,6 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -85,15 +81,9 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
         return cls(subservice_id=0, object_id=bytearray(4))
 
     @classmethod
-    def unpack(
-        cls,
-        raw_telemetry: bytes,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-    ) -> Service200FsfwTm:
+    def unpack(cls, raw_telemetry: bytes) -> Service200FsfwTm:
         service_200_tm = cls.__empty()
-        service_200_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
-        )
+        service_200_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         service_200_tm.__init_without_base(instance=service_200_tm)
         return service_200_tm
 

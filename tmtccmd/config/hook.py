@@ -39,9 +39,9 @@ class TmTcCfgHookBase(ABC):
 
         :param com_if_key:      String key of the communication interface to be created.
         """
-        from tmtccmd.config.com_if import create_communication_interface_default
+        from tmtccmd.config.com_if import create_com_interface_default
 
-        return create_communication_interface_default(
+        return create_com_interface_default(
             com_if_key=com_if_key, json_cfg_path=self.json_cfg_path
         )
 

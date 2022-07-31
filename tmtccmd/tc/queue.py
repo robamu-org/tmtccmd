@@ -1,11 +1,20 @@
 from __future__ import annotations
+
+import abc
+from abc import ABC
 from datetime import timedelta
 from enum import Enum
 from typing import Optional, Deque, cast, Any, Type
 
 from spacepackets.ccsds import SpacePacket
-from spacepackets.ecss import PusTelecommand
+from spacepackets.ecss import PusTelecommand, PusVerificator, PusServices
+from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.procedure import TcProcedureBase
+from tmtccmd.util import ProvidesSeqCount
+from tmtccmd.pus import Pus11Subservices
+
+
+LOGGER = get_console_logger()
 
 
 class TcQueueEntryType(Enum):
@@ -158,36 +167,111 @@ class QueueWrapper:
         )
 
 
-class QueueHelper:
+class QueueHelperBase(ABC):
     def __init__(self, queue_wrapper: QueueWrapper):
         self.queue_wrapper = queue_wrapper
 
     def __repr__(self):
         return f"{self.__class__.__name__}(queue_wrapper={self.queue_wrapper!r})"
 
+    @abc.abstractmethod
+    def pre_add_cb(self, entry: TcQueueEntryBase):
+        pass
+
     def add_log_cmd(self, print_str: str):
-        self.queue_wrapper.queue.append(LogQueueEntry(print_str))
-
-    def add_pus_tc(self, pus_tc: PusTelecommand):
-        self.queue_wrapper.queue.append(PusTcEntry(pus_tc))
-
-    def add_ccsds_tc(self, space_packet: SpacePacket):
-        self.queue_wrapper.queue.append(SpacePacketEntry(space_packet))
+        self._add_entry(LogQueueEntry(print_str))
 
     def add_raw_tc(self, tc: bytes):
-        self.queue_wrapper.queue.append(RawTcEntry(tc))
+        self._add_entry(RawTcEntry(tc))
 
     def add_wait(self, wait_time: timedelta):
-        self.queue_wrapper.queue.append(WaitEntry(wait_time))
+        self._add_entry(WaitEntry(wait_time))
 
     def add_wait_ms(self, wait_ms: int):
-        self.queue_wrapper.queue.append(WaitEntry.from_millis(wait_ms))
+        self._add_entry(WaitEntry.from_millis(wait_ms))
 
     def add_wait_seconds(self, wait_seconds: float):
-        self.queue_wrapper.queue.append(WaitEntry(timedelta(seconds=wait_seconds)))
+        self._add_entry(WaitEntry(timedelta(seconds=wait_seconds)))
 
     def add_packet_delay(self, delay: timedelta):
-        self.queue_wrapper.queue.append(PacketDelayEntry(delay))
+        self._add_entry(PacketDelayEntry(delay))
 
     def add_packet_delay_ms(self, delay_ms: int):
-        self.queue_wrapper.queue.append(PacketDelayEntry.from_millis(delay_ms))
+        self._add_entry(PacketDelayEntry.from_millis(delay_ms))
+
+    def _add_entry(self, entry: TcQueueEntryBase):
+        self.pre_add_cb(entry)
+        self.queue_wrapper.queue.append(entry)
+
+
+class DefaultPusQueueHelper(QueueHelperBase):
+    """Default PUS Queue Helper which simplifies inserting PUS telecommands
+    into the queue. It also provides a way to optionally stamp common PUS TC fields which would
+    otherwise add boilerplate code during the packet creation process. This includes the following
+    packet properties and it is also able to add the telecommand into a provided PUS verificator.
+
+    This queue helper also has special support for PUS 11 time tagged PUS telecommands and will
+    perform its core functionality for the time-tagged telecommands as well.
+    """
+
+    def __init__(
+        self,
+        queue_wrapper: Optional[QueueWrapper],
+        pus_apid: Optional[int] = None,
+        seq_cnt_provider: Optional[ProvidesSeqCount] = None,
+        pus_verificator: Optional[PusVerificator] = None,
+        tc_sched_timestamp_len: int = 4,
+    ):
+        """
+        :param queue_wrapper: Queue Wrapper. All entries are inserted here
+        :param pus_apid: Default APID which will be stamped onto all provided PUS TC packets
+        :param seq_cnt_provider: The sequence count will be stamped onto all provided PUS TC packets
+        :param pus_verificator: All provided PUS TCs will be added to this verificator
+        """
+        super().__init__(queue_wrapper)
+        self.seq_cnt_provider = seq_cnt_provider
+        self.pus_verificator = pus_verificator
+        self.pus_apid = pus_apid
+        self.tc_sched_timestamp_len = tc_sched_timestamp_len
+
+    def pre_add_cb(self, entry: TcQueueEntryBase):
+        if entry.etype == TcQueueEntryType.PUS_TC:
+            pus_entry = cast(PusTcEntry, entry)
+            if (
+                pus_entry.pus_tc.service == PusServices.S11_TC_SCHED
+                and pus_entry.pus_tc.subservice == Pus11Subservices.TC_INSERT
+            ):
+                self._handle_time_tagged_tc(pus_entry.pus_tc)
+            self._pus_packet_handler(pus_entry.pus_tc)
+
+    def _handle_time_tagged_tc(self, pus_tc: PusTelecommand):
+        try:
+            time_tagged_tc = PusTelecommand.unpack(
+                pus_tc.app_data[self.tc_sched_timestamp_len :]
+            )
+            self._pus_packet_handler(time_tagged_tc)
+            pus_tc.app_data[self.tc_sched_timestamp_len :] = time_tagged_tc.pack()
+        except ValueError as e:
+            LOGGER.warning(
+                f"Attempt of unpacking time tagged TC failed with exception {e}"
+            )
+
+    def _pus_packet_handler(self, pus_tc: PusTelecommand):
+        recalc_crc = False
+        if self.pus_apid is not None:
+            recalc_crc = True
+            pus_tc.apid = self.pus_apid
+        if self.seq_cnt_provider is not None:
+            recalc_crc = True
+            pus_tc.seq_count = self.seq_cnt_provider.get_and_increment()
+        if self.pus_verificator is not None:
+            # Add TC after Sequence Count and APID stamping
+            self.pus_verificator.add_tc(pus_tc)
+        if recalc_crc:
+            pus_tc.calc_crc()
+
+    def add_pus_tc(self, pus_tc: PusTelecommand):
+        super()._add_entry(PusTcEntry(pus_tc))
+
+    def add_ccsds_tc(self, space_packet: SpacePacket):
+        super()._add_entry(SpacePacketEntry(space_packet))

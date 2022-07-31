@@ -57,7 +57,6 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
             secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
@@ -85,7 +84,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def __empty(cls) -> Service23Tm:
-        return cls(subservice_id=-1, object_id=bytearray(4), repo_path="", file_name="")
+        return cls(subservice_id=0, object_id=bytearray(4), repo_path="", file_name="")
 
     @classmethod
     def unpack(
@@ -94,9 +93,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service23Tm:
         service_23_tm = cls.__empty()
-        service_23_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
-        )
+        service_23_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         service_23_tm.__init_without_base(instance=service_23_tm)
         return service_23_tm
 

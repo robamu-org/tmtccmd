@@ -54,7 +54,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         """
         Service3Base.__init__(self, object_id=0, custom_hk_handling=custom_hk_handling)
         source_data = bytearray()
-        source_data.extend(struct.pack("!I", self.object_id.id))
+        source_data.extend(struct.pack("!I", self.object_id.obj_id))
         source_data.extend(struct.pack("!I", self.set_id))
         if subservice_id == 25 or subservice_id == 26:
             source_data.extend(hk_data)

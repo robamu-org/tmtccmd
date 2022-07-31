@@ -96,7 +96,7 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAdd
             addr = EthAddr(ip_address, port)
 
     if reconfigure_ip_address:
-        address_tuple = prompt_ip_address(type_str=info_string)
+        addr = prompt_ip_address(type_str=info_string)
         save_to_json = input(
             f"Do you want to store the {info_string} configuration? ([Y]/n): "
         )
@@ -115,7 +115,7 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAdd
             )
         else:
             LOGGER.info(f"{info_string} configuration was not stored")
-    return address_tuple
+    return addr
 
 
 def prompt_ip_address(type_str: str) -> EthAddr:

@@ -32,8 +32,6 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         destination_id: int = 0,
     ):
         """This class can be used to deserialize service 8 packets.
-        :param raw_telemetry:      Raw bytearray which will be deserialized
-        :param call_srv8_hook:
         :raises ValueError: If the length of the passed bytearray is too short.
         """
         self._object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=object_id)

@@ -123,7 +123,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
     @classmethod
     def __empty(cls) -> Service20FsfwTm:
         return cls(
-            subservice_id=-1,
+            subservice_id=0,
             object_id=bytearray(4),
             param_id=bytearray(),
             domain_id=0,
@@ -139,13 +139,12 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
     ) -> Service20FsfwTm:
         service_20_tm = cls.__empty()
         service_20_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
-        if service_20_tm.custom_fsfw_handling:
-            if len(service_20_tm.pus_tm.tm_data) < 4:
-                LOGGER.warning("Invalid data length, less than 4")
-            elif len(service_20_tm.pus_tm.tm_data) < 8:
-                LOGGER.warning(
-                    "Invalid data length, less than 8 (Object ID and Parameter ID)"
-                )
+        if len(service_20_tm.pus_tm.tm_data) < 4:
+            LOGGER.warning("Invalid data length, less than 4")
+        elif len(service_20_tm.pus_tm.tm_data) < 8:
+            LOGGER.warning(
+                "Invalid data length, less than 8 (Object ID and Parameter ID)"
+            )
         service_20_tm.__init_without_base(instance=service_20_tm)
         return service_20_tm
 
