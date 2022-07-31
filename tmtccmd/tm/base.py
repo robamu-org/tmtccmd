@@ -139,8 +139,8 @@ class PusTmInfoBase(PusTmInfoInterface):
         content_list.append(f"{self.pus_tm.service}")
         content_list.append(f"{self.pus_tm.subservice}")
         content_list.append(f"{self.pus_tm.pus_tm_sec_header.message_counter}")
-        content_list.append(f"{self.pus_tm.pus_tm_sec_header.time.as_unix_seconds()}")
-        content_list.append(f"{self.pus_tm.pus_tm_sec_header.time.as_time_string()}")
+        content_list.append(f"{self.pus_tm.pus_tm_sec_header.time_provider.as_unix_seconds()}")
+        content_list.append(f"{self.pus_tm.pus_tm_sec_header.time_provider.as_time_string()}")
         content_list.append(f"0x{self.pus_tm.sp_header.apid:02x}")
         content_list.append(f"{self.pus_tm.sp_header.seq_count}")
         if self.pus_tm.valid:

@@ -24,7 +24,7 @@ class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
         Service17Tm.__init__(
             self,
             subservice=subservice,
-            time=time,
+            time_provider=time,
             ssc=ssc,
             source_data=source_data,
             apid=apid,
