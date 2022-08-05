@@ -54,10 +54,7 @@ def create_com_interface_cfg_default(
     com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Tuple[int]]
 ) -> ComIfCfgBase:
     if com_if_key == CoreComInterfaces.DUMMY.value:
-        return ComIfCfgBase(
-            com_if_key=com_if_key,
-            json_cfg_path=json_cfg_path
-        )
+        return ComIfCfgBase(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
     if com_if_key == CoreComInterfaces.UDP.value:
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
