@@ -110,7 +110,7 @@ class PacketDelayEntry(TcQueueEntryBase):
 
 
 class QueueEntryHelper:
-    def __init__(self, base: TcQueueEntryBase):
+    def __init__(self, base: Optional[TcQueueEntryBase]):
         self.base = base
 
     @property
