@@ -1,6 +1,7 @@
 import sys
 from typing import Optional, Tuple, cast
 
+from tmtccmd.com_if.dummy import DummyComIF
 from tmtccmd.config import CoreComInterfaces
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
@@ -52,6 +53,11 @@ class TcpipCfg(ComIfCfgBase):
 def create_com_interface_cfg_default(
     com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Tuple[int]]
 ) -> ComIfCfgBase:
+    if com_if_key == CoreComInterfaces.DUMMY.value:
+        return ComIfCfgBase(
+            com_if_key=com_if_key,
+            json_cfg_path=json_cfg_path
+        )
     if com_if_key == CoreComInterfaces.UDP.value:
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
@@ -70,7 +76,7 @@ def create_com_interface_cfg_default(
         CoreComInterfaces.SERIAL_DLE.value,
         CoreComInterfaces.SERIAL_FIXED_FRAME.value,
     ]:
-        pass
+        return None
 
 
 def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
@@ -96,11 +102,13 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
             cfg.com_if_key == CoreComInterfaces.SERIAL_DLE.value
             or cfg.com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
         ):
+            # TODO: Move to new model where config is passed externally
             communication_interface = create_default_serial_interface(
                 com_if_key=cfg.com_if_key,
                 json_cfg_path=cfg.json_cfg_path,
             )
         elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
+            # TODO: Move to new model where config is passed externally
             serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
             serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
             communication_interface = QEMUComIF(
