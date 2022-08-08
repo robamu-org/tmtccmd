@@ -23,7 +23,7 @@ class TestTcQueue(TestCase):
         self.pus_cmd = PusTelecommand(service=17, subservice=1)
 
     def test_wait_entry(self):
-        queue_helper.add_wait(timedelta(seconds=2))
+        self.queue_helper.add_wait(timedelta(seconds=2))
         self.assertEqual(len(self.queue_wrapper.queue), 1)
         wait_entry = cast(WaitEntry, self.queue_wrapper.queue.pop())
         self.assertTrue(wait_entry)
