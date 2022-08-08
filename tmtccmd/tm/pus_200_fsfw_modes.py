@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import struct
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomPusServices
 from tmtccmd.pus.pus_200_fsfw_mode import Subservices
