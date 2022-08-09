@@ -41,7 +41,7 @@ class DefaultFaultHandlerBase(ABC):
             return
         self._handler_dict.update({condition: handler})
 
-    def fault_callback(self, condition: ConditionCode):
+    def report_fault(self, condition: ConditionCode):
         if condition not in self._handler_dict:
             return
         fh_code = self._handler_dict.get(condition)

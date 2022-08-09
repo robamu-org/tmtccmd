@@ -559,7 +559,7 @@ class SourceHandler:
             self._notice_of_suspension()
         elif fh == FaultHandlerCodes.ABANDON_TRANSACTION:
             self._abandon_transaction()
-        self.cfg.default_fault_handlers.fault_callback(cond)
+        self.cfg.default_fault_handlers.report_fault(cond)
 
     def _notice_of_cancellation(self):
         # TODO: Implement
