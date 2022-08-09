@@ -24,6 +24,7 @@ class DefaultFaultHandlerBase(ABC):
             ConditionCode.INVALID_TRANSMISSION_MODE: FaultHandlerCodes.IGNORE_ERROR,
             ConditionCode.FILE_CHECKSUM_FAILURE: FaultHandlerCodes.IGNORE_ERROR,
             ConditionCode.FILE_SIZE_ERROR: FaultHandlerCodes.IGNORE_ERROR,
+            ConditionCode.FILESTORE_REJECTION: FaultHandlerCodes.IGNORE_ERROR,
             ConditionCode.NAK_LIMIT_REACHED: FaultHandlerCodes.IGNORE_ERROR,
             ConditionCode.INACTIVITY_DETECTED: FaultHandlerCodes.IGNORE_ERROR,
             ConditionCode.CHECK_LIMIT_REACHED: FaultHandlerCodes.IGNORE_ERROR,
