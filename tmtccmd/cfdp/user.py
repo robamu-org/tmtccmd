@@ -50,7 +50,13 @@ class CfdpUserBase(ABC):
     """This user base class provides the primary user interface to interact with CFDP handlers.
     It is also used to pass the Virtual Filestore (VFS) implementation to the CFDP handlers
     so the filestore operations can be mapped to the underlying filestore.
+
+    This class is used by implementing it in a child class and then passing it to the CFDP
+    handler objects. The base class provides default implementation for the user indication
+    primitives specified in the CFDP standard. The user can override these implementations
+    to provide custom indication handlers.
     """
+
     def __init__(self, vfs: Optional[VirtualFilestore] = None):
         if vfs is None:
             vfs = HostFilestore()

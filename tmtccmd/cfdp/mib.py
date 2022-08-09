@@ -16,6 +16,26 @@ from tmtccmd.util.countdown import Countdown
 
 
 class DefaultFaultHandlerBase(ABC):
+    """This base class provides a way to implement the fault handling procedures as specified
+    in chapter 4.8 of the CFDP standard.
+
+    It is passed into the CFDP handlers as part of the local entity configuration and provides
+    a way to specify custom user error handlers.
+
+    It does so by mapping each applicable CFDP :py:class:`ConditionCode` to a fault handler which
+    is denoted by the four :py:class:`FaultHandlerCodes`. This code is used to dispatch
+    to a user-provided callback function:
+
+     1. `FaultHandlerCodes.IGNORE_ERROR` -> :py:meth:`ignore_cb`
+     2. `FaultHandlerCodes.NOTICE_OF_CANCELLATION` -> :py:meth:`notice_of_cancellation_cb`
+     3. `FaultHandlerCodes.NOTICE_OF_SUSPENSION` -> :py:meth:`notice_of_suspension_cb`
+     4. `FaultHandlerCodes.ABANDON_TRANSACTION` -> :py:meth:`abandon_transaction_cb`
+
+    For each error reported by :py:meth:`report_error`, the appropriate fault handler callback
+    will be called. The user provides the callbacks by providing a custom class which implements
+    these base class and all abstract fault handler callbacks.
+    """
+
     def __init__(self):
         # The initial default handle will be to ignore the error
         self._handler_dict: Dict[ConditionCode, FaultHandlerCodes] = {

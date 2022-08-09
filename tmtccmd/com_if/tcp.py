@@ -29,6 +29,7 @@ class TcpCommunicationType(enum.Enum):
 
 class TcpComIF(ComInterface):
     """Communication interface for TCP communication.
+
     TODO: This class should not be tied to space packet IDs. Instead, let the parsing be done
           by an upper layer. Also, do we really need an extra thread here? Using select like
           with the UDP ComIF should be sufficient..
