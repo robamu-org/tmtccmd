@@ -47,6 +47,10 @@ class FileSegmentRecvParams:
 
 
 class CfdpUserBase(ABC):
+    """This user base class provides the primary user interface to interact with CFDP handlers.
+    It is also used to pass the Virtual Filestore (VFS) implementation to the CFDP handlers
+    so the filestore operations can be mapped to the underlying filestore.
+    """
     def __init__(self, vfs: Optional[VirtualFilestore] = None):
         if vfs is None:
             vfs = HostFilestore()
