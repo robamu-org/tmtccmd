@@ -41,7 +41,7 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
             self,
             verif_params=verif_params,
             subservice=subservice,
-            time=time,
+            time_provider=time,
             seq_count=seq_count,
             apid=apid,
             packet_version=packet_version,

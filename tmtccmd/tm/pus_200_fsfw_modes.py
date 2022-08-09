@@ -2,7 +2,7 @@
 """
 from __future__ import annotations
 import struct
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomPusServices
 from tmtccmd.pus.pus_200_fsfw_mode import Subservices
@@ -35,12 +35,11 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
         pus_tm = PusTelemetry(
             service=CustomPusServices.SERVICE_200_MODE,
             subservice=subservice_id,
-            time=time,
+            time_provider=time,
             seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
         )
