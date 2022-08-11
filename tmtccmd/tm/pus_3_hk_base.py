@@ -28,6 +28,10 @@ class Service3Base:
     def object_id(self) -> ObjectIdU32:
         return self._object_id
 
+    @object_id.setter
+    def object_id(self, obj_id: ObjectIdU32):
+        self._object_id = obj_id
+
     @property
     def set_id(self) -> int:
         return self._set_id

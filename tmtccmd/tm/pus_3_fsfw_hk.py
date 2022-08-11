@@ -39,7 +39,6 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         minimum_reply_size: int = DEFAULT_MINIMAL_PACKET_SIZE,
         minimum_structure_report_header_size: int = STRUCTURE_REPORT_FIXED_HEADER_SIZE,
         packet_version: int = 0b000,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
@@ -98,7 +97,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
             raise ValueError
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
-        instance.object_id.id = bytes(tm_data[0:4])
+        instance.object_id = ObjectIdU32.from_bytes(tm_data[0:4])
         instance.set_id = struct.unpack("!I", tm_data[4:8])[0]
         if instance.subservice == 25 or instance.subservice == 26:
             if len(tm_data) > 8:
@@ -118,7 +117,6 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         cls,
         raw_telemetry: bytes,
         custom_hk_handling: bool,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service3FsfwTm:
         service_3_tm = cls.__empty()
         service_3_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
