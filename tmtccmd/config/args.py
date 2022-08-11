@@ -172,21 +172,21 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-s",
         "--service",
-        help="Procedure service code which is passed to the TC handler objects",
+        help="Procedure service code, used for the default procedure mode",
         default=None,
     )
     arg_parser.add_argument(
         "-o",
         "--op_code",
-        help="Procedcure operation code, which is passed to the TC packer functions",
+        help="Procedure operation code, used for the default procedure mode",
         default=None,
     )
     arg_parser.add_argument(
         "-l",
         "--listener",
         help="The backend will be configured to go into listener mode after "
-        "finishing the first queue if a service argument is specified. If this flag is specified"
-        "without service and op code arguments, the core mode will be set to the listener mode",
+        "finishing the first queue\nif a service argument is specified. If this flag is specified\n"
+        "without the -s flag, the core mode will be set to the listener mode",
         action="store_true",
         default=False,
     )
