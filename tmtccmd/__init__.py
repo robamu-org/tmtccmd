@@ -13,6 +13,8 @@ from tmtccmd.config import (
     SetupWrapper,
     SetupParams,
     ArgParserWrapper,
+    CoreModeStrings,
+    CoreModeList,
 )
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
@@ -174,6 +176,15 @@ def create_default_tmtc_backend(
     tm_listener = CcsdsTmListener(tm_handler)
     mode_wrapper = ModeWrapper()
     backend_mode_conversion(setup_wrapper.params.mode, mode_wrapper)
+    if setup_wrapper.params.mode == CoreModeStrings[CoreModeList.LISTENER_MODE]:
+        print("-- Backend Listener Mode --")
+    elif setup_wrapper.params.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+        print("-- One Queue Mode --")
+    elif (
+        setup_wrapper.params.mode
+        == CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]
+    ):
+        print("-- Multi Queue Mode --")
     # The global variables are set by the argument parser.
     tmtc_backend = CcsdsTmtcBackend(
         com_if=com_if,

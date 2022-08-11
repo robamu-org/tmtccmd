@@ -185,7 +185,8 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "-l",
         "--listener",
         help="The backend will be configured to go into listener mode after "
-        "finishing the first queue",
+        "finishing the first queue if a service argument is specified. If this flag is specified"
+        "without service and op code arguments, the core mode will be set to the listener mode",
         action="store_true",
         default=False,
     )
@@ -281,12 +282,11 @@ def find_service_and_op_code(
 ):
     tmtc_defs = hook_obj.get_tmtc_definitions()
     if pargs.service is None:
-        if pargs.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
-            if use_prompts:
-                print("No service argument (-s) specified, prompting from user")
-                # Try to get the service list from the hook base and prompt service
-                # from user
-                params.def_proc_args.service = prompt_service(tmtc_defs)
+        if use_prompts:
+            print("No service argument (-s) specified, prompting from user")
+            # Try to get the service list from the hook base and prompt service
+            # from user
+            params.def_proc_args.service = prompt_service(tmtc_defs)
     else:
         params.def_proc_args.service = pargs.service
     if pargs.op_code is None:
@@ -330,14 +330,14 @@ def args_to_params(
         params.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
     else:
         params.mode = pargs.mode
+    if params.backend_params.listener and (not pargs.service and not pargs.op_code):
+        params.mode = CoreModeStrings[CoreModeList.LISTENER_MODE]
     tmtc_defs = hook_obj.get_tmtc_definitions()
     params.def_proc_args = DefProcedureParams("0", "0")
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
     else:
-        if not (
-            params.backend_params.listener and not pargs.service and not pargs.op_code
-        ):
+        if params.mode != CoreModeStrings[CoreModeList.LISTENER_MODE]:
             find_service_and_op_code(
                 params=params, hook_obj=hook_obj, use_prompts=use_prompts, pargs=pargs
             )
