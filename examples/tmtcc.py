@@ -28,11 +28,12 @@ from tmtccmd.logging.pus import (
     TimedLogWhen,
 )
 from tmtccmd.tc import (
-    QueueEntryHelper,
     TcQueueEntryType,
     ProcedureHelper,
     TcProcedureType,
     FeedWrapper,
+    SendCbParams,
+    DefaultPusQueueHelper,
 )
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
@@ -51,14 +52,18 @@ class ExampleHookClass(TmTcCfgHookBase):
         super().__init__(json_cfg_path=json_cfg_path)
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
-        from tmtccmd.config.com_if import create_com_interface_default
-        # TODO: Fix this (again)
-
         LOGGER.info("Communication interface assignment function was called")
-        return create_com_interface_default(
+        from tmtccmd.config.com_if import (
+            create_com_interface_default,
+            create_com_interface_cfg_default,
+        )
+
+        cfg = create_com_interface_cfg_default(
             com_if_key=com_if_key,
             json_cfg_path=self.json_cfg_path,
+            space_packet_ids=None,
         )
+        return create_com_interface_default(cfg)
 
     def get_tmtc_definitions(self) -> TmTcDefWrapper:
         from tmtccmd.config.globals import get_default_tmtc_defs
@@ -136,9 +141,14 @@ class TcHandler(TcHandlerBase):
         super(TcHandler, self).__init__()
         self.seq_count_provider = seq_count_provider
         self.verif_wrapper = verif_wrapper
+        self.queue_helper = DefaultPusQueueHelper(
+            queue_wrapper=None,
+            seq_cnt_provider=seq_count_provider,
+        )
 
     # TODO: Fix this
-    def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
+    def send_cb(self, send_params: SendCbParams):
+        entry_helper = send_params.entry
         if entry_helper.is_tc:
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = entry_helper.to_pus_tc_entry()
@@ -148,7 +158,7 @@ class TcHandler(TcHandlerBase):
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
-                com_if.send(raw_tc)
+                send_params.com_if.send(raw_tc)
         elif entry_helper.entry_type == TcQueueEntryType.LOG:
             log_entry = entry_helper.to_log_entry()
             LOGGER.info(log_entry.log_str)
@@ -162,12 +172,14 @@ class TcHandler(TcHandlerBase):
             )
 
     def feed_cb(self, helper: ProcedureHelper, wrapper: FeedWrapper):
+        self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
-            queue_helper = wrapper.queue_helper
             service = def_proc.service
             if service == CoreServiceList.SERVICE_17.value:
-                return queue_helper.add_pus_tc(PusTelecommand(service=17, subservice=1))
+                return self.queue_helper.add_pus_tc(
+                    PusTelecommand(service=17, subservice=1)
+                )
 
 
 def main():
