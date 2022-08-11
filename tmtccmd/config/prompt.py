@@ -36,7 +36,7 @@ def prompt_service(tmtc_defs: TmTcDefWrapper) -> str:
             complete_style=CompleteStyle.MULTI_COLUMN,
         )
         if service_string in tmtc_defs.defs:
-            LOGGER.info(f"Selected service: {service_string}")
+            print(f"Selected service: {service_string}")
             return service_string
         else:
             LOGGER.warning("Invalid key, try again")
@@ -80,7 +80,7 @@ def prompt_op_code(tmtc_defs: TmTcDefWrapper, service: str) -> str:
                 complete_style=CompleteStyle.MULTI_COLUMN,
             )
             if op_code_string in op_code_entry.op_code_dict.keys():
-                LOGGER.info(f"Selected op code: {op_code_string}")
+                print(f"Selected op code: {op_code_string}")
                 return op_code_string
             else:
                 LOGGER.warning("Invalid key, try again")
