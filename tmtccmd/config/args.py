@@ -273,6 +273,32 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     )
 
 
+def find_service_and_op_code(
+        params: SetupParams,
+        hook_obj: TmTcCfgHookBase,
+        pargs: argparse.Namespace,
+        use_prompts: bool
+):
+    tmtc_defs = hook_obj.get_tmtc_definitions()
+    if pargs.service is None:
+        if pargs.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+            if use_prompts:
+                print("No service argument (-s) specified, prompting from user")
+                # Try to get the service list from the hook base and prompt service
+                # from user
+                params.def_proc_args.service = prompt_service(tmtc_defs)
+    else:
+        params.def_proc_args.service = pargs.service
+    if pargs.op_code is None:
+        current_service = params.def_proc_args.service
+        if use_prompts:
+            params.def_proc_args.op_code = prompt_op_code(
+                tmtc_defs, current_service
+            )
+    else:
+        params.def_proc_args.op_code = pargs.op_code
+
+
 def args_to_params(
     pargs: argparse.Namespace,
     params: SetupParams,
@@ -294,6 +320,7 @@ def args_to_params(
         params.app_params.use_gui = False
     else:
         params.app_params.use_gui = pargs.gui
+    params.backend_params.listener = pargs.listener
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
         params.com_if_id = determine_com_if(
             hook_obj.get_com_if_dict(), hook_obj.json_cfg_path, use_prompts
@@ -310,22 +337,13 @@ def args_to_params(
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
     else:
-        if pargs.service is None:
-            if pargs.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
-                if use_prompts:
-                    print("No service argument (-s) specified, prompting from user")
-                    # Try to get the service list from the hook base and prompt service from user
-                    params.def_proc_args.service = prompt_service(tmtc_defs)
-        else:
-            params.def_proc_args.service = pargs.service
-        if pargs.op_code is None:
-            current_service = params.def_proc_args.service
-            if use_prompts:
-                params.def_proc_args.op_code = prompt_op_code(
-                    tmtc_defs, current_service
-                )
-        else:
-            params.def_proc_args.op_code = pargs.op_code
+        if not (params.backend_params.listener and not pargs.service and not pargs.op_code):
+            find_service_and_op_code(
+                params=params,
+                hook_obj=hook_obj,
+                use_prompts=use_prompts,
+                pargs=pargs
+            )
     if pargs.delay is None:
         if params.backend_params.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
             params.tc_params.delay = 3.0
@@ -333,10 +351,6 @@ def args_to_params(
             params.tc_params.delay = 0.0
     else:
         params.tc_params.delay = pargs.delay
-    if pargs.listener is None:
-        params.backend_params.listener = False
-    else:
-        params.backend_params.listener = pargs.listener
 
 
 class ArgParserWrapper:
