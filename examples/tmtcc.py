@@ -37,7 +37,7 @@ from tmtccmd.tc import (
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
-from tmtccmd.util import FileSeqCountProvider
+from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider
 from tmtccmd.util.obj_id import ObjectIdDictT
 
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
@@ -52,6 +52,7 @@ class ExampleHookClass(TmTcCfgHookBase):
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         from tmtccmd.config.com_if import create_com_interface_default
+        # TODO: Fix this (again)
 
         LOGGER.info("Communication interface assignment function was called")
         return create_com_interface_default(
@@ -136,6 +137,7 @@ class TcHandler(TcHandlerBase):
         self.seq_count_provider = seq_count_provider
         self.verif_wrapper = verif_wrapper
 
+    # TODO: Fix this
     def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
         if entry_helper.is_tc:
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
@@ -189,7 +191,7 @@ def main():
     ccsds_handler.add_apid_handler(tm_handler)
 
     # Create TC handler
-    seq_count_provider = FileSeqCountProvider()
+    seq_count_provider = PusFileSeqCountProvider()
     tc_handler = TcHandler(seq_count_provider, verification_wrapper)
     tmtccmd.setup(setup_args=setup_args)
 
