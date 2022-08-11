@@ -46,9 +46,7 @@ def __generate_periodic_hk_command(
             subservice = Subservices.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
             subservice = Subservices.TC_DISABLE_PERIODIC_HK_GEN
-    return PusTelecommand(
-        service=3, subservice=subservice, app_data=app_data
-    )
+    return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
 def modify_collection_interval(

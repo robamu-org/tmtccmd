@@ -274,10 +274,10 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def find_service_and_op_code(
-        params: SetupParams,
-        hook_obj: TmTcCfgHookBase,
-        pargs: argparse.Namespace,
-        use_prompts: bool
+    params: SetupParams,
+    hook_obj: TmTcCfgHookBase,
+    pargs: argparse.Namespace,
+    use_prompts: bool,
 ):
     tmtc_defs = hook_obj.get_tmtc_definitions()
     if pargs.service is None:
@@ -292,9 +292,7 @@ def find_service_and_op_code(
     if pargs.op_code is None:
         current_service = params.def_proc_args.service
         if use_prompts:
-            params.def_proc_args.op_code = prompt_op_code(
-                tmtc_defs, current_service
-            )
+            params.def_proc_args.op_code = prompt_op_code(tmtc_defs, current_service)
     else:
         params.def_proc_args.op_code = pargs.op_code
 
@@ -337,12 +335,11 @@ def args_to_params(
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
     else:
-        if not (params.backend_params.listener and not pargs.service and not pargs.op_code):
+        if not (
+            params.backend_params.listener and not pargs.service and not pargs.op_code
+        ):
             find_service_and_op_code(
-                params=params,
-                hook_obj=hook_obj,
-                use_prompts=use_prompts,
-                pargs=pargs
+                params=params, hook_obj=hook_obj, use_prompts=use_prompts, pargs=pargs
             )
     if pargs.delay is None:
         if params.backend_params.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
