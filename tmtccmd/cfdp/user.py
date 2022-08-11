@@ -34,7 +34,7 @@ class TransactionFinishedParams:
 
 
 @dataclass
-class FileSegmentRecvParams:
+class FileSegmentRecvdParams:
     """The length of the segment metadata is not supplied as an extra parameter as it can be
     simply queried with len(segment_metadata)
     """
@@ -86,7 +86,7 @@ class CfdpUserBase(ABC):
         print(params)
 
     @abstractmethod
-    def file_segment_recv_indication(self, params: FileSegmentRecvParams):
+    def file_segment_recv_indication(self, params: FileSegmentRecvdParams):
         LOGGER.info(
             f"File-Segment-Recv.indication for {params.transaction_id}. Parameters:"
         )

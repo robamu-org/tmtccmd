@@ -30,7 +30,7 @@ from tmtccmd.cfdp.handler.dest import (
     TransactionStep,
     FsmResult,
 )
-from tmtccmd.cfdp.user import TransactionFinishedParams, FileSegmentRecvParams
+from tmtccmd.cfdp.user import TransactionFinishedParams, FileSegmentRecvdParams
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -161,7 +161,7 @@ class TestCfdpDestHandler(TestCase):
         )
         self.cfdp_user.file_segment_recv_indication.assert_called_once()
         seg_recv_params = cast(
-            FileSegmentRecvParams,
+            FileSegmentRecvdParams,
             self.cfdp_user.file_segment_recv_indication.call_args.args[0],
         )
         self.assertEqual(seg_recv_params.transaction_id, self.transaction_id)

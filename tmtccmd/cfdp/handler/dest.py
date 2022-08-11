@@ -46,7 +46,7 @@ from tmtccmd.cfdp.handler.defs import (
 )
 from tmtccmd.cfdp.user import (
     MetadataRecvParams,
-    FileSegmentRecvParams,
+    FileSegmentRecvdParams,
     TransactionFinishedParams,
 )
 
@@ -195,7 +195,7 @@ class DestHandler:
                     data = file_data_pdu.file_data
                     offset = file_data_pdu.offset
                     if self.cfg.indication_cfg.file_segment_recvd_indication_required:
-                        file_segment_indic_params = FileSegmentRecvParams(
+                        file_segment_indic_params = FileSegmentRecvdParams(
                             transaction_id=self._params.transaction_id,
                             length=len(file_data_pdu.file_data),
                             offset=offset,
