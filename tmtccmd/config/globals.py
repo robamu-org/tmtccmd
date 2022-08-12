@@ -117,33 +117,6 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
-def handle_com_if_arg(
-    args, json_cfg_path: str, custom_com_if_dict: Dict[str, any] = None
-):
-    from tmtccmd.com_if.utils import determine_com_if
-
-    all_com_ifs = CORE_COM_IF_DICT
-    if custom_com_if_dict is not None:
-        all_com_ifs = CORE_COM_IF_DICT.update(custom_com_if_dict)
-    try:
-        com_if_key = str(args.com_if_id)
-    except AttributeError:
-        LOGGER.warning("No communication interface specified")
-        LOGGER.warning("Trying to set from existing configuration..")
-        com_if_key = determine_com_if(
-            com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path
-        )
-    if com_if_key == CoreComInterfaces.UNSPECIFIED.value:
-        com_if_key = determine_com_if(
-            com_if_dict=all_com_ifs, json_cfg_path=json_cfg_path
-        )
-    update_global(CoreGlobalIds.COM_IF, com_if_key)
-    try:
-        LOGGER.info(f"Communication interface: {all_com_ifs[com_if_key]}")
-    except KeyError as e:
-        LOGGER.error(f"Invalid communication interface key {com_if_key}, error {e}")
-
-
 def check_and_set_other_args(args):
     if args.listener is not None:
         update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)

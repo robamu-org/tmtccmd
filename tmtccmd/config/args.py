@@ -1,7 +1,7 @@
 """Argument parser module"""
 import argparse
 import sys
-from typing import Optional, List
+from typing import Optional, List, Sequence
 from dataclasses import dataclass
 
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
@@ -19,8 +19,8 @@ def get_default_descript_txt() -> str:
 
     return (
         f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
-        f"{AnsiColors.RESET}This application provides generic components to execute "
-        f"TMTC commanding\n"
+        f"{AnsiColors.RESET}This application provides generic components to perform remote"
+        f" commanding with special support for space applications\n"
     )
 
 
@@ -114,6 +114,7 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_default_mode_arguments(parser)
     add_default_com_if_arguments(parser)
     add_generic_arguments(parser)
+    add_default_procedure_arguments(parser)
     add_cfdp_parser(parser)
 
     add_ethernet_arguments(parser)
@@ -123,6 +124,7 @@ def parse_default_tmtccmd_input_arguments(
     parser: argparse.ArgumentParser,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
+    args: Optional[Sequence[str]] = None,
 ) -> (argparse.Namespace, List[str]):
     """Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
@@ -131,7 +133,7 @@ def parse_default_tmtccmd_input_arguments(
     if len(sys.argv) == 1:
         print("No input arguments specified. Run with -h to get list of arguments")
 
-    args, unknown = parser.parse_known_args()
+    args, unknown = parser.parse_known_args(args)
 
     if print_known_args:
         LOGGER.info("Printing known arguments:")
@@ -168,10 +170,7 @@ def add_cfdp_parser(arg_parser: argparse.ArgumentParser):
     )
 
 
-def add_generic_arguments(arg_parser: argparse.ArgumentParser):
-    arg_parser.add_argument(
-        "-g", "--gui", help="Use GUI mode", action="store_true", default=False
-    )
+def add_default_procedure_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-s",
         "--service",
@@ -183,6 +182,12 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "--op_code",
         help="Procedure operation code, used for the default procedure mode",
         default=None,
+    )
+
+
+def add_generic_arguments(arg_parser: argparse.ArgumentParser):
+    arg_parser.add_argument(
+        "-g", "--gui", help="Use GUI mode", action="store_true", default=False
     )
     arg_parser.add_argument(
         "-l",
