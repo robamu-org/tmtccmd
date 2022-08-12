@@ -186,7 +186,8 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "--listener",
         help="The backend will be configured to go into listener mode after "
         "finishing the first queue\nif a service argument is specified. If this flag is specified\n"
-        "without the -s flag, the core mode will be set to the listener mode",
+        "without the -s flag and none of the queue modes are specified explicitely\n, "
+        "the mode will be set to the listener mode",
         action="store_true",
         default=False,
     )
@@ -232,7 +233,7 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         "--mode",
         type=str,
         help=help_text,
-        default=CoreModeStrings[CoreModeList.ONE_QUEUE_MODE],
+        default=None,
     )
 
 
@@ -326,11 +327,17 @@ def args_to_params(
     else:
         # TODO: Check whether COM IF is valid?
         params.com_if_id = pargs.com_if
+    mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
     else:
+        mode_set_explicitely = True
         params.mode = pargs.mode
-    if params.backend_params.listener and (not pargs.service and not pargs.op_code):
+    if (
+        params.backend_params.listener
+        and (not pargs.service and not pargs.op_code)
+        and not mode_set_explicitely
+    ):
         params.mode = CoreModeStrings[CoreModeList.LISTENER_MODE]
     tmtc_defs = hook_obj.get_tmtc_definitions()
     params.def_proc_args = DefProcedureParams("0", "0")
