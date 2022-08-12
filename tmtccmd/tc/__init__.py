@@ -21,3 +21,4 @@ from .procedure import (
 )
 
 from .handler import FeedWrapper, TcHandlerBase, SendCbParams
+from .decorator import service_provider, route_to_registered_service_handlers
