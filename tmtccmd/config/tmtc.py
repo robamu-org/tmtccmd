@@ -54,7 +54,7 @@ ServiceDictValueT = Optional[Tuple[ServiceInfoT, OpCodeEntry]]
 ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 
 
-class TmTcDefWrapper:
+class TmtcDefinitionWrapper:
     def __init__(self, init_defs: Optional[ServiceOpCodeDictT] = None):
         if init_defs is None:
             self.defs: ServiceOpCodeDictT = dict()
@@ -83,30 +83,36 @@ class TmTcDefWrapper:
 
 
 REGISTER_CBS = set()
-DefinitionsCallable = Callable[[TmTcDefWrapper, Any, Any], None]
 
 
-def register_tmtc_definitions(adder_func: DefinitionsCallable):
+def tmtc_definitions_provider(adder_func):
     """Function decorator which registers the decorated function to be a TMTC definition provider.
     The :py:func:`execute_tmtc_def_functions` function can be used to call all functions.
 
     It is expected that the decorated function takes the py:class:`TmTcDefWrapper` as the first
-    argument
+    argument. The user can pass any additional arguments as positional and keyword
+    arguments.
     """
     global REGISTER_CBS
 
-    def call_explicitely(defs: TmTcDefWrapper):
+    def call_explicitely(defs: TmtcDefinitionWrapper, *args, **kwargs):
         if REGISTER_CBS and adder_func in REGISTER_CBS:
             REGISTER_CBS.remove(adder_func)
         print(f"{adder_func.__name__} called explicitely, not necessary")
         return adder_func(defs, args, kwargs)
+
     REGISTER_CBS.add(adder_func)
     return call_explicitely
 
 
-def execute_tmtc_def_functions(defs: TmTcDefWrapper):
+def call_all_definitions_providers(defs: TmtcDefinitionWrapper, *args, **kwargs):
     global REGISTER_CBS
     if REGISTER_CBS:
         for register_cb in REGISTER_CBS.copy():
-            register_cb(defs)
+            if args and kwargs:
+                register_cb(defs, args, kwargs)
+            if args and not kwargs:
+                register_cb(defs, args)
+            elif not args and not kwargs:
+                register_cb(defs)
             REGISTER_CBS.remove(register_cb)

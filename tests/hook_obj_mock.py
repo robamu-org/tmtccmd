@@ -5,7 +5,7 @@ import argparse
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreModeList
-from tmtccmd.config.tmtc import TmTcDefWrapper
+from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
@@ -72,7 +72,7 @@ class TestHookObj(TmTcCfgHookBase):
         )
 
     @abstractmethod
-    def get_tmtc_definitions(self) -> TmTcDefWrapper:
+    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         """This is a dicitonary mapping services represented by strings to an operation code
         dictionary.
 

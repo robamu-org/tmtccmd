@@ -16,7 +16,7 @@ from tmtccmd.config import (
     default_json_path,
     SetupParams,
     TmTcCfgHookBase,
-    TmTcDefWrapper,
+    TmtcDefinitionWrapper,
     CoreServiceList,
 )
 from tmtccmd.config import ArgParserWrapper, SetupWrapper
@@ -65,7 +65,7 @@ class ExampleHookClass(TmTcCfgHookBase):
         )
         return create_com_interface_default(cfg)
 
-    def get_tmtc_definitions(self) -> TmTcDefWrapper:
+    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         from tmtccmd.config.globals import get_default_tmtc_defs
 
         return get_default_tmtc_defs()

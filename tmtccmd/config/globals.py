@@ -18,7 +18,7 @@ from tmtccmd.config import (
     CoreComInterfaces,
     ComIfDictT,
 )
-from tmtccmd.config.tmtc import TmTcDefWrapper, OpCodeEntry
+from tmtccmd.config.tmtc import TmtcDefinitionWrapper, OpCodeEntry
 
 
 LOGGER = get_console_logger()
@@ -264,10 +264,10 @@ def check_and_set_core_service_arg(
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
 
 
-def get_default_tmtc_defs() -> TmTcDefWrapper:
+def get_default_tmtc_defs() -> TmtcDefinitionWrapper:
     global DEF_WRAPPER
     if DEF_WRAPPER is None:
-        DEF_WRAPPER = TmTcDefWrapper()
+        DEF_WRAPPER = TmtcDefinitionWrapper()
         srv_5 = OpCodeEntry()
         srv_5.add("0", "Event Test")
         DEF_WRAPPER.add_service(

@@ -7,7 +7,7 @@ from tmtccmd.com_if import ComInterface
 from tmtccmd.core import BackendBase
 from tmtccmd.util.retval import RetvalDictT
 
-from .tmtc import TmTcDefWrapper
+from .tmtc import TmtcDefinitionWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfDictT
 
 
@@ -49,7 +49,7 @@ class TmTcCfgHookBase(ABC):
         return CORE_COM_IF_DICT
 
     @abstractmethod
-    def get_tmtc_definitions(self) -> TmTcDefWrapper:
+    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         """This is a dicitonary mapping services represented by strings to an operation code
         dictionary.
 

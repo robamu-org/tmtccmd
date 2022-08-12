@@ -1,13 +1,13 @@
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
-from tmtccmd.config.tmtc import OpCodeEntry, TmTcDefWrapper
+from tmtccmd.config.tmtc import OpCodeEntry, TmtcDefinitionWrapper
 from tmtccmd.logging import get_console_logger
 
 LOGGER = get_console_logger()
 
 
-def prompt_service(tmtc_defs: TmTcDefWrapper) -> str:
+def prompt_service(tmtc_defs: TmtcDefinitionWrapper) -> str:
     service_adjustment = 20
     info_adjustment = 30
     horiz_line_num = service_adjustment + info_adjustment + 3
@@ -43,7 +43,7 @@ def prompt_service(tmtc_defs: TmTcDefWrapper) -> str:
 
 
 def build_service_word_completer(
-    tmtc_defs: TmTcDefWrapper,
+    tmtc_defs: TmtcDefinitionWrapper,
 ) -> WordCompleter:
     srv_list = []
     for service_entry in tmtc_defs.defs.items():
@@ -52,7 +52,7 @@ def build_service_word_completer(
     return srv_completer
 
 
-def prompt_op_code(tmtc_defs: TmTcDefWrapper, service: str) -> str:
+def prompt_op_code(tmtc_defs: TmtcDefinitionWrapper, service: str) -> str:
     op_code_adjustment = 24
     info_adjustment = 56
     horz_line_num = op_code_adjustment + info_adjustment + 3
