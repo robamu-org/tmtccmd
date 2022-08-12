@@ -1,10 +1,9 @@
 import argparse
 from unittest import TestCase
-from unittest.mock import MagicMock
 
 from tests.hook_obj_mock import create_hook_mock
-from tmtccmd import CoreModeList, CoreModeConverter, TmTcCfgHookBase
-from tmtccmd.config.args import args_to_params, SetupParams, add_default_mode_arguments
+from tmtccmd import CoreModeList, CoreModeConverter
+from tmtccmd.config.args import args_to_params, SetupParams
 
 
 class TestArgs(TestCase):
