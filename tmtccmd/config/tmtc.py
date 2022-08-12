@@ -1,4 +1,4 @@
-from typing import Union, List, Optional, Dict, Tuple
+from typing import Union, List, Optional, Dict, Tuple, Callable, Any
 
 ServiceNameT = str
 ServiceInfoT = str
@@ -80,3 +80,33 @@ class TmTcDefWrapper:
 
     def sort(self):
         self.defs = {key: self.defs[key] for key in sorted(self.defs.keys())}
+
+
+REGISTER_CBS = set()
+DefinitionsCallable = Callable[[TmTcDefWrapper, Any, Any], None]
+
+
+def register_tmtc_definitions(adder_func: DefinitionsCallable):
+    """Function decorator which registers the decorated function to be a TMTC definition provider.
+    The :py:func:`execute_tmtc_def_functions` function can be used to call all functions.
+
+    It is expected that the decorated function takes the py:class:`TmTcDefWrapper` as the first
+    argument
+    """
+    global REGISTER_CBS
+
+    def call_explicitely(defs: TmTcDefWrapper):
+        if REGISTER_CBS and adder_func in REGISTER_CBS:
+            REGISTER_CBS.remove(adder_func)
+        print(f"{adder_func.__name__} called explicitely, not necessary")
+        return adder_func(defs, args, kwargs)
+    REGISTER_CBS.add(adder_func)
+    return call_explicitely
+
+
+def execute_tmtc_def_functions(defs: TmTcDefWrapper):
+    global REGISTER_CBS
+    if REGISTER_CBS:
+        for register_cb in REGISTER_CBS.copy():
+            register_cb(defs)
+            REGISTER_CBS.remove(register_cb)
