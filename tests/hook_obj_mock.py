@@ -18,12 +18,7 @@ def create_hook_mock() -> TmTcCfgHookBase:
     """Create simple minimal hook mock using the MagicMock facilities by unittest
     :return:
     """
-    tmtc_hook_base = TmTcCfgHookBase()
-    tmtc_hook_base.add_globals_pre_args_parsing = MagicMock(return_value=0)
-    tmtc_hook_base.add_globals_post_args_parsing = MagicMock(return_value=0)
-    tmtc_hook_base.custom_args_parsing = MagicMock(
-        return_value=argparse.Namespace(service=17, mode=CoreModeList.IDLE)
-    )
+    tmtc_hook_base = MagicMock(spec=TmTcCfgHookBase)
     return tmtc_hook_base
 
 

@@ -13,7 +13,7 @@ from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config import (
     CoreModeList,
     CoreServiceList,
-    CoreModeStrings,
+    CoreModeConverter,
     CORE_COM_IF_DICT,
     CoreComInterfaces,
     ComIfDictT,
@@ -117,23 +117,6 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
-def handle_mode_arg(
-    args,
-    custom_modes_list: Union[None, List[Union[collections.abc.Iterable, dict]]] = None,
-) -> int:
-    # Determine communication interface from arguments. Must be contained in core modes list
-    try:
-        mode_param = args.mode
-    except AttributeError:
-        LOGGER.warning("Passed namespace does not contain the mode (-m) argument")
-        mode_param = CoreModeList.LISTENER_MODE
-    mode_param = check_and_set_core_mode_arg(
-        mode_arg=mode_param, custom_modes_list=custom_modes_list
-    )
-    update_global(CoreGlobalIds.MODE, mode_param)
-    return mode_param
-
-
 def handle_com_if_arg(
     args, json_cfg_path: str, custom_com_if_dict: Dict[str, any] = None
 ):
@@ -177,55 +160,6 @@ def check_and_set_other_args(args):
     if args.resend_tc is not None:
         update_global(CoreGlobalIds.RESEND_TC, args.resend_tc)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 3)
-
-
-def check_and_set_core_mode_arg(
-    mode_arg: any,
-    custom_modes_list: Union[None, List[Union[dict, collections.abc.Iterable]]] = None,
-) -> int:
-    from tmtccmd.util.conf_util import check_args_in_dict
-
-    """Checks whether the mode argument is contained inside the core mode list integer enumeration
-    or a custom mode list integer which can be passed optionally.
-    This function will set the single command mode as the global mode parameter if the passed mode
-    is not found in either enumerations.
-
-    :param mode_arg:
-    :param custom_modes_list:
-    :return: Mode value which was set
-    """
-    in_enum, mode_value = check_args_in_dict(
-        param=mode_arg, iterable=CoreModeList, warning_hint="mode integers"
-    )
-    if not in_enum:
-        in_enum, mode_value = check_args_in_dict(
-            param=mode_arg, iterable=CoreModeStrings, warning_hint="mode strings"
-        )
-    if in_enum:
-        update_global(CoreGlobalIds.MODE, mode_value)
-        return mode_value
-
-    mode_arg_invalid = False
-    if custom_modes_list is not None:
-        for custom_mode_entry in custom_modes_list:
-            in_enum, mode_value = check_args_in_dict(
-                param=mode_arg, iterable=custom_mode_entry, warning_hint="custom mode"
-            )
-            if in_enum:
-                break
-        if not in_enum:
-            mode_arg_invalid = True
-    else:
-        mode_arg_invalid = True
-
-    if mode_arg_invalid:
-        LOGGER.warning(
-            f"Passed mode argument might be invalid, "
-            f"setting to {CoreModeList.ONE_QUEUE_MODE}"
-        )
-        mode_value = CoreModeList.ONE_QUEUE_MODE
-    update_global(CoreGlobalIds.MODE, mode_value)
-    return mode_value
 
 
 def check_and_set_core_service_arg(

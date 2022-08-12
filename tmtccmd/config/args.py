@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.logging import get_console_logger
 
-from .defs import CoreModeStrings, CoreModeList, CoreComInterfaces
+from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
 from .hook import TmTcCfgHookBase
 
 
@@ -65,14 +65,17 @@ class SetupParams:
     def __init__(
         self,
         def_proc_args: Optional[DefProcedureParams] = None,
-        tc_params: TcParams = TcParams(),
-        backend_params: BackendParams = BackendParams(),
-        app_params: AppParams = AppParams(),
+        tc_params: Optional[TcParams] = None,
+        backend_params: Optional[BackendParams] = None,
+        app_params: Optional[AppParams] = None,
     ):
         self.def_proc_args = def_proc_args
-        self.tc_params = tc_params
-        self.backend_params = backend_params
-        self.app_params = app_params
+        if tc_params is None:
+            self.tc_params = TcParams()
+        if backend_params is None:
+            self.backend_params = BackendParams()
+        if app_params is None:
+            self.app_params = AppParams()
 
     @property
     def apid(self):
@@ -210,21 +213,21 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config import CoreModeList, CoreModeStrings
+    from tmtccmd.config import CoreModeList, CoreModeConverter
 
-    help_text = f"Core Modes. Default: {CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]}\n"
+    help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
     one_q = (
         f"{CoreModeList.ONE_QUEUE_MODE} or "
-        f"{CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]}: "
+        f"{CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}: "
         f"One Queue Command Mode\n"
     )
     listener_help = (
-        f"{CoreModeList.LISTENER_MODE} or {CoreModeStrings[CoreModeList.LISTENER_MODE]}: "
+        f"{CoreModeList.LISTENER_MODE} or {CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)}: "
         f"Listener Mode\n"
     )
     multi_q = (
         f"{CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE} or "
-        f"{CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]}: "
+        f"{CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE)}: "
         f"Multi Queue and Interactive Command Mode\n"
     )
     help_text += one_q + listener_help + multi_q
@@ -329,7 +332,7 @@ def args_to_params(
         params.com_if_id = pargs.com_if
     mode_set_explicitely = False
     if pargs.mode is None:
-        params.mode = CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]
+        params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
     else:
         mode_set_explicitely = True
         params.mode = pargs.mode
@@ -338,23 +341,25 @@ def args_to_params(
         and (not pargs.service and not pargs.op_code)
         and not mode_set_explicitely
     ):
-        params.mode = CoreModeStrings[CoreModeList.LISTENER_MODE]
+        params.mode = CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
     tmtc_defs = hook_obj.get_tmtc_definitions()
     params.def_proc_args = DefProcedureParams("0", "0")
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
     else:
-        if params.mode != CoreModeStrings[CoreModeList.LISTENER_MODE]:
+        if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
             find_service_and_op_code(
                 params=params, hook_obj=hook_obj, use_prompts=use_prompts, pargs=pargs
             )
     if pargs.delay is None:
-        if params.backend_params.mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+        if params.backend_params.mode == CoreModeConverter.get_str(
+            CoreModeList.ONE_QUEUE_MODE
+        ):
             params.tc_params.delay = 3.0
         else:
             params.tc_params.delay = 0.0
     else:
-        params.tc_params.delay = pargs.delay
+        params.tc_params.delay = float(pargs.delay)
 
 
 class ArgParserWrapper:

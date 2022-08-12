@@ -1,5 +1,5 @@
 import enum
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union
 
 # Com Interface Types
 ComIfValueT = Tuple[str, any]
@@ -57,12 +57,17 @@ class CoreModeList(enum.IntEnum):
     IDLE = 5
 
 
-CoreModeStrings = {
-    CoreModeList.ONE_QUEUE_MODE: "one-q",
-    CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE: "multi-q",
-    CoreModeList.LISTENER_MODE: "listener",
-    CoreModeList.IDLE: "idle",
-}
+class CoreModeConverter:
+    @staticmethod
+    def get_str(mode: Union[CoreModeList, int]) -> str:
+        if mode == CoreModeList.LISTENER_MODE:
+            return "listener"
+        elif mode == CoreModeList.ONE_QUEUE_MODE:
+            return "one-q"
+        elif mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
+            return "multi-q"
+        elif mode == CoreModeList.IDLE:
+            return "idle"
 
 
 class CoreServiceList(enum.Enum):

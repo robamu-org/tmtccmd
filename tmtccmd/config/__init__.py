@@ -14,7 +14,7 @@ from .args import (
 )
 from .defs import (
     CoreModeList,
-    CoreModeStrings,
+    CoreModeConverter,
     CoreComInterfaces,
     CORE_COM_IF_DICT,
     default_json_path,
@@ -27,13 +27,13 @@ from .hook import TmTcCfgHookBase
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
-    if mode == CoreModeStrings[CoreModeList.LISTENER_MODE]:
+    if mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.IDLE
-    elif mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+    elif mode == CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.ONE_QUEUE
-    elif mode == CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]:
+    elif mode == CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE):
         mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
         mode_wrapper.tm_mode = TmMode.LISTENER
 
