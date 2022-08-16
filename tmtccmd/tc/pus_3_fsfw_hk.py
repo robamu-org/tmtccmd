@@ -21,9 +21,9 @@ def enable_periodic_hk_command(diag: bool, sid: bytes, ssc: int) -> PusTelecomma
 
 
 def enable_periodic_hk_command_with_interval(
-    diag: bool, sid: bytes, interval_seconds: float, ssc: int
+    diag: bool, sid: bytes, interval_seconds: float
 ) -> (PusTelecommand, PusTelecommand):
-    cmd0 = modify_collection_interval(diag, sid, interval_seconds, ssc)
+    cmd0 = modify_collection_interval(diag, sid, interval_seconds)
     cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
     return cmd0, cmd1
 
@@ -50,7 +50,7 @@ def __generate_periodic_hk_command(
 
 
 def modify_collection_interval(
-    diag: bool, sid: bytes, interval_seconds: float, ssc: int
+    diag: bool, sid: bytes, interval_seconds: float
 ) -> PusTelecommand:
     app_data = bytearray(sid)
     app_data += make_interval(interval_seconds)
@@ -59,7 +59,7 @@ def modify_collection_interval(
     else:
         subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
     return PusTelecommand(
-        service=3, subservice=subservice, seq_count=ssc, app_data=app_data
+        service=3, subservice=subservice, app_data=app_data
     )
 
 
