@@ -58,9 +58,7 @@ def modify_collection_interval(
         subservice = Subservices.TC_MODIFY_DIAGNOSTICS_REPORT_COLLECTION_INTERVAL
     else:
         subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
-    return PusTelecommand(
-        service=3, subservice=subservice, app_data=app_data
-    )
+    return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
 def generate_one_hk_command(sid: bytes) -> PusTelecommand:
