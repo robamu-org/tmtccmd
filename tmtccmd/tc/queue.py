@@ -174,6 +174,9 @@ class QueueHelperBase(ABC):
     def __repr__(self):
         return f"{self.__class__.__name__}(queue_wrapper={self.queue_wrapper!r})"
 
+    def empty(self) -> bool:
+        return len(self.queue_wrapper.queue) == 0
+
     @abc.abstractmethod
     def pre_add_cb(self, entry: TcQueueEntryBase):
         pass

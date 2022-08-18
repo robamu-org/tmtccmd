@@ -103,8 +103,16 @@ class TcpComIF(ComInterface):
     def set_up_socket(self):
         if self.__tcp_socket is None:
             self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.__tcp_socket.connect(self.target_address.to_tuple)
-            self.connected = True
+            try:
+                self.__tcp_socket.settimeout(2.0)
+                self.__tcp_socket.connect(self.target_address.to_tuple)
+                self.connected = True
+            except socket.timeout as e:
+                LOGGER.warning(
+                    f"Could not connect to socket with address {self.target_address}: {e}"
+                )
+            finally:
+                self.__tcp_socket.settimeout(None)
 
     def set_up_tcp_thread(self):
         # TODO: Do we really need a thread here? This could probably be implemented as a polled
