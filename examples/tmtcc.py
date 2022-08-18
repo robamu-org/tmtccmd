@@ -17,7 +17,7 @@ from tmtccmd.config import (
     SetupParams,
     TmTcCfgHookBase,
     TmtcDefinitionWrapper,
-    CoreServiceList,
+    CoreServiceList, OpCodeEntry,
 )
 from tmtccmd.config import ArgParserWrapper, SetupWrapper
 from tmtccmd.core import BackendController, BackendRequest
@@ -67,8 +67,22 @@ class ExampleHookClass(TmTcCfgHookBase):
 
     def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         from tmtccmd.config.globals import get_default_tmtc_defs
-
-        return get_default_tmtc_defs()
+        defs = get_default_tmtc_defs()
+        srv_5 = OpCodeEntry()
+        srv_5.add("0", "Event Test")
+        defs.add_service(
+            name=CoreServiceList.SERVICE_5.value,
+            info="PUS Service 5 Event",
+            op_code_entry=srv_5,
+        )
+        srv_17 = OpCodeEntry()
+        srv_17.add("0", "Ping Test")
+        defs.add_service(
+            name=CoreServiceList.SERVICE_17_ALT,
+            info="PUS Service 17 Test",
+            op_code_entry=srv_17,
+        )
+        return defs
 
     def perform_mode_operation(self, tmtc_backend: CcsdsTmtcBackend, mode: int):
         LOGGER.info("Mode operation hook was called")
@@ -176,7 +190,7 @@ class TcHandler(TcHandlerBase):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
             service = def_proc.service
-            if service == CoreServiceList.SERVICE_17.value:
+            if service == CoreServiceList.SERVICE_17 or service == CoreServiceList.SERVICE_17_ALT:
                 return self.queue_helper.add_pus_tc(
                     PusTelecommand(service=17, subservice=1)
                 )
