@@ -367,7 +367,7 @@ def args_to_params(
         if params.backend_params.mode == CoreModeConverter.get_str(
             CoreModeList.ONE_QUEUE_MODE
         ):
-            params.tc_params.delay = 3.0
+            params.tc_params.delay = 4.0
         else:
             params.tc_params.delay = 0.0
     else:
