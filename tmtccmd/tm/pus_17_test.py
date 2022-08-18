@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+import deprecation
+
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss import PusVersion, PusTelemetry
 from spacepackets.ecss.pus_17_test import Service17Tm
@@ -9,6 +12,7 @@ from tmtccmd.pus.pus_17_test import Subservices
 
 # TODO: Write more simple wrapper and mark this deprecated.. We do not really need
 #       a special class for this anyway
+@deprecation.deprecated(deprecated_in="v3.0.0rc2", details="Use Service17Tm instead")
 class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
     def __init__(
         self,
@@ -18,8 +22,6 @@ class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
         source_data: bytearray = bytearray([]),
         apid: int = -1,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):

@@ -3,7 +3,12 @@ external hardware or an extra socket
 """
 from typing import Optional
 
-from spacepackets.ecss.pus_1_verification import RequestId, VerificationParams, Service1Tm
+from spacepackets.ecss.pus_17_test import Service17Tm
+from spacepackets.ecss.pus_1_verification import (
+    RequestId,
+    VerificationParams,
+    Service1Tm,
+)
 from spacepackets.ecss.tc import PusTelecommand
 
 from tmtccmd.com_if import ComInterface
@@ -61,7 +66,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17TmExtended(subservice=Pus17Subservices.TM_REPLY)
+                tm_packer = Service17Tm(subservice=Pus17Subservices.TM_REPLY)
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1

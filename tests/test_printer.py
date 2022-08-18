@@ -6,7 +6,8 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_1_verification import (
     RequestId,
     VerificationParams,
-    Subservices, Service1Tm,
+    Subservices,
+    Service1Tm,
 )
 
 from tmtccmd.tm.pus_1_verification import Service1TmExtended

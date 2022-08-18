@@ -6,6 +6,7 @@ from typing import Optional
 
 import tmtccmd
 from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
+from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
@@ -17,7 +18,8 @@ from tmtccmd.config import (
     SetupParams,
     TmTcCfgHookBase,
     TmtcDefinitionWrapper,
-    CoreServiceList, OpCodeEntry,
+    CoreServiceList,
+    OpCodeEntry,
 )
 from tmtccmd.config import ArgParserWrapper, SetupWrapper
 from tmtccmd.core import BackendController, BackendRequest
@@ -67,6 +69,7 @@ class ExampleHookClass(TmTcCfgHookBase):
 
     def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         from tmtccmd.config.globals import get_default_tmtc_defs
+
         defs = get_default_tmtc_defs()
         srv_5 = OpCodeEntry()
         srv_5.add("0", "Event Test")
@@ -116,9 +119,7 @@ class PusHandler(SpecificApidHandlerBase):
         service = tm_packet.service
         dedicated_handler = False
         if service == 1:
-            tm_packet = Service1Tm.unpack(
-                data=packet, params=UnpackParams(1, 2)
-            )
+            tm_packet = Service1Tm.unpack(data=packet, params=UnpackParams(1, 2))
             res = self.verif_wrapper.add_tm(tm_packet)
             if res is None:
                 LOGGER.info(
@@ -135,7 +136,18 @@ class PusHandler(SpecificApidHandlerBase):
         if service == 5:
             tm_packet = Service5Tm.unpack(packet)
         if service == 17:
-            tm_packet = Service17TmExtended.unpack(packet)
+            tm_packet = Service17Tm.unpack(packet)
+            dedicated_handler = True
+            if tm_packet.subservice == 2:
+                self.printer.file_logger.info("Received Ping Reply TM[17,2]")
+                LOGGER.info("Received Ping Reply TM[17,2]")
+            else:
+                self.printer.file_logger.info(
+                    f"Received Test Packet with unknown subservice {tm_packet.subservice}"
+                )
+                LOGGER.info(
+                    f"Received Test Packet with unknown subservice {tm_packet.subservice}"
+                )
         if tm_packet is None:
             LOGGER.info(
                 f"The service {service} is not implemented in Telemetry Factory"
@@ -190,7 +202,10 @@ class TcHandler(TcHandlerBase):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
             service = def_proc.service
-            if service == CoreServiceList.SERVICE_17 or service == CoreServiceList.SERVICE_17_ALT:
+            if (
+                service == CoreServiceList.SERVICE_17
+                or service == CoreServiceList.SERVICE_17_ALT
+            ):
                 return self.queue_helper.add_pus_tc(
                     PusTelecommand(service=17, subservice=1)
                 )
