@@ -6,7 +6,7 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_1_verification import (
     RequestId,
     VerificationParams,
-    Subservices,
+    Subservices, Service1Tm,
 )
 
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
@@ -34,9 +34,9 @@ class TestPrintersLoggers(TestCase):
         raw_tmtc_log = RawTmtcRotatingLogWrapper(max_bytes=1024, backup_count=10)
         pus_tc = pack_service_17_ping_command()
         raw_tmtc_log.log_tc(pus_tc)
-        pus_tm = Service1TmExtended(
+        pus_tm = Service1Tm(
             subservice=Subservices.TM_START_SUCCESS,
-            time=CdsShortTimestamp.from_current_time(),
+            time_provider=CdsShortTimestamp.from_current_time(),
             verif_params=VerificationParams(
                 req_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_ctrl)
             ),

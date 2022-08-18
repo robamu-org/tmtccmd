@@ -6,7 +6,7 @@ from typing import Optional
 
 import tmtccmd
 from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
-from spacepackets.ecss.pus_1_verification import UnpackParams
+from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
 from tmtccmd.pus import VerificationWrapper
@@ -116,8 +116,8 @@ class PusHandler(SpecificApidHandlerBase):
         service = tm_packet.service
         dedicated_handler = False
         if service == 1:
-            tm_packet = Service1TmExtended.unpack(
-                data=packet, params=UnpackParams(1, 1)
+            tm_packet = Service1Tm.unpack(
+                data=packet, params=UnpackParams(1, 2)
             )
             res = self.verif_wrapper.add_tm(tm_packet)
             if res is None:

@@ -66,7 +66,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service1TmExtended(
+                tm_packer = Service1Tm(
                     subservice=Pus1Subservices.TM_COMPLETION_SUCCESS,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
