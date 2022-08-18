@@ -33,7 +33,6 @@ class Service1FsfwWrapper:
 class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
     """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
     Only PUS C is supported.
-    TODO: Do not use subclassing here, use a wrapper class..
     """
 
     def __init__(

@@ -36,6 +36,12 @@ class VerificationWrapper:
     def verificator(self) -> PusVerificator:
         return self.pus_verificator
 
+    def dlog(self, log_str: str, level: int = logging.INFO):
+        if self.console_logger is not None:
+            self.console_logger.log(level, log_str)
+        elif self.file_logger is not None:
+            self.file_logger.info(level, log_str)
+
     def add_tc(self, pus_tc: PusTelecommand) -> bool:
         return self.pus_verificator.add_tc(pus_tc)
 
