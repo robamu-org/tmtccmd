@@ -11,15 +11,13 @@ class OpCodeOptionBase:
         pass
 
 
-OpCodeDictT = Dict[str, Tuple[OpCodeInfoT, OpCodeOptionBase]]
+OpCodeDict = Dict[str, Tuple[OpCodeInfoT, OpCodeOptionBase]]
 
 
 class OpCodeEntry:
-    def __init__(self, init_dict: Optional[OpCodeDictT] = None):
-        if init_dict is not None:
-            self._op_code_dict = init_dict
-        else:
-            self._op_code_dict: OpCodeDictT = dict()
+    def __init__(self):
+        self._op_code_dict_num_keys: OpCodeDict = dict()
+        self._op_code_dict_str_keys: OpCodeDict = dict()
 
     def add(
         self,
@@ -29,24 +27,46 @@ class OpCodeEntry:
     ):
         if isinstance(keys, str):
             keys = [keys]
-        self._op_code_dict.update(OpCodeDictT.fromkeys(keys, (info, options)))
+        for key in keys:
+            if key.isdigit():
+                self._op_code_dict_num_keys.update({key: (info, options)})
+            else:
+                self._op_code_dict_str_keys.update({key: (info, options)})
 
-    def sort(self):
-        self._op_code_dict = {
-            key: self._op_code_dict[key] for key in sorted(self._op_code_dict.keys())
+    def sort_num_key_dict(self):
+        self._op_code_dict_num_keys = {
+            int(k): v for k, v in self._op_code_dict_num_keys.items()
+        }
+
+    def sort_text_key_dict(self):
+        self._op_code_dict_str_keys = {
+            k: v for k, v in sorted(self._op_code_dict_str_keys.items())
         }
 
     def info(self, op_code: str) -> Optional[str]:
-        entry_tuple = self._op_code_dict.get(op_code)
+        if op_code.isdigit():
+            entry_tuple = self._op_code_dict_num_keys.get(op_code)
+            if entry_tuple is not None:
+                return entry_tuple[0]
+
+        entry_tuple = self._op_code_dict_str_keys.get(op_code)
         if entry_tuple is not None:
             return entry_tuple[0]
+        return None
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}(init_dict={self._op_code_dict!r})"
+    def __str__(self):
+        return (
+            f"Op codes with numeric keys: {self._op_code_dict_num_keys!r}), "
+            f"op codes with text keys: {self._op_code_dict_str_keys!r}"
+        )
 
     @property
-    def op_code_dict(self):
-        return self._op_code_dict
+    def op_code_dict_num_keys(self):
+        return self._op_code_dict_num_keys
+
+    @property
+    def op_code_dict_str_keys(self):
+        return self._op_code_dict_str_keys
 
 
 # It is possible to specify a service without any op codes
