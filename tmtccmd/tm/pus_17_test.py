@@ -7,6 +7,8 @@ from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.pus.pus_17_test import Subservices
 
 
+# TODO: Write more simple wrapper and mark this deprecated.. We do not really need
+#       a special class for this anyway
 class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
     def __init__(
         self,
@@ -29,8 +31,6 @@ class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
-            secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
         )
