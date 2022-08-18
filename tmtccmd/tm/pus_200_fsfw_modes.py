@@ -21,7 +21,6 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
         ssc: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
