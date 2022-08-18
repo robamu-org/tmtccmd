@@ -70,7 +70,8 @@ class CoreModeConverter:
             return "idle"
 
 
-class CoreServiceList(enum.Enum):
+class CoreServiceList(str, enum.Enum):
+    value: str
     SERVICE_2 = "2"
     SERVICE_3 = "3"
     SERVICE_5 = "5"
@@ -78,6 +79,7 @@ class CoreServiceList(enum.Enum):
     SERVICE_9 = "9"
     SERVICE_11 = "11"
     SERVICE_17 = "17"
+    SERVICE_17_ALT = "test"
     SERVICE_20 = "20"
     SERVICE_23 = "23"
     SERVICE_200 = "200"

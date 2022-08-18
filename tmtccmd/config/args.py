@@ -4,6 +4,8 @@ import sys
 from typing import Optional, List, Sequence
 from dataclasses import dataclass
 
+from prompt_toolkit.shortcuts import CompleteStyle
+
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.logging import get_console_logger
 
@@ -59,6 +61,7 @@ class AppParams:
     use_gui: bool = False
     reduced_printout: bool = False
     use_ansi_colors: bool = True
+    compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
 
 
 class SetupParams:
@@ -295,13 +298,17 @@ def find_service_and_op_code(
             print("No service argument (-s) specified, prompting from user")
             # Try to get the service list from the hook base and prompt service
             # from user
-            params.def_proc_args.service = prompt_service(tmtc_defs)
+            params.def_proc_args.service = prompt_service(
+                tmtc_defs, params.app_params.compl_style
+            )
     else:
         params.def_proc_args.service = pargs.service
     if pargs.op_code is None:
         current_service = params.def_proc_args.service
         if use_prompts:
-            params.def_proc_args.op_code = prompt_op_code(tmtc_defs, current_service)
+            params.def_proc_args.op_code = prompt_op_code(
+                tmtc_defs, current_service, params.app_params.compl_style
+            )
     else:
         params.def_proc_args.op_code = pargs.op_code
 

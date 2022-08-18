@@ -175,18 +175,4 @@ def get_default_tmtc_defs() -> TmtcDefinitionWrapper:
     global DEF_WRAPPER
     if DEF_WRAPPER is None:
         DEF_WRAPPER = TmtcDefinitionWrapper()
-        srv_5 = OpCodeEntry()
-        srv_5.add("0", "Event Test")
-        DEF_WRAPPER.add_service(
-            name=CoreServiceList.SERVICE_5.value,
-            info="PUS Service 5 Event",
-            op_code_entry=srv_5,
-        )
-        srv_17 = OpCodeEntry()
-        srv_17.add("0", "Ping Test")
-        DEF_WRAPPER.add_service(
-            name=CoreServiceList.SERVICE_17.value,
-            info="PUS Service 17 Test",
-            op_code_entry=srv_17,
-        )
     return DEF_WRAPPER
