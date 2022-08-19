@@ -10,7 +10,9 @@ def default_json_path() -> str:
     return "tmtc_conf.json"
 
 
-class CoreComInterfaces(enum.Enum):
+class CoreComInterfaces(str, enum.Enum):
+    value: str
+
     DUMMY = "dummy"
     SERIAL_DLE = "ser_dle"
     UDP = "udp"
@@ -21,16 +23,16 @@ class CoreComInterfaces(enum.Enum):
 
 
 CORE_COM_IF_DICT = {
-    CoreComInterfaces.DUMMY.value: ("Dummy Interface", None),
-    CoreComInterfaces.SERIAL_DLE.value: ("Serial Interace with DLE encoding", None),
-    CoreComInterfaces.UDP.value: ("TCP/IP with UDP datagrams", None),
-    CoreComInterfaces.TCP.value: ("TCP/IP with TCP", None),
-    CoreComInterfaces.SERIAL_FIXED_FRAME.value: (
+    CoreComInterfaces.DUMMY: ("Dummy Interface", None),
+    CoreComInterfaces.SERIAL_DLE: ("Serial Interace with DLE encoding", None),
+    CoreComInterfaces.UDP: ("TCP/IP with UDP datagrams", None),
+    CoreComInterfaces.TCP: ("TCP/IP with TCP", None),
+    CoreComInterfaces.SERIAL_FIXED_FRAME: (
         "Serial Interface with fixed size frames",
         None,
     ),
-    CoreComInterfaces.SERIAL_QEMU.value: ("Serial Interface using QEMU", None),
-    CoreComInterfaces.UNSPECIFIED.value: ("Unspecified", None),
+    CoreComInterfaces.SERIAL_QEMU: ("Serial Interface using QEMU", None),
+    CoreComInterfaces.UNSPECIFIED: ("Unspecified", None),
 }
 
 

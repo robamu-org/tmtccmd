@@ -1,7 +1,7 @@
 """Argument parser module"""
 import argparse
 import sys
-from typing import Optional, List, Sequence
+from typing import Optional, List, Sequence, Union
 from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
@@ -21,18 +21,21 @@ def get_default_descript_txt() -> str:
 
     return (
         f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
-        f"{AnsiColors.RESET}This application provides generic components to perform remote"
-        f" commanding with special support for space applications\n"
+        f"{AnsiColors.RESET}This application provides generic components to perform remote\n"
+        f"commanding with special support for space applications.\n"
     )
 
 
 def create_default_args_parser(
+    parent_parser: argparse.ArgumentParser,
     descript_txt: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     if descript_txt is None:
         descript_txt = get_default_descript_txt()
     return argparse.ArgumentParser(
-        description=descript_txt, formatter_class=argparse.RawTextHelpFormatter
+        description=descript_txt,
+        formatter_class=argparse.RawTextHelpFormatter,
+        parents=[parent_parser],
     )
 
 
@@ -118,16 +121,14 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_default_com_if_arguments(parser)
     add_generic_arguments(parser)
     add_default_procedure_arguments(parser)
-    add_cfdp_parser(parser)
-
     add_ethernet_arguments(parser)
 
 
 def parse_default_tmtccmd_input_arguments(
+    args: Sequence[str],
     parser: argparse.ArgumentParser,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
-    args: Optional[Sequence[str]] = None,
 ) -> (argparse.Namespace, List[str]):
     """Parses all input arguments
     :return: Input arguments contained in a special namespace and accessable by args.<variable>
@@ -152,38 +153,28 @@ def parse_default_tmtccmd_input_arguments(
     return args, unknown
 
 
-def add_cfdp_parser(arg_parser: argparse.ArgumentParser):
-    subparsers = arg_parser.add_subparsers(
-        title="CFDP",
-        description="CCSDS File Delivery Protocol commands",
-        help="CCDSDS File Delivery Commands",
-        dest="cfdp",
-    )
-    cfdp = subparsers.add_parser("cfdp")
-    cfdp.add_argument("-p", "--proxy")
-    cfdp.add_argument(
-        "-f", "--file", dest="cfdp_file", help="CFDP target file", default=None
-    )
-    cfdp.add_argument(
-        "-d",
-        "--dest",
-        dest="cfdp_dest",
-        help="CFDP file destination path",
-        default=None,
-    )
-
-
-def add_default_procedure_arguments(arg_parser: argparse.ArgumentParser):
-    arg_parser.add_argument(
+def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
+    parser_or_subparser.add_argument(
         "-s",
         "--service",
         help="Procedure service code, used for the default procedure mode",
         default=None,
     )
-    arg_parser.add_argument(
+    parser_or_subparser.add_argument(
         "-o",
         "--op_code",
         help="Procedure operation code, used for the default procedure mode",
+        default=None,
+    )
+
+
+def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
+    parser_or_subparser.add_argument("file", help="CFDP target file")
+    parser_or_subparser.add_argument("-p", "--proxy")
+    parser_or_subparser.add_argument(
+        "--dest",
+        dest="cfdp_dest",
+        help="CFDP file destination path",
         default=None,
     )
 
@@ -197,7 +188,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "--listener",
         help="The backend will be configured to go into listener mode after "
         "finishing the first queue\nif a service argument is specified. If this flag is specified\n"
-        "without the -s flag and none of the queue modes are specified explicitely\n, "
+        "without the -s flag and none of the queue modes are specified explicitely,\n"
         "the mode will be set to the listener mode",
         action="store_true",
         default=False,
@@ -205,7 +196,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-i",
         "--interactive",
-        help="Enables interactive or multi-queue mode, where the backend will be configured "
+        help="Enables interactive or multi-queue mode, where the backend will be configured\n"
         "to handle multiple queues",
         action="store_true",
         default=False,
@@ -214,7 +205,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "-d",
         "--delay",
         type=float,
-        help="Default inter-packet delay. Default: 3 seconds for one queue mode, "
+        help="Default inter-packet delay. Default: 4.0 seconds for one queue mode, "
         "0 for interactive mode",
         default=None,
     )
@@ -253,23 +244,11 @@ def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
 
     help_text = (
         "Core Communication Interface. If this is not specified, the commander core\n"
-        "will try to extract it from the JSON or prompt it from the user\n"
+        "will try to extract it from the JSON or prompt it from the user. \n"
+        "Choices provided by framework: \n"
     )
-    dummy_line = f"{CORE_COM_IF_DICT[CoreComInterfaces.DUMMY.value]}: Dummy Interface\n"
-    udp_line = f"{CORE_COM_IF_DICT[CoreComInterfaces.UDP.value]}: " f"UDP client\n"
-    ser_dle_line = (
-        f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_DLE.value]}: "
-        f"Serial with DLE transport layer\n"
-    )
-    ser_fixed_line = (
-        f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_FIXED_FRAME.value]}: "
-        f"Serial with fixed frames\n"
-    )
-    ser_qemu_line = (
-        f"{CORE_COM_IF_DICT[CoreComInterfaces.SERIAL_QEMU.value]}: "
-        f"QEMU serial interface\n"
-    )
-    help_text += dummy_line + ser_dle_line + udp_line + ser_fixed_line + ser_qemu_line
+    for k, v in CORE_COM_IF_DICT.items():
+        help_text += f"{k}: {v[0]}\n"
     arg_parser.add_argument(
         "-c",
         "--com_if",
@@ -375,36 +354,88 @@ def args_to_params(
 
 
 class ArgParserWrapper:
-    def __init__(
-        self,
-        hook_obj: TmTcCfgHookBase,
-        parser: Optional[argparse.ArgumentParser] = None,
-        descript_txt: Optional[str] = None,
-    ):
-        if parser is None:
-            self.args_parser = create_default_args_parser(descript_txt)
-            add_default_tmtccmd_args(self.args_parser)
-        else:
-            self.args_parser = parser
+    def __init__(self, hook_obj: TmTcCfgHookBase):
+        self.parent_parser: Optional[argparse.ArgumentParser] = None
+        self.args_parser: Optional[argparse.ArgumentParser] = None
         self.print_known_args = False
         self.print_unknown_args = False
         self.hook_obj = hook_obj
         self.unknown_args = [""]
         self.args_raw = None
         self._parse_was_called = False
+        self._monkey_patch_missing_subparser = False
 
-    def add_default_tmtccmd_args(self):
-        add_default_tmtccmd_args(self.args_parser)
+    def create_default_parent_parser(self):
+        self.parent_parser = argparse.ArgumentParser(add_help=False)
+        add_default_com_if_arguments(self.parent_parser)
+        add_default_mode_arguments(self.parent_parser)
+        add_generic_arguments(self.parent_parser)
+
+    def create_default_parser(self):
+        if self.parent_parser is None:
+            raise ValueError(
+                "Create parent parser with create_default_parent_parser or assign a "
+                "parent_parser first"
+            )
+        self.args_parser = create_default_args_parser(
+            self.parent_parser, descript_txt=None
+        )
 
     def parse(self):
+        if self.args_parser is None:
+            raise ValueError(
+                "Please build an argument parser first using the create_default_parser "
+                "function or assigning args_parser"
+            )
         """Parse all CLI arguments with the given argument parser"""
         if not self._parse_was_called:
+            patched_args = None
+            if self._monkey_patch_missing_subparser:
+                if (
+                    len(sys.argv) > 1
+                    and sys.argv[1] not in ["cfdp", "tmtc", "-h", "--help"]
+                    or len(sys.argv) == 1
+                ):
+                    print(
+                        "No procedure type specified, inserting 'tmtc' into passed arguments"
+                    )
+                    patched_args = ["tmtc"]
+                    patched_args.extend(sys.argv[1:])
+            if patched_args is None:
+                patched_args = sys.argv[1:]
             self.args_raw, self.unknown_args = parse_default_tmtccmd_input_arguments(
-                self.args_parser,
+                args=patched_args,
+                parser=self.args_parser,
                 print_known_args=self.print_known_args,
                 print_unknown_args=self.print_unknown_args,
             )
         self._parse_was_called = True
+
+    def add_def_proc_args(self):
+        add_default_procedure_arguments(self.args_parser)
+
+    def add_cfdp_args(self):
+        add_cfdp_procedure_arguments(self.args_parser)
+
+    def add_def_proc_and_cfdp_as_subparsers(self):
+        self._monkey_patch_missing_subparser = True
+        subparser = self.args_parser.add_subparsers(dest="proc_type")
+        tmtc_parser = subparser.add_parser(
+            "tmtc",
+            help="Default TMTC Procedure Mode.\nDefault if no positional argument is specified",
+            description="Default TMTC Procedure Mode using a Service and Operation "
+            "Code Command Tuple to dispatch commands",
+            parents=[self.parent_parser],
+        )
+        add_default_procedure_arguments(tmtc_parser)
+        cfdp_descrip = "CCSDS CFDP File Transfer"
+        cfdp_parser = subparser.add_parser(
+            "cfdp",
+            help=cfdp_descrip,
+            description=cfdp_descrip,
+            parents=[self.parent_parser],
+        )
+        add_cfdp_procedure_arguments(cfdp_parser)
 
     @property
     def use_gui(self):
