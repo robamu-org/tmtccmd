@@ -25,8 +25,8 @@ class Service1FsfwWrapper:
     def __init__(self, tm: Service1Tm):
         self.tm = tm
         if tm.has_failure_notice:
-            self.error_param_1 = struct.unpack("!I", tm.failure_notice.data[0:4])
-            self.error_param_2 = struct.unpack("!I", tm.failure_notice.data[4:8])
+            self.error_param_1 = struct.unpack("!I", tm.failure_notice.data[0:4])[0]
+            self.error_param_2 = struct.unpack("!I", tm.failure_notice.data[4:8])[0]
 
 
 @deprecated(deprecated_in="v3.0.0rc2", details="Use Service1FsfwWrapper instead")

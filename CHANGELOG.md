@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v3.0.0rc2]
+
+- Add `deprecation` dependency to allow marking functions and classes
+  as deprecated with a decorator
+- Improve test structure
+- Improve documentation
+- Add decorators `service_provider` and `tmtc_definitions_provider` which
+  avoids some boilerplate code when registering definition provider or packet creation
+  handlers
+
 ## [v3.0.0rc1] 03.07.2022
 
 - Overhaul of application architecture

@@ -42,7 +42,7 @@ class TestArgs(TestCase):
         self.assertEqual(self.params.backend_params.com_if_id, "")
         args_to_params(self.pargs, self.params, self.hook_mock, False)
         # Set to default value
-        self.assertEqual(self.params.tc_params.delay, 3.0)
+        self.assertEqual(self.params.tc_params.delay, 4.0)
         # Unset
         self.assertEqual(self.params.tc_params.apid, 0)
         self.assertEqual(self.params.app_params.use_gui, False)
