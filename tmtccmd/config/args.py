@@ -1,7 +1,7 @@
 """Argument parser module"""
 import argparse
 import sys
-from typing import Optional, List, Sequence, Union
+from typing import Optional, List, Sequence
 from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
