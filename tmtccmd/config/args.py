@@ -382,11 +382,6 @@ class ArgParserWrapper:
         )
 
     def parse(self):
-        if self.args_parser is None:
-            raise ValueError(
-                "Please build an argument parser first using the create_default_parser "
-                "function or assigning args_parser"
-            )
         """Parse all CLI arguments with the given argument parser"""
         if not self._parse_was_called:
             patched_args = None
@@ -412,10 +407,19 @@ class ArgParserWrapper:
         self._parse_was_called = True
 
     def add_def_proc_args(self):
+        self._check_arg_parser()
         add_default_procedure_arguments(self.args_parser)
 
     def add_cfdp_args(self):
+        self._check_arg_parser()
         add_cfdp_procedure_arguments(self.args_parser)
+
+    def _check_arg_parser(self):
+        if self.args_parser is None:
+            raise ValueError(
+                "Please build an argument parser first using the create_default_parser "
+                "function or assigning args_parser"
+            )
 
     def add_def_proc_and_cfdp_as_subparsers(self):
         self._monkey_patch_missing_subparser = True
