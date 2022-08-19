@@ -169,8 +169,18 @@ def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser
 
 
 def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
-    parser_or_subparser.add_argument("file", help="CFDP target file")
-    parser_or_subparser.add_argument("-p", "--proxy")
+    """TODO: Could be extended to support the various types of CFDP user primitives.
+    Right now, the first thing to be implemented will be the put request"""
+    parser_or_subparser.add_argument(
+        "file", help="Target file for the CFDP Put Request"
+    )
+    parser_or_subparser.add_argument(
+        "-p",
+        "--proxy",
+        help="Used to trigger a proxy operation at the remote CFDP entity.\n "
+        "Most commonly used to request a file from the remote entity.\n"
+        "Please note that this inverses the meaning of the destination and file parameter.",
+    )
     parser_or_subparser.add_argument(
         "--dest",
         dest="cfdp_dest",
