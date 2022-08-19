@@ -366,12 +366,16 @@ class ArgParserWrapper:
         self._monkey_patch_missing_subparser = False
 
     def create_default_parent_parser(self):
+        """Create a default parent parser, which contains common flags for all possible
+        tmtccmd submodules. For example, both the cfdp and default tmtc submodule could contain
+        these common flags"""
         self.parent_parser = argparse.ArgumentParser(add_help=False)
         add_default_com_if_arguments(self.parent_parser)
         add_default_mode_arguments(self.parent_parser)
         add_generic_arguments(self.parent_parser)
 
     def create_default_parser(self):
+        """Create the default parser. Requires a valid parent parser containing common flags"""
         if self.parent_parser is None:
             raise ValueError(
                 "Create parent parser with create_default_parent_parser or assign a "
@@ -407,10 +411,13 @@ class ArgParserWrapper:
         self._parse_was_called = True
 
     def add_def_proc_args(self):
+        """Add the default tmtc procedure parameters to the default parser. This includes
+        the service and operation code flags"""
         self._check_arg_parser()
         add_default_procedure_arguments(self.args_parser)
 
     def add_cfdp_args(self):
+        """Add the default CFDP procedure parameters to the default parser."""
         self._check_arg_parser()
         add_cfdp_procedure_arguments(self.args_parser)
 
@@ -422,6 +429,7 @@ class ArgParserWrapper:
             )
 
     def add_def_proc_and_cfdp_as_subparsers(self):
+        """Add the default tmtc and cfdp procedure as subparsers."""
         self._monkey_patch_missing_subparser = True
         subparser = self.args_parser.add_subparsers(dest="proc_type")
         tmtc_parser = subparser.add_parser(
