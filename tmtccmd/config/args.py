@@ -447,6 +447,7 @@ class ArgParserWrapper:
             help="Default TMTC Procedure Mode.\nDefault if no positional argument is specified",
             description="Default TMTC Procedure Mode using a Service and Operation "
             "Code Command Tuple to dispatch commands",
+            formatter_class=argparse.RawTextHelpFormatter,
             parents=[self.parent_parser],
         )
         add_default_procedure_arguments(tmtc_parser)
@@ -455,6 +456,7 @@ class ArgParserWrapper:
             "cfdp",
             help=cfdp_descrip,
             description=cfdp_descrip,
+            formatter_class=argparse.RawTextHelpFormatter,
             parents=[self.parent_parser],
         )
         add_cfdp_procedure_arguments(cfdp_parser)
