@@ -28,6 +28,14 @@ class VirtualFilestore(abc.ABC):
         )
 
     @abc.abstractmethod
+    def file_exists(self, path: Path) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def truncate_file(self, file: Path):
+        pass
+
+    @abc.abstractmethod
     def write_data(
         self, file: Path, data: bytes, offset: Optional[int]
     ) -> FilestoreResponseStatusCode:
@@ -102,6 +110,15 @@ class HostFilestore(VirtualFilestore):
     def read_from_opened_file(self, bytes_io: BinaryIO, offset: int, read_len: int):
         bytes_io.seek(offset)
         return bytes_io.read(read_len)
+
+    def file_exists(self, path: Path) -> bool:
+        return path.exists()
+
+    def truncate_file(self, file: Path):
+        if not file.exists():
+            raise FileNotFoundError(file)
+        with open(file, "w"):
+            pass
 
     def write_data(
         self, file: Path, data: bytes, offset: Optional[int]
