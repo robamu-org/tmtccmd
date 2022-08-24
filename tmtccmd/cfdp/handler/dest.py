@@ -163,6 +163,11 @@ class DestHandler:
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
+        if self.user.vfs.file_exists(self._params.fp.file_name):
+            self.user.vfs.truncate_file(self._params.fp.file_name)
+        else:
+            # TODO: Handle filestore rejection
+            status_code = self.user.vfs.create_file(self._params.fp.file_name)
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
