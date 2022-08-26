@@ -8,7 +8,7 @@ from spacepackets.util import get_printable_data_string, PrintFormats
 
 from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
-from tmtccmd.util.obj_id import ObjectIdU32
+from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdBase
 from tmtccmd.tm.pus_3_hk_base import HkContentType
 from tmtccmd.logging import get_console_logger, get_current_time_string
 
@@ -152,7 +152,7 @@ class FsfwTmTcPrinter:
 
     @staticmethod
     def generic_action_packet_tm_print(
-        packet: Service8FsfwTm, obj_id: ObjectIdU32
+        packet: Service8FsfwTm, obj_id: ObjectIdBase
     ) -> str:
         print_string = (
             f"Service 8 data reply from {obj_id} with action ID {packet.action_id} "
