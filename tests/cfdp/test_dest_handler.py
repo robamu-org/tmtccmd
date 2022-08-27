@@ -59,8 +59,6 @@ class TestCfdpDestHandler(TestCase):
         self.cfdp_user.file_segment_recv_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
         self.file_path = Path(f"{tempfile.gettempdir()}/hello_dest.txt")
-        with open(self.file_path, "w"):
-            pass
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,

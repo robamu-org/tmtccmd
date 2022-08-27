@@ -3,9 +3,9 @@ from unittest import TestCase
 
 from tmtccmd.config.args import (
     add_default_mode_arguments,
-    add_default_procedure_arguments_without_subparser,
     add_generic_arguments,
     add_default_com_if_arguments,
+    add_default_procedure_arguments,
 )
 
 
@@ -29,13 +29,13 @@ class TestArgsParsing(TestCase):
         self.assertEqual(args.mode, "one-q")
 
     def test_def_proc_argument_empty(self):
-        add_default_procedure_arguments_without_subparser(self.arg_parser)
+        add_default_procedure_arguments(self.arg_parser)
         args = self.arg_parser.parse_args([])
         self.assertIsNone(args.service)
         self.assertIsNone(args.op_code)
 
     def test_def_proc_argument_valid(self):
-        add_default_procedure_arguments_without_subparser(self.arg_parser)
+        add_default_procedure_arguments(self.arg_parser)
         args = self.arg_parser.parse_args(["-s", "17", "-o", "ping"])
         self.assertEqual(args.service, "17")
         self.assertEqual(args.op_code, "ping")
