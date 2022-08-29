@@ -193,6 +193,20 @@ class DestHandler:
                 ):
                     metadata_pdu = PduHolder(pdu).to_metadata_pdu()
                     self._start_transaction(metadata_pdu)
+                if self.states.state == CfdpStates.IDLE:
+                    if self._params.file_directives_dict:
+                        for other_pdu in self._params.file_directives_dict:
+                            LOGGER.warning(
+                                f"Received {other_pdu} PDU without "
+                                f"first receiving metadata PDU first. Discarding it"
+                            )
+                        self._params.file_directives_dict.clear()
+                    if self._params.file_data_deque:
+                        LOGGER.warning(
+                            f"Received {len(self._params.file_data_deque)} file data PDUs without "
+                            f"first receiving metadata PDU first. Discarding them"
+                        )
+                        self._params.file_data_deque.clear()
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 # TODO: Sequence count check
