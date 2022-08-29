@@ -157,7 +157,8 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
-        self.cfdp_user.file_segment_recv_indication.assert_called_once()
+        self.cfdp_user.file_segment_recv_indication.assert_called()
+        self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 2)
         seg_recv_params = cast(
             FileSegmentRecvdParams,
             self.cfdp_user.file_segment_recv_indication.call_args.args[0],
@@ -178,6 +179,11 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+
+    def test_file_is_overwritten(self):
+        with open(self.file_path, "w") as of:
+            of.write("This file will be truncated")
+        self.test_small_file_reception()
 
     def _state_checker(
         self,
