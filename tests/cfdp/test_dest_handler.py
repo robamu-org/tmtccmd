@@ -15,8 +15,15 @@ from spacepackets.cfdp import (
     PduConfig,
     TransmissionModes,
     NULL_CHECKSUM_U32,
+    ConditionCode,
 )
-from spacepackets.cfdp.pdu import MetadataPdu, MetadataParams, EofPdu, FileDataPdu
+from spacepackets.cfdp.pdu import (
+    MetadataPdu,
+    MetadataParams,
+    EofPdu,
+    FileDataPdu,
+    FileDeliveryStatus,
+)
 from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp import (
@@ -224,6 +231,16 @@ class TestCfdpDestHandler(TestCase):
         )
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        finished_args = cast(
+            TransactionFinishedParams,
+            self.cfdp_user.transaction_finished_indication.call_args.args[0],
+        )
+        # At least one segment was stored
+        self.assertEqual(finished_args.file_status, FileDeliveryStatus.FILE_RETAINED)
+        self.assertEqual(
+            finished_args.condition_code, ConditionCode.FILE_CHECKSUM_FAILURE
+        )
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
     def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
@@ -265,5 +282,6 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.pass_packet(file_transfer_init)
 
     def tearDown(self) -> None:
+        # self.dest_handler.finish()
         if self.file_path.exists():
             os.remove(self.file_path)

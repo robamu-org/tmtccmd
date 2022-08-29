@@ -91,15 +91,19 @@ class DestFieldWrapper:
     transaction_id: Optional[TransactionId] = None
     remote_cfg: Optional[RemoteEntityCfg] = None
     closure_requested: bool = False
-    pdu_conf: PduConfig = PduConfig.empty()
     condition_code: ConditionCode = ConditionCode.NO_CONDITION_FIELD
     delivery_code: DeliveryCode = DeliveryCode.DATA_INCOMPLETE
     file_status: FileDeliveryStatus = FileDeliveryStatus.DISCARDED_DELIBERATELY
-    fp: DestFileParams = DestFileParams.empty()
+    pdu_conf: PduConfig = dataclasses.field(default_factory=lambda: PduConfig.empty())
+    fp: DestFileParams = dataclasses.field(
+        default_factory=lambda: DestFileParams.empty()
+    )
     file_directives_dict: Dict[
         DirectiveType, List[AbstractFileDirectiveBase]
     ] = dataclasses.field(default_factory=lambda: dict())
-    file_data_deque: Deque[FileDataPdu] = deque()
+    file_data_deque: Deque[FileDataPdu] = dataclasses.field(
+        default_factory=lambda: deque()
+    )
 
     def reset(self):
         self.transaction_id = None
@@ -108,9 +112,13 @@ class DestFieldWrapper:
         self.delivery_code = DeliveryCode.DATA_INCOMPLETE
         self.pdu_conf = PduConfig.empty()
         self.fp.reset()
-        self.file_directives_dict = dict()
-        self.file_data_deque = deque()
         self.remote_cfg = None
+
+    def clear_file_deque(self):
+        self.file_data_deque.clear()
+
+    def clear_file_directive_dict(self):
+        self.file_directives_dict.clear()
 
 
 class FsmResult:
@@ -197,26 +205,31 @@ class DestHandler:
 
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
-            if DirectiveType.METADATA_PDU in self._params.file_directives_dict:
-                for pdu in self._params.file_directives_dict.get(
-                    DirectiveType.METADATA_PDU
-                ):
-                    metadata_pdu = PduHolder(pdu).to_metadata_pdu()
-                    self._start_transaction(metadata_pdu)
-                if self.states.state == CfdpStates.IDLE:
-                    if self._params.file_directives_dict:
-                        for other_pdu in self._params.file_directives_dict:
-                            LOGGER.warning(
-                                f"Received {other_pdu} PDU without "
-                                f"first receiving metadata PDU first. Discarding it"
-                            )
-                        self._params.file_directives_dict.clear()
-                    if self._params.file_data_deque:
+            for pdu_type, pdu_deque in self._params.file_directives_dict.items():
+                if pdu_type == DirectiveType.METADATA_PDU:
+                    clear_metadata_deque = False
+                    for pdu_base in pdu_deque:
+                        metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
+                        self._start_transaction(metadata_pdu)
+                        if self.states.state != CfdpStates.IDLE:
+                            clear_metadata_deque = True
+                            break
+                    if clear_metadata_deque:
+                        pdu_deque.clear()
+            if self.states.state == CfdpStates.IDLE:
+                if self._params.file_directives_dict:
+                    for other_pdu in self._params.file_directives_dict:
                         LOGGER.warning(
-                            f"Received {len(self._params.file_data_deque)} file data PDUs without "
-                            f"first receiving metadata PDU first. Discarding them"
+                            f"Received {other_pdu} PDU without "
+                            f"first receiving metadata PDU first. Discarding it"
                         )
-                        self._params.file_data_deque.clear()
+                    self._params.file_directives_dict.clear()
+                if self._params.file_data_deque:
+                    LOGGER.warning(
+                        f"Received {len(self._params.file_data_deque)} file data PDUs without "
+                        f"first receiving metadata PDU first. Discarding them"
+                    )
+                    self._params.file_data_deque.clear()
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
                 # TODO: Sequence count check
@@ -259,6 +272,9 @@ class DestHandler:
 
     def finish(self):
         self._params.reset()
+        # Not fully sure this is the best approach, but I think this is ok for now
+        self._params.clear_file_directive_dict()
+        self._params.clear_file_deque()
         self.states.state = CfdpStates.IDLE
         self.states.transaction = TransactionStep.IDLE
 
@@ -338,7 +354,7 @@ class DestHandler:
                 transaction_id=self._params.transaction_id,
                 condition_code=self._params.condition_code,
                 delivery_code=self._params.delivery_code,
-                file_status=FileDeliveryStatus.FILE_RETAINED,
+                file_status=self._params.file_status,
                 status_report=None,
             )
             self.user.transaction_finished_indication(finished_indic_params)
