@@ -243,6 +243,31 @@ class TestCfdpDestHandler(TestCase):
         )
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
+    def test_permission_error(self):
+        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
+        with open(src_file, "w") as of:
+            of.write("Hello World\n")
+        src_file.chmod(0o444)
+        # TODO: This will cause permission errors, but the error handling for this has not been
+        #       implemented properly
+        """
+        file_size = src_file.stat().st_size
+        self._source_simulator_transfer_init_with_metadata(
+            checksum=ChecksumTypes.CRC_32,
+            file_size=file_size,
+            file_path=src_file.as_posix(),
+        )
+        with open(src_file, "rb") as rf:
+            read_data = rf.read()
+        fd_params = FileDataParams(file_data=read_data, offset=0)
+        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
+        self.dest_handler.pass_packet(file_data_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
+        )
+        """
+
     def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)

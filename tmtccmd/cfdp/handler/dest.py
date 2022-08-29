@@ -15,7 +15,7 @@ from spacepackets.cfdp import (
     TlvTypes,
     PduConfig,
     Direction,
-    FilestoreResponseStatusCode,
+    FilestoreResponseStatusCode, FaultHandlerCodes,
 )
 from spacepackets.cfdp.pdu import (
     DirectiveType,
@@ -183,6 +183,18 @@ class DestHandler:
                 self.user.vfs.create_file(self._params.fp.file_name)
         except PermissionError:
             self._params.file_status = FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+            fh = self.cfg.default_fault_handlers.get_fault_handler(ConditionCode.FILESTORE_REJECTION)
+            if fh == FaultHandlerCodes.IGNORE_ERROR:
+                pass
+            elif fh == FaultHandlerCodes.ABANDON_TRANSACTION:
+                # TODO: Implement
+                pass
+            elif fh == FaultHandlerCodes.NOTICE_OF_SUSPENSION:
+                # TODO: Implement
+                pass
+            elif fh == FaultHandlerCodes.NOTICE_OF_CANCELLATION:
+                # TODO: Implement
+                pass
             self.cfg.default_fault_handlers.report_fault(
                 ConditionCode.FILESTORE_REJECTION
             )
