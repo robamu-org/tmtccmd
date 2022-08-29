@@ -15,6 +15,7 @@ from spacepackets.cfdp import (
     TlvTypes,
     PduConfig,
     Direction,
+    FilestoreResponseStatusCode,
 )
 from spacepackets.cfdp.pdu import (
     DirectiveType,
@@ -92,6 +93,8 @@ class DestFieldWrapper:
     closure_requested: bool = False
     pdu_conf: PduConfig = PduConfig.empty()
     condition_code: ConditionCode = ConditionCode.NO_CONDITION_FIELD
+    delivery_code: DeliveryCode = DeliveryCode.DATA_INCOMPLETE
+    file_status: FileDeliveryStatus = FileDeliveryStatus.DISCARDED_DELIBERATELY
     fp: DestFileParams = DestFileParams.empty()
     file_directives_dict: Dict[
         DirectiveType, List[AbstractFileDirectiveBase]
@@ -102,6 +105,7 @@ class DestFieldWrapper:
         self.transaction_id = None
         self.closure_requested = False
         self.condition_code = ConditionCode.NO_CONDITION_FIELD
+        self.delivery_code = DeliveryCode.DATA_INCOMPLETE
         self.pdu_conf = PduConfig.empty()
         self.fp.reset()
         self.file_directives_dict = dict()
@@ -135,6 +139,7 @@ class DestHandler:
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
         if self.states.state != CfdpStates.IDLE:
             return False
+        self._params.reset()
         self.states.transaction = TransactionStep.TRANSACTION_START
         if metadata_pdu.pdu_header.trans_mode == TransmissionModes.UNACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
@@ -163,11 +168,16 @@ class DestHandler:
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
-        if self.user.vfs.file_exists(self._params.fp.file_name):
-            self.user.vfs.truncate_file(self._params.fp.file_name)
-        else:
-            # TODO: Handle filestore rejection
-            status_code = self.user.vfs.create_file(self._params.fp.file_name)
+        try:
+            if self.user.vfs.file_exists(self._params.fp.file_name):
+                self.user.vfs.truncate_file(self._params.fp.file_name)
+            else:
+                self.user.vfs.create_file(self._params.fp.file_name)
+        except PermissionError:
+            self._params.file_status = FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+            self.cfg.default_fault_handlers.report_fault(
+                ConditionCode.FILESTORE_REJECTION
+            )
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
@@ -224,7 +234,17 @@ class DestHandler:
                         self.user.file_segment_recv_indication(
                             file_segment_indic_params
                         )
-                    self.user.vfs.write_data(self._params.fp.file_name, data, offset)
+                    try:
+                        status_code = self.user.vfs.write_data(
+                            self._params.fp.file_name, data, offset
+                        )
+                        if status_code == FilestoreResponseStatusCode.SUCCESS:
+                            self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+                    except PermissionError:
+                        if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
+                            self._params.file_status = (
+                                FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+                            )
                 eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
                     for pdu in eof_pdus:
@@ -309,6 +329,7 @@ class DestHandler:
             # TODO: CFDP Checksum error
             self._params.condition_code = ConditionCode.FILE_CHECKSUM_FAILURE
         else:
+            self._params.delivery_code = DeliveryCode.DATA_COMPLETE
             self._params.condition_code = ConditionCode.NO_ERROR
 
     def _notice_of_completion(self):
@@ -316,8 +337,7 @@ class DestHandler:
             finished_indic_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction_id,
                 condition_code=self._params.condition_code,
-                # TODO: Find out how those are used
-                delivery_code=DeliveryCode.DATA_COMPLETE,
+                delivery_code=self._params.delivery_code,
                 file_status=FileDeliveryStatus.FILE_RETAINED,
                 status_report=None,
             )

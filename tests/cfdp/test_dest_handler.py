@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import random
 import struct
@@ -34,6 +35,13 @@ from tmtccmd.cfdp.user import TransactionFinishedParams, FileSegmentRecvdParams
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
+
+
+@dataclasses.dataclass
+class FileInfo:
+    rand_data: bytes
+    file_size: int
+    crc32: bytes
 
 
 class TestCfdpDestHandler(TestCase):
@@ -131,9 +139,7 @@ class TestCfdpDestHandler(TestCase):
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
 
-    def test_larger_file_reception(self):
-        # This tests generates two file data PDUs, but the second one does not have a
-        # full segment length
+    def random_data_two_file_segments(self):
         if sys.version_info >= (3, 9):
             rand_data = random.randbytes(round(self.file_segment_len * 1.3))
         else:
@@ -141,31 +147,35 @@ class TestCfdpDestHandler(TestCase):
         file_size = len(rand_data)
         crc32_func = mkPredefinedCrcFun("crc32")
         crc32 = struct.pack("!I", crc32_func(rand_data))
+        return FileInfo(file_size=file_size, crc32=crc32, rand_data=rand_data)
+
+    def test_larger_file_reception(self):
+        # This tests generates two file data PDUs, but the second one does not have a
+        # full segment length
+        file_info = self.random_data_two_file_segments()
         src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumTypes.CRC_32,
-            file_size=file_size,
+            file_size=file_info.file_size,
             file_path=src_file.as_posix(),
         )
-        fd_params = FileDataParams(
-            file_data=rand_data[0 : self.file_segment_len], offset=0
+        fsm_res = self.pass_file_segment(
+            file_info.rand_data[0 : self.file_segment_len], 0
         )
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
-        fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
         self.cfdp_user.file_segment_recv_indication.assert_called()
-        self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 2)
+        self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 1)
         seg_recv_params = cast(
             FileSegmentRecvdParams,
             self.cfdp_user.file_segment_recv_indication.call_args.args[0],
         )
         self.assertEqual(seg_recv_params.transaction_id, self.transaction_id)
         fd_params = FileDataParams(
-            file_data=rand_data[self.file_segment_len :], offset=self.file_segment_len
+            file_data=file_info.rand_data[self.file_segment_len :],
+            offset=self.file_segment_len,
         )
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
         self.dest_handler.pass_packet(file_data_pdu)
@@ -174,7 +184,9 @@ class TestCfdpDestHandler(TestCase):
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
         eof_pdu = EofPdu(
-            file_size=file_size, file_checksum=crc32, pdu_conf=self.src_pdu_conf
+            file_size=file_info.file_size,
+            file_checksum=file_info.crc32,
+            pdu_conf=self.src_pdu_conf,
         )
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
@@ -184,6 +196,41 @@ class TestCfdpDestHandler(TestCase):
         with open(self.file_path, "w") as of:
             of.write("This file will be truncated")
         self.test_small_file_reception()
+
+    def test_file_data_pdu_before_metadata_is_discarded(self):
+        file_info = self.random_data_two_file_segments()
+        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
+        # Pass file data PDU first. Will be discarded
+        fsm_res = self.pass_file_segment(
+            file_info.rand_data[0 : self.file_segment_len], 0
+        )
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self._source_simulator_transfer_init_with_metadata(
+            checksum=ChecksumTypes.CRC_32,
+            file_size=file_info.file_size,
+            file_path=src_file.as_posix(),
+        )
+        fsm_res = self.pass_file_segment(
+            segment=file_info.rand_data[self.file_segment_len :],
+            offset=self.file_segment_len,
+        )
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
+        )
+        eof_pdu = EofPdu(
+            file_size=file_info.file_size,
+            file_checksum=file_info.crc32,
+            pdu_conf=self.src_pdu_conf,
+        )
+        self.dest_handler.pass_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+
+    def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
+        fd_params = FileDataParams(file_data=segment, offset=offset)
+        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
+        self.dest_handler.pass_packet(file_data_pdu)
+        return self.dest_handler.state_machine()
 
     def _state_checker(
         self,
