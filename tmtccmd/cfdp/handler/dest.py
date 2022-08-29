@@ -248,11 +248,15 @@ class DestHandler:
                             file_segment_indic_params
                         )
                     try:
-                        status_code = self.user.vfs.write_data(
+                        self.user.vfs.write_data(
                             self._params.fp.file_name, data, offset
                         )
-                        if status_code == FilestoreResponseStatusCode.SUCCESS:
-                            self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+                        self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+                    except FileNotFoundError:
+                        if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
+                            self._params.file_status = (
+                                FileDeliveryStatus.DISCARDED_DELIBERATELY
+                            )
                     except PermissionError:
                         if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
                             self._params.file_status = (
