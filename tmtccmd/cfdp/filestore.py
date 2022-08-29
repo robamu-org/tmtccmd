@@ -1,4 +1,5 @@
 import abc
+import enum
 import os
 import shutil
 import platform
@@ -38,9 +39,13 @@ class VirtualFilestore(abc.ABC):
     @abc.abstractmethod
     def write_data(
         self, file: Path, data: bytes, offset: Optional[int]
-    ) -> FilestoreResponseStatusCode:
+    ):
         """This is not used as part of a filestore request, it is used to build up the received
-        file"""
+        file.
+
+        :raises PermissionError:
+        :raises FileNotFoundError:
+        """
         raise NotImplementedError(
             "Writing to data not implemented in virtual filestore"
         )
@@ -122,7 +127,7 @@ class HostFilestore(VirtualFilestore):
 
     def write_data(
         self, file: Path, data: bytes, offset: Optional[int]
-    ) -> FilestoreResponseStatusCode:
+    ):
         """Primary function used to perform the CFDP Copy Procedure. This will also create a new
         file as long as no other file with the same name exists
 
@@ -135,7 +140,6 @@ class HostFilestore(VirtualFilestore):
             if offset is not None:
                 of.seek(offset)
             of.write(data)
-        return FilestoreResponseStatusCode.SUCCESS
 
     def create_file(self, file: Path) -> FilestoreResponseStatusCode:
         """Returns CREATE_NOT_ALLOWED if the file already exists"""
