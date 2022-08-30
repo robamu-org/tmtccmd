@@ -396,6 +396,10 @@ class ArgParserWrapper:
         )
 
     def parse(self):
+        if self.parent_parser is None:
+            raise ValueError(
+                "Create parser with create_default_parser or assign a parser first"
+            )
         """Parse all CLI arguments with the given argument parser"""
         if not self._parse_was_called:
             patched_args = None
