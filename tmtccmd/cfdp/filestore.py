@@ -37,9 +37,7 @@ class VirtualFilestore(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def write_data(
-        self, file: Path, data: bytes, offset: Optional[int]
-    ):
+    def write_data(self, file: Path, data: bytes, offset: Optional[int]):
         """This is not used as part of a filestore request, it is used to build up the received
         file.
 
@@ -125,9 +123,7 @@ class HostFilestore(VirtualFilestore):
         with open(file, "w"):
             pass
 
-    def write_data(
-        self, file: Path, data: bytes, offset: Optional[int]
-    ):
+    def write_data(self, file: Path, data: bytes, offset: Optional[int]):
         """Primary function used to perform the CFDP Copy Procedure. This will also create a new
         file as long as no other file with the same name exists
 

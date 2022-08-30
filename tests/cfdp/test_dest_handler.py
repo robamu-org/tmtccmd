@@ -73,7 +73,12 @@ class TestCfdpDestHandler(TestCase):
         self.cfdp_user.eof_recv_indication = MagicMock()
         self.cfdp_user.file_segment_recv_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
-        self.file_path = Path(f"{tempfile.gettempdir()}/hello_dest.txt")
+        self.src_file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
+        if self.src_file_path.exists():
+            os.remove(self.src_file_path)
+        self.dest_file_path = Path(f"{tempfile.gettempdir()}/hello_dest.txt")
+        if self.dest_file_path.exists():
+            os.remove(self.dest_file_path)
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
@@ -93,8 +98,8 @@ class TestCfdpDestHandler(TestCase):
         metadata_params = MetadataParams(
             checksum_type=ChecksumTypes.NULL_CHECKSUM,
             closure_requested=False,
-            source_file_name=f"{tempfile.gettempdir()}/hello.txt",
-            dest_file_name=self.file_path.as_posix(),
+            source_file_name=self.src_file_path.as_posix(),
+            dest_file_name=self.dest_file_path.as_posix(),
             file_size=0,
         )
         file_transfer_init = MetadataPdu(
@@ -123,20 +128,19 @@ class TestCfdpDestHandler(TestCase):
             self.cfdp_user.transaction_finished_indication.call_args.args[0],
         )
         self.assertEqual(finished_params.transaction_id, self.transaction_id)
-        self.assertTrue(self.file_path.exists())
-        self.assertEqual(self.file_path.stat().st_size, 0)
+        self.assertTrue(self.dest_file_path.exists())
+        self.assertEqual(self.dest_file_path.stat().st_size, 0)
 
     def test_small_file_reception(self):
-        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
-        with open(src_file, "w") as of:
+        with open(self.src_file_path, "w") as of:
             of.write("Hello World\n")
-        file_size = src_file.stat().st_size
+        file_size = self.src_file_path.stat().st_size
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumTypes.CRC_32,
             file_size=file_size,
-            file_path=src_file.as_posix(),
+            file_path=self.src_file_path.as_posix(),
         )
-        with open(src_file, "rb") as rf:
+        with open(self.src_file_path, "rb") as rf:
             read_data = rf.read()
         fd_params = FileDataParams(file_data=read_data, offset=0)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
@@ -160,12 +164,11 @@ class TestCfdpDestHandler(TestCase):
         # This tests generates two file data PDUs, but the second one does not have a
         # full segment length
         file_info = self.random_data_two_file_segments()
-        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumTypes.CRC_32,
             file_size=file_info.file_size,
-            file_path=src_file.as_posix(),
+            file_path=self.src_file_path.as_posix(),
         )
         fsm_res = self.pass_file_segment(
             file_info.rand_data[0 : self.file_segment_len], 0
@@ -200,13 +203,12 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
     def test_file_is_overwritten(self):
-        with open(self.file_path, "w") as of:
+        with open(self.dest_file_path, "w") as of:
             of.write("This file will be truncated")
         self.test_small_file_reception()
 
     def test_file_data_pdu_before_metadata_is_discarded(self):
         file_info = self.random_data_two_file_segments()
-        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
         # Pass file data PDU first. Will be discarded
         fsm_res = self.pass_file_segment(
             file_info.rand_data[0 : self.file_segment_len], 0
@@ -215,7 +217,7 @@ class TestCfdpDestHandler(TestCase):
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumTypes.CRC_32,
             file_size=file_info.file_size,
-            file_path=src_file.as_posix(),
+            file_path=self.src_file_path.as_posix(),
         )
         fsm_res = self.pass_file_segment(
             segment=file_info.rand_data[self.file_segment_len :],
@@ -244,10 +246,9 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
 
     def test_permission_error(self):
-        src_file = Path(f"{tempfile.gettempdir()}/hello.txt")
-        with open(src_file, "w") as of:
+        with open(self.src_file_path, "w") as of:
             of.write("Hello World\n")
-        src_file.chmod(0o444)
+        self.src_file_path.chmod(0o444)
         # TODO: This will cause permission errors, but the error handling for this has not been
         #       implemented properly
         """
@@ -267,6 +268,7 @@ class TestCfdpDestHandler(TestCase):
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
         """
+        self.src_file_path.chmod(0o777)
 
     def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
@@ -297,7 +299,7 @@ class TestCfdpDestHandler(TestCase):
             checksum_type=checksum,
             closure_requested=self.closure_requested,
             source_file_name=file_path,
-            dest_file_name=self.file_path.as_posix(),
+            dest_file_name=self.dest_file_path.as_posix(),
             file_size=file_size,
         )
         file_transfer_init = MetadataPdu(
@@ -308,5 +310,7 @@ class TestCfdpDestHandler(TestCase):
 
     def tearDown(self) -> None:
         # self.dest_handler.finish()
-        if self.file_path.exists():
-            os.remove(self.file_path)
+        if self.dest_file_path.exists():
+            os.remove(self.dest_file_path)
+        if self.src_file_path.exists():
+            os.remove(self.src_file_path)

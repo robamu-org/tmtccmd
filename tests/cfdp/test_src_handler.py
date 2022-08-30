@@ -46,6 +46,8 @@ class TestCfdpSourceHandler(TestCase):
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
         self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
+        if self.file_path.exists():
+            os.remove(self.file_path)
         with open(self.file_path, "w"):
             pass
         self.file_segment_len = 256
