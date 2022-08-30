@@ -335,7 +335,19 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self._state.current_service
         )
         if op_code_entry is not None:
-            for op_code_key, op_code_value in op_code_entry.op_code_dict.items():
+            for (
+                op_code_key,
+                op_code_value,
+            ) in op_code_entry.op_code_dict_num_keys.items():
+                try:
+                    self._op_code_list.append(op_code_key)
+                    self.__combo_box_op_codes.addItem(op_code_value[0])
+                except TypeError:
+                    LOGGER.warning(f"Invalid op code entry {op_code_value}, skipping..")
+            for (
+                op_code_key,
+                op_code_value,
+            ) in op_code_entry.op_code_dict_str_keys.items():
                 try:
                     self._op_code_list.append(op_code_key)
                     self.__combo_box_op_codes.addItem(op_code_value[0])
