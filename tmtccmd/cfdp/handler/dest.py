@@ -307,9 +307,9 @@ class DestHandler:
                             self._params.file_status = (
                                 FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
                             )
+                # TODO: Support for check timer missing
                 eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
-                    # TODO: Support for check timer missing
                     for pdu in eof_pdus:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
                         self._handle_eof_pdu(eof_pdu)
