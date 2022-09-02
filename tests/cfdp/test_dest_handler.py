@@ -118,22 +118,17 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
-        self.cfdp_user.eof_recv_indication.assert_called_once()
-        self.assertEqual(
-            self.cfdp_user.eof_recv_indication.call_args.args[0], self.transaction_id
-        )
-        self.cfdp_user.transaction_finished_indication.assert_called_once()
-        finished_params = cast(
-            TransactionFinishedParams,
-            self.cfdp_user.transaction_finished_indication.call_args.args[0],
-        )
-        self.assertEqual(finished_params.transaction_id, self.transaction_id)
+        self._check_eof_recv_indication(fsm_res)
+        self._check_finished_recv_indication_success(fsm_res)
         self.assertTrue(self.dest_file_path.exists())
         self.assertEqual(self.dest_file_path.stat().st_size, 0)
 
     def test_small_file_reception(self):
-        with open(self.src_file_path, "w") as of:
-            of.write("Hello World\n")
+        data = "Hello World\n".encode()
+        with open(self.src_file_path, "wb") as of:
+            of.write(data)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(data))
         file_size = self.src_file_path.stat().st_size
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumTypes.CRC_32,
@@ -149,16 +144,16 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
         )
-
-    def random_data_two_file_segments(self):
-        if sys.version_info >= (3, 9):
-            rand_data = random.randbytes(round(self.file_segment_len * 1.3))
-        else:
-            rand_data = os.urandom(round(self.file_segment_len * 1.3))
-        file_size = len(rand_data)
-        crc32_func = mkPredefinedCrcFun("crc32")
-        crc32 = struct.pack("!I", crc32_func(rand_data))
-        return FileInfo(file_size=file_size, crc32=crc32, rand_data=rand_data)
+        eof_pdu = EofPdu(
+            file_size=file_size,
+            file_checksum=crc32,
+            pdu_conf=self.src_pdu_conf,
+        )
+        self.dest_handler.pass_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self._check_eof_recv_indication(fsm_res)
+        self._check_finished_recv_indication_success(fsm_res)
 
     def test_larger_file_reception(self):
         # This tests generates two file data PDUs, but the second one does not have a
@@ -201,6 +196,18 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.pass_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self._check_eof_recv_indication(fsm_res)
+        self._check_finished_recv_indication_success(fsm_res)
+
+    def random_data_two_file_segments(self):
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(round(self.file_segment_len * 1.3))
+        else:
+            rand_data = os.urandom(round(self.file_segment_len * 1.3))
+        file_size = len(rand_data)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(rand_data))
+        return FileInfo(file_size=file_size, crc32=crc32, rand_data=rand_data)
 
     def test_file_is_overwritten(self):
         with open(self.dest_file_path, "w") as of:
@@ -269,6 +276,22 @@ class TestCfdpDestHandler(TestCase):
         )
         """
         self.src_file_path.chmod(0o777)
+
+    def _check_eof_recv_indication(self, fsm_res: FsmResult):
+        self.cfdp_user.eof_recv_indication.assert_called_once()
+        self.assertEqual(
+            self.cfdp_user.eof_recv_indication.call_args.args[0], self.transaction_id
+        )
+        self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
+
+    def _check_finished_recv_indication_success(self, fsm_res: FsmResult):
+        finished_params = cast(
+            TransactionFinishedParams,
+            self.cfdp_user.transaction_finished_indication.call_args.args[0],
+        )
+        self.assertEqual(finished_params.transaction_id, self.transaction_id)
+        self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
+        self.assertEqual(finished_params.condition_code, ConditionCode.NO_ERROR)
 
     def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)

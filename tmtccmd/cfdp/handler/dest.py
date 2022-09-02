@@ -15,7 +15,6 @@ from spacepackets.cfdp import (
     TlvTypes,
     PduConfig,
     Direction,
-    FilestoreResponseStatusCode,
     FaultHandlerCodes,
 )
 from spacepackets.cfdp.pdu import (
@@ -93,6 +92,7 @@ class TransactionStep(enum.Enum):
 class DestStateWrapper:
     state: CfdpStates = CfdpStates.IDLE
     transaction: TransactionStep = TransactionStep.IDLE
+    transaction_id: Optional[TransactionId] = None
     packet_ready: bool = False
 
 
@@ -176,6 +176,7 @@ class DestHandler:
             source_entity_id=metadata_pdu.source_entity_id,
             transaction_seq_num=metadata_pdu.transaction_seq_num,
         )
+        self.states.transaction_id = self._params.transaction_id
         self._params.remote_cfg = self.remote_cfg_table.get_remote_entity(
             metadata_pdu.source_entity_id
         )
@@ -279,6 +280,14 @@ class DestHandler:
                             self._params.fp.file_name, data, offset
                         )
                         self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+                        # Ensure that the progress value is always incremented
+                        if (
+                            offset + len(file_data_pdu.file_data)
+                            > self._params.fp.progress
+                        ):
+                            self._params.fp.progress = offset + len(
+                                file_data_pdu.file_data
+                            )
                     except FileNotFoundError:
                         if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
                             self._params.file_status = (
@@ -291,6 +300,7 @@ class DestHandler:
                             )
                 eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
+                    # TODO: Support for check timer missing
                     for pdu in eof_pdus:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
                         self._handle_eof_pdu(eof_pdu)
@@ -306,6 +316,7 @@ class DestHandler:
         # Not fully sure this is the best approach, but I think this is ok for now
         self._params.clear_file_directive_dict()
         self._params.clear_file_deque()
+        self._params.transaction_id = None
         self.states.state = CfdpStates.IDLE
         self.states.transaction = TransactionStep.IDLE
 
@@ -345,6 +356,11 @@ class DestHandler:
     def _handle_transfer_completion(self):
         if self._crc_helper.checksum_type != ChecksumTypes.NULL_CHECKSUM:
             self._checksum_verify()
+        elif (
+            self._params.fp.no_file_data
+            or self._crc_helper.checksum_type == ChecksumTypes.NULL_CHECKSUM
+        ):
+            self._params.condition_code = ConditionCode.NO_ERROR
         self._notice_of_completion()
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self._params.closure_requested:
@@ -358,7 +374,7 @@ class DestHandler:
         # TODO: Error handling
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             self._params.fp.crc32 = eof_pdu.file_checksum
-            self._params.fp.size_from_eof = eof_pdu.file_size
+            self._params.fp.file_size_from_eof = eof_pdu.file_size
             self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)
@@ -371,11 +387,11 @@ class DestHandler:
     def _checksum_verify(self):
         crc32 = self._crc_helper.calc_for_file(
             self._params.fp.file_name,
-            self._params.fp.size_from_metadata,
+            self._params.fp.file_size_from_eof,
             self._params.fp.segment_len,
         )
         if crc32 != self._params.fp.crc32:
-            # TODO: CFDP Checksum error
+            # TODO: CFDP Checksum error handling
             self._params.condition_code = ConditionCode.FILE_CHECKSUM_FAILURE
         else:
             self._params.delivery_code = DeliveryCode.DATA_COMPLETE
