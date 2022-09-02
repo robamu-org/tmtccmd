@@ -231,18 +231,29 @@ class DestHandler:
 
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
+            clear_all_other_pdus = True
             for pdu_type, pdu_deque in self._params.file_directives_dict.items():
                 if pdu_type == DirectiveType.METADATA_PDU:
                     clear_metadata_deque = False
                     for pdu_base in pdu_deque:
                         metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
                         self._start_transaction(metadata_pdu)
+                        # CFDP 4.6.1.2.4: Any repeated metadata should be discarded.
                         if self.states.state != CfdpStates.IDLE:
                             clear_metadata_deque = True
                             break
                     if clear_metadata_deque:
                         pdu_deque.clear()
-            if self.states.state == CfdpStates.IDLE:
+                else:
+                    # For unacknowledged transfers, there is no lost metadata detection in place.
+                    # For now, simply discard all PDUs which arrive before the Metadata PDU.
+                    # TODO: This is tricky for acknowledged mode. This implementation writes to the
+                    #       virtual filestore directly. If lost segment detection is in place, all
+                    #       PDUs which arrive successfully after a missing metadata PDU would have
+                    #       to be counted as lost segments.
+                    # clear_all_other_pdus = False
+                    pass
+            if self.states.state == CfdpStates.IDLE and clear_all_other_pdus:
                 if self._params.file_directives_dict:
                     for other_pdu in self._params.file_directives_dict:
                         LOGGER.warning(
