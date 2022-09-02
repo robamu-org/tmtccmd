@@ -446,7 +446,11 @@ class SourceHandler:
         if not put_req.cfg.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
             raise SourceFileDoesNotExist(put_req.cfg.source_file)
-        self._params.fp.size_from_metadata = put_req.cfg.source_file.stat().st_size
+        size = put_req.cfg.source_file.stat().st_size
+        if size == 0:
+            self._params.fp.no_file_data = True
+        else:
+            self._params.fp.size_from_metadata = size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
         self._params.remote_cfg = self._params.remote_cfg
         self._params.transaction = TransactionId(
@@ -484,7 +488,7 @@ class SourceHandler:
             in the Copy File procedure can be performed
         """
         # No need to send a file data PDU for an empty file
-        if self._params.fp.size_from_metadata == 0:
+        if self._params.fp.no_file_data:
             return False
         with open(request.cfg.source_file, "rb") as of:
             if self._params.fp.offset == self._params.fp.size_from_metadata:

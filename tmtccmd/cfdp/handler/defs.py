@@ -93,8 +93,10 @@ class FileParamsBase:
     offset: int
     segment_len: int
     crc32: bytes
+    no_file_data: bool
     size_from_metadata: int
     size_from_eof: int
+    transmission_progress: int
 
     @classmethod
     def empty(cls):
@@ -104,6 +106,8 @@ class FileParamsBase:
             crc32=bytes(),
             size_from_eof=0,
             size_from_metadata=0,
+            transmission_progress=0,
+            no_file_data=False,
         )
 
     def reset(self):

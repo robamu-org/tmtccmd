@@ -69,6 +69,8 @@ class DestFileParams(FileParamsBase):
             size_from_metadata=0,
             size_from_eof=0,
             file_name=Path(),
+            no_file_data=False,
+            transmission_progress=0,
         )
 
     def reset(self):
@@ -163,7 +165,10 @@ class DestHandler:
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
         self._crc_helper.checksum_type = metadata_pdu.checksum_type
         self._closure_requested = metadata_pdu.closure_requested
-        self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
+        if metadata_pdu.dest_file_name is None:
+            self._params.fp.no_file_data = True
+        else:
+            self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
         self._params.fp.size_from_metadata = metadata_pdu.file_size
         self._params.pdu_conf = metadata_pdu.pdu_conf
         self._params.pdu_conf.direction = Direction.TOWARDS_SENDER
