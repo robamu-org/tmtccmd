@@ -59,18 +59,18 @@ LOGGER = get_console_logger()
 @dataclass
 class DestFileParams(FileParamsBase):
     file_name: Path
+    file_size_from_eof: int
 
     @classmethod
     def empty(cls) -> DestFileParams:
         return cls(
-            offset=0,
+            progress=0,
             segment_len=0,
             crc32=bytes(),
-            size_from_metadata=0,
-            size_from_eof=0,
+            file_size=0,
             file_name=Path(),
             no_file_data=False,
-            transmission_progress=0,
+            file_size_from_eof=0,
         )
 
     def reset(self):

@@ -90,29 +90,24 @@ class BusyError(Exception):
 
 @dataclass
 class FileParamsBase:
-    offset: int
+    progress: int
     segment_len: int
     crc32: bytes
     no_file_data: bool
-    size_from_metadata: int
-    size_from_eof: int
-    transmission_progress: int
+    file_size: int
 
     @classmethod
     def empty(cls):
         return cls(
-            offset=0,
+            progress=0,
             segment_len=0,
             crc32=bytes(),
-            size_from_eof=0,
-            size_from_metadata=0,
-            transmission_progress=0,
+            file_size=0,
             no_file_data=False,
         )
 
     def reset(self):
-        self.offset = 0
+        self.progress = 0
         self.segment_len = 0
         self.crc32 = bytes()
-        self.size_from_metadata = 0
-        self.size_from_eof = 0
+        self.file_size = 0

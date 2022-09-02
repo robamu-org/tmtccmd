@@ -275,13 +275,13 @@ class SourceHandler:
                 self._transaction_start(put_req)
                 self.states.step = TransactionStep.CRC_PROCEDURE
             if self.states.step == TransactionStep.CRC_PROCEDURE:
-                if self._params.fp.size_from_metadata == 0:
+                if self._params.fp.file_size == 0:
                     # Empty file, use null checksum
                     self._params.fp.crc32 = NULL_CHECKSUM_U32
                 else:
                     self._params.fp.crc32 = self._params.crc_helper.calc_for_file(
                         file=put_req.cfg.source_file,
-                        file_sz=self._params.fp.size_from_metadata,
+                        file_sz=self._params.fp.file_size,
                         segment_len=self._params.fp.segment_len,
                     )
                 self.states.step = TransactionStep.SENDING_METADATA
@@ -294,6 +294,7 @@ class SourceHandler:
                     self.states.packet_ready = True
                     return FsmResult(self.pdu_holder, self.states)
                 else:
+                    # Special case: Empty file.
                     self.states.step = TransactionStep.SENDING_EOF
             if self.states.step == TransactionStep.SENDING_EOF:
                 self._prepare_eof_pdu()
@@ -336,8 +337,7 @@ class SourceHandler:
             if self.states.step == TransactionStep.SENDING_METADATA:
                 self.states.step = TransactionStep.SENDING_FILE_DATA
             elif self.states.step == TransactionStep.SENDING_FILE_DATA:
-                if self._params.fp.offset == self._params.fp.size_from_metadata:
-                    self.states.step = TransactionStep.SENDING_EOF
+                self._handle_file_data_sent()
             elif self.states.step == TransactionStep.SENDING_EOF:
                 self._handle_eof_sent()
 
@@ -364,6 +364,10 @@ class SourceHandler:
                 self.states.step = TransactionStep.NOTICE_OF_COMPLETION
         else:
             self.states.step = TransactionStep.WAIT_FOR_ACK
+
+    def _handle_file_data_sent(self):
+        if self._params.fp.progress == self._params.fp.file_size:
+            self.states.step = TransactionStep.SENDING_EOF
 
     def _handle_wait_for_ack(self):
         if self.states.state != CfdpStates.BUSY_CLASS_2_ACKED:
@@ -450,7 +454,7 @@ class SourceHandler:
         if size == 0:
             self._params.fp.no_file_data = True
         else:
-            self._params.fp.size_from_metadata = size
+            self._params.fp.file_size = size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
         self._params.remote_cfg = self._params.remote_cfg
         self._params.transaction = TransactionId(
@@ -474,7 +478,7 @@ class SourceHandler:
             source_file_name=put_req.cfg.source_file.as_posix(),
             checksum_type=self._params.crc_helper.checksum_type,
             closure_requested=self._params.closure_requested,
-            file_size=self._params.fp.size_from_metadata,
+            file_size=self._params.fp.file_size,
         )
         self.pdu_holder.base = MetadataPdu(
             pdu_conf=self._params.pdu_conf, params=params
@@ -491,26 +495,24 @@ class SourceHandler:
         if self._params.fp.no_file_data:
             return False
         with open(request.cfg.source_file, "rb") as of:
-            if self._params.fp.offset == self._params.fp.size_from_metadata:
+            if self._params.fp.progress == self._params.fp.file_size:
                 return False
             if self.states.packet_ready:
                 raise PacketSendNotConfirmed(
                     f"Must send current packet {self.pdu_holder.base} first"
                 )
-            if self._params.fp.size_from_metadata < self._params.fp.segment_len:
-                read_len = self._params.fp.size_from_metadata
+            if self._params.fp.file_size < self._params.fp.segment_len:
+                read_len = self._params.fp.file_size
             else:
                 if (
-                    self._params.fp.offset + self._params.fp.segment_len
-                    > self._params.fp.size_from_metadata
+                    self._params.fp.progress + self._params.fp.segment_len
+                    > self._params.fp.file_size
                 ):
-                    read_len = (
-                        self._params.fp.size_from_metadata - self._params.fp.offset
-                    )
+                    read_len = self._params.fp.file_size - self._params.fp.progress
                 else:
                     read_len = self._params.fp.segment_len
             file_data = self.user.vfs.read_from_opened_file(
-                of, self._params.fp.offset, read_len
+                of, self._params.fp.progress, read_len
             )
             self._params.pdu_conf.transaction_seq_num = (
                 self._get_next_transfer_seq_num()
@@ -522,13 +524,13 @@ class SourceHandler:
             #       to expect the user to supply some helper class to split up a file
             fd_params = FileDataParams(
                 file_data=file_data,
-                offset=self._params.fp.offset,
+                offset=self._params.fp.progress,
                 segment_metadata_flag=False,
             )
             file_data_pdu = FileDataPdu(
                 pdu_conf=self._params.pdu_conf, params=fd_params
             )
-            self._params.fp.offset += read_len
+            self._params.fp.progress += read_len
             self.pdu_holder.base = file_data_pdu
         return True
 
@@ -539,7 +541,7 @@ class SourceHandler:
             )
         self.pdu_holder.base = EofPdu(
             file_checksum=self._params.fp.crc32,
-            file_size=self._params.fp.size_from_metadata,
+            file_size=self._params.fp.file_size,
             pdu_conf=self._params.pdu_conf,
         )
 
