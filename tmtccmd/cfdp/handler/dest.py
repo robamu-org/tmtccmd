@@ -62,7 +62,14 @@ class DestFileParams(FileParamsBase):
 
     @classmethod
     def empty(cls) -> DestFileParams:
-        return cls(offset=0, segment_len=0, crc32=bytes(), size=0, file_name=Path())
+        return cls(
+            offset=0,
+            segment_len=0,
+            crc32=bytes(),
+            size_from_metadata=0,
+            size_from_eof=0,
+            file_name=Path(),
+        )
 
     def reset(self):
         super().reset()
@@ -157,7 +164,7 @@ class DestHandler:
         self._crc_helper.checksum_type = metadata_pdu.checksum_type
         self._closure_requested = metadata_pdu.closure_requested
         self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
-        self._params.fp.size = metadata_pdu.file_size
+        self._params.fp.size_from_metadata = metadata_pdu.file_size
         self._params.pdu_conf = metadata_pdu.pdu_conf
         self._params.pdu_conf.direction = Direction.TOWARDS_SENDER
         self._params.transaction_id = TransactionId(
@@ -346,7 +353,7 @@ class DestHandler:
         # TODO: Error handling
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             self._params.fp.crc32 = eof_pdu.file_checksum
-            self._params.fp.size = eof_pdu.file_size
+            self._params.fp.size_from_eof = eof_pdu.file_size
             self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)
@@ -358,7 +365,9 @@ class DestHandler:
 
     def _checksum_verify(self):
         crc32 = self._crc_helper.calc_for_file(
-            self._params.fp.file_name, self._params.fp.size, self._params.fp.segment_len
+            self._params.fp.file_name,
+            self._params.fp.size_from_metadata,
+            self._params.fp.segment_len,
         )
         if crc32 != self._params.fp.crc32:
             # TODO: CFDP Checksum error

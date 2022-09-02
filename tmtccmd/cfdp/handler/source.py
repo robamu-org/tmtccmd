@@ -275,13 +275,13 @@ class SourceHandler:
                 self._transaction_start(put_req)
                 self.states.step = TransactionStep.CRC_PROCEDURE
             if self.states.step == TransactionStep.CRC_PROCEDURE:
-                if self._params.fp.size == 0:
+                if self._params.fp.size_from_metadata == 0:
                     # Empty file, use null checksum
                     self._params.fp.crc32 = NULL_CHECKSUM_U32
                 else:
                     self._params.fp.crc32 = self._params.crc_helper.calc_for_file(
                         file=put_req.cfg.source_file,
-                        file_sz=self._params.fp.size,
+                        file_sz=self._params.fp.size_from_metadata,
                         segment_len=self._params.fp.segment_len,
                     )
                 self.states.step = TransactionStep.SENDING_METADATA
@@ -336,7 +336,7 @@ class SourceHandler:
             if self.states.step == TransactionStep.SENDING_METADATA:
                 self.states.step = TransactionStep.SENDING_FILE_DATA
             elif self.states.step == TransactionStep.SENDING_FILE_DATA:
-                if self._params.fp.offset == self._params.fp.size:
+                if self._params.fp.offset == self._params.fp.size_from_metadata:
                     self.states.step = TransactionStep.SENDING_EOF
             elif self.states.step == TransactionStep.SENDING_EOF:
                 self._handle_eof_sent()
@@ -446,7 +446,7 @@ class SourceHandler:
         if not put_req.cfg.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
             raise SourceFileDoesNotExist(put_req.cfg.source_file)
-        self._params.fp.size = put_req.cfg.source_file.stat().st_size
+        self._params.fp.size_from_metadata = put_req.cfg.source_file.stat().st_size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
         self._params.remote_cfg = self._params.remote_cfg
         self._params.transaction = TransactionId(
@@ -470,7 +470,7 @@ class SourceHandler:
             source_file_name=put_req.cfg.source_file.as_posix(),
             checksum_type=self._params.crc_helper.checksum_type,
             closure_requested=self._params.closure_requested,
-            file_size=self._params.fp.size,
+            file_size=self._params.fp.size_from_metadata,
         )
         self.pdu_holder.base = MetadataPdu(
             pdu_conf=self._params.pdu_conf, params=params
@@ -484,23 +484,25 @@ class SourceHandler:
             in the Copy File procedure can be performed
         """
         # No need to send a file data PDU for an empty file
-        if self._params.fp.size == 0:
+        if self._params.fp.size_from_metadata == 0:
             return False
         with open(request.cfg.source_file, "rb") as of:
-            if self._params.fp.offset == self._params.fp.size:
+            if self._params.fp.offset == self._params.fp.size_from_metadata:
                 return False
             if self.states.packet_ready:
                 raise PacketSendNotConfirmed(
                     f"Must send current packet {self.pdu_holder.base} first"
                 )
-            if self._params.fp.size < self._params.fp.segment_len:
-                read_len = self._params.fp.size
+            if self._params.fp.size_from_metadata < self._params.fp.segment_len:
+                read_len = self._params.fp.size_from_metadata
             else:
                 if (
                     self._params.fp.offset + self._params.fp.segment_len
-                    > self._params.fp.size
+                    > self._params.fp.size_from_metadata
                 ):
-                    read_len = self._params.fp.size - self._params.fp.offset
+                    read_len = (
+                        self._params.fp.size_from_metadata - self._params.fp.offset
+                    )
                 else:
                     read_len = self._params.fp.segment_len
             file_data = self.user.vfs.read_from_opened_file(
@@ -533,7 +535,7 @@ class SourceHandler:
             )
         self.pdu_holder.base = EofPdu(
             file_checksum=self._params.fp.crc32,
-            file_size=self._params.fp.size,
+            file_size=self._params.fp.size_from_metadata,
             pdu_conf=self._params.pdu_conf,
         )
 

@@ -93,14 +93,22 @@ class FileParamsBase:
     offset: int
     segment_len: int
     crc32: bytes
-    size: int
+    size_from_metadata: int
+    size_from_eof: int
 
     @classmethod
     def empty(cls):
-        return cls(offset=0, segment_len=0, crc32=bytes(), size=0)
+        return cls(
+            offset=0,
+            segment_len=0,
+            crc32=bytes(),
+            size_from_eof=0,
+            size_from_metadata=0,
+        )
 
     def reset(self):
         self.offset = 0
         self.segment_len = 0
         self.crc32 = bytes()
-        self.size = 0
+        self.size_from_metadata = 0
+        self.size_from_eof = 0
