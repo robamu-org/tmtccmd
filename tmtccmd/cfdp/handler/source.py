@@ -190,7 +190,7 @@ class SourceHandler:
         self.cfg.local_entity_id = source_id
         self._params.source_id = source_id
 
-    def start_transaction(
+    def start_cfdp_transaction(
         self, wrapper: CfdpRequestWrapper, remote_cfg: RemoteEntityCfg
     ) -> bool:
         """Start a CFDP transaction.
@@ -200,25 +200,28 @@ class SourceHandler:
         :return: Whether transaction was started successfully.
         """
         if wrapper.request_type == CfdpRequestType.PUT:
-            if self.states.state != CfdpStates.IDLE:
-                LOGGER.debug("CFDP source handler is busy, can't process put request")
-                return False
-            self._current_req = wrapper
-            self._params.remote_cfg = remote_cfg
-            self._params.dest_id = remote_cfg.entity_id
-            self.states.packet_ready = False
-            self._setup_transmission_mode()
-            if self._params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
-                LOGGER.debug("Starting Put Request handling in NAK mode")
-                self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
-            elif self._params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
-                LOGGER.debug("Starting Put Request handling in ACK mode")
-                self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
-            else:
-                raise ValueError(
-                    f"Invalid transmission mode {self._params.transmission_mode} passed"
-                )
-            return True
+            return self.put_request(wrapper.to_put_request(), remote_cfg)
+
+    def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
+        if self.states.state != CfdpStates.IDLE:
+            LOGGER.debug("CFDP source handler is busy, can't process put request")
+            return False
+        self._current_req.base = request
+        self._params.remote_cfg = remote_cfg
+        self._params.dest_id = remote_cfg.entity_id
+        self.states.packet_ready = False
+        self._setup_transmission_mode()
+        if self._params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
+            LOGGER.debug("Starting Put Request handling in NAK mode")
+            self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
+        elif self._params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
+            LOGGER.debug("Starting Put Request handling in ACK mode")
+            self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
+        else:
+            raise ValueError(
+                f"Invalid transmission mode {self._params.transmission_mode} passed"
+            )
+        return True
 
     def pass_packet(self, packet: AbstractFileDirectiveBase):
         """Pass PDU file directives going towards the file sender to the CFDP source handler

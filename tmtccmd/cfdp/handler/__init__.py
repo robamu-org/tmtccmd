@@ -10,6 +10,7 @@ from tmtccmd.cfdp.defs import CfdpStates, CfdpRequestType
 from .defs import NoRemoteEntityCfgFound, BusyError
 
 from .dest import DestStateWrapper
+from .dest import DestHandler
 from .source import SourceHandler, SourceStateWrapper, FsmResult
 from .source import TransactionStep as SourceTransactionStep
 from .dest import TransactionStep as DestTransactionStep
@@ -122,6 +123,6 @@ class CfdpHandler:
         )
         if remote_cfg is None:
             raise NoRemoteEntityCfgFound(put_request.cfg.destination_id)
-        self._tx_handler.start_transaction(
+        self._tx_handler.start_cfdp_transaction(
             remote_cfg=remote_cfg, wrapper=self._request_wrapper
         )

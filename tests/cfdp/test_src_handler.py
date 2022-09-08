@@ -144,7 +144,7 @@ class TestCfdpSourceHandler(TestCase):
     ):
         wrapper = CfdpRequestWrapper(put_request)
         self.remote_cfg.entity_id = dest_id
-        self.source_handler.start_transaction(wrapper, self.remote_cfg)
+        self.source_handler.start_cfdp_transaction(wrapper, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_METADATA
