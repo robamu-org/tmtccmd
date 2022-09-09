@@ -46,7 +46,8 @@ from tmtccmd.util.obj_id import ObjectIdDictT
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
-EXAMPLE_APID = 0xEF
+EXAMPLE_PUS_APID = 0xEF
+EXAMPLE_CFDP_APID = 0xF0
 
 
 class ExampleHookClass(TmTcCfgHookBase):
@@ -104,7 +105,7 @@ class PusHandler(SpecificApidHandlerBase):
         printer: FsfwTmTcPrinter,
         raw_logger: RawTmtcTimedLogWrapper,
     ):
-        super().__init__(EXAMPLE_APID, None)
+        super().__init__(EXAMPLE_PUS_APID, None)
         self.printer = printer
         self.raw_logger = raw_logger
         self.verif_wrapper = verif_wrapper
@@ -221,7 +222,7 @@ def main():
     parser_wrapper.parse()
     params = SetupParams()
     parser_wrapper.set_params(params)
-    params.apid = EXAMPLE_APID
+    params.apid = EXAMPLE_PUS_APID
     setup_args = SetupWrapper(hook_obj=hook_obj, setup_params=params)
     # Create console logger helper and file loggers
     tmtc_logger = RegularTmtcLogWrapper()
