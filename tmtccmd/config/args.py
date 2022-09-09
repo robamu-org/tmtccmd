@@ -117,7 +117,7 @@ class SetupParams:
 
 
 def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
-    add_default_mode_arguments(parser)
+    add_tmtc_mode_arguments(parser)
     add_default_com_if_arguments(parser)
     add_generic_arguments(parser)
     add_default_procedure_arguments(parser)
@@ -166,6 +166,8 @@ def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser
         help="Procedure operation code, used for the default procedure mode",
         default=None,
     )
+    add_tmtc_mode_arguments(parser_or_subparser)
+    add_tmtc_listener_arg(parser_or_subparser)
 
 
 def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
@@ -206,18 +208,6 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "-g", "--gui", help="Use GUI mode", action="store_true", default=False
     )
     arg_parser.add_argument(
-        "-l",
-        "--listener",
-        help=(
-            "The backend will be configured to go into listener mode after finishing the\n"
-            "first queue if a service argument is specified. If this flag is specified\n"
-            "without the -s flag and none of the queue modes are specified explicitly,\n"
-            "the mode will be set to the listener mode"
-        ),
-        action="store_true",
-        default=False,
-    )
-    arg_parser.add_argument(
         "-i",
         "--interactive",
         help="Enables interactive or multi-queue mode, where the backend will be configured\n"
@@ -238,7 +228,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     )
 
 
-def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
+def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config import CoreModeList, CoreModeConverter
 
     help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
@@ -263,6 +253,21 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
         type=str,
         help=help_text,
         default=None,
+    )
+
+
+def add_tmtc_listener_arg(arg_parser: argparse.ArgumentParser):
+    arg_parser.add_argument(
+        "-l",
+        "--listener",
+        help=(
+            "The backend will be configured to go into listener mode after finishing the\n"
+            "first queue if a service argument is specified. If this flag is specified\n"
+            "without the -s flag and none of the queue modes are specified explicitly,\n"
+            "the mode will be set to the listener mode"
+        ),
+        action="store_true",
+        default=False,
     )
 
 
@@ -398,7 +403,6 @@ class ArgParserWrapper:
         these common flags"""
         self.parent_parser = argparse.ArgumentParser(add_help=False)
         add_default_com_if_arguments(self.parent_parser)
-        add_default_mode_arguments(self.parent_parser)
         add_generic_arguments(self.parent_parser)
 
     def create_default_parser(self):
