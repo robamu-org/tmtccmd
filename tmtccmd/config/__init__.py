@@ -11,6 +11,7 @@ from .args import (
     parse_default_tmtccmd_input_arguments,
     DefProcedureParams,
     PreArgsParsingWrapper,
+    ProcedureParamsWrapper,
 )
 from .defs import (
     CoreModeList,
@@ -71,6 +72,7 @@ class SetupWrapper:
         self,
         hook_obj: TmTcCfgHookBase,
         setup_params: SetupParams,
+        proc_param_wrapper: ProcedureParamsWrapper,
         json_cfg_path: Optional[str] = None,
     ):
         """
@@ -80,6 +82,7 @@ class SetupWrapper:
         self.hook_obj = hook_obj
         self.json_cfg_path = json_cfg_path
         self._params = setup_params
+        self.proc_param_wrapper = proc_param_wrapper
         self.json_cfg_path = json_cfg_path
         if json_cfg_path is None:
             self.json_cfg_path = default_json_path()
