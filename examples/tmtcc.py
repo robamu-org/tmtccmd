@@ -8,6 +8,7 @@ import tmtccmd
 from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
 from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
+from spacepackets.util import UnsignedByteField
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
 from tmtccmd.pus import VerificationWrapper
@@ -46,8 +47,12 @@ from tmtccmd.util.obj_id import ObjectIdDictT
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
+
 EXAMPLE_PUS_APID = 0xEF
 EXAMPLE_CFDP_APID = 0xF0
+
+CFDP_LOCAL_ENTITY_ID = UnsignedByteField(byte_len=2, val=1)
+CFDP_REMOTE_ENTITY_ID = UnsignedByteField(byte_len=2, val=EXAMPLE_CFDP_APID)
 
 
 class ExampleHookClass(TmTcCfgHookBase):

@@ -108,19 +108,19 @@ class CheckLimitProvider(ABC):
 
 
 @dataclass
-class LocalIndicationCfg:
-    eof_sent_indication_required: bool
-    eof_recv_indication_required: bool
-    file_segment_recvd_indication_required: bool
-    transaction_finished_indication_required: bool
-    suspended_indication_required: bool
-    resumed_indication_required: bool
+class IndicationCfg:
+    eof_sent_indication_required: bool = True
+    eof_recv_indication_required: bool = True
+    file_segment_recvd_indication_required: bool = True
+    transaction_finished_indication_required: bool = True
+    suspended_indication_required: bool = True
+    resumed_indication_required: bool = True
 
 
 @dataclass
 class LocalEntityCfg:
     local_entity_id: UnsignedByteField
-    indication_cfg: LocalIndicationCfg
+    indication_cfg: IndicationCfg
     default_fault_handlers: DefaultFaultHandlerBase
 
 

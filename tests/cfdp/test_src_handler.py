@@ -15,7 +15,7 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import DirectiveType, FileDataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
-from tmtccmd.cfdp import LocalIndicationCfg, LocalEntityCfg, RemoteEntityCfg
+from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.defs import PacketSendNotConfirmed
@@ -33,7 +33,7 @@ class TestCfdpSourceHandler(TestCase):
     """
 
     def common_setup(self, closure_requested: bool):
-        self.indication_cfg = LocalIndicationCfg(True, True, True, True, True, True)
+        self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
         self.local_cfg = LocalEntityCfg(
             ByteFieldU16(1), self.indication_cfg, self.fault_handler

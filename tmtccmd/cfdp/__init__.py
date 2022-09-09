@@ -6,5 +6,5 @@ from .mib import (
     LocalEntityCfg,
     RemoteEntityCfgTable,
     RemoteEntityCfg,
-    LocalIndicationCfg,
+    IndicationCfg,
 )

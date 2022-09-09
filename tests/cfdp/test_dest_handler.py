@@ -27,7 +27,7 @@ from spacepackets.cfdp.pdu import (
 from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp import (
-    LocalIndicationCfg,
+    IndicationCfg,
     LocalEntityCfg,
     RemoteEntityCfgTable,
     RemoteEntityCfg,
@@ -53,7 +53,7 @@ class FileInfo:
 
 class TestCfdpDestHandler(TestCase):
     def setUp(self) -> None:
-        self.indication_cfg = LocalIndicationCfg(True, True, True, True, True, True)
+        self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
         self.entity_id = ByteFieldU16(2)
         self.local_cfg = LocalEntityCfg(

@@ -12,7 +12,6 @@ from tmtccmd.logging import get_console_logger
 from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
 from .hook import TmTcCfgHookBase
 
-
 LOGGER = get_console_logger()
 
 
@@ -46,6 +45,12 @@ class DefProcedureParams:
 
 
 @dataclass
+class CfdpParams:
+    source: str
+    target: str
+
+
+@dataclass
 class TcParams:
     delay: float = 0.0
     apid: int = 0
@@ -70,12 +75,10 @@ class AppParams:
 class SetupParams:
     def __init__(
         self,
-        def_proc_args: Optional[DefProcedureParams] = None,
         tc_params: Optional[TcParams] = None,
         backend_params: Optional[BackendParams] = None,
         app_params: Optional[AppParams] = None,
     ):
-        self.def_proc_args = def_proc_args
         if tc_params is None:
             self.tc_params = TcParams()
         if backend_params is None:
@@ -299,6 +302,7 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
 
 def find_service_and_op_code(
     params: SetupParams,
+    def_params: DefProcedureParams,
     hook_obj: TmTcCfgHookBase,
     pargs: argparse.Namespace,
     use_prompts: bool,
@@ -309,43 +313,29 @@ def find_service_and_op_code(
             print("No service argument (-s) specified, prompting from user")
             # Try to get the service list from the hook base and prompt service
             # from user
-            params.def_proc_args.service = prompt_service(
-                tmtc_defs, params.app_params.compl_style
-            )
+            params.service = prompt_service(tmtc_defs, params.app_params.compl_style)
     else:
-        params.def_proc_args.service = pargs.service
+        def_params.service = pargs.service
     if pargs.op_code is None:
-        current_service = params.def_proc_args.service
+        current_service = def_params.service
         if use_prompts:
-            params.def_proc_args.op_code = prompt_op_code(
+            def_params.op_code = prompt_op_code(
                 tmtc_defs, current_service, params.app_params.compl_style
             )
     else:
-        params.def_proc_args.op_code = pargs.op_code
+        def_params.op_code = pargs.op_code
 
 
-def args_to_params(
+def args_to_params_generic(
     pargs: argparse.Namespace,
     params: SetupParams,
     hook_obj: TmTcCfgHookBase,
     use_prompts: bool,
 ):
-    """If some arguments are unspecified, they are set here with (variable) default values.
-
-    :param pargs: Parsed arguments from calling parse method
-    :param params: Setup parameter object which will be set by this function
-    :param hook_obj:
-    :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
-        arguments. For something like a GUI, it might make sense to disable this
-    :return: None
-    """
-    from tmtccmd.com_if.utils import determine_com_if
-
     if pargs.gui is None:
         params.app_params.use_gui = False
     else:
         params.app_params.use_gui = pargs.gui
-    params.backend_params.listener = pargs.listener
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
         params.com_if_id = determine_com_if(
             hook_obj.get_com_if_dict(), hook_obj.json_cfg_path, use_prompts
@@ -353,6 +343,37 @@ def args_to_params(
     else:
         # TODO: Check whether COM IF is valid?
         params.com_if_id = pargs.com_if
+
+
+def args_to_params_cfdp(
+    pargs: argparse.Namespace,
+    params: SetupParams,
+    cfdp_params: CfdpParams,
+    hook_obj: TmTcCfgHookBase,
+    use_prompts: bool,
+):
+    args_to_params_generic(pargs, params, hook_obj, use_prompts)
+
+
+def args_to_params_tmtc(
+    pargs: argparse.Namespace,
+    params: SetupParams,
+    def_params: DefProcedureParams,
+    hook_obj: TmTcCfgHookBase,
+    use_prompts: bool,
+):
+    """If some arguments are unspecified, they are set here with (variable) default values.
+
+    :param def_params: Default procedure parameter class
+    :param pargs: Parsed arguments from calling parse method
+    :param params: Setup parameter object which will be set by this function
+    :param hook_obj:
+    :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
+        arguments. For something like a GUI, it might make sense to disable this
+    :return: None
+    """
+    params.backend_params.listener = pargs.listener
+    args_to_params_generic(pargs, params, hook_obj, use_prompts)
     mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
@@ -372,7 +393,11 @@ def args_to_params(
     else:
         if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
             find_service_and_op_code(
-                params=params, hook_obj=hook_obj, use_prompts=use_prompts, pargs=pargs
+                params=params,
+                hook_obj=hook_obj,
+                use_prompts=use_prompts,
+                pargs=pargs,
+                def_params=def_params,
             )
     if pargs.delay is None:
         if params.backend_params.mode == CoreModeConverter.get_str(
@@ -493,38 +518,81 @@ class ArgParserWrapper:
             return False
         return self.args_raw.gui
 
-    def set_params(self, params: SetupParams):
-        """Set up the parameter object from the parsed arguments. This call auto-determines whether
-        prompts should be used depending on whether the GUI flag was passed or not.
-
-        :raise Value Error: Parse function call missing
-        """
-        if not self._parse_was_called:
-            raise ValueError("Call the parse function first")
-        if self.args_raw.gui:
-            self.set_params_without_prompts(params)
-        else:
-            self.set_params_with_prompts(params)
-
     def set_params_without_prompts(self, params: SetupParams):
         if not self._parse_was_called:
             raise ValueError("Call the parse function first")
-        args_to_params(
+        if self.args_raw.proc_type is None:
+            raise ValueError(
+                'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
+            )
+        params_setup_func = None
+
+        if self.args_raw.proc_type == "tmtc":
+            params_setup_func = args_to_params_tmtc
+        elif self.args_raw.proc_type == "cfdp":
+            params_setup_func = args_to_params_cfdp
+        params_setup_func(
             pargs=self.args_raw,
             params=params,
             hook_obj=self.hook_obj,
             use_prompts=False,
         )
 
-    def set_params_with_prompts(self, params: SetupParams):
+    def set_cfdp_params_with_prompts(
+        self, params: SetupParams, cfdp_params: CfdpParams
+    ):
+        self._set_cfdp_params(params, cfdp_params, True)
+
+    def set_cfdp_params_without_prompts(
+        self, params: SetupParams, cfdp_params: CfdpParams
+    ):
+        self._set_cfdp_params(params, cfdp_params, False)
+
+    def set_tmtc_params_with_prompts(
+        self, params: SetupParams, tmtc_params: DefProcedureParams
+    ):
+        self._set_tmtc_params(params, tmtc_params, True)
+
+    def set_tmtc_params_without_prompts(
+        self, params: SetupParams, tmtc_params: DefProcedureParams
+    ):
+        """Set up the parameter object from the parsed arguments. This call auto-determines whether
+        prompts should be used depending on whether the GUI flag was passed or not.
+
+        :raise Value Error: Parse function call missing
+        """
+        self._set_tmtc_params(params, tmtc_params, False)
+
+    def _set_tmtc_params(
+        self, params: SetupParams, tmtc_params: DefProcedureParams, use_prompts: bool
+    ):
         if not self._parse_was_called:
             raise ValueError("Call the parse function first")
         try:
-            args_to_params(
+            args_to_params_tmtc(
                 pargs=self.args_raw,
+                def_params=tmtc_params,
                 params=params,
                 hook_obj=self.hook_obj,
-                use_prompts=True,
+                use_prompts=use_prompts,
+            )
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt(
+                "Keyboard interrupt while converting CLI args to application parameters"
+            )
+
+    def _set_cfdp_params(
+        self, params: SetupParams, cfdp_params: CfdpParams, use_prompts: bool
+    ):
+        if not self._parse_was_called:
+            raise ValueError("Call the parse function first")
+        try:
+            args_to_params_cfdp(
+                pargs=self.args_raw,
+                cfdp_params=cfdp_params,
+                params=params,
+                hook_obj=self.hook_obj,
+                use_prompts=use_prompts,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
