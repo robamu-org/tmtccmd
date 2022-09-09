@@ -12,9 +12,10 @@ from tmtccmd.config import (
     backend_mode_conversion,
     SetupWrapper,
     SetupParams,
-    ArgParserWrapper,
+    PreArgsParsingWrapper,
     CoreModeConverter,
     CoreModeList,
+    DefProcedureParams,
 )
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
@@ -201,8 +202,12 @@ def create_default_tmtc_backend(
     tmtc_backend.inter_cmd_delay = timedelta(
         seconds=setup_wrapper.params.tc_params.delay
     )
-    tmtc_backend.current_procedure = DefaultProcedureInfo(
-        setup_wrapper.params.def_proc_args.service,
-        setup_wrapper.params.def_proc_args.op_code,
-    )
     return tmtc_backend
+
+
+def setup_backend_def_procedure(
+    backend: CcsdsTmtcBackend, tmtc_params: DefProcedureParams
+):
+    backend.current_procedure = DefaultProcedureInfo(
+        tmtc_params.service, tmtc_params.op_code
+    )

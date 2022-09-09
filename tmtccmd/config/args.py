@@ -1,7 +1,7 @@
 """Argument parser module"""
 import argparse
 import sys
-from typing import Optional, List, Sequence
+from typing import Optional, List, Sequence, cast
 from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
@@ -11,6 +11,7 @@ from tmtccmd.logging import get_console_logger
 
 from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
 from .hook import TmTcCfgHookBase
+from ..tc import TcProcedureType
 
 LOGGER = get_console_logger()
 
@@ -38,16 +39,38 @@ def create_default_args_parser(
     )
 
 
-@dataclass
-class DefProcedureParams:
-    service: str
-    op_code: str
+class ProcedureParamsBase:
+    def __init__(self, ptype: TcProcedureType):
+        self.ptype = ptype
 
 
-@dataclass
-class CfdpParams:
-    source: str
-    target: str
+class DefProcedureParams(ProcedureParamsBase):
+    def __init__(self):
+        super().__init__(TcProcedureType.DEFAULT)
+        self.service = ""
+        self.op_code = ""
+
+
+class CfdpParams(ProcedureParamsBase):
+    def __init__(self):
+        super().__init__(TcProcedureType.CFDP)
+        self.source = ""
+        self.target = ""
+
+
+class ProcedureParamsWrapper:
+    def __init__(self):
+        self.base: Optional[ProcedureParamsBase] = None
+
+    @property
+    def ptype(self) -> TcProcedureType:
+        return self.base.ptype
+
+    def to_def_params(self) -> DefProcedureParams:
+        return cast(DefProcedureParams, self.base)
+
+    def to_cfdp_params(self) -> CfdpParams:
+        return cast(CfdpParams, self.base)
 
 
 @dataclass
@@ -387,7 +410,6 @@ def args_to_params_tmtc(
     ):
         params.mode = CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
     tmtc_defs = hook_obj.get_tmtc_definitions()
-    params.def_proc_args = DefProcedureParams("0", "0")
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
     else:
@@ -410,15 +432,123 @@ def args_to_params_tmtc(
         params.tc_params.delay = float(pargs.delay)
 
 
-class ArgParserWrapper:
-    def __init__(self, hook_obj: TmTcCfgHookBase):
+class PostArgsParsingWrapper:
+    def __init__(
+        self,
+        args_raw: argparse.Namespace,
+        unknown_args: List[str],
+        hook_obj: TmTcCfgHookBase,
+    ):
+        self.args_raw = args_raw
+        self.unknown_args = unknown_args
+        self.hook_obj = hook_obj
+
+    @property
+    def use_gui(self):
+        """This only yields valid values if :py:meth:`parse` was called once"""
+        return self.args_raw.gui
+
+    def request_type_from_args(self) -> TcProcedureType:
+        if self.args_raw.proc_type == "tmtc":
+            return TcProcedureType.DEFAULT
+        elif self.args_raw.proc_type == "cfdp":
+            return TcProcedureType.CFDP
+        else:
+            raise ValueError(
+                'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
+            )
+
+    def set_params_with_prompts(
+        self, params: SetupParams, proc_base: ProcedureParamsWrapper
+    ):
+        self._set_params(params, proc_base, True)
+
+    def set_params_without_prompts(
+        self, params: SetupParams, proc_base: ProcedureParamsWrapper
+    ):
+        self._set_params(params, proc_base, False)
+
+    def _set_params(
+        self, params: SetupParams, proc_base: ProcedureParamsWrapper, with_prompts: bool
+    ):
+        param_type = self.request_type_from_args()
+        if param_type == TcProcedureType.DEFAULT:
+            proc_base.base = DefProcedureParams()
+            if with_prompts:
+                self.set_tmtc_params_with_prompts(params, proc_base.base)
+            else:
+                self.set_tmtc_params_without_prompts(params, proc_base.base)
+        elif param_type == TcProcedureType.CFDP:
+            proc_base.base = CfdpParams()
+            if with_prompts:
+                self.set_cfdp_params_with_prompts(params, proc_base.base)
+            else:
+                self.set_cfdp_params_without_prompts(params, proc_base.base)
+
+    def set_cfdp_params_with_prompts(
+        self, params: SetupParams, cfdp_params: CfdpParams
+    ):
+        self._set_cfdp_params(params, cfdp_params, True)
+
+    def set_cfdp_params_without_prompts(
+        self, params: SetupParams, cfdp_params: CfdpParams
+    ):
+        self._set_cfdp_params(params, cfdp_params, False)
+
+    def set_tmtc_params_with_prompts(
+        self, params: SetupParams, tmtc_params: DefProcedureParams
+    ):
+        self._set_tmtc_params(params, tmtc_params, True)
+
+    def set_tmtc_params_without_prompts(
+        self, params: SetupParams, tmtc_params: DefProcedureParams
+    ):
+        """Set up the parameter object from the parsed arguments. This call auto-determines whether
+        prompts should be used depending on whether the GUI flag was passed or not.
+
+        :raise Value Error: Parse function call missing
+        """
+        self._set_tmtc_params(params, tmtc_params, False)
+
+    def _set_tmtc_params(
+        self, params: SetupParams, tmtc_params: DefProcedureParams, use_prompts: bool
+    ):
+        try:
+            args_to_params_tmtc(
+                pargs=self.args_raw,
+                def_params=tmtc_params,
+                params=params,
+                hook_obj=self.hook_obj,
+                use_prompts=use_prompts,
+            )
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt(
+                "Keyboard interrupt while converting CLI args to application parameters"
+            )
+
+    def _set_cfdp_params(
+        self, params: SetupParams, cfdp_params: CfdpParams, use_prompts: bool
+    ):
+        try:
+            args_to_params_cfdp(
+                pargs=self.args_raw,
+                cfdp_params=cfdp_params,
+                params=params,
+                hook_obj=self.hook_obj,
+                use_prompts=use_prompts,
+            )
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt(
+                "Keyboard interrupt while converting CLI args to application parameters"
+            )
+
+
+class PreArgsParsingWrapper:
+    def __init__(self):
         self.parent_parser: Optional[argparse.ArgumentParser] = None
         self.args_parser: Optional[argparse.ArgumentParser] = None
         self.print_known_args = False
         self.print_unknown_args = False
-        self.hook_obj = hook_obj
-        self.unknown_args = [""]
-        self.args_raw = None
         self._parse_was_called = False
         self._monkey_patch_missing_subparser = False
 
@@ -441,34 +571,33 @@ class ArgParserWrapper:
             self.parent_parser, descript_txt=None
         )
 
-    def parse(self):
+    def parse(self, hook_obj: TmTcCfgHookBase) -> PostArgsParsingWrapper:
         if self.parent_parser is None:
             raise ValueError(
                 "Create parser with create_default_parser or assign a parser first"
             )
         """Parse all CLI arguments with the given argument parser"""
-        if not self._parse_was_called:
-            patched_args = None
-            if self._monkey_patch_missing_subparser:
-                if (
-                    len(sys.argv) > 1
-                    and sys.argv[1] not in ["cfdp", "tmtc", "-h", "--help"]
-                    or len(sys.argv) == 1
-                ):
-                    print(
-                        "No procedure type specified, inserting 'tmtc' into passed arguments"
-                    )
-                    patched_args = ["tmtc"]
-                    patched_args.extend(sys.argv[1:])
-            if patched_args is None:
-                patched_args = sys.argv[1:]
-            self.args_raw, self.unknown_args = parse_default_tmtccmd_input_arguments(
-                args=patched_args,
-                parser=self.args_parser,
-                print_known_args=self.print_known_args,
-                print_unknown_args=self.print_unknown_args,
-            )
-        self._parse_was_called = True
+        patched_args = None
+        if self._monkey_patch_missing_subparser:
+            if (
+                len(sys.argv) > 1
+                and sys.argv[1] not in ["cfdp", "tmtc", "-h", "--help"]
+                or len(sys.argv) == 1
+            ):
+                print(
+                    "No procedure type specified, inserting 'tmtc' into passed arguments"
+                )
+                patched_args = ["tmtc"]
+                patched_args.extend(sys.argv[1:])
+        if patched_args is None:
+            patched_args = sys.argv[1:]
+        args_raw, unknown_args = parse_default_tmtccmd_input_arguments(
+            args=patched_args,
+            parser=self.args_parser,
+            print_known_args=self.print_known_args,
+            print_unknown_args=self.print_unknown_args,
+        )
+        return PostArgsParsingWrapper(args_raw, unknown_args, hook_obj)
 
     def add_def_proc_args(self):
         """Add the default tmtc procedure parameters to the default parser. This includes
@@ -510,91 +639,3 @@ class ArgParserWrapper:
             parents=[self.parent_parser],
         )
         add_cfdp_procedure_arguments(cfdp_parser)
-
-    @property
-    def use_gui(self):
-        """This only yields valid values if :py:meth:`parse` was called once"""
-        if not self._parse_was_called:
-            return False
-        return self.args_raw.gui
-
-    def set_params_without_prompts(self, params: SetupParams):
-        if not self._parse_was_called:
-            raise ValueError("Call the parse function first")
-        if self.args_raw.proc_type is None:
-            raise ValueError(
-                'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
-            )
-        params_setup_func = None
-
-        if self.args_raw.proc_type == "tmtc":
-            params_setup_func = args_to_params_tmtc
-        elif self.args_raw.proc_type == "cfdp":
-            params_setup_func = args_to_params_cfdp
-        params_setup_func(
-            pargs=self.args_raw,
-            params=params,
-            hook_obj=self.hook_obj,
-            use_prompts=False,
-        )
-
-    def set_cfdp_params_with_prompts(
-        self, params: SetupParams, cfdp_params: CfdpParams
-    ):
-        self._set_cfdp_params(params, cfdp_params, True)
-
-    def set_cfdp_params_without_prompts(
-        self, params: SetupParams, cfdp_params: CfdpParams
-    ):
-        self._set_cfdp_params(params, cfdp_params, False)
-
-    def set_tmtc_params_with_prompts(
-        self, params: SetupParams, tmtc_params: DefProcedureParams
-    ):
-        self._set_tmtc_params(params, tmtc_params, True)
-
-    def set_tmtc_params_without_prompts(
-        self, params: SetupParams, tmtc_params: DefProcedureParams
-    ):
-        """Set up the parameter object from the parsed arguments. This call auto-determines whether
-        prompts should be used depending on whether the GUI flag was passed or not.
-
-        :raise Value Error: Parse function call missing
-        """
-        self._set_tmtc_params(params, tmtc_params, False)
-
-    def _set_tmtc_params(
-        self, params: SetupParams, tmtc_params: DefProcedureParams, use_prompts: bool
-    ):
-        if not self._parse_was_called:
-            raise ValueError("Call the parse function first")
-        try:
-            args_to_params_tmtc(
-                pargs=self.args_raw,
-                def_params=tmtc_params,
-                params=params,
-                hook_obj=self.hook_obj,
-                use_prompts=use_prompts,
-            )
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt(
-                "Keyboard interrupt while converting CLI args to application parameters"
-            )
-
-    def _set_cfdp_params(
-        self, params: SetupParams, cfdp_params: CfdpParams, use_prompts: bool
-    ):
-        if not self._parse_was_called:
-            raise ValueError("Call the parse function first")
-        try:
-            args_to_params_cfdp(
-                pargs=self.args_raw,
-                cfdp_params=cfdp_params,
-                params=params,
-                hook_obj=self.hook_obj,
-                use_prompts=use_prompts,
-            )
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt(
-                "Keyboard interrupt while converting CLI args to application parameters"
-            )

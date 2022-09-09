@@ -22,7 +22,7 @@ from tmtccmd.config import (
     CoreServiceList,
     OpCodeEntry,
 )
-from tmtccmd.config import ArgParserWrapper, SetupWrapper
+from tmtccmd.config import PreArgsParsingWrapper, SetupWrapper
 from tmtccmd.core import BackendController, BackendRequest
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
@@ -220,7 +220,7 @@ class TcHandler(TcHandlerBase):
 def main():
     tmtccmd.init_printout(False)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
-    parser_wrapper = ArgParserWrapper(hook_obj)
+    parser_wrapper = PreArgsParsingWrapper(hook_obj)
     parser_wrapper.create_default_parent_parser()
     parser_wrapper.create_default_parser()
     parser_wrapper.add_def_proc_args()

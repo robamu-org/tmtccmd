@@ -10,7 +10,7 @@ from .args import (
     add_default_tmtccmd_args,
     parse_default_tmtccmd_input_arguments,
     DefProcedureParams,
-    ArgParserWrapper,
+    PreArgsParsingWrapper,
 )
 from .defs import (
     CoreModeList,
