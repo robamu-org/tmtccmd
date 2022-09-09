@@ -189,8 +189,8 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
         "--type",
         help=(
             "Specify the transfer type\n"
-            ' - "0" or "nak" for unacknowledged (Class 0) transfers. Default value\n'
-            ' - "1" or "ack" for acknowledged (Class 1) transfers'
+            ' - "0" or "ack" for unacknowledged (Class 0) transfers\n'
+            ' - "1" or "nak" for acknowledged (Class 1) transfers. Default value'
         ),
         default="nak",
     )
@@ -210,8 +210,8 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "--listener",
         help=(
             "The backend will be configured to go into listener mode after finishing the\n"
-            "first queue.if a service argument is specified. If this flag is specified\n"
-            "without the -s flag and none of the queue modes are specified explicitely,\n"
+            "first queue if a service argument is specified. If this flag is specified\n"
+            "without the -s flag and none of the queue modes are specified explicitly,\n"
             "the mode will be set to the listener mode"
         ),
         action="store_true",
