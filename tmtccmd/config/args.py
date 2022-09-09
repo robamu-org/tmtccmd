@@ -58,11 +58,15 @@ class ProcedureParamsWrapper:
         self.ptype = TcProcedureType.CUSTOM
         self.params = None
 
-    def def_params(self) -> DefProcedureParams:
-        return self.params
+    def def_params(self) -> Optional[DefProcedureParams]:
+        if self.ptype == TcProcedureType.DEFAULT:
+            return self.params
+        return None
 
-    def cfdp_params(self) -> CfdpParams:
-        return self.params
+    def cfdp_params(self) -> Optional[CfdpParams]:
+        if self.ptype == TcProcedureType.CFDP:
+            return self.params
+        return None
 
 
 @dataclass
