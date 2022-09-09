@@ -16,7 +16,7 @@ from tmtccmd.config import (
     PreArgsParsingWrapper,
     CoreModeConverter,
     CoreModeList,
-    DefProcedureParams,
+    DefaultProcedureParams,
 )
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
@@ -213,7 +213,7 @@ def create_default_tmtc_backend(
 
 
 def setup_backend_def_procedure(
-    backend: CcsdsTmtcBackend, tmtc_params: DefProcedureParams
+    backend: CcsdsTmtcBackend, tmtc_params: DefaultProcedureParams
 ):
     backend.current_procedure = DefaultProcedureInfo(
         tmtc_params.service, tmtc_params.op_code

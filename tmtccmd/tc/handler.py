@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 
 from tmtccmd.com_if import ComInterface
-from tmtccmd.tc import ProcedureHelper
+from tmtccmd.tc import ProcedureWrapper
 from tmtccmd.tc.queue import QueueHelperBase, QueueWrapper, QueueEntryHelper
 
 
@@ -27,7 +27,7 @@ class SendCbParams:
     """Wrapper for all important parameters passed to the TC send callback"""
 
     def __init__(
-        self, info: ProcedureHelper, entry: QueueEntryHelper, com_if: ComInterface
+        self, info: ProcedureWrapper, entry: QueueEntryHelper, com_if: ComInterface
     ):
         """
         :param info: Procedure info about the procedure this queue entry is related too
@@ -75,11 +75,11 @@ class TcHandlerBase(ABC):
         pass
 
     @abstractmethod
-    def queue_finished_cb(self, info: ProcedureHelper):
+    def queue_finished_cb(self, info: ProcedureWrapper):
         pass
 
     @abstractmethod
-    def feed_cb(self, info: ProcedureHelper, wrapper: FeedWrapper):
+    def feed_cb(self, info: ProcedureWrapper, wrapper: FeedWrapper):
         """This function will be called to retrieve a telecommand queue from the user code, based
         on a procedure. The passed feed wrapper can be used to set the TC queue or other
         parameter like the inter-packet delay.

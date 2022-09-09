@@ -17,7 +17,7 @@ from .procedure import (
     TcProcedureType,
     DefaultProcedureInfo,
     CustomProcedureInfo,
-    ProcedureHelper,
+    ProcedureWrapper,
 )
 
 from .handler import FeedWrapper, TcHandlerBase, SendCbParams

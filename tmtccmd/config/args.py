@@ -1,11 +1,13 @@
 """Argument parser module"""
 import argparse
 import sys
-from typing import Optional, List, Sequence, cast
+from pathlib import Path
+from typing import Optional, List, Sequence, Union
 from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
 
+from spacepackets.cfdp import TransmissionModes
 from tmtccmd.com_if.utils import determine_com_if
 from tmtccmd.tc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
@@ -42,7 +44,7 @@ def create_default_args_parser(
 
 
 @dataclass
-class DefProcedureParams:
+class DefaultProcedureParams:
     service = ""
     op_code = ""
 
@@ -51,21 +53,35 @@ class DefProcedureParams:
 class CfdpParams:
     source = ""
     target = ""
+    closure_requested = False
+    transmission_mode = TransmissionModes.UNACKNOWLEDGED
 
 
 class ProcedureParamsWrapper:
     def __init__(self):
-        self.ptype = TcProcedureType.CUSTOM
-        self.params = None
+        self._ptype = TcProcedureType.CUSTOM
+        self._params = None
 
-    def def_params(self) -> Optional[DefProcedureParams]:
-        if self.ptype == TcProcedureType.DEFAULT:
-            return self.params
+    @property
+    def ptype(self):
+        return self._ptype
+
+    def set_params(self, params: Union[DefaultProcedureParams, CfdpParams]):
+        if isinstance(params, DefaultProcedureParams):
+            self._params = params
+            self._ptype = TcProcedureType.DEFAULT
+        elif isinstance(params, CfdpParams):
+            self._params = params
+            self._ptype = TcProcedureType.CFDP
+
+    def def_params(self) -> Optional[DefaultProcedureParams]:
+        if self._ptype == TcProcedureType.DEFAULT:
+            return self._params
         return None
 
     def cfdp_params(self) -> Optional[CfdpParams]:
-        if self.ptype == TcProcedureType.CFDP:
-            return self.params
+        if self._ptype == TcProcedureType.CFDP:
+            return self._params
         return None
 
 
@@ -222,6 +238,7 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
         "--no-closure",
         help="Disable the requesting of transaction closure",
         action="store_true",
+        dest="no_closure",
     )
 
 
@@ -321,7 +338,7 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
 
 def find_service_and_op_code(
     params: SetupParams,
-    def_params: DefProcedureParams,
+    def_params: DefaultProcedureParams,
     hook_obj: TmTcCfgHookBase,
     pargs: argparse.Namespace,
     use_prompts: bool,
@@ -332,7 +349,9 @@ def find_service_and_op_code(
             print("No service argument (-s) specified, prompting from user")
             # Try to get the service list from the hook base and prompt service
             # from user
-            params.service = prompt_service(tmtc_defs, params.app_params.compl_style)
+            def_params.service = prompt_service(
+                tmtc_defs, params.app_params.compl_style
+            )
     else:
         def_params.service = pargs.service
     if pargs.op_code is None:
@@ -360,7 +379,6 @@ def args_to_params_generic(
             hook_obj.get_com_if_dict(), hook_obj.json_cfg_path, use_prompts
         )
     else:
-        # TODO: Check whether COM IF is valid?
         params.com_if_id = pargs.com_if
 
 
@@ -372,21 +390,28 @@ def args_to_params_cfdp(
     use_prompts: bool,
 ):
     args_to_params_generic(pargs, params, hook_obj, use_prompts)
+    cfdp_params.source = pargs.source
+    cfdp_params.target = pargs.target
+    cfdp_params.closure_requested = pargs.no_closure
+    if pargs.type in ["0", "nak"]:
+        cfdp_params.transmission_mode = TransmissionModes.UNACKNOWLEDGED
+    elif pargs.type in ["1", "ack"]:
+        cfdp_params.transmission_mode = TransmissionModes.ACKNOWLEDGED
 
 
 def args_to_params_tmtc(
     pargs: argparse.Namespace,
     params: SetupParams,
-    def_params: DefProcedureParams,
+    def_tmtc_params: DefaultProcedureParams,
     hook_obj: TmTcCfgHookBase,
     use_prompts: bool,
 ):
     """If some arguments are unspecified, they are set here with (variable) default values.
 
-    :param def_params: Default procedure parameter class
     :param pargs: Parsed arguments from calling parse method
     :param params: Setup parameter object which will be set by this function
     :param hook_obj:
+    :param def_tmtc_params:
     :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
         arguments. For something like a GUI, it might make sense to disable this
     :return: None
@@ -415,7 +440,7 @@ def args_to_params_tmtc(
                 hook_obj=hook_obj,
                 use_prompts=use_prompts,
                 pargs=pargs,
-                def_params=def_params,
+                def_params=def_tmtc_params,
             )
     if pargs.delay is None:
         if params.backend_params.mode == CoreModeConverter.get_str(
@@ -469,17 +494,19 @@ class PostArgsParsingWrapper:
     ):
         param_type = self.request_type_from_args()
         if param_type == TcProcedureType.DEFAULT:
-            proc_base.params = DefProcedureParams()
+            def_proc_params = DefaultProcedureParams()
             if with_prompts:
-                self.set_tmtc_params_with_prompts(params, proc_base.params)
+                self.set_tmtc_params_with_prompts(params, def_proc_params)
             else:
-                self.set_tmtc_params_without_prompts(params, proc_base.params)
+                self.set_tmtc_params_without_prompts(params, def_proc_params)
+            proc_base.set_params(def_proc_params)
         elif param_type == TcProcedureType.CFDP:
-            proc_base.base = CfdpParams()
+            cfdp_params = CfdpParams()
             if with_prompts:
-                self.set_cfdp_params_with_prompts(params, proc_base.base)
+                self.set_cfdp_params_with_prompts(params, cfdp_params)
             else:
-                self.set_cfdp_params_without_prompts(params, proc_base.base)
+                self.set_cfdp_params_without_prompts(params, cfdp_params)
+            proc_base.set_params(cfdp_params)
 
     def set_cfdp_params_with_prompts(
         self, params: SetupParams, cfdp_params: CfdpParams
@@ -492,12 +519,12 @@ class PostArgsParsingWrapper:
         self._set_cfdp_params(params, cfdp_params, False)
 
     def set_tmtc_params_with_prompts(
-        self, params: SetupParams, tmtc_params: DefProcedureParams
+        self, params: SetupParams, tmtc_params: DefaultProcedureParams
     ):
         self._set_tmtc_params(params, tmtc_params, True)
 
     def set_tmtc_params_without_prompts(
-        self, params: SetupParams, tmtc_params: DefProcedureParams
+        self, params: SetupParams, tmtc_params: DefaultProcedureParams
     ):
         """Set up the parameter object from the parsed arguments. This call auto-determines whether
         prompts should be used depending on whether the GUI flag was passed or not.
@@ -507,15 +534,18 @@ class PostArgsParsingWrapper:
         self._set_tmtc_params(params, tmtc_params, False)
 
     def _set_tmtc_params(
-        self, params: SetupParams, tmtc_params: DefProcedureParams, use_prompts: bool
+        self,
+        params: SetupParams,
+        def_tmtc_params: DefaultProcedureParams,
+        use_prompts: bool,
     ):
         try:
             args_to_params_tmtc(
                 pargs=self.args_raw,
-                def_params=tmtc_params,
                 params=params,
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
+                def_tmtc_params=def_tmtc_params,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(

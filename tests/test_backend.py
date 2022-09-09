@@ -12,7 +12,7 @@ from tmtccmd.tc import (
     TcProcedureBase,
     DefaultProcedureInfo,
     TcProcedureType,
-    ProcedureHelper,
+    ProcedureWrapper,
 )
 from tmtccmd.tc.handler import FeedWrapper, SendCbParams
 from tmtccmd.tc.queue import DefaultPusQueueHelper
@@ -37,7 +37,7 @@ class TcHandlerMock(TcHandlerBase):
     def queue_finished_cb(self, info: TcProcedureBase):
         pass
 
-    def feed_cb(self, info: ProcedureHelper, wrapper: FeedWrapper):
+    def feed_cb(self, info: ProcedureWrapper, wrapper: FeedWrapper):
         self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         self.feed_cb_call_count += 1
         self.send_cb_service_arg = None

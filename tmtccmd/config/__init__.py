@@ -1,7 +1,10 @@
 """Definitions for the TMTC commander core
 """
+from pathlib import Path
 from typing import Optional
 
+from spacepackets.cfdp import TransmissionModes
+from spacepackets.util import UnsignedByteField, ByteFieldEmpty
 from tmtccmd.core import ModeWrapper, TmMode, TcMode
 
 from .args import (
@@ -9,9 +12,10 @@ from .args import (
     create_default_args_parser,
     add_default_tmtccmd_args,
     parse_default_tmtccmd_input_arguments,
-    DefProcedureParams,
+    DefaultProcedureParams,
     PreArgsParsingWrapper,
     ProcedureParamsWrapper,
+    CfdpParams,
 )
 from .defs import (
     CoreModeList,
@@ -25,6 +29,13 @@ from .defs import (
 from .prompt import prompt_op_code, prompt_service
 from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase
 from .hook import TmTcCfgHookBase
+from tmtccmd.tc.procedure import (
+    DefaultProcedureInfo,
+    CfdpProcedureInfo,
+    TcProcedureType,
+    ProcedureWrapper,
+)
+from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
@@ -90,3 +101,33 @@ class SetupWrapper:
     @property
     def params(self):
         return self._params
+
+
+def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedureInfo:
+    return DefaultProcedureInfo(service=params.service, op_code=params.op_code)
+
+
+def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
+    proc_info = CfdpProcedureInfo()
+    put_req_cfg = PutRequestCfg(
+        destination_id=ByteFieldEmpty(),
+        source_file=Path(params.source),
+        dest_file=params.target,
+        closure_requested=False,
+        trans_mode=TransmissionModes.UNACKNOWLEDGED,
+    )
+    proc_info.request_wrapper.request = PutRequest(put_req_cfg)
+    return proc_info
+
+
+def params_to_procedure_conversion(
+    param_wrapper: ProcedureParamsWrapper,
+) -> ProcedureWrapper:
+    proc_wrapper = ProcedureWrapper(None)
+    if param_wrapper.ptype == TcProcedureType.DEFAULT:
+        proc_wrapper.base = tmtc_params_to_procedure(param_wrapper.def_params())
+    elif param_wrapper.ptype == TcProcedureType.CFDP:
+        proc_wrapper.base = cfdp_put_req_params_to_procedure(
+            param_wrapper.cfdp_params()
+        )
+    return proc_wrapper

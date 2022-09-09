@@ -7,7 +7,7 @@ from tmtccmd.tc import (
     TcQueueEntryBase,
     TcQueueEntryType,
     QueueEntryHelper,
-    ProcedureHelper,
+    ProcedureWrapper,
 )
 from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tc.queue import QueueWrapper
@@ -44,7 +44,7 @@ class SequentialCcsdsSender:
         """
         self._tc_handler = tc_handler
         self._queue_wrapper = queue_wrapper
-        self._proc_wrapper = ProcedureHelper(None)
+        self._proc_wrapper = ProcedureWrapper(None)
         self._mode = SenderMode.DONE
         self._wait_cd = Countdown(None)
         self._send_cd = Countdown(queue_wrapper.inter_cmd_delay)
@@ -147,7 +147,7 @@ class SequentialCcsdsSender:
             self.queue_wrapper.queue.popleft()
         if not self.queue_wrapper.queue and self.no_delay_remaining():
             self._tc_handler.queue_finished_cb(
-                ProcedureHelper(self._queue_wrapper.info)
+                ProcedureWrapper(self._queue_wrapper.info)
             )
             self._mode = SenderMode.DONE
 

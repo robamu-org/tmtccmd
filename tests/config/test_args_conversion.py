@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from tests.hook_obj_mock import create_hook_mock
 from tmtccmd import CoreModeList, CoreModeConverter
-from tmtccmd.config.args import args_to_params, SetupParams
+from tmtccmd.config.args import args_to_params_tmtc, SetupParams, DefaultProcedureParams
 
 
 class TestArgs(TestCase):
@@ -40,13 +40,22 @@ class TestArgs(TestCase):
         self.assertEqual(self.params.tc_params.delay, 0)
         self.assertEqual(self.params.backend_params.mode, "")
         self.assertEqual(self.params.backend_params.com_if_id, "")
-        args_to_params(self.pargs, self.params, self.hook_mock, False)
+        def_params = DefaultProcedureParams()
+        args_to_params_tmtc(
+            pargs=self.pargs,
+            params=self.params,
+            hook_obj=self.hook_mock,
+            use_prompts=False,
+            def_tmtc_params=def_params,
+        )
         # Set to default value
         self.assertEqual(self.params.tc_params.delay, 4.0)
         # Unset
         self.assertEqual(self.params.tc_params.apid, 0)
         self.assertEqual(self.params.app_params.use_gui, False)
         self.assertEqual(self.params.app_params.use_ansi_colors, True)
+        self.assertEqual(def_params.service, "17")
+        self.assertEqual(def_params.op_code, "ping")
         self.assertEqual(
             self.params.backend_params.mode,
             CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE),
@@ -57,13 +66,31 @@ class TestArgs(TestCase):
     def test_delay_set(self):
         self.simple_pargs_cli_set()
         self.pargs.delay = 2.0
-        args_to_params(self.pargs, self.params, self.hook_mock, False)
+        def_params = DefaultProcedureParams()
+        args_to_params_tmtc(
+            pargs=self.pargs,
+            params=self.params,
+            hook_obj=self.hook_mock,
+            use_prompts=False,
+            def_tmtc_params=def_params,
+        )
+        self.assertEqual(def_params.service, "17")
+        self.assertEqual(def_params.op_code, "ping")
         self.assertEqual(self.params.tc_params.delay, 2.0)
 
     def test_auto_listener_mode(self):
         self.auto_listener_cli_set()
-        args_to_params(self.pargs, self.params, self.hook_mock, False)
+        def_params = DefaultProcedureParams()
+        args_to_params_tmtc(
+            pargs=self.pargs,
+            params=self.params,
+            hook_obj=self.hook_mock,
+            use_prompts=False,
+            def_tmtc_params=def_params,
+        )
         self.assertEqual(self.params.backend_params.listener, True)
+        self.assertEqual(def_params.service, "")
+        self.assertEqual(def_params.op_code, "")
         self.assertEqual(
             self.params.backend_params.mode,
             CoreModeConverter.get_str(CoreModeList.LISTENER_MODE),

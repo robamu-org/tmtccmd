@@ -32,7 +32,7 @@ from tmtccmd.logging.pus import (
 )
 from tmtccmd.tc import (
     TcQueueEntryType,
-    ProcedureHelper,
+    ProcedureWrapper,
     TcProcedureType,
     FeedWrapper,
     SendCbParams,
@@ -195,7 +195,7 @@ class TcHandler(TcHandlerBase):
             log_entry = entry_helper.to_log_entry()
             LOGGER.info(log_entry.log_str)
 
-    def queue_finished_cb(self, helper: ProcedureHelper):
+    def queue_finished_cb(self, helper: ProcedureWrapper):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
             LOGGER.info(
@@ -203,7 +203,7 @@ class TcHandler(TcHandlerBase):
                 f"op code {def_proc.op_code}"
             )
 
-    def feed_cb(self, helper: ProcedureHelper, wrapper: FeedWrapper):
+    def feed_cb(self, helper: ProcedureWrapper, wrapper: FeedWrapper):
         self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()

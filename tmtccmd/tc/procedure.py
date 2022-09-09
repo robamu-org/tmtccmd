@@ -48,12 +48,15 @@ class CfdpProcedureInfo(TcProcedureBase):
         return self.request_wrapper.request
 
 
-class ProcedureHelper:
+class ProcedureWrapper:
     """Procedure helper class. It wraps the concrete procedure object but allows easily casting
     it to concrete types supported by the framework."""
 
     def __init__(self, base: Optional[TcProcedureBase]):
         self.base = base
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(base={self.base!r})"
 
     @property
     def proc_type(self):
