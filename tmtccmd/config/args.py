@@ -172,20 +172,32 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
     """TODO: Could be extended to support the various types of CFDP user primitives.
     Right now, the first thing to be implemented will be the put request"""
     parser_or_subparser.add_argument(
-        "file", help="Target file for the CFDP Put Request"
+        "source", help="Full Source Path for File Copy Procedures", nargs="?"
+    )
+    parser_or_subparser.add_argument(
+        "target", help="Full Destination Path for File Copy Procedures", nargs="?"
     )
     parser_or_subparser.add_argument(
         "-p",
         "--proxy",
-        help="Used to trigger a proxy operation at the remote CFDP entity.\n "
+        help="Used to trigger a proxy operation at the remote CFDP entity.\n"
         "Most commonly used to request a file from the remote entity.\n"
         "Please note that this inverses the meaning of the destination and file parameter.",
     )
     parser_or_subparser.add_argument(
-        "--dest",
-        dest="cfdp_dest",
-        help="CFDP file destination path",
-        default=None,
+        "-t",
+        "--type",
+        help=(
+            "Specify the transfer type\n"
+            ' - "0" or "nak" for unacknowledged (Class 0) transfers. Default value\n'
+            ' - "1" or "ack" for acknowledged (Class 1) transfers'
+        ),
+        default="nak",
+    )
+    parser_or_subparser.add_argument(
+        "--no-closure",
+        help="Disable the requesting of transaction closure",
+        action="store_true",
     )
 
 
@@ -196,10 +208,12 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-l",
         "--listener",
-        help="The backend will be configured to go into listener mode after "
-        "finishing the first queue\nif a service argument is specified. If this flag is specified\n"
-        "without the -s flag and none of the queue modes are specified explicitely,\n"
-        "the mode will be set to the listener mode",
+        help=(
+            "The backend will be configured to go into listener mode after finishing the\n"
+            "first queue.if a service argument is specified. If this flag is specified\n"
+            "without the -s flag and none of the queue modes are specified explicitely,\n"
+            "the mode will be set to the listener mode"
+        ),
         action="store_true",
         default=False,
     )
@@ -215,8 +229,11 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
         "-d",
         "--delay",
         type=float,
-        help="Default inter-packet delay. Default: 4.0 seconds for one queue mode, "
-        "0 for interactive mode",
+        help=(
+            "Default inter-packet delay. Default:\n"
+            " - Default One-Queue Mode: 4 seconds\n"
+            " - Multi-Queue Mode: 0 seconds"
+        ),
         default=None,
     )
 
@@ -226,17 +243,17 @@ def add_default_mode_arguments(arg_parser: argparse.ArgumentParser):
 
     help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
     one_q = (
-        f"{CoreModeList.ONE_QUEUE_MODE} or "
-        f"{CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}: "
+        f' - "{CoreModeList.ONE_QUEUE_MODE}" or '
+        f'"{CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}": '
         f"One Queue Command Mode\n"
     )
     listener_help = (
-        f"{CoreModeList.LISTENER_MODE} or {CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)}: "
-        f"Listener Mode\n"
+        f' - "{CoreModeList.LISTENER_MODE}" or '
+        f'"{CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)}": Listener Mode\n'
     )
     multi_q = (
-        f"{CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE} or "
-        f"{CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE)}: "
+        f' - "{CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE}" or '
+        f'"{CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE)}": '
         f"Multi Queue and Interactive Command Mode\n"
     )
     help_text += one_q + listener_help + multi_q
@@ -254,11 +271,11 @@ def add_default_com_if_arguments(arg_parser: argparse.ArgumentParser):
 
     help_text = (
         "Core Communication Interface. If this is not specified, the commander core\n"
-        "will try to extract it from the JSON or prompt it from the user. \n"
-        "Choices provided by framework: \n"
+        "will try to extract it from the JSON or prompt it from the user.\n"
+        "Choices provided by framework:\n"
     )
     for k, v in CORE_COM_IF_DICT.items():
-        help_text += f"{k}: {v[0]}\n"
+        help_text += f' - "{k}": {v[0]}\n'
     arg_parser.add_argument(
         "-c",
         "--com_if",

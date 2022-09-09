@@ -141,17 +141,17 @@ class RemoteEntityCfgTable:
     def __init__(self):
         self._remote_entity_dict = dict()
 
-    def add_remote_entity(self, cfg: RemoteEntityCfg) -> bool:
+    def add_config(self, cfg: RemoteEntityCfg) -> bool:
         if cfg.entity_id in self._remote_entity_dict:
             return False
         self._remote_entity_dict.update({cfg.entity_id: cfg})
         return True
 
-    def add_remote_entities(self, cfgs: Sequence[RemoteEntityCfg]):
+    def add_configs(self, cfgs: Sequence[RemoteEntityCfg]):
         for cfg in cfgs:
             if cfg.entity_id in self._remote_entity_dict:
                 continue
             self._remote_entity_dict.update({cfg.entity_id: cfg})
 
-    def get_remote_entity(self, remote_entity_id: UnsignedByteField) -> RemoteEntityCfg:
+    def get_cfg(self, remote_entity_id: UnsignedByteField) -> RemoteEntityCfg:
         return self._remote_entity_dict.get(remote_entity_id)

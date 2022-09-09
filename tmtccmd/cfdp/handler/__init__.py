@@ -118,9 +118,7 @@ class CfdpHandler:
         if self.state.source_handler_state != CfdpStates.IDLE:
             raise BusyError(f"Currently in {self.state}, can not handle put request")
         self._request_wrapper.base = put_request
-        remote_cfg = self.remote_cfg_table.get_remote_entity(
-            put_request.cfg.destination_id
-        )
+        remote_cfg = self.remote_cfg_table.get_cfg(put_request.cfg.destination_id)
         if remote_cfg is None:
             raise NoRemoteEntityCfgFound(put_request.cfg.destination_id)
         self._tx_handler.start_cfdp_transaction(

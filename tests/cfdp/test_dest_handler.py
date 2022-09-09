@@ -89,7 +89,7 @@ class TestCfdpDestHandler(TestCase):
             default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
             max_file_segment_len=self.file_segment_len,
         )
-        self.remote_cfg_table.add_remote_entity(self.remote_cfg)
+        self.remote_cfg_table.add_config(self.remote_cfg)
         self.dest_handler = DestHandler(
             self.local_cfg, self.cfdp_user, self.remote_cfg_table
         )

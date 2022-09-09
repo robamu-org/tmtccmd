@@ -175,7 +175,7 @@ class DestHandler:
             transaction_seq_num=metadata_pdu.transaction_seq_num,
         )
         self.states.transaction_id = self._params.transaction_id
-        self._params.remote_cfg = self.remote_cfg_table.get_remote_entity(
+        self._params.remote_cfg = self.remote_cfg_table.get_cfg(
             metadata_pdu.source_entity_id
         )
         # I am not fully sure whether a remote configuration is strictly required for
