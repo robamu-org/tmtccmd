@@ -41,38 +41,28 @@ def create_default_args_parser(
     )
 
 
-class ProcedureParamsBase:
-    def __init__(self, ptype: TcProcedureType):
-        self.ptype = ptype
+@dataclass
+class DefProcedureParams:
+    service = ""
+    op_code = ""
 
 
-class DefProcedureParams(ProcedureParamsBase):
-    def __init__(self):
-        super().__init__(TcProcedureType.DEFAULT)
-        self.service = ""
-        self.op_code = ""
-
-
-class CfdpParams(ProcedureParamsBase):
-    def __init__(self):
-        super().__init__(TcProcedureType.CFDP)
-        self.source = ""
-        self.target = ""
+@dataclass
+class CfdpParams:
+    source = ""
+    target = ""
 
 
 class ProcedureParamsWrapper:
     def __init__(self):
-        self.base: Optional[ProcedureParamsBase] = None
+        self.ptype = TcProcedureType.CUSTOM
+        self.params = None
 
-    @property
-    def ptype(self) -> TcProcedureType:
-        return self.base.ptype
+    def def_params(self) -> DefProcedureParams:
+        return self.params
 
-    def to_def_params(self) -> DefProcedureParams:
-        return cast(DefProcedureParams, self.base)
-
-    def to_cfdp_params(self) -> CfdpParams:
-        return cast(CfdpParams, self.base)
+    def cfdp_params(self) -> CfdpParams:
+        return self.params
 
 
 @dataclass
@@ -475,11 +465,11 @@ class PostArgsParsingWrapper:
     ):
         param_type = self.request_type_from_args()
         if param_type == TcProcedureType.DEFAULT:
-            proc_base.base = DefProcedureParams()
+            proc_base.params = DefProcedureParams()
             if with_prompts:
-                self.set_tmtc_params_with_prompts(params, proc_base.base)
+                self.set_tmtc_params_with_prompts(params, proc_base.params)
             else:
-                self.set_tmtc_params_without_prompts(params, proc_base.base)
+                self.set_tmtc_params_without_prompts(params, proc_base.params)
         elif param_type == TcProcedureType.CFDP:
             proc_base.base = CfdpParams()
             if with_prompts:
