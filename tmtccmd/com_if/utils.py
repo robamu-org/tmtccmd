@@ -3,7 +3,7 @@ import json
 from tmtccmd.logging import get_console_logger
 from tmtccmd.util.conf_util import wrapped_prompt
 from tmtccmd.util.json import check_json_file, JsonKeyNames
-from tmtccmd.config import ComIfDictT
+from tmtccmd.config.defs import ComIfDictT
 
 LOGGER = get_console_logger()
 

@@ -6,12 +6,14 @@ from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
 
+from tmtccmd.com_if.utils import determine_com_if
+from tmtccmd.tc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.logging import get_console_logger
 
 from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
 from .hook import TmTcCfgHookBase
-from ..tc import TcProcedureType
+
 
 LOGGER = get_console_logger()
 
