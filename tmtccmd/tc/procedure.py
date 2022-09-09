@@ -1,6 +1,8 @@
 import enum
 from typing import Any, cast, Type, Optional
 
+from tmtccmd.cfdp import CfdpRequestWrapper
+
 
 class TcProcedureType(enum.Enum):
     DEFAULT = 0
@@ -36,6 +38,16 @@ class DefaultProcedureInfo(TcProcedureBase):
         return f"CmdInfo(service={self.service!r}, op_code={self.op_code!r})"
 
 
+class CfdpProcedureInfo(TcProcedureBase):
+    def __init__(self):
+        super().__init__(TcProcedureType.CFDP)
+        self.request_wrapper = CfdpRequestWrapper(None)
+
+    @property
+    def cfdp_request_type(self):
+        return self.request_wrapper.request
+
+
 class ProcedureHelper:
     """Procedure helper class. It wraps the concrete procedure object but allows easily casting
     it to concrete types supported by the framework."""
@@ -60,6 +72,11 @@ class ProcedureHelper:
     def to_def_procedure(self) -> DefaultProcedureInfo:
         return self.__cast_internally(
             DefaultProcedureInfo, self.base, TcProcedureType.DEFAULT
+        )
+
+    def to_cfdp_procedure(self) -> CfdpProcedureInfo:
+        return self.__cast_internally(
+            CfdpProcedureInfo, self.base, TcProcedureType.CFDP
         )
 
     def to_custom_procedure(self) -> CustomProcedureInfo:

@@ -6,7 +6,7 @@ from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUser
 from spacepackets.cfdp.pdu.file_data import RecordContinuationState
 from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
 from spacepackets.util import UnsignedByteField
-from tmtccmd import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.cfdp.defs import TransactionId
 from tmtccmd.cfdp.filestore import VirtualFilestore, HostFilestore
 
