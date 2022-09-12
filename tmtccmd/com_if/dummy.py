@@ -14,9 +14,7 @@ from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreComInterfaces
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.tm.pus_1_verification import Subservices as Pus1Subservices
-from tmtccmd.tm.pus_17_test import Service17TmExtended
 from tmtccmd.tm.pus_17_test import Subservices as Pus17Subservices
 from tmtccmd.logging import get_console_logger
 

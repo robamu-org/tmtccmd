@@ -1,7 +1,6 @@
 import collections.abc
 import enum
 import pprint
-from typing import Union, List, Dict
 
 from spacepackets.ecss.conf import (
     set_default_tc_apid,
@@ -10,15 +9,14 @@ from spacepackets.ecss.conf import (
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import update_global, get_global
-from tmtccmd.config import (
+from tmtccmd.config.defs import (
     CoreModeList,
     CoreServiceList,
-    CoreModeConverter,
     CORE_COM_IF_DICT,
     CoreComInterfaces,
     ComIfDictT,
 )
-from tmtccmd.config.tmtc import TmtcDefinitionWrapper, OpCodeEntry
+from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 
 
 LOGGER = get_console_logger()

@@ -1,8 +1,7 @@
 import sys
 from typing import Optional, Tuple, cast
 
-from tmtccmd.com_if.dummy import DummyComIF
-from tmtccmd.config import CoreComInterfaces
+from tmtccmd.config.defs import CoreComInterfaces
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if import ComInterface
@@ -12,7 +11,7 @@ from tmtccmd.com_if.serial import (
     SerialComIF,
 )
 from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
-from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds, TcpIpType, EthAddr
+from tmtccmd.com_if.tcpip_utils import TcpIpType, EthAddr
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if.udp import UdpComIF
 from tmtccmd.com_if.tcp import TcpComIF, TcpCommunicationType

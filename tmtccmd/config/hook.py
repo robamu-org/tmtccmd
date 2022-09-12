@@ -2,11 +2,11 @@ from typing import Optional
 from abc import abstractmethod, ABC
 
 from tmtccmd.util.obj_id import ObjectIdDictT
-from tmtccmd.com_if import ComInterface
 
 from tmtccmd.core import BackendBase
 from tmtccmd.util.retval import RetvalDictT
 
+from .com_if import ComIfCfgBase, ComInterface
 from .tmtc import TmtcDefinitionWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfDictT
 
@@ -18,9 +18,9 @@ class TmTcCfgHookBase(ABC):
     """
 
     def __init__(self, json_cfg_path: Optional[str] = None):
-        self.json_cfg_path = json_cfg_path
-        if self.json_cfg_path is None:
-            self.json_cfg_path = default_json_path()
+        self.cfg_path = json_cfg_path
+        if self.cfg_path is None:
+            self.cfg_path = default_json_path()
 
     @abstractmethod
     def get_object_ids(self) -> ObjectIdDictT:
@@ -41,9 +41,8 @@ class TmTcCfgHookBase(ABC):
         """
         from tmtccmd.config.com_if import create_com_interface_default
 
-        return create_com_interface_default(
-            com_if_key=com_if_key, json_cfg_path=self.json_cfg_path
-        )
+        cfg_base = ComIfCfgBase(com_if_key=com_if_key, json_cfg_path=self.cfg_path)
+        return create_com_interface_default(cfg_base)
 
     def get_com_if_dict(self) -> ComIfDictT:
         return CORE_COM_IF_DICT

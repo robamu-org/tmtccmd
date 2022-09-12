@@ -68,7 +68,7 @@ class ExampleHookClass(TmTcCfgHookBase):
 
         cfg = create_com_interface_cfg_default(
             com_if_key=com_if_key,
-            json_cfg_path=self.json_cfg_path,
+            json_cfg_path=self.cfg_path,
             space_packet_ids=None,
         )
         return create_com_interface_default(cfg)
