@@ -397,6 +397,14 @@ def args_to_params_cfdp(
         cfdp_params.transmission_mode = TransmissionModes.UNACKNOWLEDGED
     elif pargs.type in ["1", "ack"]:
         cfdp_params.transmission_mode = TransmissionModes.ACKNOWLEDGED
+    # TODO: Listener mode is also relevant.
+    #       Basically, if -l is specified, use listener after mqueue mode or right aways when
+    #       no transaction parameter are specified
+    #       Not sure if one queue mode is relevant here. A file transfer might always be split up
+    #       in multiple queue fragments and might require feedback before finishing properly.
+    params.backend_params.mode = CoreModeConverter.get_str(
+        CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE
+    )
 
 
 def args_to_params_tmtc(
