@@ -45,6 +45,44 @@ class PutRequest(CfdpRequestBase):
     def __repr__(self):
         return f"{self.__class__.__name__}(cfg={self.cfg})"
 
+    @property
+    def metadata_only(self):
+        if self.cfg.source_file is None and self.cfg.dest_file is None:
+            return True
+        return False
+
+    def __str__(self):
+        src_file_str = "Unknown source file"
+        dest_file_str = "Unknown destination file"
+        if not self.metadata_only:
+            src_file_str = f"Source File: {self.cfg.source_file}"
+            dest_file_str = f"Destination File: {self.cfg.dest_file}"
+        if self.cfg.trans_mode:
+            if self.cfg.trans_mode == TransmissionModes.ACKNOWLEDGED:
+                trans_mode_str = "Transmission Mode: Class 2 Acknowledged"
+            else:
+                trans_mode_str = "Transmission Mode: Class 1 Unacknowledged"
+        else:
+            trans_mode_str = "Transmission Mode from MIB"
+        if self.cfg.closure_requested:
+            if self.cfg.closure_requested:
+                closure_str = "Closure requested"
+            else:
+                closure_str = "No closure requested"
+        else:
+            closure_str = "Closure information from MIB"
+        if not self.metadata_only:
+            print_str = (
+                f"Destination ID: {self.cfg.destination_id}\n"
+                f"{src_file_str}\n{dest_file_str}\n{trans_mode_str}\n{closure_str}\n"
+            )
+        else:
+            # TODO: Print out other parameters
+            print_str = (
+                f"Destination ID: {self.cfg.destination_id}\n"
+            )
+        return print_str
+
 
 class CfdpRequestWrapper:
     def __init__(self, base: Optional[CfdpRequestBase]):

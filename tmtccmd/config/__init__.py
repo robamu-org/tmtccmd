@@ -113,8 +113,8 @@ def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
         destination_id=ByteFieldEmpty(),
         source_file=Path(params.source),
         dest_file=params.target,
-        closure_requested=False,
-        trans_mode=TransmissionModes.UNACKNOWLEDGED,
+        closure_requested=params.closure_requested,
+        trans_mode=params.transmission_mode,
     )
     proc_info.request_wrapper.base = PutRequest(put_req_cfg)
     return proc_info
