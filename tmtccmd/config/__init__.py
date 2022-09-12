@@ -116,7 +116,7 @@ def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
         closure_requested=False,
         trans_mode=TransmissionModes.UNACKNOWLEDGED,
     )
-    proc_info.request_wrapper.request = PutRequest(put_req_cfg)
+    proc_info.request_wrapper.base = PutRequest(put_req_cfg)
     return proc_info
 
 
