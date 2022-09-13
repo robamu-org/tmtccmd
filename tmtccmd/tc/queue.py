@@ -136,6 +136,9 @@ class QueueEntryHelper:
     def to_pus_tc_entry(self) -> PusTcEntry:
         return self.__cast_internally(PusTcEntry, TcQueueEntryType.PUS_TC)
 
+    def to_space_packet_entry(self) -> SpacePacketEntry:
+        return self.__cast_internally(SpacePacketEntry, TcQueueEntryType.CCSDS_TC)
+
     def to_raw_tc_entry(self) -> RawTcEntry:
         return self.__cast_internally(RawTcEntry, TcQueueEntryType.RAW_TC)
 
