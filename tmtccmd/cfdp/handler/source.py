@@ -178,6 +178,10 @@ class SourceHandler:
         self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
     @property
+    def transaction_seq_num(self) -> UnsignedByteField:
+        return self.pdu_conf.transaction_seq_num
+
+    @property
     def pdu_conf(self) -> PduConfig:
         return self._params.pdu_conf
 
@@ -460,9 +464,10 @@ class SourceHandler:
             self._params.fp.file_size = size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
         self._params.remote_cfg = self._params.remote_cfg
+        self._get_next_transfer_seq_num()
         self._params.transaction = TransactionId(
             source_entity_id=self.cfg.local_entity_id,
-            transaction_seq_num=self._get_next_transfer_seq_num(),
+            transaction_seq_num=self.transaction_seq_num,
         )
         self.user.transaction_indication(self._params.transaction)
 
@@ -475,7 +480,6 @@ class SourceHandler:
         self._params.pdu_conf.dest_entity_id = put_req.cfg.destination_id
         self._params.pdu_conf.crc_flag = self._params.remote_cfg.crc_on_transmission
         self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
-        self._params.pdu_conf.transaction_seq_num = self._params.transaction.seq_num
         params = MetadataParams(
             dest_file_name=put_req.cfg.dest_file,
             source_file_name=put_req.cfg.source_file.as_posix(),
@@ -517,9 +521,6 @@ class SourceHandler:
             file_data = self.user.vfs.read_from_opened_file(
                 of, self._params.fp.progress, read_len
             )
-            self._params.pdu_conf.transaction_seq_num = (
-                self._get_next_transfer_seq_num()
-            )
             # TODO: Support for record continuation state not implemented yet. Segment metadata
             #       flag is therefore always set to False. Segment metadata support also omitted
             #       for now. Implementing those generically could be done in form of a callback,
@@ -548,13 +549,13 @@ class SourceHandler:
             pdu_conf=self._params.pdu_conf,
         )
 
-    def _get_next_transfer_seq_num(self) -> UnsignedByteField:
+    def _get_next_transfer_seq_num(self):
         next_seq_num = self.seq_num_provider.get_and_increment()
         if self.seq_num_provider.max_bit_width not in [8, 16, 32]:
             raise ValueError(
                 "Invalid bit width for sequence number provider, must be one of [8, 16, 32]"
             )
-        return ByteFieldGenerator.from_int(
+        self._params.pdu_conf.transaction_seq_num = ByteFieldGenerator.from_int(
             self.seq_num_provider.max_bit_width // 8, next_seq_num
         )
 
