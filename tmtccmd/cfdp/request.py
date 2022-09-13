@@ -78,9 +78,7 @@ class PutRequest(CfdpRequestBase):
             )
         else:
             # TODO: Print out other parameters
-            print_str = (
-                f"Destination ID: {self.cfg.destination_id}\n"
-            )
+            print_str = f"Destination ID: {self.cfg.destination_id}\n"
         return print_str
 
 
