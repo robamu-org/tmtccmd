@@ -68,6 +68,7 @@ class TestCfdpSourceHandler(TestCase):
     def _common_empty_file_test(self):
         dest_path = "/tmp/hello_copy.txt"
         dest_id = ByteFieldU16(2)
+        self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
         put_req_cfg = PutRequestCfg(
             destination_id=dest_id,
             source_file=self.file_path,
@@ -81,9 +82,11 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
         )
+        self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
+        self.assertEqual(eof_pdu.transaction_seq_num.value, 3)
         self.assertEqual(eof_pdu.file_checksum, NULL_CHECKSUM_U32)
         self.assertEqual(eof_pdu.file_size, 0)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
@@ -97,6 +100,7 @@ class TestCfdpSourceHandler(TestCase):
         dest_path = "/tmp/hello_copy.txt"
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
+        self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
         self.source_handler.source_id = self.source_id
         put_req_cfg = PutRequestCfg(
             destination_id=self.dest_id,
@@ -114,9 +118,11 @@ class TestCfdpSourceHandler(TestCase):
             of.write(data)
         file_size = self.file_path.stat().st_size
         self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
+        self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
         fsm_res = self.source_handler.state_machine()
         file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res)
         self.assertFalse(file_data_pdu.has_segment_metadata)
+        self.assertEqual(file_data_pdu.transaction_seq_num.value, 2)
         self.assertEqual(file_data_pdu.file_data, "Hello World\n".encode())
         self.assertEqual(file_data_pdu.offset, 0)
         self.source_handler.confirm_packet_sent_advance_fsm()

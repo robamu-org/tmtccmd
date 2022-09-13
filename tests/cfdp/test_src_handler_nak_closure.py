@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from spacepackets.cfdp import ConditionCode, Direction
 from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
@@ -16,6 +18,7 @@ from .test_src_handler import TestCfdpSourceHandler
 class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
         self.common_setup(True)
+        self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
 
     def test_empty_file_pdu_generation(self):
         self._common_empty_file_test()
@@ -65,6 +68,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
     def _regular_transaction_start(self, dest_id: UnsignedByteField) -> FinishedPdu:
         self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
         finish_pdu = self._prepare_finish_pdu()
+        self.assertEqual(finish_pdu.transaction_seq_num.value, 2)
         return finish_pdu
 
     def _prepare_dummy_put_req(self, dest_id: UnsignedByteField) -> PutRequest:

@@ -74,11 +74,11 @@ class PutRequest(CfdpRequestBase):
         if not self.metadata_only:
             print_str = (
                 f"Destination ID: {self.cfg.destination_id}\n"
-                f"{src_file_str}\n{dest_file_str}\n{trans_mode_str}\n{closure_str}\n"
+                f"{src_file_str}\n{dest_file_str}\n{trans_mode_str}\n{closure_str}"
             )
         else:
             # TODO: Print out other parameters
-            print_str = f"Destination ID: {self.cfg.destination_id}\n"
+            print_str = f"Destination ID: {self.cfg.destination_id}"
         return print_str
 
 
