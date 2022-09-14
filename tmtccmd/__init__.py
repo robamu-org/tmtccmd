@@ -24,7 +24,7 @@ from tmtccmd.core.globals_manager import update_global
 from tmtccmd.logging import get_console_logger
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
-from tmtccmd.tc import DefaultProcedureInfo, TcProcedureBase
+from tmtccmd.tc import DefaultProcedureInfo, TcProcedureBase, ProcedureWrapper
 from tmtccmd.tc.handler import TcHandlerBase
 
 VERSION_MAJOR = 3
@@ -151,7 +151,7 @@ def create_default_tmtc_backend(
     setup_wrapper: SetupWrapper,
     tm_handler: TmHandlerBase,
     tc_handler: TcHandlerBase,
-    init_procedure: Optional[TcProcedureBase],
+    init_procedure: Optional[ProcedureWrapper],
 ) -> BackendBase:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 
@@ -208,7 +208,7 @@ def create_default_tmtc_backend(
         seconds=setup_wrapper.params.tc_params.delay
     )
     if init_procedure is not None:
-        tmtc_backend.current_procedure = init_procedure
+        tmtc_backend.current_procedure = init_procedure.base
     return tmtc_backend
 
 

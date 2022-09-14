@@ -40,8 +40,6 @@ from tmtccmd.tc import (
     DefaultPusQueueHelper,
 )
 from tmtccmd.tm.pus_5_event import Service5Tm
-from tmtccmd.tm.pus_17_test import Service17TmExtended
-from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider
 from tmtccmd.util.obj_id import ObjectIdDictT
 
@@ -256,7 +254,7 @@ def main():
         setup_wrapper=setup_args,
         tm_handler=ccsds_handler,
         tc_handler=tc_handler,
-        init_procedure=init_proc.base,
+        init_procedure=init_proc,
     )
     tmtccmd.start(tmtc_backend=tmtc_backend, hook_obj=hook_obj)
     try:
