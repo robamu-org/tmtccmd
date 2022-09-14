@@ -380,15 +380,6 @@ def args_to_params_generic(
         )
     else:
         params.com_if_id = pargs.com_if
-    if pargs.delay is None:
-        if params.backend_params.mode == CoreModeConverter.get_str(
-            CoreModeList.ONE_QUEUE_MODE
-        ):
-            params.tc_params.delay = 4.0
-        else:
-            params.tc_params.delay = 0.0
-    else:
-        params.tc_params.delay = float(pargs.delay)
 
 
 def args_to_params_cfdp(
@@ -414,6 +405,10 @@ def args_to_params_cfdp(
     params.backend_params.mode = CoreModeConverter.get_str(
         CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE
     )
+    if pargs.delay is None:
+        params.tc_params.delay = 0.4
+    else:
+        params.tc_params.delay = float(pargs.delay)
 
 
 def args_to_params_tmtc(
@@ -447,6 +442,15 @@ def args_to_params_tmtc(
         and not mode_set_explicitely
     ):
         params.mode = CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
+    if pargs.delay is None:
+        if params.backend_params.mode == CoreModeConverter.get_str(
+            CoreModeList.ONE_QUEUE_MODE
+        ):
+            params.tc_params.delay = 4.0
+        else:
+            params.tc_params.delay = 0.0
+    else:
+        params.tc_params.delay = float(pargs.delay)
     tmtc_defs = hook_obj.get_tmtc_definitions()
     if tmtc_defs is None:
         LOGGER.warning("Invalid Service to Op-Code dictionary detected")
