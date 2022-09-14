@@ -51,8 +51,8 @@ class TransactionId:
 
     def __str__(self):
         return (
-            f"Transaction ID with source ID {self.source_id} and sequence "
-            f"number {self.seq_num.value}"
+            f"Transaction {{ Source ID {{{self.source_id}}}, Sequence "
+            f"number {self.seq_num.value} }}"
         )
 
     def __eq__(self, other: TransactionId):
