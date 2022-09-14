@@ -390,6 +390,7 @@ def args_to_params_generic(
     else:
         params.tc_params.delay = float(pargs.delay)
 
+
 def args_to_params_cfdp(
     pargs: argparse.Namespace,
     params: SetupParams,
