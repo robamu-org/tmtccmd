@@ -380,7 +380,15 @@ def args_to_params_generic(
         )
     else:
         params.com_if_id = pargs.com_if
-
+    if pargs.delay is None:
+        if params.backend_params.mode == CoreModeConverter.get_str(
+            CoreModeList.ONE_QUEUE_MODE
+        ):
+            params.tc_params.delay = 4.0
+        else:
+            params.tc_params.delay = 0.0
+    else:
+        params.tc_params.delay = float(pargs.delay)
 
 def args_to_params_cfdp(
     pargs: argparse.Namespace,
@@ -450,15 +458,6 @@ def args_to_params_tmtc(
                 pargs=pargs,
                 def_params=def_tmtc_params,
             )
-    if pargs.delay is None:
-        if params.backend_params.mode == CoreModeConverter.get_str(
-            CoreModeList.ONE_QUEUE_MODE
-        ):
-            params.tc_params.delay = 4.0
-        else:
-            params.tc_params.delay = 0.0
-    else:
-        params.tc_params.delay = float(pargs.delay)
 
 
 class PostArgsParsingWrapper:
