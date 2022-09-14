@@ -1,8 +1,8 @@
 from abc import abstractmethod, ABC
 
 from tmtccmd.com_if import ComInterface
-from tmtccmd.tc import ProcedureWrapper
-from tmtccmd.tc.queue import QueueHelperBase, QueueWrapper, QueueEntryHelper
+from tmtccmd.tc.procedure import ProcedureWrapper
+from tmtccmd.tc.queue import QueueWrapper, QueueEntryHelper
 
 
 class FeedWrapper:
@@ -16,7 +16,7 @@ class FeedWrapper:
     """
 
     def __init__(self, queue_wrapper: QueueWrapper, auto_dispatch: bool):
-        from tmtccmd.core import ModeWrapper
+        from tmtccmd.core.base import ModeWrapper
 
         self.queue_wrapper = queue_wrapper
         self.dispatch_next_queue = auto_dispatch

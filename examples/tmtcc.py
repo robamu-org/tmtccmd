@@ -11,6 +11,7 @@ from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 from spacepackets.util import UnsignedByteField
 
 from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
+from tmtccmd.core.base import BackendRequest
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.com_if import ComInterface
@@ -23,7 +24,7 @@ from tmtccmd.config import (
     OpCodeEntry,
 )
 from tmtccmd.config import PreArgsParsingWrapper, SetupWrapper
-from tmtccmd.core import BackendController, BackendRequest
+from tmtccmd.core import BackendController
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,

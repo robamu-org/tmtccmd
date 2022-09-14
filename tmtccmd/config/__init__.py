@@ -3,9 +3,8 @@
 from pathlib import Path
 from typing import Optional
 
-from spacepackets.cfdp import TransmissionModes
-from spacepackets.util import UnsignedByteField, ByteFieldEmpty
-from tmtccmd.core import ModeWrapper, TmMode, TcMode
+from spacepackets.util import ByteFieldEmpty
+from tmtccmd.core import TmMode, TcMode
 
 from .args import (
     SetupParams,
@@ -36,6 +35,7 @@ from tmtccmd.tc.procedure import (
     ProcedureWrapper,
 )
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
+from tmtccmd.core.base import ModeWrapper
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
