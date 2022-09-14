@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from tmtccmd.core.base import ModeWrapper, BackendRequest
+from .base import ModeWrapper, BackendRequest
 from tmtccmd.tc.ccsds_seq_sender import SeqResultWrapper, SenderMode
 
 

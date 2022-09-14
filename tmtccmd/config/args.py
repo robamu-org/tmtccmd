@@ -478,14 +478,17 @@ class PostArgsParsingWrapper:
         return self.args_raw.gui
 
     def request_type_from_args(self) -> TcProcedureType:
-        if self.args_raw.proc_type == "tmtc":
-            return TcProcedureType.DEFAULT
-        elif self.args_raw.proc_type == "cfdp":
-            return TcProcedureType.CFDP
+        if hasattr(self.args_raw, "proc_type"):
+            if self.args_raw.proc_type == "tmtc":
+                return TcProcedureType.DEFAULT
+            elif self.args_raw.proc_type == "cfdp":
+                return TcProcedureType.CFDP
+            else:
+                raise ValueError(
+                    'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
+                )
         else:
-            raise ValueError(
-                'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
-            )
+            return TcProcedureType.DEFAULT
 
     def set_params_with_prompts(
         self, params: SetupParams, proc_base: ProcedureParamsWrapper
@@ -493,9 +496,9 @@ class PostArgsParsingWrapper:
         self._set_params(params, proc_base, True)
 
     def set_params_without_prompts(
-        self, params: SetupParams, proc_base: ProcedureParamsWrapper
+        self, params: SetupParams, proc_wrapper: ProcedureParamsWrapper
     ):
-        self._set_params(params, proc_base, False)
+        self._set_params(params, proc_wrapper, False)
 
     def _set_params(
         self, params: SetupParams, proc_base: ProcedureParamsWrapper, with_prompts: bool

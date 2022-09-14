@@ -10,7 +10,7 @@ from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 from spacepackets.util import UnsignedByteField
 
-from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
+from tmtccmd import CcsdsTmtcBackend, TcHandlerBase, ProcedureParamsWrapper
 from tmtccmd.core.base import BackendRequest
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
@@ -22,9 +22,9 @@ from tmtccmd.config import (
     TmtcDefinitionWrapper,
     CoreServiceList,
     OpCodeEntry,
+    params_to_procedure_conversion,
 )
 from tmtccmd.config import PreArgsParsingWrapper, SetupWrapper
-from tmtccmd.core import BackendController
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
@@ -221,15 +221,21 @@ class TcHandler(TcHandlerBase):
 def main():
     tmtccmd.init_printout(False)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
-    parser_wrapper = PreArgsParsingWrapper(hook_obj)
+    parser_wrapper = PreArgsParsingWrapper()
     parser_wrapper.create_default_parent_parser()
     parser_wrapper.create_default_parser()
     parser_wrapper.add_def_proc_args()
-    parser_wrapper.parse()
+    post_args_wrapper = parser_wrapper.parse(hook_obj)
     params = SetupParams()
-    parser_wrapper.set_params(params)
+    proc_wrapper = ProcedureParamsWrapper()
+    if post_args_wrapper.use_gui:
+        post_args_wrapper.set_params_without_prompts(params, proc_wrapper)
+    else:
+        post_args_wrapper.set_params_with_prompts(params, proc_wrapper)
     params.apid = EXAMPLE_PUS_APID
-    setup_args = SetupWrapper(hook_obj=hook_obj, setup_params=params)
+    setup_args = SetupWrapper(
+        hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper
+    )
     # Create console logger helper and file loggers
     tmtc_logger = RegularTmtcLogWrapper()
     printer = FsfwTmTcPrinter(tmtc_logger.logger)
@@ -245,15 +251,17 @@ def main():
     seq_count_provider = PusFileSeqCountProvider()
     tc_handler = TcHandler(seq_count_provider, verification_wrapper)
     tmtccmd.setup(setup_args=setup_args)
-
+    init_proc = params_to_procedure_conversion(setup_args.proc_param_wrapper)
     tmtc_backend = tmtccmd.create_default_tmtc_backend(
-        setup_wrapper=setup_args, tm_handler=ccsds_handler, tc_handler=tc_handler
+        setup_wrapper=setup_args,
+        tm_handler=ccsds_handler,
+        tc_handler=tc_handler,
+        init_procedure=init_proc.base,
     )
     tmtccmd.start(tmtc_backend=tmtc_backend, hook_obj=hook_obj)
-    ctrl = BackendController()
     try:
         while True:
-            state = tmtc_backend.periodic_op(ctrl)
+            state = tmtc_backend.periodic_op(None)
             if state.request == BackendRequest.TERMINATION_NO_ERROR:
                 sys.exit(0)
             elif state.request == BackendRequest.DELAY_IDLE:
