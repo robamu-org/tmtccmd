@@ -396,13 +396,14 @@ class SourceHandler:
                 self.states.step = TransactionStep.WAIT_FOR_FINISH
 
     def _notice_of_completion(self):
-        indication_params = TransactionFinishedParams(
-            transaction_id=self._params.transaction,
-            condition_code=ConditionCode.NO_ERROR,
-            file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
-            delivery_code=DeliveryCode.DATA_COMPLETE,
-        )
-        self.user.transaction_finished_indication(indication_params)
+        if self.cfg.indication_cfg.transaction_finished_indication_required:
+            indication_params = TransactionFinishedParams(
+                transaction_id=self._params.transaction,
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            )
+            self.user.transaction_finished_indication(indication_params)
         # Transaction finished
         self.reset()
 
