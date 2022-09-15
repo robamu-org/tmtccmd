@@ -19,7 +19,7 @@ from spacepackets.cfdp.pdu import (
     FileDataPdu,
     MetadataPdu,
     MetadataParams,
-    DirectiveType,
+    DirectiveTypes,
     AbstractFileDirectiveBase,
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
@@ -175,7 +175,7 @@ class SourceHandler:
         self.seq_num_provider = seq_num_provider
         self._params = TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
         self._current_req = CfdpRequestWrapper(None)
-        self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
+        self._rec_dict: Dict[DirectiveTypes, List[AbstractFileDirectiveBase]] = dict()
 
     @property
     def transaction_seq_num(self) -> UnsignedByteField:
@@ -244,7 +244,10 @@ class SourceHandler:
                 self._params.remote_cfg.entity_id, packet.dest_entity_id
             )
         # TODO: What about prompt and keep alive PDU?
-        if packet.directive_type in [DirectiveType.METADATA_PDU, DirectiveType.EOF_PDU]:
+        if packet.directive_type in [
+            DirectiveTypes.METADATA_PDU,
+            DirectiveTypes.EOF_PDU,
+        ]:
             raise InvalidPduForSourceHandler(packet)
         # A dictionary is used to allow passing multiple received packets and store them until
         # they are processed by the state machine.
@@ -381,13 +384,13 @@ class SourceHandler:
             LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
-        pdu_list = self._rec_dict.get(DirectiveType.ACK_PDU)
+        pdu_list = self._rec_dict.get(DirectiveTypes.ACK_PDU)
         if pdu_list is None:
             return FsmResult(self.pdu_holder, self.states)
         for pdu in pdu_list:
             holder = PduHolder(pdu)
             ack_pdu = holder.to_ack_pdu()
-            if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
+            if ack_pdu.directive_code_of_acked_pdu == DirectiveTypes.EOF_PDU:
                 if ack_pdu.condition_code_of_acked_pdu != ConditionCode.NO_ERROR:
                     # TODO: This is required for class 2 transfers. It might make sense
                     #       to remember the condition code of the sent EOF PDU for a basic
@@ -423,8 +426,8 @@ class SourceHandler:
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
                     LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
             # Check all entries for some robustness against out-of-order reception
-            if DirectiveType.FINISHED_PDU in self._rec_dict:
-                pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
+            if DirectiveTypes.FINISHED_PDU in self._rec_dict:
+                pdu_list = self._rec_dict.get(DirectiveTypes.FINISHED_PDU)
                 for pdu in pdu_list:
                     holder = PduHolder(pdu)
                     finish_pdu = holder.to_finished_pdu()

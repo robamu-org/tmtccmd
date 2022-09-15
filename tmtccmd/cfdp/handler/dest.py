@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Deque, cast, Optional
 
 from spacepackets.cfdp import (
-    PduType,
+    PduTypes,
     ChecksumTypes,
     TransmissionModes,
     ConditionCode,
@@ -18,7 +18,7 @@ from spacepackets.cfdp import (
     FaultHandlerCodes,
 )
 from spacepackets.cfdp.pdu import (
-    DirectiveType,
+    DirectiveTypes,
     AbstractFileDirectiveBase,
     MetadataPdu,
     FileDataPdu,
@@ -107,7 +107,7 @@ class DestFieldWrapper:
         default_factory=lambda: DestFileParams.empty()
     )
     file_directives_dict: Dict[
-        DirectiveType, List[AbstractFileDirectiveBase]
+        DirectiveTypes, List[AbstractFileDirectiveBase]
     ] = dataclasses.field(default_factory=lambda: dict())
     file_data_deque: Deque[FileDataPdu] = dataclasses.field(
         default_factory=lambda: deque()
@@ -233,7 +233,7 @@ class DestHandler:
         if self.states.state == CfdpStates.IDLE:
             clear_all_other_pdus = True
             for pdu_type, pdu_deque in self._params.file_directives_dict.items():
-                if pdu_type == DirectiveType.METADATA_PDU:
+                if pdu_type == DirectiveTypes.METADATA_PDU:
                     clear_metadata_deque = False
                     for pdu_base in pdu_deque:
                         metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
@@ -308,7 +308,7 @@ class DestHandler:
                                 FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
                             )
                 # TODO: Support for check timer missing
-                eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
+                eof_pdus = self._params.file_directives_dict.get(DirectiveTypes.EOF_PDU)
                 if eof_pdus is not None:
                     for pdu in eof_pdus:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
@@ -331,7 +331,7 @@ class DestHandler:
 
     def pass_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
-        if packet.pdu_type == PduType.FILE_DATA:
+        if packet.pdu_type == PduTypes.FILE_DATA:
             self._params.file_data_deque.append(cast(FileDataPdu, packet))
         else:
             if packet.directive_type in self._params.file_directives_dict:

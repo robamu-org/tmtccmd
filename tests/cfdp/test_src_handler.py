@@ -13,7 +13,7 @@ from spacepackets.cfdp import (
     ConditionCode,
     ChecksumTypes,
 )
-from spacepackets.cfdp.pdu import DirectiveType, FileDataPdu
+from spacepackets.cfdp.pdu import DirectiveTypes, FileDataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg
 from tmtccmd.cfdp.defs import CfdpStates
@@ -84,7 +84,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
-        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
+        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveTypes.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
         self.assertEqual(eof_pdu.transaction_seq_num.value, 3)
         self.assertEqual(eof_pdu.file_checksum, NULL_CHECKSUM_U32)
@@ -130,7 +130,7 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
         )
-        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveType.EOF_PDU)
+        self.assertEqual(fsm_res.pdu_holder.pdu_directive_type, DirectiveTypes.EOF_PDU)
         eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
         self.assertEqual(crc32, eof_pdu.file_checksum)
         self.assertEqual(eof_pdu.file_size, file_size)
@@ -159,7 +159,7 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
         self.assertTrue(fsm_res.pdu_holder.is_file_directive)
         self.assertEqual(
-            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
+            fsm_res.pdu_holder.pdu_directive_type, DirectiveTypes.METADATA_PDU
         )
         metadata_pdu = fsm_res.pdu_holder.to_metadata_pdu()
         if put_request.cfg.closure_requested is not None:
