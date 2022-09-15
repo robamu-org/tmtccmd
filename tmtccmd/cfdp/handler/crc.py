@@ -3,30 +3,30 @@ from typing import Optional
 
 from crcmod.predefined import PredefinedCrc
 
-from spacepackets.cfdp import ChecksumTypes, NULL_CHECKSUM_U32
+from spacepackets.cfdp import ChecksumType, NULL_CHECKSUM_U32
 from tmtccmd.cfdp.filestore import VirtualFilestore
 from tmtccmd.cfdp.handler.defs import ChecksumNotImplemented, SourceFileDoesNotExist
 
 
 class Crc32Helper:
-    def __init__(self, init_type: ChecksumTypes, vfs: VirtualFilestore):
+    def __init__(self, init_type: ChecksumType, vfs: VirtualFilestore):
         self.checksum_type = init_type
         self.vfs = vfs
 
     def _verify_checksum(self):
         if self.checksum_type not in [
-            ChecksumTypes.NULL_CHECKSUM,
-            ChecksumTypes.CRC_32,
-            ChecksumTypes.CRC_32C,
+            ChecksumType.NULL_CHECKSUM,
+            ChecksumType.CRC_32,
+            ChecksumType.CRC_32C,
         ]:
             raise ChecksumNotImplemented(self.checksum_type)
 
     def checksum_type_to_crcmod_str(self) -> Optional[str]:
-        if self.checksum_type == ChecksumTypes.NULL_CHECKSUM:
+        if self.checksum_type == ChecksumType.NULL_CHECKSUM:
             return None
-        if self.checksum_type == ChecksumTypes.CRC_32:
+        if self.checksum_type == ChecksumType.CRC_32:
             return "crc32"
-        elif self.checksum_type == ChecksumTypes.CRC_32C:
+        elif self.checksum_type == ChecksumType.CRC_32C:
             return "crc32c"
 
     def generate_crc_calculator(self) -> PredefinedCrc:
@@ -34,7 +34,7 @@ class Crc32Helper:
         return PredefinedCrc(self.checksum_type_to_crcmod_str())
 
     def calc_for_file(self, file: Path, file_sz: int, segment_len: int) -> bytes:
-        if self.checksum_type == ChecksumTypes.NULL_CHECKSUM:
+        if self.checksum_type == ChecksumType.NULL_CHECKSUM:
             return NULL_CHECKSUM_U32
         crc_obj = self.generate_crc_calculator()
         if segment_len == 0:

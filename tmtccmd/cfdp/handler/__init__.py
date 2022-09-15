@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Sequence, Optional, Tuple
 
 from spacepackets import SpacePacket, SpacePacketHeader, PacketTypes
-from spacepackets.cfdp import GenericPduPacket, PduTypes, DirectiveTypes, PduFactory
+from spacepackets.cfdp import GenericPduPacket, PduType, DirectiveType, PduFactory
 from spacepackets.cfdp.pdu import PduHolder
 
 from tmtccmd.logging import get_console_logger
@@ -97,35 +97,35 @@ class CfdpHandler:
         The routing is based on section 4.5 of the CFDP standard whcih specifies the PDU forwarding
         procedure.
         """
-        if packet.pdu_type == PduTypes.FILE_DATA:
+        if packet.pdu_type == PduType.FILE_DATA:
             self.dest_handler.pass_packet(packet)
         else:
             if packet.directive_type in [
-                DirectiveTypes.METADATA_PDU,
-                DirectiveTypes.EOF_PDU,
-                DirectiveTypes.PROMPT_PDU,
+                DirectiveType.METADATA_PDU,
+                DirectiveType.EOF_PDU,
+                DirectiveType.PROMPT_PDU,
             ]:
                 # Section b) of 4.5.3: These PDUs should always be targeted towards the file
                 # receiver a.k.a. the destination handler
                 self.dest_handler.pass_packet(packet)
             elif packet.directive_type in [
-                DirectiveTypes.FINISHED_PDU,
-                DirectiveTypes.NAK_PDU,
-                DirectiveTypes.KEEP_ALIVE_PDU,
+                DirectiveType.FINISHED_PDU,
+                DirectiveType.NAK_PDU,
+                DirectiveType.KEEP_ALIVE_PDU,
             ]:
                 # Section c) of 4.5.3: These PDUs should always be targeted towards the file sender
                 # a.k.a. the source handler
                 self.source_handler.pass_packet(packet)
-            elif packet.directive_type == DirectiveTypes.ACK_PDU:
+            elif packet.directive_type == DirectiveType.ACK_PDU:
                 # Section a): Recipient depends on the type of PDU that is being acknowledged.
                 # We can simply extract the PDU type from the raw stream. If it is an EOF PDU,
                 # this packet is passed to the source handler. For a finished PDU, it is
                 # passed to the destination handler
                 pdu_holder = PduHolder(packet)
                 ack_pdu = pdu_holder.to_ack_pdu()
-                if ack_pdu.directive_code_of_acked_pdu == DirectiveTypes.EOF_PDU:
+                if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
                     self.source_handler.pass_packet(packet)
-                elif ack_pdu.directive_code_of_acked_pdu == DirectiveTypes.FINISHED_PDU:
+                elif ack_pdu.directive_code_of_acked_pdu == DirectiveType.FINISHED_PDU:
                     self.dest_handler.pass_packet(packet)
 
 

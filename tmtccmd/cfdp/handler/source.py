@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List
 
 from spacepackets.cfdp import (
-    TransmissionModes,
+    TransmissionMode,
     NULL_CHECKSUM_U32,
     ConditionCode,
     Direction,
     PduConfig,
-    ChecksumTypes,
-    FaultHandlerCodes,
+    ChecksumType,
+    FaultHandlerCode,
 )
 from spacepackets.cfdp.pdu import (
     PduHolder,
@@ -19,7 +19,7 @@ from spacepackets.cfdp.pdu import (
     FileDataPdu,
     MetadataPdu,
     MetadataParams,
-    DirectiveTypes,
+    DirectiveType,
     AbstractFileDirectiveBase,
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
@@ -73,7 +73,7 @@ class SourceStateWrapper:
 
 class TransferFieldWrapper:
     def __init__(self, local_entity_id: UnsignedByteField, vfs: VirtualFilestore):
-        self.crc_helper = Crc32Helper(ChecksumTypes.NULL_CHECKSUM, vfs)
+        self.crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, vfs)
         self.transaction: Optional[TransactionId] = None
         self.check_limit: Optional[Countdown] = None
         self.fp = FileParamsBase.empty()
@@ -99,11 +99,11 @@ class TransferFieldWrapper:
         self.pdu_conf.dest_entity_id = dest_id
 
     @property
-    def transmission_mode(self) -> TransmissionModes:
+    def transmission_mode(self) -> TransmissionMode:
         return self.pdu_conf.trans_mode
 
     @transmission_mode.setter
-    def transmission_mode(self, trans_mode: TransmissionModes):
+    def transmission_mode(self, trans_mode: TransmissionMode):
         self.pdu_conf.trans_mode = trans_mode
 
     @property
@@ -175,7 +175,7 @@ class SourceHandler:
         self.seq_num_provider = seq_num_provider
         self._params = TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
         self._current_req = CfdpRequestWrapper(None)
-        self._rec_dict: Dict[DirectiveTypes, List[AbstractFileDirectiveBase]] = dict()
+        self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
     @property
     def transaction_seq_num(self) -> UnsignedByteField:
@@ -215,10 +215,10 @@ class SourceHandler:
         self._params.dest_id = remote_cfg.entity_id
         self.states.packet_ready = False
         self._setup_transmission_mode()
-        if self._params.transmission_mode == TransmissionModes.UNACKNOWLEDGED:
+        if self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             LOGGER.debug("Starting Put Request handling in NAK mode")
             self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
-        elif self._params.transmission_mode == TransmissionModes.ACKNOWLEDGED:
+        elif self._params.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             LOGGER.debug("Starting Put Request handling in ACK mode")
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
         else:
@@ -245,8 +245,8 @@ class SourceHandler:
             )
         # TODO: What about prompt and keep alive PDU?
         if packet.directive_type in [
-            DirectiveTypes.METADATA_PDU,
-            DirectiveTypes.EOF_PDU,
+            DirectiveType.METADATA_PDU,
+            DirectiveType.EOF_PDU,
         ]:
             raise InvalidPduForSourceHandler(packet)
         # A dictionary is used to allow passing multiple received packets and store them until
@@ -384,13 +384,13 @@ class SourceHandler:
             LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
-        pdu_list = self._rec_dict.get(DirectiveTypes.ACK_PDU)
+        pdu_list = self._rec_dict.get(DirectiveType.ACK_PDU)
         if pdu_list is None:
             return FsmResult(self.pdu_holder, self.states)
         for pdu in pdu_list:
             holder = PduHolder(pdu)
             ack_pdu = holder.to_ack_pdu()
-            if ack_pdu.directive_code_of_acked_pdu == DirectiveTypes.EOF_PDU:
+            if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
                 if ack_pdu.condition_code_of_acked_pdu != ConditionCode.NO_ERROR:
                     # TODO: This is required for class 2 transfers. It might make sense
                     #       to remember the condition code of the sent EOF PDU for a basic
@@ -426,8 +426,8 @@ class SourceHandler:
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
                     LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
             # Check all entries for some robustness against out-of-order reception
-            if DirectiveTypes.FINISHED_PDU in self._rec_dict:
-                pdu_list = self._rec_dict.get(DirectiveTypes.FINISHED_PDU)
+            if DirectiveType.FINISHED_PDU in self._rec_dict:
+                pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
                 for pdu in pdu_list:
                     holder = PduHolder(pdu)
                     finish_pdu = holder.to_finished_pdu()
@@ -569,11 +569,11 @@ class SourceHandler:
             f"transaction {self._params.transaction}"
         )
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
-        if fh == FaultHandlerCodes.NOTICE_OF_CANCELLATION:
+        if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self._notice_of_cancellation()
-        elif fh == FaultHandlerCodes.NOTICE_OF_SUSPENSION:
+        elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self._notice_of_suspension()
-        elif fh == FaultHandlerCodes.ABANDON_TRANSACTION:
+        elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
         self.cfg.default_fault_handlers.report_fault(cond)
 

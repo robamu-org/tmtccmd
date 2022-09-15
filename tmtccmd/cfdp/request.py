@@ -3,7 +3,7 @@ from typing import Optional, List, cast
 
 from spacepackets.cfdp import (
     SegmentationControl,
-    TransmissionModes,
+    TransmissionMode,
     FaultHandlerOverrideTlv,
     FlowLabelTlv,
     MessageToUserTlv,
@@ -26,7 +26,7 @@ class PutRequestCfg:
     # request
     source_file: Optional[Path]
     dest_file: Optional[str]
-    trans_mode: Optional[TransmissionModes]
+    trans_mode: Optional[TransmissionMode]
     closure_requested: Optional[bool]
     seg_ctrl: Optional[
         SegmentationControl
@@ -58,7 +58,7 @@ class PutRequest(CfdpRequestBase):
             src_file_str = f"Source File: {self.cfg.source_file}"
             dest_file_str = f"Destination File: {self.cfg.dest_file}"
         if self.cfg.trans_mode:
-            if self.cfg.trans_mode == TransmissionModes.ACKNOWLEDGED:
+            if self.cfg.trans_mode == TransmissionMode.ACKNOWLEDGED:
                 trans_mode_str = "Transmission Mode: Class 2 Acknowledged"
             else:
                 trans_mode_str = "Transmission Mode: Class 1 Unacknowledged"

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
 
-from spacepackets.cfdp import TransmissionModes
+from spacepackets.cfdp import TransmissionMode
 from tmtccmd.com_if.utils import determine_com_if
 from tmtccmd.tc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
@@ -54,7 +54,7 @@ class CfdpParams:
     source = ""
     target = ""
     closure_requested = False
-    transmission_mode = TransmissionModes.UNACKNOWLEDGED
+    transmission_mode = TransmissionMode.UNACKNOWLEDGED
 
 
 class ProcedureParamsWrapper:
@@ -394,9 +394,9 @@ def args_to_params_cfdp(
     cfdp_params.target = pargs.target
     cfdp_params.closure_requested = pargs.no_closure
     if pargs.type in ["0", "nak"]:
-        cfdp_params.transmission_mode = TransmissionModes.UNACKNOWLEDGED
+        cfdp_params.transmission_mode = TransmissionMode.UNACKNOWLEDGED
     elif pargs.type in ["1", "ack"]:
-        cfdp_params.transmission_mode = TransmissionModes.ACKNOWLEDGED
+        cfdp_params.transmission_mode = TransmissionMode.ACKNOWLEDGED
     # TODO: Listener mode is also relevant.
     #       Basically, if -l is specified, use listener after mqueue mode or right aways when
     #       no transaction parameter are specified

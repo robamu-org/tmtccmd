@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Sequence
 
 from spacepackets.cfdp.defs import (
-    FaultHandlerCodes,
-    ChecksumTypes,
-    TransmissionModes,
+    FaultHandlerCode,
+    ChecksumType,
+    TransmissionMode,
     CFDP_VERSION_2,
     ConditionCode,
 )
@@ -38,25 +38,23 @@ class DefaultFaultHandlerBase(ABC):
 
     def __init__(self):
         # The initial default handle will be to ignore the error
-        self._handler_dict: Dict[ConditionCode, FaultHandlerCodes] = {
-            ConditionCode.POSITIVE_ACK_LIMIT_REACHED: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.KEEP_ALIVE_LIMIT_REACHED: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.INVALID_TRANSMISSION_MODE: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.FILE_CHECKSUM_FAILURE: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.FILE_SIZE_ERROR: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.FILESTORE_REJECTION: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.NAK_LIMIT_REACHED: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.INACTIVITY_DETECTED: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.CHECK_LIMIT_REACHED: FaultHandlerCodes.IGNORE_ERROR,
-            ConditionCode.UNSUPPORTED_CHECKSUM_TYPE: FaultHandlerCodes.IGNORE_ERROR,
+        self._handler_dict: Dict[ConditionCode, FaultHandlerCode] = {
+            ConditionCode.POSITIVE_ACK_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.KEEP_ALIVE_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.INVALID_TRANSMISSION_MODE: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.FILE_CHECKSUM_FAILURE: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.FILE_SIZE_ERROR: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.FILESTORE_REJECTION: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.NAK_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.INACTIVITY_DETECTED: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.CHECK_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.UNSUPPORTED_CHECKSUM_TYPE: FaultHandlerCode.IGNORE_ERROR,
         }
 
-    def get_fault_handler(
-        self, condition: ConditionCode
-    ) -> Optional[FaultHandlerCodes]:
+    def get_fault_handler(self, condition: ConditionCode) -> Optional[FaultHandlerCode]:
         return self._handler_dict.get(condition)
 
-    def set_handler(self, condition: ConditionCode, handler: FaultHandlerCodes):
+    def set_handler(self, condition: ConditionCode, handler: FaultHandlerCode):
         if condition not in self._handler_dict:
             return
         self._handler_dict.update({condition: handler})
@@ -65,13 +63,13 @@ class DefaultFaultHandlerBase(ABC):
         if condition not in self._handler_dict:
             return
         fh_code = self._handler_dict.get(condition)
-        if fh_code == FaultHandlerCodes.NOTICE_OF_CANCELLATION:
+        if fh_code == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self.notice_of_cancellation_cb(condition)
-        elif fh_code == FaultHandlerCodes.NOTICE_OF_SUSPENSION:
+        elif fh_code == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self.notice_of_suspension_cb(condition)
-        elif fh_code == FaultHandlerCodes.IGNORE_ERROR:
+        elif fh_code == FaultHandlerCode.IGNORE_ERROR:
             self.ignore_cb(condition)
-        elif fh_code == FaultHandlerCodes.ABANDON_TRANSACTION:
+        elif fh_code == FaultHandlerCode.ABANDON_TRANSACTION:
             self.abandoned_cb(condition)
 
     @abc.abstractmethod
@@ -130,8 +128,8 @@ class RemoteEntityCfg:
     max_file_segment_len: int
     closure_requested: bool
     crc_on_transmission: bool
-    default_transmission_mode: TransmissionModes
-    crc_type: ChecksumTypes
+    default_transmission_mode: TransmissionMode
+    crc_type: ChecksumType
     check_limit: Optional[CheckLimitProvider]
     # NOTE: Only this version is supported
     cfdp_version: int = CFDP_VERSION_2

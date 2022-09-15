@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from spacepackets.cfdp import Direction, ChecksumTypes
+from spacepackets.cfdp import Direction, ChecksumType
 from spacepackets.util import UnsignedByteField
 
 
@@ -24,7 +24,7 @@ class SourceFileDoesNotExist(Exception):
 
 
 class ChecksumNotImplemented(Exception):
-    def __init__(self, checksum_type: ChecksumTypes, *args, **kwargs):
+    def __init__(self, checksum_type: ChecksumType, *args, **kwargs):
         super().__init__(args, kwargs)
         self.checksum_type = checksum_type
 

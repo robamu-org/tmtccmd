@@ -11,9 +11,9 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from spacepackets.cfdp import (
-    ChecksumTypes,
+    ChecksumType,
     PduConfig,
-    TransmissionModes,
+    TransmissionMode,
     NULL_CHECKSUM_U32,
     ConditionCode,
 )
@@ -64,7 +64,7 @@ class TestCfdpDestHandler(TestCase):
             source_entity_id=self.src_entity_id,
             dest_entity_id=self.entity_id,
             transaction_seq_num=ByteFieldU8(1),
-            trans_mode=TransmissionModes.UNACKNOWLEDGED,
+            trans_mode=TransmissionMode.UNACKNOWLEDGED,
         )
         self.transaction_id = TransactionId(self.src_entity_id, ByteFieldU8(1))
         self.closure_requested = False
@@ -83,10 +83,10 @@ class TestCfdpDestHandler(TestCase):
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
             check_limit=None,
-            crc_type=ChecksumTypes.CRC_32,
+            crc_type=ChecksumType.CRC_32,
             closure_requested=False,
             crc_on_transmission=False,
-            default_transmission_mode=TransmissionModes.UNACKNOWLEDGED,
+            default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
             max_file_segment_len=self.file_segment_len,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
@@ -96,7 +96,7 @@ class TestCfdpDestHandler(TestCase):
 
     def test_empty_file_reception(self):
         metadata_params = MetadataParams(
-            checksum_type=ChecksumTypes.NULL_CHECKSUM,
+            checksum_type=ChecksumType.NULL_CHECKSUM,
             closure_requested=False,
             source_file_name=self.src_file_path.as_posix(),
             dest_file_name=self.dest_file_path.as_posix(),
@@ -131,7 +131,7 @@ class TestCfdpDestHandler(TestCase):
         crc32 = struct.pack("!I", crc32_func(data))
         file_size = self.src_file_path.stat().st_size
         self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumTypes.CRC_32,
+            checksum=ChecksumType.CRC_32,
             file_size=file_size,
             file_path=self.src_file_path.as_posix(),
         )
@@ -161,7 +161,7 @@ class TestCfdpDestHandler(TestCase):
         file_info = self.random_data_two_file_segments()
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
         self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumTypes.CRC_32,
+            checksum=ChecksumType.CRC_32,
             file_size=file_info.file_size,
             file_path=self.src_file_path.as_posix(),
         )
@@ -222,7 +222,7 @@ class TestCfdpDestHandler(TestCase):
         )
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumTypes.CRC_32,
+            checksum=ChecksumType.CRC_32,
             file_size=file_info.file_size,
             file_path=self.src_file_path.as_posix(),
         )
@@ -312,7 +312,7 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(self.dest_handler.states.transaction, expected_transaction)
 
     def _source_simulator_transfer_init_with_metadata(
-        self, checksum: ChecksumTypes, file_path: str, file_size: int
+        self, checksum: ChecksumType, file_path: str, file_size: int
     ):
         """A file transfer on the receiving side is always initiated by sending a metadata PDU.
         This function simulates a CFDP source entity which initiates a file transfer by sending

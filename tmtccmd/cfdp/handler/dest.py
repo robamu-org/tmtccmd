@@ -8,17 +8,17 @@ from pathlib import Path
 from typing import Dict, List, Deque, cast, Optional
 
 from spacepackets.cfdp import (
-    PduTypes,
-    ChecksumTypes,
-    TransmissionModes,
+    PduType,
+    ChecksumType,
+    TransmissionMode,
     ConditionCode,
     TlvTypes,
     PduConfig,
     Direction,
-    FaultHandlerCodes,
+    FaultHandlerCode,
 )
 from spacepackets.cfdp.pdu import (
-    DirectiveTypes,
+    DirectiveType,
     AbstractFileDirectiveBase,
     MetadataPdu,
     FileDataPdu,
@@ -107,7 +107,7 @@ class DestFieldWrapper:
         default_factory=lambda: DestFileParams.empty()
     )
     file_directives_dict: Dict[
-        DirectiveTypes, List[AbstractFileDirectiveBase]
+        DirectiveType, List[AbstractFileDirectiveBase]
     ] = dataclasses.field(default_factory=lambda: dict())
     file_data_deque: Deque[FileDataPdu] = dataclasses.field(
         default_factory=lambda: deque()
@@ -149,7 +149,7 @@ class DestHandler:
         self.pdu_holder = PduHolder(None)
         self._params = DestFieldWrapper()
         self._crc_helper: Crc32Helper = Crc32Helper(
-            ChecksumTypes.NULL_CHECKSUM, user.vfs
+            ChecksumType.NULL_CHECKSUM, user.vfs
         )
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
@@ -157,9 +157,9 @@ class DestHandler:
             return False
         self._params.reset()
         self.states.transaction = TransactionStep.TRANSACTION_START
-        if metadata_pdu.pdu_header.trans_mode == TransmissionModes.UNACKNOWLEDGED:
+        if metadata_pdu.pdu_header.trans_mode == TransmissionMode.UNACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
-        elif metadata_pdu.pdu_header.trans_mode == TransmissionModes.ACKNOWLEDGED:
+        elif metadata_pdu.pdu_header.trans_mode == TransmissionMode.ACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
         self._crc_helper.checksum_type = metadata_pdu.checksum_type
         self._closure_requested = metadata_pdu.closure_requested
@@ -198,15 +198,15 @@ class DestHandler:
             fh = self.cfg.default_fault_handlers.get_fault_handler(
                 ConditionCode.FILESTORE_REJECTION
             )
-            if fh == FaultHandlerCodes.IGNORE_ERROR:
+            if fh == FaultHandlerCode.IGNORE_ERROR:
                 pass
-            elif fh == FaultHandlerCodes.ABANDON_TRANSACTION:
+            elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
                 # TODO: Implement
                 pass
-            elif fh == FaultHandlerCodes.NOTICE_OF_SUSPENSION:
+            elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
                 # TODO: Implement
                 pass
-            elif fh == FaultHandlerCodes.NOTICE_OF_CANCELLATION:
+            elif fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
                 # TODO: Implement
                 pass
             self.cfg.default_fault_handlers.report_fault(
@@ -233,7 +233,7 @@ class DestHandler:
         if self.states.state == CfdpStates.IDLE:
             clear_all_other_pdus = True
             for pdu_type, pdu_deque in self._params.file_directives_dict.items():
-                if pdu_type == DirectiveTypes.METADATA_PDU:
+                if pdu_type == DirectiveType.METADATA_PDU:
                     clear_metadata_deque = False
                     for pdu_base in pdu_deque:
                         metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
@@ -308,7 +308,7 @@ class DestHandler:
                                 FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
                             )
                 # TODO: Support for check timer missing
-                eof_pdus = self._params.file_directives_dict.get(DirectiveTypes.EOF_PDU)
+                eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
                 if eof_pdus is not None:
                     for pdu in eof_pdus:
                         eof_pdu = PduHolder(pdu).to_eof_pdu()
@@ -331,7 +331,7 @@ class DestHandler:
 
     def pass_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
-        if packet.pdu_type == PduTypes.FILE_DATA:
+        if packet.pdu_type == PduType.FILE_DATA:
             self._params.file_data_deque.append(cast(FileDataPdu, packet))
         else:
             if packet.directive_type in self._params.file_directives_dict:
@@ -363,11 +363,11 @@ class DestHandler:
             self.finish()
 
     def _handle_transfer_completion(self):
-        if self._crc_helper.checksum_type != ChecksumTypes.NULL_CHECKSUM:
+        if self._crc_helper.checksum_type != ChecksumType.NULL_CHECKSUM:
             self._checksum_verify()
         elif (
             self._params.fp.no_file_data
-            or self._crc_helper.checksum_type == ChecksumTypes.NULL_CHECKSUM
+            or self._crc_helper.checksum_type == ChecksumType.NULL_CHECKSUM
         ):
             self._params.condition_code = ConditionCode.NO_ERROR
         self._notice_of_completion()
