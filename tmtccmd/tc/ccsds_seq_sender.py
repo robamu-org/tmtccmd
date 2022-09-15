@@ -67,6 +67,7 @@ class SequentialCcsdsSender:
         # There is no need to delay sending of the first entry, the send delay is inter-packet
         # only
         self._send_cd.timeout = timedelta()
+        self._current_res.longest_rem_delay = queue_wrapper.inter_cmd_delay
         self._proc_wrapper.base = self._queue_wrapper.info
         self._queue_wrapper = queue_wrapper
 
