@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Sequence, Optional, Tuple
 
-from spacepackets import SpacePacket, SpacePacketHeader, PacketTypes
+from spacepackets import SpacePacket, SpacePacketHeader, PacketType
 from spacepackets.cfdp import GenericPduPacket, PduType, DirectiveType, PduFactory
 from spacepackets.cfdp.pdu import PduHolder
 
@@ -175,7 +175,7 @@ class CfdpInCcsdsHandler:
         if next_packet is None:
             return next_packet
         sp_header = SpacePacketHeader(
-            packet_type=PacketTypes.TC,
+            packet_type=PacketType.TC,
             apid=self.ccsds_apid,
             seq_count=self.ccsds_seq_cnt_provider.get_and_increment(),
             data_len=next_packet.packet_len - 1,
@@ -188,7 +188,7 @@ class CfdpInCcsdsHandler:
         if next_packet is None:
             return next_packet
         sp_header = SpacePacketHeader(
-            packet_type=PacketTypes.TC,
+            packet_type=PacketType.TC,
             apid=self.ccsds_apid,
             seq_count=self.ccsds_seq_cnt_provider.get_and_increment(),
             data_len=next_packet.packet_len - 1,
