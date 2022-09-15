@@ -28,6 +28,7 @@ class SeqResultWrapper:
         self.mode = mode
         self.longest_rem_delay: timedelta = timedelta()
         self.tc_sent: bool = False
+        self.next_entry_is_tc: bool = False
 
 
 class SequentialCcsdsSender:
@@ -125,16 +126,16 @@ class SequentialCcsdsSender:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         next_queue_entry = self.queue_wrapper.queue[0]
         is_tc = self.handle_non_tc_entry(next_queue_entry)
-        call_send_cb = True
+        consume_queue_entry = True
         if is_tc:
             if self.no_delay_remaining():
                 self._current_res.tc_sent = True
             else:
                 self._current_res.tc_sent = False
-                call_send_cb = False
+                consume_queue_entry = False
         else:
             self._current_res.tc_sent = False
-        if call_send_cb:
+        if consume_queue_entry:
             self._tc_handler.send_cb(
                 SendCbParams(
                     self._proc_wrapper, QueueEntryHelper(next_queue_entry), com_if
@@ -146,6 +147,8 @@ class SequentialCcsdsSender:
                 else:
                     self._send_cd.reset()
             self.queue_wrapper.queue.popleft()
+            if self.queue_wrapper.queue:
+                self._current_res.next_entry_is_tc = self.queue_wrapper.queue[0].is_tc()
         if not self.queue_wrapper.queue and self.no_delay_remaining():
             self._tc_handler.queue_finished_cb(
                 ProcedureWrapper(self._queue_wrapper.info)

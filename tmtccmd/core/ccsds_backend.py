@@ -196,8 +196,11 @@ class CcsdsTmtcBackend(BackendBase):
                     self._state.mode_wrapper.tc_mode = TcMode.IDLE
                 self._state._req = BackendRequest.CALL_NEXT
         else:
-            if self._state.sender_res.tc_sent:
-                if int(self._state.sender_res.longest_rem_delay.microseconds / 1000) > 0:
+            if self._state.sender_res.next_entry_is_tc:
+                if (
+                    int(self._state.sender_res.longest_rem_delay.microseconds / 1000)
+                    > 0
+                ):
                     self._state._recommended_delay = (
                         self._state.sender_res.longest_rem_delay
                     )
