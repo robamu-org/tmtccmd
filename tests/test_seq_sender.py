@@ -113,6 +113,7 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         self.assertEqual(res.longest_rem_delay, timedelta())
         self.assertTrue(res.tc_sent)
+        self.assertEqual(res.next_entry_is_tc, False)
         self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
         send_cb_params = cast(SendCbParams, call_args.args[0])
@@ -121,6 +122,7 @@ class TestSendReceive(TestCase):
         self.assertEqual(send_cb_params.entry.to_pus_tc_entry().pus_tc, ping_cmd)
         res = self.seq_sender.operation(self.com_if)
         self.assertFalse(res.tc_sent)
+        self.assertEqual(res.next_entry_is_tc, True)
         self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
         send_cb_params = cast(SendCbParams, call_args.args[0])
@@ -135,6 +137,7 @@ class TestSendReceive(TestCase):
         res = self.seq_sender.operation(self.com_if)
         # No TC sent
         self.assertFalse(res.tc_sent)
+        self.assertEqual(res.next_entry_is_tc, True)
         self.assertEqual(len(self.queue_wrapper.queue), 2)
         time.sleep(inter_packet_delay.total_seconds())
         res = self.seq_sender.operation(self.com_if)
@@ -152,6 +155,8 @@ class TestSendReceive(TestCase):
         time.sleep(inter_packet_delay.total_seconds())
         res = self.seq_sender.operation(self.com_if)
         self.assertTrue(res.tc_sent)
+        # Queue is empty now, but this should still be set to False
+        self.assertEqual(res.next_entry_is_tc, False)
         self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
         send_cb_params = cast(SendCbParams, call_args.args[0])

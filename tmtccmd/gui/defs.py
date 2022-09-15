@@ -3,7 +3,6 @@ import threading
 
 from tmtccmd import CcsdsTmtcBackend
 from tmtccmd.config import CoreComInterfaces
-from tmtccmd.core import BackendController
 
 CONNECT_BTTN_STYLE = (
     "background-color: #1fc600;"
@@ -74,7 +73,6 @@ class LocalArgs:
 
 class SharedArgs:
     def __init__(self, backend: CcsdsTmtcBackend):
-        self.ctrl = BackendController()
         self.state_lock = threading.Lock()
         self.com_if_ref_tracker = ComIfRefCount()
         self.tc_lock = threading.Lock()

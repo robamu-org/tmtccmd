@@ -149,6 +149,8 @@ class SequentialCcsdsSender:
             self.queue_wrapper.queue.popleft()
             if self.queue_wrapper.queue:
                 self._current_res.next_entry_is_tc = self.queue_wrapper.queue[0].is_tc()
+            else:
+                self._current_res.next_entry_is_tc = False
         if not self.queue_wrapper.queue and self.no_delay_remaining():
             self._tc_handler.queue_finished_cb(
                 ProcedureWrapper(self._queue_wrapper.info)
