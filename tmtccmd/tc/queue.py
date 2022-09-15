@@ -148,9 +148,6 @@ class QueueEntryHelper:
     def to_packet_delay_entry(self) -> PacketDelayEntry:
         return self.__cast_internally(PacketDelayEntry, TcQueueEntryType.PACKET_DELAY)
 
-    def to_space_packet_entry(self) -> SpacePacketEntry:
-        return self.__cast_internally(SpacePacketEntry, TcQueueEntryType.CCSDS_TC)
-
 
 class QueueWrapper:
     def __init__(
