@@ -6,21 +6,25 @@ from typing import Optional
 
 import tmtccmd
 from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
-from spacepackets.ecss.pus_1_verification import UnpackParams
+from spacepackets.ecss.pus_17_test import Service17Tm
+from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
+from spacepackets.util import UnsignedByteField
 
-from tmtccmd import CcsdsTmtcBackend, TcHandlerBase
-from tmtccmd.pus import VerificationWrapper, FileSeqCountProvider
+from tmtccmd import CcsdsTmtcBackend, TcHandlerBase, ProcedureParamsWrapper
+from tmtccmd.core.base import BackendRequest
+from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
     default_json_path,
     SetupParams,
     TmTcCfgHookBase,
-    TmTcDefWrapper,
+    TmtcDefinitionWrapper,
     CoreServiceList,
+    OpCodeEntry,
+    params_to_procedure_conversion,
 )
-from tmtccmd.config import ArgParserWrapper, SetupWrapper
-from tmtccmd.core import BackendController, BackendRequest
+from tmtccmd.config import PreArgsParsingWrapper, SetupWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
@@ -28,21 +32,26 @@ from tmtccmd.logging.pus import (
     TimedLogWhen,
 )
 from tmtccmd.tc import (
-    QueueEntryHelper,
     TcQueueEntryType,
-    ProcedureHelper,
+    ProcedureWrapper,
     TcProcedureType,
     FeedWrapper,
+    SendCbParams,
+    DefaultPusQueueHelper,
 )
 from tmtccmd.tm.pus_5_event import Service5Tm
-from tmtccmd.tm.pus_17_test import Service17TmExtended
-from tmtccmd.tm.pus_1_verification import Service1TmExtended
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider
+from tmtccmd.util.obj_id import ObjectIdDictT
 
-from tmtccmd.utility.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
-EXAMPLE_APID = 0xEF
+
+EXAMPLE_PUS_APID = 0xEF
+EXAMPLE_CFDP_APID = 0xF0
+
+CFDP_LOCAL_ENTITY_ID = UnsignedByteField(byte_len=2, val=1)
+CFDP_REMOTE_ENTITY_ID = UnsignedByteField(byte_len=2, val=EXAMPLE_CFDP_APID)
 
 
 class ExampleHookClass(TmTcCfgHookBase):
@@ -50,18 +59,38 @@ class ExampleHookClass(TmTcCfgHookBase):
         super().__init__(json_cfg_path=json_cfg_path)
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
-        from tmtccmd.config.com_if import create_communication_interface_default
-
-        LOGGER.info("Communication interface assignment function was called")
-        return create_communication_interface_default(
-            com_if_key=com_if_key,
-            json_cfg_path=self.json_cfg_path,
+        print("Communication interface assignment function was called")
+        from tmtccmd.config.com_if import (
+            create_com_interface_default,
+            create_com_interface_cfg_default,
         )
 
-    def get_tmtc_definitions(self) -> TmTcDefWrapper:
+        cfg = create_com_interface_cfg_default(
+            com_if_key=com_if_key,
+            json_cfg_path=self.cfg_path,
+            space_packet_ids=None,
+        )
+        return create_com_interface_default(cfg)
+
+    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         from tmtccmd.config.globals import get_default_tmtc_defs
 
-        return get_default_tmtc_defs()
+        defs = get_default_tmtc_defs()
+        srv_5 = OpCodeEntry()
+        srv_5.add("0", "Event Test")
+        defs.add_service(
+            name=CoreServiceList.SERVICE_5.value,
+            info="PUS Service 5 Event",
+            op_code_entry=srv_5,
+        )
+        srv_17 = OpCodeEntry()
+        srv_17.add("0", "Ping Test")
+        defs.add_service(
+            name=CoreServiceList.SERVICE_17_ALT,
+            info="PUS Service 17 Test",
+            op_code_entry=srv_17,
+        )
+        return defs
 
     def perform_mode_operation(self, tmtc_backend: CcsdsTmtcBackend, mode: int):
         LOGGER.info("Mode operation hook was called")
@@ -80,7 +109,7 @@ class PusHandler(SpecificApidHandlerBase):
         printer: FsfwTmTcPrinter,
         raw_logger: RawTmtcTimedLogWrapper,
     ):
-        super().__init__(EXAMPLE_APID, None)
+        super().__init__(EXAMPLE_PUS_APID, None)
         self.printer = printer
         self.raw_logger = raw_logger
         self.verif_wrapper = verif_wrapper
@@ -95,9 +124,7 @@ class PusHandler(SpecificApidHandlerBase):
         service = tm_packet.service
         dedicated_handler = False
         if service == 1:
-            tm_packet = Service1TmExtended.unpack(
-                data=packet, params=UnpackParams(1, 1)
-            )
+            tm_packet = Service1Tm.unpack(data=packet, params=UnpackParams(1, 2))
             res = self.verif_wrapper.add_tm(tm_packet)
             if res is None:
                 LOGGER.info(
@@ -114,7 +141,18 @@ class PusHandler(SpecificApidHandlerBase):
         if service == 5:
             tm_packet = Service5Tm.unpack(packet)
         if service == 17:
-            tm_packet = Service17TmExtended.unpack(packet)
+            tm_packet = Service17Tm.unpack(packet)
+            dedicated_handler = True
+            if tm_packet.subservice == 2:
+                self.printer.file_logger.info("Received Ping Reply TM[17,2]")
+                LOGGER.info("Received Ping Reply TM[17,2]")
+            else:
+                self.printer.file_logger.info(
+                    f"Received Test Packet with unknown subservice {tm_packet.subservice}"
+                )
+                LOGGER.info(
+                    f"Received Test Packet with unknown subservice {tm_packet.subservice}"
+                )
         if tm_packet is None:
             LOGGER.info(
                 f"The service {service} is not implemented in Telemetry Factory"
@@ -134,20 +172,29 @@ class TcHandler(TcHandlerBase):
         super(TcHandler, self).__init__()
         self.seq_count_provider = seq_count_provider
         self.verif_wrapper = verif_wrapper
+        self.queue_helper = DefaultPusQueueHelper(
+            queue_wrapper=None,
+            seq_cnt_provider=seq_count_provider,
+        )
 
-    def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
+    # TODO: Fix this
+    def send_cb(self, send_params: SendCbParams):
+        entry_helper = send_params.entry
         if entry_helper.is_tc:
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = entry_helper.to_pus_tc_entry()
                 pus_tc_wrapper.pus_tc.seq_count = (
-                    self.seq_count_provider.next_seq_count()
+                    self.seq_count_provider.get_and_increment()
                 )
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
-                com_if.send(raw_tc)
+                send_params.com_if.send(raw_tc)
+        elif entry_helper.entry_type == TcQueueEntryType.LOG:
+            log_entry = entry_helper.to_log_entry()
+            LOGGER.info(log_entry.log_str)
 
-    def queue_finished_cb(self, helper: ProcedureHelper):
+    def queue_finished_cb(self, helper: ProcedureWrapper):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
             LOGGER.info(
@@ -155,24 +202,38 @@ class TcHandler(TcHandlerBase):
                 f"op code {def_proc.op_code}"
             )
 
-    def feed_cb(self, helper: ProcedureHelper, wrapper: FeedWrapper):
+    def feed_cb(self, helper: ProcedureWrapper, wrapper: FeedWrapper):
+        self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
-            queue_helper = wrapper.queue_helper
             service = def_proc.service
-            if service == CoreServiceList.SERVICE_17.value:
-                return queue_helper.add_pus_tc(PusTelecommand(service=17, subservice=1))
+            if (
+                service == CoreServiceList.SERVICE_17
+                or service == CoreServiceList.SERVICE_17_ALT
+            ):
+                return self.queue_helper.add_pus_tc(
+                    PusTelecommand(service=17, subservice=1)
+                )
 
 
 def main():
     tmtccmd.init_printout(False)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
-    parser_wrapper = ArgParserWrapper(hook_obj)
-    parser_wrapper.parse()
+    parser_wrapper = PreArgsParsingWrapper()
+    parser_wrapper.create_default_parent_parser()
+    parser_wrapper.create_default_parser()
+    parser_wrapper.add_def_proc_args()
+    post_args_wrapper = parser_wrapper.parse(hook_obj)
     params = SetupParams()
-    parser_wrapper.set_params(params)
-    params.apid = EXAMPLE_APID
-    setup_args = SetupWrapper(hook_obj=hook_obj, setup_params=params)
+    proc_wrapper = ProcedureParamsWrapper()
+    if post_args_wrapper.use_gui:
+        post_args_wrapper.set_params_without_prompts(params, proc_wrapper)
+    else:
+        post_args_wrapper.set_params_with_prompts(params, proc_wrapper)
+    params.apid = EXAMPLE_PUS_APID
+    setup_args = SetupWrapper(
+        hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper
+    )
     # Create console logger helper and file loggers
     tmtc_logger = RegularTmtcLogWrapper()
     printer = FsfwTmTcPrinter(tmtc_logger.logger)
@@ -185,18 +246,20 @@ def main():
     ccsds_handler.add_apid_handler(tm_handler)
 
     # Create TC handler
-    seq_count_provider = FileSeqCountProvider()
+    seq_count_provider = PusFileSeqCountProvider()
     tc_handler = TcHandler(seq_count_provider, verification_wrapper)
     tmtccmd.setup(setup_args=setup_args)
-
+    init_proc = params_to_procedure_conversion(setup_args.proc_param_wrapper)
     tmtc_backend = tmtccmd.create_default_tmtc_backend(
-        setup_wrapper=setup_args, tm_handler=ccsds_handler, tc_handler=tc_handler
+        setup_wrapper=setup_args,
+        tm_handler=ccsds_handler,
+        tc_handler=tc_handler,
+        init_procedure=init_proc,
     )
     tmtccmd.start(tmtc_backend=tmtc_backend, hook_obj=hook_obj)
-    ctrl = BackendController()
     try:
         while True:
-            state = tmtc_backend.periodic_op(ctrl)
+            state = tmtc_backend.periodic_op(None)
             if state.request == BackendRequest.TERMINATION_NO_ERROR:
                 sys.exit(0)
             elif state.request == BackendRequest.DELAY_IDLE:

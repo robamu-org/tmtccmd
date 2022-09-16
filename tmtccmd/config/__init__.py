@@ -1,20 +1,24 @@
 """Definitions for the TMTC commander core
 """
+from pathlib import Path
 from typing import Optional
 
-from tmtccmd.core import ModeWrapper, TmMode, TcMode
+from spacepackets.util import ByteFieldEmpty
+from tmtccmd.core import TmMode, TcMode
 
 from .args import (
     SetupParams,
     create_default_args_parser,
     add_default_tmtccmd_args,
     parse_default_tmtccmd_input_arguments,
-    DefProcedureParams,
-    ArgParserWrapper,
+    DefaultProcedureParams,
+    PreArgsParsingWrapper,
+    ProcedureParamsWrapper,
+    CfdpParams,
 )
 from .defs import (
     CoreModeList,
-    CoreModeStrings,
+    CoreModeConverter,
     CoreComInterfaces,
     CORE_COM_IF_DICT,
     default_json_path,
@@ -22,18 +26,26 @@ from .defs import (
     ComIfDictT,
 )
 from .prompt import prompt_op_code, prompt_service
-from .tmtc import TmTcDefWrapper
+from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase
 from .hook import TmTcCfgHookBase
+from tmtccmd.tc.procedure import (
+    DefaultProcedureInfo,
+    CfdpProcedureInfo,
+    TcProcedureType,
+    ProcedureWrapper,
+)
+from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
+from tmtccmd.core.base import ModeWrapper
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
-    if mode == CoreModeStrings[CoreModeList.LISTENER_MODE]:
+    if mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.IDLE
-    elif mode == CoreModeStrings[CoreModeList.ONE_QUEUE_MODE]:
+    elif mode == CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.ONE_QUEUE
-    elif mode == CoreModeStrings[CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE]:
+    elif mode == CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE):
         mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
         mode_wrapper.tm_mode = TmMode.LISTENER
 
@@ -71,6 +83,7 @@ class SetupWrapper:
         self,
         hook_obj: TmTcCfgHookBase,
         setup_params: SetupParams,
+        proc_param_wrapper: ProcedureParamsWrapper,
         json_cfg_path: Optional[str] = None,
     ):
         """
@@ -80,6 +93,7 @@ class SetupWrapper:
         self.hook_obj = hook_obj
         self.json_cfg_path = json_cfg_path
         self._params = setup_params
+        self.proc_param_wrapper = proc_param_wrapper
         self.json_cfg_path = json_cfg_path
         if json_cfg_path is None:
             self.json_cfg_path = default_json_path()
@@ -87,3 +101,33 @@ class SetupWrapper:
     @property
     def params(self):
         return self._params
+
+
+def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedureInfo:
+    return DefaultProcedureInfo(service=params.service, op_code=params.op_code)
+
+
+def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
+    proc_info = CfdpProcedureInfo()
+    put_req_cfg = PutRequestCfg(
+        destination_id=ByteFieldEmpty(),
+        source_file=Path(params.source),
+        dest_file=params.target,
+        closure_requested=params.closure_requested,
+        trans_mode=params.transmission_mode,
+    )
+    proc_info.request_wrapper.base = PutRequest(put_req_cfg)
+    return proc_info
+
+
+def params_to_procedure_conversion(
+    param_wrapper: ProcedureParamsWrapper,
+) -> ProcedureWrapper:
+    proc_wrapper = ProcedureWrapper(None)
+    if param_wrapper.ptype == TcProcedureType.DEFAULT:
+        proc_wrapper.base = tmtc_params_to_procedure(param_wrapper.def_params())
+    elif param_wrapper.ptype == TcProcedureType.CFDP:
+        proc_wrapper.base = cfdp_put_req_params_to_procedure(
+            param_wrapper.cfdp_params()
+        )
+    return proc_wrapper

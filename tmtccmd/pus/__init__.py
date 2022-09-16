@@ -1,8 +1,8 @@
 from enum import IntEnum
 from typing import Optional
 
+from .pus_11_tc_sched import Subservices as Pus11Subservices
 from spacepackets.ecss import PusTelecommand
-from spacepackets.ecss.defs import PusServices
 from spacepackets.ecss.pus_1_verification import RequestId
 import spacepackets.ecss.pus_1_verification as pus_1
 from spacepackets.ecss.pus_verificator import (
@@ -11,10 +11,9 @@ from spacepackets.ecss.pus_verificator import (
     PusVerificator,
     TmCheckResult,
 )
-from .seqcnt import FileSeqCountProvider, ProvidesSeqCount
 import logging
 
-from tmtccmd.utility.conf_util import AnsiColors
+from tmtccmd.util.conf_util import AnsiColors
 
 
 class CustomPusServices(IntEnum):
@@ -36,6 +35,12 @@ class VerificationWrapper:
     @property
     def verificator(self) -> PusVerificator:
         return self.pus_verificator
+
+    def dlog(self, log_str: str, level: int = logging.INFO):
+        if self.console_logger is not None:
+            self.console_logger.log(level, log_str)
+        elif self.file_logger is not None:
+            self.file_logger.info(level, log_str)
 
     def add_tc(self, pus_tc: PusTelecommand) -> bool:
         return self.pus_verificator.add_tc(pus_tc)

@@ -5,11 +5,11 @@ import argparse
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreModeList
-from tmtccmd.config.tmtc import TmTcDefWrapper
+from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import TmTcCfgHookBase
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.obj_id import ObjectIdDictT
+from tmtccmd.util.obj_id import ObjectIdDictT
 
 LOGGER = get_console_logger()
 
@@ -18,12 +18,7 @@ def create_hook_mock() -> TmTcCfgHookBase:
     """Create simple minimal hook mock using the MagicMock facilities by unittest
     :return:
     """
-    tmtc_hook_base = TmTcCfgHookBase()
-    tmtc_hook_base.add_globals_pre_args_parsing = MagicMock(return_value=0)
-    tmtc_hook_base.add_globals_post_args_parsing = MagicMock(return_value=0)
-    tmtc_hook_base.custom_args_parsing = MagicMock(
-        return_value=argparse.Namespace(service=17, mode=CoreModeList.IDLE)
-    )
+    tmtc_hook_base = MagicMock(spec=TmTcCfgHookBase)
     return tmtc_hook_base
 
 
@@ -65,14 +60,14 @@ class TestHookObj(TmTcCfgHookBase):
 
         :param com_if_key:      String key of the communication interface to be created.
         """
-        from tmtccmd.config.com_if import create_communication_interface_default
+        from tmtccmd.config.com_if import create_com_interface_default
 
-        return create_communication_interface_default(
-            com_if_key=com_if_key, json_cfg_path=self.json_cfg_path
+        return create_com_interface_default(
+            com_if_key=com_if_key, json_cfg_path=self.cfg_path
         )
 
     @abstractmethod
-    def get_tmtc_definitions(self) -> TmTcDefWrapper:
+    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         """This is a dicitonary mapping services represented by strings to an operation code
         dictionary.
 

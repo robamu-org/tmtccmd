@@ -1,7 +1,7 @@
 from typing import Tuple, List
 import enum
 
-from tmtccmd.utility.obj_id import ObjectId
+from tmtccmd.util.obj_id import ObjectIdU32
 
 
 class HkContentType(enum.Enum):
@@ -19,14 +19,18 @@ class Service3Base:
     """
 
     def __init__(self, object_id: int, custom_hk_handling: bool = False):
-        self._object_id = ObjectId(object_id=object_id)
+        self._object_id = ObjectIdU32(obj_id=object_id)
         self._set_id = 0
         self._param_length = 0
         self._custom_hk_handling = custom_hk_handling
 
     @property
-    def object_id(self) -> ObjectId:
+    def object_id(self) -> ObjectIdU32:
         return self._object_id
+
+    @object_id.setter
+    def object_id(self, obj_id: ObjectIdU32):
+        self._object_id = obj_id
 
     @property
     def set_id(self) -> int:

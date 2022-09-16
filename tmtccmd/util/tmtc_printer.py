@@ -5,11 +5,10 @@ import enum
 from typing import List, Optional
 
 from spacepackets.util import get_printable_data_string, PrintFormats
-from spacepackets.ecss.defs import PusServices
 
 from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
-from tmtccmd.utility.obj_id import ObjectId
+from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdBase
 from tmtccmd.tm.pus_3_hk_base import HkContentType
 from tmtccmd.logging import get_console_logger, get_current_time_string
 
@@ -91,7 +90,7 @@ class FsfwTmTcPrinter:
     def generic_hk_tm_print(
         self,
         content_type: HkContentType,
-        object_id: ObjectId,
+        object_id: ObjectIdU32,
         set_id: int,
         hk_data: bytes,
     ):
@@ -111,7 +110,7 @@ class FsfwTmTcPrinter:
         if object_id.name == "":
             object_id.name = "Unknown Name"
         generic_info = (
-            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_string}) with "
+            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_hex_string}) with "
             f"Set ID {set_id} and {len(hk_data)} bytes of HK data"
         )
         LOGGER.info(generic_info)
@@ -152,7 +151,9 @@ class FsfwTmTcPrinter:
                 self.file_logger.info(printout)
 
     @staticmethod
-    def generic_action_packet_tm_print(packet: Service8FsfwTm, obj_id: ObjectId) -> str:
+    def generic_action_packet_tm_print(
+        packet: Service8FsfwTm, obj_id: ObjectIdBase
+    ) -> str:
         print_string = (
             f"Service 8 data reply from {obj_id} with action ID {packet.action_id} "
             f"and data size {len(packet.tm_data)}"

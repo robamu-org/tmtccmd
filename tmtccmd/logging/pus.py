@@ -25,7 +25,7 @@ def date_suffix() -> str:
 
 
 class TimedLogWhen(enum.Enum):
-    PER_HOUR = "H"
+    PER_HOUR = "h"
     PER_MINUTE = "M"
     PER_SECOND = "S"
     PER_DAY = "D"

@@ -1,5 +1,5 @@
 import enum
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union
 
 # Com Interface Types
 ComIfValueT = Tuple[str, any]
@@ -10,7 +10,9 @@ def default_json_path() -> str:
     return "tmtc_conf.json"
 
 
-class CoreComInterfaces(enum.Enum):
+class CoreComInterfaces(str, enum.Enum):
+    value: str
+
     DUMMY = "dummy"
     SERIAL_DLE = "ser_dle"
     UDP = "udp"
@@ -21,16 +23,16 @@ class CoreComInterfaces(enum.Enum):
 
 
 CORE_COM_IF_DICT = {
-    CoreComInterfaces.DUMMY.value: ("Dummy Interface", None),
-    CoreComInterfaces.SERIAL_DLE.value: ("Serial Interace with DLE encoding", None),
-    CoreComInterfaces.UDP.value: ("TCP/IP with UDP datagrams", None),
-    CoreComInterfaces.TCP.value: ("TCP/IP with TCP", None),
-    CoreComInterfaces.SERIAL_FIXED_FRAME.value: (
+    CoreComInterfaces.DUMMY: ("Dummy Interface", None),
+    CoreComInterfaces.SERIAL_DLE: ("Serial Interace with DLE encoding", None),
+    CoreComInterfaces.UDP: ("TCP/IP with UDP datagrams", None),
+    CoreComInterfaces.TCP: ("TCP/IP with TCP", None),
+    CoreComInterfaces.SERIAL_FIXED_FRAME: (
         "Serial Interface with fixed size frames",
         None,
     ),
-    CoreComInterfaces.SERIAL_QEMU.value: ("Serial Interface using QEMU", None),
-    CoreComInterfaces.UNSPECIFIED.value: ("Unspecified", None),
+    CoreComInterfaces.SERIAL_QEMU: ("Serial Interface using QEMU", None),
+    CoreComInterfaces.UNSPECIFIED: ("Unspecified", None),
 }
 
 
@@ -57,15 +59,21 @@ class CoreModeList(enum.IntEnum):
     IDLE = 5
 
 
-CoreModeStrings = {
-    CoreModeList.ONE_QUEUE_MODE: "one-q",
-    CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE: "multi-q",
-    CoreModeList.LISTENER_MODE: "listener",
-    CoreModeList.IDLE: "idle",
-}
+class CoreModeConverter:
+    @staticmethod
+    def get_str(mode: Union[CoreModeList, int]) -> str:
+        if mode == CoreModeList.LISTENER_MODE:
+            return "listener"
+        elif mode == CoreModeList.ONE_QUEUE_MODE:
+            return "one-q"
+        elif mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
+            return "multi-q"
+        elif mode == CoreModeList.IDLE:
+            return "idle"
 
 
-class CoreServiceList(enum.Enum):
+class CoreServiceList(str, enum.Enum):
+    value: str
     SERVICE_2 = "2"
     SERVICE_3 = "3"
     SERVICE_5 = "5"
@@ -73,6 +81,7 @@ class CoreServiceList(enum.Enum):
     SERVICE_9 = "9"
     SERVICE_11 = "11"
     SERVICE_17 = "17"
+    SERVICE_17_ALT = "test"
     SERVICE_20 = "20"
     SERVICE_23 = "23"
     SERVICE_200 = "200"

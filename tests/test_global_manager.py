@@ -7,7 +7,6 @@ from tmtccmd.config.globals import (
     set_glob_com_if_dict,
     get_glob_com_if_dict,
     set_default_globals_pre_args_parsing,
-    check_and_set_core_mode_arg,
     CoreModeList,
     CoreGlobalIds,
 )
@@ -35,16 +34,6 @@ class TestGlobalManager(TestCase):
 
         set_default_globals_pre_args_parsing(apid=0x02)
 
-        result = check_and_set_core_mode_arg(mode_arg="udp")
-        self.assertTrue(result == CoreModeList.ONE_QUEUE_MODE)
-
-        result = check_and_set_core_mode_arg(mode_arg="listener")
-        self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.LISTENER_MODE)
-        self.assertTrue(result == CoreModeList.LISTENER_MODE)
-
-        result = check_and_set_core_mode_arg(mode_arg="seqcmd")
-        self.assertTrue(get_global(CoreGlobalIds.MODE) == CoreModeList.ONE_QUEUE_MODE)
-        self.assertTrue(result == CoreModeList.ONE_QUEUE_MODE)
         lock_global_pool()
         unlock_global_pool()
         set_lock_timeout(0.5)

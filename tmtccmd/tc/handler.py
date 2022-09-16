@@ -1,8 +1,8 @@
 from abc import abstractmethod, ABC
 
 from tmtccmd.com_if import ComInterface
-from tmtccmd.tc import ProcedureHelper
-from tmtccmd.tc.queue import QueueHelper, QueueWrapper, QueueEntryHelper
+from tmtccmd.tc.procedure import ProcedureWrapper
+from tmtccmd.tc.queue import QueueWrapper, QueueEntryHelper
 
 
 class FeedWrapper:
@@ -16,11 +16,29 @@ class FeedWrapper:
     """
 
     def __init__(self, queue_wrapper: QueueWrapper, auto_dispatch: bool):
-        from tmtccmd.core import ModeWrapper
+        from tmtccmd.core.base import ModeWrapper
 
-        self.queue_helper = QueueHelper(queue_wrapper)
+        self.queue_wrapper = queue_wrapper
         self.dispatch_next_queue = auto_dispatch
         self.modes = ModeWrapper()
+
+
+class SendCbParams:
+    """Wrapper for all important parameters passed to the TC send callback"""
+
+    def __init__(
+        self, info: ProcedureWrapper, entry: QueueEntryHelper, com_if: ComInterface
+    ):
+        """
+        :param info: Procedure info about the procedure this queue entry is related too
+        :param entry: Queue entry base type. The user can cast this back to the concrete
+                type or just use duck typing if the concrete type is known
+        :param com_if: Communication interface. Will generally be used to send the packet,
+                using the :py:func:`tmtccmd.com_if.ComInterface.send` method
+        """
+        self.info = info
+        self.entry = entry
+        self.com_if = com_if
 
 
 class TcHandlerBase(ABC):
@@ -34,7 +52,7 @@ class TcHandlerBase(ABC):
         pass
 
     @abstractmethod
-    def send_cb(self, entry_helper: QueueEntryHelper, com_if: ComInterface):
+    def send_cb(self, send_params: SendCbParams):
         """This function callback will be called for each queue entry. This also includes
         miscellaneous queue entries, for example the ones used to log additional information.
         It is up to the user code implementation to determine the concrete queue entry and what
@@ -46,19 +64,22 @@ class TcHandlerBase(ABC):
         2. If applicable, retrieve the raw data to send from the queue entry and send it using
            the generic communication interface
 
-        :param entry_helper: Queue entry base type. The user can cast this back to the concrete
-            type or just use duck typing if the concrete type is known
-        :param com_if: Communication interface. Will generally be used to send the packet,
-            using the :py:func:`tmtccmd.com_if.ComInterface.send` method
+        All delay related entries will generally be handled by the send queue consumer so there
+        is no need to manually delay the application in this callback. However, the queue consumer
+        will not handle log entries so the user needs to take care of handling these
+        entries and log the content to a console, file logger or any other system used to log
+        something.
+
+        :param send_params:
         """
         pass
 
     @abstractmethod
-    def queue_finished_cb(self, info: ProcedureHelper):
+    def queue_finished_cb(self, info: ProcedureWrapper):
         pass
 
     @abstractmethod
-    def feed_cb(self, info: ProcedureHelper, wrapper: FeedWrapper):
+    def feed_cb(self, info: ProcedureWrapper, wrapper: FeedWrapper):
         """This function will be called to retrieve a telecommand queue from the user code, based
         on a procedure. The passed feed wrapper can be used to set the TC queue or other
         parameter like the inter-packet delay.

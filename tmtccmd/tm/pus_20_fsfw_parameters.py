@@ -14,7 +14,7 @@ from spacepackets.ecss import (
 )
 from spacepackets.ecss.defs import PusServices
 
-from tmtccmd.utility.obj_id import ObjectId
+from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.pus.pus_20_params import (
     CustomSubservices,
 )
@@ -63,16 +63,15 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         pus_tm = PusTelemetry(
             service=PusServices.S20_PARAMETER,
             subservice=subservice_id,
-            time=time,
+            time_provider=time,
             seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
         )
-        self.object_id = ObjectId.from_bytes(obj_id_as_bytes=object_id)
+        self.object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=object_id)
         self.param_struct = ParamStruct()
         self.param_struct.param_id = param_id
         self.param_struct.domain_id = domain_id
@@ -89,7 +88,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         if len(tm_data) < 8:
             return
         data_size = len(tm_data)
-        instance.object_id = ObjectId.from_bytes(obj_id_as_bytes=tm_data[0:4])
+        instance.object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=tm_data[0:4])
         instance.param_struct.param_id = struct.unpack("!I", tm_data[4:8])[0]
         instance.param_struct.domain_id = tm_data[4]
         instance.param_struct.unique_id = tm_data[5]
@@ -123,7 +122,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
     @classmethod
     def __empty(cls) -> Service20FsfwTm:
         return cls(
-            subservice_id=-1,
+            subservice_id=0,
             object_id=bytearray(4),
             param_id=bytearray(),
             domain_id=0,
@@ -139,19 +138,18 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
     ) -> Service20FsfwTm:
         service_20_tm = cls.__empty()
         service_20_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
-        if service_20_tm.custom_fsfw_handling:
-            if len(service_20_tm.pus_tm.tm_data) < 4:
-                LOGGER.warning("Invalid data length, less than 4")
-            elif len(service_20_tm.pus_tm.tm_data) < 8:
-                LOGGER.warning(
-                    "Invalid data length, less than 8 (Object ID and Parameter ID)"
-                )
+        if len(service_20_tm.pus_tm.tm_data) < 4:
+            LOGGER.warning("Invalid data length, less than 4")
+        elif len(service_20_tm.pus_tm.tm_data) < 8:
+            LOGGER.warning(
+                "Invalid data length, less than 8 (Object ID and Parameter ID)"
+            )
         service_20_tm.__init_without_base(instance=service_20_tm)
         return service_20_tm
 
     def append_telemetry_content(self, content_list: list):
         super().append_telemetry_content(content_list=content_list)
-        content_list.append(self.object_id.as_string)
+        content_list.append(self.object_id.as_hex_string)
 
     def append_telemetry_column_headers(self, header_list: list):
         super().append_telemetry_column_headers(header_list=header_list)

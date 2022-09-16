@@ -4,16 +4,12 @@ from collections import deque
 from datetime import timedelta
 from typing import Optional
 
-from tmtccmd.core import (
-    BackendBase,
-    BackendState,
-    BackendRequest,
-    TcMode,
-    TmMode,
-)
-from tmtccmd.tc import TcProcedureBase, ProcedureHelper
+from tmtccmd.core.backend_base import BackendBase
+from tmtccmd.core.backend_state import BackendState
+from tmtccmd.core.base import TcMode, TmMode, BackendRequest
+from tmtccmd.tc import TcProcedureBase, ProcedureWrapper
 from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
-from tmtccmd.utility.exit_handler import keyboard_interrupt_handler
+from tmtccmd.util.exit import keyboard_interrupt_handler
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.ccsds_seq_sender import (
@@ -54,6 +50,7 @@ class CcsdsTmtcBackend(BackendBase):
         # This can be used to keep the TC mode in multi queue mode after finishing the handling
         # of a queue
         self.keep_multi_queue_mode = False
+        self.keep_listener_mode = False
         self._queue_wrapper = QueueWrapper(None, deque())
         self._seq_handler = SequentialCcsdsSender(
             tc_handler=tc_handler,
@@ -120,8 +117,8 @@ class CcsdsTmtcBackend(BackendBase):
         return self._com_if_active
 
     @property
-    def current_procedure(self) -> ProcedureHelper:
-        return ProcedureHelper(self._queue_wrapper.info)
+    def current_procedure(self) -> ProcedureWrapper:
+        return ProcedureWrapper(self._queue_wrapper.info)
 
     @current_procedure.setter
     def current_procedure(self, proc_info: TcProcedureBase):
@@ -187,18 +184,29 @@ class CcsdsTmtcBackend(BackendBase):
             self._state._req = BackendRequest.DELAY_LISTENER
         elif self._seq_handler.mode == SenderMode.DONE:
             if self._state.tc_mode == TcMode.ONE_QUEUE:
-                self.tc_mode = TcMode.IDLE
-                self._state._req = BackendRequest.TERMINATION_NO_ERROR
+                if self.keep_listener_mode:
+                    self._state._req = BackendRequest.DELAY_LISTENER
+                    self.tm_mode = TmMode.LISTENER
+                    self.tc_mode = TcMode.IDLE
+                else:
+                    self.tc_mode = TcMode.IDLE
+                    self._state._req = BackendRequest.TERMINATION_NO_ERROR
             elif self._state.tc_mode == TcMode.MULTI_QUEUE:
                 if not self.keep_multi_queue_mode:
                     self._state.mode_wrapper.tc_mode = TcMode.IDLE
                 self._state._req = BackendRequest.CALL_NEXT
         else:
-            if self._state.sender_res.longest_rem_delay.total_seconds() * 1000 > 0:
-                self._state._recommended_delay = (
-                    self._state.sender_res.longest_rem_delay
-                )
-                self._state._req = BackendRequest.DELAY_CUSTOM
+            if self._state.sender_res.next_entry_is_tc:
+                if (
+                    int(self._state.sender_res.longest_rem_delay.microseconds / 1000)
+                    > 0
+                ):
+                    self._state._recommended_delay = (
+                        self._state.sender_res.longest_rem_delay
+                    )
+                    self._state._req = BackendRequest.DELAY_CUSTOM
+                else:
+                    self._state._req = BackendRequest.CALL_NEXT
             else:
                 self._state._req = BackendRequest.CALL_NEXT
 
@@ -245,8 +253,8 @@ class CcsdsTmtcBackend(BackendBase):
                 "No procedure was set to pass to the feed callback function"
             )
         self._tc_handler.feed_cb(
-            ProcedureHelper(self._queue_wrapper.info), feed_wrapper
+            ProcedureWrapper(self._queue_wrapper.info), feed_wrapper
         )
         if not feed_wrapper.dispatch_next_queue:
             return None
-        return feed_wrapper.queue_helper.queue_wrapper
+        return feed_wrapper.queue_wrapper

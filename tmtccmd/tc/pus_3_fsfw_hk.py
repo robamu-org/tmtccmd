@@ -17,23 +17,23 @@ def make_interval(interval_seconds: float) -> bytearray:
 
 
 def enable_periodic_hk_command(diag: bool, sid: bytes, ssc: int) -> PusTelecommand:
-    return __generate_periodic_hk_command(diag=diag, enable=True, sid=sid, ssc=ssc)
+    return __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
 
 
 def enable_periodic_hk_command_with_interval(
-    diag: bool, sid: bytes, interval_seconds: float, ssc: int
+    diag: bool, sid: bytes, interval_seconds: float
 ) -> (PusTelecommand, PusTelecommand):
-    cmd0 = modify_collection_interval(diag, sid, interval_seconds, ssc)
-    cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid, ssc=ssc)
+    cmd0 = modify_collection_interval(diag, sid, interval_seconds)
+    cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
     return cmd0, cmd1
 
 
-def disable_periodic_hk_command(diag: bool, sid: bytes, ssc: int) -> PusTelecommand:
-    return __generate_periodic_hk_command(diag=diag, enable=False, sid=sid, ssc=ssc)
+def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
+    return __generate_periodic_hk_command(diag=diag, enable=False, sid=sid)
 
 
 def __generate_periodic_hk_command(
-    diag: bool, enable: bool, sid: bytes, ssc: int
+    diag: bool, enable: bool, sid: bytes
 ) -> PusTelecommand:
     app_data = bytearray(sid)
     if enable:
@@ -46,13 +46,11 @@ def __generate_periodic_hk_command(
             subservice = Subservices.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
             subservice = Subservices.TC_DISABLE_PERIODIC_HK_GEN
-    return PusTelecommand(
-        service=3, subservice=subservice, seq_count=ssc, app_data=app_data
-    )
+    return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
 def modify_collection_interval(
-    diag: bool, sid: bytes, interval_seconds: float, ssc: int
+    diag: bool, sid: bytes, interval_seconds: float
 ) -> PusTelecommand:
     app_data = bytearray(sid)
     app_data += make_interval(interval_seconds)
@@ -60,24 +58,20 @@ def modify_collection_interval(
         subservice = Subservices.TC_MODIFY_DIAGNOSTICS_REPORT_COLLECTION_INTERVAL
     else:
         subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
-    return PusTelecommand(
-        service=3, subservice=subservice, seq_count=ssc, app_data=app_data
-    )
+    return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
-def generate_one_hk_command(sid: bytes, ssc: int) -> PusTelecommand:
+def generate_one_hk_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservices.TC_GENERATE_ONE_PARAMETER_REPORT,
-        seq_count=ssc,
         app_data=sid,
     )
 
 
-def generate_one_diag_command(sid: bytes, ssc: int) -> PusTelecommand:
+def generate_one_diag_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservices.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
-        seq_count=ssc,
         app_data=sid,
     )

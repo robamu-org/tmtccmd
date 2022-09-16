@@ -23,13 +23,11 @@ class Service2Tm(PusTmInfoBase, PusTmBase):
         pus_tm = PusTelemetry(
             service=2,
             subservice=subservice,
-            time=time,
+            time_provider=time,
             seq_count=ssc,
             source_data=source_data,
             apid=apid,
             packet_version=packet_version,
-            pus_version=pus_version,
-            secondary_header_flag=secondary_header_flag,
             space_time_ref=space_time_ref,
             destination_id=destination_id,
         )
@@ -48,9 +46,7 @@ class Service2Tm(PusTmInfoBase, PusTmBase):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service2Tm:
         service_2_tm = cls.__empty()
-        service_2_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, pus_version=pus_version
-        )
+        service_2_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
         return service_2_tm
 
     def append_telemetry_content(self, content_list: list):

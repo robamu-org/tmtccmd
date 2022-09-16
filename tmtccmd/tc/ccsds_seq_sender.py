@@ -7,13 +7,13 @@ from tmtccmd.tc import (
     TcQueueEntryBase,
     TcQueueEntryType,
     QueueEntryHelper,
-    ProcedureHelper,
+    ProcedureWrapper,
 )
-from tmtccmd.tc.handler import TcHandlerBase
+from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com_if import ComInterface
 from tmtccmd.logging import get_console_logger
-from tmtccmd.utility.countdown import Countdown
+from tmtccmd.util.countdown import Countdown
 
 LOGGER = get_console_logger()
 
@@ -28,6 +28,7 @@ class SeqResultWrapper:
         self.mode = mode
         self.longest_rem_delay: timedelta = timedelta()
         self.tc_sent: bool = False
+        self.next_entry_is_tc: bool = False
 
 
 class SequentialCcsdsSender:
@@ -44,6 +45,7 @@ class SequentialCcsdsSender:
         """
         self._tc_handler = tc_handler
         self._queue_wrapper = queue_wrapper
+        self._proc_wrapper = ProcedureWrapper(None)
         self._mode = SenderMode.DONE
         self._wait_cd = Countdown(None)
         self._send_cd = Countdown(queue_wrapper.inter_cmd_delay)
@@ -66,11 +68,14 @@ class SequentialCcsdsSender:
         # There is no need to delay sending of the first entry, the send delay is inter-packet
         # only
         self._send_cd.timeout = timedelta()
+        self._current_res.longest_rem_delay = queue_wrapper.inter_cmd_delay
+        self._proc_wrapper.base = self._queue_wrapper.info
         self._queue_wrapper = queue_wrapper
 
     def handle_new_queue_forced(self, queue_wrapper: QueueWrapper):
         self._mode = SenderMode.DONE
         self.queue_wrapper = queue_wrapper
+        self._proc_wrapper.base = self._queue_wrapper.info
 
     def resume(self):
         """Can be used to resume a finished sequential sender it the provided queue is
@@ -99,10 +104,9 @@ class SequentialCcsdsSender:
         # Do not use continue anywhere in this while loop for now
         if not self.queue_wrapper.queue:
             if self.no_delay_remaining():
+                self._proc_wrapper.base = self._queue_wrapper.info
                 # cache this for last wait time
-                self._tc_handler.queue_finished_cb(
-                    ProcedureHelper(self._queue_wrapper.info)
-                )
+                self._tc_handler.queue_finished_cb(self._proc_wrapper)
                 self._mode = SenderMode.DONE
                 return
         else:
@@ -122,26 +126,34 @@ class SequentialCcsdsSender:
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
         next_queue_entry = self.queue_wrapper.queue[0]
         is_tc = self.handle_non_tc_entry(next_queue_entry)
-        call_send_cb = True
+        consume_queue_entry = True
         if is_tc:
             if self.no_delay_remaining():
                 self._current_res.tc_sent = True
             else:
                 self._current_res.tc_sent = False
-                call_send_cb = False
+                consume_queue_entry = False
         else:
             self._current_res.tc_sent = False
-        if call_send_cb:
-            self._tc_handler.send_cb(QueueEntryHelper(next_queue_entry), com_if)
+        if consume_queue_entry:
+            self._tc_handler.send_cb(
+                SendCbParams(
+                    self._proc_wrapper, QueueEntryHelper(next_queue_entry), com_if
+                )
+            )
             if is_tc:
                 if self.queue_wrapper.inter_cmd_delay != self._send_cd.timeout:
                     self._send_cd.reset(self.queue_wrapper.inter_cmd_delay)
                 else:
                     self._send_cd.reset()
             self.queue_wrapper.queue.popleft()
+            if self.queue_wrapper.queue:
+                self._current_res.next_entry_is_tc = self.queue_wrapper.queue[0].is_tc()
+            else:
+                self._current_res.next_entry_is_tc = False
         if not self.queue_wrapper.queue and self.no_delay_remaining():
             self._tc_handler.queue_finished_cb(
-                ProcedureHelper(self._queue_wrapper.info)
+                ProcedureWrapper(self._queue_wrapper.info)
             )
             self._mode = SenderMode.DONE
 
