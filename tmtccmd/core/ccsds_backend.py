@@ -196,9 +196,14 @@ class CcsdsTmtcBackend(BackendBase):
                     self._state.mode_wrapper.tc_mode = TcMode.IDLE
                 self._state._req = BackendRequest.CALL_NEXT
         else:
-            if self._state.sender_res.next_entry_is_tc:
+            if (
+                not self._state.sender_res.next_entry_is_tc
+                and not self._state.sender_res.queue_empty
+            ):
+                self._state._req = BackendRequest.CALL_NEXT
+            else:
                 if (
-                    int(self._state.sender_res.longest_rem_delay.microseconds / 1000)
+                    int(self._state.sender_res.longest_rem_delay.microseconds / 1000.0)
                     > 0
                 ):
                     self._state._recommended_delay = (
@@ -207,8 +212,6 @@ class CcsdsTmtcBackend(BackendBase):
                     self._state._req = BackendRequest.DELAY_CUSTOM
                 else:
                     self._state._req = BackendRequest.CALL_NEXT
-            else:
-                self._state._req = BackendRequest.CALL_NEXT
 
     def poll_tm(self):
         """Poll TM, irrespective of current TM mode"""

@@ -28,6 +28,7 @@ class SeqResultWrapper:
         self.mode = mode
         self.longest_rem_delay: timedelta = timedelta()
         self.tc_sent: bool = False
+        self.queue_empty: bool = False
         self.next_entry_is_tc: bool = False
 
 
@@ -103,6 +104,7 @@ class SequentialCcsdsSender:
         """
         # Do not use continue anywhere in this while loop for now
         if not self.queue_wrapper.queue:
+            self._current_res.queue_empty = True
             if self.no_delay_remaining():
                 self._proc_wrapper.base = self._queue_wrapper.info
                 # cache this for last wait time
@@ -110,7 +112,9 @@ class SequentialCcsdsSender:
                 self._mode = SenderMode.DONE
                 return
         else:
+            self._current_res.queue_empty = False
             self._check_next_telecommand(com_if)
+        self._update_largest_delay()
         self.__print_rem_timeout(op_divider=self._op_divider)
         self._op_divider += 1
 
@@ -184,18 +188,17 @@ class SequentialCcsdsSender:
                 f"Waiting for {wait_entry.wait_time.total_seconds() * 1000} milliseconds."
             )
             self._wait_cd.reset(new_timeout=wait_entry.wait_time)
-            self._current_res.longest_rem_delay = max(
-                self._wait_cd.rem_time(), self._send_cd.rem_time()
-            )
         elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:
             timeout_entry = cast_wrapper.to_packet_delay_entry()
             self.queue_wrapper.inter_cmd_delay = timeout_entry.delay_time
             self._send_cd.reset(new_timeout=timeout_entry.delay_time)
-            self._current_res.longest_rem_delay = max(
-                self._wait_cd.rem_time(), self._send_cd.rem_time()
-            )
         is_tc = queue_entry.is_tc()
         if is_tc:
             self._last_tc = queue_entry
         self._last_queue_entry = queue_entry
         return is_tc
+
+    def _update_largest_delay(self):
+        self._current_res.longest_rem_delay = max(
+            self._wait_cd.rem_time(), self._send_cd.rem_time()
+        )
