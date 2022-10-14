@@ -57,7 +57,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     @staticmethod
     def __init_without_base(instance: Service200FsfwTm):
         tm_data = instance.tm_data
-        instance.object_id = tm_data[0:4]
+        instance.object_id = bytes(tm_data[0:4])
         if instance.subservice == Subservices.TM_CANT_REACH_MODE:
             instance.append_packet_info(": Can't reach mode")
             instance.is_cant_reach_mode_reply = True
