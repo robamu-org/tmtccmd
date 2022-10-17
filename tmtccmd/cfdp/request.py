@@ -64,7 +64,7 @@ class PutRequest(CfdpRequestBase):
                 trans_mode_str = "Transmission Mode: Class 1 Unacknowledged"
         else:
             trans_mode_str = "Transmission Mode from MIB"
-        if self.cfg.closure_requested:
+        if self.cfg.closure_requested is not None:
             if self.cfg.closure_requested:
                 closure_str = "Closure requested"
             else:
