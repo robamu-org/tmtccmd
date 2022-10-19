@@ -161,6 +161,10 @@ class CfdpInCcsdsHandler:
     def put_request_pending(self):
         return self.cfdp_handler.put_request_pending()
 
+    def fsm(self):
+        self.source_handler.state_machine()
+        self.dest_handler.state_machine()
+
     @property
     def source_handler(self):
         return self.cfdp_handler.source_handler
@@ -201,10 +205,13 @@ class CfdpInCcsdsHandler:
     def confirm_source_packet_sent(self):
         self.cfdp_handler.confirm_source_packet_sent()
 
-    def pass_packet(self, space_packet: SpacePacket):
+    def pass_space_packet(self, space_packet: SpacePacket):
         # Unwrap the user data and pass it to the handler
         pdu_raw = space_packet.user_data
         pdu_base = PduFactory.from_raw(pdu_raw)
+        self.pass_pdu_packet(pdu_base)
+
+    def pass_pdu_packet(self, pdu_base: GenericPduPacket):
         self.cfdp_handler.pass_packet(pdu_base)
 
     def __iter__(self):
