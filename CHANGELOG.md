@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
-## [v3.0.0rc2]
+## [v3.0.0rc2] 20.11.2022
 
 - Add `deprecation` dependency to allow marking functions and classes
   as deprecated with a decorator
