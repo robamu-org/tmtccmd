@@ -117,10 +117,10 @@ class PusHandler(SpecificApidHandlerBase):
     def handle_tm(self, packet: bytes, _user_args: any):
         try:
             tm_packet = PusTelemetry.unpack(packet)
-        except ValueError:
+        except ValueError as e:
             LOGGER.warning("Could not generate PUS TM object from raw data")
             LOGGER.warning(f"Raw Packet: [{packet.hex(sep=',')}], REPR: {packet!r}")
-            return
+            raise e
         service = tm_packet.service
         dedicated_handler = False
         if service == 1:
