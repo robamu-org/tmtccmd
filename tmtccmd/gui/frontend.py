@@ -22,11 +22,14 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QMenu,
     QAction,
+    QMessageBox,
+    QApplication,
 )
 from PyQt5.QtGui import QPixmap, QIcon, QFont
 from PyQt5.QtCore import (
     Qt,
     QThreadPool,
+    QTimer,
 )
 
 from tmtccmd.core.base import FrontendBase
@@ -47,6 +50,22 @@ from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds
 import tmtccmd as mod_root
 
 LOGGER = get_console_logger()
+
+
+def sigint_handler(*args):
+    """Handler for the SIGINT signal."""
+    sys.stderr.write("\r")
+    if (
+        QMessageBox.question(
+            None,
+            "",
+            "Are you sure you want to quit?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        == QMessageBox.Yes
+    ):
+        QApplication.quit()
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
@@ -77,6 +96,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def start(self, qt_app: any):
         self.__start_ui()
+        timer = QTimer()
+        timer.start(500)  # You may change this if you wish.
+        timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
         sys.exit(qt_app.exec())
 
     def set_gui_logo(self, logo_total_path: str):

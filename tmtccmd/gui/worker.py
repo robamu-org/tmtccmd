@@ -76,9 +76,14 @@ class FrontendWorker(QRunnable):
                         self._locals.op_args()
                 self._finish_success()
                 return False
+            elif state.request == BackendRequest.DELAY_IDLE:
+                time.sleep(1.0)
             elif state.request == BackendRequest.DELAY_CUSTOM:
                 self._shared.tc_lock.release()
-                time.sleep(state.next_delay.seconds)
+                if state.next_delay.total_seconds() < 0.5:
+                    time.sleep(state.next_delay.total_seconds())
+                else:
+                    time.sleep(0.5)
             elif state.request == BackendRequest.CALL_NEXT:
                 self._shared.tc_lock.release()
         elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
