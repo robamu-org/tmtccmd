@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v3.0.0rc3] 01.12.2022
+
+- Some bugfixes for GUI, improved teardown/close handling
+
 ## [v3.0.0rc2] 20.11.2022
 
 - Add `deprecation` dependency to allow marking functions and classes
