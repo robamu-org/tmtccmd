@@ -133,30 +133,39 @@ class TmButtonWrapper:
         self.button.clicked.connect(self.button_op)
         self._conn_button = conn_button
 
+    def is_listening(self):
+        return self._listening
+
     def stop_thread(self):
         if self.worker:
-            self.worker.signals.stop.emit(None)
+            self.stop_listener()
 
     def abort_thread(self):
         if self.worker:
             self.worker.signals.abort.emit(None)
 
+    def start_listener(self):
+        LOGGER.info("Starting TM listener")
+        self.worker = FrontendWorker(
+            LocalArgs(WorkerOperationsCodes.LISTEN_FOR_TM, 0.4), self.args.shared
+        )
+        self._next_listener_state = True
+        self._conn_button.setDisabled(True)
+        self.args.pool.start(self.worker)
+        self.button_op_done()
+
+    def stop_listener(self):
+        LOGGER.info("Stopping TM listener")
+        self._next_listener_state = False
+        self.worker.signals.finished.connect(self.button_op_done)
+        self.worker.signals.stop.emit(None)
+        self.button.setEnabled(False)
+
     def button_op(self):
         if not self._listening:
-            LOGGER.info("Starting TM listener")
-            self.worker = FrontendWorker(
-                LocalArgs(WorkerOperationsCodes.LISTEN_FOR_TM, 0.4), self.args.shared
-            )
-            self._next_listener_state = True
-            self._conn_button.setDisabled(True)
-            self.args.pool.start(self.worker)
-            self.button_op_done()
+            self.start_listener()
         else:
-            LOGGER.info("Stopping TM listener")
-            self._next_listener_state = False
-            self.worker.signals.finished.connect(self.button_op_done)
-            self.worker.signals.stop.emit(None)
-            self.button.setEnabled(False)
+            self.stop_listener()
 
     def button_op_done(self):
         if self._next_listener_state:

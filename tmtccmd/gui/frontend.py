@@ -147,10 +147,17 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(self.__tm_button_wrapper.button, row, 0, 1, 2)
         row += 1
         self.show()
+        # self.destroyed.connect(self.__tm_button_wrapper.stop_thread)
 
     def closeEvent(self, event):
         try:
-            self.__tm_button_wrapper.abort_thread()
+            pass
+            if self.__tm_button_wrapper.is_listening():
+                LOGGER.warning("TM listener still active. Stopping it first..")
+                self.__tm_button_wrapper.stop_thread()
+                event.ignore()
+            else:
+                pass
         except KeyboardInterrupt:
             self.__tm_button_wrapper.abort_thread()
 
