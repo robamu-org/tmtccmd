@@ -33,7 +33,7 @@ VERSION_REVISION = 0
 
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
-__version__ = "3.0.0rc2"
+__version__ = "3.0.0rc3"
 
 
 LOGGER = get_console_logger()

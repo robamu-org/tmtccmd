@@ -31,7 +31,6 @@ from PyQt5.QtCore import (
     QThreadPool,
     QTimer,
 )
-from PyQt5.uic.properties import QtGui
 
 from tmtccmd.core.base import FrontendBase
 from tmtccmd.config.globals import CoreGlobalIds
