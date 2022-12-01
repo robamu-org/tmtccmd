@@ -134,10 +134,12 @@ class TmButtonWrapper:
         self._conn_button = conn_button
 
     def stop_thread(self):
-        self.worker.signals.stop.emit(None)
+        if self.worker:
+            self.worker.signals.stop.emit(None)
 
     def abort_thread(self):
-        self.worker.signals.abort.emit(None)
+        if self.worker:
+            self.worker.signals.abort.emit(None)
 
     def button_op(self):
         if not self._listening:

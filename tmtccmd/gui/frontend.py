@@ -52,22 +52,6 @@ import tmtccmd as mod_root
 LOGGER = get_console_logger()
 
 
-def sigint_handler(*args):
-    """Handler for the SIGINT signal."""
-    sys.stderr.write("\r")
-    if (
-        QMessageBox.question(
-            None,
-            "",
-            "Are you sure you want to quit?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        == QMessageBox.Yes
-    ):
-        QApplication.quit()
-
-
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(
         self, hook_obj: TmTcCfgHookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str
@@ -96,9 +80,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def start(self, qt_app: any):
         self.__start_ui()
-        timer = QTimer()
-        timer.start(500)  # You may change this if you wish.
-        timer.timeout.connect(lambda: None)  # Let the interpreter run each 500 ms.
         sys.exit(qt_app.exec())
 
     def set_gui_logo(self, logo_total_path: str):
@@ -168,7 +149,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.show()
 
     def closeEvent(self, event):
-        self.__tm_button_wrapper.abort_thread()
+        try:
+            self.__tm_button_wrapper.abort_thread()
+        except KeyboardInterrupt:
+            self.__tm_button_wrapper.abort_thread()
 
     def __create_menu_bar(self):
         menu_bar = self.menuBar()
