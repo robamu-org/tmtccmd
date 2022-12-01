@@ -11,6 +11,7 @@ class WorkerSignalWrapper(QObject):
     finished = pyqtSignal(object)
     failure = pyqtSignal(object)
     stop = pyqtSignal(object)
+    abort = pyqtSignal(object)
 
 
 class FrontendWorker(QRunnable):
@@ -24,7 +25,9 @@ class FrontendWorker(QRunnable):
         self._shared = shared_args
         self.signals = WorkerSignalWrapper()
         self._stop_signal = False
+        self._abort_signal = False
         self.signals.stop.connect(self._stop_com_if)
+        self.signals.abort.connect(self._abort)
 
     def __sanitize_locals(self):
         if self._locals.op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
@@ -87,15 +90,16 @@ class FrontendWorker(QRunnable):
             elif state.request == BackendRequest.CALL_NEXT:
                 self._shared.tc_lock.release()
         elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
-            if not self._stop_signal:
+            if self._stop_signal or self._abort_signal:
+                self._shared.com_if_ref_tracker.remove_user()
+                if not self._abort_signal:
+                    self._finish_success()
+                return False
+            else:
                 # We only should run the TM operation here
                 self._shared.backend.tm_operation()
                 # Poll TM every 400 ms for now
                 time.sleep(self._locals.op_args)
-            else:
-                self._shared.com_if_ref_tracker.remove_user()
-                self._finish_success()
-                return False
         elif op_code == WorkerOperationsCodes.IDLE:
             return False
         else:
@@ -129,3 +133,6 @@ class FrontendWorker(QRunnable):
 
     def _stop_com_if(self, _args: any):
         self._stop_signal = True
+
+    def _abort(self, _args: any):
+        self._abort_signal = True

@@ -136,6 +136,9 @@ class TmButtonWrapper:
     def stop_thread(self):
         self.worker.signals.stop.emit(None)
 
+    def abort_thread(self):
+        self.worker.signals.abort.emit(None)
+
     def button_op(self):
         if not self._listening:
             LOGGER.info("Starting TM listener")

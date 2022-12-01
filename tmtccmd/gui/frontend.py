@@ -169,7 +169,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.show()
 
     def closeEvent(self, event):
-        self.__tm_button_wrapper.stop_thread()
+        self.__tm_button_wrapper.abort_thread()
 
     def __create_menu_bar(self):
         menu_bar = self.menuBar()
