@@ -133,6 +133,9 @@ class TmButtonWrapper:
         self.button.clicked.connect(self.button_op)
         self._conn_button = conn_button
 
+    def stop_thread(self):
+        self.worker.signals.stop.emit(None)
+
     def button_op(self):
         if not self._listening:
             LOGGER.info("Starting TM listener")

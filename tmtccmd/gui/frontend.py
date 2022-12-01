@@ -31,6 +31,7 @@ from PyQt5.QtCore import (
     QThreadPool,
     QTimer,
 )
+from PyQt5.uic.properties import QtGui
 
 from tmtccmd.core.base import FrontendBase
 from tmtccmd.config.globals import CoreGlobalIds
@@ -166,6 +167,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(self.__tm_button_wrapper.button, row, 0, 1, 2)
         row += 1
         self.show()
+
+    def closeEvent(self, event):
+        self.__tm_button_wrapper.stop_thread()
 
     def __create_menu_bar(self):
         menu_bar = self.menuBar()
