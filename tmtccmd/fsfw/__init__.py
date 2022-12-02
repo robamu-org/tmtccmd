@@ -1,7 +1,7 @@
 import csv
 import os
 import copy
-from typing import Optional
+from typing import Optional, List
 from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdDictT
 from tmtccmd.pus.pus_5_event import EventInfo, EventDictT
 from tmtccmd.util.retval import RetvalDictT, RetvalInfo
@@ -65,3 +65,34 @@ def parse_fsfw_returnvalues_csv(csv_file: str) -> Optional[RetvalDictT]:
         return retval_dict
     else:
         return None
+
+
+def bit_extractor(byte: int, position: int):
+    """
+
+    :param byte:
+    :param position:
+    :return:
+    """
+    shift_number = position + (6 - 2 * (position - 1))
+    return (byte >> shift_number) & 1
+
+
+def validity_buffer_list(validity_buffer: bytes, num_vars: int) -> List[bool]:
+    """
+    :param validity_buffer: Validity buffer in bytes format
+    :param num_vars: Number of variables
+    :return:
+    """
+    valid_list = []
+    counter = 0
+    for index, byte in enumerate(validity_buffer):
+        for bit in range(1, 9):
+            if bit_extractor(byte, bit) == 1:
+                valid_list.append(True)
+            else:
+                valid_list.append(False)
+            counter += 1
+            if counter == num_vars:
+                return valid_list
+    return valid_list
