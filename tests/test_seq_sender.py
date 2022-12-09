@@ -132,7 +132,7 @@ class TestSendReceive(TestCase):
             inter_packet_delay.total_seconds(),
         )
         self.assertTrue(
-            inter_packet_delay <= res.longest_rem_delay <= inter_packet_delay
+            inter_packet_delay * 0.8 <= res.longest_rem_delay <= inter_packet_delay
         )
         res = self.seq_sender.operation(self.com_if)
         # No TC sent
