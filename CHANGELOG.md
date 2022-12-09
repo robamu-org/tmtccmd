@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v3.0.0] 09.12.2022
+
+- Minor cleaning up
+- Added some FSFW specific functionality to retrieve validity lists from a bitfield representation
+
 ## [v3.0.0rc3] 01.12.2022
 
 - Some bugfixes for GUI, improved teardown/close handling
