@@ -177,7 +177,6 @@ class TcHandler(TcHandlerBase):
             seq_cnt_provider=seq_count_provider,
         )
 
-    # TODO: Fix this
     def send_cb(self, send_params: SendCbParams):
         entry_helper = send_params.entry
         if entry_helper.is_tc:
