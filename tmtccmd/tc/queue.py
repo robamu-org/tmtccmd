@@ -219,7 +219,7 @@ class DefaultPusQueueHelper(QueueHelperBase):
 
     def __init__(
         self,
-        queue_wrapper: Optional[QueueWrapper],
+        queue_wrapper: QueueWrapper,
         pus_apid: Optional[int] = None,
         seq_cnt_provider: Optional[ProvidesSeqCount] = None,
         pus_verificator: Optional[PusVerificator] = None,
