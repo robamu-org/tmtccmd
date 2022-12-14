@@ -42,8 +42,7 @@ class FrontendWorker(QRunnable):
     def __setup(self, op_code: WorkerOperationsCodes) -> bool:
         if op_code == WorkerOperationsCodes.OPEN_COM_IF:
             LOGGER.info("Switching COM Interface")
-            # TODO: This needs to happen in separate thread and not here because
-            #       it can take a longer time if prompts are used
+            # TODO: We should really pass a proper object here instead of using magic tuples..
             new_com_if = self._locals.op_args[2].assign_communication_interface(
                 com_if_key=self._locals.op_args[1]
             )
