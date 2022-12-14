@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+### Fixes
+
+- Minor fixes for GUI: Moved communication interface switching to
+  separate worker thread
+
 ## [v3.0.0] 09.12.2022
 
 - Minor cleaning up
