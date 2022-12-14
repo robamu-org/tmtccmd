@@ -66,6 +66,8 @@ class ConnectButtonWrapper:
         # Build and assign new communication interface
         if self._args.state.current_com_if != self._args.state.last_com_if:
             LOGGER.info("Switching COM Interface")
+            # TODO: This needs to happen in separate thread and not here because
+            #       it can take a longer time if prompts are used
             new_com_if = self._bttn_params.hook_obj.assign_communication_interface(
                 com_if_key=self._args.state.current_com_if
             )
