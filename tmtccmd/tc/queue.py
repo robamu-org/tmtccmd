@@ -152,8 +152,8 @@ class QueueEntryHelper:
 class QueueWrapper:
     def __init__(
         self,
-        info: Optional[TcProcedureBase],
-        queue: Optional[QueueDequeT],
+        info: TcProcedureBase,
+        queue: QueueDequeT,
         inter_cmd_delay: timedelta = timedelta(milliseconds=0),
     ):
         self.info = info
