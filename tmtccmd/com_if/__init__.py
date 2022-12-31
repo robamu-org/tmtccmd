@@ -12,6 +12,7 @@ class ComInterface(ABC):
     """Generic form of a communication interface to separate communication logic from
     the underlying interface.
     """
+
     @abstractmethod
     def get_id(self) -> str:
         pass

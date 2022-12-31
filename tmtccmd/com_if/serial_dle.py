@@ -1,8 +1,9 @@
 import threading
+import time
 from typing import Optional
 
 import serial
-from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR
+from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 from tmtccmd import get_console_logger
 from tmtccmd.com_if import ComInterface
@@ -17,11 +18,11 @@ DLE_MAX_FRAME_LENGTH = 4096
 
 class SerialComDleComIF(SerialComBase, ComInterface):
     def __init__(
-            self,
-            com_if_id: str,
-            com_port: str,
-            baud_rate: int,
-            serial_timeout: float,
+        self,
+        com_if_id: str,
+        com_port: str,
+        baud_rate: int,
+        serial_timeout: float,
     ):
         super().__init__(LOGGER, com_if_id, com_port, baud_rate, serial_timeout)
         self.encoder = DleEncoder()
@@ -35,11 +36,11 @@ class SerialComDleComIF(SerialComBase, ComInterface):
         self.dle_encode_cr = True
 
     def set_dle_settings(
-            self,
-            dle_queue_len: int,
-            dle_max_frame: int,
-            dle_timeout: float,
-            encode_cr: bool = True,
+        self,
+        dle_queue_len: int,
+        dle_max_frame: int,
+        dle_timeout: float,
+        encode_cr: bool = True,
     ):
         self.dle_queue_len = dle_queue_len
         self.dle_max_frame = dle_max_frame
@@ -52,7 +53,7 @@ class SerialComDleComIF(SerialComBase, ComInterface):
     def initialize(self, args: any = None) -> any:
         pass
 
-    def open_port(self, args: any = None) -> None:
+    def open(self, args: any = None) -> None:
         super().open_port()
         self.dle_polling_active_event.set()
         self.reception_thread = threading.Thread(
@@ -81,7 +82,7 @@ class SerialComDleComIF(SerialComBase, ComInterface):
                 # It is assumed that all packets are DLE encoded, so throw it away for now.
                 LOGGER.info(f"Non DLE-Encoded data with length {len(data) + 1} found..")
 
-    def is_port_open(self) -> bool:
+    def is_open(self) -> bool:
         return super().is_port_open()
 
     def close(self, args: any = None) -> None:
@@ -92,11 +93,30 @@ class SerialComDleComIF(SerialComBase, ComInterface):
     def send(self, data: bytes):
         encoded_data = self.encoder.encode(source_packet=data, add_stx_etx=True)
         self.serial.write(encoded_data)
-        pass
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
-        pass
+        packet_list = []
+        while self.reception_buffer:
+            data = self.reception_buffer.pop()
+            dle_retval, decoded_packet, read_len = self.encoder.decode(
+                source_packet=data
+            )
+            if dle_retval == DleErrorCodes.OK:
+                packet_list.append(decoded_packet)
+            else:
+                LOGGER.warning("DLE decoder error!")
+        return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
-        pass
-
+        elapsed_time = 0
+        start_time = time.time()
+        sleep_time = timeout / 3.0
+        if timeout > 0:
+            while elapsed_time < timeout:
+                if self.reception_buffer:
+                    return self.reception_buffer.__len__()
+                elapsed_time = time.time() - start_time
+                time.sleep(sleep_time)
+        if self.reception_buffer:
+            return self.reception_buffer.__len__()
+        return 0

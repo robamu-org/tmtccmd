@@ -64,6 +64,7 @@ class QEMUComIF(ComInterface):
     """
     Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the TMTC software
     """
+
     def __init__(
         self,
         com_if_id: str,

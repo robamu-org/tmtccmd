@@ -32,13 +32,13 @@ class SerialCommunicationType(enum.Enum):
 
 class SerialComBase:
     def __init__(
-            self,
-            logger: logging.Logger,
-            com_if_id: str,
-            com_port: str,
-            baud_rate: int,
-            serial_timeout: float,
-            ser_com_type: SerialCommunicationType
+        self,
+        logger: logging.Logger,
+        com_if_id: str,
+        com_port: str,
+        baud_rate: int,
+        serial_timeout: float,
+        ser_com_type: SerialCommunicationType,
     ):
         self.logger = logger
         self.com_if_id = com_if_id

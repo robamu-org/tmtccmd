@@ -183,7 +183,6 @@ class SerialComIF(ComInterface):
         if self.serial.inWaiting() > 0:
             return self.serial.inWaiting()
 
-
     @staticmethod
     def poll_pus_packets_fixed_frames(data: bytearray) -> list:
         pus_data_list = []
