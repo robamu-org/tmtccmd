@@ -1,32 +1,122 @@
+import time
+
+from tmtccmd import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_base import SerialComBase
 from tmtccmd.tm import TelemetryListT
 
 
+LOGGER = get_console_logger()
+
+# TODO: This should be configurable
+SERIAL_FRAME_MAX_LENGTH = 4096
+
+
 class SerialFixedFrameComIF(SerialComBase, ComInterface):
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        com_if_id: str,
+        com_port: str,
+        baud_rate: int,
+        serial_timeout: float,
+    ):
+        super().__init__(LOGGER, com_if_id, com_port, baud_rate, serial_timeout)
+        # Set to default value.
+        self.serial_frame_size = 256
+
+    def set_fixed_frame_settings(self, serial_frame_size: int):
+        self.serial_frame_size = serial_frame_size
 
     def get_id(self) -> str:
-        pass
+        return self.com_if_id
 
     def initialize(self, args: any = None) -> any:
         pass
 
     def open(self, args: any = None) -> None:
-        pass
+        super().open_port()
 
     def is_open(self) -> bool:
-        pass
+        return super().is_port_open()
 
     def close(self, args: any = None) -> None:
-        pass
+        return super().close_port()
 
     def send(self, data: bytes):
-        pass
+        self.serial.write(data)
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
-        pass
+        packet_list = []
+        if self.data_available(0, None):
+            data = self.serial.read(self.serial_frame_size)
+            pus_data_list = self.poll_pus_packets_fixed_frames(bytearray(data))
+            for pus_packet in pus_data_list:
+                packet_list.append(pus_packet)
+        return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
-        pass
+        sleep_time = timeout / 3.0
+        return self.data_available_fixed_frame(timeout=timeout, sleep_time=sleep_time)
+
+    def data_available_fixed_frame(self, timeout: float, sleep_time: float):
+        if timeout > 0:
+            start_time = time.time()
+            elapsed_time = 0
+            while elapsed_time < timeout:
+                if self.serial.inWaiting() > 0:
+                    return self.serial.inWaiting()
+                elapsed_time = time.time() - start_time
+                time.sleep(sleep_time)
+        if self.serial.inWaiting() > 0:
+            return self.serial.inWaiting()
+
+    @staticmethod
+    def poll_pus_packets_fixed_frames(data: bytearray) -> list:
+        pus_data_list = []
+        if len(data) == 0:
+            return pus_data_list
+
+        payload_length = data[4] << 8 | data[5]
+        packet_size = payload_length + 7
+        if payload_length == 0:
+            return []
+        read_size = len(data)
+        pus_data = data[0:packet_size]
+        pus_data_list.append(pus_data)
+
+        SerialFixedFrameComIF.read_multiple_packets(
+            data, packet_size, read_size, pus_data_list
+        )
+        return pus_data_list
+
+    @staticmethod
+    def read_multiple_packets(
+        data: bytearray, start_index: int, frame_size: int, pus_data_list: list
+    ):
+        while start_index < frame_size:
+            start_index = SerialFixedFrameComIF.parse_next_packets(
+                data, start_index, frame_size, pus_data_list
+            )
+
+    @staticmethod
+    def parse_next_packets(
+        data: bytearray, start_index: int, frame_size: int, pus_data_list: list
+    ) -> int:
+        next_payload_len = data[start_index + 4] << 8 | data[start_index + 5]
+        if next_payload_len == 0:
+            end_index = frame_size
+            return end_index
+        next_packet_size = next_payload_len + 7
+
+        if next_packet_size > SERIAL_FRAME_MAX_LENGTH:
+            LOGGER.error(
+                "PUS Polling: Very large packet detected, packet splitting not implemented yet!"
+            )
+            LOGGER.error("Detected Size: " + str(next_packet_size))
+            end_index = frame_size
+            return end_index
+
+        end_index = start_index + next_packet_size
+        pus_data = data[start_index:end_index]
+        pus_data_list.append(pus_data)
+        return end_index

@@ -1,5 +1,6 @@
 import threading
 import time
+from collections import deque
 from typing import Optional
 
 import serial
@@ -51,7 +52,8 @@ class SerialComDleComIF(SerialComBase, ComInterface):
         return self.com_if_id
 
     def initialize(self, args: any = None) -> any:
-        pass
+        self.reception_buffer = deque(maxlen=self.dle_queue_len)
+        self.dle_polling_active_event = threading.Event()
 
     def open(self, args: any = None) -> None:
         super().open_port()
