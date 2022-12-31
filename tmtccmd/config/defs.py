@@ -18,6 +18,7 @@ class CoreComInterfaces(str, enum.Enum):
     UDP = "udp"
     TCP = "tcp"
     SERIAL_FIXED_FRAME = "ser_fixed"
+    SERIAL_COBS = "ser_cobs"
     SERIAL_QEMU = "ser_qemu"
     UNSPECIFIED = "unspec"
 

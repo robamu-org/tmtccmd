@@ -1,6 +1,6 @@
 import time
 
-from tmtccmd import get_console_logger
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_base import SerialComBase
 from tmtccmd.tm import TelemetryListT

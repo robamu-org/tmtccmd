@@ -94,10 +94,13 @@ class DummyHandler:
 
 class DummyComIF(ComInterface):
     def __init__(self):
-        super().__init__(com_if_id=CoreComInterfaces.DUMMY.value)
+        self.com_if_id = CoreComInterfaces.DUMMY.value
         self.dummy_handler = DummyHandler()
         self._open = False
         self.initialized = False
+
+    def get_id(self) -> str:
+        return self.com_if_id
 
     def initialize(self, args: any = None) -> any:
         self.initialized = True

@@ -5,11 +5,13 @@ from tmtccmd.config.defs import CoreComInterfaces
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial import (
+from tmtccmd.com_if.serial_base import (
     SerialConfigIds,
     SerialCommunicationType,
-    SerialComIF,
 )
+from tmtccmd.com_if.serial_dle import SerialComDleComIF
+from tmtccmd.com_if.serial_fixed_frame import SerialFixedFrameComIF
+from tmtccmd.com_if.serial_cobs import SerialCobsComIF
 from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utils import TcpIpType, EthAddr
 from tmtccmd.logging import get_console_logger
@@ -252,22 +254,30 @@ def create_default_serial_interface(
         serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
         com_port = serial_cfg[SerialConfigIds.SERIAL_PORT]
         if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
-            ser_com_type = SerialCommunicationType.DLE_ENCODING
-        else:
-            ser_com_type = SerialCommunicationType.FIXED_FRAME_BASED
-        communication_interface = SerialComIF(
-            com_if_id=com_if_key,
-            com_port=com_port,
-            baud_rate=serial_baudrate,
-            serial_timeout=serial_timeout,
-            ser_com_type=ser_com_type,
-        )
-        if com_if_key == CoreComInterfaces.SERIAL_DLE:
+            communication_interface = SerialComDleComIF(
+                com_if_id=com_if_key,
+                com_port=com_port,
+                baud_rate=serial_baudrate,
+                serial_timeout=serial_timeout,
+            )
             dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
             dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
             communication_interface.set_dle_settings(
                 dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
+        elif com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
+            communication_interface = SerialFixedFrameComIF(
+                com_if_id=com_if_key,
+                com_port=com_port,
+                baud_rate=serial_baudrate,
+                serial_timeout=serial_timeout,
+            )
+        elif com_if_key == CoreComInterfaces.SERIAL_COBS.value:
+            communication_interface = SerialCobsComIF()
+        else:
+            # TODO: Maybe print valid keys?
+            LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
+            return None
     except KeyError:
         LOGGER.warning("Serial configuration global not configured properly")
         return None
