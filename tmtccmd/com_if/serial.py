@@ -10,6 +10,7 @@ import serial
 import serial.tools.list_ports
 
 from tmtccmd.com_if import ComInterface
+from tmtccmd.com_if.serial_base import SerialCommunicationType
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
@@ -17,32 +18,7 @@ from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 LOGGER = get_console_logger()
 SERIAL_FRAME_LENGTH = 256
-DLE_FRAME_LENGTH = 1500
 HEADER_BYTES_BEFORE_SIZE = 5
-
-
-class SerialConfigIds(enum.Enum):
-    from enum import auto
-
-    SERIAL_PORT = auto()
-    SERIAL_BAUD_RATE = auto()
-    SERIAL_TIMEOUT = auto()
-    SERIAL_COMM_TYPE = auto()
-    SERIAL_FRAME_SIZE = auto()
-    SERIAL_DLE_QUEUE_LEN = auto()
-    SERIAL_DLE_MAX_FRAME_SIZE = auto()
-
-
-class SerialCommunicationType(enum.Enum):
-    """
-    Right now, two serial communication methods are supported. One uses frames with a fixed size
-    containing PUS packets and the other uses a simple ASCII based transport layer called DLE.
-    If DLE is used, it is expected that the sender side encoded the packets with the DLE
-    protocol. Any packets sent will also be encoded.
-    """
-
-    FIXED_FRAME_BASED = 1
-    DLE_ENCODING = 2
 
 
 # pylint: disable=arguments-differ
@@ -55,7 +31,7 @@ class SerialComIF(ComInterface):
         com_port: str,
         baud_rate: int,
         serial_timeout: float,
-        ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
+        ser_com_type: SerialCommunicationType = SerialCommunicationType.COBS,
     ):
         """
         Initiaze a serial communication handler.
@@ -72,6 +48,8 @@ class SerialComIF(ComInterface):
         self.serial = None
         self.encoder = None
         self.ser_com_type = ser_com_type
+        if self.ser_com_type == SerialCommunicationType.COBS:
+            pass
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             # Set to default value.
             self.serial_frame_size = 256
@@ -112,14 +90,14 @@ class SerialComIF(ComInterface):
 
     def open(self, args: any = None) -> None:
         try:
+            self.serial = serial.Serial(
+                port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout
+            )
             if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
                 self.dle_polling_active_event.set()
                 self.reception_thread = threading.Thread(
                     target=self.poll_dle_packets, daemon=True
                 )
-            self.serial = serial.Serial(
-                port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout
-            )
         except serial.SerialException:
             LOGGER.error("Serial Port opening failure!")
             raise IOError
@@ -205,26 +183,6 @@ class SerialComIF(ComInterface):
         if self.serial.inWaiting() > 0:
             return self.serial.inWaiting()
 
-    def poll_dle_packets(self):
-        while True and self.dle_polling_active_event.is_set():
-            # Poll permanently, but it is possible to join this thread every 200 ms
-            self.serial.timeout = 0.2
-            data = bytearray()
-            byte = self.serial.read()
-            if len(byte) == 1 and byte[0] == STX_CHAR:
-                data.append(byte[0])
-                self.serial.timeout = 0.1
-                bytes_rcvd = self.serial.read_until(
-                    serial.to_bytes([ETX_CHAR]), DLE_FRAME_LENGTH
-                )
-                if bytes_rcvd[len(bytes_rcvd) - 1] == ETX_CHAR:
-                    data.extend(bytes_rcvd)
-                    self.reception_buffer.appendleft(data)
-            elif len(byte) >= 1:
-                data.append(byte[0])
-                data.extend(self.serial.read(self.serial.inWaiting()))
-                # It is assumed that all packets are DLE encoded, so throw it away for now.
-                LOGGER.info(f"Non DLE-Encoded data with length {len(data) + 1} found..")
 
     @staticmethod
     def poll_pus_packets_fixed_frames(data: bytearray) -> list:

@@ -64,14 +64,13 @@ class QEMUComIF(ComInterface):
     """
     Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the TMTC software
     """
-
     def __init__(
         self,
         com_if_id: str,
         serial_timeout: float,
         ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
     ):
-        super().__init__(com_if_id=com_if_id)
+        self.com_if_id = com_if_id
         self.serial_timeout = serial_timeout
         self.loop = asyncio.get_event_loop()
         self.number_of_packets = 0
@@ -93,6 +92,9 @@ class QEMUComIF(ComInterface):
 
     def __del__(self):
         self.close()
+
+    def get_id(self) -> str:
+        return self.com_if_id
 
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
@@ -119,7 +121,7 @@ class QEMUComIF(ComInterface):
             self.usart = asyncio.run_coroutine_threadsafe(
                 Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop
             ).result()
-            asyncio.run_coroutine_threadsafe(self.usart.open(), self.loop).result()
+            asyncio.run_coroutine_threadsafe(self.usart.open_port(), self.loop).result()
         except NotImplementedError:
             LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
             sys.exit()
