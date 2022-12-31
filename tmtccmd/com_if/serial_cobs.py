@@ -1,14 +1,30 @@
+from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_base import SerialComBase
 from tmtccmd.tm import TelemetryListT
 
 
+LOGGER = get_console_logger()
+
+
 class SerialCobsComIF(SerialComBase, ComInterface):
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        com_if_id: str,
+        com_port: str,
+        baud_rate: int,
+        serial_timeout: float,
+    ):
+        super().__init__(
+            LOGGER,
+            com_if_id=com_if_id,
+            com_port=com_port,
+            baud_rate=baud_rate,
+            serial_timeout=serial_timeout,
+        )
 
     def get_id(self) -> str:
-        pass
+        return self.com_if_id
 
     def initialize(self, args: any = None) -> any:
         pass
