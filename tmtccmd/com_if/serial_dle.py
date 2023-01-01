@@ -22,6 +22,13 @@ class DleCfg:
 
 
 class SerialComDleComIF(SerialComBase, ComInterface):
+    """Serial communication interface which uses the `DLE protocol <https://pypi.org/project/dle-encoder/>`_
+    to encode and decode packets.
+
+    This class will spin up a receiver thread on the :meth:`open` call to poll for DLE encoded packets.
+    This means that the :meth:`close` call might block until the receiver thread has shut down.
+    """
+
     def __init__(self, ser_cfg: SerialCfg, dle_cfg: Optional[DleCfg]):
         super().__init__(LOGGER, ser_cfg=ser_cfg)
         self.encoder = DleEncoder()
@@ -39,6 +46,9 @@ class SerialComDleComIF(SerialComBase, ComInterface):
         else:
             self.reception_buffer = deque()
         self.dle_polling_active_event = threading.Event()
+
+    """Spins up a receiver thread to permanently check for new DLE encoded packets.
+    """
 
     def open(self, args: any = None) -> None:
         super().open_port()

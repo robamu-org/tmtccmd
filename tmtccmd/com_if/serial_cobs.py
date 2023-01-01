@@ -13,6 +13,14 @@ LOGGER = get_console_logger()
 
 
 class SerialCobsComIF(SerialComBase, ComInterface):
+    """Serial communication interface which uses the `COBS protocol <https://pypi.org/project/cobs/>`_
+    to encode and decode packets.
+
+    This class will spin up a receiver thread on the :meth:`open` call to poll
+    for COBS encoded packets.
+    This means that the :meth:`close` call might block until the receiver thread has shut down.
+    """
+
     def __init__(self, ser_cfg: SerialCfg):
         super().__init__(LOGGER, ser_cfg=ser_cfg)
         self.polling_active_event = threading.Event()
@@ -24,6 +32,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
 
     def initialize(self, args: any = None) -> any:
         pass
+
+    """Spins up a receiver thread to permanently check for new COBS encoded packets.
+    """
 
     def open(self, args: any = None) -> None:
         super().open_port()
