@@ -2,6 +2,7 @@ from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_base import SerialComBase
 from tmtccmd.tm import TelemetryListT
+from cobs import cobs
 
 
 LOGGER = get_console_logger()
@@ -39,7 +40,8 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         pass
 
     def send(self, data: bytes):
-        pass
+        encoded = cobs.encode(data)
+        self.serial.write(encoded)
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
         pass
