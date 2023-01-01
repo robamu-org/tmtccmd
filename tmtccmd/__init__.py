@@ -1,8 +1,13 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
+# I think this needs to be in string representation to be parsed so we can't
+# use a formatted string here.
+__version__ = "4.0.0a0"
+
 import sys
 import os
 from datetime import timedelta
 from typing import Union, cast, Optional
+
 
 from tmtccmd.config.args import ProcedureParamsWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
@@ -31,10 +36,6 @@ from tmtccmd.tc.handler import TcHandlerBase
 VERSION_MAJOR = 4
 VERSION_MINOR = 0
 VERSION_REVISION = 0
-
-# I think this needs to be in string representation to be parsed so we can't
-# use a formatted string here.
-__version__ = "4.0.0a0"
 
 LOGGER = get_console_logger()
 
