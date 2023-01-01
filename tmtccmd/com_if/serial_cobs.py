@@ -33,10 +33,8 @@ class SerialCobsComIF(SerialComBase, ComInterface):
     def initialize(self, args: any = None) -> any:
         pass
 
-    """Spins up a receiver thread to permanently check for new COBS encoded packets.
-    """
-
     def open(self, args: any = None) -> None:
+        """Spins up a receiver thread to permanently check for new COBS encoded packets."""
         super().open_port()
         self.reception_thread = threading.Thread(
             target=self.poll_cobs_packets, daemon=True

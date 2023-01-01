@@ -47,10 +47,8 @@ class SerialComDleComIF(SerialComBase, ComInterface):
             self.reception_buffer = deque()
         self.dle_polling_active_event = threading.Event()
 
-    """Spins up a receiver thread to permanently check for new DLE encoded packets.
-    """
-
     def open(self, args: any = None) -> None:
+        """Spins up a receiver thread to permanently check for new DLE encoded packets."""
         super().open_port()
         self.dle_polling_active_event.set()
         self.reception_thread = threading.Thread(
