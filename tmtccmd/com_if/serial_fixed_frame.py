@@ -52,7 +52,7 @@ class SerialFixedFrameComIF(SerialComBase, ComInterface):
         packet_list = []
         if self.data_available(0, None):
             data = self.serial.read(self.serial_frame_size)
-            pus_data_list = self.poll_pus_packets_fixed_frames(bytearray(data))
+            pus_data_list = poll_pus_packets_fixed_frames(bytearray(data))
             for pus_packet in pus_data_list:
                 packet_list.append(pus_packet)
         return packet_list
@@ -73,53 +73,53 @@ class SerialFixedFrameComIF(SerialComBase, ComInterface):
         if self.serial.inWaiting() > 0:
             return self.serial.inWaiting()
 
-    @staticmethod
-    def poll_pus_packets_fixed_frames(data: bytearray) -> list:
-        pus_data_list = []
-        if len(data) == 0:
-            return pus_data_list
 
-        payload_length = data[4] << 8 | data[5]
-        packet_size = payload_length + 7
-        if payload_length == 0:
-            return []
-        read_size = len(data)
-        pus_data = data[0:packet_size]
-        pus_data_list.append(pus_data)
-
-        SerialFixedFrameComIF.read_multiple_packets(
-            data, packet_size, read_size, pus_data_list
-        )
+def poll_pus_packets_fixed_frames(data: bytearray) -> list:
+    pus_data_list = []
+    if len(data) == 0:
         return pus_data_list
 
-    @staticmethod
-    def read_multiple_packets(
-        data: bytearray, start_index: int, frame_size: int, pus_data_list: list
-    ):
-        while start_index < frame_size:
-            start_index = SerialFixedFrameComIF.parse_next_packets(
-                data, start_index, frame_size, pus_data_list
-            )
+    payload_length = data[4] << 8 | data[5]
+    packet_size = payload_length + 7
+    if payload_length == 0:
+        return []
+    read_size = len(data)
+    pus_data = data[0:packet_size]
+    pus_data_list.append(pus_data)
 
-    @staticmethod
-    def parse_next_packets(
-        data: bytearray, start_index: int, frame_size: int, pus_data_list: list
-    ) -> int:
-        next_payload_len = data[start_index + 4] << 8 | data[start_index + 5]
-        if next_payload_len == 0:
-            end_index = frame_size
-            return end_index
-        next_packet_size = next_payload_len + 7
+    SerialFixedFrameComIF.read_multiple_packets(
+        data, packet_size, read_size, pus_data_list
+    )
+    return pus_data_list
 
-        if next_packet_size > SERIAL_FRAME_MAX_LENGTH:
-            LOGGER.error(
-                "PUS Polling: Very large packet detected, packet splitting not implemented yet!"
-            )
-            LOGGER.error("Detected Size: " + str(next_packet_size))
-            end_index = frame_size
-            return end_index
 
-        end_index = start_index + next_packet_size
-        pus_data = data[start_index:end_index]
-        pus_data_list.append(pus_data)
+def read_multiple_packets(
+    data: bytearray, start_index: int, frame_size: int, pus_data_list: list
+):
+    while start_index < frame_size:
+        start_index = SerialFixedFrameComIF.parse_next_packets(
+            data, start_index, frame_size, pus_data_list
+        )
+
+
+def parse_next_packets(
+    data: bytearray, start_index: int, frame_size: int, pus_data_list: list
+) -> int:
+    next_payload_len = data[start_index + 4] << 8 | data[start_index + 5]
+    if next_payload_len == 0:
+        end_index = frame_size
         return end_index
+    next_packet_size = next_payload_len + 7
+
+    if next_packet_size > SERIAL_FRAME_MAX_LENGTH:
+        LOGGER.error(
+            "PUS Polling: Very large packet detected, packet splitting not implemented yet!"
+        )
+        LOGGER.error("Detected Size: " + str(next_packet_size))
+        end_index = frame_size
+        return end_index
+
+    end_index = start_index + next_packet_size
+    pus_data = data[start_index:end_index]
+    pus_data_list.append(pus_data)
+    return end_index

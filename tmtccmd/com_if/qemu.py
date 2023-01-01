@@ -28,8 +28,9 @@ from collections import deque
 from threading import Thread
 
 from tmtccmd.com_if import ComInterface
+from tmtccmd.com_if.serial_fixed_frame import poll_pus_packets_fixed_frames
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.serial import SerialComIF, SerialCommunicationType
+from tmtccmd.com_if.serial_base import SerialCommunicationType
 from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
@@ -93,6 +94,9 @@ class QEMUComIF(ComInterface):
 
     def __del__(self):
         self.close()
+
+    def is_open(self) -> bool:
+        return True
 
     def get_id(self) -> str:
         return self.com_if_id
@@ -162,7 +166,7 @@ class QEMUComIF(ComInterface):
         if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
             if self.data_available():
                 data = self.usart.read(self.serial_frame_size, self.serial_timeout)
-                pus_data_list = SerialComIF.poll_pus_packets_fixed_frames(data)
+                pus_data_list = poll_pus_packets_fixed_frames(data)
                 for pus_packet in pus_data_list:
                     packet_list.append(pus_packet)
 

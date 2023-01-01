@@ -8,6 +8,7 @@ from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_base import (
     SerialConfigIds,
     SerialCommunicationType,
+    SerialCfg,
 )
 from tmtccmd.com_if.serial_dle import SerialComDleComIF
 from tmtccmd.com_if.serial_fixed_frame import SerialFixedFrameComIF
@@ -53,7 +54,7 @@ class TcpipCfg(ComIfCfgBase):
 
 def create_com_interface_cfg_default(
     com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Tuple[int]]
-) -> ComIfCfgBase:
+) -> Optional[ComIfCfgBase]:
     if com_if_key == CoreComInterfaces.DUMMY.value:
         return ComIfCfgBase(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
     if com_if_key == CoreComInterfaces.UDP.value:
@@ -122,10 +123,8 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
         else:
             communication_interface = DummyComIF()
         if communication_interface is None:
+            LOGGER.warning("Invalid communication interface, is None")
             return communication_interface
-        if not communication_interface.valid:
-            LOGGER.warning("Invalid communication interface!")
-            return None
         communication_interface.initialize()
         return communication_interface
     except ConnectionRefusedError:
@@ -228,6 +227,7 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
     return communication_interface
 
 
+# TODO: Pass configuration explicitely instead of using globals..
 def create_default_serial_interface(
     com_if_key: str, json_cfg_path: str
 ) -> Optional[ComInterface]:
@@ -253,27 +253,19 @@ def create_default_serial_interface(
         serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
         serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
         com_port = serial_cfg[SerialConfigIds.SERIAL_PORT]
+        ser_cfg = SerialCfg(
+            baud_rate=serial_baudrate,
+            serial_timeout=serial_timeout,
+            com_port=com_port,
+            com_if_id=com_if_key,
+        )
         if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
-            communication_interface = SerialComDleComIF(
-                com_if_id=com_if_key,
-                com_port=com_port,
-                baud_rate=serial_baudrate,
-                serial_timeout=serial_timeout,
-            )
-            dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
-            dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
-            communication_interface.set_dle_settings(
-                dle_max_queue_len, dle_max_frame_size, serial_timeout
-            )
+            # Ignore the DLE config for now, it is not that important anyway
+            communication_interface = SerialComDleComIF(ser_cfg=ser_cfg, dle_cfg=None)
         elif com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
-            communication_interface = SerialFixedFrameComIF(
-                com_if_id=com_if_key,
-                com_port=com_port,
-                baud_rate=serial_baudrate,
-                serial_timeout=serial_timeout,
-            )
+            communication_interface = SerialFixedFrameComIF(ser_cfg=ser_cfg)
         elif com_if_key == CoreComInterfaces.SERIAL_COBS.value:
-            communication_interface = SerialCobsComIF()
+            communication_interface = SerialCobsComIF(ser_cfg=ser_cfg)
         else:
             # TODO: Maybe print valid keys?
             LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
