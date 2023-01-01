@@ -1,5 +1,8 @@
 import time
 
+import deprecation
+
+from tmtccmd import __version__
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
 from tmtccmd.com_if.serial_base import SerialComBase, SerialArgs
@@ -12,6 +15,13 @@ LOGGER = get_console_logger()
 SERIAL_FRAME_MAX_LENGTH = 4096
 
 
+# TODO: Consider removing this? Sending binary data without some sort of transport layer
+#       is not really the best approach..
+@deprecation.deprecated(
+    deprecated_in="4.0.0",
+    current_version=__version__,
+    details="Please use a serial interface using a transport layer like SerialCobsComIF",
+)
 class SerialFixedFrameComIF(SerialComBase, ComInterface):
     def __init__(self, cfg: SerialArgs):
         super().__init__(LOGGER, cfg=cfg)

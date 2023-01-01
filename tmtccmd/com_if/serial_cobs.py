@@ -70,4 +70,17 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         return 0
 
     def poll_cobs_packets(self):
-        pass
+        last_byte_was_zero = False
+        while True and self.polling_active_event.is_set():
+            # Poll permanently, but it is possible to join this thread every 200 ms
+            self.serial.timeout = 0.2
+            byte = self.serial.read()
+            if byte[0] == 0:
+                last_byte_was_zero = True
+            else:
+                if last_byte_was_zero:
+                    self.serial.timeout = 0.1
+                    possible_cobs_frame = self.serial.read_until(0)
+                    self.reception_buffer.appendleft(possible_cobs_frame)
+                else:
+                    last_byte_was_zero = False
