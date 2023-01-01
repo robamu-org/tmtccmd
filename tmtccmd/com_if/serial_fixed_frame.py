@@ -5,7 +5,7 @@ import deprecation
 from tmtccmd import __version__
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase, SerialArgs
+from tmtccmd.com_if.serial_base import SerialComBase, SerialCfg
 from tmtccmd.tm import TelemetryListT
 
 
@@ -23,8 +23,8 @@ SERIAL_FRAME_MAX_LENGTH = 4096
     details="Please use a serial interface using a transport layer like SerialCobsComIF",
 )
 class SerialFixedFrameComIF(SerialComBase, ComInterface):
-    def __init__(self, cfg: SerialArgs):
-        super().__init__(LOGGER, cfg=cfg)
+    def __init__(self, ser_cfg: SerialCfg):
+        super().__init__(LOGGER, ser_cfg=ser_cfg)
         # Set to default value.
         self.serial_frame_size = SERIAL_FRAME_MAX_LENGTH
 
@@ -32,7 +32,7 @@ class SerialFixedFrameComIF(SerialComBase, ComInterface):
         self.serial_frame_size = serial_frame_size
 
     def get_id(self) -> str:
-        return self.cfg.com_if_id
+        return self.ser_cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:
         pass

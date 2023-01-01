@@ -1,5 +1,5 @@
+import dataclasses
 import threading
-import time
 from collections import deque
 from typing import Optional
 
@@ -8,45 +8,36 @@ from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase, SerialArgs
+from tmtccmd.com_if.serial_base import SerialComBase, SerialCfg
 from tmtccmd.tm import TelemetryListT
 
 LOGGER = get_console_logger()
 
-# TODO: Maybe this should be configurable
-DLE_MAX_FRAME_LENGTH = 4096
+
+@dataclasses.dataclass
+class DleCfg:
+    dle_queue_len: Optional[int] = None
+    dle_max_frame: Optional[int] = None
+    encode_cr: bool = True
 
 
 class SerialComDleComIF(SerialComBase, ComInterface):
-    def __init__(self, cfg: SerialArgs):
-        super().__init__(LOGGER, cfg=cfg)
+    def __init__(self, ser_cfg: SerialCfg, dle_cfg: Optional[DleCfg]):
+        super().__init__(LOGGER, ser_cfg=ser_cfg)
         self.encoder = DleEncoder()
         self.reception_thread = None
         self.reception_buffer = None
         self.dle_polling_active_event: Optional[threading.Event] = None
-        # Set to default value.
-        self.dle_queue_len = 10
-        self.dle_max_frame = 256
-        self.dle_timeout = 0.01
-        self.dle_encode_cr = True
-
-    def set_dle_settings(
-        self,
-        dle_queue_len: int,
-        dle_max_frame: int,
-        dle_timeout: float,
-        encode_cr: bool = True,
-    ):
-        self.dle_queue_len = dle_queue_len
-        self.dle_max_frame = dle_max_frame
-        self.dle_timeout = dle_timeout
-        self.dle_encode_cr = encode_cr
+        self.dle_cfg = dle_cfg
 
     def get_id(self) -> str:
-        return self.cfg.com_if_id
+        return self.ser_cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:
-        self.reception_buffer = deque(maxlen=self.dle_queue_len)
+        if self.dle_cfg and self.dle_cfg.dle_queue_len:
+            self.reception_buffer = deque(maxlen=self.dle_cfg.dle_queue_len)
+        else:
+            self.reception_buffer = deque()
         self.dle_polling_active_event = threading.Event()
 
     def open(self, args: any = None) -> None:
@@ -66,9 +57,12 @@ class SerialComDleComIF(SerialComBase, ComInterface):
             if len(byte) == 1 and byte[0] == STX_CHAR:
                 data.append(byte[0])
                 self.serial.timeout = 0.1
-                bytes_rcvd = self.serial.read_until(
-                    serial.to_bytes([ETX_CHAR]), DLE_MAX_FRAME_LENGTH
-                )
+                if self.dle_cfg and self.dle_cfg.dle_max_frame:
+                    bytes_rcvd = self.serial.read_until(
+                        serial.to_bytes([ETX_CHAR]), self.dle_cfg.dle_max_frame
+                    )
+                else:
+                    bytes_rcvd = self.serial.read_until(serial.to_bytes([ETX_CHAR]))
                 if bytes_rcvd[len(bytes_rcvd) - 1] == ETX_CHAR:
                     data.extend(bytes_rcvd)
                     # deque is thread-safe for appends and pops from and to the opposite side
@@ -105,15 +99,4 @@ class SerialComDleComIF(SerialComBase, ComInterface):
         return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
-        elapsed_time = 0
-        start_time = time.time()
-        sleep_time = timeout / 3.0
-        if timeout > 0:
-            while elapsed_time < timeout:
-                if self.reception_buffer:
-                    return self.reception_buffer.__len__()
-                elapsed_time = time.time() - start_time
-                time.sleep(sleep_time)
-        if self.reception_buffer:
-            return self.reception_buffer.__len__()
-        return 0
+        return SerialComBase.data_available_from_queue(timeout, self.reception_buffer)

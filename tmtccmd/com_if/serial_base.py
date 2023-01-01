@@ -1,6 +1,8 @@
+import collections
 import dataclasses
 import enum
 import logging
+import time
 from typing import Optional
 
 import serial
@@ -32,7 +34,7 @@ class SerialCommunicationType(enum.Enum):
 
 
 @dataclasses.dataclass
-class SerialArgs:
+class SerialCfg:
     com_if_id: str
     com_port: str
     baud_rate: int
@@ -43,20 +45,20 @@ class SerialComBase:
     def __init__(
         self,
         logger: logging.Logger,
-        cfg: SerialArgs,
+        ser_cfg: SerialCfg,
         ser_com_type: SerialCommunicationType,
     ):
         self.logger = logger
-        self.cfg = cfg
+        self.ser_cfg = ser_cfg
         self.ser_com_type = ser_com_type
         self.serial: Optional[serial.Serial] = None
 
     def open_port(self):
         try:
             self.serial = serial.Serial(
-                port=self.cfg.com_port,
-                baudrate=self.cfg.baud_rate,
-                timeout=self.cfg.serial_timeout,
+                port=self.ser_cfg.com_port,
+                baudrate=self.ser_cfg.baud_rate,
+                timeout=self.ser_cfg.serial_timeout,
             )
         except serial.SerialException:
             self.logger.error("Serial Port opening failure!")
@@ -71,3 +73,18 @@ class SerialComBase:
 
     def is_port_open(self) -> bool:
         return self.serial is not None
+
+    @staticmethod
+    def data_available_from_queue(timeout: float, reception_buffer: collections.deque):
+        elapsed_time = 0
+        start_time = time.time()
+        sleep_time = timeout / 3.0
+        if timeout > 0:
+            while elapsed_time < timeout:
+                if reception_buffer:
+                    return reception_buffer.__len__()
+                elapsed_time = time.time() - start_time
+                time.sleep(sleep_time)
+        if reception_buffer:
+            return reception_buffer.__len__()
+        return 0
