@@ -10,9 +10,7 @@ from tmtccmd.com_if.serial_base import (
     SerialCommunicationType,
     SerialCfg,
 )
-from tmtccmd.com_if.serial_dle import SerialComDleComIF
-from tmtccmd.com_if.serial_fixed_frame import SerialFixedFrameComIF
-from tmtccmd.com_if.serial_cobs import SerialCobsComIF
+
 from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utils import TcpIpType, EthAddr
 from tmtccmd.logging import get_console_logger
@@ -231,6 +229,10 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
 def create_default_serial_interface(
     com_if_key: str, json_cfg_path: str
 ) -> Optional[ComInterface]:
+    from tmtccmd.com_if.serial_dle import SerialComDleComIF
+    from tmtccmd.com_if.serial_fixed_frame import SerialFixedFrameComIF
+    from tmtccmd.com_if.serial_cobs import SerialCobsComIF
+
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
 

@@ -69,7 +69,7 @@ tmtccmd.com\_if.serial\_dle module
    :show-inheritance:
 
 tmtccmd.com\_if.serial\_fixed_frame module
---------------------------------------
+-------------------------------------------
 
 .. automodule:: tmtccmd.com_if.serial_fixed_frame
    :members:
