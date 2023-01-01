@@ -1,5 +1,6 @@
 import collections
 import threading
+import time
 from typing import Optional
 
 from tmtccmd.logging import get_console_logger
@@ -15,9 +16,9 @@ LOGGER = get_console_logger()
 class SerialCobsComIF(SerialComBase, ComInterface):
     def __init__(self, cfg: SerialArgs):
         super().__init__(LOGGER, cfg=cfg)
-        self.polling_active_event: Optional[threading.Event] = None
+        self.polling_active_event = threading.Event()
         self.reception_thread: Optional[threading.Thread] = None
-        self.reception_buffer: Optional[collections.deque] = None
+        self.reception_buffer = collections.deque()
 
     def get_id(self) -> str:
         return self.cfg.com_if_id
@@ -36,7 +37,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         return self.serial is not None
 
     def close(self, args: any = None) -> None:
-        pass
+        self.polling_active_event.clear()
+        self.reception_thread.join(0.4)
+        super().close_port()
 
     def send(self, data: bytes):
         encoded = cobs.encode(data)
@@ -53,7 +56,18 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
-        pass
+        elapsed_time = 0
+        start_time = time.time()
+        sleep_time = timeout / 3.0
+        if timeout > 0:
+            while elapsed_time < timeout:
+                if self.reception_buffer:
+                    return self.reception_buffer.__len__()
+                elapsed_time = time.time() - start_time
+                time.sleep(sleep_time)
+        if self.reception_buffer:
+            return self.reception_buffer.__len__()
+        return 0
 
     def poll_cobs_packets(self):
         pass
