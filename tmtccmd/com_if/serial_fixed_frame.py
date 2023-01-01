@@ -2,7 +2,7 @@ import time
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase
+from tmtccmd.com_if.serial_base import SerialComBase, SerialArgs
 from tmtccmd.tm import TelemetryListT
 
 
@@ -13,22 +13,16 @@ SERIAL_FRAME_MAX_LENGTH = 4096
 
 
 class SerialFixedFrameComIF(SerialComBase, ComInterface):
-    def __init__(
-        self,
-        com_if_id: str,
-        com_port: str,
-        baud_rate: int,
-        serial_timeout: float,
-    ):
-        super().__init__(LOGGER, com_if_id, com_port, baud_rate, serial_timeout)
+    def __init__(self, cfg: SerialArgs):
+        super().__init__(LOGGER, cfg=cfg)
         # Set to default value.
-        self.serial_frame_size = 256
+        self.serial_frame_size = SERIAL_FRAME_MAX_LENGTH
 
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
 
     def get_id(self) -> str:
-        return self.com_if_id
+        return self.cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:
         pass

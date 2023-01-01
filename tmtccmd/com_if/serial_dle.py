@@ -8,7 +8,7 @@ from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase
+from tmtccmd.com_if.serial_base import SerialComBase, SerialArgs
 from tmtccmd.tm import TelemetryListT
 
 LOGGER = get_console_logger()
@@ -18,14 +18,8 @@ DLE_MAX_FRAME_LENGTH = 4096
 
 
 class SerialComDleComIF(SerialComBase, ComInterface):
-    def __init__(
-        self,
-        com_if_id: str,
-        com_port: str,
-        baud_rate: int,
-        serial_timeout: float,
-    ):
-        super().__init__(LOGGER, com_if_id, com_port, baud_rate, serial_timeout)
+    def __init__(self, cfg: SerialArgs):
+        super().__init__(LOGGER, cfg=cfg)
         self.encoder = DleEncoder()
         self.reception_thread = None
         self.reception_buffer = None
@@ -49,7 +43,7 @@ class SerialComDleComIF(SerialComBase, ComInterface):
         self.dle_encode_cr = encode_cr
 
     def get_id(self) -> str:
-        return self.com_if_id
+        return self.cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:
         self.reception_buffer = deque(maxlen=self.dle_queue_len)
@@ -77,6 +71,7 @@ class SerialComDleComIF(SerialComBase, ComInterface):
                 )
                 if bytes_rcvd[len(bytes_rcvd) - 1] == ETX_CHAR:
                     data.extend(bytes_rcvd)
+                    # deque is thread-safe for appends and pops from and to the opposite side
                     self.reception_buffer.appendleft(data)
             elif len(byte) >= 1:
                 data.append(byte[0])

@@ -1,3 +1,4 @@
+import dataclasses
 import enum
 import logging
 from typing import Optional
@@ -30,28 +31,32 @@ class SerialCommunicationType(enum.Enum):
     DLE_ENCODING = 2
 
 
+@dataclasses.dataclass
+class SerialArgs:
+    com_if_id: str
+    com_port: str
+    baud_rate: int
+    serial_timeout: float
+
+
 class SerialComBase:
     def __init__(
         self,
         logger: logging.Logger,
-        com_if_id: str,
-        com_port: str,
-        baud_rate: int,
-        serial_timeout: float,
+        cfg: SerialArgs,
         ser_com_type: SerialCommunicationType,
     ):
         self.logger = logger
-        self.com_if_id = com_if_id
-        self.com_port = com_port
-        self.baud_rate = baud_rate
-        self.serial_timeout = serial_timeout
+        self.cfg = cfg
         self.ser_com_type = ser_com_type
         self.serial: Optional[serial.Serial] = None
 
     def open_port(self):
         try:
             self.serial = serial.Serial(
-                port=self.com_port, baudrate=self.baud_rate, timeout=self.serial_timeout
+                port=self.cfg.com_port,
+                baudrate=self.cfg.baud_rate,
+                timeout=self.cfg.serial_timeout,
             )
         except serial.SerialException:
             self.logger.error("Serial Port opening failure!")

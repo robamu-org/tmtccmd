@@ -1,6 +1,10 @@
+import collections
+import threading
+from typing import Optional
+
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase
+from tmtccmd.com_if.serial_base import SerialComBase, SerialArgs
 from tmtccmd.tm import TelemetryListT
 from cobs import cobs
 
@@ -9,32 +13,27 @@ LOGGER = get_console_logger()
 
 
 class SerialCobsComIF(SerialComBase, ComInterface):
-    def __init__(
-        self,
-        com_if_id: str,
-        com_port: str,
-        baud_rate: int,
-        serial_timeout: float,
-    ):
-        super().__init__(
-            LOGGER,
-            com_if_id=com_if_id,
-            com_port=com_port,
-            baud_rate=baud_rate,
-            serial_timeout=serial_timeout,
-        )
+    def __init__(self, cfg: SerialArgs):
+        super().__init__(LOGGER, cfg=cfg)
+        self.polling_active_event: Optional[threading.Event] = None
+        self.reception_thread: Optional[threading.Thread] = None
+        self.reception_buffer: Optional[collections.deque] = None
 
     def get_id(self) -> str:
-        return self.com_if_id
+        return self.cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:
         pass
 
     def open(self, args: any = None) -> None:
-        pass
+        super().open_port()
+        self.reception_thread = threading.Thread(
+            target=self.poll_cobs_packets, daemon=True
+        )
+        self.reception_thread.start()
 
     def is_open(self) -> bool:
-        pass
+        return self.serial is not None
 
     def close(self, args: any = None) -> None:
         pass
@@ -44,7 +43,17 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         self.serial.write(encoded)
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
-        pass
+        packet_list = []
+        while self.reception_buffer:
+            data = self.reception_buffer.pop()
+            try:
+                packet_list.extend(cobs.decode(data))
+            except cobs.DecodeError as e:
+                LOGGER.warning(f"DLE decoding error {e}")
+        return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
+        pass
+
+    def poll_cobs_packets(self):
         pass
