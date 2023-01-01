@@ -49,7 +49,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
             try:
                 packet_list.extend(cobs.decode(data))
             except cobs.DecodeError as e:
-                LOGGER.warning(f"DLE decoding error {e}")
+                LOGGER.warning(f"COBS decoding error {e}")
         return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
