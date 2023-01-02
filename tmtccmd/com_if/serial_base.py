@@ -36,7 +36,7 @@ class SerialCommunicationType(enum.Enum):
 @dataclasses.dataclass
 class SerialCfg:
     com_if_id: str
-    com_port: str
+    serial_port: str
     baud_rate: int
     serial_timeout: float
 
@@ -56,7 +56,7 @@ class SerialComBase:
     def open_port(self):
         try:
             self.serial = serial.Serial(
-                port=self.ser_cfg.com_port,
+                port=self.ser_cfg.serial_port,
                 baudrate=self.ser_cfg.baud_rate,
                 timeout=self.ser_cfg.serial_timeout,
             )
