@@ -14,7 +14,7 @@ from tmtccmd.pus.pus_17_test import Subservices
 @deprecation.deprecated(
     deprecated_in="v3.0.0rc2",
     current_version=__version__,
-    details="Use Service17Tm from the spacepackets package instead"
+    details="Use Service17Tm from the spacepackets package instead",
 )
 class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
     def __init__(

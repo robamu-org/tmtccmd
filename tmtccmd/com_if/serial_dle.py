@@ -21,7 +21,7 @@ class DleCfg:
     encode_cr: bool = True
 
 
-class SerialComDleComIF(SerialComBase, ComInterface):
+class SerialDleComIF(SerialComBase, ComInterface):
     """Serial communication interface which uses the `DLE protocol <https://pypi.org/project/dle-encoder/>`_
     to encode and decode packets.
 

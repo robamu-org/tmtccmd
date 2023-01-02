@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+### Added
+
+- New `SerialCobsComIF` communication interface to send and received COBS encoded packets.
+
+### Changes
+
+- `CoreComInterfaces`: Renamed `ser_*` interface names to `serial_*`.
+- Split up the `SerialComIF` into distinct classes:
+  - `SerialFixedFrameComIF`, but this one has also been deprecated now.
+  - `SerialDleComIF` for sending and receiving DLE encoded packets
+
 ### Fixes
 
 - Minor fixes for GUI: Moved communication interface switching to

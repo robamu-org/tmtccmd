@@ -24,12 +24,14 @@ def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
 @deprecated(
     deprecated_in="3.1.0",
     current_version=__version__,
-    details="Please use pack_scalar_boolean_parameter_app_data instead"
+    details="Please use pack_scalar_boolean_parameter_app_data instead",
 )
 def pack_boolean_parameter_app_data(
-        object_id: bytes, domain_id: int, unique_id: int, parameter: bool
-)-> Optional[bytearray]:
-    return pack_scalar_boolean_parameter_app_data(object_id, domain_id, unique_id, parameter)
+    object_id: bytes, domain_id: int, unique_id: int, parameter: bool
+) -> Optional[bytearray]:
+    return pack_scalar_boolean_parameter_app_data(
+        object_id, domain_id, unique_id, parameter
+    )
 
 
 def pack_scalar_boolean_parameter_app_data(
