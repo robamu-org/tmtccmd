@@ -83,7 +83,7 @@ def create_com_interface_cfg_default(
         CoreComInterfaces.SERIAL_FIXED_FRAME.value,
         CoreComInterfaces.SERIAL_COBS.value,
     ]:
-        cfg = SerialCfg(baud_rate=0, com_if_id="", serial_timeout=0, serial_port="")
+        cfg = SerialCfg(baud_rate=0, com_if_id=com_if_key, serial_timeout=0, serial_port="")
         default_serial_cfg_baud_and_port_setup(json_cfg_path, cfg)
         return SerialCfgWrapper(
             com_if_key=com_if_key, json_cfg_path=json_cfg_path, serial_cfg=cfg
