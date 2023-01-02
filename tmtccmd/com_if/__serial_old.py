@@ -35,7 +35,7 @@ class SerialComIF(ComInterface):
     ):
         """
         Initiaze a serial communication handler.
-        :param com_port: Specify COM port.
+        :param com_port: Specify serial port.
         :param baud_rate: Specify baud rate
         :param serial_timeout: Specify serial timeout
         :param ser_com_type: Specify how to handle serial reception

@@ -55,7 +55,7 @@ def determine_baud_rate(json_cfg_path: str) -> int:
 
 
 def determine_com_port(json_cfg_path: str) -> str:
-    """Determine serial port. Tries to read from JSON first. If the com port is not contained
+    """Determine serial port. Tries to read from JSON first. If the serial port is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
 
     :return: Determined serial port
@@ -201,8 +201,8 @@ def find_com_port_from_hint(hint: str) -> (bool, str):
 def prompt_com_port() -> str:
     while True:
         com_port = input(
-            "Configuring serial port. Please enter COM Port"
-            "(enter h to display list of COM ports): "
+            "Configuring serial port. Please enter serial port"
+            ' or "h" to display list of serial ports): '
         )
         if com_port == "h":
             ports = serial.tools.list_ports.comports()
