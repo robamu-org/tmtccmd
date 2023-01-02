@@ -29,11 +29,9 @@ class ComIfCfgBase:
         self,
         com_if_key: str,
         json_cfg_path: str,
-        space_packet_ids: Optional[Tuple[int]] = None,
     ):
         self.com_if_key = com_if_key
         self.json_cfg_path = json_cfg_path
-        self.space_packet_ids = space_packet_ids
 
 
 class TcpipCfg(ComIfCfgBase):
@@ -47,7 +45,8 @@ class TcpipCfg(ComIfCfgBase):
         space_packet_ids: Optional[Tuple[int]] = None,
         recv_addr: Optional[EthAddr] = None,
     ):
-        super().__init__(com_if_key, json_cfg_path, space_packet_ids)
+        super().__init__(com_if_key, json_cfg_path)
+        self.space_packet_ids = space_packet_ids
         self.if_type = if_type
         self.send_addr = send_addr
         self.recv_addr = recv_addr
@@ -90,6 +89,8 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
     from tmtccmd.com_if.dummy import DummyComIF
     from tmtccmd.com_if.qemu import QEMUComIF
 
+    if cfg is None:
+        raise ValueError("COM IF configuration is invalid")
     if cfg.com_if_key == "":
         LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
     try:
