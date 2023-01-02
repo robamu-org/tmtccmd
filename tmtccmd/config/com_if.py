@@ -103,11 +103,11 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
             communication_interface = create_default_tcpip_interface(
                 cast(TcpipCfg, cfg)
             )
-        elif (
-            cfg.com_if_key == CoreComInterfaces.SERIAL_DLE.value
-            or cfg.com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
-            or cfg.com_if_key == CoreComInterfaces.SERIAL_COBS.value
-        ):
+        elif cfg.com_if_key in [
+            CoreComInterfaces.SERIAL_DLE.value,
+            CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+            CoreComInterfaces.SERIAL_COBS.value,
+        ]:
             # TODO: Move to new model where config is passed externally
             communication_interface = create_default_serial_interface(
                 com_if_key=cfg.com_if_key,
@@ -251,11 +251,11 @@ def create_default_serial_interface(
         # baud rate and serial port which need to be set once but are expected to stay
         # the same for a given machine. Therefore, we use a JSON file to store and extract
         # those values
-        if (
-            com_if_key == CoreComInterfaces.SERIAL_DLE.value
-            or com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
-            or com_if_key == CoreComInterfaces.SERIAL_QEMU.value
-        ):
+        if com_if_key in [
+            CoreComInterfaces.SERIAL_DLE.value,
+            CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+            CoreComInterfaces.SERIAL_QEMU.value,
+        ]:
             default_serial_cfg_setup(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
         serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
         serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
@@ -278,9 +278,9 @@ def create_default_serial_interface(
             # TODO: Maybe print valid keys?
             LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
             return None
-    except KeyError:
+    except KeyError as e:
         LOGGER.warning("Serial configuration global not configured properly")
-        return None
+        raise e
     return communication_interface
 
 
