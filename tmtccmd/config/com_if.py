@@ -108,24 +108,18 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
             CoreComInterfaces.SERIAL_FIXED_FRAME.value,
             CoreComInterfaces.SERIAL_COBS.value,
         ]:
-            # TODO: Move to new model where config is passed externally
             communication_interface = create_default_serial_interface(
                 com_if_key=cfg.com_if_key,
                 json_cfg_path=cfg.json_cfg_path,
+                serial_cfg=cast(SerialCfg, cfg)
             )
         elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
             # TODO: Move to new model where config is passed externally
-            serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
-            serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
+            serial_cfg = cast(SerialCfg, cfg)
             communication_interface = QEMUComIF(
                 com_if_id=cfg.com_if_key,
-                serial_timeout=serial_timeout,
+                serial_timeout=serial_cfg.serial_timeout,
                 ser_com_type=SerialCommunicationType.DLE_ENCODING,
-            )
-            dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
-            dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
-            communication_interface.set_dle_settings(
-                dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
             communication_interface = DummyComIF()
@@ -236,7 +230,7 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
 
 # TODO: Pass configuration explicitely instead of using globals..
 def create_default_serial_interface(
-    com_if_key: str, json_cfg_path: str
+    com_if_key: str, json_cfg_path: str, serial_cfg: SerialCfg
 ) -> Optional[ComInterface]:
 
     """Create a default serial interface. Requires a certain set of global variables set up. See
@@ -244,6 +238,7 @@ def create_default_serial_interface(
 
     :param com_if_key:
     :param json_cfg_path:
+    :param serial_cfg: Generic serial configuration parameters
     :return:
     """
     try:
@@ -257,23 +252,13 @@ def create_default_serial_interface(
             CoreComInterfaces.SERIAL_QEMU.value,
         ]:
             default_serial_cfg_setup(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
-        serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
-        serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
-        serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
-        com_port = serial_cfg[SerialConfigIds.SERIAL_PORT]
-        ser_cfg = SerialCfg(
-            baud_rate=serial_baudrate,
-            serial_timeout=serial_timeout,
-            com_port=com_port,
-            com_if_id=com_if_key,
-        )
         if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
             # Ignore the DLE config for now, it is not that important anyway
-            communication_interface = SerialDleComIF(ser_cfg=ser_cfg, dle_cfg=None)
+            communication_interface = SerialDleComIF(ser_cfg=serial_cfg, dle_cfg=None)
         elif com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
-            communication_interface = SerialFixedFrameComIF(ser_cfg=ser_cfg)
+            communication_interface = SerialFixedFrameComIF(ser_cfg=serial_cfg)
         elif com_if_key == CoreComInterfaces.SERIAL_COBS.value:
-            communication_interface = SerialCobsComIF(ser_cfg=ser_cfg)
+            communication_interface = SerialCobsComIF(ser_cfg=serial_cfg)
         else:
             # TODO: Maybe print valid keys?
             LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
