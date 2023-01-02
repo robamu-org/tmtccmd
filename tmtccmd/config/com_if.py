@@ -72,8 +72,9 @@ def create_com_interface_cfg_default(
     elif com_if_key in [
         CoreComInterfaces.SERIAL_DLE.value,
         CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+        CoreComInterfaces.SERIAL_COBS.value,
     ]:
-        return None
+        return ComIfCfgBase(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
 
 
 def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
@@ -98,6 +99,7 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
         elif (
             cfg.com_if_key == CoreComInterfaces.SERIAL_DLE.value
             or cfg.com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
+            or cfg.com_if_key == CoreComInterfaces.SERIAL_COBS.value
         ):
             # TODO: Move to new model where config is passed externally
             communication_interface = create_default_serial_interface(
