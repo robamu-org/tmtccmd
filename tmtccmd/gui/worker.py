@@ -7,6 +7,9 @@ from tmtccmd.core import TmMode, TcMode, BackendRequest
 from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCodes
 
 
+LOGGER = get_console_logger()
+
+
 class WorkerSignalWrapper(QObject):
     finished = pyqtSignal(object)
     failure = pyqtSignal(object)
@@ -38,6 +41,17 @@ class FrontendWorker(QRunnable):
 
     def __setup(self, op_code: WorkerOperationsCodes) -> bool:
         if op_code == WorkerOperationsCodes.OPEN_COM_IF:
+            LOGGER.info("Switching COM Interface")
+            # TODO: We should really pass a proper object here instead of using magic tuples..
+            new_com_if = self._locals.op_args[2].assign_communication_interface(
+                com_if_key=self._locals.op_args[1]
+            )
+            # self._args.state.last_com_if = self._args.state.current_com_if
+            set_success = self._shared.backend.try_set_com_if(new_com_if)
+            if not set_success:
+                LOGGER.warning(
+                    f"Could not set new communication interface {new_com_if}"
+                )
             if self._shared.backend.com_if_active():
                 self._finish_with_info("COM Interface is already active")
             else:

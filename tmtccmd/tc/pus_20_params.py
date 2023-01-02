@@ -1,6 +1,8 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
 import struct
+from tmtccmd import __version__
+from deprecation import deprecated
 from typing import Optional
 
 from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
@@ -19,7 +21,18 @@ def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
     )
 
 
+@deprecated(
+    deprecated_in="3.1.0",
+    current_version=__version__,
+    details="Please use pack_scalar_boolean_parameter_app_data instead"
+)
 def pack_boolean_parameter_app_data(
+        object_id: bytes, domain_id: int, unique_id: int, parameter: bool
+)-> Optional[bytearray]:
+    return pack_scalar_boolean_parameter_app_data(object_id, domain_id, unique_id, parameter)
+
+
+def pack_scalar_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
 ) -> Optional[bytearray]:
     """Generic function to pack a the application data for a parameter service command.

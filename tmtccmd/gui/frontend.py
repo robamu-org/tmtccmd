@@ -232,6 +232,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
             self._com_if_list.append((id, com_if_value[0]))
             if self._shared_args.backend.com_if_id == id:
                 com_if_combo_box.setCurrentIndex(index)
+                self._state.current_com_if = id
             index += 1
         com_if_combo_box.currentIndexChanged.connect(self.__com_if_sel_index_changed)
         grid.addWidget(com_if_combo_box, row, 1, 1, 1)

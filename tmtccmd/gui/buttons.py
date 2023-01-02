@@ -53,6 +53,7 @@ class ConnectButtonWrapper:
         self._bttn_params = bttn_params
         self._connected = False
         self._next_con_state = False
+        self._com_if_needs_switch = False
         self.button.clicked.connect(self._button_op)
 
     def _button_op(self):
@@ -63,21 +64,21 @@ class ConnectButtonWrapper:
 
     def _connect_button_pressed(self):
         LOGGER.info("Opening COM Interface")
+        self._com_if_needs_switch = False
         # Build and assign new communication interface
         if self._args.state.current_com_if != self._args.state.last_com_if:
-            LOGGER.info("Switching COM Interface")
-            new_com_if = self._bttn_params.hook_obj.assign_communication_interface(
-                com_if_key=self._args.state.current_com_if
-            )
-            self._args.state.last_com_if = self._args.state.current_com_if
-            set_success = self._args.shared.backend.try_set_com_if(new_com_if)
-            if not set_success:
-                LOGGER.warning(
-                    f"Could not set new communication interface {new_com_if}"
-                )
+            self._com_if_needs_switch = True
         self.button.setEnabled(False)
         worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.OPEN_COM_IF, None), self._args.shared
+            LocalArgs(
+                WorkerOperationsCodes.OPEN_COM_IF,
+                (
+                    self._com_if_needs_switch,
+                    self._args.state.current_com_if,
+                    self._bttn_params.hook_obj,
+                ),
+            ),
+            self._args.shared,
         )
         self._next_con_state = True
         worker.signals.finished.connect(self._button_op_done)
@@ -86,6 +87,8 @@ class ConnectButtonWrapper:
 
     def _button_op_done(self):
         if self._next_con_state:
+            if self._com_if_needs_switch:
+                self._args.state.last_com_if = self._args.state.current_com_if
             self._connect_button_finished()
         else:
             self._disconnect_button_finished()

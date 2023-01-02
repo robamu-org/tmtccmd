@@ -3,7 +3,7 @@ import json
 from tmtccmd.logging import get_console_logger
 from tmtccmd.util.conf_util import wrapped_prompt
 from tmtccmd.util.json import check_json_file, JsonKeyNames
-from tmtccmd.config.defs import ComIfDictT
+from tmtccmd.config.defs import ComIfDictT, CoreComInterfaces
 
 LOGGER = get_console_logger()
 
@@ -31,6 +31,8 @@ def determine_com_if(
         )
         if save_to_json.lower() in ["", "y", "yes", "1"]:
             store_com_if_json(com_if_string=com_if_string, json_cfg_path=json_cfg_path)
+    elif do_prompt_com_if and not use_prompts:
+        return CoreComInterfaces.DUMMY.value
     return com_if_string
 
 

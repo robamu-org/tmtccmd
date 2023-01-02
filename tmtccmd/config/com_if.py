@@ -90,7 +90,7 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
     from tmtccmd.com_if.qemu import QEMUComIF
 
     if cfg is None:
-        raise ValueError("COM IF configuration is invalid")
+        raise ValueError("Passed ComIF configuration is empty")
     if cfg.com_if_key == "":
         LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
     try:
