@@ -111,7 +111,7 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
             communication_interface = create_default_serial_interface(
                 com_if_key=cfg.com_if_key,
                 json_cfg_path=cfg.json_cfg_path,
-                serial_cfg=cast(SerialCfg, cfg)
+                serial_cfg=cast(SerialCfg, cfg),
             )
         elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
             # TODO: Move to new model where config is passed externally

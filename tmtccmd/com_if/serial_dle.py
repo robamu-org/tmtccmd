@@ -8,7 +8,7 @@ from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase, SerialCfg
+from tmtccmd.com_if.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
 from tmtccmd.tm import TelemetryListT
 
 LOGGER = get_console_logger()
@@ -30,7 +30,9 @@ class SerialDleComIF(SerialComBase, ComInterface):
     """
 
     def __init__(self, ser_cfg: SerialCfg, dle_cfg: Optional[DleCfg]):
-        super().__init__(LOGGER, ser_cfg=ser_cfg)
+        super().__init__(
+            LOGGER, ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.DLE_ENCODING
+        )
         self.encoder = DleEncoder()
         self.reception_thread = None
         self.reception_buffer = None
