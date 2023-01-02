@@ -10,11 +10,10 @@ from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 from spacepackets.util import UnsignedByteField
 
-from tmtccmd import CcsdsTmtcBackend, TcHandlerBase, ProcedureParamsWrapper
-from tmtccmd.core.base import BackendRequest
+from tmtccmd import CcsdsTmtcBackend, ProcedureParamsWrapper, BackendRequest
+from tmtccmd.com_if import ComInterface
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
-from tmtccmd.com_if import ComInterface
 from tmtccmd.config import (
     default_json_path,
     SetupParams,
@@ -23,8 +22,9 @@ from tmtccmd.config import (
     CoreServiceList,
     OpCodeEntry,
     params_to_procedure_conversion,
+    PreArgsParsingWrapper,
+    SetupWrapper,
 )
-from tmtccmd.config import PreArgsParsingWrapper, SetupWrapper
 from tmtccmd.logging import get_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
@@ -38,11 +38,10 @@ from tmtccmd.tc import (
     FeedWrapper,
     SendCbParams,
     DefaultPusQueueHelper,
+    TcHandlerBase,
 )
 from tmtccmd.tm.pus_5_event import Service5Tm
-from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider
-from tmtccmd.util.obj_id import ObjectIdDictT
-
+from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
 LOGGER = get_console_logger()
