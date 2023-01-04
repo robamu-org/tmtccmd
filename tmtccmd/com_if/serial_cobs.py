@@ -62,9 +62,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         while self.reception_buffer:
             data = self.reception_buffer.pop()
             try:
-                packet_list.extend(cobs.decode(data))
+                packet_list.append(cobs.decode(data))
             except cobs.DecodeError as e:
-                LOGGER.warning(f"COBS decoding error {e}")
+                LOGGER.warning(f"COBS decoding error: {e}")
         return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
@@ -72,16 +72,26 @@ class SerialCobsComIF(SerialComBase, ComInterface):
 
     def poll_cobs_packets(self):
         last_byte_was_zero = False
-        while True and self.polling_active_event.is_set():
-            # Poll permanently, but it is possible to join this thread every 200 ms
-            self.serial.timeout = 0.2
+        # Poll permanently, but it is possible to join this thread every 200 ms
+        self.serial.timeout = 0.2
+        while True:
             byte = self.serial.read()
-            if byte[0] == 0:
-                last_byte_was_zero = True
-            else:
-                if last_byte_was_zero:
-                    self.serial.timeout = 0.1
-                    possible_cobs_frame = self.serial.read_until(0)
-                    self.reception_buffer.appendleft(possible_cobs_frame)
+            if len(byte) == 1:
+                if byte[0] == 0:
+                    last_byte_was_zero = True
                 else:
-                    last_byte_was_zero = False
+                    if last_byte_was_zero:
+                        self.serial.timeout = 0.1
+                        possible_cobs_frame = bytearray(byte)
+                        possible_cobs_frame.extend(self.serial.read_until(bytes([0])))
+                        self.reception_buffer.appendleft(possible_cobs_frame[:-1])
+                        self.serial.timeout = 0.2
+                        last_byte_was_zero = True
+                    else:
+                        broken_cobs_frame = self.serial.read_until(bytes([0]))
+                        LOGGER.warning(
+                            f"Discarding possibly broken COBS frame: {broken_cobs_frame.hex(sep=',')}"
+                        )
+                        last_byte_was_zero = True
+            elif self.polling_active_event.is_set():
+                break
