@@ -52,7 +52,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         super().close_port()
 
     def send(self, data: bytes):
-        encoded = cobs.encode(data)
+        encoded = bytearray([0])
+        encoded.extend(cobs.encode(data))
+        encoded.append(0)
         self.serial.write(encoded)
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
