@@ -5,11 +5,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [v3.0.1] 05.01.2023
-
-### Changes
-
-- Marked `Service17TmExtended` as deprecated.
+## [unreleased]
 
 ### Added
 
@@ -21,6 +17,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Split up the `SerialComIF` into distinct classes:
   - `SerialFixedFrameComIF`, but this one has also been deprecated now.
   - `SerialDleComIF` for sending and receiving DLE encoded packets
+
+## [v3.0.1] 05.01.2023
+
+### Changes
+
+- Marked `Service17TmExtended` as deprecated.
 
 ### Fixes
 
