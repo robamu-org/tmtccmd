@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [unreleased]
+## [v3.0.1] 05.01.2023
+
+### Changes
+
+- Marked `Service17TmExtended` as deprecated.
 
 ### Added
 
@@ -21,7 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ### Fixes
 
 - Minor fixes for GUI: Moved communication interface switching to
-  separate worker thread
+  separate worker thread.
 
 ## [v3.0.0] 09.12.2022
 

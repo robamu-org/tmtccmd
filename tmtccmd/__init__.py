@@ -3,6 +3,10 @@
 # use a formatted string here.
 __version__ = "4.0.0a0"
 
+VERSION_MAJOR = 4
+VERSION_MINOR = 0
+VERSION_REVISION = 0
+
 import sys
 import os
 from datetime import timedelta
@@ -35,10 +39,6 @@ from tmtccmd.tc import (
     ProcedureWrapper,
     TcHandlerBase,
 )
-
-VERSION_MAJOR = 4
-VERSION_MINOR = 0
-VERSION_REVISION = 0
 
 LOGGER = get_console_logger()
 
