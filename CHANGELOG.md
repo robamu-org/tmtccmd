@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## [unreleased]
 
+## [v4.0.0a0] 05.01.2023
+
 ### Added
 
 - New `SerialCobsComIF` communication interface to send and received COBS encoded packets.
