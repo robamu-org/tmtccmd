@@ -29,11 +29,11 @@ from tmtccmd.tc.handler import TcHandlerBase
 
 VERSION_MAJOR = 3
 VERSION_MINOR = 0
-VERSION_REVISION = 0
+VERSION_REVISION = 1
 
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 
 LOGGER = get_console_logger()
