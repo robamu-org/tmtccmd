@@ -16,8 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - `CoreComInterfaces`: Renamed `ser_*` interface names to `serial_*`.
 - Split up the `SerialComIF` into distinct classes:
   - `SerialFixedFrameComIF`, but this one has also been deprecated now.
-  - `SerialDleComIF` for sending and receiving DLE encoded packets
-- Switched to compatible release requirement for dependencies
+  - `SerialDleComIF` for sending and receiving DLE encoded packets.
+- Switched to compatible release requirement for dependencies.
+- `ComInterface`: Added new abstract method `get_id`, removed `__init__` dunder.
 
 ## [v3.0.1] 05.01.2023
 
