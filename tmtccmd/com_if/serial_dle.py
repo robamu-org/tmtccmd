@@ -36,7 +36,7 @@ class SerialDleComIF(SerialComBase, ComInterface):
         self.dle_cfg = dle_cfg
         self.__encoder = DleEncoder()
         self.__reception_thread = None
-        self.__reception_buffer = None
+        self.__reception_buffer = deque()
         self.__polling_shutdown: Optional[threading.Event] = threading.Event()
 
     def get_id(self) -> str:
@@ -45,8 +45,6 @@ class SerialDleComIF(SerialComBase, ComInterface):
     def initialize(self, args: any = None) -> any:
         if self.dle_cfg and self.dle_cfg.dle_queue_len:
             self.__reception_buffer = deque(maxlen=self.dle_cfg.dle_queue_len)
-        else:
-            self.__reception_buffer = deque()
 
     def open(self, args: any = None) -> None:
         """Spins up a receiver thread to permanently check for new DLE encoded packets."""
