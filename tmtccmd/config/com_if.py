@@ -83,6 +83,10 @@ def create_com_interface_cfg_default(
         CoreComInterfaces.SERIAL_FIXED_FRAME.value,
         CoreComInterfaces.SERIAL_COBS.value,
     ]:
+        # For a serial communication interface, there are some configuration values like
+        # baud rate and serial port which need to be set once but are expected to stay
+        # the same for a given machine. Therefore, we use a JSON file to store and extract
+        # those values
         cfg = SerialCfg(
             baud_rate=0, com_if_id=com_if_key, serial_timeout=0, serial_port=""
         )
@@ -259,18 +263,6 @@ def create_default_serial_interface(
     :return:
     """
     try:
-        # For a serial communication interface, there are some configuration values like
-        # baud rate and serial port which need to be set once but are expected to stay
-        # the same for a given machine. Therefore, we use a JSON file to store and extract
-        # those values
-        if com_if_key in [
-            CoreComInterfaces.SERIAL_DLE.value,
-            CoreComInterfaces.SERIAL_FIXED_FRAME.value,
-            CoreComInterfaces.SERIAL_QEMU.value,
-        ]:
-            default_serial_cfg_baud_and_port_setup(
-                com_if_key=com_if_key, json_cfg_path=json_cfg_path
-            )
         if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
             # Ignore the DLE config for now, it is not that important anyway
             communication_interface = SerialDleComIF(ser_cfg=serial_cfg, dle_cfg=None)
