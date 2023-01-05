@@ -33,73 +33,73 @@ class SerialDleComIF(SerialComBase, ComInterface):
         super().__init__(
             LOGGER, ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.DLE_ENCODING
         )
-        self.encoder = DleEncoder()
-        self.reception_thread = None
-        self.reception_buffer = None
-        self.dle_polling_active_event: Optional[threading.Event] = None
         self.dle_cfg = dle_cfg
+        self.__encoder = DleEncoder()
+        self.__reception_thread = None
+        self.__reception_buffer = None
+        self.__polling_shutdown: Optional[threading.Event] = None
 
     def get_id(self) -> str:
         return self.ser_cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:
         if self.dle_cfg and self.dle_cfg.dle_queue_len:
-            self.reception_buffer = deque(maxlen=self.dle_cfg.dle_queue_len)
+            self.__reception_buffer = deque(maxlen=self.dle_cfg.dle_queue_len)
         else:
-            self.reception_buffer = deque()
-        self.dle_polling_active_event = threading.Event()
+            self.__reception_buffer = deque()
+        self.__polling_shutdown = threading.Event()
 
     def open(self, args: any = None) -> None:
         """Spins up a receiver thread to permanently check for new DLE encoded packets."""
         super().open_port()
-        self.dle_polling_active_event.set()
-        self.reception_thread = threading.Thread(
-            target=self.poll_dle_packets, daemon=True
+        self.__polling_shutdown.clear()
+        self.__reception_thread = threading.Thread(
+            target=self.__poll_dle_packets, daemon=True
         )
-        self.reception_thread.start()
+        self.__reception_thread.start()
 
-    def poll_dle_packets(self):
-        while True and self.dle_polling_active_event.is_set():
-            # Poll permanently, but it is possible to join this thread every 200 ms
-            self.serial.timeout = 0.2
-            data = bytearray()
+    def __poll_dle_packets(self):
+        # Poll permanently, but it is possible to join this thread every 200 ms
+        self.serial.timeout = 0.2
+        data = bytearray()
+        while True:
             byte = self.serial.read()
-            if len(byte) == 1 and byte[0] == STX_CHAR:
-                data.append(byte[0])
-                self.serial.timeout = 0.1
-                if self.dle_cfg and self.dle_cfg.dle_max_frame:
-                    bytes_rcvd = self.serial.read_until(
-                        serial.to_bytes([ETX_CHAR]), self.dle_cfg.dle_max_frame
-                    )
-                else:
-                    bytes_rcvd = self.serial.read_until(serial.to_bytes([ETX_CHAR]))
-                if bytes_rcvd[len(bytes_rcvd) - 1] == ETX_CHAR:
-                    data.extend(bytes_rcvd)
-                    # deque is thread-safe for appends and pops from and to the opposite side
-                    self.reception_buffer.appendleft(data)
-            elif len(byte) >= 1:
-                data.append(byte[0])
-                data.extend(self.serial.read(self.serial.inWaiting()))
-                # It is assumed that all packets are DLE encoded, so throw it away for now.
-                LOGGER.info(f"Non DLE-Encoded data with length {len(data) + 1} found..")
+            if len(byte) == 1:
+                if byte[0] == STX_CHAR:
+                    data.append(byte[0])
+                    self.serial.timeout = 0.1
+                    if self.dle_cfg and self.dle_cfg.dle_max_frame:
+                        bytes_rcvd = self.serial.read_until(
+                            serial.to_bytes([ETX_CHAR]), self.dle_cfg.dle_max_frame
+                        )
+                    else:
+                        bytes_rcvd = self.serial.read_until(serial.to_bytes([ETX_CHAR]))
+                    self.serial.timeout = 0.2
+                    if bytes_rcvd[len(bytes_rcvd) - 1] == ETX_CHAR:
+                        data.extend(bytes_rcvd)
+                        # deque is thread-safe for appends and pops from and to the opposite side
+                        self.__reception_buffer.appendleft(data)
+                data = bytearray()
+            elif self.__polling_shutdown.is_set():
+                break
 
     def is_open(self) -> bool:
         return super().is_port_open()
 
     def close(self, args: any = None) -> None:
-        self.dle_polling_active_event.clear()
-        self.reception_thread.join(0.4)
+        self.__polling_shutdown.set()
+        self.__reception_thread.join(0.4)
         super().close_port()
 
     def send(self, data: bytes):
-        encoded_data = self.encoder.encode(source_packet=data, add_stx_etx=True)
+        encoded_data = self.__encoder.encode(source_packet=data, add_stx_etx=True)
         self.serial.write(encoded_data)
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
         packet_list = []
-        while self.reception_buffer:
-            data = self.reception_buffer.pop()
-            dle_retval, decoded_packet, read_len = self.encoder.decode(
+        while self.__reception_buffer:
+            data = self.__reception_buffer.pop()
+            dle_retval, decoded_packet, read_len = self.__encoder.decode(
                 source_packet=data
             )
             if dle_retval == DleErrorCodes.OK:
@@ -109,4 +109,4 @@ class SerialDleComIF(SerialComBase, ComInterface):
         return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
-        return SerialComBase.data_available_from_queue(timeout, self.reception_buffer)
+        return SerialComBase.data_available_from_queue(timeout, self.__reception_buffer)

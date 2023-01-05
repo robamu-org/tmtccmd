@@ -25,9 +25,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         super().__init__(
             LOGGER, ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.COBS
         )
-        self.polling_active_event = threading.Event()
-        self.reception_thread: Optional[threading.Thread] = None
-        self.reception_buffer = collections.deque()
+        self.__polling_shutdown = threading.Event()
+        self.__reception_thread: Optional[threading.Thread] = None
+        self.__reception_buffer = collections.deque()
 
     def get_id(self) -> str:
         return self.ser_cfg.com_if_id
@@ -38,17 +38,18 @@ class SerialCobsComIF(SerialComBase, ComInterface):
     def open(self, args: any = None) -> None:
         """Spins up a receiver thread to permanently check for new COBS encoded packets."""
         super().open_port()
-        self.reception_thread = threading.Thread(
-            target=self.poll_cobs_packets, daemon=True
+        self.__polling_shutdown.clear()
+        self.__reception_thread = threading.Thread(
+            target=self.__poll_cobs_packets, daemon=True
         )
-        self.reception_thread.start()
+        self.__reception_thread.start()
 
     def is_open(self) -> bool:
         return self.serial is not None
 
     def close(self, args: any = None) -> None:
-        self.polling_active_event.clear()
-        self.reception_thread.join(0.4)
+        self.__polling_shutdown.set()
+        self.__reception_thread.join(0.4)
         super().close_port()
 
     def send(self, data: bytes):
@@ -59,8 +60,8 @@ class SerialCobsComIF(SerialComBase, ComInterface):
 
     def receive(self, parameters: any = 0) -> TelemetryListT:
         packet_list = []
-        while self.reception_buffer:
-            data = self.reception_buffer.pop()
+        while self.__reception_buffer:
+            data = self.__reception_buffer.pop()
             try:
                 packet_list.append(cobs.decode(data))
             except cobs.DecodeError as e:
@@ -68,9 +69,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         return packet_list
 
     def data_available(self, timeout: float, parameters: any) -> int:
-        return SerialComBase.data_available_from_queue(timeout, self.reception_buffer)
+        return SerialComBase.data_available_from_queue(timeout, self.__reception_buffer)
 
-    def poll_cobs_packets(self):
+    def __poll_cobs_packets(self):
         last_byte_was_zero = False
         # Poll permanently, but it is possible to join this thread every 200 ms
         self.serial.timeout = 0.2
@@ -84,7 +85,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
                         self.serial.timeout = 0.1
                         possible_cobs_frame = bytearray(byte)
                         possible_cobs_frame.extend(self.serial.read_until(bytes([0])))
-                        self.reception_buffer.appendleft(possible_cobs_frame[:-1])
+                        self.__reception_buffer.appendleft(possible_cobs_frame[:-1])
                         self.serial.timeout = 0.2
                         last_byte_was_zero = True
                     else:
@@ -93,5 +94,5 @@ class SerialCobsComIF(SerialComBase, ComInterface):
                             f"Discarding possibly broken COBS frame: {broken_cobs_frame.hex(sep=',')}"
                         )
                         last_byte_was_zero = True
-            elif self.polling_active_event.is_set():
+            elif self.__polling_shutdown.is_set():
                 break
