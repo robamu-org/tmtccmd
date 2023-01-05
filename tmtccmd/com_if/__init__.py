@@ -13,12 +13,9 @@ class ComInterface(ABC):
     the underlying interface.
     """
 
-    def __init__(self, com_if_id: str):
-        self.valid = True
-        self.com_if_id = com_if_id
-
+    @abstractmethod
     def get_id(self) -> str:
-        return self.com_if_id
+        pass
 
     @abstractmethod
     def initialize(self, args: any = None) -> any:

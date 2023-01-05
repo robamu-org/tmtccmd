@@ -55,7 +55,7 @@ def determine_baud_rate(json_cfg_path: str) -> int:
 
 
 def determine_com_port(json_cfg_path: str) -> str:
-    """Determine serial port. Tries to read from JSON first. If the com port is not contained
+    """Determine serial port. Tries to read from JSON first. If the serial port is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
 
     :return: Determined serial port
@@ -107,11 +107,11 @@ def __try_com_port_load(json_obj) -> (bool, bool, str):
     com_port = ""
     try:
         com_port = json_obj[JsonKeyNames.SERIAL_PORT.value]
-        LOGGER.info(f"Loaded COM port {com_port} from JSON configuration file")
+        LOGGER.info(f"Loaded serial port {com_port} from JSON configuration file")
         if not check_port_validity(com_port):
             while True:
                 LOGGER.info(
-                    "COM port from configuration file not contained within serial port list"
+                    "Serial port from configuration file not contained within serial port list"
                 )
                 reconfigure = input(
                     "Reconfigure serial port or try to determine from hint? "
@@ -154,7 +154,7 @@ def __try_hint_handling(
             ):
                 reconfig_com_port = False
     else:
-        LOGGER.info("No COM port found based on hint..")
+        LOGGER.info("No serial port found based on hint..")
         reconfig_com_port = True
     return reconfig_com_port, com_port
 
@@ -201,8 +201,8 @@ def find_com_port_from_hint(hint: str) -> (bool, str):
 def prompt_com_port() -> str:
     while True:
         com_port = input(
-            "Configuring serial port. Please enter COM Port"
-            "(enter h to display list of COM ports): "
+            "Configuring serial port. Please enter serial port"
+            ' or "h" to display list of serial ports): '
         )
         if com_port == "h":
             ports = serial.tools.list_ports.comports()

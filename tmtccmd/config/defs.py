@@ -14,11 +14,12 @@ class CoreComInterfaces(str, enum.Enum):
     value: str
 
     DUMMY = "dummy"
-    SERIAL_DLE = "ser_dle"
     UDP = "udp"
     TCP = "tcp"
-    SERIAL_FIXED_FRAME = "ser_fixed"
-    SERIAL_QEMU = "ser_qemu"
+    SERIAL_FIXED_FRAME = "serial_fixed"
+    SERIAL_COBS = "serial_cobs"
+    SERIAL_DLE = "serial_dle"
+    SERIAL_QEMU = "serial_qemu"
     UNSPECIFIED = "unspec"
 
 

@@ -5,11 +5,16 @@ from tmtccmd.config.defs import CoreComInterfaces
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
 from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial import (
+from tmtccmd.com_if.serial_base import (
     SerialConfigIds,
     SerialCommunicationType,
-    SerialComIF,
+    SerialCfg,
 )
+
+from tmtccmd.com_if.serial_dle import SerialDleComIF
+from tmtccmd.com_if.serial_fixed_frame import SerialFixedFrameComIF
+from tmtccmd.com_if.serial_cobs import SerialCobsComIF
+
 from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com_if.tcpip_utils import TcpIpType, EthAddr
 from tmtccmd.logging import get_console_logger
@@ -24,11 +29,9 @@ class ComIfCfgBase:
         self,
         com_if_key: str,
         json_cfg_path: str,
-        space_packet_ids: Optional[Tuple[int]] = None,
     ):
         self.com_if_key = com_if_key
         self.json_cfg_path = json_cfg_path
-        self.space_packet_ids = space_packet_ids
 
 
 class TcpipCfg(ComIfCfgBase):
@@ -42,19 +45,26 @@ class TcpipCfg(ComIfCfgBase):
         space_packet_ids: Optional[Tuple[int]] = None,
         recv_addr: Optional[EthAddr] = None,
     ):
-        super().__init__(com_if_key, json_cfg_path, space_packet_ids)
+        super().__init__(com_if_key, json_cfg_path)
+        self.space_packet_ids = space_packet_ids
         self.if_type = if_type
         self.send_addr = send_addr
         self.recv_addr = recv_addr
         self.max_recv_buf_len = max_recv_buf_len
 
 
+class SerialCfgWrapper(ComIfCfgBase):
+    def __init__(self, com_if_key: str, json_cfg_path: str, serial_cfg: SerialCfg):
+        super().__init__(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
+        self.serial_cfg = serial_cfg
+
+
 def create_com_interface_cfg_default(
     com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Tuple[int]]
-) -> ComIfCfgBase:
+) -> Optional[ComIfCfgBase]:
     if com_if_key == CoreComInterfaces.DUMMY.value:
         return ComIfCfgBase(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
-    if com_if_key == CoreComInterfaces.UDP.value:
+    elif com_if_key == CoreComInterfaces.UDP.value:
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
             json_cfg_path=json_cfg_path,
@@ -71,7 +81,20 @@ def create_com_interface_cfg_default(
     elif com_if_key in [
         CoreComInterfaces.SERIAL_DLE.value,
         CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+        CoreComInterfaces.SERIAL_COBS.value,
     ]:
+        # For a serial communication interface, there are some configuration values like
+        # baud rate and serial port which need to be set once but are expected to stay
+        # the same for a given machine. Therefore, we use a JSON file to store and extract
+        # those values
+        cfg = SerialCfg(
+            baud_rate=0, com_if_id=com_if_key, serial_timeout=0, serial_port=""
+        )
+        default_serial_cfg_baud_and_port_setup(json_cfg_path, cfg)
+        return SerialCfgWrapper(
+            com_if_key=com_if_key, json_cfg_path=json_cfg_path, serial_cfg=cfg
+        )
+    else:
         return None
 
 
@@ -96,36 +119,30 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
             communication_interface = create_default_tcpip_interface(
                 cast(TcpipCfg, cfg)
             )
-        elif (
-            cfg.com_if_key == CoreComInterfaces.SERIAL_DLE.value
-            or cfg.com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
-        ):
-            # TODO: Move to new model where config is passed externally
+        elif cfg.com_if_key in [
+            CoreComInterfaces.SERIAL_DLE.value,
+            CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+            CoreComInterfaces.SERIAL_COBS.value,
+        ]:
+            serial_cfg_wrapper = cast(SerialCfgWrapper, cfg)
             communication_interface = create_default_serial_interface(
                 com_if_key=cfg.com_if_key,
                 json_cfg_path=cfg.json_cfg_path,
+                serial_cfg=serial_cfg_wrapper.serial_cfg,
             )
         elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
             # TODO: Move to new model where config is passed externally
-            serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
-            serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
+            serial_cfg = cast(SerialCfg, cfg)
             communication_interface = QEMUComIF(
                 com_if_id=cfg.com_if_key,
-                serial_timeout=serial_timeout,
+                serial_timeout=serial_cfg.serial_timeout,
                 ser_com_type=SerialCommunicationType.DLE_ENCODING,
-            )
-            dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
-            dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
-            communication_interface.set_dle_settings(
-                dle_max_queue_len, dle_max_frame_size, serial_timeout
             )
         else:
             communication_interface = DummyComIF()
         if communication_interface is None:
+            LOGGER.warning("Invalid communication interface, is None")
             return communication_interface
-        if not communication_interface.valid:
-            LOGGER.warning("Invalid communication interface!")
-            return None
         communication_interface.initialize()
         return communication_interface
     except ConnectionRefusedError:
@@ -184,21 +201,25 @@ def default_tcpip_cfg_setup(
     return cfg
 
 
-def default_serial_cfg_setup(com_if_key: str, json_cfg_path: str):
-    """Default setup for serial interfaces
+def default_serial_cfg_baud_and_port_setup(json_cfg_path: str, cfg: SerialCfg):
+    """Default setup for serial interfaces.
 
-    :param com_if_key:
     :param json_cfg_path:
+    :param cfg: The baud and serial port parameter will be set in this dataclass
     :return:
     """
     baud_rate = determine_baud_rate(json_cfg_path=json_cfg_path)
     serial_port = determine_com_port(json_cfg_path=json_cfg_path)
+    cfg.serial_port = serial_port
+    cfg.baud_rate = baud_rate
+    """
     set_up_serial_cfg(
         json_cfg_path=json_cfg_path,
         com_if_key=com_if_key,
         baud_rate=baud_rate,
         com_port=serial_port,
     )
+    """
 
 
 def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface]:
@@ -228,51 +249,34 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
     return communication_interface
 
 
+# TODO: Pass configuration explicitely instead of using globals..
 def create_default_serial_interface(
-    com_if_key: str, json_cfg_path: str
+    com_if_key: str, json_cfg_path: str, serial_cfg: SerialCfg
 ) -> Optional[ComInterface]:
+
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
 
     :param com_if_key:
     :param json_cfg_path:
+    :param serial_cfg: Generic serial configuration parameters
     :return:
     """
     try:
-        # For a serial communication interface, there are some configuration values like
-        # baud rate and serial port which need to be set once but are expected to stay
-        # the same for a given machine. Therefore, we use a JSON file to store and extract
-        # those values
-        if (
-            com_if_key == CoreComInterfaces.SERIAL_DLE.value
-            or com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
-            or com_if_key == CoreComInterfaces.SERIAL_QEMU.value
-        ):
-            default_serial_cfg_setup(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
-        serial_cfg = get_global(CoreGlobalIds.SERIAL_CONFIG)
-        serial_baudrate = serial_cfg[SerialConfigIds.SERIAL_BAUD_RATE]
-        serial_timeout = serial_cfg[SerialConfigIds.SERIAL_TIMEOUT]
-        com_port = serial_cfg[SerialConfigIds.SERIAL_PORT]
         if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
-            ser_com_type = SerialCommunicationType.DLE_ENCODING
+            # Ignore the DLE config for now, it is not that important anyway
+            communication_interface = SerialDleComIF(ser_cfg=serial_cfg, dle_cfg=None)
+        elif com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
+            communication_interface = SerialFixedFrameComIF(ser_cfg=serial_cfg)
+        elif com_if_key == CoreComInterfaces.SERIAL_COBS.value:
+            communication_interface = SerialCobsComIF(ser_cfg=serial_cfg)
         else:
-            ser_com_type = SerialCommunicationType.FIXED_FRAME_BASED
-        communication_interface = SerialComIF(
-            com_if_id=com_if_key,
-            com_port=com_port,
-            baud_rate=serial_baudrate,
-            serial_timeout=serial_timeout,
-            ser_com_type=ser_com_type,
-        )
-        if com_if_key == CoreComInterfaces.SERIAL_DLE:
-            dle_max_queue_len = serial_cfg[SerialConfigIds.SERIAL_DLE_QUEUE_LEN]
-            dle_max_frame_size = serial_cfg[SerialConfigIds.SERIAL_DLE_MAX_FRAME_SIZE]
-            communication_interface.set_dle_settings(
-                dle_max_queue_len, dle_max_frame_size, serial_timeout
-            )
-    except KeyError:
+            # TODO: Maybe print valid keys?
+            LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
+            return None
+    except KeyError as e:
         LOGGER.warning("Serial configuration global not configured properly")
-        return None
+        raise e
     return communication_interface
 
 

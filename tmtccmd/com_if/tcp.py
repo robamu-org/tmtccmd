@@ -56,7 +56,7 @@ class TcpComIF(ComInterface):
                                         detect the start of PUS packets
         :param tm_polling_freqency:     Polling frequency in seconds
         """
-        super().__init__(com_if_id=com_if_id)
+        self.com_if_id = com_if_id
         self.com_type = com_type
         self.space_packet_ids = space_packet_ids
         self.tm_polling_frequency = tm_polling_freqency
@@ -77,6 +77,9 @@ class TcpComIF(ComInterface):
         # Only allow one connection to OBSW at a time for now by using this lock
         # self.__socket_lock = threading.Lock()
         self.__queue_lock = threading.Lock()
+
+    def get_id(self) -> str:
+        return self.com_if_id
 
     def __del__(self):
         try:

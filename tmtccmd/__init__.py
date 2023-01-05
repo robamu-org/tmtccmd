@@ -1,12 +1,21 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
+# I think this needs to be in string representation to be parsed so we can't
+# use a formatted string here.
+__version__ = "4.0.0a0"
+
+VERSION_MAJOR = 4
+VERSION_MINOR = 0
+VERSION_REVISION = 0
+
 import sys
 import os
 from datetime import timedelta
 from typing import Union, cast, Optional
 
+
 from tmtccmd.config.args import ProcedureParamsWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-from tmtccmd.core.base import FrontendBase
+from tmtccmd.core.base import FrontendBase, BackendRequest
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import (
     TmTcCfgHookBase,
@@ -24,17 +33,12 @@ from tmtccmd.core.globals_manager import update_global
 from tmtccmd.logging import get_console_logger
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
-from tmtccmd.tc import DefaultProcedureInfo, TcProcedureBase, ProcedureWrapper
-from tmtccmd.tc.handler import TcHandlerBase
-
-VERSION_MAJOR = 3
-VERSION_MINOR = 0
-VERSION_REVISION = 1
-
-# I think this needs to be in string representation to be parsed so we can't
-# use a formatted string here.
-__version__ = "3.0.1"
-
+from tmtccmd.tc import (
+    DefaultProcedureInfo,
+    TcProcedureBase,
+    ProcedureWrapper,
+    TcHandlerBase,
+)
 
 LOGGER = get_console_logger()
 

@@ -52,10 +52,34 @@ tmtccmd.com\_if.qemu module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.serial module
+tmtccmd.com\_if.serial\_cobs module
 --------------------------------------
 
-.. automodule:: tmtccmd.com_if.serial
+.. automodule:: tmtccmd.com_if.serial_cobs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.serial\_dle module
+--------------------------------------
+
+.. automodule:: tmtccmd.com_if.serial_dle
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.serial\_fixed_frame module
+-------------------------------------------
+
+.. automodule:: tmtccmd.com_if.serial_fixed_frame
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tmtccmd.com\_if.serial\_base module
+--------------------------------------
+
+.. automodule:: tmtccmd.com_if.serial_base
    :members:
    :undoc-members:
    :show-inheritance:

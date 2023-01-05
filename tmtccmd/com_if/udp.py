@@ -27,11 +27,14 @@ class UdpComIF(ComInterface):
         :param max_recv_size:
         :param recv_addr:
         """
-        super().__init__(com_if_id=com_if_id)
         self.udp_socket = None
+        self.com_if_id = com_if_id
         self.send_address = send_address
         self.recv_addr = recv_addr
         self.max_recv_size = max_recv_size
+
+    def get_id(self) -> str:
+        return self.com_if_id
 
     def __del__(self):
         try:
