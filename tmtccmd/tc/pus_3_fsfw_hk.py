@@ -16,7 +16,7 @@ def make_interval(interval_seconds: float) -> bytearray:
     return bytearray(struct.pack("!f", interval_seconds))
 
 
-def enable_periodic_hk_command(diag: bool, sid: bytes, ssc: int) -> PusTelecommand:
+def enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
 
 
