@@ -12,7 +12,7 @@ from spacepackets.ecss import (
     PusVersion,
     PusTelemetry,
 )
-from spacepackets.ecss.defs import PusServices
+from spacepackets.ecss.defs import PusService
 
 from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.pus.pus_20_params import (
@@ -61,7 +61,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         destination_id: int = 0,
     ):
         pus_tm = PusTelemetry(
-            service=PusServices.S20_PARAMETER,
+            service=PusService.S20_PARAMETER,
             subservice=subservice_id,
             time_provider=time,
             seq_count=ssc,

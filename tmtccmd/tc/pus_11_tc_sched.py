@@ -1,9 +1,9 @@
-from spacepackets.ecss import PusTelecommand, PusServices
+from spacepackets.ecss import PusTelecommand, PusService
 from tmtccmd.pus.pus_11_tc_sched import Subservices
 
 
 def __generic_param_less_tc_sched_cmd(subservice: int) -> PusTelecommand:
-    return PusTelecommand(service=PusServices.S11_TC_SCHED, subservice=subservice)
+    return PusTelecommand(service=PusService.S11_TC_SCHED, subservice=subservice)
 
 
 def generate_enable_tc_sched_cmd() -> PusTelecommand:
@@ -20,7 +20,7 @@ def generate_reset_tc_sched_cmd() -> PusTelecommand:
 
 def generate_time_tagged_cmd(release_time: bytes, tc_to_insert: PusTelecommand):
     return PusTelecommand(
-        service=PusServices.S11_TC_SCHED,
+        service=PusService.S11_TC_SCHED,
         subservice=Subservices.TC_INSERT,
         app_data=pack_time_tagged_tc_app_data(release_time, tc_to_insert),
     )

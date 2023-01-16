@@ -4,7 +4,7 @@ from __future__ import annotations
 import struct
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
-from tmtccmd.pus import CustomPusServices
+from tmtccmd.pus import CustomPusService
 from tmtccmd.pus.pus_200_fsfw_mode import Subservices
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
@@ -32,7 +32,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
             source_data.extend(struct.pack("!I", mode))
             source_data.append(submode)
         pus_tm = PusTelemetry(
-            service=CustomPusServices.SERVICE_200_MODE,
+            service=CustomPusService.SERVICE_200_MODE,
             subservice=subservice_id,
             time_provider=time,
             seq_count=ssc,

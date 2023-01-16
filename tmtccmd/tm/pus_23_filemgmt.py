@@ -1,7 +1,7 @@
 from __future__ import annotations
 import struct
 
-from spacepackets.ecss.defs import PusServices
+from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
@@ -50,7 +50,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         self.data_start_idx = 0
         self.file_info = FileInfo(file_name=file_name, repo_path=repo_path)
         pus_tm = PusTelemetry(
-            service=PusServices.S23_FILE_MGMT,
+            service=PusService.S23_FILE_MGMT,
             subservice=subservice_id,
             time_provider=time,
             seq_count=ssc,

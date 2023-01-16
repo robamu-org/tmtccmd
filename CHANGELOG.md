@@ -5,19 +5,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [v4.0.0a1] 12.01.2023
+# [unreleased]
 
-### Fixed
+## Changed
+
+- (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
+
+# [v4.0.0a1] 12.01.2023
+
+## Fixed
 
 - `enable_periodic_hk_command`: Remove third obsolete ssc argument
 
-## [v4.0.0a0] 05.01.2023
+# [v4.0.0a0] 05.01.2023
 
-### Added
+## Added
 
 - New `SerialCobsComIF` communication interface to send and received COBS encoded packets.
 
-### Changes
+## Changes
 
 - `CoreComInterfaces`: Renamed `ser_*` interface names to `serial_*`.
 - Split up the `SerialComIF` into distinct classes:
@@ -26,27 +32,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Switched to compatible release requirement for dependencies.
 - `ComInterface`: Added new abstract method `get_id`, removed `__init__` dunder.
 
-## [v3.0.1] 05.01.2023
+# [v3.0.1] 05.01.2023
 
-### Changes
+## Changes
 
 - Marked `Service17TmExtended` as deprecated.
 
-### Fixes
+## Fixes
 
 - Minor fixes for GUI: Moved communication interface switching to
   separate worker thread.
 
-## [v3.0.0] 09.12.2022
+# [v3.0.0] 09.12.2022
 
 - Minor cleaning up
 - Added some FSFW specific functionality to retrieve validity lists from a bitfield representation
 
-## [v3.0.0rc3] 01.12.2022
+# [v3.0.0rc3] 01.12.2022
 
 - Some bugfixes for GUI, improved teardown/close handling
 
-## [v3.0.0rc2] 20.11.2022
+# [v3.0.0rc2] 20.11.2022
 
 - Add `deprecation` dependency to allow marking functions and classes
   as deprecated with a decorator
@@ -56,7 +62,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   avoids some boilerplate code when registering definition provider or packet creation
   handlers
 
-## [v3.0.0rc1] 03.07.2022
+# [v3.0.0rc1] 03.07.2022
 
 - Overhaul of application architecture
 - Significant simplification of various modules to increase testability
@@ -73,17 +79,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Reduce overall number of spawned threads
 - Added Sequence Count handling modules
 
-## [v2.2.2]
+# [v2.2.2]
 
 - Improve internal structure of sequential sender receiver object
 - Add some PUS11 Telecommand Scheduling helpers
 - Bugfixes for new modules and code
 
-## [v2.2.1]
+# [v2.2.1]
 
 - Minor fix for CI/CD
 
-## [v2.2.0]
+# [v2.2.0]
 
 - Improve `lint.py`: Add prefix and print out executed command
 - Architectural improvements for the `TmListener` component

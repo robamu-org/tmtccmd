@@ -16,7 +16,7 @@ import logging
 from tmtccmd.util.conf_util import AnsiColors
 
 
-class CustomPusServices(IntEnum):
+class CustomPusService(IntEnum):
     SERVICE_200_MODE = 200
 
 

@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Optional, Deque, cast, Any, Type
 
 from spacepackets.ccsds import SpacePacket
-from spacepackets.ecss import PusTelecommand, PusVerificator, PusServices
+from spacepackets.ecss import PusTelecommand, PusVerificator, PusService
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.procedure import TcProcedureBase
 from tmtccmd.util import ProvidesSeqCount
@@ -241,7 +241,7 @@ class DefaultPusQueueHelper(QueueHelperBase):
         if entry.etype == TcQueueEntryType.PUS_TC:
             pus_entry = cast(PusTcEntry, entry)
             if (
-                pus_entry.pus_tc.service == PusServices.S11_TC_SCHED
+                pus_entry.pus_tc.service == PusService.S11_TC_SCHED
                 and pus_entry.pus_tc.subservice == Pus11Subservices.TC_INSERT
             ):
                 self._handle_time_tagged_tc(pus_entry.pus_tc)
