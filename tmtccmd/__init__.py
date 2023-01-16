@@ -1,7 +1,7 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
-__version__ = "4.0.0a0"
+__version__ = "4.0.0a1"
 
 VERSION_MAJOR = 4
 VERSION_MINOR = 0

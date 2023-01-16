@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [unreleased]
+## [v4.0.0a1] 12.01.2023
+
+### Fixed
+
+- `enable_periodic_hk_command`: Remove third obsolete ssc argument
 
 ## [v4.0.0a0] 05.01.2023
 
