@@ -2,7 +2,7 @@
 """
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.conf import get_default_tc_apid
-from spacepackets.ecss.pus_5_event import Subservices
+from spacepackets.ecss.pus_5_event import Subservice
 
 from tmtccmd.tc.queue import DefaultPusQueueHelper
 
@@ -12,7 +12,7 @@ def pack_enable_event_reporting_command(ssc: int, apid: int = -1):
         apid = get_default_tc_apid()
     return PusTelecommand(
         service=5,
-        subservice=Subservices.TC_ENABLE_EVENT_REPORTING,
+        subservice=Subservice.TC_ENABLE_EVENT_REPORTING,
         seq_count=ssc,
         apid=apid,
     )
@@ -23,7 +23,7 @@ def pack_disable_event_reporting_command(ssc: int, apid: int = -1):
         apid = get_default_tc_apid()
     return PusTelecommand(
         service=5,
-        subservice=Subservices.TC_DISABLE_EVENT_REPORTING,
+        subservice=Subservice.TC_DISABLE_EVENT_REPORTING,
         seq_count=ssc,
         apid=apid,
     )

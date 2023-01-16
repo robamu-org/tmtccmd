@@ -1,11 +1,23 @@
 """Base class for implementation of PUS Service 2 handling.
 """
 from __future__ import annotations
+
+from typing import Optional
+
+import deprecation
+
+from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
+from tmtccmd import __version__
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a1",
+    current_version=__version__,
+    details="use a custom wrapper type instead",
+)
 class Service2Tm(PusTmInfoBase, PusTmBase):
     def __init__(
         self,
@@ -41,12 +53,12 @@ class Service2Tm(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def unpack(
-        cls,
-        raw_telemetry: bytes,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
     ) -> Service2Tm:
         service_2_tm = cls.__empty()
-        service_2_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_2_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=time_reader
+        )
         return service_2_tm
 
     def append_telemetry_content(self, content_list: list):

@@ -8,7 +8,7 @@ from spacepackets.ecss import PusVersion, PusTelemetry
 from spacepackets.ecss.pus_17_test import Service17Tm
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
-from tmtccmd.pus.pus_17_test import Subservices
+from tmtccmd.pus.pus_17_test import Subservice
 
 
 @deprecation.deprecated(
@@ -48,7 +48,7 @@ class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
         return cls(subservice=0)
 
     def __set_internal_fields(self):
-        if self.subservice == Subservices.TM_REPLY:
+        if self.subservice == Subservice.TM_REPLY:
             self.set_packet_info("Ping Reply")
 
     @classmethod

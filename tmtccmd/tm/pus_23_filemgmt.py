@@ -1,6 +1,8 @@
 from __future__ import annotations
 import struct
+from typing import Optional
 
+from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
 
@@ -87,12 +89,12 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def unpack(
-        cls,
-        raw_telemetry: bytes,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
     ) -> Service23Tm:
         service_23_tm = cls.__empty()
-        service_23_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_23_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=time_reader
+        )
         service_23_tm.__init_without_base(instance=service_23_tm)
         return service_23_tm
 

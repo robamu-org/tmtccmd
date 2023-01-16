@@ -2,7 +2,7 @@ from __future__ import annotations
 import enum
 
 from spacepackets.ecss import PusTelecommand, PusService
-from spacepackets.ecss.pus_17_test import Subservices
+from spacepackets.ecss.pus_17_test import Subservice
 
 
 class CustomSubservices(enum.IntEnum):
@@ -11,4 +11,4 @@ class CustomSubservices(enum.IntEnum):
 
 def pack_service_17_ping_command() -> PusTelecommand:
     """Generate a simple ping PUS telecommand packet"""
-    return PusTelecommand(service=PusService.S17_TEST, subservice=Subservices.TC_PING)
+    return PusTelecommand(service=PusService.S17_TEST, subservice=Subservice.TC_PING)

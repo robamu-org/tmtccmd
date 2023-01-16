@@ -21,12 +21,16 @@ class TestTelemetry(TestCase):
         pus_17_telemetry = None
 
         def tm_func(raw_telemetry: bytearray):
-            return Service17Tm.unpack(raw_telemetry=raw_telemetry)
+            return Service17Tm.unpack(
+                raw_telemetry=raw_telemetry, time_reader=CdsShortTimestamp.empty()
+            )
 
         self.assertRaises(ValueError, tm_func, bytearray())
         self.assertRaises(ValueError, tm_func, None)
 
-        pus_17_telemetry = Service17Tm.unpack(raw_telemetry=pus_17_raw)
+        pus_17_telemetry = Service17Tm.unpack(
+            raw_telemetry=pus_17_raw, time_reader=CdsShortTimestamp.empty()
+        )
         self.assertTrue(pus_17_telemetry.service == 17)
         self.assertTrue(pus_17_telemetry.apid == 0xEF)
         self.assertTrue(pus_17_telemetry.subservice == 1)

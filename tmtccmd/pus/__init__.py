@@ -55,7 +55,7 @@ class VerificationWrapper:
         self,
         req_id: RequestId,
         res: TmCheckResult,
-        subservice: Optional[pus_1.Subservices] = None,
+        subservice: Optional[pus_1.Subservice] = None,
     ):
         return self.log_progress_to_console_from_status(res.status, req_id, subservice)
 
@@ -66,7 +66,7 @@ class VerificationWrapper:
         self,
         req_id: RequestId,
         res: TmCheckResult,
-        subservice: Optional[pus_1.Subservices] = None,
+        subservice: Optional[pus_1.Subservice] = None,
     ):
         self.log_to_file_from_status(res.status, req_id, subservice)
 
@@ -74,7 +74,7 @@ class VerificationWrapper:
         self,
         status: VerificationStatus,
         req_id: RequestId,
-        subservice: Optional[pus_1.Subservices] = None,
+        subservice: Optional[pus_1.Subservice] = None,
     ):
         if self.file_logger is None:
             raise ValueError("No valid file logger was set")
@@ -99,7 +99,7 @@ class VerificationWrapper:
         self,
         status: VerificationStatus,
         req_id: RequestId,
-        subservice: Optional[pus_1.Subservices] = None,
+        subservice: Optional[pus_1.Subservice] = None,
     ):
         if self.console_logger is None:
             raise ValueError("Invalid console logger")
@@ -127,24 +127,24 @@ class VerificationWrapper:
             return f"{max(status.step_list)}"
 
     @staticmethod
-    def _get_info_string(subservice: pus_1.Subservices):
+    def _get_info_string(subservice: pus_1.Subservice):
         status_str = "Status"
         if subservice is not None:
-            if subservice == pus_1.Subservices.TM_ACCEPTANCE_SUCCESS:
+            if subservice == pus_1.Subservice.TM_ACCEPTANCE_SUCCESS:
                 status_str = "Acceptance success"
-            elif subservice == pus_1.Subservices.TM_ACCEPTANCE_FAILURE:
+            elif subservice == pus_1.Subservice.TM_ACCEPTANCE_FAILURE:
                 status_str = "Acceptance failure"
-            elif subservice == pus_1.Subservices.TM_START_SUCCESS:
+            elif subservice == pus_1.Subservice.TM_START_SUCCESS:
                 status_str = "Start success"
-            elif subservice == pus_1.Subservices.TM_START_FAILURE:
+            elif subservice == pus_1.Subservice.TM_START_FAILURE:
                 status_str = "Start failure"
-            elif subservice == pus_1.Subservices.TM_STEP_SUCCESS:
+            elif subservice == pus_1.Subservice.TM_STEP_SUCCESS:
                 status_str = "Step success"
-            elif subservice == pus_1.Subservices.TM_STEP_FAILURE:
+            elif subservice == pus_1.Subservice.TM_STEP_FAILURE:
                 status_str = "Step failure"
-            elif subservice == pus_1.Subservices.TM_COMPLETION_SUCCESS:
+            elif subservice == pus_1.Subservice.TM_COMPLETION_SUCCESS:
                 status_str = "Completion success"
-            elif subservice == pus_1.Subservices.TM_COMPLETION_FAILURE:
+            elif subservice == pus_1.Subservice.TM_COMPLETION_FAILURE:
                 status_str = "Completion failure"
         return f"{status_str} of TC".ljust(25)
 

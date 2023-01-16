@@ -3,7 +3,7 @@
 import struct
 
 from spacepackets.ecss.tc import PusTelecommand
-from spacepackets.ecss.pus_3_hk import Subservices
+from spacepackets.ecss.pus_3_hk import Subservice
 
 
 def make_sid(object_id: bytes, set_id: int) -> bytearray:
@@ -38,14 +38,14 @@ def __generate_periodic_hk_command(
     app_data = bytearray(sid)
     if enable:
         if diag:
-            subservice = Subservices.TC_ENABLE_PERIODIC_DIAGNOSTICS_GEN
+            subservice = Subservice.TC_ENABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
-            subservice = Subservices.TC_ENABLE_PERIODIC_HK_GEN
+            subservice = Subservice.TC_ENABLE_PERIODIC_HK_GEN
     else:
         if diag:
-            subservice = Subservices.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
+            subservice = Subservice.TC_DISABLE_PERIODIC_DIAGNOSTICS_GEN
         else:
-            subservice = Subservices.TC_DISABLE_PERIODIC_HK_GEN
+            subservice = Subservice.TC_DISABLE_PERIODIC_HK_GEN
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
@@ -55,16 +55,16 @@ def modify_collection_interval(
     app_data = bytearray(sid)
     app_data += make_interval(interval_seconds)
     if diag:
-        subservice = Subservices.TC_MODIFY_DIAGNOSTICS_REPORT_COLLECTION_INTERVAL
+        subservice = Subservice.TC_MODIFY_DIAGNOSTICS_REPORT_COLLECTION_INTERVAL
     else:
-        subservice = Subservices.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
+        subservice = Subservice.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
 def generate_one_hk_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
-        subservice=Subservices.TC_GENERATE_ONE_PARAMETER_REPORT,
+        subservice=Subservice.TC_GENERATE_ONE_PARAMETER_REPORT,
         app_data=sid,
     )
 
@@ -72,6 +72,6 @@ def generate_one_hk_command(sid: bytes) -> PusTelecommand:
 def generate_one_diag_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
-        subservice=Subservices.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
+        subservice=Subservice.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
         app_data=sid,
     )

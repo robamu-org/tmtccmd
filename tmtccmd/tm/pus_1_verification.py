@@ -10,7 +10,7 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.tm import PusTelemetry
 from spacepackets.ecss.pus_1_verification import (
     Service1Tm,
-    Subservices,
+    Subservice,
     VerificationParams,
     UnpackParams,
 )
@@ -37,7 +37,7 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
 
     def __init__(
         self,
-        subservice: Subservices,
+        subservice: Subservice,
         verif_params: Optional[VerificationParams] = None,
         time: CdsShortTimestamp = None,
         seq_count: int = 0,
@@ -65,7 +65,7 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
 
     @classmethod
     def __empty(cls) -> Service1TmExtended:
-        return cls(subservice=Subservices.INVALID)
+        return cls(subservice=Subservice.INVALID)
 
     @classmethod
     def unpack(cls, data: bytes, params: UnpackParams) -> Service1TmExtended:
@@ -126,25 +126,25 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
         super()._unpack_failure_verification(params)
         self.set_packet_info("Failure Verficiation")
         subservice = self.pus_tm.subservice
-        if subservice == Subservices.TM_ACCEPTANCE_FAILURE:
+        if subservice == Subservice.TM_ACCEPTANCE_FAILURE:
             self.append_packet_info(" : Acceptance failure")
-        elif subservice == Subservices.TM_START_FAILURE:
+        elif subservice == Subservice.TM_START_FAILURE:
             self.append_packet_info(" : Start failure")
-        elif subservice == Subservices.TM_STEP_FAILURE:
+        elif subservice == Subservice.TM_STEP_FAILURE:
             self.append_packet_info(" : Step Failure")
-        elif subservice == Subservices.TM_COMPLETION_FAILURE:
+        elif subservice == Subservice.TM_COMPLETION_FAILURE:
             self.append_packet_info(" : Completion Failure")
 
     def _unpack_success_verification(self, params: UnpackParams):
         super()._unpack_success_verification(params)
         self.set_packet_info("Success Verification")
-        if self.subservice == Subservices.TM_ACCEPTANCE_SUCCESS:
+        if self.subservice == Subservice.TM_ACCEPTANCE_SUCCESS:
             self.append_packet_info(" : Acceptance success")
-        elif self.subservice == Subservices.TM_START_SUCCESS:
+        elif self.subservice == Subservice.TM_START_SUCCESS:
             self.append_packet_info(" : Start success")
-        elif self.subservice == Subservices.TM_STEP_SUCCESS:
+        elif self.subservice == Subservice.TM_STEP_SUCCESS:
             self.append_packet_info(" : Step Success")
-        elif self.subservice == Subservices.TM_COMPLETION_SUCCESS:
+        elif self.subservice == Subservice.TM_COMPLETION_SUCCESS:
             self.append_packet_info(" : Completion success")
 
 
