@@ -4,7 +4,9 @@
 from __future__ import annotations
 from abc import abstractmethod
 import struct
+from typing import Optional
 
+from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.pus_5_event import Subservices
 from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion
@@ -77,12 +79,12 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
 
     @classmethod
     def unpack(
-        cls,
-        raw_telemetry: bytes,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
     ) -> Service5Tm:
         service_5_tm = cls.__empty()
-        service_5_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_5_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=time_reader
+        )
         service_5_tm.__init_without_base(
             instance=service_5_tm, set_attrs_from_tm_data=True
         )

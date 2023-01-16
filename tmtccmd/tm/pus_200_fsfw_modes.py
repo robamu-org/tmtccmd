@@ -2,6 +2,9 @@
 """
 from __future__ import annotations
 import struct
+from typing import Optional
+
+from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomPusService
@@ -79,9 +82,13 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
         return cls(subservice_id=0, object_id=bytearray(4))
 
     @classmethod
-    def unpack(cls, raw_telemetry: bytes) -> Service200FsfwTm:
+    def unpack(
+        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
+    ) -> Service200FsfwTm:
         service_200_tm = cls.__empty()
-        service_200_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_200_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=time_reader
+        )
         service_200_tm.__init_without_base(instance=service_200_tm)
         return service_200_tm
 

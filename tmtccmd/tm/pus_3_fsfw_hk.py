@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import struct
 
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.tm.pus_3_hk_base import *
 from tmtccmd.logging import get_console_logger
@@ -119,7 +119,9 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         custom_hk_handling: bool,
     ) -> Service3FsfwTm:
         service_3_tm = cls.__empty()
-        service_3_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_3_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=CdsShortTimestamp.empty()
+        )
         service_3_tm.__init_without_base(
             instance=service_3_tm,
             custom_hk_handling=custom_hk_handling,

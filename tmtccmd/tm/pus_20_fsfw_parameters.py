@@ -3,7 +3,7 @@ import os
 import struct
 from typing import Optional
 
-from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ccsds.time import CdsShortTimestamp, CcsdsTimeProvider
 from spacepackets.ecss import (
     Ptc,
     PfcUnsigned,
@@ -132,12 +132,12 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def unpack(
-        cls,
-        raw_telemetry: bytes,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
+        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
     ) -> Service20FsfwTm:
         service_20_tm = cls.__empty()
-        service_20_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_20_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=time_reader
+        )
         if len(service_20_tm.pus_tm.tm_data) < 4:
             LOGGER.warning("Invalid data length, less than 4")
         elif len(service_20_tm.pus_tm.tm_data) < 8:
