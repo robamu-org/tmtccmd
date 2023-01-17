@@ -8,7 +8,7 @@ from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomPusService
-from tmtccmd.pus.pus_200_fsfw_mode import Subservices
+from tmtccmd.pus.pus_200_fsfw_mode import Subservice
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 

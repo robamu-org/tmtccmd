@@ -16,7 +16,7 @@ from spacepackets.ecss.defs import PusService
 
 from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.pus.pus_20_params import (
-    CustomSubservices,
+    CustomSubservice,
 )
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.logging import get_console_logger
