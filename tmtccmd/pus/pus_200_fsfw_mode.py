@@ -1,7 +1,7 @@
 import enum
 
 
-class Subservices(enum.IntEnum):
+class Subservice(enum.IntEnum):
     TC_MODE_COMMAND = 1
     TC_MODE_COMMAND_FORCES = 2
     TC_MODE_READ = 3

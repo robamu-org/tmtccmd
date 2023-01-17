@@ -1,6 +1,6 @@
 import enum
 
 
-class Subservices(enum.IntEnum):
-    FUNCTIONAL_CMD = 128
-    DATA_REPLY = 130
+class Subservice(enum.IntEnum):
+    TC_FUNCTIONAL_CMD = 128
+    TM_DATA_REPLY = 130

@@ -12,7 +12,7 @@ class TypeOfTimeWindow(enum.IntEnum):
     TO_TIMETAG = 3
 
 
-class Subservices(enum.IntEnum):
+class Subservice(enum.IntEnum):
     """Unless specified, TCs and TMs are related to a request ID"""
 
     TC_ENABLE = 1

@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Changed
 
+- (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not
+  flag enums.
 - (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
 
 # [v4.0.0a1] 12.01.2023
