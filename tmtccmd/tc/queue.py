@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import abc
 from abc import ABC
+from collections import deque
 from datetime import timedelta
 from enum import Enum
 from typing import Optional, Deque, cast, Any, Type
 
+
 from spacepackets.ccsds import SpacePacket
 from spacepackets.ecss import PusTelecommand, PusVerificator, PusService
 from tmtccmd.logging import get_console_logger
-from tmtccmd.tc.procedure import TcProcedureBase
+from tmtccmd.tc.procedure import TcProcedureBase, DefaultProcedureInfo
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.pus import Pus11Subservices
 
@@ -159,6 +161,10 @@ class QueueWrapper:
         self.info = info
         self.queue = queue
         self.inter_cmd_delay = inter_cmd_delay
+
+    @classmethod
+    def empty(cls):
+        return cls(DefaultProcedureInfo.empty(), deque())
 
     def __repr__(self):
         return (

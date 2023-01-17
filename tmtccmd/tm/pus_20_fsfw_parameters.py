@@ -55,8 +55,6 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         source_data: bytearray = bytearray([]),
         apid: int = -1,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
@@ -94,7 +92,7 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         instance.param_struct.unique_id = tm_data[5]
         instance.param_struct.linear_index = tm_data[6] << 8 | tm_data[7]
 
-        if instance.subservice == CustomSubservices.DUMP:
+        if instance.subservice == CustomSubservice.TC_DUMP:
             # TODO: This needs to be more generic. Furthermore, we need to be able to handle
             #       vector and matrix dumps as well and this is not possible in the current form.
             instance.param_struct.type_ptc = tm_data[8]

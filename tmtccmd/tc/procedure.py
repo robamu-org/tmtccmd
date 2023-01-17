@@ -34,6 +34,10 @@ class DefaultProcedureInfo(TcProcedureBase):
         self.service = service
         self.op_code = op_code
 
+    @classmethod
+    def empty(cls):
+        return cls("", "")
+
     def __repr__(self):
         return f"CmdInfo(service={self.service!r}, op_code={self.op_code!r})"
 

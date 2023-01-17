@@ -5,6 +5,7 @@ import time
 from typing import Optional
 
 import tmtccmd
+from spacepackets.ccsds import CdsShortTimestamp
 from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
 from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
@@ -39,6 +40,7 @@ from tmtccmd.tc import (
     SendCbParams,
     DefaultPusQueueHelper,
     TcHandlerBase,
+    QueueWrapper,
 )
 from tmtccmd.tm.pus_5_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
@@ -115,7 +117,9 @@ class PusHandler(SpecificApidHandlerBase):
 
     def handle_tm(self, packet: bytes, _user_args: any):
         try:
-            tm_packet = PusTelemetry.unpack(packet)
+            tm_packet = PusTelemetry.unpack(
+                packet, time_reader=CdsShortTimestamp.empty()
+            )
         except ValueError as e:
             LOGGER.warning("Could not generate PUS TM object from raw data")
             LOGGER.warning(f"Raw Packet: [{packet.hex(sep=',')}], REPR: {packet!r}")
@@ -123,7 +127,9 @@ class PusHandler(SpecificApidHandlerBase):
         service = tm_packet.service
         dedicated_handler = False
         if service == 1:
-            tm_packet = Service1Tm.unpack(data=packet, params=UnpackParams(1, 2))
+            tm_packet = Service1Tm.unpack(
+                data=packet, params=UnpackParams(CdsShortTimestamp.empty(), 1, 2)
+            )
             res = self.verif_wrapper.add_tm(tm_packet)
             if res is None:
                 LOGGER.info(
@@ -138,9 +144,11 @@ class PusHandler(SpecificApidHandlerBase):
                 self.verif_wrapper.log_to_file(tm_packet, res)
             dedicated_handler = True
         if service == 5:
-            tm_packet = Service5Tm.unpack(packet)
+            tm_packet = Service5Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
         if service == 17:
-            tm_packet = Service17Tm.unpack(packet)
+            tm_packet = Service17Tm.unpack(
+                packet, time_reader=CdsShortTimestamp.empty()
+            )
             dedicated_handler = True
             if tm_packet.subservice == 2:
                 self.printer.file_logger.info("Received Ping Reply TM[17,2]")
@@ -156,7 +164,9 @@ class PusHandler(SpecificApidHandlerBase):
             LOGGER.info(
                 f"The service {service} is not implemented in Telemetry Factory"
             )
-            tm_packet = PusTelemetry.unpack(packet)
+            tm_packet = PusTelemetry.unpack(
+                packet, time_reader=CdsShortTimestamp.empty()
+            )
         self.raw_logger.log_tm(tm_packet)
         if not dedicated_handler and tm_packet is not None:
             self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
@@ -172,7 +182,7 @@ class TcHandler(TcHandlerBase):
         self.seq_count_provider = seq_count_provider
         self.verif_wrapper = verif_wrapper
         self.queue_helper = DefaultPusQueueHelper(
-            queue_wrapper=None,
+            queue_wrapper=QueueWrapper.empty(),
             seq_cnt_provider=seq_count_provider,
         )
 

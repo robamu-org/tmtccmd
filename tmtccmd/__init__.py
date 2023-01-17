@@ -2,16 +2,10 @@
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
 __version__ = "4.0.0a1"
-
-VERSION_MAJOR = 4
-VERSION_MINOR = 0
-VERSION_REVISION = 0
-
 import sys
 import os
 from datetime import timedelta
 from typing import Union, cast, Optional
-
 
 from tmtccmd.config.args import ProcedureParamsWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
@@ -39,6 +33,11 @@ from tmtccmd.tc import (
     ProcedureWrapper,
     TcHandlerBase,
 )
+
+
+VERSION_MAJOR = 4
+VERSION_MINOR = 0
+VERSION_REVISION = 0
 
 LOGGER = get_console_logger()
 

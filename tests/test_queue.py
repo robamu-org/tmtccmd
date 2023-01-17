@@ -1,4 +1,3 @@
-import math
 from collections import deque
 from datetime import timedelta
 from typing import cast
@@ -6,18 +5,21 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
+from tmtccmd import DefaultProcedureInfo
 from tmtccmd.tc import WaitEntry, QueueEntryHelper
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
 from tmtccmd.tc import LogQueueEntry, RawTcEntry
-from tmtccmd.tc.queue import QueueWrapper, QueueHelperBase, DefaultPusQueueHelper
+from tmtccmd.tc.queue import QueueWrapper, DefaultPusQueueHelper
 from tmtccmd.util import ProvidesSeqCount
 
 
 class TestTcQueue(TestCase):
     def setUp(self) -> None:
-        self.queue_wrapper = QueueWrapper(info=None, queue=deque())
+        self.queue_wrapper = QueueWrapper(
+            info=DefaultProcedureInfo.empty(), queue=deque()
+        )
         self.assertEqual(self.queue_wrapper.queue, deque())
         self.queue_helper = DefaultPusQueueHelper(self.queue_wrapper)
         self.pus_cmd = PusTelecommand(service=17, subservice=1)
