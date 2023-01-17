@@ -61,18 +61,18 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     def __init_without_base(instance: Service200FsfwTm):
         tm_data = instance.tm_data
         instance.object_id = bytes(tm_data[0:4])
-        if instance.subservice == Subservices.TM_CANT_REACH_MODE:
+        if instance.subservice == Subservice.TM_CANT_REACH_MODE:
             instance.append_packet_info(": Can't reach mode")
             instance.is_cant_reach_mode_reply = True
             instance.return_value = tm_data[4] << 8 | tm_data[5]
         elif (
-            instance.subservice == Subservices.TM_MODE_REPLY
-            or instance.subservice == Subservices.TM_WRONG_MODE_REPLY
+            instance.subservice == Subservice.TM_MODE_REPLY
+            or instance.subservice == Subservice.TM_WRONG_MODE_REPLY
         ):
             instance.is_mode_reply = True
-            if instance.subservice == Subservices.TM_WRONG_MODE_REPLY:
+            if instance.subservice == Subservice.TM_WRONG_MODE_REPLY:
                 instance.append_packet_info(": Wrong Mode")
-            elif instance.subservice == Subservices.TM_MODE_REPLY:
+            elif instance.subservice == Subservice.TM_MODE_REPLY:
                 instance.append_packet_info(": Mode reached")
             instance.mode = struct.unpack("!I", tm_data[4:8])[0]
             instance.submode = tm_data[8]
