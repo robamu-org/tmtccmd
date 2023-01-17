@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not
   flag enums.
 - (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
+- Subservice enumerations: Add missing `TM_...` and `TC_...` prefixes where applicable
 
 # [v4.0.0a1] 12.01.2023
 

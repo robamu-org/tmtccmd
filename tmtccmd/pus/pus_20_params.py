@@ -1,6 +1,6 @@
 import enum
 
 
-class CustomSubservices(enum.IntEnum):
-    LOAD = 128
-    DUMP = 129
+class CustomSubservice(enum.IntEnum):
+    TC_LOAD = 128
+    TC_DUMP = 129

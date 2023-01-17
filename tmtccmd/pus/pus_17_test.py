@@ -5,7 +5,7 @@ from spacepackets.ecss import PusTelecommand, PusService
 from spacepackets.ecss.pus_17_test import Subservice
 
 
-class CustomSubservices(enum.IntEnum):
+class CustomSubservice(enum.IntEnum):
     TC_GEN_EVENT = 128
 
 
