@@ -6,9 +6,7 @@ from deprecation import deprecated
 from typing import Optional
 
 from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
-from tmtccmd.pus.pus_20_params import (
-    CustomSubservices,
-)
+from tmtccmd.pus.pus_20_params import CustomSubservice
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.logging import get_console_logger
 
@@ -17,7 +15,7 @@ logger = get_console_logger()
 
 def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
     return PusTelecommand(
-        service=20, subservice=CustomSubservices.LOAD, app_data=app_data
+        service=20, subservice=CustomSubservice.TC_LOAD, app_data=app_data
     )
 
 

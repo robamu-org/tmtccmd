@@ -1,7 +1,7 @@
 import struct
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.pus.pus_8_funccmd import Subservices
+from tmtccmd.pus.pus_8_funccmd import Subservice
 
 
 def make_fsfw_action_cmd(
@@ -10,7 +10,7 @@ def make_fsfw_action_cmd(
     data_to_pack = bytearray(object_id)
     data_to_pack += make_action_id(action_id) + user_data
     return PusTelecommand(
-        service=8, subservice=Subservices.FUNCTIONAL_CMD, app_data=data_to_pack
+        service=8, subservice=Subservice.TC_FUNCTIONAL_CMD, app_data=data_to_pack
     )
 
 

@@ -7,7 +7,7 @@ from typing import Union
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.pus import CustomPusService
-from tmtccmd.pus.pus_200_fsfw_mode import Subservices
+from tmtccmd.pus.pus_200_fsfw_mode import Subservice
 
 
 class Mode(enum.IntEnum):
@@ -29,6 +29,6 @@ def pack_mode_command(
 ) -> PusTelecommand:
     return PusTelecommand(
         service=CustomPusService.SERVICE_200_MODE,
-        subservice=Subservices.TC_MODE_COMMAND,
+        subservice=Subservice.TC_MODE_COMMAND,
         app_data=pack_mode_data(object_id, mode, submode),
     )
