@@ -79,7 +79,9 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
 
     @classmethod
     def __empty(cls) -> Service200FsfwTm:
-        return cls(subservice_id=0, object_id=bytearray(4))
+        return cls(
+            subservice_id=0, object_id=bytearray(4), time=CdsShortTimestamp.empty()
+        )
 
     @classmethod
     def unpack(

@@ -81,7 +81,13 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
 
     @classmethod
     def __empty(cls) -> Service23Tm:
-        return cls(subservice_id=0, object_id=bytearray(4), repo_path="", file_name="")
+        return cls(
+            subservice_id=0,
+            object_id=bytearray(4),
+            repo_path="",
+            file_name="",
+            time=CdsShortTimestamp.empty(),
+        )
 
     @classmethod
     def unpack(

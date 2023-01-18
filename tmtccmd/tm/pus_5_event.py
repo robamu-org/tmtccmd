@@ -75,6 +75,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
             object_id=bytearray(4),
             param_1=0,
             param_2=0,
+            time=CdsShortTimestamp.empty(),
         )
 
     @classmethod
