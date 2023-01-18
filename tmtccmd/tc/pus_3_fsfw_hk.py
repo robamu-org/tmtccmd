@@ -24,6 +24,10 @@ def make_interval(interval_seconds: float) -> bytearray:
     details="use create_... API instead",
 )
 def enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
+    return create_enable_periodic_hk_command(diag, sid)
+
+
+def create_enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
 
 
@@ -46,8 +50,17 @@ def enable_periodic_hk_command_with_interval(
     return cmd0, cmd1
 
 
-def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
+def create_disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(diag=diag, enable=False, sid=sid)
+
+
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a2",
+    current_version=__version__,
+    details="use create_... API instead",
+)
+def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
+    return create_disable_periodic_hk_command(diag, sid)
 
 
 def __generate_periodic_hk_command(
@@ -96,10 +109,10 @@ def create_modify_collection_interval_cmd(
     details="use create_... API instead",
 )
 def generate_one_hk_command(sid: bytes) -> PusTelecommand:
-    return create_one_hk_command(sid)
+    return create_request_one_hk_command(sid)
 
 
-def create_one_hk_command(sid: bytes) -> PusTelecommand:
+def create_request_one_hk_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservice.TC_GENERATE_ONE_PARAMETER_REPORT,
@@ -113,10 +126,10 @@ def create_one_hk_command(sid: bytes) -> PusTelecommand:
     details="use create_... API instead",
 )
 def generate_one_diag_command(sid: bytes) -> PusTelecommand:
-    return create_one_diag_command(sid)
+    return create_request_one_diag_command(sid)
 
 
-def create_one_diag_command(sid: bytes) -> PusTelecommand:
+def create_request_one_diag_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservice.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,
