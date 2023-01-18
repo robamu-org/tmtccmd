@@ -1,5 +1,6 @@
 from __future__ import annotations
 import enum
+import struct
 
 from spacepackets.ecss import PusTelecommand
 
