@@ -40,8 +40,8 @@ def prompt_com_if(com_if_dict: ComIfDictT) -> str:
     com_if_string = ""
     while True:
         com_if_list = []
-        for index, com_if_value in enumerate(com_if_dict.items()):
-            print(f"{index}: {com_if_value}")
+        for index, (name, com_if_value) in enumerate(com_if_dict.items()):
+            print(f"{index}: {name}")
             com_if_list.append(com_if_value)
         com_if_key = wrapped_prompt(
             "Please enter the desired communication interface by key: "
