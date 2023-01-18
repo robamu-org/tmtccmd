@@ -40,9 +40,10 @@ def prompt_com_if(com_if_dict: ComIfDictT) -> str:
     com_if_string = ""
     while True:
         com_if_list = []
+        print("List of available communication interfaces:")
         for index, (name, com_if_value) in enumerate(com_if_dict.items()):
-            print(f"{index}: {name}")
-            com_if_list.append(com_if_value)
+            print(f"{index}: {com_if_value[0]}")
+            com_if_list.append(name)
         com_if_key = wrapped_prompt(
             "Please enter the desired communication interface by key: "
         )
@@ -53,7 +54,7 @@ def prompt_com_if(com_if_dict: ComIfDictT) -> str:
         if com_if_key >= len(com_if_list):
             print("Key invalid, try again.")
             continue
-        com_if_string = com_if_list[com_if_key][0]
+        com_if_string = com_if_list[com_if_key].value
         break
     return com_if_string
 
