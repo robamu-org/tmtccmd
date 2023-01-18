@@ -1,7 +1,9 @@
 """Contains definitions and functions related to PUS Service 3 Telecommands.
 """
 import struct
+import deprecation
 
+from tmtccmd import __version__
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ecss.pus_3_hk import Subservice
 
@@ -16,10 +18,26 @@ def make_interval(interval_seconds: float) -> bytearray:
     return bytearray(struct.pack("!f", interval_seconds))
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a2",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
 
 
+def create_enable_periodic_hk_command_with_interval(
+    diag: bool, sid: bytes, interval_seconds: float
+) -> (PusTelecommand, PusTelecommand):
+    return enable_periodic_hk_command_with_interval(diag, sid, interval_seconds)
+
+
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a2",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> (PusTelecommand, PusTelecommand):
@@ -49,7 +67,18 @@ def __generate_periodic_hk_command(
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a2",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def modify_collection_interval(
+    diag: bool, sid: bytes, interval_seconds: float
+) -> PusTelecommand:
+    return create_modify_collection_interval_cmd(diag, sid, interval_seconds)
+
+
+def create_modify_collection_interval_cmd(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> PusTelecommand:
     app_data = bytearray(sid)
@@ -61,7 +90,16 @@ def modify_collection_interval(
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a2",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def generate_one_hk_command(sid: bytes) -> PusTelecommand:
+    return create_one_hk_command(sid)
+
+
+def create_one_hk_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservice.TC_GENERATE_ONE_PARAMETER_REPORT,
@@ -69,7 +107,16 @@ def generate_one_hk_command(sid: bytes) -> PusTelecommand:
     )
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a2",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def generate_one_diag_command(sid: bytes) -> PusTelecommand:
+    return create_one_diag_command(sid)
+
+
+def create_one_diag_command(sid: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=3,
         subservice=Subservice.TC_GENERATE_ONE_DIAGNOSTICS_REPORT,

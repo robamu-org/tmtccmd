@@ -10,7 +10,7 @@ from tmtccmd.tc.queue import DefaultPusQueueHelper
 
 
 @deprecation.deprecated(
-    deprecated_in="v4.0.0rc0",
+    deprecated_in="v4.0.0a0",
     current_version=__version__,
     details="use create_... API instead",
 )
@@ -32,7 +32,7 @@ def create_enable_event_reporting_command(
 
 
 @deprecation.deprecated(
-    deprecated_in="v4.0.0rc0",
+    deprecated_in="v4.0.0a0",
     current_version=__version__,
     details="use create_... API instead",
 )
