@@ -1,5 +1,4 @@
 import enum
-from tmtccmd.pus.s201_fsfw_health import Subservice
 
 
 class FsfwHealth(enum.IntEnum):
