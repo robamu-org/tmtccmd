@@ -3,9 +3,11 @@
 """
 import enum
 import struct
+import deprecation
 from typing import Union
 
 from spacepackets.ecss import PusTelecommand
+from tmtccmd import __version__
 from tmtccmd.pus import CustomPusService
 from tmtccmd.pus.pus_200_fsfw_mode import Subservice
 
@@ -24,7 +26,18 @@ def pack_mode_data(object_id: bytes, mode: Union[Mode, int], submode: int) -> by
     return mode_data
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a1",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def pack_mode_command(
+    object_id: bytes, mode: Union[int, Mode], submode: int
+) -> PusTelecommand:
+    return create_mode_command(object_id, mode, submode)
+
+
+def create_mode_command(
     object_id: bytes, mode: Union[int, Mode], submode: int
 ) -> PusTelecommand:
     return PusTelecommand(

@@ -1,28 +1,84 @@
+import deprecation
+
+from tmtccmd import __version__
 from spacepackets.ecss import PusTelecommand, PusService
 from tmtccmd.pus.pus_11_tc_sched import Subservice
 
 
-def __generic_param_less_tc_sched_cmd(subservice: int) -> PusTelecommand:
-    return PusTelecommand(service=PusService.S11_TC_SCHED, subservice=subservice)
+def __generic_param_less_tc_sched_cmd(
+    subservice: int, apid: int = 0, seq_count: int = 0
+) -> PusTelecommand:
+    return PusTelecommand(
+        service=PusService.S11_TC_SCHED,
+        subservice=subservice,
+        apid=apid,
+        seq_count=seq_count,
+    )
 
 
-def generate_enable_tc_sched_cmd() -> PusTelecommand:
-    return __generic_param_less_tc_sched_cmd(subservice=Subservice.TC_ENABLE)
+@deprecation.deprecated(
+    deprecated_in="v4.0.0rc0",
+    current_version=__version__,
+    details="use create_... API instead",
+)
+def generate_enable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
+    return create_enable_tc_sched_cmd(apid, seq_count)
 
 
-def generate_disable_tc_sched_cmd() -> PusTelecommand:
-    return __generic_param_less_tc_sched_cmd(subservice=Subservice.TC_DISABLE)
+def create_enable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
+    return __generic_param_less_tc_sched_cmd(
+        subservice=Subservice.TC_ENABLE, apid=apid, seq_count=seq_count
+    )
 
 
-def generate_reset_tc_sched_cmd() -> PusTelecommand:
-    return __generic_param_less_tc_sched_cmd(subservice=Subservice.TC_RESET)
+@deprecation.deprecated(
+    deprecated_in="v4.0.0rc0",
+    current_version=__version__,
+    details="use create_... API instead",
+)
+def generate_disable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
+    return create_disable_tc_sched_cmd(apid, seq_count)
 
 
+def create_disable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
+    return __generic_param_less_tc_sched_cmd(
+        subservice=Subservice.TC_DISABLE, apid=apid, seq_count=seq_count
+    )
+
+
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a1",
+    current_version=__version__,
+    details="use create_... API instead",
+)
+def generate_reset_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
+    return create_reset_tc_sched_cmd(apid, seq_count)
+
+
+def create_reset_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
+    return __generic_param_less_tc_sched_cmd(
+        subservice=Subservice.TC_RESET, apid=apid, seq_count=seq_count
+    )
+
+
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a1",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def generate_time_tagged_cmd(release_time: bytes, tc_to_insert: PusTelecommand):
+    return create_time_tagged_cmd(release_time, tc_to_insert)
+
+
+def create_time_tagged_cmd(
+    release_time: bytes, tc_to_insert: PusTelecommand, apid: int = 0, seq_count: int = 0
+):
     return PusTelecommand(
         service=PusService.S11_TC_SCHED,
         subservice=Subservice.TC_INSERT,
         app_data=pack_time_tagged_tc_app_data(release_time, tc_to_insert),
+        apid=apid,
+        seq_count=seq_count,
     )
 
 

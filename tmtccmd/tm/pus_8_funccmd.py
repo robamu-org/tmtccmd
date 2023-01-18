@@ -5,6 +5,7 @@ import struct
 from typing import Optional
 
 from spacepackets.ccsds.time import CcsdsTimeProvider
+from spacepackets.ecss import PusService
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 from spacepackets.util import UnsignedByteField
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
@@ -21,15 +22,14 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
 
     def __init__(
         self,
-        subservice_id: int,
+        subservice: int,
         object_id: bytearray,
         action_id: int,
         custom_data: bytearray,
-        time: CdsShortTimestamp = None,
+        time: Optional[CcsdsTimeProvider] = None,
         ssc: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
@@ -44,8 +44,8 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         source_data.extend(struct.pack("!I", self._action_id))
         source_data.extend(self._custom_data)
         pus_tm = PusTelemetry(
-            service=5,
-            subservice=subservice_id,
+            service=PusService.S8_FUNC_CMD,
+            subservice=subservice,
             time_provider=time,
             seq_count=ssc,
             source_data=source_data,
@@ -77,7 +77,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     @classmethod
     def __empty(cls) -> Service8FsfwTm:
         return cls(
-            subservice_id=0,
+            subservice=0,
             object_id=bytearray(4),
             action_id=0,
             custom_data=bytearray(),

@@ -13,22 +13,20 @@ from tmtccmd import __version__
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a1",
-    current_version=__version__,
-    details="use a custom wrapper type instead",
-)
 class Service2Tm(PusTmInfoBase, PusTmBase):
+    @deprecation.deprecated(
+        deprecated_in="v4.0.0a1",
+        current_version=__version__,
+        details="use a custom wrapper type instead",
+    )
     def __init__(
         self,
         subservice: int,
-        time: CdsShortTimestamp = None,
+        time: Optional[CdsShortTimestamp] = None,
         ssc: int = 0,
         source_data: bytearray = bytearray([]),
         apid: int = -1,
         packet_version: int = 0b000,
-        pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):

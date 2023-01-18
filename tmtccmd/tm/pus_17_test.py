@@ -11,12 +11,12 @@ from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.pus.pus_17_test import Subservice
 
 
-@deprecation.deprecated(
-    deprecated_in="v3.0.0rc2",
-    current_version=__version__,
-    details="Use Service17Tm from the spacepackets package instead",
-)
 class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
+    @deprecation.deprecated(
+        deprecated_in="v3.0.0rc2",
+        current_version=__version__,
+        details="Use Service17Tm from the spacepackets package instead",
+    )
     def __init__(
         self,
         subservice: int,
@@ -58,6 +58,8 @@ class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
         pus_version: PusVersion = PusVersion.GLOBAL_CONFIG,
     ) -> Service17TmExtended:
         service_17_tm = cls.__empty()
-        service_17_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry)
+        service_17_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=CdsShortTimestamp.empty()
+        )
         service_17_tm.__set_internal_fields()
         return service_17_tm

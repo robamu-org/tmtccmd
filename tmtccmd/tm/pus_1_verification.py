@@ -29,12 +29,12 @@ class Service1FsfwWrapper:
             self.error_param_2 = struct.unpack("!I", tm.failure_notice.data[4:8])[0]
 
 
-@deprecated(deprecated_in="v3.0.0rc2", details="Use Service1FsfwWrapper instead")
 class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
     """Service 1 TM class representation. Can be used to deserialize raw service 1 packets.
     Only PUS C is supported.
     """
 
+    @deprecated(deprecated_in="v3.0.0rc2", details="Use Service1FsfwWrapper instead")
     def __init__(
         self,
         subservice: Subservice,
@@ -43,7 +43,6 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
         seq_count: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,
-        secondary_header_flag: bool = True,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
     ):
@@ -77,7 +76,9 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
         :return:
         """
         service_1_tm = cls.__empty()
-        service_1_tm.pus_tm = PusTelemetry.unpack(raw_telemetry=data)
+        service_1_tm.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=data, time_reader=CdsShortTimestamp.empty()
+        )
         cls._unpack_raw_tm(service_1_tm, params)
         # FSFW specific
         if service_1_tm.has_failure_notice:

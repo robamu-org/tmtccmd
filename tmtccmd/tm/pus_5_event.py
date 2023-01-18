@@ -26,7 +26,7 @@ class Service5Tm(PusTmBase, PusTmInfoBase):
         object_id: bytearray,
         param_1: int,
         param_2: int,
-        time: CdsShortTimestamp = None,
+        time: Optional[CdsShortTimestamp],
         ssc: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,

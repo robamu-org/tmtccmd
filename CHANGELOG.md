@@ -7,8 +7,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+## Added
+
+- Added `apid` and `seq_count` optional arguments back to generic
+  (not FSFW specific) TC constructors.
+- Cleaned up telecommand and telemetry code, removed a lot of obsolete
+  functionality
+
 ## Changed
 
+- (breaking) `pus.pus_8_funccmd`: Renamed `Subservices` to `CustomSubservice`
+- TC creation API: Replace `generate_...` API with `crate_...` API for consistency
 - (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not
   flag enums.
 - (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.

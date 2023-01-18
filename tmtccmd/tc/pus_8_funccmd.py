@@ -1,16 +1,48 @@
 import struct
 
+import deprecation
+
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.pus.pus_8_funccmd import Subservice
+from tmtccmd.pus.pus_8_fsfw_funccmd import CustomSubservice
+from tmtccmd import __version__
 
 
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a1",
+    current_version=__version__,
+    details="use create_... API instead",
+)
 def make_fsfw_action_cmd(
-    object_id: bytes, action_id: int, user_data: bytes = bytes()
+    object_id: bytes,
+    action_id: int,
+    user_data: bytes = bytes(),
+    apid: int = 0,
+    seq_count: int = 0,
+) -> PusTelecommand:
+    return create_fsfw_action_cmd(
+        object_id=object_id,
+        action_id=action_id,
+        user_data=user_data,
+        apid=apid,
+        seq_count=seq_count,
+    )
+
+
+def create_fsfw_action_cmd(
+    object_id: bytes,
+    action_id: int,
+    user_data: bytes = bytes(),
+    apid: int = 0,
+    seq_count: int = 0,
 ) -> PusTelecommand:
     data_to_pack = bytearray(object_id)
     data_to_pack += make_action_id(action_id) + user_data
     return PusTelecommand(
-        service=8, subservice=Subservice.TC_FUNCTIONAL_CMD, app_data=data_to_pack
+        service=8,
+        subservice=CustomSubservice.TC_FUNCTIONAL_CMD,
+        app_data=data_to_pack,
+        apid=apid,
+        seq_count=seq_count,
     )
 
 
