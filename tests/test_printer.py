@@ -11,7 +11,7 @@ from spacepackets.ecss.pus_1_verification import (
 )
 
 from tmtccmd.tm.pus_1_verification import Service1TmExtended
-from tmtccmd.pus.pus_17_test import pack_service_17_ping_command
+from tmtccmd.pus.s17_test import create_service_17_ping_command
 from tmtccmd.logging import get_console_logger, LOG_DIR
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
@@ -33,7 +33,7 @@ class TestPrintersLoggers(TestCase):
     def test_pus_loggers(self):
         regular_tmtc_logger = RegularTmtcLogWrapper(self.regular_file_name)
         raw_tmtc_log = RawTmtcRotatingLogWrapper(max_bytes=1024, backup_count=10)
-        pus_tc = pack_service_17_ping_command()
+        pus_tc = create_service_17_ping_command()
         raw_tmtc_log.log_tc(pus_tc)
         pus_tm = Service1Tm(
             subservice=Subservice.TM_START_SUCCESS,

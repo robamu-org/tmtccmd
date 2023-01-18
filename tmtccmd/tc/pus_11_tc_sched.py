@@ -2,7 +2,7 @@ import deprecation
 
 from tmtccmd import __version__
 from spacepackets.ecss import PusTelecommand, PusService
-from tmtccmd.pus.pus_11_tc_sched import Subservice
+from tmtccmd.pus.s11_tc_sched import Subservice
 
 
 def __generic_param_less_tc_sched_cmd(

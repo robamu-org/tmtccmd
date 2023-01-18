@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Changed
 
+- (breaking) `pus` module: Renamed `pus_?...` modules to `s?_...`. These modules
+  now re-export all their definitions and everything in their similarly
+  named `tm` and `tc` modules.
 - (breaking) `pus.pus_8_funccmd`: Renamed `Subservices` to `CustomSubservice`
 - TC creation API: Replace `generate_...` API with `crate_...` API for consistency
 - (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not

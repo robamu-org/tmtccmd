@@ -6,7 +6,7 @@ from typing import Optional
 
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss import PusService
-from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
+from spacepackets.ecss.tm import PusTelemetry
 from spacepackets.util import UnsignedByteField
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.util.obj_id import ObjectIdU32

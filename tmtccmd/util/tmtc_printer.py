@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from spacepackets.util import get_printable_data_string, PrintFormats
 
-from tmtccmd.tm.pus_8_funccmd import Service8FsfwTm
+from tmtccmd.tm.pus_8_fsfw_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdBase
 from tmtccmd.tm.pus_3_hk_base import HkContentType

@@ -7,7 +7,7 @@ from typing import Optional
 import deprecation
 
 from spacepackets.ccsds.time import CcsdsTimeProvider
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd import __version__
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase

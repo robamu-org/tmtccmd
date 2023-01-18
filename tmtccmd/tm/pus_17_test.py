@@ -8,7 +8,7 @@ from spacepackets.ecss import PusVersion, PusTelemetry
 from spacepackets.ecss.pus_17_test import Service17Tm
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
-from tmtccmd.pus.pus_17_test import Subservice
+from tmtccmd.pus.s17_test import Subservice
 
 
 class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):

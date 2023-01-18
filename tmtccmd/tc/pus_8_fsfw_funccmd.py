@@ -3,7 +3,7 @@ import struct
 import deprecation
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.pus.pus_8_fsfw_funccmd import CustomSubservice
+from tmtccmd.pus.s8_defs import CustomSubservice
 from tmtccmd import __version__
 
 
@@ -19,7 +19,7 @@ def make_fsfw_action_cmd(
     apid: int = 0,
     seq_count: int = 0,
 ) -> PusTelecommand:
-    return create_fsfw_action_cmd(
+    return create_action_cmd(
         object_id=object_id,
         action_id=action_id,
         user_data=user_data,
@@ -28,7 +28,7 @@ def make_fsfw_action_cmd(
     )
 
 
-def create_fsfw_action_cmd(
+def create_action_cmd(
     object_id: bytes,
     action_id: int,
     user_data: bytes = bytes(),

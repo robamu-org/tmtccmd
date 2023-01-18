@@ -9,7 +9,7 @@ from typing import Union
 from spacepackets.ecss import PusTelecommand
 from tmtccmd import __version__
 from tmtccmd.pus import CustomPusService
-from tmtccmd.pus.pus_200_fsfw_mode import Subservice
+from tmtccmd.pus.s200_fsfw_mode import Subservice
 
 
 class Mode(enum.IntEnum):

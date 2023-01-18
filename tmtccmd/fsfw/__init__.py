@@ -3,7 +3,7 @@ import os
 import copy
 from typing import Optional, List
 from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdDictT
-from tmtccmd.pus.pus_5_event import EventInfo, EventDictT
+from tmtccmd.pus.s5_event import EventInfo, EventDictT
 from tmtccmd.util.retval import RetvalDictT, RetvalInfo
 
 
