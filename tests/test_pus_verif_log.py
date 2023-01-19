@@ -14,6 +14,7 @@ from spacepackets.ecss.pus_1_verification import (
     ErrorCode,
     create_start_failure_tm,
 )
+from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_verificator import PusVerificator
 from tmtccmd import get_console_logger
 from tmtccmd.logging.pus import RegularTmtcLogWrapper
@@ -39,16 +40,22 @@ class TestPusVerifLog(TestCase):
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=0)
         verificator.add_tc(tc)
-        srv_1_tm = create_acceptance_success_tm(tc)
+        srv_1_tm = create_acceptance_success_tm(
+            tc, time_provider=CdsShortTimestamp.empty()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
-        srv_1_tm = create_start_success_tm(tc)
+        srv_1_tm = create_start_success_tm(tc, time_provider=CdsShortTimestamp.empty())
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
-        srv_1_tm = create_step_success_tm(tc, StepId.with_byte_size(1, 1))
+        srv_1_tm = create_step_success_tm(
+            tc, StepId.with_byte_size(1, 1), time_provider=CdsShortTimestamp.empty()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
-        srv_1_tm = create_completion_success_tm(tc)
+        srv_1_tm = create_completion_success_tm(
+            tc, time_provider=CdsShortTimestamp.empty()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
 
@@ -68,7 +75,9 @@ class TestPusVerifLog(TestCase):
         tc = PusTelecommand(service=17, subservice=1, seq_count=1)
         verificator.add_tc(tc)
         srv_1_tm = create_acceptance_failure_tm(
-            tc, failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes())
+            tc,
+            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
+            time_provider=CdsShortTimestamp.empty(),
         )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
@@ -80,12 +89,16 @@ class TestPusVerifLog(TestCase):
         tc = PusTelecommand(service=17, subservice=1, seq_count=2)
         verificator.add_tc(tc)
         srv_1_tm = create_acceptance_failure_tm(
-            tc, failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes())
+            tc,
+            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
+            time_provider=CdsShortTimestamp.empty(),
         )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
         srv_1_tm = create_start_failure_tm(
-            tc, failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes())
+            tc,
+            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
+            time_provider=CdsShortTimestamp.empty(),
         )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_console(srv_1_tm, res)
@@ -96,16 +109,22 @@ class TestPusVerifLog(TestCase):
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=0)
         verificator.add_tc(tc)
-        srv_1_tm = create_acceptance_success_tm(tc)
+        srv_1_tm = create_acceptance_success_tm(
+            tc, time_provider=CdsShortTimestamp.empty()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
-        srv_1_tm = create_start_success_tm(tc)
+        srv_1_tm = create_start_success_tm(tc, time_provider=CdsShortTimestamp.empty())
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
-        srv_1_tm = create_step_success_tm(tc, StepId.with_byte_size(1, 1))
+        srv_1_tm = create_step_success_tm(
+            tc, StepId.with_byte_size(1, 1), time_provider=CdsShortTimestamp.empty()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
-        srv_1_tm = create_completion_success_tm(tc)
+        srv_1_tm = create_completion_success_tm(
+            tc, time_provider=CdsShortTimestamp.empty()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
         # Assert that 4 lines have been written

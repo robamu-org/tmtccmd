@@ -10,6 +10,7 @@ from spacepackets.ecss.pus_1_verification import (
     Service1Tm,
 )
 from spacepackets.ecss.tc import PusTelecommand
+from spacepackets.ccsds.time import CdsShortTimestamp
 
 from tmtccmd.com_if import ComInterface
 from tmtccmd.config import CoreComInterfaces
@@ -38,6 +39,7 @@ class DummyHandler:
         """Generate a reply package. Currently, this only generates a reply for a ping telecommand."""
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
+                current_time_stamp = CdsShortTimestamp.from_current_time()
                 tm_packer = Service1Tm(
                     subservice=Pus1Subservices.TM_ACCEPTANCE_SUCCESS,
                     seq_count=self.current_ssc,
@@ -46,6 +48,7 @@ class DummyHandler:
                             self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
                         )
                     ),
+                    time_provider=current_time_stamp,
                 )
 
                 self.current_ssc += 1
@@ -59,12 +62,16 @@ class DummyHandler:
                             self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
                         )
                     ),
+                    time_provider=current_time_stamp,
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
 
-                tm_packer = Service17Tm(subservice=Pus17Subservices.TM_REPLY)
+                tm_packer = Service17Tm(
+                    subservice=Pus17Subservices.TM_REPLY,
+                    time_provider=current_time_stamp,
+                )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 self.current_ssc += 1
@@ -77,6 +84,7 @@ class DummyHandler:
                             self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
                         )
                     ),
+                    time_provider=current_time_stamp,
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)

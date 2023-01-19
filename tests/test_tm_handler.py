@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelemetry
+from spacepackets.ccsds.time import CdsShortTimestamp
 from tmtccmd.tm import (
     SpecificApidHandlerBase,
     CcsdsTmHandler,
@@ -37,8 +38,12 @@ class TestTmHandler(TestCase):
         handled_packets = tm_listener.operation(com_if)
         self.assertEqual(handled_packets, 0)
         self.assertTrue(ccsds_handler.has_apid(0x01))
-        tm0_raw = PusTelemetry(service=1, subservice=12, apid=0x01).pack()
-        tm1_raw = PusTelemetry(service=5, subservice=1, apid=0x01).pack()
+        tm0_raw = PusTelemetry(
+            service=1, subservice=12, apid=0x01, time_provider=CdsShortTimestamp.empty()
+        ).pack()
+        tm1_raw = PusTelemetry(
+            service=5, subservice=1, apid=0x01, time_provider=CdsShortTimestamp.empty()
+        ).pack()
         com_if.receive.return_value = [tm0_raw]
         handled_packets = tm_listener.operation(com_if)
         self.assertEqual(handled_packets, 1)
@@ -52,7 +57,9 @@ class TestTmHandler(TestCase):
         self.assertEqual(handled_packets, 2)
         self.assertEqual(tm_handler.packet_queue.pop(), tm0_raw)
         self.assertEqual(tm_handler.packet_queue.pop(), tm1_raw)
-        unknown_apid = PusTelemetry(service=1, subservice=12, apid=0x02).pack()
+        unknown_apid = PusTelemetry(
+            service=1, subservice=12, apid=0x02, time_provider=CdsShortTimestamp.empty()
+        ).pack()
         com_if.receive.return_value = [unknown_apid]
         handled_packets = tm_listener.operation(com_if)
         self.assertEqual(handled_packets, 1)
