@@ -20,19 +20,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   now re-export all their definitions and everything in their similarly
   named `tm` and `tc` modules.
 - (breaking) `pus.pus_8_funccmd`: Renamed `Subservices` to `CustomSubservice`
-- TC creation API: Replace `generate_...` API with `crate_...` API for consistency
+- TC creation API: Replace `generate_...` API with `create_...` API for consistency
 - (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not
   flag enums.
 - (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
 - Subservice enumerations: Add missing `TM_...` and `TC_...` prefixes where applicable
 
-# [v4.0.0a1] 12.01.2023
+# [v4.0.0a1] 2023-01-12
 
 ## Fixed
 
 - `enable_periodic_hk_command`: Remove third obsolete ssc argument
 
-# [v4.0.0a0] 05.01.2023
+# [v4.0.0a0] 2023-01-05
 
 ## Added
 
@@ -47,7 +47,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Switched to compatible release requirement for dependencies.
 - `ComInterface`: Added new abstract method `get_id`, removed `__init__` dunder.
 
-# [v3.0.1] 05.01.2023
+# [v3.0.1] 2023-01-05
 
 ## Changes
 
@@ -58,16 +58,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - Minor fixes for GUI: Moved communication interface switching to
   separate worker thread.
 
-# [v3.0.0] 09.12.2022
+# [v3.0.0] 2022-12-09
 
 - Minor cleaning up
 - Added some FSFW specific functionality to retrieve validity lists from a bitfield representation
 
-# [v3.0.0rc3] 01.12.2022
+# [v3.0.0rc3] 2022-12-01
 
 - Some bugfixes for GUI, improved teardown/close handling
 
-# [v3.0.0rc2] 20.11.2022
+# [v3.0.0rc2] 2022-11-20
 
 - Add `deprecation` dependency to allow marking functions and classes
   as deprecated with a decorator
@@ -77,7 +77,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   avoids some boilerplate code when registering definition provider or packet creation
   handlers
 
-# [v3.0.0rc1] 03.07.2022
+# [v3.0.0rc1] 2022-07-03
 
 - Overhaul of application architecture
 - Significant simplification of various modules to increase testability
