@@ -54,7 +54,7 @@ def prompt_com_if(com_if_dict: ComIfDictT) -> str:
         if com_if_key >= len(com_if_list):
             print("Key invalid, try again.")
             continue
-        com_if_string = com_if_list[com_if_key].value
+        com_if_string = com_if_list[com_if_key]
         break
     return com_if_string
 
