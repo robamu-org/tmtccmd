@@ -24,18 +24,19 @@ class FeedWrapper:
 
 
 class SendCbParams:
-    """Wrapper for all important parameters passed to the TC send callback"""
+    """Wrapper for all important parameters passed to the TC send callback.
+
+    :var info: Procedure info about the procedure this queue entry is related too
+    :var entry: Queue entry base type. The user can cast this back to the concrete
+            type or just use duck typing if the concrete type is known
+    :var com_if: Communication interface. Will generally be used to send the packet,
+            using the :py:func:`tmtccmd.com_if.ComInterface.send` method
+    """
 
     def __init__(
         self, info: ProcedureWrapper, entry: QueueEntryHelper, com_if: ComInterface
     ):
-        """
-        :param info: Procedure info about the procedure this queue entry is related too
-        :param entry: Queue entry base type. The user can cast this back to the concrete
-                type or just use duck typing if the concrete type is known
-        :param com_if: Communication interface. Will generally be used to send the packet,
-                using the :py:func:`tmtccmd.com_if.ComInterface.send` method
-        """
+        """Creates the parameters passed to the send callback."""
         self.info = info
         self.entry = entry
         self.com_if = com_if

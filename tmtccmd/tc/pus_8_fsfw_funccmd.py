@@ -10,7 +10,7 @@ from tmtccmd import __version__
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def make_fsfw_action_cmd(
     object_id: bytes,

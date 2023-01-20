@@ -8,7 +8,7 @@ from spacepackets.ecss.pus_17_test import Subservice
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def pack_service_17_ping_command(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
     return create_service_17_ping_command(apid, seq_count)

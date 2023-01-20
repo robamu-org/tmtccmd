@@ -21,7 +21,7 @@ def make_interval(interval_seconds: float) -> bytearray:
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return create_enable_periodic_hk_command(diag, sid)
@@ -40,7 +40,7 @@ def create_enable_periodic_hk_command_with_interval(
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
@@ -57,7 +57,7 @@ def create_disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return create_disable_periodic_hk_command(diag, sid)
@@ -83,7 +83,7 @@ def __generate_periodic_hk_command(
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def modify_collection_interval(
     diag: bool, sid: bytes, interval_seconds: float
@@ -106,7 +106,7 @@ def create_modify_collection_interval_cmd(
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def generate_one_hk_command(sid: bytes) -> PusTelecommand:
     return create_request_one_hk_command(sid)
@@ -123,7 +123,7 @@ def create_request_one_hk_command(sid: bytes) -> PusTelecommand:
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def generate_one_diag_command(sid: bytes) -> PusTelecommand:
     return create_request_one_diag_command(sid)

@@ -19,7 +19,7 @@ def __generic_param_less_tc_sched_cmd(
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def generate_enable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
     return create_enable_tc_sched_cmd(apid, seq_count)
@@ -34,7 +34,7 @@ def create_enable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecomm
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def generate_disable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
     return create_disable_tc_sched_cmd(apid, seq_count)
@@ -49,7 +49,7 @@ def create_disable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecom
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def generate_reset_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
     return create_reset_tc_sched_cmd(apid, seq_count)
@@ -64,7 +64,7 @@ def create_reset_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecomma
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def generate_time_tagged_cmd(release_time: bytes, tc_to_insert: PusTelecommand):
     return create_time_tagged_cmd(release_time, tc_to_insert)

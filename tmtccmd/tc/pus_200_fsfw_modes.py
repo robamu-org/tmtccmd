@@ -29,7 +29,7 @@ def pack_mode_data(object_id: bytes, mode: Union[Mode, int], submode: int) -> by
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
     current_version=__version__,
-    details="use create_... API instead",
+    details="use create... API instead",
 )
 def pack_mode_command(
     object_id: bytes, mode: Union[int, Mode], submode: int
