@@ -13,7 +13,7 @@ class TestTelemetry(TestCase):
         pus_17_telemetry = Service17Tm(
             subservice=1,
             ssc=36,
-            time_provider=CdsShortTimestamp.from_current_time(),
+            time_provider=CdsShortTimestamp.from_now(),
             apid=0xEF,
         )
         pus_17_raw = pus_17_telemetry.pack()

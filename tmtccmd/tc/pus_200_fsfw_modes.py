@@ -51,7 +51,7 @@ def create_read_mode_command(object_id: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=CustomPusService.SERVICE_200_MODE,
         subservice=Subservice.TC_MODE_READ,
-        app_data=object_id
+        app_data=object_id,
     )
 
 
@@ -59,5 +59,5 @@ def create_announce_mode_recursive_command(object_id: bytes) -> PusTelecommand:
     return PusTelecommand(
         service=CustomPusService.SERVICE_200_MODE,
         subservice=Subservice.TC_MODE_ANNOUNCE_RECURSIVE,
-        app_data=object_id
+        app_data=object_id,
     )
