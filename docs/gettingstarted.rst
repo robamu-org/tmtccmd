@@ -28,7 +28,7 @@ The TC handler
 This object is responsible for the telecommand handling.
 
 The PUS TM handler
------------------
+--------------------
 
 This object is responsible for the handling of PUS telemetry.
 
