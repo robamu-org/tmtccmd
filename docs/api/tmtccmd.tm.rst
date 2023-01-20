@@ -36,10 +36,10 @@ tmtccmd.tm.pus\_5\_event module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tm.pus\_8\_funccmd module
+tmtccmd.tm.pus\_8\_fsfw\_funccmd module
 -----------------------------------------------------
 
-.. automodule:: tmtccmd.tm.pus_8_funccmd
+.. automodule:: tmtccmd.tm.pus_8_fsfw_funccmd
    :members:
    :undoc-members:
    :show-inheritance:
