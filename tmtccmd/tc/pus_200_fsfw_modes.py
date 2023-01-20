@@ -1,6 +1,4 @@
-"""
-@brief      Core components for mode commanding (custom PUS service)
-"""
+"""Core components for mode commanding (custom PUS service)."""
 import enum
 import struct
 import deprecation
