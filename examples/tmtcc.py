@@ -103,7 +103,7 @@ class ExampleHookClass(TmTcCfgHookBase):
         return get_core_object_ids()
 
 
-class PusHandler(SpecificApidHandlerBase):
+class PusTmHandler(SpecificApidHandlerBase):
     def __init__(
         self,
         verif_wrapper: VerificationWrapper,
@@ -249,7 +249,7 @@ def main():
     verificator = PusVerificator()
     verification_wrapper = VerificationWrapper(verificator, LOGGER, printer.file_logger)
     # Create primary TM handler and add it to the CCSDS Packet Handler
-    tm_handler = PusHandler(verification_wrapper, printer, raw_logger)
+    tm_handler = PusTmHandler(verification_wrapper, printer, raw_logger)
     ccsds_handler = CcsdsTmHandler(generic_handler=None)
     ccsds_handler.add_apid_handler(tm_handler)
 
