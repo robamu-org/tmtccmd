@@ -28,13 +28,13 @@ def update_global(global_param_id: int, parameter: any, lock: bool = False):
 def lock_global_pool(
     blocking: Optional[bool] = None, timeout: Optional[float] = None
 ) -> bool:
-    global __LOCK_TIMEOUT, __GLOBALS_LOCK
-    """Lock the global objects. This is important if the values are changed. Don't forget to unlock the pool
-    after finishing work with the globals!
-    :param timeout_seconds: Attempt to lock for this many second. Default value -1 blocks permanently until lock is
-    released.
+    """Lock the global objects. This is important if the values are changed. Don't forget to unlock
+    the pool after finishing work with the globals!
+    :param timeout_seconds: Attempt to lock for this many second. Default value -1 blocks
+    permanently until lock is released.
     :return: Returns whether lock was locked or not.
     """
+    global __LOCK_TIMEOUT, __GLOBALS_LOCK
     if blocking is None:
         blocking = True
     if timeout is None:

@@ -1,10 +1,8 @@
 from abc import abstractmethod
 from typing import Optional
 from unittest.mock import MagicMock
-import argparse
 
 from tmtccmd.com_if import ComInterface
-from tmtccmd.config import CoreModeList
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import TmTcCfgHookBase

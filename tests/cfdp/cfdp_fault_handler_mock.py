@@ -1,4 +1,4 @@
-from spacepackets.cfdp import FaultHandlerCode, ConditionCode
+from spacepackets.cfdp import ConditionCode
 from tmtccmd.cfdp.mib import DefaultFaultHandlerBase
 
 

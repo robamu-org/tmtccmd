@@ -10,7 +10,7 @@ from tmtccmd.tc import WaitEntry, QueueEntryHelper
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
-from tmtccmd.tc import LogQueueEntry, RawTcEntry
+from tmtccmd.tc import LogQueueEntry, RawTcEntry  # noqa: F401
 from tmtccmd.tc.queue import QueueWrapper, DefaultPusQueueHelper
 from tmtccmd.util import ProvidesSeqCount
 

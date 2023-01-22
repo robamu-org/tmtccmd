@@ -7,8 +7,6 @@ from tmtccmd.config.globals import (
     set_glob_com_if_dict,
     get_glob_com_if_dict,
     set_default_globals_pre_args_parsing,
-    CoreModeList,
-    CoreGlobalIds,
 )
 from tmtccmd.core.globals_manager import (
     lock_global_pool,

@@ -126,7 +126,7 @@ def hamming_verify_256x(
     return error_code
 
 
-def hamming_compute_256(data: bytearray) -> bytearray:
+def hamming_compute_256(data: bytearray) -> bytearray:  # noqa: C901
     """Takes a bytearray with the size of 256 bytes and calculates the 22 parity bits for the
     hamming code which will be returned as a three byte bytearray.
 

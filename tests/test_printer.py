@@ -10,7 +10,6 @@ from spacepackets.ecss.pus_1_verification import (
     Service1Tm,
 )
 
-from tmtccmd.tm.pus_1_verification import Service1TmExtended
 from tmtccmd.pus.s17_test import create_service_17_ping_command
 from tmtccmd.logging import get_console_logger, LOG_DIR
 from tmtccmd.logging.pus import (

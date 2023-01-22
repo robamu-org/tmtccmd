@@ -1,6 +1,5 @@
 import os.path
 from pathlib import Path
-import shutil
 import tempfile
 
 from pyfakefs.fake_filesystem_unittest import TestCase

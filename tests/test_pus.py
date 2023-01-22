@@ -5,8 +5,6 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.util import PrintFormats
 
-from tmtccmd.tm.pus_17_test import Service17TmExtended
-
 
 class TestTelemetry(TestCase):
     def test_generic_pus_c(self):

@@ -56,7 +56,7 @@ class FsfwTmTcPrinter:
             self.__handle_column_header_print(info_if=info_if)
             self.__handle_tm_content_print(info_if=info_if)
             self.__handle_additional_printout(info_if=info_if)
-        except TypeError as error:
+        except TypeError:
             LOGGER.exception(
                 f"Type Error when trying to print TM Packet "
                 f"[{packet_if.service}, {packet_if.subservice}]"

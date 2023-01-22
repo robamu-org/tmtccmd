@@ -22,14 +22,11 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QMenu,
     QAction,
-    QMessageBox,
-    QApplication,
 )
 from PyQt5.QtGui import QPixmap, QIcon, QFont
 from PyQt5.QtCore import (
     Qt,
     QThreadPool,
-    QTimer,
 )
 
 from tmtccmd.core.base import FrontendBase

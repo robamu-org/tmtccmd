@@ -95,7 +95,8 @@ def set_up_colorlog_logger(logger: logging.Logger):
         "[%(filename)s:%(lineno)d] %(reset)s%(message)s"
     )
     custom_formatter = CustomTmtccmdFormatter(
-        info_fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s.%(msecs)03d %(reset)s%(message)s",
+        info_fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s."
+        "%(msecs)03d %(reset)s%(message)s",
         dbg_fmt=dbg_fmt,
         err_fmt=dbg_fmt,
         warn_fmt=dbg_fmt,

@@ -1,7 +1,6 @@
 import os
 import random
 import sys
-from pathlib import Path
 
 from crcmod.predefined import PredefinedCrc
 
