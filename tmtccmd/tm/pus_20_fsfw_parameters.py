@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 import struct
-from typing import Optional
+from typing import Optional, Any
 
 from spacepackets.ccsds.time import CdsShortTimestamp, CcsdsTimeProvider
 from spacepackets.ecss import (
@@ -183,62 +183,76 @@ class Service20FsfwTm(PusTmInfoBase, PusTmBase):
         return custom_printout
 
 
-def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[any]:
+def __deserialize_unsigned_scalar_entry(
+    pfc: int, ptc: int, tm_data: bytes, param_len: int, len_error_str: str
+) -> Optional[Any]:
+    if pfc == PfcUnsigned.ONE_BYTE:
+        if param_len < 1:
+            LOGGER.warning(f"{len_error_str} 1")
+            raise None
+        return tm_data[12]
+    elif pfc == PfcUnsigned.TWO_BYTES:
+        if param_len < 2:
+            LOGGER.warning(f"{len_error_str} 2")
+            return None
+        return struct.unpack("!H", tm_data[12:14])[0]
+    if pfc == PfcUnsigned.FOUR_BYTES:
+        if param_len < 4:
+            LOGGER.warning(f"{len_error_str} 4")
+            return None
+        return struct.unpack("!I", tm_data[12:16])[0]
+    elif pfc == PfcUnsigned.EIGHT_BYTES:
+        if param_len < 8:
+            LOGGER.warning(f"{len_error_str} 8")
+            return None
+        return struct.unpack("!Q", tm_data[12:20])[0]
+    else:
+        LOGGER.warning(f"Parsing of unsigned PTC {ptc} not implemented for PFC {pfc}")
+        return None
+
+
+def __deserialize_signed_scalar_entry(
+    pfc: int, ptc: int, tm_data: bytes, param_len: int, len_error_str: str
+) -> Optional[Any]:
+    if pfc == PfcSigned.ONE_BYTE:
+        if param_len < 1:
+            LOGGER.warning(f"{len_error_str} 1")
+            return None
+        return struct.unpack("!b", tm_data[12:13])[0]
+    elif pfc == PfcSigned.TWO_BYTES:
+        if param_len < 2:
+            LOGGER.warning(f"{len_error_str} 2")
+            return None
+        return struct.unpack("!h", tm_data[12:14])[0]
+    elif pfc == PfcSigned.FOUR_BYTES:
+        if param_len < 4:
+            LOGGER.warning(f"{len_error_str} 4")
+            return None
+        return struct.unpack("!i", tm_data[12:16])[0]
+    elif pfc == PfcSigned.EIGHT_BYTES:
+        if param_len < 8:
+            LOGGER.warning(f"{len_error_str} 8")
+            return None
+        return struct.unpack("!q", tm_data[12:20])[0]
+    else:
+        LOGGER.warning(f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}")
+        return None
+
+
+def deserialize_scalar_entry(ptc: int, pfc: int, tm_data: bytes) -> Optional[Any]:
     param_data = tm_data[12:]
     param_len = len(param_data)
     len_error_str = "Invalid parameter data size, smaller than "
     if param_len == 0:
         return None
     if ptc == Ptc.UNSIGNED:
-        if pfc == PfcUnsigned.ONE_BYTE:
-            if param_len < 1:
-                LOGGER.warning(f"{len_error_str} 1")
-                raise None
-            return tm_data[12]
-        elif pfc == PfcUnsigned.TWO_BYTES:
-            if param_len < 2:
-                LOGGER.warning(f"{len_error_str} 2")
-                return None
-            return struct.unpack("!H", tm_data[12:14])[0]
-        if pfc == PfcUnsigned.FOUR_BYTES:
-            if param_len < 4:
-                LOGGER.warning(f"{len_error_str} 4")
-                return None
-            return struct.unpack("!I", tm_data[12:16])[0]
-        elif pfc == PfcUnsigned.EIGHT_BYTES:
-            if param_len < 8:
-                LOGGER.warning(f"{len_error_str} 8")
-                return None
-            return struct.unpack("!Q", tm_data[12:20])[0]
-        else:
-            LOGGER.warning(
-                f"Parsing of unsigned PTC {ptc} not implemented for PFC {pfc}"
-            )
-            return None
+        return __deserialize_unsigned_scalar_entry(
+            pfc, ptc, tm_data, param_len, len_error_str
+        )
     elif ptc == Ptc.SIGNED:
-        if pfc == PfcSigned.ONE_BYTE:
-            if param_len < 1:
-                LOGGER.warning(f"{len_error_str} 1")
-                return None
-            return struct.unpack("!b", tm_data[12:13])[0]
-        elif pfc == PfcSigned.TWO_BYTES:
-            if param_len < 2:
-                LOGGER.warning(f"{len_error_str} 2")
-                return None
-            return struct.unpack("!h", tm_data[12:14])[0]
-        elif pfc == PfcSigned.FOUR_BYTES:
-            if param_len < 4:
-                LOGGER.warning(f"{len_error_str} 4")
-                return None
-            return struct.unpack("!i", tm_data[12:16])[0]
-        elif pfc == PfcSigned.EIGHT_BYTES:
-            if param_len < 8:
-                LOGGER.warning(f"{len_error_str} 8")
-                return None
-            return struct.unpack("!q", tm_data[12:20])[0]
-        else:
-            LOGGER.warning(f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}")
-            return None
+        return __deserialize_signed_scalar_entry(
+            pfc, ptc, tm_data, param_len, len_error_str
+        )
     if ptc == Ptc.REAL:
         if pfc == PfcReal.FLOAT_SIMPLE_PRECISION_IEEE:
             if param_len < 4:

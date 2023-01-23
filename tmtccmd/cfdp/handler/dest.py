@@ -152,9 +152,7 @@ class DestHandler:
             ChecksumType.NULL_CHECKSUM, user.vfs
         )
 
-    def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
-        if self.states.state != CfdpStates.IDLE:
-            return False
+    def __transaction_start_metadata_pdu_to_params(self, metadata_pdu: MetadataPdu):
         self._params.reset()
         self.states.transaction = TransactionStep.TRANSACTION_START
         if metadata_pdu.pdu_header.trans_mode == TransmissionMode.UNACKNOWLEDGED:
@@ -178,16 +176,8 @@ class DestHandler:
         self._params.remote_cfg = self.remote_cfg_table.get_cfg(
             metadata_pdu.source_entity_id
         )
-        # I am not fully sure whether a remote configuration is strictly required for
-        # a destination handler. I think to be fully standard-compliant or at least allow
-        # the flexibility to be standard-compliant in the future, we should require that
-        # a remote entity configuration exists for each CFDP sender.
-        if self._params.remote_cfg is None:
-            LOGGER.warning(
-                f"No remote configuration found for remote ID {metadata_pdu.dest_entity_id}"
-            )
-            raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
-        self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
+
+    def __transaction_start_vfs_handling(self):
         try:
             if self.user.vfs.file_exists(self._params.fp.file_name):
                 self.user.vfs.truncate_file(self._params.fp.file_name)
@@ -212,6 +202,22 @@ class DestHandler:
             self.cfg.default_fault_handlers.report_fault(
                 ConditionCode.FILESTORE_REJECTION
             )
+
+    def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
+        if self.states.state != CfdpStates.IDLE:
+            return False
+        self.__transaction_start_metadata_pdu_to_params(metadata_pdu)
+        # I am not fully sure whether a remote configuration is strictly required for
+        # a destination handler. I think to be fully standard-compliant or at least allow
+        # the flexibility to be standard-compliant in the future, we should require that
+        # a remote entity configuration exists for each CFDP sender.
+        if self._params.remote_cfg is None:
+            LOGGER.warning(
+                f"No remote configuration found for remote ID {metadata_pdu.dest_entity_id}"
+            )
+            raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
+        self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
+        self.__transaction_start_vfs_handling()
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
