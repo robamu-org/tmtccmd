@@ -89,7 +89,7 @@ coverage run -m pytest
 provided that `pytest` and `coverage` were installed with
 
 ```sh
-python3 -m pip install coverage pytest
+pip install coverage pytest
 ```
 
 ## <a id="install"></a> Installation
@@ -106,6 +106,23 @@ pip install .[gui]
 
 You can omit `[gui]` for a CLI only installation. Alternatively you can also install the package
 from PyPI with `pip install -e tmtccmd[gui]`.
+
+## Documentation
+
+The documentation is built with Sphinx
+
+Install the required dependencies first:
+
+```sh
+pip install -r docs/requirements.txt
+```
+
+Then the documentation can be built with
+
+```sh
+cd docs
+make html
+```
 
 ## Using PyCharm
 

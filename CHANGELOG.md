@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+# [v4.0.0a2] 2023-01-23
+
 ## Added
 
 - Added `apid` and `seq_count` optional arguments back to generic
@@ -25,6 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   flag enums.
 - (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
 - Subservice enumerations: Add missing `TM_...` and `TC_...` prefixes where applicable
+- Use concrete `spacepackets` version 0.14.0rc1
 
 # [v4.0.0a1] 2023-01-12
 

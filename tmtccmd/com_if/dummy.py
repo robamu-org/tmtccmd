@@ -40,7 +40,7 @@ class DummyHandler:
         telecommand."""
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
-                current_time_stamp = CdsShortTimestamp.from_current_time()
+                current_time_stamp = CdsShortTimestamp.from_now()
                 tm_packer = Service1Tm(
                     subservice=Pus1Subservices.TM_ACCEPTANCE_SUCCESS,
                     seq_count=self.current_ssc,
