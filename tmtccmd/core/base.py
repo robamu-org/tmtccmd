@@ -28,7 +28,8 @@ class BackendRequest(enum.IntEnum):
 
     Brief explanation of fields:
      1. NONE: No special recommendation
-     2. TERMINATION_NO_ERROR: Will be returned for the One Queue mode after finishing queue handling.
+     2. TERMINATION_NO_ERROR: Will be returned for the One Queue mode after finishing queue
+        handling.
      3. DELAY_IDLE: TC and TM mode are idle, so there is nothing to do
      4. DELAY_LISTENER: TC handling is not active but TM listening is active. Delay to
         wait for new TM packets

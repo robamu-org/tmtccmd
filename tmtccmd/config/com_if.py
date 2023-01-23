@@ -104,47 +104,12 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
     :param cfg: Generic configuration
     :return:
     """
-    from tmtccmd.com_if.dummy import DummyComIF
-    from tmtccmd.com_if.qemu import QEMUComIF
-
     if cfg is None:
         raise ValueError("Passed ComIF configuration is empty")
     if cfg.com_if_key == "":
         LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
     try:
-        if (
-            cfg.com_if_key == CoreComInterfaces.UDP.value
-            or cfg.com_if_key == CoreComInterfaces.TCP.value
-        ):
-            communication_interface = create_default_tcpip_interface(
-                cast(TcpipCfg, cfg)
-            )
-        elif cfg.com_if_key in [
-            CoreComInterfaces.SERIAL_DLE.value,
-            CoreComInterfaces.SERIAL_FIXED_FRAME.value,
-            CoreComInterfaces.SERIAL_COBS.value,
-        ]:
-            serial_cfg_wrapper = cast(SerialCfgWrapper, cfg)
-            communication_interface = create_default_serial_interface(
-                com_if_key=cfg.com_if_key,
-                json_cfg_path=cfg.json_cfg_path,
-                serial_cfg=serial_cfg_wrapper.serial_cfg,
-            )
-        elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
-            # TODO: Move to new model where config is passed externally
-            serial_cfg = cast(SerialCfg, cfg)
-            communication_interface = QEMUComIF(
-                com_if_id=cfg.com_if_key,
-                serial_timeout=serial_cfg.serial_timeout,
-                ser_com_type=SerialCommunicationType.DLE_ENCODING,
-            )
-        else:
-            communication_interface = DummyComIF()
-        if communication_interface is None:
-            LOGGER.warning("Invalid communication interface, is None")
-            return communication_interface
-        communication_interface.initialize()
-        return communication_interface
+        return __create_com_if(cfg)
     except ConnectionRefusedError:
         LOGGER.exception("TCP/IP connection refused")
         if cfg.com_if_key == CoreComInterfaces.UDP.value:
@@ -155,6 +120,43 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
     except (IOError, OSError):
         LOGGER.exception("Error setting up communication interface")
         sys.exit(1)
+
+
+def __create_com_if(cfg: ComIfCfgBase) -> Optional[ComInterface]:
+    from tmtccmd.com_if.dummy import DummyComIF
+    from tmtccmd.com_if.qemu import QEMUComIF
+
+    if (
+        cfg.com_if_key == CoreComInterfaces.UDP.value
+        or cfg.com_if_key == CoreComInterfaces.TCP.value
+    ):
+        communication_interface = create_default_tcpip_interface(cast(TcpipCfg, cfg))
+    elif cfg.com_if_key in [
+        CoreComInterfaces.SERIAL_DLE.value,
+        CoreComInterfaces.SERIAL_FIXED_FRAME.value,
+        CoreComInterfaces.SERIAL_COBS.value,
+    ]:
+        serial_cfg_wrapper = cast(SerialCfgWrapper, cfg)
+        communication_interface = create_default_serial_interface(
+            com_if_key=cfg.com_if_key,
+            json_cfg_path=cfg.json_cfg_path,
+            serial_cfg=serial_cfg_wrapper.serial_cfg,
+        )
+    elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
+        # TODO: Move to new model where config is passed externally
+        serial_cfg = cast(SerialCfg, cfg)
+        communication_interface = QEMUComIF(
+            com_if_id=cfg.com_if_key,
+            serial_timeout=serial_cfg.serial_timeout,
+            ser_com_type=SerialCommunicationType.DLE_ENCODING,
+        )
+    else:
+        communication_interface = DummyComIF()
+    if communication_interface is None:
+        LOGGER.warning("Invalid communication interface, is None")
+        return communication_interface
+    communication_interface.initialize()
+    return communication_interface
 
 
 def default_tcpip_cfg_setup(

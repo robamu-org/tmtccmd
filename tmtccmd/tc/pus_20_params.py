@@ -118,7 +118,6 @@ def prepare_param_packet_header(
 
 
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
-    # noinspection PyPep8
     """Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the
     number of columns and rows in the parameter.
     See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
@@ -131,7 +130,7 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
     :param columns:  Number of columns in parameter (for matrix or vector entries,
         1 for scalar entries)
     :return: Parameter information field as 4 byte bytearray
-    """
+    """  # noqa: E501
     data = bytearray(4)
     data[0] = ptc
     data[1] = pfc

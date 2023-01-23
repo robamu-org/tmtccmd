@@ -1,7 +1,6 @@
 """Argument parser module"""
 import argparse
 import sys
-from pathlib import Path
 from typing import Optional, List, Sequence, Union
 from dataclasses import dataclass
 

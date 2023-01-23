@@ -224,7 +224,9 @@ class TcHandler(TcHandlerBase):
                 )
 
 
-def main():
+# Note about lint disable: I could split up the function but I prefer to have the whole
+# running main in one block for the example.
+def main():  # noqa: C901
     tmtccmd.init_printout(False)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     parser_wrapper = PreArgsParsingWrapper()

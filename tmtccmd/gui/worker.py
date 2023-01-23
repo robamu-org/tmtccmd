@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 
 from PyQt5.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
 
@@ -76,44 +77,54 @@ class FrontendWorker(QRunnable):
             self._shared.backend.tm_mode = TmMode.LISTENER
         return True
 
+    def __one_queue_mode_cycle(self) -> Optional[bool]:
+        self._shared.tc_lock.acquire()
+        self._shared.backend.tc_operation()
+        self._update_backend_mode()
+        state = self._shared.backend.state
+        if state.request == BackendRequest.TERMINATION_NO_ERROR:
+            self._shared.tc_lock.release()
+            self._shared.com_if_ref_tracker.remove_user()
+            with self._shared.state_lock:
+                if (
+                    not self._shared.com_if_ref_tracker.is_used()
+                    and self._locals.op_args is not None
+                ):
+                    self._locals.op_args()
+            self._finish_success()
+            return False
+        elif state.request == BackendRequest.DELAY_IDLE:
+            time.sleep(1.0)
+        elif state.request == BackendRequest.DELAY_CUSTOM:
+            self._shared.tc_lock.release()
+            if state.next_delay.total_seconds() < 0.5:
+                time.sleep(state.next_delay.total_seconds())
+            else:
+                time.sleep(0.5)
+        elif state.request == BackendRequest.CALL_NEXT:
+            self._shared.tc_lock.release()
+
+    def __listener_cycle(self) -> Optional[bool]:
+        if self._stop_signal or self._abort_signal:
+            self._shared.com_if_ref_tracker.remove_user()
+            if not self._abort_signal:
+                self._finish_success()
+            return False
+        else:
+            # We only should run the TM operation here
+            self._shared.backend.tm_operation()
+            # Poll TM every 400 ms for now
+            time.sleep(self._locals.op_args)
+
     def __loop(self, op_code: WorkerOperationsCodes) -> bool:
         if op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
-            self._shared.tc_lock.acquire()
-            self._shared.backend.tc_operation()
-            self._update_backend_mode()
-            state = self._shared.backend.state
-            if state.request == BackendRequest.TERMINATION_NO_ERROR:
-                self._shared.tc_lock.release()
-                self._shared.com_if_ref_tracker.remove_user()
-                with self._shared.state_lock:
-                    if (
-                        not self._shared.com_if_ref_tracker.is_used()
-                        and self._locals.op_args is not None
-                    ):
-                        self._locals.op_args()
-                self._finish_success()
-                return False
-            elif state.request == BackendRequest.DELAY_IDLE:
-                time.sleep(1.0)
-            elif state.request == BackendRequest.DELAY_CUSTOM:
-                self._shared.tc_lock.release()
-                if state.next_delay.total_seconds() < 0.5:
-                    time.sleep(state.next_delay.total_seconds())
-                else:
-                    time.sleep(0.5)
-            elif state.request == BackendRequest.CALL_NEXT:
-                self._shared.tc_lock.release()
+            should_return = self.__one_queue_mode_cycle()
+            if should_return is not None:
+                return should_return
         elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
-            if self._stop_signal or self._abort_signal:
-                self._shared.com_if_ref_tracker.remove_user()
-                if not self._abort_signal:
-                    self._finish_success()
-                return False
-            else:
-                # We only should run the TM operation here
-                self._shared.backend.tm_operation()
-                # Poll TM every 400 ms for now
-                time.sleep(self._locals.op_args)
+            should_return = self.__listener_cycle()
+            if should_return is not None:
+                return should_return
         elif op_code == WorkerOperationsCodes.IDLE:
             return False
         else:
