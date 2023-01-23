@@ -34,7 +34,9 @@ def create_enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
 def create_enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> (PusTelecommand, PusTelecommand):
-    return enable_periodic_hk_command_with_interval(diag, sid, interval_seconds)
+    cmd0 = create_modify_collection_interval_cmd(diag, sid, interval_seconds)
+    cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
+    return cmd0, cmd1
 
 
 @deprecation.deprecated(
@@ -45,9 +47,7 @@ def create_enable_periodic_hk_command_with_interval(
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> (PusTelecommand, PusTelecommand):
-    cmd0 = modify_collection_interval(diag, sid, interval_seconds)
-    cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
-    return cmd0, cmd1
+    return create_enable_periodic_hk_command_with_interval(diag, sid, interval_seconds)
 
 
 def create_disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
