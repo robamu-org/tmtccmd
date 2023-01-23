@@ -13,4 +13,4 @@ include requirements.txt
 recursive-exclude * *.pyc *.pyo
 
 include misc/logo-tiny.png
-include misc/logo.png
+include misc/logo_medium.png
