@@ -4,7 +4,7 @@ from typing import Optional
 
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
-from spacepackets.ecss.tm import CdsShortTimestamp, PusVersion, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.logging import get_console_logger

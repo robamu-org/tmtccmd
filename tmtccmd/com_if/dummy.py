@@ -36,7 +36,8 @@ class DummyHandler:
         self.generate_reply_package()
 
     def generate_reply_package(self):
-        """Generate a reply package. Currently, this only generates a reply for a ping telecommand."""
+        """Generate a reply package. Currently, this only generates a reply for a ping
+        telecommand."""
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
                 current_time_stamp = CdsShortTimestamp.from_current_time()

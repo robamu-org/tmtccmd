@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-QEMU_SERIAL Communication Interface to communicate with emulated QEMU_SERIAL hardware via the UART interface.
+QEMU_SERIAL Communication Interface to communicate with emulated QEMU_SERIAL hardware via the
+UART interface.
 
 It utilizes the the asyncio library.
 
@@ -62,9 +63,8 @@ def start_background_loop(loop: asyncio.AbstractEventLoop) -> None:
 
 
 class QEMUComIF(ComInterface):
-    """
-    Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the TMTC software
-    """
+    """Specific Communication Interface implementation of the QEMU_SERIAL USART protocol for the
+    TMTC software"""
 
     def __init__(
         self,

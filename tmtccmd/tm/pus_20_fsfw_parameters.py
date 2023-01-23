@@ -9,7 +9,6 @@ from spacepackets.ecss import (
     PfcUnsigned,
     PfcSigned,
     PfcReal,
-    PusVersion,
     PusTelemetry,
 )
 from spacepackets.ecss.defs import PusService

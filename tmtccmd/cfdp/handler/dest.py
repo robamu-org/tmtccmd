@@ -229,95 +229,107 @@ class DestHandler:
         self.user.metadata_recv_indication(params)
         return True
 
+    def __idle_fsm(self):
+        clear_all_other_pdus = True
+        for pdu_type, pdu_deque in self._params.file_directives_dict.items():
+            if pdu_type == DirectiveType.METADATA_PDU:
+                clear_metadata_deque = False
+                for pdu_base in pdu_deque:
+                    metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
+                    self._start_transaction(metadata_pdu)
+                    # CFDP 4.6.1.2.4: Any repeated metadata should be discarded.
+                    if self.states.state != CfdpStates.IDLE:
+                        clear_metadata_deque = True
+                        break
+                if clear_metadata_deque:
+                    pdu_deque.clear()
+            else:
+                # For unacknowledged transfers, there is no lost metadata detection in place.
+                # For now, simply discard all PDUs which arrive before the Metadata PDU.
+                # TODO: This is tricky for acknowledged mode. This implementation writes to the
+                #       virtual filestore directly. If lost segment detection is in place, all
+                #       PDUs which arrive successfully after a missing metadata PDU would have
+                #       to be counted as lost segments.
+                # clear_all_other_pdus = False
+                pass
+        if self.states.state == CfdpStates.IDLE and clear_all_other_pdus:
+            if self._params.file_directives_dict:
+                for other_pdu in self._params.file_directives_dict:
+                    LOGGER.warning(
+                        f"Received {other_pdu} PDU without "
+                        f"first receiving metadata PDU first. Discarding it"
+                    )
+                self._params.file_directives_dict.clear()
+            if self._params.file_data_deque:
+                LOGGER.warning(
+                    f"Received {len(self._params.file_data_deque)} file data PDUs without "
+                    f"first receiving metadata PDU first. Discarding them"
+                )
+                self._params.file_data_deque.clear()
+
+    def __busy_naked_fsm(self):
+        if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
+            self.__receiving_fd_pdus_nacknowledged()
+        if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
+            self._handle_transfer_completion()
+        if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
+            self._prepare_finished_pdu()
+            self.states.packet_ready = True
+
+    def __receiving_fd_pdus_nacknowledged(self):
+        # TODO: Sequence count check
+        for file_data_pdu in self._params.file_data_deque:
+            self.__handle_one_fd_pdu(file_data_pdu)
+        # TODO: Support for check timer missing
+        eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
+        if eof_pdus is not None:
+            for pdu in eof_pdus:
+                eof_pdu = PduHolder(pdu).to_eof_pdu()
+                self._handle_eof_pdu(eof_pdu)
+
+    def __handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
+        data = file_data_pdu.file_data
+        offset = file_data_pdu.offset
+        if self.cfg.indication_cfg.file_segment_recvd_indication_required:
+            file_segment_indic_params = FileSegmentRecvdParams(
+                transaction_id=self._params.transaction_id,
+                length=len(file_data_pdu.file_data),
+                offset=offset,
+                record_cont_state=file_data_pdu.record_cont_state,
+                segment_metadata=file_data_pdu.segment_metadata,
+            )
+            self.user.file_segment_recv_indication(
+                file_segment_indic_params
+            )
+        try:
+            self.user.vfs.write_data(
+                self._params.fp.file_name, data, offset
+            )
+            self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+            # Ensure that the progress value is always incremented
+            if (
+                    offset + len(file_data_pdu.file_data)
+                    > self._params.fp.progress
+            ):
+                self._params.fp.progress = offset + len(
+                    file_data_pdu.file_data
+                )
+        except FileNotFoundError:
+            if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
+                self._params.file_status = (
+                    FileDeliveryStatus.DISCARDED_DELIBERATELY
+                )
+        except PermissionError:
+            if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
+                self._params.file_status = (
+                    FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+                )
+
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
-            clear_all_other_pdus = True
-            for pdu_type, pdu_deque in self._params.file_directives_dict.items():
-                if pdu_type == DirectiveType.METADATA_PDU:
-                    clear_metadata_deque = False
-                    for pdu_base in pdu_deque:
-                        metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
-                        self._start_transaction(metadata_pdu)
-                        # CFDP 4.6.1.2.4: Any repeated metadata should be discarded.
-                        if self.states.state != CfdpStates.IDLE:
-                            clear_metadata_deque = True
-                            break
-                    if clear_metadata_deque:
-                        pdu_deque.clear()
-                else:
-                    # For unacknowledged transfers, there is no lost metadata detection in place.
-                    # For now, simply discard all PDUs which arrive before the Metadata PDU.
-                    # TODO: This is tricky for acknowledged mode. This implementation writes to the
-                    #       virtual filestore directly. If lost segment detection is in place, all
-                    #       PDUs which arrive successfully after a missing metadata PDU would have
-                    #       to be counted as lost segments.
-                    # clear_all_other_pdus = False
-                    pass
-            if self.states.state == CfdpStates.IDLE and clear_all_other_pdus:
-                if self._params.file_directives_dict:
-                    for other_pdu in self._params.file_directives_dict:
-                        LOGGER.warning(
-                            f"Received {other_pdu} PDU without "
-                            f"first receiving metadata PDU first. Discarding it"
-                        )
-                    self._params.file_directives_dict.clear()
-                if self._params.file_data_deque:
-                    LOGGER.warning(
-                        f"Received {len(self._params.file_data_deque)} file data PDUs without "
-                        f"first receiving metadata PDU first. Discarding them"
-                    )
-                    self._params.file_data_deque.clear()
+            self.__idle_fsm()
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
-            if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
-                # TODO: Sequence count check
-                for file_data_pdu in self._params.file_data_deque:
-                    data = file_data_pdu.file_data
-                    offset = file_data_pdu.offset
-                    if self.cfg.indication_cfg.file_segment_recvd_indication_required:
-                        file_segment_indic_params = FileSegmentRecvdParams(
-                            transaction_id=self._params.transaction_id,
-                            length=len(file_data_pdu.file_data),
-                            offset=offset,
-                            record_cont_state=file_data_pdu.record_cont_state,
-                            segment_metadata=file_data_pdu.segment_metadata,
-                        )
-                        self.user.file_segment_recv_indication(
-                            file_segment_indic_params
-                        )
-                    try:
-                        self.user.vfs.write_data(
-                            self._params.fp.file_name, data, offset
-                        )
-                        self._params.file_status = FileDeliveryStatus.FILE_RETAINED
-                        # Ensure that the progress value is always incremented
-                        if (
-                            offset + len(file_data_pdu.file_data)
-                            > self._params.fp.progress
-                        ):
-                            self._params.fp.progress = offset + len(
-                                file_data_pdu.file_data
-                            )
-                    except FileNotFoundError:
-                        if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
-                            self._params.file_status = (
-                                FileDeliveryStatus.DISCARDED_DELIBERATELY
-                            )
-                    except PermissionError:
-                        if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
-                            self._params.file_status = (
-                                FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
-                            )
-                # TODO: Support for check timer missing
-                eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
-                if eof_pdus is not None:
-                    for pdu in eof_pdus:
-                        eof_pdu = PduHolder(pdu).to_eof_pdu()
-                        self._handle_eof_pdu(eof_pdu)
-            if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
-                self._handle_transfer_completion()
-            if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
-                self._prepare_finished_pdu()
-                self.states.packet_ready = True
+            self.__busy_naked_fsm()
         return FsmResult(self.states, self.pdu_holder)
 
     def finish(self):

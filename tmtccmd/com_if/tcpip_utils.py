@@ -64,7 +64,7 @@ def determine_udp_recv_address(json_cfg_path: str) -> EthAddr:
 
 
 def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAddr:
-    address_tuple = ()
+    addr = EthAddr("", 0)
     reconfigure_ip_address = False
     if not check_json_file(json_cfg_path=json_cfg_path):
         reconfigure_ip_address = True

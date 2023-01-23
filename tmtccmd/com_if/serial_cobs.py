@@ -13,8 +13,8 @@ LOGGER = get_console_logger()
 
 
 class SerialCobsComIF(SerialComBase, ComInterface):
-    """Serial communication interface which uses the `COBS protocol <https://pypi.org/project/cobs/>`_
-    to encode and decode packets.
+    """Serial communication interface which uses the
+    `COBS protocol <https://pypi.org/project/cobs/>`_ to encode and decode packets.
 
     This class will spin up a receiver thread on the :meth:`open` call to poll
     for COBS encoded packets.
@@ -91,7 +91,8 @@ class SerialCobsComIF(SerialComBase, ComInterface):
                     else:
                         broken_cobs_frame = self.serial.read_until(bytes([0]))
                         LOGGER.warning(
-                            f"Discarding possibly broken COBS frame: {broken_cobs_frame.hex(sep=',')}"
+                            f"Discarding possibly broken COBS frame: "
+                            f"{broken_cobs_frame.hex(sep=',')}"
                         )
                         last_byte_was_zero = True
             elif self.__polling_shutdown.is_set():

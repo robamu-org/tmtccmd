@@ -22,11 +22,12 @@ class DleCfg:
 
 
 class SerialDleComIF(SerialComBase, ComInterface):
-    """Serial communication interface which uses the `DLE protocol <https://pypi.org/project/dle-encoder/>`_
-    to encode and decode packets.
+    """Serial communication interface which uses the
+    `DLE protocol <https://pypi.org/project/dle-encoder/>`_ to encode and decode packets.
 
-    This class will spin up a receiver thread on the :meth:`open` call to poll for DLE encoded packets.
-    This means that the :meth:`close` call might block until the receiver thread has shut down.
+    This class will spin up a receiver thread on the :meth:`open` call to poll for DLE encoded
+    packets. This means that the :meth:`close` call might block until the receiver thread has shut
+    down.
     """
 
     def __init__(self, ser_cfg: SerialCfg, dle_cfg: Optional[DleCfg]):
