@@ -298,27 +298,16 @@ class DestHandler:
                 record_cont_state=file_data_pdu.record_cont_state,
                 segment_metadata=file_data_pdu.segment_metadata,
             )
-            self.user.file_segment_recv_indication(
-                file_segment_indic_params
-            )
+            self.user.file_segment_recv_indication(file_segment_indic_params)
         try:
-            self.user.vfs.write_data(
-                self._params.fp.file_name, data, offset
-            )
+            self.user.vfs.write_data(self._params.fp.file_name, data, offset)
             self._params.file_status = FileDeliveryStatus.FILE_RETAINED
             # Ensure that the progress value is always incremented
-            if (
-                    offset + len(file_data_pdu.file_data)
-                    > self._params.fp.progress
-            ):
-                self._params.fp.progress = offset + len(
-                    file_data_pdu.file_data
-                )
+            if offset + len(file_data_pdu.file_data) > self._params.fp.progress:
+                self._params.fp.progress = offset + len(file_data_pdu.file_data)
         except FileNotFoundError:
             if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
-                self._params.file_status = (
-                    FileDeliveryStatus.DISCARDED_DELIBERATELY
-                )
+                self._params.file_status = FileDeliveryStatus.DISCARDED_DELIBERATELY
         except PermissionError:
             if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
                 self._params.file_status = (

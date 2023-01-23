@@ -127,6 +127,7 @@ class TcpComIF(ComInterface):
 
     def close(self, args: any = None) -> None:
         self.__tm_thread_kill_signal.set()
+        socket_was_closed = False
         if self.__tcp_conn_thread is not None:
             if self.__tcp_conn_thread.is_alive():
                 self.__tcp_conn_thread.join(self.tm_polling_frequency)
@@ -138,6 +139,9 @@ class TcpComIF(ComInterface):
                         "TCP socket endpoint was already closed or not connected"
                     )
                 self.__tcp_socket.close()
+                socket_was_closed = True
+        if self.__tcp_socket is not None and not socket_was_closed:
+            self.__tcp_socket.close()
         self.__tcp_socket = None
         self.__tcp_conn_thread = None
 
