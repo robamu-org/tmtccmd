@@ -1,6 +1,8 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
 import struct
+
+from spacepackets.ecss import PusService
 from tmtccmd import __version__
 from deprecation import deprecated
 from typing import Optional
@@ -13,10 +15,21 @@ from tmtccmd.logging import get_console_logger
 logger = get_console_logger()
 
 
-def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
+def create_load_param_cmd(app_data: bytes) -> PusTelecommand:
     return PusTelecommand(
-        service=20, subservice=CustomSubservice.TC_LOAD, app_data=app_data
+        service=PusService.S20_PARAMETER,
+        subservice=CustomSubservice.TC_LOAD,
+        app_data=app_data,
     )
+
+
+@deprecated(
+    deprecated_in="4.0.0a3",
+    current_version=__version__,
+    details="Please use crate_fsfw_load_param_cmd instead",
+)
+def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
+    return create_load_param_cmd(app_data)
 
 
 @deprecated(
@@ -35,8 +48,24 @@ def pack_boolean_parameter_app_data(
 def pack_scalar_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
 ) -> Optional[bytearray]:
-    """Generic function to pack a the application data for a parameter service command.
-    Tailored towards FSFW applications.
+    """Tailored towards FSFW applications.
+
+    :param object_id:
+    :param domain_id:
+    :param unique_id:
+    :param parameter:
+    :return: Application data
+    """
+    return pack_scalar_u8_parameter_app_data(
+        object_id, domain_id, unique_id, int(parameter)
+    )
+
+
+def pack_scalar_u8_parameter_app_data(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: int
+) -> Optional[bytearray]:
+    """Tailored towards FSFW applications.
+
     :param object_id:
     :param domain_id:
     :param unique_id:

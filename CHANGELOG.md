@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+## Changed
+
+- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
+  deprecate the former `pack_fsfw_load_param_cmd` function.
+- (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
+  `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
+  towards usage with the FSFW.
+
 # [v4.0.0a2] 2023-01-23
 
 ## Added

@@ -1,4 +1,5 @@
 import enum
+from tmtccmd.tc.pus_20_fsfw_params import *  # noqa: F401
 
 
 class CustomSubservice(enum.IntEnum):
