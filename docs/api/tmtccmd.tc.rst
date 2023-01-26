@@ -52,10 +52,10 @@ tmtccmd.tc.pus\_200\_fsfw\_modes module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tc.pus\_20\_params module
+tmtccmd.tc.pus\_20\_fsfw\_params module
 ---------------------------------------------
 
-.. automodule:: tmtccmd.tc.pus_20_params
+.. automodule:: tmtccmd.tc.pus_20_fsfw_params
    :members:
    :undoc-members:
    :show-inheritance:

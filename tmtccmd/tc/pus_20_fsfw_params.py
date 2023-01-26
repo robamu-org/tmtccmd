@@ -8,7 +8,7 @@ from deprecation import deprecated
 from typing import Optional
 
 from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
-from tmtccmd.pus.s20_fsfw_params import CustomSubservice
+from tmtccmd.pus.s20_fsfw_params_defs import CustomSubservice
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.logging import get_console_logger
 
