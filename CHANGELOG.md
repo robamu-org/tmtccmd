@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+## Added
+
+- `tmtccmd.tm.pus_20_fsfw_params`: New `ParamId` and `ParamStruct` helper
+  dataclasses. Also added `Service20ParamDumpWrapper` helper class
+  to help with the deserialization of parameters.
+
 ## Changed
 
 - `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
@@ -14,6 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
   `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
   towards usage with the FSFW.
+- (breaking): Reworked `tmtccmd.tc.pus_20_params` by simplifying `Service20FsfwTm`
+  significantly. It only implements `AbstractPusTm` now and is a simple wrapper
+  around `PusTelemetry`, which is exposed as a `pus_tm` member.
 
 # [v4.0.0a2] 2023-01-23
 
