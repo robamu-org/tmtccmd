@@ -25,36 +25,38 @@ class EventDefinition:
     param1: int
     param2: int
 
-    def pack(self):
+    def pack(self) -> bytes:
         raw = bytearray(struct.pack("!H", self.event_id))
         if len(self.object_id) < 4:
             raise ValueError("object ID must be at least 4 bytes wide")
         raw.extend(self.object_id)
         raw.extend(struct.pack("!I", self.param1))
         raw.extend(struct.pack("!I", self.param2))
+        return raw
 
     @classmethod
     def empty(cls) -> EventDefinition:
-        return cls(0, bytes(), 0, 0)
+        return cls(0, bytes([0, 0, 0, 0]), 0, 0)
 
     @classmethod
     def from_bytes(cls, data: bytes) -> EventDefinition:
         if len(data) < 14:
-            raise ValueError("full FSFW event definition must be at least 14 bytes wide")
+            raise ValueError(
+                "full FSFW event definition must be at least 14 bytes wide"
+            )
         event_id = struct.unpack("!H", data[0:2])[0]
-        object_id = struct.unpack("!I", data[2:6])[0]
+        object_id = data[2:6]
         param1 = struct.unpack("!I", data[6:10])[0]
         param2 = struct.unpack("!I", data[10:14])[0]
         return cls(event_id, object_id, param1, param2)
 
 
 class Service5Tm(AbstractPusTm):
-
     def __init__(
         self,
         subservice: Subservice,
         event: EventDefinition,
-        time: Optional[CdsShortTimestamp],
+        time_provider: Optional[CdsShortTimestamp],
         ssc: int = 0,
         apid: int = -1,
         packet_version: int = 0b000,
@@ -68,7 +70,7 @@ class Service5Tm(AbstractPusTm):
         self.pus_tm = PusTelemetry(
             service=PusService.S5_EVENT,
             subservice=subservice,
-            time_provider=time,
+            time_provider=time_provider,
             seq_count=ssc,
             source_data=event.pack(),
             apid=apid,
@@ -79,6 +81,9 @@ class Service5Tm(AbstractPusTm):
 
     def get_sp_header(self) -> SpacePacketHeader:
         return self.pus_tm.get_sp_header()
+
+    def pack(self) -> bytes:
+        return self.pus_tm.pack()
 
     @property
     def service(self) -> int:
@@ -97,7 +102,7 @@ class Service5Tm(AbstractPusTm):
         return cls(
             subservice=Subservice.TM_INFO_EVENT,
             event=EventDefinition.empty(),
-            time=CdsShortTimestamp.empty(),
+            time_provider=CdsShortTimestamp.empty(),
         )
 
     @classmethod
@@ -107,9 +112,13 @@ class Service5Tm(AbstractPusTm):
         return instance
 
     @classmethod
-    def unpack(cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]) -> Service5Tm:
+    def unpack(
+        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
+    ) -> Service5Tm:
         instance = cls.__empty()
-        instance.pus_tm = PusTelemetry.unpack(raw_telemetry=raw_telemetry, time_reader=time_reader)
+        instance.pus_tm = PusTelemetry.unpack(
+            raw_telemetry=raw_telemetry, time_reader=time_reader
+        )
         return instance
 
     @property
@@ -126,3 +135,6 @@ class Service5Tm(AbstractPusTm):
     @property
     def event_definition(self) -> EventDefinition:
         return EventDefinition.from_bytes(self.pus_tm.source_data)
+
+    def __eq__(self, other: Service5Tm):
+        return self.pus_tm == other.pus_tm

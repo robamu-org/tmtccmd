@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Example application for the TMTC Commander"""
+import logging
 import sys
 import time
 from typing import Optional
@@ -46,7 +47,7 @@ from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
-LOGGER = get_console_logger()
+_LOGGER = get_console_logger()
 
 EXAMPLE_PUS_APID = 0xEF
 EXAMPLE_CFDP_APID = 0xF0
@@ -94,13 +95,27 @@ class ExampleHookClass(TmTcCfgHookBase):
         return defs
 
     def perform_mode_operation(self, tmtc_backend: CcsdsTmtcBackend, mode: int):
-        LOGGER.info("Mode operation hook was called")
+        _LOGGER.info("Mode operation hook was called")
         pass
 
     def get_object_ids(self) -> ObjectIdDictT:
         from tmtccmd.config.objects import get_core_object_ids
 
         return get_core_object_ids()
+
+
+class DualLogger:
+    def __init__(self, file_logger: logging.Logger, console_logger: logging.Logger):
+        self.file_logger = file_logger
+        self.console_logger = console_logger
+
+    def info(self, string: str):
+        self.console_logger.info(string)
+        self.file_logger.info(string)
+
+    def print(self, string: str):
+        print(string)
+        self.file_logger.info(string)
 
 
 class PusTmHandler(SpecificApidHandlerBase):
@@ -114,6 +129,7 @@ class PusTmHandler(SpecificApidHandlerBase):
         self.printer = printer
         self.raw_logger = raw_logger
         self.verif_wrapper = verif_wrapper
+        self.dlogger = DualLogger(self.printer.file_logger, _LOGGER)
 
     def handle_tm(self, packet: bytes, _user_args: any):
         try:
@@ -121,8 +137,8 @@ class PusTmHandler(SpecificApidHandlerBase):
                 packet, time_reader=CdsShortTimestamp.empty()
             )
         except ValueError as e:
-            LOGGER.warning("Could not generate PUS TM object from raw data")
-            LOGGER.warning(f"Raw Packet: [{packet.hex(sep=',')}], REPR: {packet!r}")
+            _LOGGER.warning("Could not generate PUS TM object from raw data")
+            _LOGGER.warning(f"Raw Packet: [{packet.hex(sep=',')}], REPR: {packet!r}")
             raise e
         service = tm_packet.service
         dedicated_handler = False
@@ -132,11 +148,11 @@ class PusTmHandler(SpecificApidHandlerBase):
             )
             res = self.verif_wrapper.add_tm(verif_tm)
             if res is None:
-                LOGGER.info(
+                _LOGGER.info(
                     f"Received Verification TM[{tm_packet.service}, {tm_packet.subservice}] "
                     f"with Request ID {verif_tm.tc_req_id.as_u32():#08x}"
                 )
-                LOGGER.warning(
+                _LOGGER.warning(
                     f"No matching telecommand found for {verif_tm.tc_req_id}"
                 )
             else:
@@ -145,24 +161,21 @@ class PusTmHandler(SpecificApidHandlerBase):
             dedicated_handler = True
         if service == 5:
             event_tm = Service5Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
-            dedicated_handler = True
-        if service == 17:
-            ping_tm = Service17Tm.unpack(
-                packet, time_reader=CdsShortTimestamp.empty()
+            self.dlogger.info(
+                f"Received event packet TM [{event_tm.service}, {event_tm.subservice}]"
             )
             dedicated_handler = True
+        if service == 17:
+            ping_tm = Service17Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
+            dedicated_handler = True
             if ping_tm.subservice == 2:
-                self.printer.file_logger.info("Received Ping Reply TM[17,2]")
-                LOGGER.info("Received Ping Reply TM[17,2]")
+                self.dlogger.info("Received Ping Reply TM[17,2]")
             else:
-                self.printer.file_logger.info(
-                    f"Received Test Packet with unknown subservice {tm_packet.subservice}"
-                )
-                LOGGER.info(
+                self.dlogger.info(
                     f"Received Test Packet with unknown subservice {tm_packet.subservice}"
                 )
         if tm_packet is None:
-            LOGGER.info(
+            _LOGGER.info(
                 f"The service {service} is not implemented in Telemetry Factory"
             )
             tm_packet = PusTelemetry.unpack(
@@ -197,16 +210,16 @@ class TcHandler(TcHandlerBase):
                 )
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
-                LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
+                _LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
                 send_params.com_if.send(raw_tc)
         elif entry_helper.entry_type == TcQueueEntryType.LOG:
             log_entry = entry_helper.to_log_entry()
-            LOGGER.info(log_entry.log_str)
+            _LOGGER.info(log_entry.log_str)
 
     def queue_finished_cb(self, helper: ProcedureWrapper):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
-            LOGGER.info(
+            _LOGGER.info(
                 f"Queue handling finished for service {def_proc.service} and "
                 f"op code {def_proc.op_code}"
             )
@@ -250,7 +263,9 @@ def main():  # noqa: C901
     printer = FsfwTmTcPrinter(tmtc_logger.logger)
     raw_logger = RawTmtcTimedLogWrapper(when=TimedLogWhen.PER_HOUR, interval=1)
     verificator = PusVerificator()
-    verification_wrapper = VerificationWrapper(verificator, LOGGER, printer.file_logger)
+    verification_wrapper = VerificationWrapper(
+        verificator, _LOGGER, printer.file_logger
+    )
     # Create primary TM handler and add it to the CCSDS Packet Handler
     tm_handler = PusTmHandler(verification_wrapper, printer, raw_logger)
     ccsds_handler = CcsdsTmHandler(generic_handler=None)
@@ -274,7 +289,7 @@ def main():  # noqa: C901
             if state.request == BackendRequest.TERMINATION_NO_ERROR:
                 sys.exit(0)
             elif state.request == BackendRequest.DELAY_IDLE:
-                LOGGER.info("TMTC Client in IDLE mode")
+                _LOGGER.info("TMTC Client in IDLE mode")
                 time.sleep(3.0)
             elif state.request == BackendRequest.DELAY_LISTENER:
                 time.sleep(0.8)
