@@ -50,7 +50,7 @@ class ParamId:
 @dataclasses.dataclass
 class ParamStruct:
     param_id: ParamId
-    ptc: int
+    ptc: Optional[Ptc]
     pfc: int
     row: int
     column: int
@@ -59,7 +59,12 @@ class ParamStruct:
     @classmethod
     def empty(cls):
         return cls(
-            param_id=ParamId.empty(), ptc=0, pfc=0, row=0, column=0, param_data=bytes()
+            param_id=ParamId.empty(),
+            ptc=None,
+            pfc=0,
+            row=0,
+            column=0,
+            param_data=bytes(),
         )
 
     def parse_scalar_param(self) -> Union[int, float]:
@@ -67,27 +72,34 @@ class ParamStruct:
 
 
 class Service20ParamDumpWrapper:
-    def __init__(self, tm: Service20FsfwTm):
-        self.tm = tm
-        if self.tm.subservice != CustomSubservice.TM_DUMP_REPLY:
+    def __init__(self, param_tm: Service20FsfwTm):
+        self.param_tm = param_tm
+        if self.param_tm.subservice != CustomSubservice.TM_DUMP_REPLY:
             raise ValueError(f"subservice is not {CustomSubservice.TM_DUMP_REPLY}")
+
+    @property
+    def base_tm(self) -> PusTelemetry:
+        return self.param_tm.pus_tm
 
     def get_param(self) -> ParamStruct:
         """Tries to build a :py:class`ParamStruct` from the own raw telemetry data.
 
         :raises ValueError: Telemetry source data too short.
         """
-        if len(self.tm.source_data) < 12:
+        if len(self.param_tm.source_data) < 12:
             raise ValueError("source data too short to hold parameter")
-        param_id = ParamId.from_bytes(self.tm.source_data[4:8])
-        ptc = self.tm.source_data[8]
-        pfc = self.tm.source_data[9]
-        row = self.tm.source_data[10]
-        column = self.tm.source_data[11]
-        param_data = self.tm.source_data[12:]
+        param_id = ParamId.from_bytes(self.param_tm.source_data[4:8])
+        try:
+            ptc = Ptc(self.param_tm.source_data[8])
+        except TypeError:
+            raise ValueError(f"unknown PTC {self.param_tm.source_data[8]}")
+        pfc = self.param_tm.source_data[9]
+        row = self.param_tm.source_data[10]
+        column = self.param_tm.source_data[11]
+        param_data = self.param_tm.source_data[12:]
         return ParamStruct(
             param_id=param_id,
-            ptc=ptc,
+            ptc=Ptc(ptc),
             pfc=pfc,
             row=row,
             column=column,
@@ -146,7 +158,7 @@ class Service20FsfwTm(AbstractPusTm):
 
     @property
     def object_id(self) -> bytes:
-        return self.source_data[0:4]
+        return bytes(self.source_data[0:4])
 
     @property
     def service(self) -> int:
@@ -171,32 +183,32 @@ class Service20FsfwTm(AbstractPusTm):
         )
 
 
+__BASE_LEN_ERR = "Invalid parameter data size, smaller than "
+
+
 def __deserialize_unsigned_scalar_entry(
-    pfc: int, ptc: int, param_data: bytes, param_len: int, len_error_str: str
+    pfc: int, ptc: int, param_data: bytes, param_len: int
 ) -> int:
     if pfc == PfcUnsigned.ONE_BYTE:
         if param_len < 1:
-            raise ValueError(f"{len_error_str} 1")
+            raise ValueError(f"{__BASE_LEN_ERR} 1")
         return param_data[0]
     elif pfc == PfcUnsigned.TWO_BYTES:
         if param_len < 2:
-            raise ValueError(f"{len_error_str} 2")
+            raise ValueError(f"{__BASE_LEN_ERR} 2")
         return struct.unpack("!H", param_data[0:2])[0]
     if pfc == PfcUnsigned.FOUR_BYTES:
         if param_len < 4:
-            raise ValueError(f"{len_error_str} 4")
+            raise ValueError(f"{__BASE_LEN_ERR} 4")
         return struct.unpack("!I", param_data[0:4])[0]
     elif pfc == PfcUnsigned.EIGHT_BYTES:
         if param_len < 8:
-            raise ValueError(f"{len_error_str} 8")
+            raise ValueError(f"{__BASE_LEN_ERR} 8")
         return struct.unpack("!Q", param_data[0:8])[0]
     else:
         raise NotImplementedError(
             f"Parsing of unsigned PTC {ptc} not implemented for PFC {pfc}"
         )
-
-
-__BASE_LEN_ERR = "Invalid parameter data size, smaller than "
 
 
 def __deserialize_signed_scalar_entry(
