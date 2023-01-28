@@ -5,7 +5,7 @@ from typing import Deque, List, Union, Dict, Optional
 from spacepackets.ecss import PusTelemetry
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
-from tmtccmd.tm.pus_5_event import Service5Tm
+from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.tm.pus_8_fsfw_funccmd import Service8FsfwTm
 from tmtccmd.tm.pus_3_fsfw_hk import Service3FsfwTm
 from tmtccmd.tm.pus_20_fsfw_params import Service20FsfwTm

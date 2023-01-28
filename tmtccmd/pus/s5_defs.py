@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Optional, Dict
 
 from spacepackets.ecss.pus_5_event import Severity
@@ -14,6 +15,7 @@ def str_to_severity(string: str) -> Optional[Severity]:
         return Severity.HIGH
 
 
+@dataclasses.dataclass
 class EventInfo:
     id: int = 0
     name: str = ""

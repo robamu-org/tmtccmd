@@ -42,7 +42,7 @@ from tmtccmd.tc import (
     TcHandlerBase,
     QueueWrapper,
 )
-from tmtccmd.tm.pus_5_event import Service5Tm
+from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
@@ -127,30 +127,31 @@ class PusTmHandler(SpecificApidHandlerBase):
         service = tm_packet.service
         dedicated_handler = False
         if service == 1:
-            tm_packet = Service1Tm.unpack(
+            verif_tm = Service1Tm.unpack(
                 data=packet, params=UnpackParams(CdsShortTimestamp.empty(), 1, 2)
             )
-            res = self.verif_wrapper.add_tm(tm_packet)
+            res = self.verif_wrapper.add_tm(verif_tm)
             if res is None:
                 LOGGER.info(
                     f"Received Verification TM[{tm_packet.service}, {tm_packet.subservice}] "
-                    f"with Request ID {tm_packet.tc_req_id.as_u32():#08x}"
+                    f"with Request ID {verif_tm.tc_req_id.as_u32():#08x}"
                 )
                 LOGGER.warning(
-                    f"No matching telecommand found for {tm_packet.tc_req_id}"
+                    f"No matching telecommand found for {verif_tm.tc_req_id}"
                 )
             else:
-                self.verif_wrapper.log_to_console(tm_packet, res)
-                self.verif_wrapper.log_to_file(tm_packet, res)
+                self.verif_wrapper.log_to_console(verif_tm, res)
+                self.verif_wrapper.log_to_file(verif_tm, res)
             dedicated_handler = True
         if service == 5:
-            tm_packet = Service5Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
+            event_tm = Service5Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
+            dedicated_handler = True
         if service == 17:
-            tm_packet = Service17Tm.unpack(
+            ping_tm = Service17Tm.unpack(
                 packet, time_reader=CdsShortTimestamp.empty()
             )
             dedicated_handler = True
-            if tm_packet.subservice == 2:
+            if ping_tm.subservice == 2:
                 self.printer.file_logger.info("Received Ping Reply TM[17,2]")
                 LOGGER.info("Received Ping Reply TM[17,2]")
             else:

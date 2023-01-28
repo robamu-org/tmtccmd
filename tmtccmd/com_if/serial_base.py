@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import enum
+from enum import auto
 import logging
 import time
 from typing import Optional
@@ -9,7 +10,6 @@ import serial
 
 
 class SerialConfigIds(enum.Enum):
-    from enum import auto
 
     SERIAL_PORT = auto()
     SERIAL_BAUD_RATE = auto()
