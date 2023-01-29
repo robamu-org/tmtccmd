@@ -3,7 +3,7 @@ import threading
 from typing import Optional
 
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com import ComInterface
+from tmtccmd.com import ComInterface, ReceptionDecodeError
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
 from tmtccmd.tm import TelemetryListT
 from cobs import cobs
@@ -65,10 +65,10 @@ class SerialCobsComIF(SerialComBase, ComInterface):
             try:
                 packet_list.append(cobs.decode(data))
             except cobs.DecodeError as e:
-                LOGGER.warning(f"COBS decoding error: {e}")
+                raise ReceptionDecodeError(f"COBS decoding error: {e}", e)
         return packet_list
 
-    def data_available(self, timeout: float, parameters: any) -> int:
+    def data_available(self, timeout: float, parameters: any = 0) -> int:
         return SerialComBase.data_available_from_queue(timeout, self.__reception_buffer)
 
     def __poll_cobs_packets(self):

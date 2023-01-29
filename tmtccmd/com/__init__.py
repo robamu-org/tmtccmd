@@ -4,8 +4,16 @@ Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
 :author:     R. Mueller
 """
 from abc import abstractmethod, ABC
+from typing import Optional
 
 from tmtccmd.tm import TelemetryListT
+
+
+class ReceptionDecodeError(Exception):
+    def __init__(self, msg: str, custom_exception: Optional[Exception]):
+        """Generic decode error which can also wrap the exception thrown by other libraries."""
+        super().__init__(msg)
+        self.custom_exception = custom_exception
 
 
 class ComInterface(ABC):
@@ -54,6 +62,8 @@ class ComInterface(ABC):
         to be returned here.
 
         :param parameters:
+        :raises ReceptionDecodeError: If the underlying COM interface uses encoding and decoding
+            and the decoding fails, this exception will be returned.
         :return:
         """
         packet_list = []
