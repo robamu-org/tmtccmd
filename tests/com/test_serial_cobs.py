@@ -1,15 +1,17 @@
 import os
+import sys
 import time
+import unittest
 from unittest import TestCase
 
-from cobs import cobs
 from tmtccmd.com.serial_base import SerialCfg
 from tmtccmd.com.serial_cobs import SerialCobsComIF
-import pty
 
 
+@unittest.skipIf(sys.platform.startswith("win"), "pty only works on POSIX systems")
 class TestSerialCobsInterface(TestCase):
     def setUp(self) -> None:
+        import pty
         self.master, self.slave = pty.openpty()
         sname = os.ttyname(self.slave)
         self.ser_cfg = SerialCfg(
@@ -28,6 +30,7 @@ class TestSerialCobsInterface(TestCase):
         self.assertEqual(self.cobs_if.get_id(), "pseudo_ser_cobs")
 
     def test_send(self):
+        from cobs import cobs
         test_data = bytes([0x01, 0x02, 0x03])
         encoded_len = len(cobs.encode(test_data))
         self.cobs_if.send(test_data)
@@ -36,6 +39,7 @@ class TestSerialCobsInterface(TestCase):
         self.assertEqual(test_data_read_back, test_data)
 
     def test_recv(self):
+        from cobs import cobs
         test_data = bytes([0x02, 0x03, 0x04])
         encoded_test_data = cobs.encode(test_data)
         # Add packer delimiters.
