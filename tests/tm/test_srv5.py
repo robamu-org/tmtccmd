@@ -17,7 +17,7 @@ class TestSrv5Tm(TestCase):
 
     def test_basic(self):
         self.assertEqual(
-            self.srv5_tm.get_sp_header(), self.srv5_tm.pus_tm.get_sp_header()
+            self.srv5_tm.sp_header, self.srv5_tm.pus_tm.space_packet_header
         )
         self.assertEqual(self.srv5_tm.service, 5)
         self.assertEqual(self.srv5_tm.subservice, Subservice.TM_INFO_EVENT)

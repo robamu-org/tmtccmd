@@ -145,8 +145,8 @@ class PusTmInfoBase(PusTmInfoInterface):
         content_list.append(
             f"{self.pus_tm.pus_tm_sec_header.time_provider.as_time_string()}"
         )
-        content_list.append(f"0x{self.pus_tm.sp_header.apid:02x}")
-        content_list.append(f"{self.pus_tm.sp_header.seq_count}")
+        content_list.append(f"0x{self.pus_tm.space_packet_header.apid:02x}")
+        content_list.append(f"{self.pus_tm.space_packet_header.seq_count}")
         if self.pus_tm.valid:
             content_list.append("Yes")
         else:

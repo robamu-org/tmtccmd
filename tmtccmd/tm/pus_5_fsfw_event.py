@@ -79,8 +79,9 @@ class Service5Tm(AbstractPusTm):
             destination_id=destination_id,
         )
 
-    def get_sp_header(self) -> SpacePacketHeader:
-        return self.pus_tm.get_sp_header()
+    @property
+    def sp_header(self) -> SpacePacketHeader:
+        return self.pus_tm.space_packet_header
 
     def pack(self) -> bytes:
         return self.pus_tm.pack()

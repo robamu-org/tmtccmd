@@ -100,8 +100,8 @@ class Service20FsfwTm(AbstractPusTm):
     def pack(self) -> bytes:
         return self.pus_tm.pack()
 
-    def get_sp_header(self) -> SpacePacketHeader:
-        return self.pus_tm.sp_header
+    def sp_header(self) -> SpacePacketHeader:
+        return self.pus_tm.space_packet_header
 
     @property
     def object_id(self) -> bytes:
