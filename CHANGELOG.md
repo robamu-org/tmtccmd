@@ -9,9 +9,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Added
 
-- `tmtccmd.tm.pus_20_fsfw_params`: New `ParamId` and `ParamStruct` helper
+- `tmtccmd.pus.pus_20_fsfw_params_defs`: New `ParameterId` and `Parameter` helper
   dataclasses. Also added `Service20ParamDumpWrapper` helper class
-  to help with the deserialization of parameters.
+  to help with the deserialization of parameters. The helper classes can be used both
+  for TC and TM handling. Create new API set to create the `Parameter` classes for common
+  parameter types.
 
 ## Changed
 
