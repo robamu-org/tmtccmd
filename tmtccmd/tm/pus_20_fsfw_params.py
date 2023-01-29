@@ -28,7 +28,7 @@ class Service20ParamDumpWrapper:
         return self.param_tm.pus_tm
 
     def get_param(self) -> Parameter:
-        """Tries to build a :py:class`ParamStruct` from the own raw telemetry data.
+        """Tries to build a :py:class:`Parameter` from the own raw telemetry data.
 
         :raises ValueError: Telemetry source data too short.
         """
@@ -102,6 +102,10 @@ class Service20FsfwTm(AbstractPusTm):
 
     def sp_header(self) -> SpacePacketHeader:
         return self.pus_tm.space_packet_header
+
+    @property
+    def time_provider(self) -> Optional[CcsdsTimeProvider]:
+        return self.pus_tm.time_provider
 
     @property
     def object_id(self) -> bytes:

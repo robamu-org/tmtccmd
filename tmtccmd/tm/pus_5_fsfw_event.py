@@ -83,6 +83,10 @@ class Service5Tm(AbstractPusTm):
     def sp_header(self) -> SpacePacketHeader:
         return self.pus_tm.space_packet_header
 
+    @property
+    def time_provider(self) -> Optional[CcsdsTimeProvider]:
+        return self.pus_tm.time_provider
+
     def pack(self) -> bytes:
         return self.pus_tm.pack()
 
