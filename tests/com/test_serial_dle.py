@@ -32,21 +32,35 @@ class TestSerialDleInterface(TestCase):
         cls._DLE_IF.open()
         cls._DLE_IF.initialize()
 
+    def setUp(self) -> None:
+        from dle_encoder.dle_encoder import DleEncoder
+
+        self.encoder = DleEncoder()
+
     def test_state(self):
         self.assertTrue(self._DLE_IF.is_open())
         self.assertEqual(self._DLE_IF.data_available(0), 0)
         self.assertEqual(self._DLE_IF.get_id(), "pseudo_ser_dle")
 
     def test_send(self):
-        from dle_encoder.dle_encoder import DleEncoder
-
         test_data = bytes([0x01, 0x02, 0x03])
-        encoder = DleEncoder()
-        encoded_len = len(encoder.encode(test_data))
+        encoded_len = len(self.encoder.encode(test_data))
         self._DLE_IF.send(test_data)
         encoded_packet = os.read(self._PTY_MASTER, encoded_len)
-        (errors, test_data_read_back, len_read) = encoder.decode(encoded_packet)
+        (errors, test_data_read_back, len_read) = self.encoder.decode(encoded_packet)
         self.assertEqual(test_data_read_back, test_data)
+
+    def test_recv(self):
+        test_data = bytes([0x02, 0x03, 0x04])
+        encoded_test_data = self.encoder.encode(test_data)
+        os.write(self._PTY_MASTER, encoded_test_data)
+        # Give the receiver thread some time to do its work.
+        time.sleep(0.1)
+        self.assertEqual(self._DLE_IF.data_available(0), 1)
+        packet_list = self._DLE_IF.receive()
+        self.assertEqual(len(packet_list), 1)
+        # Received data should be decoded now
+        self.assertEqual(packet_list[0], test_data)
 
     @classmethod
     def tearDownClass(cls) -> None:
