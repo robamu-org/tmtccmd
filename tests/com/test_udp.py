@@ -14,13 +14,11 @@ class TestUdpIf(TestCase):
         self.udp_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.addr = (LOCALHOST, 7777)
         self.udp_server.bind(self.addr)
-        self.max_sz = 1024
-        self.udp_client = UdpComIF(
-            "udp", send_address=EthAddr.from_tuple(self.addr), max_recv_size=self.max_sz
-        )
+        self.udp_client = UdpComIF("udp", send_address=EthAddr.from_tuple(self.addr))
         self.udp_client.initialize()
 
     def test_basic(self):
+        self.assertEqual(self.udp_client.get_id(), "udp")
         self._open()
 
     def test_send(self):
@@ -40,7 +38,7 @@ class TestUdpIf(TestCase):
         self.udp_client.send(data)
         ready = select.select([self.udp_server], [], [], 0.1)
         self.assertTrue(ready[0])
-        data_recv, sender_addr = self.udp_server.recvfrom(self.max_sz)
+        data_recv, sender_addr = self.udp_server.recvfrom(4096)
         self.assertEqual(data, data_recv)
         return sender_addr
 

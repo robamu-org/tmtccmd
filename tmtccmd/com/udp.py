@@ -18,20 +18,17 @@ class UdpComIF(ComInterface):
         self,
         com_if_id: str,
         send_address: EthAddr,
-        max_recv_size: int,
         recv_addr: Optional[EthAddr] = None,
     ):
         """Initialize a communication interface to send and receive UDP datagrams.
 
         :param send_address:
-        :param max_recv_size:
         :param recv_addr:
         """
         self.udp_socket = None
         self.com_if_id = com_if_id
         self.send_address = send_address
         self.recv_addr = recv_addr
-        self.max_recv_size = max_recv_size
 
     def get_id(self) -> str:
         return self.com_if_id
@@ -86,7 +83,7 @@ class UdpComIF(ComInterface):
             return packet_list
         try:
             while self.data_available(poll_timeout):
-                data, sender_addr = self.udp_socket.recvfrom(self.max_recv_size)
+                data, sender_addr = self.udp_socket.recvfrom(4096)
                 packet_list.append(bytearray(data))
             return packet_list
         except ConnectionResetError:

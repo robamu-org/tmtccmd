@@ -45,7 +45,6 @@ class TcpComIF(ComInterface):
         space_packet_ids: Tuple[int],
         tm_polling_freqency: float,
         target_address: EthAddr,
-        max_recv_size: int,
         max_packets_stored: int = 50,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP
@@ -61,7 +60,6 @@ class TcpComIF(ComInterface):
         self.space_packet_ids = space_packet_ids
         self.tm_polling_frequency = tm_polling_freqency
         self.target_address = target_address
-        self.max_recv_size = max_recv_size
         self.max_packets_stored = max_packets_stored
         self.connected = False
 
@@ -191,7 +189,7 @@ class TcpComIF(ComInterface):
         try:
             ready = select.select([self.__tcp_socket], [], [], 0)
             if ready[0]:
-                bytes_recvd = self.__tcp_socket.recv(self.max_recv_size)
+                bytes_recvd = self.__tcp_socket.recv(4096)
                 if bytes_recvd == b"":
                     self.__close_tcp_socket()
                     LOGGER.info("TCP server has been closed")
