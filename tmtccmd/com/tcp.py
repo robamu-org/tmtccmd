@@ -7,7 +7,7 @@ import select
 from collections import deque
 from typing import Optional, Tuple
 
-from spacepackets.ccsds.spacepacket import parse_space_packets
+from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface
@@ -42,7 +42,7 @@ class TcpComIF(ComInterface):
         self,
         com_if_id: str,
         com_type: TcpCommunicationType,
-        space_packet_ids: Tuple[int],
+        space_packet_ids: Tuple[PacketId],
         tm_polling_freqency: float,
         target_address: EthAddr,
         max_packets_stored: int = 50,
@@ -143,7 +143,7 @@ class TcpComIF(ComInterface):
         self.__tcp_socket = None
         self.__tcp_conn_thread = None
 
-    def send(self, data: bytearray):
+    def send(self, data: bytes):
         try:
             if not self.connected:
                 self.set_up_socket()
