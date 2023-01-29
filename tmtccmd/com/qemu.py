@@ -28,10 +28,10 @@ import time
 from collections import deque
 from threading import Thread
 
-from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_fixed_frame import poll_pus_packets_fixed_frames
+from tmtccmd.com import ComInterface
+from tmtccmd.com.serial_fixed_frame import poll_pus_packets_fixed_frames
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.serial_base import SerialCommunicationType
+from tmtccmd.com.serial_base import SerialCommunicationType
 from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 

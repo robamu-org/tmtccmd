@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
-from tmtccmd.com_if.dummy import DummyComIF
+from tmtccmd.com.dummy import DummyComIF
 from tmtccmd.core import TcMode, TmMode, BackendRequest
 from tmtccmd.core.ccsds_backend import NoValidProcedureSet
 from tmtccmd.tc import (

@@ -13,7 +13,7 @@ from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 from spacepackets.util import UnsignedByteField
 
 from tmtccmd import CcsdsTmtcBackend, ProcedureParamsWrapper, BackendRequest
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.config import (

@@ -4,22 +4,22 @@ from typing import Optional, Tuple, cast
 from tmtccmd.config.defs import CoreComInterfaces
 from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import (
+from tmtccmd.com import ComInterface
+from tmtccmd.com.serial_base import (
     SerialConfigIds,
     SerialCommunicationType,
     SerialCfg,
 )
 
-from tmtccmd.com_if.serial_dle import SerialDleComIF
-from tmtccmd.com_if.serial_fixed_frame import SerialFixedFrameComIF
-from tmtccmd.com_if.serial_cobs import SerialCobsComIF
+from tmtccmd.com.serial_dle import SerialDleComIF
+from tmtccmd.com.serial_fixed_frame import SerialFixedFrameComIF
+from tmtccmd.com.serial_cobs import SerialCobsComIF
 
-from tmtccmd.com_if.ser_utils import determine_com_port, determine_baud_rate
-from tmtccmd.com_if.tcpip_utils import TcpIpType, EthAddr
+from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
+from tmtccmd.com.tcpip_utils import TcpIpType, EthAddr
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if.udp import UdpComIF
-from tmtccmd.com_if.tcp import TcpComIF, TcpCommunicationType
+from tmtccmd.com.udp import UdpComIF
+from tmtccmd.com.tcp import TcpComIF, TcpCommunicationType
 
 LOGGER = get_console_logger()
 
@@ -123,8 +123,8 @@ def create_com_interface_default(cfg: ComIfCfgBase) -> Optional[ComInterface]:
 
 
 def __create_com_if(cfg: ComIfCfgBase) -> Optional[ComInterface]:
-    from tmtccmd.com_if.dummy import DummyComIF
-    from tmtccmd.com_if.qemu import QEMUComIF
+    from tmtccmd.com.dummy import DummyComIF
+    from tmtccmd.com.qemu import QEMUComIF
 
     if (
         cfg.com_if_key == CoreComInterfaces.UDP.value
@@ -175,7 +175,7 @@ def default_tcpip_cfg_setup(
     :param space_packet_ids:       Required if the TCP com interface needs to parse space packets
     :return:
     """
-    from tmtccmd.com_if.tcpip_utils import (
+    from tmtccmd.com.tcpip_utils import (
         determine_udp_send_address,
         determine_tcp_send_address,
         determine_recv_buffer_len,

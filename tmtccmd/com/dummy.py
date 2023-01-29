@@ -12,7 +12,7 @@ from spacepackets.ecss.pus_1_verification import (
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ccsds.time import CdsShortTimestamp
 
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.config import CoreComInterfaces
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.tm.pus_1_verification import Subservice as Pus1Subservices

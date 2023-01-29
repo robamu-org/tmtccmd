@@ -17,7 +17,7 @@ from tmtccmd.tc.ccsds_seq_sender import (
     SenderMode,
 )
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 
 LOGGER = get_console_logger()
 

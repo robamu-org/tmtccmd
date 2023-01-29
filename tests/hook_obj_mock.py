@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Optional
 from unittest.mock import MagicMock
 
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import TmTcCfgHookBase

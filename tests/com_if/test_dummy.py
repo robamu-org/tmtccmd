@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.com_if.dummy import DummyComIF
+from tmtccmd.com.dummy import DummyComIF
 
 
 class TestDummy(TestCase):

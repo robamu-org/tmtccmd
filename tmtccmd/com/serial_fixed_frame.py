@@ -4,8 +4,8 @@ import deprecation
 
 from tmtccmd import __version__
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if import ComInterface
-from tmtccmd.com_if.serial_base import SerialComBase, SerialCfg
+from tmtccmd.com import ComInterface
+from tmtccmd.com.serial_base import SerialComBase, SerialCfg
 from tmtccmd.tm import TelemetryListT
 
 LOGGER = get_console_logger()

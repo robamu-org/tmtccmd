@@ -9,7 +9,7 @@ from tmtccmd.tm import (
     CcsdsTmHandler,
     GenericApidHandlerBase,
 )
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 
 

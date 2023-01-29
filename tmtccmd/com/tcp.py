@@ -10,9 +10,9 @@ from typing import Optional, Tuple
 from spacepackets.ccsds.spacepacket import parse_space_packets
 
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.tcpip_utils import EthAddr
+from tmtccmd.com.tcpip_utils import EthAddr
 from tmtccmd.util.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()

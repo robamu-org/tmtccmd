@@ -43,7 +43,7 @@ from tmtccmd.gui.buttons import (
 from tmtccmd.gui.defs import SharedArgs, CONNECT_BTTN_STYLE, FrontendState
 from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com_if.tcpip_utils import TcpIpConfigIds
+from tmtccmd.com.tcpip_utils import TcpIpConfigIds
 import tmtccmd as mod_root
 
 LOGGER = get_console_logger()

@@ -5,7 +5,7 @@ from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
 
 from tmtccmd.tm import TelemetryQueueT, CcsdsTmHandler
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 
 LOGGER = get_console_logger()
 

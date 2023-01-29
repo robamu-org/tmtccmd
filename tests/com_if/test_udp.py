@@ -2,8 +2,8 @@ import select
 import socket
 from unittest import TestCase
 
-from tmtccmd.com_if.tcpip_utils import EthAddr
-from tmtccmd.com_if.udp import UdpComIF
+from tmtccmd.com.tcpip_utils import EthAddr
+from tmtccmd.com.udp import UdpComIF
 
 
 LOCALHOST = "127.0.0.1"

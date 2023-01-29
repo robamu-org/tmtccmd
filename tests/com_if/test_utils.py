@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
 
-from tmtccmd.com_if.utils import determine_com_if
+from tmtccmd.com.utils import determine_com_if
 
 
 class TestUtils(TestCase):
@@ -11,7 +11,7 @@ class TestUtils(TestCase):
         self.json_file = "test.json"
 
     def test_com_if_utils(self):
-        with patch("tmtccmd.com_if.utils.wrapped_prompt", side_effect=["0", "yes"]):
+        with patch("tmtccmd.com.utils.wrapped_prompt", side_effect=["0", "yes"]):
             test_dict = {"test-com-if": ("Some more info", None)}
             com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
@@ -21,7 +21,7 @@ class TestUtils(TestCase):
                 lines[1] = '    "com_if": "test-com-if"\n'
                 lines[2] = "}"
             os.remove(self.json_file)
-        with patch("tmtccmd.com_if.utils.wrapped_prompt", side_effect=["0", "no"]):
+        with patch("tmtccmd.com.utils.wrapped_prompt", side_effect=["0", "no"]):
             test_dict = {"test-com-if": ("Some more info", None)}
             com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
@@ -29,14 +29,14 @@ class TestUtils(TestCase):
                 lines = file.readlines()
                 lines[0] = "{}"
         with patch(
-            "tmtccmd.com_if.utils.wrapped_prompt",
+            "tmtccmd.com.utils.wrapped_prompt",
             side_effect=["1", "0", "no"],
         ):
             test_dict = {"test-com-if": ("Some more info", None)}
             com_if = determine_com_if(test_dict, self.json_file, True)
             self.assertEqual(com_if, "test-com-if")
         with patch(
-            "tmtccmd.com_if.utils.wrapped_prompt",
+            "tmtccmd.com.utils.wrapped_prompt",
             side_effect=["blub", "0", "no"],
         ):
             test_dict = {"test-com-if": ("Some more info", None)}

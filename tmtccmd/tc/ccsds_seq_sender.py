@@ -11,7 +11,7 @@ from tmtccmd.tc import (
 )
 from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tc.queue import QueueWrapper
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.logging import get_console_logger
 from tmtccmd.util.countdown import Countdown
 

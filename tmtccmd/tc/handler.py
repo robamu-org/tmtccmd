@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.tc.procedure import ProcedureWrapper
 from tmtccmd.tc.queue import QueueWrapper, QueueEntryHelper
 

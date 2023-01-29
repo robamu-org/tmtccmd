@@ -4,9 +4,9 @@ import socket
 from typing import Optional
 
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com_if import ComInterface
+from tmtccmd.com import ComInterface
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com_if.tcpip_utils import EthAddr
+from tmtccmd.com.tcpip_utils import EthAddr
 
 LOGGER = get_console_logger()
 
