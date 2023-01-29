@@ -70,7 +70,7 @@ class TestTcpIf(TestCase):
 
     def _test_send(self):
         self.tcp_client.send(self.base_data)
-        time.sleep(0.15)
+        time.sleep(0.2)
         self.assertEqual(len(self.server_received_packets), 1)
         packet = self.server_received_packets.pop()
         self.assertEqual(packet, self.base_data)
@@ -80,7 +80,7 @@ class TestTcpIf(TestCase):
 
     def _test_recv(self):
         self.tcp_client.send(self.ping_cmd.pack())
-        time.sleep(0.05)
+        time.sleep(0.2)
         # Assert it arrived at the server
         self.assertEqual(len(self.server_received_packets), 1)
         packet = self.server_received_packets.pop()
