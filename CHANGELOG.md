@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Changed
 
+- (possibly breaking): Rename `com_if` module to `com`.
 - `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
   deprecate the former `pack_fsfw_load_param_cmd` function.
 - (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
