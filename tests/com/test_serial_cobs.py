@@ -19,6 +19,7 @@ class TestSerialCobsInterface(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         import pty
+
         cls._PTY_MASTER, slave = pty.openpty()
         sname = os.ttyname(slave)
         ser_cfg = SerialCfg(
@@ -41,6 +42,7 @@ class TestSerialCobsInterface(TestCase):
 
     def test_send(self):
         from cobs import cobs
+
         test_data = bytes([0x01, 0x02, 0x03])
         encoded_len = len(cobs.encode(test_data))
         self._COBS_IF.send(test_data)
@@ -50,6 +52,7 @@ class TestSerialCobsInterface(TestCase):
 
     def test_recv(self):
         from cobs import cobs
+
         test_data = bytes([0x02, 0x03, 0x04])
         encoded_test_data = cobs.encode(test_data)
         # Add packer delimiters.
