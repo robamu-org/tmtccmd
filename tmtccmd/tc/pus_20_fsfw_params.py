@@ -1,5 +1,6 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
+from __future__ import annotations
 import struct
 
 from spacepackets.ecss import PusService
@@ -8,7 +9,13 @@ from deprecation import deprecated
 from typing import Optional
 
 from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
-from tmtccmd.pus.s20_fsfw_params_defs import CustomSubservice
+from tmtccmd.pus.s20_fsfw_params_defs import (  # noqa: F401
+    CustomSubservice,
+    create_scalar_boolean_parameter,
+    create_scalar_u8_parameter,
+    create_scalar_float_parameter,
+    create_scalar_double_parameter,
+)
 from spacepackets.ecss.tc import PusTelecommand
 from tmtccmd.logging import get_console_logger
 
@@ -35,7 +42,7 @@ def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
 @deprecated(
     deprecated_in="3.1.0",
     current_version=__version__,
-    details="Please use pack_scalar_boolean_parameter_app_data instead",
+    details="Please use create_scalar_boolean_parameter instead",
 )
 def pack_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
@@ -45,6 +52,11 @@ def pack_boolean_parameter_app_data(
     )
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use create_scalar_boolean_parameter instead",
+)
 def pack_scalar_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
 ) -> Optional[bytearray]:
@@ -61,6 +73,11 @@ def pack_scalar_boolean_parameter_app_data(
     )
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use create_scalar_u8_parameter instead",
+)
 def pack_scalar_u8_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: int
 ) -> Optional[bytearray]:
@@ -86,6 +103,11 @@ def pack_scalar_u8_parameter_app_data(
     return data_to_pack
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use create_scalar_double_parameter instead",
+)
 def pack_scalar_double_param_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
 ) -> Optional[bytearray]:
@@ -103,6 +125,11 @@ def pack_scalar_double_param_app_data(
     return data_to_pack
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use create_scalar_float_parameter instead",
+)
 def pack_scalar_float_param_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
 ) -> Optional[bytearray]:
@@ -120,6 +147,11 @@ def pack_scalar_float_param_app_data(
     return data_to_pack
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use ParamWrapper helper class with pack() instead",
+)
 def prepare_param_packet_header(
     object_id: bytes,
     domain_id: int,
@@ -146,20 +178,12 @@ def prepare_param_packet_header(
     return data_to_pack
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use ParamWrapper helper class with pack() instead",
+)
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
-    """Packs the parameter information field, which contains the ECSS PTC and PFC numbers and the
-    number of columns and rows in the parameter.
-    See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
-    p.428 for more information.
-
-    :param ptc:     ECSS PTC number
-    :param pfc:     ECSS PFC number
-    :param rows:     Number of rows in parameter (for matrix entries, 1 for vector entries,
-        1 for scalar entries)
-    :param columns:  Number of columns in parameter (for matrix or vector entries,
-        1 for scalar entries)
-    :return: Parameter information field as 4 byte bytearray
-    """  # noqa: E501
     data = bytearray(4)
     data[0] = ptc
     data[1] = pfc
@@ -168,6 +192,11 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
     return data
 
 
+@deprecated(
+    deprecated_in="4.0.0a2",
+    current_version=__version__,
+    details="Please use ParameterId helper class with pack() instead",
+)
 def pack_parameter_id(domain_id: int, unique_id: int, linear_index: int) -> bytearray:
     """Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.
     The first byte of the parameter ID is the domain ID, the second byte is a unique ID and the
