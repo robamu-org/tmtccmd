@@ -16,6 +16,12 @@ class ReceptionDecodeError(Exception):
         self.custom_exception = custom_exception
 
 
+class SendError(Exception):
+    def __init__(self, msg: str, custom_exception: Optional[Exception]):
+        super().__init__(msg)
+        self.custom_exception = custom_exception
+
+
 class ComInterface(ABC):
     """Generic form of a communication interface to separate communication logic from
     the underlying interface.
@@ -26,13 +32,13 @@ class ComInterface(ABC):
         pass
 
     @abstractmethod
-    def initialize(self, args: any = None) -> any:
+    def initialize(self, args: any = 0) -> any:
         """Perform initializations step which can not be done in constructor or which require
         returnvalues.
         """
 
     @abstractmethod
-    def open(self, args: any = None) -> None:
+    def open(self, args: any = 0):
         """Opens the communication interface to allow communication.
 
         :return:
@@ -45,7 +51,7 @@ class ComInterface(ABC):
         """
 
     @abstractmethod
-    def close(self, args: any = None) -> None:
+    def close(self, args: any = 0):
         """Closes the ComIF and releases any held resources (for example a Communication Port).
 
         :return:
@@ -53,7 +59,10 @@ class ComInterface(ABC):
 
     @abstractmethod
     def send(self, data: bytes):
-        """Send raw data"""
+        """Send raw data.
+
+        raises :py:class:`SendError`: Sending failed for some reason.
+        """
 
     @abstractmethod
     def receive(self, parameters: any = 0) -> TelemetryListT:
@@ -62,18 +71,22 @@ class ComInterface(ABC):
         to be returned here.
 
         :param parameters:
-        :raises ReceptionDecodeError: If the underlying COM interface uses encoding and decoding
-            and the decoding fails, this exception will be returned.
+        :raises :py:class:`ReceptionDecodeError`: If the underlying COM interface uses encoding and
+            decoding and the decoding fails, this exception will be returned.
         :return:
         """
         packet_list = []
         return packet_list
 
     @abstractmethod
-    def data_available(self, timeout: float, parameters: any) -> int:
-        """Check whether TM data is available.
+    def data_available(self, timeout: float, parameters: any = 0) -> int:
+        """Check whether TM packets are available.
 
-        :param timeout:
-        :param parameters: Can be an arbitrary parameter like a timeout
-        :return: 0 if no data is available, number of bytes or anything > 0 otherwise.
+        :param timeout: Can be used to block on available data if supported by the specific
+            communication interface.
+        :param parameters: Can be an arbitrary parameter.
+        :raises :py:class:`ReceptionDecodeError`: If the underlying COM interface uses encoding and
+            decoding when determining the number of available packets, this exception can be
+            thrown on decoding errors.
+        :return: 0 if no data is available, number of packets otherwise.
         """

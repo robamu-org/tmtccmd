@@ -19,7 +19,7 @@ from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com.tcpip_utils import TcpIpType, EthAddr
 from tmtccmd.logging import get_console_logger
 from tmtccmd.com.udp import UdpComIF
-from tmtccmd.com.tcp import TcpComIF, TcpCommunicationType
+from tmtccmd.com.tcp import TcpSpacePacketsComIF, TcpCommunicationType
 
 LOGGER = get_console_logger()
 
@@ -240,7 +240,7 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
             max_recv_size=tcpip_cfg.max_recv_buf_len,
         )
     elif tcpip_cfg.com_if_key == CoreComInterfaces.TCP.value:
-        communication_interface = TcpComIF(
+        communication_interface = TcpSpacePacketsComIF(
             com_if_id=tcpip_cfg.com_if_key,
             com_type=TcpCommunicationType.SPACE_PACKETS,
             space_packet_ids=tcpip_cfg.space_packet_ids,

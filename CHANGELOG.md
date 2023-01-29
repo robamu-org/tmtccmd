@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Added
 
+- `tmtccmd.com.ComInterface`: Added two new generic exceptions:
+  - `ReceptionDecodeError` for generic decoder errors on packet reception.
+  - `SendError` for generic send errors when sending packets.
 - `tmtccmd.pus.pus_20_fsfw_params_defs`: New `ParameterId` and `Parameter` helper
   dataclasses. Also added `Service20ParamDumpWrapper` helper class
   to help with the deserialization of parameters. The helper classes can be used both
@@ -18,6 +21,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Changed
 
 - (breaking): TCP and UDP com interface: Remove `max_recv_size` argument and set it to 4096.
+- (breaking): TCP: Renamed `tmtccmd.com.TcpComIF` to `tmtccmd.com.TcpSpacePacketsComIF` to better
+  reflect this interface sends and expects space packets.
+- (breaking) TCP: The TCP communication interface now expects a generic `Sequence[PacketId]`
+  instead of a tuple of raw packet IDs. This makes usage more ergonomic.
 - (possibly breaking): Rename `com_if` module to `com`.
 - `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
   deprecate the former `pack_fsfw_load_param_cmd` function.
@@ -31,6 +38,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   are tailored towards usage with the FSFW
 - (breaking): Simplified `Service5Tm significantly`. It only implements `AbstractPusTm` now and
   is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
+
+
+## Fixed
+
+- TCP: Actually use the TM polling frequency parameter now in the TM reception thread.
+- TCP: The `data_available` API now works properly by always converting the internal unparsed
+  TM queue to the TM packet list and returning its length.
 
 # [v4.0.0a2] 2023-01-23
 

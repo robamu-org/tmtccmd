@@ -5,15 +5,14 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import Optional, Tuple
+from typing import Optional, Sequence
 
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
 from tmtccmd.logging import get_console_logger
-from tmtccmd.com import ComInterface
+from tmtccmd.com import ComInterface, SendError
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.com.tcpip_utils import EthAddr
-from tmtccmd.util.conf_util import acquire_timeout
 
 LOGGER = get_console_logger()
 
@@ -22,41 +21,33 @@ TCP_SEND_WIRETAPPING_ENABLED = False
 
 
 class TcpCommunicationType(enum.Enum):
-    """Parse for space packets in the TCP stream, using the space packet header"""
+    """Parse for space packets in the TCP stream, using the space packet header."""
 
     SPACE_PACKETS = 0
 
 
-class TcpComIF(ComInterface):
-    """Communication interface for TCP communication.
-
-    TODO: This class should not be tied to space packet IDs. Instead, let the parsing be done
-          by an upper layer. Also, do we really need an extra thread here? Using select like
-          with the UDP ComIF should be sufficient..
+class TcpSpacePacketsComIF(ComInterface):
+    """Communication interface for TCP communication. This particular interface expects
+    raw space packets to be sent via TCP and uses a list of passed packet IDs to parse for them.
     """
-
-    DEFAULT_LOCK_TIMEOUT = 0.4
-    TM_LOOP_DELAY = 0.2
 
     def __init__(
         self,
         com_if_id: str,
-        com_type: TcpCommunicationType,
-        space_packet_ids: Tuple[PacketId],
+        space_packet_ids: Sequence[PacketId],
         tm_polling_freqency: float,
         target_address: EthAddr,
         max_packets_stored: int = 50,
     ):
-        """Initialize a communication interface to send and receive TMTC via TCP
+        """Initialize a communication interface to send and receive TMTC via TCP.
+
         :param com_if_id:
-        :param com_type:                Communication Type. By default, it is assumed that
-                                        space packets are sent via TCP
-        :param space_packet_ids:        16 bit packet header for space packet headers. Used to
-                                        detect the start of PUS packets
-        :param tm_polling_freqency:     Polling frequency in seconds
+        :param space_packet_ids: Valid packet IDs for CCSDS space packets. Those will be used
+            to parse for space packets inside the TCP stream.
+        :param tm_polling_freqency: Polling frequency in seconds
         """
         self.com_if_id = com_if_id
-        self.com_type = com_type
+        self.com_type = TcpCommunicationType.SPACE_PACKETS
         self.space_packet_ids = space_packet_ids
         self.tm_polling_frequency = tm_polling_freqency
         self.target_address = target_address
@@ -72,9 +63,7 @@ class TcpComIF(ComInterface):
         )
         self.__tm_queue = deque()
         self.__analysis_queue = deque()
-        # Only allow one connection to OBSW at a time for now by using this lock
-        # self.__socket_lock = threading.Lock()
-        self.__queue_lock = threading.Lock()
+        self.tm_packet_list = []
 
     def get_id(self) -> str:
         return self.com_if_id
@@ -116,8 +105,6 @@ class TcpComIF(ComInterface):
                 self.__tcp_socket.settimeout(None)
 
     def set_up_tcp_thread(self):
-        # TODO: Do we really need a thread here? This could probably be implemented as a polled
-        #       interface like UDP, using the select API
         if self.__tcp_conn_thread is None:
             self.__tcp_conn_thread = threading.Thread(
                 target=self.__tcp_tm_client, daemon=True
@@ -148,33 +135,35 @@ class TcpComIF(ComInterface):
             if not self.connected:
                 self.set_up_socket()
             self.__tcp_socket.sendto(data, self.target_address.to_tuple)
-        except BrokenPipeError:
-            LOGGER.exception("Communication Interface setup might have failed")
-        except ConnectionRefusedError or OSError:
+        except BrokenPipeError as e:
+            raise SendError(f"{e}", e)
+        except ConnectionRefusedError or OSError as e:
             self.connected = False
             self.__tcp_socket.close()
             self.__tcp_socket = None
-            LOGGER.warning("TCP connection attempt failed..")
+            raise SendError(f"TCP connection attempt failed with exception: {e}", e)
 
     def receive(self, poll_timeout: float = 0) -> TelemetryListT:
-        tm_packet_list = []
-        with acquire_timeout(
-            self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT
-        ) as acquired:
-            if not acquired:
-                LOGGER.warning("Acquiring queue lock failed!")
-            while self.__tm_queue:
-                self.__analysis_queue.appendleft(self.__tm_queue.pop())
+        self.__tm_queue_to_packet_list()
+        tm_packet_list = self.tm_packet_list
+        self.tm_packet_list = []
+        return tm_packet_list
+
+    def __tm_queue_to_packet_list(self):
+        while self.__tm_queue:
+            self.__analysis_queue.appendleft(self.__tm_queue.pop())
         # TCP is stream based, so there might be broken packets or multiple packets in one recv
         # call. We parse the space packets contained in the stream here
         if self.com_type == TcpCommunicationType.SPACE_PACKETS:
-            tm_packet_list = parse_space_packets(
-                analysis_queue=self.__analysis_queue, packet_ids=self.space_packet_ids
+            self.tm_packet_list.extend(
+                parse_space_packets(
+                    analysis_queue=self.__analysis_queue,
+                    packet_ids=self.space_packet_ids,
+                )
             )
         else:
             while self.__analysis_queue:
-                tm_packet_list.append(self.__analysis_queue.pop())
-        return tm_packet_list
+                self.tm_packet_list.append(self.__analysis_queue.pop())
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
@@ -183,7 +172,7 @@ class TcpComIF(ComInterface):
                     self.__receive_tm_packets()
                 except ConnectionRefusedError:
                     LOGGER.warning("TCP connection attempt failed..")
-            time.sleep(self.TM_LOOP_DELAY)
+            time.sleep(self.tm_polling_frequency)
 
     def __receive_tm_packets(self):
         try:
@@ -196,30 +185,23 @@ class TcpComIF(ComInterface):
                     return
                 else:
                     self.connected = True
-                with acquire_timeout(
-                    self.__queue_lock, timeout=self.DEFAULT_LOCK_TIMEOUT
-                ) as acquired:
-                    if not acquired:
-                        LOGGER.warning("Acquiring queue lock failed!")
-                    if self.__tm_queue.__len__() >= self.max_packets_stored:
-                        LOGGER.warning(
-                            "Number of packets in TCP queue too large. "
-                            "Overwriting old packets.."
-                        )
-                        self.__tm_queue.pop()
-                        # TODO: If segments are received but the receiver is unable to parse packets
-                        #       properly, it might make sense to have a timeout which then also
-                        #       logs that there might be an issue reading packets
-                    self.__tm_queue.appendleft(bytes(bytes_recvd))
+                if self.__tm_queue.__len__() >= self.max_packets_stored:
+                    LOGGER.warning(
+                        "Number of packets in TCP queue too large. "
+                        "Overwriting old packets.."
+                    )
+                    self.__tm_queue.pop()
+                    # TODO: If segments are received but the receiver is unable to parse packets
+                    #       properly, it might make sense to have a timeout which then also
+                    #       logs that there might be an issue reading packets
+                self.__tm_queue.appendleft(bytes(bytes_recvd))
         except ConnectionResetError:
             self.__close_tcp_socket()
             LOGGER.exception("ConnectionResetError. TCP server might not be up")
 
-    def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
-        if self.__tm_queue:
-            return True
-        else:
-            return False
+    def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
+        self.__tm_queue_to_packet_list()
+        return len(self.tm_packet_list)
 
     def __close_tcp_socket(self):
         self.connected = False
