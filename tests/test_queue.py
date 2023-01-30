@@ -22,7 +22,11 @@ class TestTcQueue(TestCase):
         )
         self.assertEqual(self.queue_wrapper.queue, deque())
         self.queue_helper = DefaultPusQueueHelper(
-            self.queue_wrapper, tc_sched_timestamp_len=4
+            self.queue_wrapper,
+            tc_sched_timestamp_len=4,
+            seq_cnt_provider=None,
+            default_pus_apid=None,
+            pus_verificator=None,
         )
         self.pus_cmd = PusTelecommand(service=17, subservice=1)
 

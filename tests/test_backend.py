@@ -26,7 +26,11 @@ class TcHandlerMock(TcHandlerBase):
         self.feed_cb_def_proc_count = 0
         self.send_cb_call_count = 0
         self.queue_helper = DefaultPusQueueHelper(
-            queue_wrapper=QueueWrapper.empty(), tc_sched_timestamp_len=4
+            queue_wrapper=QueueWrapper.empty(),
+            tc_sched_timestamp_len=4,
+            pus_verificator=None,
+            default_pus_apid=None,
+            seq_cnt_provider=None,
         )
         self.send_cb_call_args: Optional[SendCbParams] = None
         self.send_cb_service_arg: Optional[str] = None

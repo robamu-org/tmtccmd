@@ -177,7 +177,6 @@ def default_tcpip_cfg_setup(
     from tmtccmd.com.tcpip_utils import (
         determine_udp_send_address,
         determine_tcp_send_address,
-        determine_recv_buffer_len,
     )
 
     # TODO: Is this necessary? Where is it used?
@@ -188,9 +187,6 @@ def default_tcpip_cfg_setup(
         send_addr = determine_tcp_send_address(json_cfg_path=json_cfg_path)
     else:
         send_addr = ()
-    max_recv_buf_size = determine_recv_buffer_len(
-        json_cfg_path=json_cfg_path, tcpip_type=tcpip_type
-    )
     cfg = TcpipCfg(
         com_if_key=com_if_key,
         if_type=tcpip_type,

@@ -227,20 +227,20 @@ class DefaultPusQueueHelper(QueueHelperBase):
         self,
         queue_wrapper: QueueWrapper,
         tc_sched_timestamp_len: int,
-        pus_apid: Optional[int] = None,
-        seq_cnt_provider: Optional[ProvidesSeqCount] = None,
-        pus_verificator: Optional[PusVerificator] = None,
+        seq_cnt_provider: Optional[ProvidesSeqCount],
+        pus_verificator: Optional[PusVerificator],
+        default_pus_apid: Optional[int],
     ):
         """
         :param queue_wrapper: Queue Wrapper. All entries are inserted here
-        :param pus_apid: Default APID which will be stamped onto all provided PUS TC packets
+        :param default_pus_apid: Default APID which will be stamped onto all provided PUS TC packets
         :param seq_cnt_provider: The sequence count will be stamped onto all provided PUS TC packets
         :param pus_verificator: All provided PUS TCs will be added to this verificator
         """
         super().__init__(queue_wrapper)
         self.seq_cnt_provider = seq_cnt_provider
         self.pus_verificator = pus_verificator
-        self.pus_apid = pus_apid
+        self.pus_apid = default_pus_apid
         self.tc_sched_timestamp_len = tc_sched_timestamp_len
 
     def pre_add_cb(self, entry: TcQueueEntryBase):

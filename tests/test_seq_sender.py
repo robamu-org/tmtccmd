@@ -16,7 +16,11 @@ class TestSendReceive(TestCase):
     def setUp(self) -> None:
         self.queue_wrapper = QueueWrapper(info=None, queue=deque())
         self.queue_helper = DefaultPusQueueHelper(
-            self.queue_wrapper, tc_sched_timestamp_len=4
+            self.queue_wrapper,
+            tc_sched_timestamp_len=4,
+            pus_verificator=None,
+            default_pus_apid=None,
+            seq_cnt_provider=None,
         )
         self.tc_handler_mock = MagicMock(spec=TcHandlerBase)
         self.com_if = MagicMock(spec=ComInterface)
