@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - (breaking): `tmtccmd.com.ComInterface`: Change `get_id` to `id` property.
 - (breaking): TCP (`tmtccmd.com.TcpSpacePacketsComIF`) and `tmtccmd.com.UdpComIF`:
-   Remove `max_recv_size` argument and set it to 4096.
+   Remove `max_recv_size` argument and replace it with 4096 where it was used.
 - (breaking): TCP: Renamed `tmtccmd.com.TcpComIF` to `tmtccmd.com.TcpSpacePacketsComIF` to better
   reflect this interface sends and expects space packets.
 - (breaking) TCP: The TCP communication interface now expects a generic `Sequence[PacketId]`
@@ -38,7 +38,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   around `PusTelemetry`, which is exposed as a `pus_tm` member.
 - (breaking): Renamed `tm.pus_5_event` to `tm.pus_5_fsfw_event` to better reflect these modules
   are tailored towards usage with the FSFW
-- (breaking): Simplified `Service5Tm significantly`. It only implements `AbstractPusTm` now and
+- (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
   is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
 
 
