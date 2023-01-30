@@ -66,7 +66,7 @@ class TestTcpIf(TestCase):
                     self.server_received_packets.appendleft(data_recv)
 
     def _test_basic(self):
-        self.assertEqual(self.tcp_client.get_id(), "tcp")
+        self.assertEqual(self.tcp_client.id, "tcp")
 
     def _test_send(self):
         self.tcp_client.send(self.base_data)

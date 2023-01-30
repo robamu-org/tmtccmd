@@ -30,7 +30,8 @@ class SerialFixedFrameComIF(SerialComBase, ComInterface):
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
 
-    def get_id(self) -> str:
+    @property
+    def id(self) -> str:
         return self.ser_cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:

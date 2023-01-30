@@ -27,8 +27,9 @@ class ComInterface(ABC):
     the underlying interface.
     """
 
+    @property
     @abstractmethod
-    def get_id(self) -> str:
+    def id(self) -> str:
         pass
 
     @abstractmethod

@@ -64,7 +64,7 @@ class CcsdsTmtcBackend(BackendBase):
 
     @property
     def com_if_id(self):
-        return self._com_if.get_id()
+        return self._com_if.id
 
     @property
     def com_if(self) -> ComInterface:

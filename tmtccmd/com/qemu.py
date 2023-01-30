@@ -98,7 +98,8 @@ class QEMUComIF(ComInterface):
     def is_open(self) -> bool:
         return True
 
-    def get_id(self) -> str:
+    @property
+    def id(self) -> str:
         return self.com_if_id
 
     def set_fixed_frame_settings(self, serial_frame_size: int):

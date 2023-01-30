@@ -40,7 +40,7 @@ class TestSerialDleInterface(TestCase):
     def test_state(self):
         self.assertTrue(self._DLE_IF.is_open())
         self.assertEqual(self._DLE_IF.data_available(0), 0)
-        self.assertEqual(self._DLE_IF.get_id(), "pseudo_ser_dle")
+        self.assertEqual(self._DLE_IF.id, "pseudo_ser_dle")
 
     def test_send(self):
         test_data = bytes([0x01, 0x02, 0x03])

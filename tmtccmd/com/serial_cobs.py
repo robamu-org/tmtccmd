@@ -29,7 +29,8 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         self.__reception_thread: Optional[threading.Thread] = None
         self.__reception_buffer = collections.deque()
 
-    def get_id(self) -> str:
+    @property
+    def id(self) -> str:
         return self.ser_cfg.com_if_id
 
     def initialize(self, args: any = None) -> any:

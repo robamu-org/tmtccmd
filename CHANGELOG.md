@@ -20,7 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Changed
 
-- (breaking): TCP and UDP com interface: Remove `max_recv_size` argument and set it to 4096.
+- (breaking): `tmtccmd.com.ComInterface`: Change `get_id` to `id` property.
+- (breaking): TCP (`tmtccmd.com.TcpSpacePacketsComIF`) and `tmtccmd.com.UdpComIF`:
+   Remove `max_recv_size` argument and set it to 4096.
 - (breaking): TCP: Renamed `tmtccmd.com.TcpComIF` to `tmtccmd.com.TcpSpacePacketsComIF` to better
   reflect this interface sends and expects space packets.
 - (breaking) TCP: The TCP communication interface now expects a generic `Sequence[PacketId]`

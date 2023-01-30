@@ -38,7 +38,7 @@ class TestSerialCobsInterface(TestCase):
     def test_state(self):
         self.assertTrue(self._COBS_IF.is_open())
         self.assertEqual(self._COBS_IF.data_available(0), 0)
-        self.assertEqual(self._COBS_IF.get_id(), "pseudo_ser_cobs")
+        self.assertEqual(self._COBS_IF.id, "pseudo_ser_cobs")
 
     def test_send(self):
         from cobs import cobs

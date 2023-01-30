@@ -30,7 +30,8 @@ class UdpComIF(ComInterface):
         self.send_address = send_address
         self.recv_addr = recv_addr
 
-    def get_id(self) -> str:
+    @property
+    def id(self) -> str:
         return self.com_if_id
 
     def __del__(self):

@@ -65,7 +65,8 @@ class TcpSpacePacketsComIF(ComInterface):
         self.__analysis_queue = deque()
         self.tm_packet_list = []
 
-    def get_id(self) -> str:
+    @property
+    def id(self) -> str:
         return self.com_if_id
 
     def __del__(self):

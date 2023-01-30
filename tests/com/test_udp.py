@@ -18,7 +18,7 @@ class TestUdpIf(TestCase):
         self.udp_client.initialize()
 
     def test_basic(self):
-        self.assertEqual(self.udp_client.get_id(), "udp")
+        self.assertEqual(self.udp_client.id, "udp")
         self._open()
 
     def test_send(self):

@@ -89,7 +89,7 @@ class TestBackend(TestCase):
     def test_idle(self):
         self.assertEqual(self.backend.tm_mode, TmMode.IDLE)
         self.assertEqual(self.backend.tc_mode, TcMode.IDLE)
-        self.assertEqual(self.backend.com_if.get_id(), "dummy")
+        self.assertEqual(self.backend.com_if.id, "dummy")
         self.assertEqual(self.backend.com_if_id, "dummy")
         self.assertEqual(self.backend.inter_cmd_delay, timedelta())
         state = self.backend.state

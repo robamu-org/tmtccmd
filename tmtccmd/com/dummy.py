@@ -108,7 +108,8 @@ class DummyComIF(ComInterface):
         self._open = False
         self.initialized = False
 
-    def get_id(self) -> str:
+    @property
+    def id(self) -> str:
         return self.com_if_id
 
     def initialize(self, args: any = None) -> any:
