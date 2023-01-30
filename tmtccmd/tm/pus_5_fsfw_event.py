@@ -21,15 +21,15 @@ LOGGER = get_console_logger()
 @dataclasses.dataclass
 class EventDefinition:
     event_id: int
-    object_id: bytes
+    reporter_id: bytes
     param1: int
     param2: int
 
     def pack(self) -> bytes:
         raw = bytearray(struct.pack("!H", self.event_id))
-        if len(self.object_id) < 4:
-            raise ValueError("object ID must be at least 4 bytes wide")
-        raw.extend(self.object_id)
+        if len(self.reporter_id) < 4:
+            raise ValueError("reporter ID must be at least 4 bytes wide")
+        raw.extend(self.reporter_id)
         raw.extend(struct.pack("!I", self.param1))
         raw.extend(struct.pack("!I", self.param2))
         return raw
@@ -45,7 +45,7 @@ class EventDefinition:
                 "full FSFW event definition must be at least 14 bytes wide"
             )
         event_id = struct.unpack("!H", data[0:2])[0]
-        object_id = data[2:6]
+        object_id = bytes(data[2:6])
         param1 = struct.unpack("!I", data[6:10])[0]
         param2 = struct.unpack("!I", data[10:14])[0]
         return cls(event_id, object_id, param1, param2)

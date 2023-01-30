@@ -7,7 +7,7 @@ class TestSrv5Tm(TestCase):
     def setUp(self):
         self.obj_id = bytes([0x00, 0x01, 0x02, 0x03])
         self.event_def = EventDefinition(
-            event_id=5, object_id=self.obj_id, param1=22, param2=942
+            event_id=5, reporter_id=self.obj_id, param1=22, param2=942
         )
         self.srv5_tm = Service5Tm(
             subservice=Subservice.TM_INFO_EVENT,
