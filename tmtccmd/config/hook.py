@@ -6,7 +6,7 @@ from tmtccmd.util.obj_id import ObjectIdDictT
 from tmtccmd.core import BackendBase
 from tmtccmd.util.retval import RetvalDictT
 
-from .com_if import ComIfCfgBase, ComInterface
+from .com import ComCfgBase, ComInterface
 from .tmtc import TmtcDefinitionWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfDictT
 
@@ -39,9 +39,9 @@ class TmTcCfgHookBase(ABC):
 
         :param com_if_key:      String key of the communication interface to be created.
         """
-        from tmtccmd.config.com_if import create_com_interface_default
+        from tmtccmd.config.com import create_com_interface_default
 
-        cfg_base = ComIfCfgBase(com_if_key=com_if_key, json_cfg_path=self.cfg_path)
+        cfg_base = ComCfgBase(com_if_key=com_if_key, json_cfg_path=self.cfg_path)
         return create_com_interface_default(cfg_base)
 
     def get_com_if_dict(self) -> ComIfDictT:

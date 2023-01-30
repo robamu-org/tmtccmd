@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Changed
 
+- (breaking): Renamed `tmtccmd.config.com.ComIfCfgBase` to `ComCfgBase`
 - (breaking): `tmtccmd.com.ComInterface`: Change `get_id` to `id` property.
 - (breaking): TCP (`tmtccmd.com.TcpSpacePacketsComIF`) and `tmtccmd.com.UdpComIF`:
    Remove `max_recv_size` argument and replace it with 4096 where it was used.

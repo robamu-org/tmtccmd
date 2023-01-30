@@ -62,7 +62,7 @@ class ExampleHookClass(TmTcCfgHookBase):
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         print("Communication interface assignment function was called")
-        from tmtccmd.config.com_if import (
+        from tmtccmd.config.com import (
             create_com_interface_default,
             create_com_interface_cfg_default,
         )
