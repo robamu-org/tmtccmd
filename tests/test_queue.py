@@ -21,7 +21,9 @@ class TestTcQueue(TestCase):
             info=DefaultProcedureInfo.empty(), queue=deque()
         )
         self.assertEqual(self.queue_wrapper.queue, deque())
-        self.queue_helper = DefaultPusQueueHelper(self.queue_wrapper)
+        self.queue_helper = DefaultPusQueueHelper(
+            self.queue_wrapper, tc_sched_timestamp_len=4
+        )
         self.pus_cmd = PusTelecommand(service=17, subservice=1)
 
     def test_wait_entry(self):

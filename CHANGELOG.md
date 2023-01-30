@@ -40,7 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   are tailored towards usage with the FSFW
 - (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
   is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
-
+- (breaking): `tmtccmd.tc.queue.DefaultPusQueueHelper`: The timestamp length of time tagged
+  telecommands needs to be specified explicitely now (no default value of 4).
 
 ## Fixed
 

@@ -15,7 +15,7 @@ from tmtccmd.tc import (
     ProcedureWrapper,
 )
 from tmtccmd.tc.handler import FeedWrapper, SendCbParams
-from tmtccmd.tc.queue import DefaultPusQueueHelper
+from tmtccmd.tc.queue import DefaultPusQueueHelper, QueueWrapper
 
 
 class TcHandlerMock(TcHandlerBase):
@@ -25,7 +25,9 @@ class TcHandlerMock(TcHandlerBase):
         self.feed_cb_call_count = 0
         self.feed_cb_def_proc_count = 0
         self.send_cb_call_count = 0
-        self.queue_helper = DefaultPusQueueHelper(None)
+        self.queue_helper = DefaultPusQueueHelper(
+            queue_wrapper=QueueWrapper.empty(), tc_sched_timestamp_len=4
+        )
         self.send_cb_call_args: Optional[SendCbParams] = None
         self.send_cb_service_arg: Optional[str] = None
         self.send_cb_op_code_arg: Optional[str] = None

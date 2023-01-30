@@ -9,7 +9,7 @@ from typing import Optional, Deque, cast, Any, Type
 
 
 from spacepackets.ccsds import SpacePacket
-from spacepackets.ecss import PusTelecommand, PusVerificator, PusService
+from spacepackets.ecss import PusTelecommand, PusVerificator, PusService, check_pus_crc
 from tmtccmd.logging import get_console_logger
 from tmtccmd.tc.procedure import TcProcedureBase, DefaultProcedureInfo
 from tmtccmd.util import ProvidesSeqCount
@@ -226,10 +226,10 @@ class DefaultPusQueueHelper(QueueHelperBase):
     def __init__(
         self,
         queue_wrapper: QueueWrapper,
+        tc_sched_timestamp_len: int,
         pus_apid: Optional[int] = None,
         seq_cnt_provider: Optional[ProvidesSeqCount] = None,
         pus_verificator: Optional[PusVerificator] = None,
-        tc_sched_timestamp_len: int = 4,
     ):
         """
         :param queue_wrapper: Queue Wrapper. All entries are inserted here
@@ -255,14 +255,17 @@ class DefaultPusQueueHelper(QueueHelperBase):
 
     def _handle_time_tagged_tc(self, pus_tc: PusTelecommand):
         try:
-            time_tagged_tc = PusTelecommand.unpack(
-                pus_tc.app_data[self.tc_sched_timestamp_len :]
-            )
+            pus_tc_raw = pus_tc.app_data[self.tc_sched_timestamp_len :]
+            if not check_pus_crc(pus_tc_raw):
+                raise ValueError(
+                    f"crc check on contained PUS TC with length {len(pus_tc_raw)} failed"
+                )
+            time_tagged_tc = PusTelecommand.unpack(pus_tc_raw)
             self._pus_packet_handler(time_tagged_tc)
             pus_tc.app_data[self.tc_sched_timestamp_len :] = time_tagged_tc.pack()
         except ValueError as e:
             LOGGER.warning(
-                f"Attempt of unpacking time tagged TC failed with exception {e}"
+                f"Attempt of unpacking time tagged TC failed with exception: {e}"
             )
 
     def _pus_packet_handler(self, pus_tc: PusTelecommand):

@@ -15,7 +15,9 @@ from tmtccmd.tc.queue import QueueWrapper, DefaultPusQueueHelper
 class TestSendReceive(TestCase):
     def setUp(self) -> None:
         self.queue_wrapper = QueueWrapper(info=None, queue=deque())
-        self.queue_helper = DefaultPusQueueHelper(self.queue_wrapper)
+        self.queue_helper = DefaultPusQueueHelper(
+            self.queue_wrapper, tc_sched_timestamp_len=4
+        )
         self.tc_handler_mock = MagicMock(spec=TcHandlerBase)
         self.com_if = MagicMock(spec=ComInterface)
         self.seq_sender = SequentialCcsdsSender(
