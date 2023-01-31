@@ -198,6 +198,9 @@ class TcHandler(TcHandlerBase):
         self.queue_helper = DefaultPusQueueHelper(
             queue_wrapper=QueueWrapper.empty(),
             seq_cnt_provider=seq_count_provider,
+            pus_verificator=self.verif_wrapper.pus_verificator,
+            tc_sched_timestamp_len=7,
+            default_pus_apid=EXAMPLE_PUS_APID
         )
 
     def send_cb(self, send_params: SendCbParams):
