@@ -26,7 +26,7 @@ def __setup_tmtc_console_logger(log_level: int = logging.INFO) -> logging.Logger
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     # Use colorlog for now because it allows more flexibility and custom messages
     # for different levels
-    set_up_colorlog_logger(logger=logger)
+    set_up_colorlog_console_logger(logger=logger)
     logger.setLevel(level=log_level)
     # set_up_coloredlogs_logger(logger=logger)
     return logger
@@ -87,7 +87,7 @@ class CustomTmtccmdFormatter(ColoredFormatter):
         return result
 
 
-def set_up_colorlog_logger(logger: logging.Logger):
+def set_up_colorlog_console_logger(logger: logging.Logger):
     from colorlog import StreamHandler
 
     dbg_fmt = (
@@ -102,22 +102,10 @@ def set_up_colorlog_logger(logger: logging.Logger):
         warn_fmt=dbg_fmt,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    file_format = logging.Formatter(
-        fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
     console_handler = StreamHandler(stream=sys.stdout)
 
-    if not os.path.exists(LOG_DIR):
-        os.mkdir(LOG_DIR)
-    error_file_handler = logging.FileHandler(
-        filename=f"{LOG_DIR}/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
-    )
-    error_file_handler.setLevel(level=logging.WARNING)
-    error_file_handler.setFormatter(file_format)
     console_handler.setFormatter(custom_formatter)
-    logger.addHandler(error_file_handler)
     logger.addHandler(console_handler)
 
 
@@ -138,6 +126,21 @@ def init_console_logger(log_level: int = logging.INFO) -> logging.Logger:
         __CONSOLE_LOGGER_SET_UP = True
         return __setup_tmtc_console_logger(log_level=log_level)
     return get_console_logger()
+
+
+def add_error_file_logger(logger: logging.Logger):
+    file_format = logging.Formatter(
+        fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    if not os.path.exists(LOG_DIR):
+        os.mkdir(LOG_DIR)
+    error_file_handler = logging.FileHandler(
+        filename=f"{LOG_DIR}/{ERROR_LOG_FILE_NAME}", encoding="utf-8", mode="w"
+    )
+    error_file_handler.setLevel(level=logging.WARNING)
+    error_file_handler.setFormatter(file_format)
+    logger.addHandler(error_file_handler)
 
 
 def build_log_file_name(base_name: str):
