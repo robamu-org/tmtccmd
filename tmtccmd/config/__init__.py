@@ -1,4 +1,13 @@
-"""Configuration helpers and definitions."""
+"""Configuration helpers and definitions.
+
+Submodules:
+
+* :py:mod:`tmtccmd.config.hook` - Base hook class which should be implemented by user and is used
+  by the framework to retrieve certain configuration from the user.
+* :py:mod:`tmtccmd.config.args` - Various helper methods and classes to create the argument parsers
+  and arguments converts to create the data structures expected by this library from passed CLI
+  arguments.
+"""
 from pathlib import Path
 from typing import Optional
 

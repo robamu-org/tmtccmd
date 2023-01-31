@@ -21,6 +21,7 @@ Communication Submodule
 ========================
 
 .. automodule:: tmtccmd.com
+   :noindex:
 
 
 .. toctree::
