@@ -35,6 +35,7 @@ from tmtccmd.tc.procedure import (
 )
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
 from tmtccmd.core.base import ModeWrapper
+from tmtccmd.com import ComInterface
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):

@@ -18,6 +18,7 @@ class TestArgs(TestCase):
         self.pargs.delay = None
         self.pargs.com_if = "dummy"
         self.pargs.listener = True
+        self.pargs.prompt_proc = False
         self.pargs.service = None
         self.pargs.op_code = None
 
@@ -47,6 +48,7 @@ class TestArgs(TestCase):
             hook_obj=self.hook_mock,
             use_prompts=False,
             def_tmtc_params=def_params,
+            assign_com_if=False,
         )
         # Set to default value
         self.assertEqual(self.params.tc_params.delay, 4.0)
@@ -73,6 +75,7 @@ class TestArgs(TestCase):
             hook_obj=self.hook_mock,
             use_prompts=False,
             def_tmtc_params=def_params,
+            assign_com_if=False,
         )
         self.assertEqual(def_params.service, "17")
         self.assertEqual(def_params.op_code, "ping")
@@ -87,10 +90,11 @@ class TestArgs(TestCase):
             hook_obj=self.hook_mock,
             use_prompts=False,
             def_tmtc_params=def_params,
+            assign_com_if=False,
         )
         self.assertEqual(self.params.backend_params.listener, True)
-        self.assertEqual(def_params.service, "")
-        self.assertEqual(def_params.op_code, "")
+        self.assertIsNone(def_params.service)
+        self.assertIsNone(def_params.op_code)
         self.assertEqual(
             self.params.backend_params.mode,
             CoreModeConverter.get_str(CoreModeList.LISTENER_MODE),

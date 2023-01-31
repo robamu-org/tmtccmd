@@ -17,8 +17,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   to help with the deserialization of parameters. The helper classes can be used both
   for TC and TM handling. Create new API set to create the `Parameter` classes for common
   parameter types.
+- `SetupParams` can now already include a COM interface instance.
+- CLI arguments: Added the `--pp` or `--prompt-proc` argument which only has meaning when used
+  together with the listener flag (`-l`). It should cause the main application to prompt for
+  a procedure (but still go to listener mode after the procedure).
 
 ## Changed
+
+### Argument parsing and Core modules
+
+- `args_to_params_tmtc` now expects an `assign_com_if` method and can assign a COM interface
+  when it is passed. It oftentimes makes sense to determine a valid COM interface
+  (and prompt applicable parameters from the user) before prompting procedure parameters.
+  The new behaviour is the default when using the `PostArgsParsingWrapper`.
+- (breaking): The `PostArgsParsingWrapper` constructor now expects a `SetupParams` parameter and
+  caches it.
+  All `set_*` methods now do not expect the `SetupParams` to be passed explicitely anymore.
+- (breaking): The `PreArgsParsingWrapper` now expects a `setup_params` parameter to be passed to the
+  `parse` method. The parameter helper will be cached in the created `PostArgsParsingWrapper`. 
+
+### PUS modules
+
+- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
+  deprecate the former `pack_fsfw_load_param_cmd` function.
+- (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
+  `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
+  towards usage with the FSFW.
+- (breaking): Reworked `tmtccmd.tm.pus_20_fsfw_params` by simplifying `Service20FsfwTm`
+  significantly. It only implements `AbstractPusTm` now and is a simple wrapper
+  around `PusTelemetry`, which is exposed as a `pus_tm` member.
+- (breaking): Renamed `tm.pus_5_event` to `tm.pus_5_fsfw_event` to better reflect these modules
+  are tailored towards usage with the FSFW
+- (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
+  is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
+
+### Other
 
 - (breaking): `DefaultPusQueueHelper`: `seq_cnt_provider`, `pus_verificator`
   and `default_pus_apid` (formerly `pus_apid`) do not have default values anymore
@@ -32,18 +65,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - (breaking) TCP: The TCP communication interface now expects a generic `Sequence[PacketId]`
   instead of a tuple of raw packet IDs. This makes usage more ergonomic.
 - (possibly breaking): Rename `com_if` module to `com`.
-- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
-  deprecate the former `pack_fsfw_load_param_cmd` function.
-- (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
-  `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
-  towards usage with the FSFW.
-- (breaking): Reworked `tmtccmd.tm.pus_20_fsfw_params` by simplifying `Service20FsfwTm`
-  significantly. It only implements `AbstractPusTm` now and is a simple wrapper
-  around `PusTelemetry`, which is exposed as a `pus_tm` member.
-- (breaking): Renamed `tm.pus_5_event` to `tm.pus_5_fsfw_event` to better reflect these modules
-  are tailored towards usage with the FSFW
-- (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
-  is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
 - (breaking): `tmtccmd.tc.queue.DefaultPusQueueHelper`: The timestamp length of time tagged
   telecommands needs to be specified explicitely now (no default value of 4).
 

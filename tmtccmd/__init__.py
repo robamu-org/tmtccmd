@@ -179,9 +179,11 @@ def create_default_tmtc_backend(
     else:
         if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
             tm_handler = cast(CcsdsTmHandler, tm_handler)
-    com_if = setup_wrapper.hook_obj.assign_communication_interface(
-        com_if_key=setup_wrapper.params.com_if_id
-    )
+    com_if = setup_wrapper.params.com_if
+    if com_if is None:
+        com_if = setup_wrapper.hook_obj.assign_communication_interface(
+            setup_wrapper.params.com_if_id
+        )
     tm_listener = CcsdsTmListener(tm_handler)
     mode_wrapper = ModeWrapper()
     backend_mode_conversion(setup_wrapper.params.mode, mode_wrapper)
