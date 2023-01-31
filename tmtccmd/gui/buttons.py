@@ -3,7 +3,7 @@ from typing import Callable, Optional
 from PyQt5.QtCore import QThreadPool, QRunnable
 from PyQt5.QtWidgets import QPushButton
 
-from tmtccmd import TmTcCfgHookBase, get_console_logger, DefaultProcedureInfo
+from tmtccmd import HookBase, get_console_logger, DefaultProcedureInfo
 from tmtccmd.gui.defs import (
     SharedArgs,
     LocalArgs,
@@ -33,7 +33,7 @@ class ButtonArgs:
 class ConnectButtonParams:
     def __init__(
         self,
-        hook_obj: TmTcCfgHookBase,
+        hook_obj: HookBase,
         connect_cb: Callable[[], None],
         disconnect_cb: Callable[[], None],
         tm_listener_bttn: Optional[QPushButton],

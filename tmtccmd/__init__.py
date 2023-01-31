@@ -12,7 +12,7 @@ from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.core.base import FrontendBase, BackendRequest
 from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import (
-    TmTcCfgHookBase,
+    HookBase,
     backend_mode_conversion,
     SetupWrapper,
     SetupParams,
@@ -71,7 +71,7 @@ def setup(setup_args: SetupWrapper):
 
 def start(
     tmtc_backend: BackendBase,
-    hook_obj: TmTcCfgHookBase,
+    hook_obj: HookBase,
     tmtc_frontend: Optional[FrontendBase] = None,
     app_name: str = "TMTC Commander",
 ):
@@ -123,7 +123,7 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
 
 def __start_tmtc_commander_qt_gui(
     tmtc_backend: BackendBase,
-    hook_obj: TmTcCfgHookBase,
+    hook_obj: HookBase,
     tmtc_frontend: Union[None, FrontendBase] = None,
     app_name: str = "TMTC Commander",
 ):

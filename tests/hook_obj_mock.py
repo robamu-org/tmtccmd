@@ -5,22 +5,22 @@ from unittest.mock import MagicMock
 from tmtccmd.com import ComInterface
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-from tmtccmd.config import TmTcCfgHookBase
+from tmtccmd.config import HookBase
 from tmtccmd.logging import get_console_logger
 from tmtccmd.util.obj_id import ObjectIdDictT
 
 LOGGER = get_console_logger()
 
 
-def create_hook_mock() -> TmTcCfgHookBase:
+def create_hook_mock() -> HookBase:
     """Create simple minimal hook mock using the MagicMock facilities by unittest
     :return:
     """
-    tmtc_hook_base = MagicMock(spec=TmTcCfgHookBase)
+    tmtc_hook_base = MagicMock(spec=HookBase)
     return tmtc_hook_base
 
 
-def create_hook_mock_with_srv_handlers() -> TmTcCfgHookBase:
+def create_hook_mock_with_srv_handlers() -> HookBase:
     tmtc_hook_base = create_hook_mock()
     tmtc_hook_base.handle_service_8_telemetry = MagicMock(return_value=(["Test"], [0]))
     # Valid returnvalue for now
@@ -31,7 +31,7 @@ def create_hook_mock_with_srv_handlers() -> TmTcCfgHookBase:
     return tmtc_hook_base
 
 
-class TestHookObj(TmTcCfgHookBase):
+class TestHookObj(HookBase):
     service_8_handler_called = False
     service_5_handler_called = False
     service_3_handler_called = False

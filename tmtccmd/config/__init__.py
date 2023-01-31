@@ -26,7 +26,7 @@ from .defs import (
 )
 from .prompt import prompt_op_code, prompt_service
 from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase
-from .hook import TmTcCfgHookBase
+from .hook import HookBase
 from tmtccmd.tc.procedure import (
     DefaultProcedureInfo,
     CfdpProcedureInfo,
@@ -35,7 +35,6 @@ from tmtccmd.tc.procedure import (
 )
 from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
 from tmtccmd.core.base import ModeWrapper
-from tmtccmd.com import ComInterface
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
@@ -50,7 +49,7 @@ def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
         mode_wrapper.tm_mode = TmMode.LISTENER
 
 
-def get_global_hook_obj() -> Optional[TmTcCfgHookBase]:
+def get_global_hook_obj() -> Optional[HookBase]:
     """This function can be used to get the handle to the global hook object.
     :return:
     """
@@ -67,7 +66,7 @@ def get_global_hook_obj() -> Optional[TmTcCfgHookBase]:
         if hook_obj_raw is None:
             logger.error("Hook object is invalid!")
             return None
-        return cast(TmTcCfgHookBase, hook_obj_raw)
+        return cast(HookBase, hook_obj_raw)
     except ImportError:
         logger.exception("Issues importing modules to get global hook handle!")
         return None
@@ -81,7 +80,7 @@ class SetupWrapper:
 
     def __init__(
         self,
-        hook_obj: TmTcCfgHookBase,
+        hook_obj: HookBase,
         setup_params: SetupParams,
         proc_param_wrapper: ProcedureParamsWrapper,
         json_cfg_path: Optional[str] = None,

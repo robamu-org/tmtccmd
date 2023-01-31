@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Argument parsing and Core modules
 
+- `tmtccmd.config.hook.TmTcCfgHookBase` renamed to `tmtccmd.config.hook.HookBase`.
 - `args_to_params_tmtc` now expects an `assign_com_if` method and can assign a COM interface
   when it is passed. It oftentimes makes sense to determine a valid COM interface
   (and prompt applicable parameters from the user) before prompting procedure parameters.

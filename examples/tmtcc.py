@@ -19,7 +19,7 @@ from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.config import (
     default_json_path,
     SetupParams,
-    TmTcCfgHookBase,
+    HookBase,
     TmtcDefinitionWrapper,
     CoreServiceList,
     OpCodeEntry,
@@ -56,7 +56,7 @@ CFDP_LOCAL_ENTITY_ID = UnsignedByteField(byte_len=2, val=1)
 CFDP_REMOTE_ENTITY_ID = UnsignedByteField(byte_len=2, val=EXAMPLE_CFDP_APID)
 
 
-class ExampleHookClass(TmTcCfgHookBase):
+class ExampleHookClass(HookBase):
     def __init__(self, json_cfg_path: str):
         super().__init__(json_cfg_path=json_cfg_path)
 

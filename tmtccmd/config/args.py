@@ -14,7 +14,7 @@ from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.logging import get_console_logger
 
 from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
-from .hook import TmTcCfgHookBase
+from .hook import HookBase
 from ..com import ComInterface
 
 LOGGER = get_console_logger()
@@ -359,7 +359,7 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
 def find_service_and_op_code(
     params: SetupParams,
     def_params: DefaultProcedureParams,
-    hook_obj: TmTcCfgHookBase,
+    hook_obj: HookBase,
     pargs: argparse.Namespace,
     use_prompts: bool,
 ):
@@ -387,7 +387,7 @@ def find_service_and_op_code(
 def args_to_params_generic(
     pargs: argparse.Namespace,
     params: SetupParams,
-    hook_obj: TmTcCfgHookBase,
+    hook_obj: HookBase,
     use_prompts: bool,
 ):
     if pargs.gui is None:
@@ -406,7 +406,7 @@ def args_to_params_cfdp(
     pargs: argparse.Namespace,
     params: SetupParams,
     cfdp_params: CfdpParams,
-    hook_obj: TmTcCfgHookBase,
+    hook_obj: HookBase,
     use_prompts: bool,
 ):
     """Helper function to convert CFDP command line arguments to CFDP setup parameters."""
@@ -436,7 +436,7 @@ def args_to_params_tmtc(
     pargs: argparse.Namespace,
     params: SetupParams,
     def_tmtc_params: DefaultProcedureParams,
-    hook_obj: TmTcCfgHookBase,
+    hook_obj: HookBase,
     use_prompts: bool,
     assign_com_if: bool,
 ):
@@ -543,7 +543,7 @@ class PreArgsParsingWrapper:
         )
 
     def parse(
-        self, hook_obj: TmTcCfgHookBase, setup_params: SetupParams
+        self, hook_obj: HookBase, setup_params: SetupParams
     ) -> PostArgsParsingWrapper:
         """Parses the set parser by calling the
         :py:meth:`argparse.ArgumentParser.parse_known_args` method internally and returns the
@@ -636,7 +636,7 @@ class PostArgsParsingWrapper:
         args_raw: argparse.Namespace,
         unknown_args: List[str],
         params: SetupParams,
-        hook_obj: TmTcCfgHookBase,
+        hook_obj: HookBase,
     ):
         """It is recommended to use :py:meth:`PreArgsParsingWrapper.parse` to retrieve an instance
         instead of using the constructor directly.
