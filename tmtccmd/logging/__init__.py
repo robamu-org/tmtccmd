@@ -110,9 +110,8 @@ def set_up_colorlog_console_logger(logger: logging.Logger):
 
 
 def get_console_logger() -> logging.Logger:
+    """Get the global console logger instance for the library."""
     global __CONSOLE_LOGGER_SET_UP
-    """Get the global console logger instance. Error logs will still be saved to an error file
-    """
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     if not __CONSOLE_LOGGER_SET_UP:
         __CONSOLE_LOGGER_SET_UP = True
