@@ -71,7 +71,7 @@ tmtccmd.tm.pus\_3\_fsfw\_hk module
 tmtccmd.tm.pus\_20\_fsfw\_params module
 ------------------------------------------------
 
-.. automodule:: tmtccmd.tm.pus_20_fsfw_params
+.. automodule:: tmtccmd.tm.pus_20_fsfw_param
    :members:
    :undoc-members:
    :show-inheritance:
@@ -79,7 +79,7 @@ tmtccmd.tm.pus\_20\_fsfw\_params module
 tmtccmd.tm.pus\_200\_fsfw\_modes module
 --------------------------------------------
 
-.. automodule:: tmtccmd.tm.pus_200_fsfw_modes
+.. automodule:: tmtccmd.tm.pus_200_fsfw_mode
    :members:
    :undoc-members:
    :show-inheritance:

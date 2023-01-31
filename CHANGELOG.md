@@ -39,8 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### PUS modules
 
-- (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
-  `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
+- (breaking): Renamed `tmtccmd.*.*20_params.py` to
+  `tmtccmd.*.*20_fsfw_param.py` to reflect these modules are tailored
   towards usage with the FSFW.
 - (breaking): Reworked `tmtccmd.tm.pus_20_fsfw_params` by simplifying `Service20FsfwTm`
   significantly. It only implements `AbstractPusTm` now and is a simple wrapper
@@ -49,6 +49,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   are tailored towards usage with the FSFW
 - (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
   is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
+- (breaking): Renamed `tmtccmd.*.*200_fsfw_modes` to `tmtccmd.*.*200_fsfw_mode` and
+  `tmtccmd.*.*20_fsfw_params` to `tmtccmd.*.*20_fsfw_param` for consistency.
 - `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
   deprecate the former `pack_fsfw_load_param_cmd` function.
 

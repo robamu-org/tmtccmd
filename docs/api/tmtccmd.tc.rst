@@ -44,18 +44,18 @@ tmtccmd.tc.ccsds\_seq\_sender module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tc.pus\_200\_fsfw\_modes module
+tmtccmd.tc.pus\_200\_fsfw\_mode module
 -----------------------------------------
 
-.. automodule:: tmtccmd.tc.pus_200_fsfw_modes
+.. automodule:: tmtccmd.tc.pus_200_fsfw_mode
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tc.pus\_20\_fsfw\_params module
+tmtccmd.tc.pus\_20\_fsfw\_param module
 ---------------------------------------------
 
-.. automodule:: tmtccmd.tc.pus_20_fsfw_params
+.. automodule:: tmtccmd.tc.pus_20_fsfw_param
    :members:
    :undoc-members:
    :show-inheritance:

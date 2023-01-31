@@ -6,7 +6,7 @@ from tmtccmd.pus.s20_fsfw_param_defs import (
     CustomSubservice,
     Parameter,
 )
-from tmtccmd.tm.pus_20_fsfw_params import Service20FsfwTm, Service20ParamDumpWrapper
+from tmtccmd.tm.pus_20_fsfw_param import Service20FsfwTm, Service20ParamDumpWrapper
 
 
 class TestSrv20Tm(TestCase):

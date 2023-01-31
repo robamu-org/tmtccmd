@@ -8,8 +8,8 @@ from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.tm.pus_8_fsfw_funccmd import Service8FsfwTm
 from tmtccmd.tm.pus_3_fsfw_hk import Service3FsfwTm
-from tmtccmd.tm.pus_20_fsfw_params import Service20FsfwTm
-from tmtccmd.tm.pus_200_fsfw_modes import Service200FsfwTm
+from tmtccmd.tm.pus_20_fsfw_param import Service20FsfwTm
+from tmtccmd.tm.pus_200_fsfw_mode import Service200FsfwTm
 
 TelemetryListT = List[bytes]
 TelemetryQueueT = Deque[bytes]
