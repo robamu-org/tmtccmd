@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+# [v4.0.0a3] 2023-01-31
+
+- `spacepackets` version 0.14.0rc2
+
 ## Added
 
 - `tmtccmd.com.ComInterface`: Added two new generic exceptions:
@@ -95,7 +99,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - TC creation API: Replace `generate_...` API with `create_...` API for consistency
 - (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not
   flag enums.
-- (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
+- (breaking) `pus_200_fsfw_mode`: Rename `Modes` to `Mode`.
 - Subservice enumerations: Add missing `TM_...` and `TC_...` prefixes where applicable
 - Use concrete `spacepackets` version 0.14.0rc1
 
