@@ -56,7 +56,6 @@ class Parameter:
         1 for scalar entries)
     :return: Parameter information field as 4 byte bytearray
     """  # noqa: E501
-
     object_id: bytes
     param_id: ParameterId
     ptc: Optional[Ptc]

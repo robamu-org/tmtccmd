@@ -55,7 +55,8 @@ This currently contains the CFDP support.
 ECSS Submodules
 =========================
 
-Contains the ECSS PUS C support.
+.. automodule:: tmtccmd.pus
+   :noindex:
 
 .. toctree::
    :maxdepth: 2

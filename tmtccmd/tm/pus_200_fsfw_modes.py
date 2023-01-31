@@ -7,7 +7,7 @@ from typing import Optional
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
-from tmtccmd.pus import CustomPusService
+from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
@@ -35,7 +35,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
             source_data.extend(struct.pack("!I", mode))
             source_data.append(submode)
         pus_tm = PusTelemetry(
-            service=CustomPusService.SERVICE_200_MODE,
+            service=CustomFsfwPusService.SERVICE_200_MODE,
             subservice=subservice_id,
             time_provider=time,
             seq_count=ssc,

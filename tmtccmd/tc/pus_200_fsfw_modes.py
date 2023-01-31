@@ -6,7 +6,7 @@ from typing import Union
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd import __version__
-from tmtccmd.pus import CustomPusService
+from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 
 
@@ -39,7 +39,7 @@ def create_mode_command(
     object_id: bytes, mode: Union[int, Mode], submode: int
 ) -> PusTelecommand:
     return PusTelecommand(
-        service=CustomPusService.SERVICE_200_MODE,
+        service=CustomFsfwPusService.SERVICE_200_MODE,
         subservice=Subservice.TC_MODE_COMMAND,
         app_data=pack_mode_data(object_id, mode, submode),
     )
@@ -47,7 +47,7 @@ def create_mode_command(
 
 def create_read_mode_command(object_id: bytes) -> PusTelecommand:
     return PusTelecommand(
-        service=CustomPusService.SERVICE_200_MODE,
+        service=CustomFsfwPusService.SERVICE_200_MODE,
         subservice=Subservice.TC_MODE_READ,
         app_data=object_id,
     )
@@ -55,7 +55,7 @@ def create_read_mode_command(object_id: bytes) -> PusTelecommand:
 
 def create_announce_mode_recursive_command(object_id: bytes) -> PusTelecommand:
     return PusTelecommand(
-        service=CustomPusService.SERVICE_200_MODE,
+        service=CustomFsfwPusService.SERVICE_200_MODE,
         subservice=Subservice.TC_MODE_ANNOUNCE_RECURSIVE,
         app_data=object_id,
     )

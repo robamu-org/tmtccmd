@@ -9,7 +9,7 @@ from deprecation import deprecated
 from typing import Optional
 
 from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
-from tmtccmd.pus.s20_fsfw_params_defs import (  # noqa: F401
+from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
     CustomSubservice,
     create_scalar_boolean_parameter,
     create_scalar_u8_parameter,

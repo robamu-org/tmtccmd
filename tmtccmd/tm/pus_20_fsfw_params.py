@@ -11,10 +11,10 @@ from spacepackets.ecss import (
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import AbstractPusTm
 
-from tmtccmd.pus.s20_fsfw_params import (
+from tmtccmd.pus.s20_fsfw_param import (
     CustomSubservice,
 )
-from tmtccmd.pus.s20_fsfw_params_defs import ParameterId, Parameter
+from tmtccmd.pus.s20_fsfw_param_defs import ParameterId, Parameter
 
 
 class Service20ParamDumpWrapper:

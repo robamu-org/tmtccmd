@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand, PusService
-from tmtccmd.pus.s20_fsfw_params_defs import Parameter, CustomSubservice
+from tmtccmd.pus.s20_fsfw_param_defs import Parameter, CustomSubservice
 from tmtccmd.tc.pus_20_fsfw_params import (
     create_load_param_cmd,
     create_scalar_boolean_parameter,
