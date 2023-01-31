@@ -26,21 +26,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ### Argument parsing and Core modules
 
-- `tmtccmd.config.hook.TmTcCfgHookBase` renamed to `tmtccmd.config.hook.HookBase`.
-- `args_to_params_tmtc` now expects an `assign_com_if` method and can assign a COM interface
-  when it is passed. It oftentimes makes sense to determine a valid COM interface
-  (and prompt applicable parameters from the user) before prompting procedure parameters.
-  The new behaviour is the default when using the `PostArgsParsingWrapper`.
+- (breaking): `tmtccmd.config.hook.TmTcCfgHookBase` renamed to `tmtccmd.config.hook.HookBase`.
 - (breaking): The `PostArgsParsingWrapper` constructor now expects a `SetupParams` parameter and
   caches it.
   All `set_*` methods now do not expect the `SetupParams` to be passed explicitely anymore.
 - (breaking): The `PreArgsParsingWrapper` now expects a `setup_params` parameter to be passed to the
   `parse` method. The parameter helper will be cached in the created `PostArgsParsingWrapper`. 
+- `args_to_params_tmtc` now expects an `assign_com_if` method and can assign a COM interface
+  when it is passed. It oftentimes makes sense to determine a valid COM interface
+  (and prompt applicable parameters from the user) before prompting procedure parameters.
+  The new behaviour is the default when using the `PostArgsParsingWrapper`.
 
 ### PUS modules
 
-- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
-  deprecate the former `pack_fsfw_load_param_cmd` function.
 - (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
   `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
   towards usage with the FSFW.
@@ -51,6 +49,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   are tailored towards usage with the FSFW
 - (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
   is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
+- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
+  deprecate the former `pack_fsfw_load_param_cmd` function.
 
 ### Other
 
