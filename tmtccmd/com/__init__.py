@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Generic Communication Interface. Defines the syntax of the communication functions.
-Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
-:author:     R. Mueller
-"""
+"""Communication module. Provides generic abstraction for communication and commonly used
+concrete implementations."""
 from abc import abstractmethod, ABC
 from typing import Optional
 
@@ -62,7 +60,7 @@ class ComInterface(ABC):
     def send(self, data: bytes):
         """Send raw data.
 
-        raises :py:class:`SendError`: Sending failed for some reason.
+        :raisesq :py:class:`SendError`: Sending failed for some reason.
         """
 
     @abstractmethod

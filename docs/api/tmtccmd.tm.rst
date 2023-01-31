@@ -28,10 +28,10 @@ tmtccmd.tm.pus\_1\_verification module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tm.pus\_5\_event module
+tmtccmd.tm.pus\_5\_fsfw\_event module
 ----------------------------------------
 
-.. automodule:: tmtccmd.tm.pus_5_event
+.. automodule:: tmtccmd.tm.pus_5_fsfw_event
    :members:
    :undoc-members:
    :show-inheritance:
@@ -68,10 +68,10 @@ tmtccmd.tm.pus\_3\_fsfw\_hk module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.tm.pus\_20\_fsfw\_parameters module
+tmtccmd.tm.pus\_20\_fsfw\_params module
 ------------------------------------------------
 
-.. automodule:: tmtccmd.tm.pus_20_fsfw_parameters
+.. automodule:: tmtccmd.tm.pus_20_fsfw_params
    :members:
    :undoc-members:
    :show-inheritance:

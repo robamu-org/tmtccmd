@@ -22,7 +22,6 @@ TCP_SEND_WIRETAPPING_ENABLED = False
 
 class TcpCommunicationType(enum.Enum):
     """Parse for space packets in the TCP stream, using the space packet header."""
-
     SPACE_PACKETS = 0
 
 

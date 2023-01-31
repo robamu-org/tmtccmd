@@ -28,10 +28,10 @@ tmtccmd.config.hook module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.config.com\_if module
+tmtccmd.config.com module
 -----------------------------
 
-.. automodule:: tmtccmd.config.com_if
+.. automodule:: tmtccmd.config.com
    :members:
    :undoc-members:
    :show-inheritance:
