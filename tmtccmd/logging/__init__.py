@@ -26,7 +26,7 @@ def __setup_tmtc_console_logger(log_level: int = logging.INFO) -> logging.Logger
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     # Use colorlog for now because it allows more flexibility and custom messages
     # for different levels
-    set_up_colorlog_console_logger(logger=logger)
+    add_colorlog_console_logger(logger=logger)
     logger.setLevel(level=log_level)
     # set_up_coloredlogs_logger(logger=logger)
     return logger
@@ -87,7 +87,7 @@ class CustomTmtccmdFormatter(ColoredFormatter):
         return result
 
 
-def set_up_colorlog_console_logger(logger: logging.Logger):
+def add_colorlog_console_logger(logger: logging.Logger):
     from colorlog import StreamHandler
 
     dbg_fmt = (
@@ -130,7 +130,7 @@ def init_console_logger(log_level: int = logging.INFO) -> logging.Logger:
 def add_error_file_logger(logger: logging.Logger):
     file_format = logging.Formatter(
         fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     if not os.path.exists(LOG_DIR):
         os.mkdir(LOG_DIR)
