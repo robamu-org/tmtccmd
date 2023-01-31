@@ -183,7 +183,9 @@ class PusTmHandler(SpecificApidHandlerBase):
             )
         self.raw_logger.log_tm(tm_packet)
         if not dedicated_handler and tm_packet is not None:
-            self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
+            pass
+            # TODO: Create more generic print method..
+            # self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
 
 
 class TcHandler(TcHandlerBase):
@@ -250,13 +252,13 @@ def main():  # noqa: C901
     parser_wrapper.create_default_parent_parser()
     parser_wrapper.create_default_parser()
     parser_wrapper.add_def_proc_args()
-    post_args_wrapper = parser_wrapper.parse(hook_obj)
     params = SetupParams()
+    post_args_wrapper = parser_wrapper.parse(hook_obj=hook_obj, setup_params=params)
     proc_wrapper = ProcedureParamsWrapper()
     if post_args_wrapper.use_gui:
-        post_args_wrapper.set_params_without_prompts(params, proc_wrapper)
+        post_args_wrapper.set_params_without_prompts(proc_wrapper)
     else:
-        post_args_wrapper.set_params_with_prompts(params, proc_wrapper)
+        post_args_wrapper.set_params_with_prompts(proc_wrapper)
     params.apid = EXAMPLE_PUS_APID
     setup_args = SetupWrapper(
         hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper
