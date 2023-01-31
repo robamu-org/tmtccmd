@@ -14,7 +14,7 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 This is a small Python framework targeted towards remote system software developers to
 perform TMTC (Telemetry and Telecommand) handling and testing via different communication
 interfaces. Examples for such systems are CubeSats or Rovers. This tool can be used either as a
-command line tool or as a GUI tool. The GUI features require a PyQt5 installation. This package
+command line tool or as a GUI tool which requires a PyQt6 installation. This package
 also has dedicated support to send and receive ECSS PUS packets or other generic CCSDS packets.
 
 The TMTC commander also includes some telemetry handling components and telecommand packaging
@@ -40,8 +40,10 @@ helpers. Some of those components are tailored towards usage with the
 This has a communication interface abstraction which allows to exchange TMTC through different
 channels. The framework currently supports the following communication interfaces:
 
-1. TCP/IP with UDP and TCP
-2. Serial Communication using fixed frames or a simple ASCII based transport layer
+1. TCP/IP with UDP and TCP. The TCP interface currently only supports sending CCSDS space packets
+   and is able to parse those packets from the received data stream.
+2. Serial Communication with a transport layer using either [COBS](https://pypi.org/project/cobs/)
+   encoded packets or DLE as a simple [ASCII based transport layer](https://pypi.org/project/dle-encoder/).
 3. QEMU, using a virtual serial interface
 
 It is also possible to supply custom interfaces.
@@ -76,7 +78,7 @@ To run the tests, install the test requirements first with the following command
 a virtual environment:
 
 ```sh
-pip install .[gui,test]
+pip install .[test]
 ```
 
 All tests are provided in the `src/test` folder and can be run with coverage information
@@ -105,7 +107,7 @@ pip install .[gui]
 ```
 
 You can omit `[gui]` for a CLI only installation. Alternatively you can also install the package
-from PyPI with `pip install -e tmtccmd[gui]`.
+from PyPI with `pip install tmtccmd[gui]`.
 
 ## Documentation
 

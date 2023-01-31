@@ -129,7 +129,7 @@ def __start_tmtc_commander_qt_gui(
 ):
     global __SETUP_WAS_CALLED
     try:
-        from PyQt5.QtWidgets import QApplication
+        from PyQt6.QtWidgets import QApplication
 
         if not __SETUP_WAS_CALLED:
             LOGGER.warning("setup_tmtccmd was not called first. Call it first")

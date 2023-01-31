@@ -1,7 +1,7 @@
 import time
 from typing import Optional
 
-from PyQt5.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
+from PyQt6.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
 
 from tmtccmd import get_console_logger
 from tmtccmd.core import TmMode, TcMode, BackendRequest
