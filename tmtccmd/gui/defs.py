@@ -8,6 +8,7 @@ CONNECT_BTTN_STYLE = (
     "background-color: #1fc600;"
     "border-style: inset;"
     "font: bold;"
+    "color: black;"
     "padding: 6px;"
     "border-width: 2px;"
     "border-radius: 6px;"
@@ -18,6 +19,7 @@ DISCONNECT_BTTN_STYLE = (
     "background-color: orange;"
     "border-style: inset;"
     "font: bold;"
+    "color: black;",
     "padding: 6px;"
     "border-width: 2px;"
     "border-radius: 6px;"
@@ -28,6 +30,7 @@ COMMAND_BUTTON_STYLE = (
     "background-color: #cdeefd;"
     "border-style: inset;"
     "font: bold;"
+    "color: black;"
     "padding: 6px;"
     "border-width: 2px;"
     "border-radius: 6px;"
