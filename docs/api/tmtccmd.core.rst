@@ -1,3 +1,9 @@
+.. automodule:: tmtccmd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 tmtccmd.core package
 ====================
 

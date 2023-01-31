@@ -42,12 +42,12 @@ Features
 This framework also has a communication interface abstraction which allows to exchange TMTC through
 different channels. The framework currently supports the following communication interfaces:
 
-1. TCP/IP with the :py:class:`tmtccmd.com_if.udp.UdpComIF` and :py:class:`tmtccmd.com_if.tcp.TcpSpacePacketsComIF`.
-2. Serial Communication with a transport layer using `COBS <https://pypi.org/project/cobs/>`_
-   encoded packets: :py:class:`tmtccmd.com.serial_cobs.SerialCobsComIF`.
-3. The `DLE ASCII based transport layer <https://pypi.org/project/dle-encoder/>`_ exposed by the
+1. TCP/IP with the :py:class:`tmtccmd.com.udp.UdpComIF` and :py:class:`tmtccmd.com.tcp.TcpSpacePacketsComIF`.
+2. Serial Communication with `COBS <https://pypi.org/project/cobs/>`_ encoded packets by using the
+   :py:class:`tmtccmd.com.serial_cobs.SerialCobsComIF`.
+3. The `DLE ASCII based transport layer <https://pypi.org/project/dle-encoder/>`_ by using the
    :py:class:`tmtccmd.com.serial_dle.SerialDleComIF`.
-3. QEMU, using a virtual serial interface.
+4. QEMU, using a virtual serial interface.
 
 It is also possible to supply custom interfaces.
 

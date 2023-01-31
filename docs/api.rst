@@ -9,29 +9,44 @@ tmtccmd module
 ---------------------
 
 .. automodule:: tmtccmd
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :noindex:
+
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    api/tmtccmd.core
 
-Configuration Submodules
-=========================
+Communication Submodule
+========================
+
+.. automodule:: tmtccmd.com
+
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
+
+   api/tmtccmd.com
+
+Configuration Submodule
+=========================
+
+.. automodule:: tmtccmd.config
+   :noindex:
+
+
+.. toctree::
+   :maxdepth: 2
 
    api/tmtccmd.config
-   api/tmtccmd.com
 
 CCSDS Submodules
 ===================
 
+This currently contains the CFDP support.
+
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    api/tmtccmd.cfdp
    api/tmtccmd.cfdp.handler
@@ -39,8 +54,10 @@ CCSDS Submodules
 ECSS Submodules
 =========================
 
+Contains the ECSS PUS C support.
+
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    api/tmtccmd.pus
    api/tmtccmd.tc
@@ -50,7 +67,7 @@ Other Submodules
 =========================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
    api/tmtccmd.util
    api/tmtccmd.logging

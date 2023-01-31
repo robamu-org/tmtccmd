@@ -1,5 +1,4 @@
-"""Definitions for the TMTC commander core
-"""
+"""Configuration helpers and definitions."""
 from pathlib import Path
 from typing import Optional
 
