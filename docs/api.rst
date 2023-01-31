@@ -25,7 +25,7 @@ Configuration Submodules
    :maxdepth: 4
 
    api/tmtccmd.config
-   api/tmtccmd.com_if
+   api/tmtccmd.com
 
 CCSDS Submodules
 ===================

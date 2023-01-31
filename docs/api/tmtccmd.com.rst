@@ -1,10 +1,10 @@
-tmtccmd.com\_if package
+tmtccmd.com package
 =======================
 
 Module contents
 ---------------
 
-.. automodule:: tmtccmd.com_if
+.. automodule:: tmtccmd.com
    :members:
    :undoc-members:
    :show-inheritance:
@@ -12,90 +12,90 @@ Module contents
 Submodules
 ----------
 
-tmtccmd.com\_if.utils module
+tmtccmd.com.utils module
 -----------------------------------------
 
-.. automodule:: tmtccmd.com_if.utils
+.. automodule:: tmtccmd.com.utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.tcp module
+tmtccmd.com.tcp module
 -------------------------------------------
 
-.. automodule:: tmtccmd.com_if.tcp
+.. automodule:: tmtccmd.com.tcp
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.udp module
+tmtccmd.com.udp module
 -------------------------------------
 
-.. automodule:: tmtccmd.com_if.udp
+.. automodule:: tmtccmd.com.udp
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.tcpip\_utils module
+tmtccmd.com.tcpip\_utils module
 -------------------------------------
 
-.. automodule:: tmtccmd.com_if.tcpip_utils
+.. automodule:: tmtccmd.com.tcpip_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.qemu module
+tmtccmd.com.qemu module
 ------------------------------------
 
-.. automodule:: tmtccmd.com_if.qemu
+.. automodule:: tmtccmd.com.qemu
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.serial\_cobs module
+tmtccmd.com.serial\_cobs module
 --------------------------------------
 
-.. automodule:: tmtccmd.com_if.serial_cobs
+.. automodule:: tmtccmd.com.serial_cobs
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.serial\_dle module
+tmtccmd.com.serial\_dle module
 --------------------------------------
 
-.. automodule:: tmtccmd.com_if.serial_dle
+.. automodule:: tmtccmd.com.serial_dle
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.serial\_fixed_frame module
+tmtccmd.com.serial\_fixed_frame module
 -------------------------------------------
 
-.. automodule:: tmtccmd.com_if.serial_fixed_frame
+.. automodule:: tmtccmd.com.serial_fixed_frame
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.serial\_base module
+tmtccmd.com.serial\_base module
 --------------------------------------
 
-.. automodule:: tmtccmd.com_if.serial_base
+.. automodule:: tmtccmd.com.serial_base
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.ser\_utils module
+tmtccmd.com.ser\_utils module
 ----------------------------------------
 
-.. automodule:: tmtccmd.com_if.ser_utils
+.. automodule:: tmtccmd.com.ser_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com\_if.dummy module
+tmtccmd.com.dummy module
 ------------------------------------------
 
-.. automodule:: tmtccmd.com_if.dummy
+.. automodule:: tmtccmd.com.dummy
    :members:
    :undoc-members:
    :show-inheritance:
