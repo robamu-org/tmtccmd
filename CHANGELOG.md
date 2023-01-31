@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+## Changed
+
+- The logging default init function does not set up an error file logger
+  anymore.
+- (breaking) Rename `set_up_colorlog_logger` to `add_colorlog_console_logger`
+
+## Added
+
+- New `add_error_file_logger` function.
+
 # [v4.0.0a3] 2023-01-31
 
 - `spacepackets` version 0.14.0rc2
