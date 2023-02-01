@@ -246,9 +246,10 @@ class TcHandler(TcHandlerBase):
 # Note about lint disable: I could split up the function but I prefer to have the whole
 # running main in one block for the example.
 def main():  # noqa: C901
-    tmtccmd.init_logger()
-    tmtccmd.init_printout(False)
+    # Apply the library logger formatting to the own root logger. Library logs will be propagated
+    # to application logger.
     add_colorlog_console_logger(_LOGGER)
+    tmtccmd.init_printout(False)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     parser_wrapper = PreArgsParsingWrapper()
     parser_wrapper.create_default_parent_parser()
