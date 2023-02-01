@@ -9,9 +9,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 ## Changed
 
-- The logging default init function does not set up an error file logger
-  anymore.
-- (breaking) Rename `set_up_colorlog_logger` to `add_colorlog_console_logger`
+### Logging
+
+The usage of the `logging` library now is a lot more pythonic and more
+aligned to the recommended way to use the logger. The `get_console_logger` has become deprecated.
+Users are encouraged to create custom application loggers using `logging.getLogger(__name__)`.
+It is also possible to apply the library log format to an application logger using
+`tmtccmd.logging.add_colorlog_console_logger`. 
+
+- Mark `get_console_logger` as deprecated.
+- New `tmtccmd.init_logger` method to set up library logger.
+- The logging default init function does not set up an error file logger anymore.
+- (breaking) Rename `set_up_colorlog_logger` to `add_colorlog_console_logger`.
 
 ## Added
 
