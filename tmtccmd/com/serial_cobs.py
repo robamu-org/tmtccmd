@@ -1,15 +1,12 @@
 import collections
+import logging
 import threading
 from typing import Optional
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface, ReceptionDecodeError
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
 from tmtccmd.tm import TelemetryListT
 from cobs import cobs
-
-
-LOGGER = get_console_logger()
 
 
 class SerialCobsComIF(SerialComBase, ComInterface):
@@ -23,7 +20,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
 
     def __init__(self, ser_cfg: SerialCfg):
         super().__init__(
-            LOGGER, ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.COBS
+            logging.getLogger(__name__), ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.COBS
         )
         self.__polling_shutdown = threading.Event()
         self.__reception_thread: Optional[threading.Thread] = None
@@ -91,7 +88,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
                         last_byte_was_zero = True
                     else:
                         broken_cobs_frame = self.serial.read_until(bytes([0]))
-                        LOGGER.warning(
+                        self.logger.warning(
                             f"Discarding possibly broken COBS frame: "
                             f"{broken_cobs_frame.hex(sep=',')}"
                         )

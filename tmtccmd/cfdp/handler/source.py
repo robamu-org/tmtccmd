@@ -1,4 +1,5 @@
 import enum
+import logging
 from dataclasses import dataclass
 from typing import Optional, Dict, List
 
@@ -24,7 +25,6 @@ from spacepackets.cfdp.pdu import (
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
-from tmtccmd import get_console_logger
 from tmtccmd.cfdp import (
     LocalEntityCfg,
     CfdpUserBase,
@@ -48,7 +48,7 @@ from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class TransactionStep(enum.Enum):
@@ -208,7 +208,7 @@ class SourceHandler:
 
     def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
         if self.states.state != CfdpStates.IDLE:
-            LOGGER.debug("CFDP source handler is busy, can't process put request")
+            _LOGGER.debug("CFDP source handler is busy, can't process put request")
             return False
         self._current_req.base = request
         self._params.remote_cfg = remote_cfg
@@ -216,10 +216,10 @@ class SourceHandler:
         self.states.packet_ready = False
         self._setup_transmission_mode()
         if self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
-            LOGGER.debug("Starting Put Request handling in NAK mode")
+            _LOGGER.debug("Starting Put Request handling in NAK mode")
             self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
         elif self._params.transmission_mode == TransmissionMode.ACKNOWLEDGED:
-            LOGGER.debug("Starting Put Request handling in ACK mode")
+            _LOGGER.debug("Starting Put Request handling in ACK mode")
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
         else:
             raise ValueError(
@@ -391,7 +391,7 @@ class SourceHandler:
 
     def _handle_wait_for_ack(self):
         if self.states.state != CfdpStates.BUSY_CLASS_2_ACKED:
-            LOGGER.error(
+            _LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
         pdu_list = self._rec_dict.get(DirectiveType.ACK_PDU)
@@ -422,7 +422,7 @@ class SourceHandler:
 
     def _handle_wait_for_finish(self):
         if not self._params.closure_requested:
-            LOGGER.error(
+            _LOGGER.error(
                 "Invalid Finish PDU waiting function call, no closure requested"
             )
         # TODO: If transaction closure is requested, a user transaction can only be marked
@@ -434,7 +434,7 @@ class SourceHandler:
             if self._params.check_limit is not None:
                 if self._params.check_limit.timed_out():
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
-                    LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
+                    _LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
             # Check all entries for some robustness against out-of-order reception
             if DirectiveType.FINISHED_PDU in self._rec_dict:
                 pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
@@ -447,7 +447,7 @@ class SourceHandler:
                         self.states.step = TransactionStep.NOTICE_OF_COMPLETION
                     else:
                         # TODO: Implement error handling
-                        LOGGER.warning(
+                        _LOGGER.warning(
                             f"Received condition code {finish_pdu.condition_code} in "
                             f"Finished PDU"
                         )
@@ -574,7 +574,7 @@ class SourceHandler:
         )
 
     def _declare_fault(self, cond: ConditionCode):
-        LOGGER.warning(
+        _LOGGER.warning(
             f"Fault with condition code {cond} was declared for "
             f"transaction {self._params.transaction}"
         )

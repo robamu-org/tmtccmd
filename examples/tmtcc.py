@@ -27,7 +27,7 @@ from tmtccmd.config import (
     PreArgsParsingWrapper,
     SetupWrapper,
 )
-from tmtccmd.logging import get_console_logger
+from tmtccmd.logging import add_colorlog_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
     RawTmtcTimedLogWrapper,
@@ -47,7 +47,7 @@ from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
 from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
 
-_LOGGER = get_console_logger()
+_LOGGER = logging.getLogger()
 
 EXAMPLE_PUS_APID = 0xEF
 EXAMPLE_CFDP_APID = 0xF0
@@ -246,7 +246,9 @@ class TcHandler(TcHandlerBase):
 # Note about lint disable: I could split up the function but I prefer to have the whole
 # running main in one block for the example.
 def main():  # noqa: C901
+    tmtccmd.init_logger()
     tmtccmd.init_printout(False)
+    add_colorlog_console_logger(_LOGGER)
     hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
     parser_wrapper = PreArgsParsingWrapper()
     parser_wrapper.create_default_parent_parser()

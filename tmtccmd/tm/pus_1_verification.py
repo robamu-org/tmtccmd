@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import struct
 from abc import abstractmethod
 from typing import Deque, Optional
@@ -16,9 +17,6 @@ from spacepackets.ecss.pus_1_verification import (
 )
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.logging import get_console_logger
-
-LOGGER = get_console_logger()
 
 
 class Service1FsfwWrapper:

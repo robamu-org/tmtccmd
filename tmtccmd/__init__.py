@@ -2,6 +2,8 @@
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
 __version__ = "4.0.0a3"
+
+import logging
 import sys
 import os
 from datetime import timedelta
@@ -24,7 +26,6 @@ from tmtccmd.config import (
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
-from tmtccmd.logging import get_console_logger
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
 from tmtccmd.tc import (
@@ -39,7 +40,7 @@ VERSION_MAJOR = 4
 VERSION_MINOR = 0
 VERSION_REVISION = 0
 
-LOGGER = get_console_logger()
+TMTCCMD_LOGGER = logging.getLogger(__name__)
 
 __SETUP_WAS_CALLED = False
 __SETUP_FOR_GUI = False
@@ -47,6 +48,11 @@ __SETUP_FOR_GUI = False
 
 def version() -> str:
     return __version__
+
+
+def init_logger(log_level: int = logging.INFO):
+    from tmtccmd.logging import __setup_tmtc_console_logger
+    __setup_tmtc_console_logger(TMTCCMD_LOGGER, log_level)
 
 
 def setup(setup_args: SetupWrapper):
@@ -92,7 +98,7 @@ def start(
     """
     global __SETUP_WAS_CALLED, __SETUP_FOR_GUI
     if not __SETUP_WAS_CALLED:
-        LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+        TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
     if __SETUP_FOR_GUI:
         __start_tmtc_commander_qt_gui(
@@ -132,7 +138,7 @@ def __start_tmtc_commander_qt_gui(
         from PyQt5.QtWidgets import QApplication
 
         if not __SETUP_WAS_CALLED:
-            LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+            TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
             sys.exit(1)
         app = QApplication([app_name])
         if tmtc_frontend is None:
@@ -146,7 +152,7 @@ def __start_tmtc_commander_qt_gui(
             )
         tmtc_frontend.start(app)
     except ImportError as e:
-        LOGGER.exception(e)
+        TMTCCMD_LOGGER.exception(e)
         sys.exit(1)
 
 
@@ -169,10 +175,10 @@ def create_default_tmtc_backend(
     from typing import cast
 
     if not __SETUP_WAS_CALLED:
-        LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+        TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
     if tm_handler is None:
-        LOGGER.warning(
+        TMTCCMD_LOGGER.warning(
             "No TM Handler specified! Make sure to specify at least one TM handler"
         )
         sys.exit(1)

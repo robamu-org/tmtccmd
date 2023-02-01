@@ -1,14 +1,13 @@
+import logging
 import time
 
 import deprecation
 
 from tmtccmd import __version__
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg
 from tmtccmd.tm import TelemetryListT
 
-LOGGER = get_console_logger()
 
 # TODO: This should be configurable
 SERIAL_FRAME_MAX_LENGTH = 4096
@@ -23,7 +22,7 @@ SERIAL_FRAME_MAX_LENGTH = 4096
 )
 class SerialFixedFrameComIF(SerialComBase, ComInterface):
     def __init__(self, ser_cfg: SerialCfg):
-        super().__init__(LOGGER, ser_cfg=ser_cfg)
+        super().__init__(logging.getLogger(__name__), ser_cfg=ser_cfg)
         # Set to default value.
         self.serial_frame_size = SERIAL_FRAME_MAX_LENGTH
 
@@ -113,10 +112,11 @@ def parse_next_packets(
     next_packet_size = next_payload_len + 7
 
     if next_packet_size > SERIAL_FRAME_MAX_LENGTH:
-        LOGGER.error(
+        logger = logging.getLogger(__name__)
+        logger.error(
             "PUS Polling: Very large packet detected, packet splitting not implemented yet!"
         )
-        LOGGER.error("Detected Size: " + str(next_packet_size))
+        logger.error("Detected Size: " + str(next_packet_size))
         end_index = frame_size
         return end_index
 

@@ -19,6 +19,7 @@ Instructions:
 """
 
 import asyncio
+import logging
 import struct
 import json
 import re
@@ -32,10 +33,9 @@ from tmtccmd.com import ComInterface
 from tmtccmd.com.serial_fixed_frame import poll_pus_packets_fixed_frames
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.com.serial_base import SerialCommunicationType
-from tmtccmd.logging import get_console_logger
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 SERIAL_FRAME_LENGTH = 256
 DLE_FRAME_LENGTH = 1500
 
@@ -129,7 +129,7 @@ class QEMUComIF(ComInterface):
             ).result()
             asyncio.run_coroutine_threadsafe(self.usart.open_port(), self.loop).result()
         except NotImplementedError:
-            LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
+            _LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
             sys.exit()
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             self.reception_buffer = deque(maxlen=self.dle_queue_len)
@@ -178,10 +178,10 @@ class QEMUComIF(ComInterface):
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)
                 else:
-                    LOGGER.warning("DLE decoder error!")
+                    _LOGGER.warning("DLE decoder error!")
 
         else:
-            LOGGER.warning("This communication type was not implemented yet!")
+            _LOGGER.warning("This communication type was not implemented yet!")
 
         return packet_list
 
@@ -251,7 +251,7 @@ class QEMUComIF(ComInterface):
             # handle erroneous data
             print(data)
             # It is assumed that all packets are DLE encoded, so throw it away for now.
-            LOGGER.info(
+            _LOGGER.info(
                 "Non DLE-Encoded data with length " + str(len(data) + 1) + " found.."
             )
 

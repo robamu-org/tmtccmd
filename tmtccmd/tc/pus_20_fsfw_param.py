@@ -17,9 +17,6 @@ from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
     create_scalar_double_parameter,
 )
 from spacepackets.ecss.tc import PusTelecommand
-from tmtccmd.logging import get_console_logger
-
-logger = get_console_logger()
 
 
 def create_load_param_cmd(app_data: bytes) -> PusTelecommand:
@@ -165,8 +162,7 @@ def prepare_param_packet_header(
     parameter_id = bytearray(4)
     parameter_id[0] = domain_id
     if unique_id > 255:
-        logger.warning("Invalid unique ID, should be smaller than 255!")
-        return None
+        raise ValueError("Invalid unique ID, should be smaller than 255!")
     parameter_id[1] = unique_id
     parameter_id[2] = (start_at_idx >> 8) & 0xFF
     parameter_id[3] = start_at_idx & 0xFF

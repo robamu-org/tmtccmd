@@ -12,10 +12,6 @@ from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.pus_5_event import Subservice, Severity
 from spacepackets.ecss.tm import CdsShortTimestamp, AbstractPusTm, PusTelemetry
-from tmtccmd.logging import get_console_logger
-
-
-LOGGER = get_console_logger()
 
 
 @dataclasses.dataclass

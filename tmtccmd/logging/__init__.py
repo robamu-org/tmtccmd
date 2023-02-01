@@ -11,28 +11,25 @@ from colorlog import ColoredFormatter
 LOG_DIR = "log"
 # Always use the parent module name as the logger name. This makes it easier to derive
 # loggers in submodules
-TMTC_LOGGER_NAME = ".".join(__name__.split(".")[:-1])
 TMTC_FILE_LOGGER_NAME = "tmtccmd-file"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"
 __CONSOLE_LOGGER_SET_UP = False
 __FILE_LOGER_SET_UP = False
 
 
-def __setup_tmtc_console_logger(log_level: int = logging.INFO) -> logging.Logger:
-    """Sets the LOGGER object which will be used globally. This needs to be called before
-    using the logger.
+def __setup_tmtc_console_logger(root_logger: logging.Logger, log_level: int):
+    """Set up the tmtccmd root logger.
+
     :return:    Returns the instance of the global logger
     """
-    logger = logging.getLogger(TMTC_LOGGER_NAME)
     # Use colorlog for now because it allows more flexibility and custom messages
     # for different levels
-    add_colorlog_console_logger(logger=logger)
-    logger.setLevel(level=log_level)
+    add_colorlog_console_logger(logger=root_logger)
+    root_logger.setLevel(level=log_level)
     # set_up_coloredlogs_logger(logger=logger)
-    return logger
 
 
-def set_up_coloredlogs_logger(logger: logging.Logger):
+def __set_up_coloredlogs_logger(logger: logging.Logger):
     try:
         import coloredlogs
 
@@ -109,22 +106,16 @@ def add_colorlog_console_logger(logger: logging.Logger):
     logger.addHandler(console_handler)
 
 
+"""
 def get_console_logger() -> logging.Logger:
-    """Get the global console logger instance for the library."""
+    # Get the global console logger instance for the library.
     global __CONSOLE_LOGGER_SET_UP
     logger = logging.getLogger(TMTC_LOGGER_NAME)
     if not __CONSOLE_LOGGER_SET_UP:
         __CONSOLE_LOGGER_SET_UP = True
         __setup_tmtc_console_logger()
     return logger
-
-
-def init_console_logger(log_level: int = logging.INFO) -> logging.Logger:
-    global __CONSOLE_LOGGER_SET_UP
-    if not __CONSOLE_LOGGER_SET_UP:
-        __CONSOLE_LOGGER_SET_UP = True
-        return __setup_tmtc_console_logger(log_level=log_level)
-    return get_console_logger()
+"""
 
 
 def add_error_file_logger(logger: logging.Logger):

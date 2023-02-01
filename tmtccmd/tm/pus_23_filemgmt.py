@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import logging
 import struct
 from typing import Optional
 
@@ -7,9 +9,6 @@ from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.logging import get_console_logger
-
-LOGGER = get_console_logger()
 
 
 class FileInfo:
@@ -67,7 +66,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
     def __init_without_base(instance: Service23Tm):
         tm_data = instance.tm_data
         if len(tm_data) < 4:
-            LOGGER.error("Service23TM: Invalid packet format!")
+            logging.getLogger(__name__).error("Service23TM: Invalid packet format!")
             return
         instance.object_id = struct.unpack("!I", tm_data[0:4])[0]
         instance.file_info.file_size = 0
@@ -123,7 +122,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         # Size of file length (4) + lock status (1), adapt if more field are added!
         print(len(self.tm_data) - self.data_start_idx)
         if len(self.tm_data) - self.data_start_idx != 5:
-            LOGGER.error("Service23TM: Invalid lenght of file attributes data")
+            logging.getLogger(__name__).error("Service23TM: Invalid lenght of file attributes data")
             return
         self.file_info.file_size = struct.unpack(
             "!I", self.tm_data[self.data_start_idx : self.data_start_idx + 4]

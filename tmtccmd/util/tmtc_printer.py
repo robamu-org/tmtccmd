@@ -10,9 +10,9 @@ from tmtccmd.tm.pus_8_fsfw_funccmd import Service8FsfwTm
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdBase
 from tmtccmd.tm.pus_3_hk_base import HkContentType
-from tmtccmd.logging import get_console_logger, get_current_time_string
+from tmtccmd.logging import get_current_time_string
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class DisplayMode(enum.Enum):
@@ -49,7 +49,7 @@ class FsfwTmTcPrinter:
         :return:
         """
         base_string = "Got TM: " + info_if.get_print_info()
-        LOGGER.info(base_string)
+        _LOGGER.info(base_string)
         if self.file_logger is not None:
             self.file_logger.info(f"{get_current_time_string(True)}: {base_string}")
         try:
@@ -57,7 +57,7 @@ class FsfwTmTcPrinter:
             self.__handle_tm_content_print(info_if=info_if)
             self.__handle_additional_printout(info_if=info_if)
         except TypeError:
-            LOGGER.exception(
+            _LOGGER.exception(
                 f"Type Error when trying to print TM Packet "
                 f"[{packet_if.service}, {packet_if.subservice}]"
             )
@@ -83,7 +83,7 @@ class FsfwTmTcPrinter:
     def __handle_additional_printout(self, info_if: PusTmInfoInterface):
         additional_printout = info_if.get_custom_printout()
         if additional_printout is not None and additional_printout != "":
-            LOGGER.info(additional_printout)
+            _LOGGER.info(additional_printout)
             if self.file_logger is not None:
                 print(additional_printout)
 
@@ -113,7 +113,7 @@ class FsfwTmTcPrinter:
             f"{print_prefix} from Object ID {object_id.name} ({object_id.as_hex_string}) with "
             f"Set ID {set_id} and {len(hk_data)} bytes of HK data"
         )
-        LOGGER.info(generic_info)
+        _LOGGER.info(generic_info)
         if self.file_logger is not None:
             self.file_logger.info(f"{get_current_time_string(True)}: {generic_info}")
 
@@ -194,7 +194,7 @@ class FsfwTmTcPrinter:
         :return: None
         """
         string = get_printable_data_string(print_format=PrintFormats.HEX, data=data)
-        LOGGER.info(string)
+        _LOGGER.info(string)
 
     @staticmethod
     def chunks(lst: List, n) -> List[List]:

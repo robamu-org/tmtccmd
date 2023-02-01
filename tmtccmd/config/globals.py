@@ -1,5 +1,6 @@
 import collections.abc
 import enum
+import logging
 import pprint
 
 from spacepackets.ecss.conf import (
@@ -7,7 +8,6 @@ from spacepackets.ecss.conf import (
     set_default_tm_apid,
 )
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.defs import (
     CoreModeList,
@@ -19,7 +19,6 @@ from tmtccmd.config.defs import (
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 
 
-LOGGER = get_console_logger()
 DEF_WRAPPER = None
 
 
@@ -161,7 +160,7 @@ def check_and_set_core_service_arg(
         service_arg_invalid = True
 
     if service_arg_invalid:
-        LOGGER.warning(
+        logging.getLogger(__name__).warning(
             f"Passed service argument might be invalid, "
             f"setting to {CoreServiceList.SERVICE_17}"
         )

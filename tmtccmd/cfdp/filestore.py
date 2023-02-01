@@ -1,14 +1,14 @@
 import abc
+import logging
 import os
 import shutil
 import platform
 from pathlib import Path
 from typing import Optional, BinaryIO
 
-from tmtccmd.logging import get_console_logger
 from spacepackets.cfdp.tlv import FilestoreResponseStatusCode
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 FilestoreResult = FilestoreResponseStatusCode
 
@@ -48,45 +48,45 @@ class VirtualFilestore(abc.ABC):
 
     @abc.abstractmethod
     def create_file(self, file: Path) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Creating file not implemented in virtual filestore")
+        _LOGGER.warning("Creating file not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
     @abc.abstractmethod
     def delete_file(self, file: Path) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Deleting file not implemented in virtual filestore")
+        _LOGGER.warning("Deleting file not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
     @abc.abstractmethod
     def rename_file(
         self, _old_file: Path, _new_file: Path
     ) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Renaming file not implemented in virtual filestore")
+        _LOGGER.warning("Renaming file not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
     @abc.abstractmethod
     def replace_file(
         self, _replaced_file: Path, _source_file: Path
     ) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Replacing file not implemented in virtual filestore")
+        _LOGGER.warning("Replacing file not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
     @abc.abstractmethod
     def create_directory(self, _dir_name: Path) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Creating directory not implemented in virtual filestore")
+        _LOGGER.warning("Creating directory not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
     @abc.abstractmethod
     def remove_directory(
         self, _dir_name: Path, recursive: bool
     ) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Removing directory not implemented in virtual filestore")
+        _LOGGER.warning("Removing directory not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
     @abc.abstractmethod
     def list_directory(
         self, _dir_name: Path, _file_name: Path, _recursive: bool = False
     ) -> FilestoreResponseStatusCode:
-        LOGGER.warning("Listing directory not implemented in virtual filestore")
+        _LOGGER.warning("Listing directory not implemented in virtual filestore")
         return FilestoreResponseStatusCode.NOT_PERFORMED
 
 
@@ -138,14 +138,14 @@ class HostFilestore(VirtualFilestore):
     def create_file(self, file: Path) -> FilestoreResponseStatusCode:
         """Returns CREATE_NOT_ALLOWED if the file already exists"""
         if file.exists():
-            LOGGER.warning("File already exists")
+            _LOGGER.warning("File already exists")
             return FilestoreResponseStatusCode.CREATE_NOT_ALLOWED
         try:
             file = open(file, "x")
             file.close()
             return FilestoreResponseStatusCode.CREATE_SUCCESS
         except OSError:
-            LOGGER.exception(f"Creating file {file} failed")
+            _LOGGER.exception(f"Creating file {file} failed")
             return FilestoreResponseStatusCode.CREATE_NOT_ALLOWED
 
     def delete_file(self, file: Path) -> FilestoreResponseStatusCode:
@@ -160,7 +160,7 @@ class HostFilestore(VirtualFilestore):
         self, old_file: Path, new_file: Path
     ) -> FilestoreResponseStatusCode:
         if old_file.is_dir() or new_file.is_dir():
-            LOGGER.exception(f"{old_file} or {new_file} is a directory")
+            _LOGGER.exception(f"{old_file} or {new_file} is a directory")
             return FilestoreResponseStatusCode.RENAME_NOT_PERFORMED
         if not old_file.exists():
             return FilestoreResponseStatusCode.RENAME_OLD_FILE_DOES_NOT_EXIST
@@ -173,7 +173,7 @@ class HostFilestore(VirtualFilestore):
         self, replaced_file: Path, source_file: Path
     ) -> FilestoreResponseStatusCode:
         if replaced_file.is_dir() or source_file.is_dir():
-            LOGGER.warning(f"{replaced_file} is a directory")
+            _LOGGER.warning(f"{replaced_file} is a directory")
             return FilestoreResponseStatusCode.REPLACE_NOT_ALLOWED
         if not replaced_file.exists():
             return (
@@ -189,10 +189,10 @@ class HostFilestore(VirtualFilestore):
         self, dir_name: Path, recursive: bool = False
     ) -> FilestoreResponseStatusCode:
         if not dir_name.exists():
-            LOGGER.warning(f"{dir_name} does not exist")
+            _LOGGER.warning(f"{dir_name} does not exist")
             return FilestoreResponseStatusCode.REMOVE_DIR_DOES_NOT_EXIST
         elif not dir_name.is_dir():
-            LOGGER.warning(f"{dir_name} is not a directory")
+            _LOGGER.warning(f"{dir_name} is not a directory")
             return FilestoreResponseStatusCode.REMOVE_DIR_NOT_ALLOWED
         if recursive:
             shutil.rmtree(dir_name)
@@ -201,7 +201,7 @@ class HostFilestore(VirtualFilestore):
                 os.rmdir(dir_name)
                 return FilestoreResponseStatusCode.REMOVE_DIR_SUCCESS
             except OSError:
-                LOGGER.exception(f"Removing directory {dir_name} failed")
+                _LOGGER.exception(f"Removing directory {dir_name} failed")
                 return FilestoreResponseStatusCode.RENAME_NOT_PERFORMED
 
     def create_directory(self, dir_name: Path) -> FilestoreResponseStatusCode:
@@ -231,7 +231,7 @@ class HostFilestore(VirtualFilestore):
             elif platform.system() == "Windows":
                 cmd = "dir"
             else:
-                LOGGER.warning(
+                _LOGGER.warning(
                     f"Unknown OS {platform.system()}, do not know how to list directory"
                 )
                 return FilestoreResponseStatusCode.NOT_PERFORMED

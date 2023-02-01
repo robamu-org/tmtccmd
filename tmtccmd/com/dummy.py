@@ -17,10 +17,6 @@ from tmtccmd.config import CoreComInterfaces
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.tm.pus_1_verification import Subservice as Pus1Subservices
 from tmtccmd.tm.pus_17_test import Subservice as Pus17Subservices
-from tmtccmd.logging import get_console_logger
-
-
-LOGGER = get_console_logger()
 
 
 class DummyHandler:

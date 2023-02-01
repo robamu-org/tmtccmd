@@ -1,4 +1,5 @@
 """TCP communication interface"""
+import logging
 import socket
 import time
 import enum
@@ -9,12 +10,11 @@ from typing import Optional, Sequence
 
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface, SendError
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.com.tcpip_utils import EthAddr
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 TCP_RECV_WIRETAPPING_ENABLED = False
 TCP_SEND_WIRETAPPING_ENABLED = False
@@ -73,7 +73,7 @@ class TcpSpacePacketsComIF(ComInterface):
         try:
             self.close()
         except IOError:
-            LOGGER.warning("Could not close TCP communication interface!")
+            _LOGGER.warning("Could not close TCP communication interface!")
 
     def initialize(self, args: any = None) -> any:
         pass
@@ -83,7 +83,7 @@ class TcpSpacePacketsComIF(ComInterface):
         try:
             self.set_up_socket()
         except IOError as e:
-            LOGGER.exception("Issues setting up the TCP socket")
+            _LOGGER.exception("Issues setting up the TCP socket")
             raise e
         self.set_up_tcp_thread()
         self.__tcp_conn_thread.start()
@@ -99,7 +99,7 @@ class TcpSpacePacketsComIF(ComInterface):
                 self.__tcp_socket.connect(self.target_address.to_tuple)
                 self.connected = True
             except socket.timeout as e:
-                LOGGER.warning(
+                _LOGGER.warning(
                     f"Could not connect to socket with address {self.target_address}: {e}"
                 )
             finally:
@@ -121,7 +121,7 @@ class TcpSpacePacketsComIF(ComInterface):
                 try:
                     self.__tcp_socket.shutdown(socket.SHUT_RDWR)
                 except OSError:
-                    LOGGER.warning(
+                    _LOGGER.warning(
                         "TCP socket endpoint was already closed or not connected"
                     )
                 self.__tcp_socket.close()
@@ -172,7 +172,7 @@ class TcpSpacePacketsComIF(ComInterface):
                 try:
                     self.__receive_tm_packets()
                 except ConnectionRefusedError:
-                    LOGGER.warning("TCP connection attempt failed..")
+                    _LOGGER.warning("TCP connection attempt failed..")
             time.sleep(self.tm_polling_frequency)
 
     def __receive_tm_packets(self):
@@ -182,12 +182,12 @@ class TcpSpacePacketsComIF(ComInterface):
                 bytes_recvd = self.__tcp_socket.recv(4096)
                 if bytes_recvd == b"":
                     self.__close_tcp_socket()
-                    LOGGER.info("TCP server has been closed")
+                    _LOGGER.info("TCP server has been closed")
                     return
                 else:
                     self.connected = True
                 if self.__tm_queue.__len__() >= self.max_packets_stored:
-                    LOGGER.warning(
+                    _LOGGER.warning(
                         "Number of packets in TCP queue too large. "
                         "Overwriting old packets.."
                     )
@@ -198,7 +198,7 @@ class TcpSpacePacketsComIF(ComInterface):
                 self.__tm_queue.appendleft(bytes(bytes_recvd))
         except ConnectionResetError:
             self.__close_tcp_socket()
-            LOGGER.exception("ConnectionResetError. TCP server might not be up")
+            _LOGGER.exception("ConnectionResetError. TCP server might not be up")
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
         self.__tm_queue_to_packet_list()
