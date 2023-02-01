@@ -86,7 +86,8 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         when: TimedLogWhen,
         interval: int,
         logger: Optional[logging.Logger] = None,
-        file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}.log"),
+        file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}"),
+        suffix: Optional[str] = f"{date_suffix()}.log",
     ):
         """Create a raw TMTC timed rotating log wrapper.
         See the official Python documentation at
@@ -105,6 +106,8 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
+        if suffix:
+            file_name = f"{file_name}_{suffix}"
         handler = TimedRotatingFileHandler(
             filename=file_name, when=when.value, interval=interval
         )
@@ -122,7 +125,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
         backup_count: int,
         logger: Optional[logging.Logger] = None,
         file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}"),
-        suffix: str = date_suffix(),
+        suffix: Optional[str] = f"{date_suffix()}.log",
     ):
         """Create a raw TMTC rotating log wrapper.
         See the official Python documentation at
@@ -147,8 +150,10 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
+        if suffix:
+            file_name = f"{file_name}_{suffix}"
         handler = RotatingFileHandler(
-            filename=f"{file_name}_{suffix}.log",
+            filename=file_name,
             maxBytes=max_bytes,
             backupCount=backup_count,
         )
