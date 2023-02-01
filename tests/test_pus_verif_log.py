@@ -44,21 +44,52 @@ class TestPusVerifLog(TestCase):
         srv_1_tm = create_acceptance_success_tm(
             tc, time_provider=CdsShortTimestamp.empty()
         )
+
+        def generic_checks():
+            self.assertTrue("acc" in cm.output[0])
+            self.assertTrue("fin" in cm.output[0])
+            self.assertTrue("sta" in cm.output[0])
+            self.assertTrue("ste" in cm.output[0])
+
         res = verificator.add_tm(srv_1_tm)
-        wrapper.log_to_console(srv_1_tm, res)
+        with self.assertLogs(self.logger) as cm:
+            wrapper.log_to_console(srv_1_tm, res)
+            self.assertTrue(
+                f"{'Acceptance success of TC'.ljust(25)} | "
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
+            )
+            generic_checks()
         srv_1_tm = create_start_success_tm(tc, time_provider=CdsShortTimestamp.empty())
         res = verificator.add_tm(srv_1_tm)
-        wrapper.log_to_console(srv_1_tm, res)
+        with self.assertLogs(self.logger) as cm:
+            wrapper.log_to_console(srv_1_tm, res)
+            self.assertTrue(
+                f"{'Start success of TC'.ljust(25)} | "
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
+            )
+            generic_checks()
         srv_1_tm = create_step_success_tm(
             tc, StepId.with_byte_size(1, 1), time_provider=CdsShortTimestamp.empty()
         )
         res = verificator.add_tm(srv_1_tm)
-        wrapper.log_to_console(srv_1_tm, res)
+        with self.assertLogs(self.logger) as cm:
+            wrapper.log_to_console(srv_1_tm, res)
+            self.assertTrue(
+                f"{'Step success of TC'.ljust(25)} | "
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
+            )
+            generic_checks()
         srv_1_tm = create_completion_success_tm(
             tc, time_provider=CdsShortTimestamp.empty()
         )
         res = verificator.add_tm(srv_1_tm)
-        wrapper.log_to_console(srv_1_tm, res)
+        with self.assertLogs(self.logger) as cm:
+            wrapper.log_to_console(srv_1_tm, res)
+            self.assertTrue(
+                f"{'Completion success of TC'.ljust(25)} | "
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
+            )
+            generic_checks()
 
     def test_console_log_acc_failure(self):
         wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
@@ -79,6 +110,7 @@ class TestPusVerifLog(TestCase):
             time_provider=CdsShortTimestamp.empty(),
         )
         res = verificator.add_tm(srv_1_tm)
+        # TODO: Use self.assertLogs here instead
         wrapper.log_to_console(srv_1_tm, res)
 
     def test_console_log_start_failure(self):
@@ -92,6 +124,7 @@ class TestPusVerifLog(TestCase):
             time_provider=CdsShortTimestamp.empty(),
         )
         res = verificator.add_tm(srv_1_tm)
+        # TODO: Use self.assertLogs here instead
         wrapper.log_to_console(srv_1_tm, res)
         srv_1_tm = create_start_failure_tm(
             tc,
@@ -99,6 +132,7 @@ class TestPusVerifLog(TestCase):
             time_provider=CdsShortTimestamp.empty(),
         )
         res = verificator.add_tm(srv_1_tm)
+        # TODO: Use self.assertLogs here instead
         wrapper.log_to_console(srv_1_tm, res)
 
     def test_file_logger(self):
