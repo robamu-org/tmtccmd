@@ -434,7 +434,9 @@ class SourceHandler:
             if self._params.check_limit is not None:
                 if self._params.check_limit.timed_out():
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
-                    _LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
+                    _LOGGER.warning(
+                        f"Check limit countdown: {self._params.check_limit}"
+                    )
             # Check all entries for some robustness against out-of-order reception
             if DirectiveType.FINISHED_PDU in self._rec_dict:
                 pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)

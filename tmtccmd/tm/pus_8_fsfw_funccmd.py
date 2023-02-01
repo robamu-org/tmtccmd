@@ -60,7 +60,9 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         if instance.subservice == 130:
             tm_data = instance.tm_data
             if len(tm_data) < 8:
-                raise ValueError(f"Length of Service 8 TM data field {len(tm_data)} short than 8")
+                raise ValueError(
+                    f"Length of Service 8 TM data field {len(tm_data)} short than 8"
+                )
             instance.set_packet_info("Functional Data Reply")
             instance._object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=tm_data[0:4])
             instance._action_id = struct.unpack("!I", tm_data[4:8])[0]

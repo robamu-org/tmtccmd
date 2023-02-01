@@ -72,6 +72,7 @@ def init_logger(propagate: bool = False, log_level: int = logging.INFO):
     :param log_level: Sets the log level of the library logger
     """
     from tmtccmd.logging import __setup_tmtc_console_logger
+
     __setup_tmtc_console_logger(__TMTCCMD_LOGGER, propagate, log_level)
 
 
@@ -164,7 +165,9 @@ def __start_tmtc_commander_qt_gui(
         from PyQt5.QtWidgets import QApplication
 
         if not __SETUP_WAS_CALLED:
-            __TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+            __TMTCCMD_LOGGER.warning(
+                "setup_tmtccmd was not called first. Call it first"
+            )
             sys.exit(1)
         app = QApplication([app_name])
         if tmtc_frontend is None:

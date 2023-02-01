@@ -1,5 +1,4 @@
 """Contains the TmListener which can be used to listen to Telemetry in the background"""
-import logging
 from typing import Dict, List, Tuple
 
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet

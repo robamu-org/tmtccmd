@@ -20,7 +20,9 @@ class SerialCobsComIF(SerialComBase, ComInterface):
 
     def __init__(self, ser_cfg: SerialCfg):
         super().__init__(
-            logging.getLogger(__name__), ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.COBS
+            logging.getLogger(__name__),
+            ser_cfg=ser_cfg,
+            ser_com_type=SerialCommunicationType.COBS,
         )
         self.__polling_shutdown = threading.Event()
         self.__reception_thread: Optional[threading.Thread] = None

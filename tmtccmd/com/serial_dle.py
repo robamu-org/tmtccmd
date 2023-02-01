@@ -30,7 +30,9 @@ class SerialDleComIF(SerialComBase, ComInterface):
 
     def __init__(self, ser_cfg: SerialCfg, dle_cfg: Optional[DleCfg]):
         super().__init__(
-            logging.getLogger(__name__), ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.DLE_ENCODING
+            logging.getLogger(__name__),
+            ser_cfg=ser_cfg,
+            ser_com_type=SerialCommunicationType.DLE_ENCODING,
         )
         self.dle_cfg = dle_cfg
         self.__encoder = DleEncoder()

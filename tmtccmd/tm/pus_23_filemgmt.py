@@ -122,7 +122,9 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
         # Size of file length (4) + lock status (1), adapt if more field are added!
         print(len(self.tm_data) - self.data_start_idx)
         if len(self.tm_data) - self.data_start_idx != 5:
-            logging.getLogger(__name__).error("Service23TM: Invalid lenght of file attributes data")
+            logging.getLogger(__name__).error(
+                "Service23TM: Invalid lenght of file attributes data"
+            )
             return
         self.file_info.file_size = struct.unpack(
             "!I", self.tm_data[self.data_start_idx : self.data_start_idx + 4]

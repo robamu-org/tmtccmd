@@ -48,7 +48,9 @@ class SpecificApidHandlerBase(ABC):
 
     @abstractmethod
     def handle_tm(self, _packet: bytes, _user_args: any):
-        logging.getLogger(__name__).warning(f"No TM handling implemented for APID {self.apid}")
+        logging.getLogger(__name__).warning(
+            f"No TM handling implemented for APID {self.apid}"
+        )
 
 
 class GenericApidHandlerBase(ABC):
@@ -66,7 +68,9 @@ class GenericApidHandlerBase(ABC):
 
 class DefaultApidHandler(GenericApidHandlerBase):
     def handle_tm(self, apid: int, _packet: bytes, _user_args: any):
-        logging.getLogger(__name__).warning(f"No TM handling implemented for unknown APID {apid}")
+        logging.getLogger(__name__).warning(
+            f"No TM handling implemented for unknown APID {apid}"
+        )
 
 
 HandlerDictT = Dict[int, SpecificApidHandlerBase]
