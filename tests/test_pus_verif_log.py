@@ -1,7 +1,9 @@
+import logging
 import os
 from pathlib import Path
 from unittest import TestCase
 
+from tmtccmd.logging import add_colorlog_console_logger
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import (
     create_acceptance_success_tm,
@@ -16,7 +18,6 @@ from spacepackets.ecss.pus_1_verification import (
 )
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_verificator import PusVerificator
-from tmtccmd import get_console_logger
 from tmtccmd.logging.pus import RegularTmtcLogWrapper
 from tmtccmd.pus import VerificationWrapper
 
@@ -24,15 +25,15 @@ from tmtccmd.pus import VerificationWrapper
 class TestPusVerifLog(TestCase):
     def setUp(self) -> None:
         self.log_file_name = RegularTmtcLogWrapper.get_current_tmtc_file_name()
+        self.logger = logging.getLogger(__name__)
+        add_colorlog_console_logger(self.logger)
 
     def test_console_log_success(self):
-        logger = get_console_logger()
-        wrapper = VerificationWrapper(PusVerificator(), logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
         self._test_success(wrapper)
 
     def test_console_log_success_without_colors(self):
-        logger = get_console_logger()
-        wrapper = VerificationWrapper(PusVerificator(), logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
         wrapper.with_colors = False
         self._test_success(wrapper)
 
@@ -60,13 +61,11 @@ class TestPusVerifLog(TestCase):
         wrapper.log_to_console(srv_1_tm, res)
 
     def test_console_log_acc_failure(self):
-        logger = get_console_logger()
-        wrapper = VerificationWrapper(PusVerificator(), logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
         self._test_acc_failure(wrapper)
 
     def test_console_log_acc_failure_without_colors(self):
-        logger = get_console_logger()
-        wrapper = VerificationWrapper(PusVerificator(), logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
         wrapper.with_colors = False
         self._test_acc_failure(wrapper)
 
@@ -83,8 +82,7 @@ class TestPusVerifLog(TestCase):
         wrapper.log_to_console(srv_1_tm, res)
 
     def test_console_log_start_failure(self):
-        logger = get_console_logger()
-        wrapper = VerificationWrapper(PusVerificator(), logger, None)
+        wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=2)
         verificator.add_tc(tc)
@@ -104,7 +102,7 @@ class TestPusVerifLog(TestCase):
         wrapper.log_to_console(srv_1_tm, res)
 
     def test_file_logger(self):
-        tmtc_logger = RegularTmtcLogWrapper(self.log_file_name)
+        tmtc_logger = RegularTmtcLogWrapper(file_name=self.log_file_name)
         wrapper = VerificationWrapper(PusVerificator(), None, tmtc_logger.logger)
         verificator = wrapper.verificator
         tc = PusTelecommand(service=17, subservice=1, seq_count=0)

@@ -161,7 +161,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
 
 class RegularTmtcLogWrapper:
     def __init__(
-        self, logger: Optional[logging.Logger] = None, file_name: Optional[Path] = None
+        self, file_name: Optional[Path] = None, logger: Optional[logging.Logger] = None
     ):
         if logger is None:
             logger = logging.getLogger(TMTC_LOGGER_NAME)
