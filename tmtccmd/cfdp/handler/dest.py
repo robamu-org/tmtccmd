@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import enum
+import logging
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,7 +32,6 @@ from spacepackets.cfdp.pdu.finished import (
     FileDeliveryStatus,
 )
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
-from tmtccmd import get_console_logger
 from tmtccmd.cfdp import (
     CfdpUserBase,
     LocalEntityCfg,
@@ -52,7 +52,7 @@ from tmtccmd.cfdp.user import (
 )
 
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -212,7 +212,7 @@ class DestHandler:
         # the flexibility to be standard-compliant in the future, we should require that
         # a remote entity configuration exists for each CFDP sender.
         if self._params.remote_cfg is None:
-            LOGGER.warning(
+            _LOGGER.warning(
                 f"No remote configuration found for remote ID {metadata_pdu.dest_entity_id}"
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
@@ -261,13 +261,13 @@ class DestHandler:
         if self.states.state == CfdpStates.IDLE and clear_all_other_pdus:
             if self._params.file_directives_dict:
                 for other_pdu in self._params.file_directives_dict:
-                    LOGGER.warning(
+                    _LOGGER.warning(
                         f"Received {other_pdu} PDU without "
                         f"first receiving metadata PDU first. Discarding it"
                     )
                 self._params.file_directives_dict.clear()
             if self._params.file_data_deque:
-                LOGGER.warning(
+                _LOGGER.warning(
                     f"Received {len(self._params.file_data_deque)} file data PDUs without "
                     f"first receiving metadata PDU first. Discarding them"
                 )

@@ -16,9 +16,6 @@ from spacepackets.ecss.pus_1_verification import (
 )
 
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.logging import get_console_logger
-
-LOGGER = get_console_logger()
 
 
 class Service1FsfwWrapper:

@@ -1,3 +1,4 @@
+import logging
 import sys
 from typing import Optional, Tuple, cast, Sequence
 
@@ -18,11 +19,10 @@ from tmtccmd.com.serial_cobs import SerialCobsComIF
 
 from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com.tcpip_utils import TcpIpType, EthAddr
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com.udp import UdpComIF
 from tmtccmd.com.tcp import TcpSpacePacketsComIF
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class ComCfgBase:
@@ -106,18 +106,18 @@ def create_com_interface_default(cfg: ComCfgBase) -> Optional[ComInterface]:
     if cfg is None:
         raise ValueError("Passed ComIF configuration is empty")
     if cfg.com_if_key == "":
-        LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
+        _LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
     try:
         return __create_com_if(cfg)
     except ConnectionRefusedError:
-        LOGGER.exception("TCP/IP connection refused")
+        _LOGGER.exception("TCP/IP connection refused")
         if cfg.com_if_key == CoreComInterfaces.UDP.value:
-            LOGGER.warning("Make sure that a UDP server is running")
+            _LOGGER.warning("Make sure that a UDP server is running")
         if cfg.com_if_key == CoreComInterfaces.TCP.value:
-            LOGGER.warning("Make sure that a TCP server is running")
+            _LOGGER.warning("Make sure that a TCP server is running")
         sys.exit(1)
     except (IOError, OSError):
-        LOGGER.exception("Error setting up communication interface")
+        _LOGGER.exception("Error setting up communication interface")
         sys.exit(1)
 
 
@@ -152,7 +152,7 @@ def __create_com_if(cfg: ComCfgBase) -> Optional[ComInterface]:
     else:
         communication_interface = DummyComIF()
     if communication_interface is None:
-        LOGGER.warning("Invalid communication interface, is None")
+        _LOGGER.warning("Invalid communication interface, is None")
         return communication_interface
     communication_interface.initialize()
     return communication_interface
@@ -265,10 +265,10 @@ def create_default_serial_interface(
             communication_interface = SerialCobsComIF(ser_cfg=serial_cfg)
         else:
             # TODO: Maybe print valid keys?
-            LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
+            _LOGGER.warning(f"Invalid COM IF key {com_if_key} for a serial interface")
             return None
     except KeyError as e:
-        LOGGER.warning("Serial configuration global not configured properly")
+        _LOGGER.warning("Serial configuration global not configured properly")
         raise e
     return communication_interface
 
@@ -306,7 +306,7 @@ def set_up_serial_cfg(
         com_if_key == CoreComInterfaces.SERIAL_DLE.value
         or com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value
     ) and com_port == "":
-        LOGGER.warning("Invalid serial port specified!")
+        _LOGGER.warning("Invalid serial port specified!")
         com_port = determine_com_port(json_cfg_path=json_cfg_path)
     serial_cfg_dict = get_global(CoreGlobalIds.SERIAL_CONFIG)
     serial_cfg_dict.update({SerialConfigIds.SERIAL_PORT: com_port})

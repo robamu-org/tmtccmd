@@ -12,11 +12,7 @@ from tmtccmd.tm.pus_3_hk_base import (  # noqa: F401
     ObjectIdU32,
     HkContentType,
 )
-from tmtccmd.logging import get_console_logger
 from typing import Tuple, List
-
-
-LOGGER = get_console_logger()
 
 
 class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
@@ -95,10 +91,9 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
             return
         tm_data = instance.tm_data
         if len(tm_data) < 8:
-            LOGGER.warning(
+            raise ValueError(
                 f"Invalid Service 3 packet, is too short. Detected TM data length: {len(tm_data)}"
             )
-            raise ValueError
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
         instance.object_id = ObjectIdU32.from_bytes(tm_data[0:4])
@@ -150,12 +145,11 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     def get_hk_definitions_list(self) -> Tuple[List, List]:
         tm_data = self.tm_data
         if len(tm_data) < self.hk_structure_report_header_size:
-            LOGGER.warning(
+            raise ValueError(
                 f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
                 f"from {self.object_id.as_hex_string}, is shorter "
                 f"than {self.hk_structure_report_header_size}"
             )
-            return [], []
         definitions_header = [
             "Object ID",
             "Set ID",
@@ -169,12 +163,11 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         collection_interval_seconds = struct.unpack("!f", tm_data[10:14])[0] / 1000.0
         num_params = tm_data[14]
         if len(tm_data) < self.hk_structure_report_header_size + num_params * 4:
-            LOGGER.warning(
+            raise ValueError(
                 f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
                 f"from {self.object_id.as_hex_string}, is shorter than "
                 f"{self.hk_structure_report_header_size + num_params * 4}"
             )
-            return [], []
 
         parameters = []
         counter = 1

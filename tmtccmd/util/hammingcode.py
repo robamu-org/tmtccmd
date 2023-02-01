@@ -3,8 +3,8 @@ Hamming codes belong to the family of linear error correcting codes.
 Documentation: https://en.wikipedia.org/wiki/Hamming_code
 They can be used to identify up to two bit errors and correct one bit error per 256 byte block.
 """
+import logging
 from enum import Enum
-from tmtccmd.logging import get_console_logger
 
 # Translated from ATMEL C library.
 # /* ----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ from tmtccmd.logging import get_console_logger
 # */
 
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class HammingReturnCodes(Enum):
@@ -63,7 +63,7 @@ def hamming_compute_256x(data: bytearray) -> bytearray:
         is invalid.
     """
     if len(data) % 256 != 0:
-        LOGGER.error(
+        _LOGGER.error(
             "hamming_compute_256: Invalid input, datablock is not a multiple of "
             "256 bytes!"
         )
@@ -83,13 +83,13 @@ def hamming_verify_256x(
     data: bytearray, original_hamming_code: bytearray
 ) -> HammingReturnCodes:
     if len(data) % 256 != 0:
-        LOGGER.error(
+        _LOGGER.error(
             "hamming_compute_256: Invalid input, datablock is not a multiple of "
             "256 bytes!"
         )
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != len(data) / 256 * 3:
-        LOGGER.error(
+        _LOGGER.error(
             "hamming_compute_256: Invalid input, original hamming code does not have the"
             "correct size!"
         )
@@ -108,17 +108,17 @@ def hamming_verify_256x(
         if error_code == HammingReturnCodes.ERROR_SINGLE_BIT:
             # Assign corrected data
             data[current_data_idx : current_data_idx + 256] = current_data
-            LOGGER.info(
+            _LOGGER.info(
                 f"Corrected single bit error at data block starting at {current_data_idx}"
             )
             error_code = HammingReturnCodes.ERROR_SINGLE_BIT
         elif error_code == HammingReturnCodes.ERROR_MULTI_BIT:
-            LOGGER.info(
+            _LOGGER.info(
                 f"Detected multi-bit error at data block starting at {current_data_idx}"
             )
             return error_code
         elif error_code == HammingReturnCodes.ERROR_ECC:
-            LOGGER.info("Possible error in ECC code")
+            _LOGGER.info("Possible error in ECC code")
             return error_code
         current_data_idx += 256
         current_hamming_idx += 3
@@ -135,7 +135,7 @@ def hamming_compute_256(data: bytearray) -> bytearray:  # noqa: C901
     """
     hamming_code = bytearray(3)
     if len(data) != 256:
-        LOGGER.error(
+        _LOGGER.error(
             "hamming_compute_256: Invalid input, data does not have "
             "a length of 256 bytes!"
         )
@@ -253,13 +253,13 @@ def hamming_verify_256(
      - 3 if there was a multi bit error which can not be corrected
     """
     if len(data) != 256:
-        LOGGER.error(
+        _LOGGER.error(
             "hamming_compute_256: Invalid input, data does not have "
             "a length of 256 bytes!"
         )
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != 3:
-        LOGGER.error(
+        _LOGGER.error(
             "hamming_compute_256: Invalid input, hamming code does not have "
             "a length of 3 bytes!"
         )
@@ -302,7 +302,7 @@ def hamming_verify_256(
 
         # Correct bit
         print_string = "Correcting byte " + str(byte_idx) + " at bit " + str(bit_idx)
-        LOGGER.info(print_string)
+        _LOGGER.info(print_string)
         data[byte_idx] ^= 1 << bit_idx
         return HammingReturnCodes.ERROR_SINGLE_BIT
 

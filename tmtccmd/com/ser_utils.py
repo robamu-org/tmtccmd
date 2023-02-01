@@ -1,16 +1,17 @@
 import json
+import logging
 from typing import TextIO
 
 import serial
 import serial.tools.list_ports
-from tmtccmd.logging import get_console_logger
 from tmtccmd.util.json import (
     check_json_file,
     JsonKeyNames,
     save_to_json_with_prompt,
 )
 
-LOGGER = get_console_logger()
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def determine_baud_rate(json_cfg_path: str) -> int:
@@ -107,10 +108,10 @@ def __try_com_port_load(json_obj) -> (bool, bool, str):
     com_port = ""
     try:
         com_port = json_obj[JsonKeyNames.SERIAL_PORT.value]
-        LOGGER.info(f"Loaded serial port {com_port} from JSON configuration file")
+        _LOGGER.info(f"Loaded serial port {com_port} from JSON configuration file")
         if not check_port_validity(com_port):
             while True:
-                LOGGER.info(
+                _LOGGER.info(
                     "Serial port from configuration file not contained within serial port list"
                 )
                 reconfigure = input(
@@ -143,7 +144,7 @@ def __try_hint_handling(
 
     com_port_found, com_port = find_com_port_from_hint(hint=hint)
     if com_port_found:
-        LOGGER.info(f"Found {com_port} based on hint {hint}")
+        _LOGGER.info(f"Found {com_port} based on hint {hint}")
         if reconfig_hint:
             if save_to_json_with_prompt(
                 key=JsonKeyNames.SERIAL_PORT.value,
@@ -154,7 +155,7 @@ def __try_hint_handling(
             ):
                 reconfig_com_port = False
     else:
-        LOGGER.info("No serial port found based on hint..")
+        _LOGGER.info("No serial port found based on hint..")
         reconfig_com_port = True
     return reconfig_com_port, com_port
 
@@ -169,7 +170,7 @@ def __prompt_hint_handling(json_obj) -> (bool, str):
     )
     if prompt_hint.lower() in ["y", "yes", "1", ""]:
         while True:
-            LOGGER.info("Found serial devices:")
+            _LOGGER.info("Found serial devices:")
             for port, desc, hwid in sorted(ports):
                 print("{}: {} [{}]".format(port, desc, hwid))
             hint = input("Specify hint: ")
@@ -189,7 +190,7 @@ def __prompt_hint_handling(json_obj) -> (bool, str):
 def find_com_port_from_hint(hint: str) -> (bool, str):
     """Find a COM port based on a hint string"""
     if hint == "":
-        LOGGER.warning("Invalid hint, is empty..")
+        _LOGGER.warning("Invalid hint, is empty..")
         return False, ""
     ports = serial.tools.list_ports.comports()
     for port, desc, hwid in sorted(ports):

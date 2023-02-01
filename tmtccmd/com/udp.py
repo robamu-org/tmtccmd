@@ -1,14 +1,15 @@
 """UDP Communication Interface"""
+import logging
 import select
 import socket
 from typing import Optional
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface
 from tmtccmd.tm import TelemetryListT
 from tmtccmd.com.tcpip_utils import EthAddr
 
-LOGGER = get_console_logger()
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class UdpComIF(ComInterface):
@@ -38,7 +39,7 @@ class UdpComIF(ComInterface):
         try:
             self.close()
         except IOError:
-            LOGGER.warning("Could not close UDP communication interface")
+            _LOGGER.warning("Could not close UDP communication interface")
 
     def initialize(self, args: any = None) -> any:
         pass
@@ -49,7 +50,7 @@ class UdpComIF(ComInterface):
         # being used.
         # See: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-bind
         if self.recv_addr is not None:
-            LOGGER.info(
+            _LOGGER.info(
                 f"Binding UDP socket to {self.recv_addr.ip_addr} and port {self.recv_addr.port}"
             )
             self.udp_socket.bind(self.recv_addr.to_tuple)
@@ -68,7 +69,7 @@ class UdpComIF(ComInterface):
             return
         bytes_sent = self.udp_socket.sendto(data, self.send_address.to_tuple)
         if bytes_sent != len(data):
-            LOGGER.warning("Not all bytes were sent!")
+            _LOGGER.warning("Not all bytes were sent!")
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> bool:
         if self.udp_socket is None:
@@ -88,5 +89,5 @@ class UdpComIF(ComInterface):
                 packet_list.append(bytearray(data))
             return packet_list
         except ConnectionResetError:
-            LOGGER.warning("Connection reset exception occured!")
+            _LOGGER.warning("Connection reset exception occured!")
             return []

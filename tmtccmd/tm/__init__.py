@@ -1,9 +1,9 @@
 import enum
+import logging
 from abc import abstractmethod, ABC
 from typing import Deque, List, Union, Dict, Optional
 
 from spacepackets.ecss import PusTelemetry
-from tmtccmd.logging import get_console_logger
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.tm.pus_8_fsfw_funccmd import Service8FsfwTm
@@ -20,9 +20,6 @@ PusTmListT = List[PusTelemetry]
 PusTmQueueT = Deque[PusTmListT]
 PusIFListT = List[Union[PusTmInfoInterface, PusTmInterface]]
 PusIFQueueT = Deque[PusIFListT]
-
-
-LOGGER = get_console_logger()
 
 
 class TmTypes(enum.Enum):
@@ -51,7 +48,9 @@ class SpecificApidHandlerBase(ABC):
 
     @abstractmethod
     def handle_tm(self, _packet: bytes, _user_args: any):
-        LOGGER.warning(f"No TM handling implemented for APID {self.apid}")
+        logging.getLogger(__name__).warning(
+            f"No TM handling implemented for APID {self.apid}"
+        )
 
 
 class GenericApidHandlerBase(ABC):
@@ -69,7 +68,9 @@ class GenericApidHandlerBase(ABC):
 
 class DefaultApidHandler(GenericApidHandlerBase):
     def handle_tm(self, apid: int, _packet: bytes, _user_args: any):
-        LOGGER.warning(f"No TM handling implemented for unknown APID {apid}")
+        logging.getLogger(__name__).warning(
+            f"No TM handling implemented for unknown APID {apid}"
+        )
 
 
 HandlerDictT = Dict[int, SpecificApidHandlerBase]

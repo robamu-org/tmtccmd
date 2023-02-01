@@ -1,6 +1,7 @@
 """Argument parser module."""
 from __future__ import annotations
 import argparse
+import logging
 import sys
 from typing import Optional, List, Sequence, Union
 from dataclasses import dataclass
@@ -11,13 +12,13 @@ from spacepackets.cfdp import TransmissionMode
 from tmtccmd.com.utils import determine_com_if
 from tmtccmd.tc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
-from tmtccmd.logging import get_console_logger
+from tmtccmd.com import ComInterface
 
 from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
 from .hook import HookBase
-from ..com import ComInterface
 
-LOGGER = get_console_logger()
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def get_default_descript_txt() -> str:
@@ -187,13 +188,13 @@ def parse_default_tmtccmd_input_arguments(
     args, unknown = parser.parse_known_args(args)
 
     if print_known_args:
-        LOGGER.info("Printing known arguments:")
+        _LOGGER.info("Printing known arguments:")
         for argument in vars(args):
-            LOGGER.debug(argument + ": " + str(getattr(args, argument)))
+            _LOGGER.debug(argument + ": " + str(getattr(args, argument)))
     if print_unknown_args:
-        LOGGER.info("Printing unknown arguments:")
+        _LOGGER.info("Printing unknown arguments:")
         for argument in unknown:
-            LOGGER.info(argument)
+            _LOGGER.info(argument)
 
     if len(unknown) > 0:
         print(f"Unknown arguments detected: {unknown}")
@@ -485,7 +486,7 @@ def args_to_params_tmtc(
         params.com_if = hook_obj.assign_communication_interface(params.com_if_id)
     tmtc_defs = hook_obj.get_tmtc_definitions()
     if tmtc_defs is None:
-        LOGGER.warning("Invalid Service to Op-Code dictionary detected")
+        _LOGGER.warning("Invalid Service to Op-Code dictionary detected")
     else:
         if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
             find_service_and_op_code(

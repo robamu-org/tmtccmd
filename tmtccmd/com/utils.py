@@ -1,11 +1,9 @@
 import json
+import logging
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.util.conf_util import wrapped_prompt
 from tmtccmd.util.json import check_json_file, JsonKeyNames
 from tmtccmd.config.defs import ComIfDictT, CoreComInterfaces
-
-LOGGER = get_console_logger()
 
 
 def determine_com_if(
@@ -65,7 +63,8 @@ def store_com_if_json(com_if_string: str, json_cfg_path: str):
         data[JsonKeyNames.COM_IF.value] = com_if_string
         file.seek(0)
         json.dump(data, file, indent=4)
-    LOGGER.info(f"Communication interface was stored in the JSON file {json_cfg_path}")
-    LOGGER.info(
+    logger = logging.getLogger(__name__)
+    logger.info(f"Communication interface was stored in the JSON file {json_cfg_path}")
+    logger.info(
         "Delete this file or edit it manually to edit the communication interface"
     )

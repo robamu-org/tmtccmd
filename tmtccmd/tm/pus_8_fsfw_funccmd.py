@@ -10,9 +10,6 @@ from spacepackets.ecss.tm import PusTelemetry
 from spacepackets.util import UnsignedByteField
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 from tmtccmd.util.obj_id import ObjectIdU32
-from tmtccmd.logging import get_console_logger
-
-LOGGER = get_console_logger()
 
 
 class Service8FsfwTm(PusTmBase, PusTmInfoBase):
@@ -63,10 +60,9 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
         if instance.subservice == 130:
             tm_data = instance.tm_data
             if len(tm_data) < 8:
-                LOGGER.warning(
+                raise ValueError(
                     f"Length of Service 8 TM data field {len(tm_data)} short than 8"
                 )
-                raise ValueError
             instance.set_packet_info("Functional Data Reply")
             instance._object_id = ObjectIdU32.from_bytes(obj_id_as_bytes=tm_data[0:4])
             instance._action_id = struct.unpack("!I", tm_data[4:8])[0]

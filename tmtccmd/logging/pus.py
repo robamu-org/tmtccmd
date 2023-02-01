@@ -10,11 +10,11 @@ from tmtccmd.logging import LOG_DIR
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from logging import FileHandler
 
-RAW_PUS_LOGGER_NAME = "pus-log"
-RAW_PUS_FILE_BASE_NAME = RAW_PUS_LOGGER_NAME
+RAW_PUS_LOGGER_NAME = "tmtccmd_raw_pus_log"
+RAW_PUS_FILE_BASE_NAME = "_".join(RAW_PUS_LOGGER_NAME.split("_")[:-1])
 
-TMTC_LOGGER_NAME = "tmtc-log"
-TMTC_FILE_BASE_NAME = TMTC_LOGGER_NAME
+TMTC_LOGGER_NAME = "tmtccmd_file_log"
+TMTC_FILE_BASE_NAME = "_".join(TMTC_LOGGER_NAME.split("_")[:-1])
 
 __TMTC_LOGGER: Optional[logging.Logger] = None
 __RAW_PUS_LOGGER: Optional[logging.Logger] = None
@@ -85,6 +85,7 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         self,
         when: TimedLogWhen,
         interval: int,
+        logger: Optional[logging.Logger] = None,
         file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}.log"),
     ):
         """Create a raw TMTC timed rotating log wrapper.
@@ -98,7 +99,9 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
             hour intervals
         :param file_name: Base filename of the log file
         """
-        logger = logging.getLogger(RAW_PUS_LOGGER_NAME)
+        if logger is None:
+            logger = logging.getLogger(RAW_PUS_LOGGER_NAME)
+            logger.propagate = False
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
@@ -117,6 +120,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
         self,
         max_bytes: int,
         backup_count: int,
+        logger: Optional[logging.Logger] = None,
         file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}"),
         suffix: str = date_suffix(),
     ):
@@ -136,7 +140,10 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
             argument will use a date suffix, which will lead to a new unique rotating log created
             every day
         """
-        logger = logging.getLogger(RAW_PUS_LOGGER_NAME)
+        if logger is None:
+            logger = logging.getLogger(RAW_PUS_LOGGER_NAME)
+            # We don't want any loggers up the hierarchy to receive the logs, only the file
+            logger.propagate = False
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
@@ -153,12 +160,20 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
 
 
 class RegularTmtcLogWrapper:
-    def __init__(self, file_name: Optional[Path] = None):
+    def __init__(
+        self, file_name: Optional[Path] = None, logger: Optional[logging.Logger] = None
+    ):
+        if logger is None:
+            logger = logging.getLogger(TMTC_LOGGER_NAME)
+            logger.propagate = False
+        log_dir = Path(LOG_DIR)
+        if not log_dir.exists():
+            log_dir.mkdir()
         if file_name is None:
             self.file_name = self.get_current_tmtc_file_name()
         else:
             self.file_name = file_name
-        self.logger = logging.getLogger(TMTC_LOGGER_NAME)
+        self.logger = logger
         self.file_handler = FileHandler(self.file_name)
         formatter = logging.Formatter()
         self.file_handler.setFormatter(formatter)

@@ -5,7 +5,6 @@ from spacepackets import SpacePacket, SpacePacketHeader, PacketType
 from spacepackets.cfdp import GenericPduPacket, PduType, DirectiveType, PduFactory
 from spacepackets.cfdp.pdu import PduHolder
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.cfdp import (
     LocalEntityCfg,
@@ -22,8 +21,6 @@ from .dest import DestHandler
 from .source import SourceHandler, SourceStateWrapper, FsmResult
 from .source import TransactionStep as SourceTransactionStep
 from .dest import TransactionStep as DestTransactionStep
-
-LOGGER = get_console_logger()
 
 
 @dataclass

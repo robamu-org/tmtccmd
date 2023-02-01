@@ -1,5 +1,6 @@
 """Used to send multiple TCs in sequence"""
 import enum
+import logging
 from datetime import timedelta
 from typing import Optional
 
@@ -12,10 +13,7 @@ from tmtccmd.tc import (
 from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tc.queue import QueueWrapper
 from tmtccmd.com import ComInterface
-from tmtccmd.logging import get_console_logger
 from tmtccmd.util.countdown import Countdown
-
-LOGGER = get_console_logger()
 
 
 class SenderMode(enum.IntEnum):
@@ -122,9 +120,7 @@ class SequentialCcsdsSender:
         if not self.__wait_cd_timed_out() and op_divider % divisor == 0:
             rem_time = self._wait_cd.rem_time()
             if self._wait_cd.rem_time() > timedelta():
-                LOGGER.info(
-                    f"{rem_time.total_seconds():.01f} seconds wait time remaining"
-                )
+                print(f"{rem_time.total_seconds():.01f} seconds wait time remaining")
 
     def _check_next_telecommand(self, com_if: ComInterface):
         """Sends the next telecommand and returns whether an actual telecommand was sent"""
@@ -179,12 +175,11 @@ class SequentialCcsdsSender:
         :return: True if queue entry is telecommand, False if it is not
         """
         if not isinstance(queue_entry, TcQueueEntryBase):
-            LOGGER.warning("Invalid queue entry detected")
             raise ValueError("Invalid queue entry detected")
         cast_wrapper = QueueEntryHelper(queue_entry)
         if queue_entry.etype == TcQueueEntryType.WAIT:
             wait_entry = cast_wrapper.to_wait_entry()
-            LOGGER.info(
+            logging.getLogger(__name__).info(
                 f"Waiting for {wait_entry.wait_time.total_seconds() * 1000} milliseconds."
             )
             self._wait_cd.reset(new_timeout=wait_entry.wait_time)

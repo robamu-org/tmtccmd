@@ -1,7 +1,9 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
 # I think this needs to be in string representation to be parsed so we can't
 # use a formatted string here.
-__version__ = "4.0.0a3"
+__version__ = "4.0.0a4"
+
+import logging
 import sys
 import os
 from datetime import timedelta
@@ -24,7 +26,6 @@ from tmtccmd.config import (
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
 from tmtccmd.core.globals_manager import update_global
-from tmtccmd.logging import get_console_logger
 from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
 from tmtccmd.tc import (
@@ -39,7 +40,7 @@ VERSION_MAJOR = 4
 VERSION_MINOR = 0
 VERSION_REVISION = 0
 
-LOGGER = get_console_logger()
+__TMTCCMD_LOGGER = logging.getLogger(__name__)
 
 __SETUP_WAS_CALLED = False
 __SETUP_FOR_GUI = False
@@ -47,6 +48,38 @@ __SETUP_FOR_GUI = False
 
 def version() -> str:
     return __version__
+
+
+def init_logger(propagate: bool = False, log_level: int = logging.INFO):
+    """Initiate the library internal logger. There are various ways how to use the logging support
+    of tmtccmd in an application.
+
+    1. Usage of a custom application logger, possibly a root logger created with
+       :py:func:`logging.getLogger`. In that case, this function does not have to be called if
+       the goal is to have the library logs be emitted by the custom logger. It might still make
+       sense to apply the library console logging format to the application logger using
+       :py:func:`tmtccmd.logging.add_colorlog_console_logger`.
+    2. Usage of a custom application logger, but the library logs should not be emitted
+       by that logger. In that case, the propagation can be disabled but this function can be
+       used to still set up the library logger.
+    3. No usage of logging in the application but the logs of the library should still be emitted.
+       In that case, this function should still be called to set the log level and set up
+       formatting. The propagation flag does not matter and can be left at the default level.
+
+    :param propagate: Specifies whether logs are propagated. If the user wants to use an own (root)
+        logger and does not wish the logs of the library to be propagated to that logger,
+        this should be set to False, which is the default.
+    :param log_level: Sets the log level of the library logger
+    """
+    from tmtccmd.logging import __setup_tmtc_console_logger
+
+    __setup_tmtc_console_logger(__TMTCCMD_LOGGER, propagate, log_level)
+
+
+def get_lib_logger() -> logging.Logger:
+    """Get the library logger. Please note that this logger has to be configured first by
+    calling :py:func:`init_logger` first."""
+    return __TMTCCMD_LOGGER
 
 
 def setup(setup_args: SetupWrapper):
@@ -92,7 +125,7 @@ def start(
     """
     global __SETUP_WAS_CALLED, __SETUP_FOR_GUI
     if not __SETUP_WAS_CALLED:
-        LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+        __TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
     if __SETUP_FOR_GUI:
         __start_tmtc_commander_qt_gui(
@@ -132,7 +165,9 @@ def __start_tmtc_commander_qt_gui(
         from PyQt5.QtWidgets import QApplication
 
         if not __SETUP_WAS_CALLED:
-            LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+            __TMTCCMD_LOGGER.warning(
+                "setup_tmtccmd was not called first. Call it first"
+            )
             sys.exit(1)
         app = QApplication([app_name])
         if tmtc_frontend is None:
@@ -146,7 +181,7 @@ def __start_tmtc_commander_qt_gui(
             )
         tmtc_frontend.start(app)
     except ImportError as e:
-        LOGGER.exception(e)
+        __TMTCCMD_LOGGER.exception(e)
         sys.exit(1)
 
 
@@ -169,10 +204,10 @@ def create_default_tmtc_backend(
     from typing import cast
 
     if not __SETUP_WAS_CALLED:
-        LOGGER.warning("setup_tmtccmd was not called first. Call it first")
+        __TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
     if tm_handler is None:
-        LOGGER.warning(
+        __TMTCCMD_LOGGER.warning(
             "No TM Handler specified! Make sure to specify at least one TM handler"
         )
         sys.exit(1)

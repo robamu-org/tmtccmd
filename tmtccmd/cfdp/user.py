@@ -1,3 +1,4 @@
+import logging
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import List, Optional
@@ -6,11 +7,10 @@ from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUser
 from spacepackets.cfdp.pdu.file_data import RecordContinuationState
 from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
 from spacepackets.util import UnsignedByteField
-from tmtccmd.logging import get_console_logger
 from tmtccmd.cfdp.defs import TransactionId
 from tmtccmd.cfdp.filestore import VirtualFilestore, HostFilestore
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
@@ -65,29 +65,29 @@ class CfdpUserBase(ABC):
     @abstractmethod
     def transaction_indication(self, transaction_id: TransactionId):
         """This indication is used to report the transaction ID to the CFDP user"""
-        LOGGER.info(f"Transaction.indication for {transaction_id}")
+        _LOGGER.info(f"Transaction.indication for {transaction_id}")
 
     @abstractmethod
     def eof_sent_indication(self, transaction_id: TransactionId):
-        LOGGER.info(f"EOF-Sent.indication for {transaction_id}")
+        _LOGGER.info(f"EOF-Sent.indication for {transaction_id}")
 
     @abstractmethod
     def transaction_finished_indication(self, params: TransactionFinishedParams):
-        LOGGER.info(
+        _LOGGER.info(
             f"Transaction-Finished.indication for {params.transaction_id}. Parameters:"
         )
         print(params)
 
     @abstractmethod
     def metadata_recv_indication(self, params: MetadataRecvParams):
-        LOGGER.info(
+        _LOGGER.info(
             f"Metadata-Recv.indication for {params.transaction_id}. Parameters:"
         )
         print(params)
 
     @abstractmethod
     def file_segment_recv_indication(self, params: FileSegmentRecvdParams):
-        LOGGER.info(
+        _LOGGER.info(
             f"File-Segment-Recv.indication for {params.transaction_id}. Parameters:"
         )
         print(params)
@@ -105,13 +105,13 @@ class CfdpUserBase(ABC):
     def suspended_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode
     ):
-        LOGGER.info(
+        _LOGGER.info(
             f"Suspended.indication for {transaction_id} | Condition Code: {cond_code}"
         )
 
     @abstractmethod
     def resumed_indication(self, transaction_id: TransactionId, progress: int):
-        LOGGER.info(
+        _LOGGER.info(
             f"Resumed.indication for {transaction_id} | Progress: {progress} bytes"
         )
 
@@ -119,7 +119,7 @@ class CfdpUserBase(ABC):
     def fault_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
-        LOGGER.warning(
+        _LOGGER.warning(
             f"Fault.indication for {transaction_id} | Condition Code: {cond_code} | "
             f"Progress: {progress} bytes"
         )
@@ -128,11 +128,11 @@ class CfdpUserBase(ABC):
     def abandoned_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
-        LOGGER.warning(
+        _LOGGER.warning(
             f"Abandoned.indication for {transaction_id} | Condition Code: {cond_code} | "
             f"Progress: {progress} bytes"
         )
 
     @abstractmethod
     def eof_recv_indication(self, transaction_id: TransactionId):
-        LOGGER.info(f"EOF-Recv.indication for {transaction_id}")
+        _LOGGER.info(f"EOF-Recv.indication for {transaction_id}")
