@@ -1,10 +1,13 @@
 """
 @brief      This module is used to set up the global loggers
 """
+from tmtccmd import __version__
 import logging
 import os
 import sys
 from datetime import datetime
+
+import deprecation
 from colorlog import ColoredFormatter
 
 
@@ -51,6 +54,15 @@ def add_error_file_logger(logger: logging.Logger):
     error_file_handler.setLevel(level=logging.WARNING)
     error_file_handler.setFormatter(file_format)
     logger.addHandler(error_file_handler)
+
+
+@deprecation.deprecated(
+    deprecated_in="v4.0.0a4",
+    current_version=__version__,
+    details="Use a custom application logger or tmtccmd.get_lib_logger instead.",
+)
+def get_console_logger() -> logging.Logger:
+    return logging.getLogger(__name__)
 
 
 def __setup_tmtc_console_logger(

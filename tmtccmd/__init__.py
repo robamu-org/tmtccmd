@@ -76,7 +76,7 @@ def init_logger(propagate: bool = False, log_level: int = logging.INFO):
     __setup_tmtc_console_logger(__TMTCCMD_LOGGER, propagate, log_level)
 
 
-def get_tmtccmd_logger() -> logging.Logger:
+def get_lib_logger() -> logging.Logger:
     """Get the library logger. Please note that this logger has to be configured first by
     calling :py:func:`init_logger` first."""
     return __TMTCCMD_LOGGER
