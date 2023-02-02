@@ -85,7 +85,7 @@ class Service20FsfwTm(AbstractPusTm):
     ) -> Service20FsfwTm:
         instance = cls.empty()
         instance.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=time_reader
+            data=raw_telemetry, time_reader=time_reader
         )
         Service20FsfwTm.__common_checks(instance.pus_tm)
         return instance

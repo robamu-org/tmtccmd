@@ -114,12 +114,10 @@ class Service5Tm(AbstractPusTm):
 
     @classmethod
     def unpack(
-        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
+        cls, data: bytes, time_reader: Optional[CcsdsTimeProvider]
     ) -> Service5Tm:
         instance = cls.__empty()
-        instance.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=time_reader
-        )
+        instance.pus_tm = PusTelemetry.unpack(data=data, time_reader=time_reader)
         return instance
 
     @property

@@ -20,21 +20,20 @@ class TestTelemetry(TestCase):
     def test_generic_pus_c(self):
         def tm_func(raw_telemetry: bytearray):
             return Service17Tm.unpack(
-                raw_telemetry=raw_telemetry, time_reader=CdsShortTimestamp.empty()
+                data=raw_telemetry, time_reader=CdsShortTimestamp.empty()
             )
 
         self.assertRaises(ValueError, tm_func, bytearray())
         self.assertRaises(ValueError, tm_func, None)
 
         pus_17_telemetry = Service17Tm.unpack(
-            raw_telemetry=self.pus_17_raw, time_reader=CdsShortTimestamp.empty()
+            data=self.pus_17_raw, time_reader=CdsShortTimestamp.empty()
         )
         self.assertTrue(pus_17_telemetry.service == 17)
         self.assertTrue(pus_17_telemetry.apid == 0xEF)
         self.assertTrue(pus_17_telemetry.subservice == 1)
         self.assertTrue(pus_17_telemetry.seq_count == 36)
         self.assertTrue(pus_17_telemetry.source_data == bytearray())
-        self.assertTrue(pus_17_telemetry.pus_tm.valid)
         pus_17_telemetry.pus_tm.print_source_data(print_format=PrintFormats.HEX)
         pus_17_telemetry.pus_tm.print_full_packet_string(print_format=PrintFormats.HEX)
         # This string changes depending on system time, so its complicated to test its validity

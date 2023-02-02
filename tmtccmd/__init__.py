@@ -77,8 +77,9 @@ def init_logger(propagate: bool = False, log_level: int = logging.INFO):
 
 
 def get_lib_logger() -> logging.Logger:
-    """Get the library logger. Please note that this logger has to be configured first by
-    calling :py:func:`init_logger` first."""
+    """Get the library logger. Please note that this logger can be configured by
+    calling :py:func:`init_logger`. This might make sense depending on how the library logger
+    is used."""
     return __TMTCCMD_LOGGER
 
 
