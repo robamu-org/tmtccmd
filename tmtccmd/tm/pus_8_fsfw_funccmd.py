@@ -83,7 +83,7 @@ class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     def unpack(cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]):
         service_8_tm = cls.__empty()
         service_8_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=time_reader
+            data=raw_telemetry, time_reader=time_reader
         )
         service_8_tm.__init_without_base(instance=service_8_tm)
         return service_8_tm

@@ -55,7 +55,7 @@ class Service2Tm(PusTmInfoBase, PusTmBase):
     ) -> Service2Tm:
         service_2_tm = cls.__empty()
         service_2_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=time_reader
+            data=raw_telemetry, time_reader=time_reader
         )
         return service_2_tm
 

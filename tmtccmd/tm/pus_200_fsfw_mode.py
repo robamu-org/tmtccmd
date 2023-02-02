@@ -89,7 +89,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     ) -> Service200FsfwTm:
         service_200_tm = cls.__empty()
         service_200_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=time_reader
+            data=raw_telemetry, time_reader=time_reader
         )
         service_200_tm.__init_without_base(instance=service_200_tm)
         return service_200_tm

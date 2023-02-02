@@ -59,7 +59,7 @@ class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
     ) -> Service17TmExtended:
         service_17_tm = cls.__empty()
         service_17_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=CdsShortTimestamp.empty()
+            data=raw_telemetry, time_reader=CdsShortTimestamp.empty()
         )
         service_17_tm.__set_internal_fields()
         return service_17_tm

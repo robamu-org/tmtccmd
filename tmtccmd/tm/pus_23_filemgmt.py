@@ -94,7 +94,7 @@ class Service23Tm(PusTmInfoBase, PusTmBase):
     ) -> Service23Tm:
         service_23_tm = cls.__empty()
         service_23_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=time_reader
+            data=raw_telemetry, time_reader=time_reader
         )
         service_23_tm.__init_without_base(instance=service_23_tm)
         return service_23_tm

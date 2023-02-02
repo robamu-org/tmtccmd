@@ -119,7 +119,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     ) -> Service3FsfwTm:
         service_3_tm = cls.__empty()
         service_3_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=raw_telemetry, time_reader=CdsShortTimestamp.empty()
+            data=raw_telemetry, time_reader=CdsShortTimestamp.empty()
         )
         service_3_tm.__init_without_base(
             instance=service_3_tm,

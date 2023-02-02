@@ -74,7 +74,7 @@ class Service1TmExtended(PusTmBase, PusTmInfoBase, Service1Tm):
         """
         service_1_tm = cls.__empty()
         service_1_tm.pus_tm = PusTelemetry.unpack(
-            raw_telemetry=data, time_reader=CdsShortTimestamp.empty()
+            data=data, time_reader=CdsShortTimestamp.empty()
         )
         cls._unpack_raw_tm(service_1_tm, params)
         # FSFW specific
