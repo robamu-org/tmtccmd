@@ -5,7 +5,6 @@ from unittest import TestCase
 from tmtccmd.com.tcpip_utils import EthAddr
 from tmtccmd.com.udp import UdpComIF
 
-
 LOCALHOST = "127.0.0.1"
 
 

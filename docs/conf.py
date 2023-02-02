@@ -19,7 +19,7 @@ from tmtccmd import __version__
 # -- Project information -----------------------------------------------------
 
 project = "tmtccmd"
-copyright = "2021, Robin Mueller"
+copyright = "2021-2023, Robin Mueller"
 author = "Robin Mueller"
 
 # The full version, including alpha/beta/rc tags
@@ -30,7 +30,17 @@ version = release = __version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx", "sphinx_rtd_theme"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
+    "sphinx_rtd_theme"
+]
+
+# Disable the doctests of the full package because those would require the explicit specification
+# of imports. The doctests inside the source code are covered by pytest, using the --doctest-modules
+# configuration option.
+doctest_test_doctest_blocks = ""
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

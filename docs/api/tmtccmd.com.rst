@@ -1,9 +1,6 @@
 tmtccmd.com package
 =======================
 
-Module contents
----------------
-
 .. automodule:: tmtccmd.com
    :members:
    :undoc-members:

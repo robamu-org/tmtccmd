@@ -27,6 +27,7 @@ Contents
    
    introduction
    gettingstarted
+   communication
    api
 
 Indices and tables
