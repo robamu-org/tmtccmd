@@ -3,7 +3,6 @@ from unittest import TestCase
 
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_17_test import Service17Tm
-from spacepackets.util import PrintFormats
 
 
 class TestTelemetry(TestCase):
@@ -34,13 +33,4 @@ class TestTelemetry(TestCase):
         self.assertTrue(pus_17_telemetry.subservice == 1)
         self.assertTrue(pus_17_telemetry.seq_count == 36)
         self.assertTrue(pus_17_telemetry.source_data == bytearray())
-        pus_17_telemetry.pus_tm.print_source_data(print_format=PrintFormats.HEX)
-        pus_17_telemetry.pus_tm.print_full_packet_string(print_format=PrintFormats.HEX)
-        # This string changes depending on system time, so its complicated to test its validity
-        full_string = pus_17_telemetry.pus_tm.get_full_packet_string(
-            print_format=PrintFormats.HEX
-        )
-        print(full_string)
-        print(pus_17_telemetry)
-        print(repr(pus_17_telemetry))
         self.assertTrue(pus_17_telemetry.pus_tm.packet_id.raw() == 0x8 << 8 | 0xEF)

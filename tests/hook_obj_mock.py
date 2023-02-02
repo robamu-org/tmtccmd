@@ -3,13 +3,11 @@ from typing import Optional
 from unittest.mock import MagicMock
 
 from tmtccmd.com import ComInterface
+from tmtccmd.config.com import ComCfgBase
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import HookBase
-from tmtccmd.logging import get_console_logger
 from tmtccmd.util.obj_id import ObjectIdDictT
-
-LOGGER = get_console_logger()
 
 
 def create_hook_mock() -> HookBase:
@@ -60,9 +58,8 @@ class TestHookObj(HookBase):
         """
         from tmtccmd.config.com import create_com_interface_default
 
-        return create_com_interface_default(
-            com_if_key=com_if_key, json_cfg_path=self.cfg_path
-        )
+        com_cfg = ComCfgBase(com_if_key, self.cfg_path)
+        return create_com_interface_default(com_cfg)
 
     @abstractmethod
     def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
