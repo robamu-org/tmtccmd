@@ -64,7 +64,7 @@ list, which is then returned on the receive call.
 
 The receiver thread may then also implement the logic required for some transport layers using
 blocking API. For example, the serial COBS interface will perform a blocking
-:py:meth:`serial.serial.read` to look for the start marker 0, and then read until the end marker
+:py:meth:`serial.Serial.read` to look for the start marker 0, and then read until the end marker
 0 has been read.
 
 Here is another example where a the same packet is sent via a serial interface. This
@@ -81,14 +81,12 @@ example only runs of Unix systems because it simulates a serial port using
 
     from tmtccmd.com import ComInterface
     from tmtccmd.com.serial_cobs import SerialCfg, SerialCobsComIF
-    from spacepackets.ecss.tc import PusTelecommand
-
-    def send_my_telecommand(tc: PusTelecommand, com_if: ComInterface):
-    	com_if.send(tc.pack())
 
     sim_ser_device, pty_slave = pty.openpty()
     sim_serial_port = os.ttyname(pty_slave)
-    ser_cfg = SerialCfg("serial_cobs", serial_port=sim_serial_port, baud_rate=9600, serial_timeout=1.0)
+    ser_cfg = SerialCfg(
+        "serial_cobs", serial_port=sim_serial_port, baud_rate=9600, serial_timeout=1.0
+    )
     cobs_com_if = SerialCobsComIF(ser_cfg)
     cobs_com_if.initialize()
     cobs_com_if.open()
@@ -131,3 +129,7 @@ Output:
     Encoded packet received at simulated serial device: 0x[00,04,01,02,03,00]
     Decoded packet: 0x[01,02,03]
     Data received from simulated serial device: 0x[01,02,03]
+
+This interface could of course also exchange a higher level protocol like PUS packets, but
+this example was kept more simple to also show how a communication interface can also provide
+a transport layer.
