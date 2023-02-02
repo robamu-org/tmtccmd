@@ -8,13 +8,16 @@ from tmtccmd.tm import TelemetryListT
 
 
 class ReceptionDecodeError(Exception):
+    """Generic decode error which can also wrap the exception thrown by other libraries."""
+
     def __init__(self, msg: str, custom_exception: Optional[Exception]):
-        """Generic decode error which can also wrap the exception thrown by other libraries."""
         super().__init__(msg)
         self.custom_exception = custom_exception
 
 
 class SendError(Exception):
+    """Generic send error which can also wrap the exception thrown by other libraries."""
+
     def __init__(self, msg: str, custom_exception: Optional[Exception]):
         super().__init__(msg)
         self.custom_exception = custom_exception
@@ -60,7 +63,7 @@ class ComInterface(ABC):
     def send(self, data: bytes):
         """Send raw data.
 
-        :raisesq :py:class:`SendError`: Sending failed for some reason.
+        :raises SendError: Sending failed for some reason.
         """
 
     @abstractmethod
@@ -70,7 +73,7 @@ class ComInterface(ABC):
         to be returned here.
 
         :param parameters:
-        :raises :py:class:`ReceptionDecodeError`: If the underlying COM interface uses encoding and
+        :raises ReceptionDecodeError: If the underlying COM interface uses encoding and
             decoding and the decoding fails, this exception will be returned.
         :return:
         """
@@ -84,7 +87,7 @@ class ComInterface(ABC):
         :param timeout: Can be used to block on available data if supported by the specific
             communication interface.
         :param parameters: Can be an arbitrary parameter.
-        :raises :py:class:`ReceptionDecodeError`: If the underlying COM interface uses encoding and
+        :raises ReceptionDecodeError: If the underlying COM interface uses encoding and
             decoding when determining the number of available packets, this exception can be
             thrown on decoding errors.
         :return: 0 if no data is available, number of packets otherwise.

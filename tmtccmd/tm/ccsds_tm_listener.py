@@ -39,7 +39,7 @@ class CcsdsTmListener:
         """Core operation to route packet to the provided handler.
 
         :param com_if:
-        :raises :py:class:`PacketsTooSmallForCcsds` if any of the received packets are too small.
+        :raises PacketsTooSmallForCcsds: If any of the received packets are too small.
             The internal handler will still continue to process the remaining packet list retrieved
             from the COM interface.
         :return:
