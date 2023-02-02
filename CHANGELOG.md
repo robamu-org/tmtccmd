@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+- `spacepackets` version 0.14.0rc3
+
 ## Changed
 
 ### Logging
