@@ -57,6 +57,15 @@ Output:
     Sent TC: PUS TC[17, 1] with Request ID 0x1820c000, APID 0x020, SSC 0
     Received TC: PUS TC[17, 1] with Request ID 0x1820c000, APID 0x020, SSC 0
 
+It should be noted that the :py:class:`tmtccmd.com.ComInterface.receive` function should never block
+and returns a list of received packets. For many concrete implementations, this means that a
+separate receiver thread is required to poll for packets periodically and fill them into a packet
+list, which is then returned on the receive call.
+
+The receiver thread may then also implement the logic required for some transport layers using
+blocking API. For example, the serial COBS interface will perform a blocking
+:py:meth:`serial.serial.read` to look for the start marker 0, and then read until the end marker
+0 has been read.
 
 Here is another example where a the same packet is sent via a serial interface. This
 example only runs of Unix systems because it simulates a serial port using
