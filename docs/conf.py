@@ -34,13 +34,16 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.doctest",
-    "sphinx_rtd_theme"
+    "sphinx_rtd_theme",
 ]
 
 # Disable the doctests of the full package because those would require the explicit specification
 # of imports. The doctests inside the source code are covered by pytest, using the --doctest-modules
 # configuration option.
 doctest_test_doctest_blocks = ""
+doctest_global_setup = """
+import sys
+"""
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
