@@ -19,11 +19,6 @@ interface. The second way assumes that the OBSW is run on an external microcontr
 Here, the serial interface is used to send telecommands. Other ways like sending TMTCs 
 via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 
-Another core feature of this library is also a generic communication interface abstraction
-in form of the :py:class:`ComInterface`. This abstraction could also be used without the
-other components of the library if the goal is to separate the packet logic from the
-communication interface. The :ref:`com` chapter contains a more information and examples.
-
 .. _`SOURCE`: https://www.ksat-stuttgart.de/en/our-missions/source/
 
 ..
@@ -32,6 +27,10 @@ communication interface. The :ref:`com` chapter contains a more information and 
 Features
 =========
 
+- Generic communication interface abstraction in form of the :py:class:`tmtccmd.com.ComInterface`.
+  This abstraction could also be used without the other components of the library if the goal is
+  to separate the packet logic from the communication interface. The :ref:`com` chapter contains a
+  more information and examples.
 - Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
   This library uses the `spacepackets`_ library for most packet implementations.
 - Support for both CLI and GUI usage
