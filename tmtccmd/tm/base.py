@@ -78,16 +78,12 @@ class PusTmBase(PusTmInterface):
         return self.pus_tm.pack()
 
     @property
-    def tm_data(self) -> bytearray:
+    def tm_data(self) -> bytes:
         return self.pus_tm.tm_data
 
     @property
     def ssc(self) -> int:
         return self.pus_tm.seq_count
-
-    @property
-    def valid(self):
-        return self.pus_tm.valid
 
     @property
     def apid(self) -> int:
@@ -147,10 +143,6 @@ class PusTmInfoBase(PusTmInfoInterface):
         )
         content_list.append(f"0x{self.pus_tm.space_packet_header.apid:02x}")
         content_list.append(f"{self.pus_tm.space_packet_header.seq_count}")
-        if self.pus_tm.valid:
-            content_list.append("Yes")
-        else:
-            content_list.append("No")
 
     def append_telemetry_column_headers(self, header_list: list):
         """Default implementation adds the PUS header content header (confusing, I know)
