@@ -24,6 +24,9 @@ helpers. Some of those components are tailored towards usage with the
 
 ## Features
 
+- Generic communication interface abstraction which can also be used without the other components
+  of the library if the goal is to separate the packet logic from the communication interface.
+  The dedicated documentation chapter contains a more information and examples.
 - Special support for [Packet Utilisation Standard (PUS)](https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/)
   packets and [CCSDS Space Packets](https://public.ccsds.org/Pubs/133x0b2e1.pdf).
   This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
@@ -38,8 +41,7 @@ helpers. Some of those components are tailored towards usage with the
 - Some components are tailored towards usage with the
   [Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/)
 
-This has a communication interface abstraction which allows to exchange TMTC through different
-channels. The framework currently supports the following communication interfaces:
+The framework currently supports the following communication interfaces:
 
 1. TCP/IP with UDP and TCP. The TCP interface currently only supports sending CCSDS space packets
    and is able to parse those packets from the received data stream.
