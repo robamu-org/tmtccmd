@@ -127,6 +127,13 @@ cd docs
 make html
 ```
 
+The doctests can be run with the following command
+
+```sh
+cd docs
+make doctest
+```
+
 ## Using PyCharm
 
 When using PyCharm and running the application from PyCharm, it is recommended to set
