@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+- `spacepackets` version 0.14.0
+
+## Added
+
+- `tc.pus_200_fsfw_mode.create_announce_mode_command` added.
+
+## Changed
+
 # [v4.0.0rc0] 2023-02-03
 
 - `spacepackets` version 0.14.0rc3
