@@ -53,3 +53,6 @@ test = [
 
 [tool.setuptools.dynamic]
 version = {attr = "tmtccmd.__version__"}
+
+[tool.setuptools]
+packages = ["tmtccmd"]
