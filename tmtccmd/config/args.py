@@ -390,7 +390,7 @@ def args_to_params_generic(
     params: SetupParams,
     hook_obj: HookBase,
     use_prompts: bool,
-    assign_com_if: bool
+    assign_com_if: bool,
 ):
     if pargs.gui is None:
         params.app_params.use_gui = False
@@ -412,7 +412,7 @@ def args_to_params_cfdp(
     cfdp_params: CfdpParams,
     hook_obj: HookBase,
     use_prompts: bool,
-    assign_com_if: bool
+    assign_com_if: bool,
 ):
     """Helper function to convert CFDP command line arguments to CFDP setup parameters."""
     args_to_params_generic(
@@ -420,7 +420,7 @@ def args_to_params_cfdp(
         params=params,
         hook_obj=hook_obj,
         use_prompts=use_prompts,
-        assign_com_if=assign_com_if
+        assign_com_if=assign_com_if,
     )
     cfdp_params.source = pargs.source
     cfdp_params.target = pargs.target
@@ -474,7 +474,7 @@ def args_to_params_tmtc(
         params=params,
         hook_obj=hook_obj,
         use_prompts=use_prompts,
-        assign_com_if=assign_com_if
+        assign_com_if=assign_com_if,
     )
     mode_set_explicitely = False
     if pargs.mode is None:
@@ -752,7 +752,7 @@ class PostArgsParsingWrapper:
                 params=self.params,
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
-                assign_com_if=self.assign_com_if
+                assign_com_if=self.assign_com_if,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
