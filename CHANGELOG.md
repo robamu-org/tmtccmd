@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+## Fixed
+
+- `config.args`: Assigning of the COM interface in the args to setup converters is now done in
+  the `args_to_params_generic` function. Otherwise, this feature does not work for the conversion
+  of CFDP arguments.
+
 # [v4.0.0rc0] 2023-02-03
 
 - `spacepackets` version 0.14.0rc3

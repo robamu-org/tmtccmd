@@ -390,6 +390,7 @@ def args_to_params_generic(
     params: SetupParams,
     hook_obj: HookBase,
     use_prompts: bool,
+    assign_com_if: bool
 ):
     if pargs.gui is None:
         params.app_params.use_gui = False
@@ -401,6 +402,8 @@ def args_to_params_generic(
         )
     else:
         params.com_if_id = pargs.com_if
+    if assign_com_if:
+        params.com_if = hook_obj.assign_communication_interface(params.com_if_id)
 
 
 def args_to_params_cfdp(
@@ -409,9 +412,16 @@ def args_to_params_cfdp(
     cfdp_params: CfdpParams,
     hook_obj: HookBase,
     use_prompts: bool,
+    assign_com_if: bool
 ):
     """Helper function to convert CFDP command line arguments to CFDP setup parameters."""
-    args_to_params_generic(pargs, params, hook_obj, use_prompts)
+    args_to_params_generic(
+        pargs=pargs,
+        params=params,
+        hook_obj=hook_obj,
+        use_prompts=use_prompts,
+        assign_com_if=assign_com_if
+    )
     cfdp_params.source = pargs.source
     cfdp_params.target = pargs.target
     cfdp_params.closure_requested = not pargs.no_closure
@@ -459,7 +469,13 @@ def args_to_params_tmtc(
     :return: None
     """
     params.backend_params.listener = pargs.listener
-    args_to_params_generic(pargs, params, hook_obj, use_prompts)
+    args_to_params_generic(
+        pargs=pargs,
+        params=params,
+        hook_obj=hook_obj,
+        use_prompts=use_prompts,
+        assign_com_if=assign_com_if
+    )
     mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
@@ -482,8 +498,6 @@ def args_to_params_tmtc(
             params.tc_params.delay = 0.0
     else:
         params.tc_params.delay = float(pargs.delay)
-    if assign_com_if:
-        params.com_if = hook_obj.assign_communication_interface(params.com_if_id)
     tmtc_defs = hook_obj.get_tmtc_definitions()
     if tmtc_defs is None:
         _LOGGER.warning("Invalid Service to Op-Code dictionary detected")
@@ -738,6 +752,7 @@ class PostArgsParsingWrapper:
                 params=self.params,
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
+                assign_com_if=self.assign_com_if
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
