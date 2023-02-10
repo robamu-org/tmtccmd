@@ -7,11 +7,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+# [v4.0.0rc1] 2023-02-10
+
 ## Fixed
 
 - `config.args`: Assigning of the COM interface in the args to setup converters is now done in
   the `args_to_params_generic` function. Otherwise, this feature does not work for the conversion
   of CFDP arguments.
+- `spacepackets` version 0.14.0
+
+## Changed
+
+- Remove `setup.cfg` and move to `pyproject.toml`. Create new `.flake8` file accordingly.
+
+## Added
+
+- `tc.pus_200_fsfw_mode.create_announce_mode_command` added.
 
 # [v4.0.0rc0] 2023-02-03
 
