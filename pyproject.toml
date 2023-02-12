@@ -54,5 +54,6 @@ test = [
 [tool.setuptools.dynamic]
 version = {attr = "tmtccmd.__version__"}
 
-[tool.setuptools]
-packages = ["tmtccmd"]
+# Auto-Discovery is problematic for some reason, so use custom-discovery
+[tool.setuptools.packages]
+find = {}

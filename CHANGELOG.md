@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+# [v4.0.0rc2] 2023-02-12
+
+## Fixed
+
+- Use custom package discovery in `pyproject.toml` similarly how to discovery
+  was handled in `setup.cfg`. Auto-Discovery was problematic, package is not discovered
+  correctly.
+
 # [v4.0.0rc1] 2023-02-10
 
 `spacepackets` version 0.14.0
