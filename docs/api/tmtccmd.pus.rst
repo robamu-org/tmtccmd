@@ -20,15 +20,28 @@ s1\_verification module
    :undoc-members:
    :show-inheritance:
 
-s5\_event module
+s5\_satrs\_event module
 ------------------------
 
-.. automodule:: tmtccmd.pus.s5_event
+.. automodule:: tmtccmd.pus.s5_satrs_event
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: tmtccmd.pus.s5_event_defs
+.. automodule:: tmtccmd.pus.s5_satrs_event_defs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+s5\_fsfw\_event module
+------------------------
+
+.. automodule:: tmtccmd.pus.s5_fsfw_event
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.pus.s5_fsfw_event_defs
    :members:
    :undoc-members:
    :show-inheritance:

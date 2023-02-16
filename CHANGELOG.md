@@ -7,6 +7,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+## Changed
+
+- Renamed `pus.s5_event` and `pus.s5_event_defs` to `pus.s5_fsfw_event` and
+  `pus.s5_fsfw_event_defs` to better reflect this module is FSFW specific.
+
+## Added
+
+- First sat-rs support modules: `pus.s5_satrs_event` and `pus.s5_satrs_event_defs`
+
+## Removed
+
+- `pack_generic_service_5_test_into` removed, not generic enough.
+
 # [v4.0.0rc2] 2023-02-12
 
 ## Fixed

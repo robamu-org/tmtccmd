@@ -1,7 +1,13 @@
 import dataclasses
+import enum
 from typing import Optional, Dict
 
-from spacepackets.ecss.pus_5_event import Severity
+
+class Severity(enum.IntEnum):
+    INFO = 1
+    LOW = (2,)
+    MEDIUM = (3,)
+    HIGH = 4
 
 
 def str_to_severity(string: str) -> Optional[Severity]:

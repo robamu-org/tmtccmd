@@ -10,8 +10,9 @@ from typing import Optional
 from spacepackets import SpacePacketHeader
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
-from spacepackets.ecss.pus_5_event import Subservice, Severity
+from spacepackets.ecss.pus_5_event import Subservice
 from spacepackets.ecss.tm import CdsShortTimestamp, AbstractPusTm, PusTelemetry
+from tmtccmd.pus.s5_fsfw_event_defs import Severity
 
 
 @dataclasses.dataclass

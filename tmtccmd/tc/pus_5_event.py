@@ -6,8 +6,6 @@ from tmtccmd import __version__
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_5_event import Subservice
 
-from tmtccmd.tc.queue import DefaultPusQueueHelper
-
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a0",
@@ -51,22 +49,3 @@ def create_disable_event_reporting_command(
         seq_count=seq_count,
         apid=apid,
     )
-
-
-def pack_generic_service_5_test_into(q: DefaultPusQueueHelper):
-    q.add_log_cmd("Testing Service 5")
-    # invalid subservice
-    q.add_log_cmd("Testing Service 5: Invalid subservice")
-    q.add_pus_tc(PusTelecommand(service=5, subservice=1))
-    # disable events
-    q.add_log_cmd("Testing Service 5: Disable event")
-    q.add_pus_tc(create_disable_event_reporting_command())
-    # trigger event
-    q.add_log_cmd("Testing Service 5: Trigger event")
-    q.add_pus_tc(PusTelecommand(service=17, subservice=128))
-    # enable event
-    q.add_log_cmd("Testing Service 5: Enable event")
-    q.add_pus_tc(create_enable_event_reporting_command())
-    # trigger event
-    q.add_log_cmd("Testing Service 5: Trigger another event")
-    q.add_pus_tc(PusTelecommand(service=17, subservice=128))
