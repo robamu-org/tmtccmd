@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+# [v4.0.0] 2023-02-17
+
+spacepackets version: v0.15.0
+
 ## Changed
 
 - Renamed `pus.s5_event` and `pus.s5_event_defs` to `pus.s5_fsfw_event` and

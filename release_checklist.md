@@ -5,7 +5,7 @@ Checklist for new releases
 
 1. Make sure the docs build with Sphinx, using `make html` inside the
    `docs` directory with dependencies in `docs/requirements.txt` installed.
-2. Bump version inside the `spacepackets/__init__.py` file.
+2. Bump version inside the `tmtccmd/__init__.py` file.
 3. Update `CHANGELOG.md`: Convert `unreleased` section into version section
    with date and new `unreleased`section.
 4. Run tests with `pytest .`
@@ -16,5 +16,5 @@ Checklist for new releases
 
 # Post-Release
 
-1. Create new release on `GitHub` based on the release branch. This also creates
-   a tag.
+1. Create new release on [GitHub](https://github.com/robamu-org/tmtccmd) based on the release
+   branch. This also creates a tag.
