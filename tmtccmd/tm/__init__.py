@@ -101,6 +101,10 @@ class CcsdsTmHandler(TmHandlerBase):
     def has_apid(self, apid: int) -> bool:
         return apid in self._handler_dict
 
+    def user_hook(self, apid: int, packet: bytes):
+        """Can be overriden to trace all packets received."""
+        pass
+
     def handle_packet(self, apid: int, packet: bytes) -> bool:
         """Handle a packet with an APID. If a handler exists for the given APID,
         it is used to handle the packet. If not, a dedicated handler for unknown APIDs
@@ -110,6 +114,7 @@ class CcsdsTmHandler(TmHandlerBase):
         :param packet:
         :return: True if the packet was passed to as dedicated APID handler, False otherwise
         """
+        self.user_hook(apid, packet)
         specific_handler = self._handler_dict.get(apid)
         if specific_handler is None:
             self.generic_handler.handle_tm(apid, packet, self.generic_handler.user_args)
