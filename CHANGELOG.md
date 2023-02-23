@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [unreleased]
 
+# [v4.1.0] 2023-02-23
+
 ## Added
 
 - Added various parameter helpers in the `pus.s20_fsfw_param` module. This includes
