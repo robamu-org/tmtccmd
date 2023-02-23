@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semver.org/).
+
 # [unreleased]
 
 # [v4.1.0] 2023-02-23
@@ -17,6 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 # [v4.0.0] 2023-02-17
 
+Starting from this version, the project will adhere to [Semantic Versioning](https:://semver.org/).
 spacepackets version: v0.15.0
 
 ## Changed
