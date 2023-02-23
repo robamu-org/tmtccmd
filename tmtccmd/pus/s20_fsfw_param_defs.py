@@ -2,7 +2,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 import struct
-from typing import Optional, Union
+from typing import Optional, Union, Sequence
 
 from spacepackets.ecss import Ptc, PfcUnsigned, PfcSigned, PfcReal
 
@@ -27,6 +27,14 @@ class ParameterId:
         return (self.domain_id << 24) | (self.unique_id << 16) | self.linear_index
 
     def pack(self) -> bytes:
+        if self.domain_id > pow(2, 8) - 1:
+            raise ValueError(
+                f"domain ID {self.domain_id} too large, max value is {pow(2, 8) - 1}"
+            )
+        if self.unique_id > pow(2, 8) - 1:
+            raise ValueError(
+                f"unique ID {self.unique_id} too large, max value is {pow(2, 8) - 1}"
+            )
         raw = bytearray([self.domain_id, self.unique_id])
         raw.extend(struct.pack("!H", self.linear_index))
         return raw
@@ -148,19 +156,19 @@ def __deserialize_signed_scalar_entry(
     if pfc == PfcSigned.ONE_BYTE:
         if param_len < 1:
             raise ValueError(f"{__BASE_LEN_ERR} 1")
-        return struct.unpack("!b", tm_data[12:13])[0]
+        return struct.unpack("!b", tm_data[0:1])[0]
     elif pfc == PfcSigned.TWO_BYTES:
         if param_len < 2:
             raise ValueError(f"{__BASE_LEN_ERR} 2")
-        return struct.unpack("!h", tm_data[12:14])[0]
+        return struct.unpack("!h", tm_data[0:2])[0]
     elif pfc == PfcSigned.FOUR_BYTES:
         if param_len < 4:
             raise ValueError(f"{__BASE_LEN_ERR} 4")
-        return struct.unpack("!i", tm_data[12:16])[0]
+        return struct.unpack("!i", tm_data[0:4])[0]
     elif pfc == PfcSigned.EIGHT_BYTES:
         if param_len < 8:
             raise ValueError(f"{__BASE_LEN_ERR} 8")
-        return struct.unpack("!q", tm_data[12:20])[0]
+        return struct.unpack("!q", tm_data[0:8])[0]
     else:
         raise NotImplementedError(
             f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}"
@@ -220,6 +228,86 @@ def create_scalar_u8_parameter(
     )
 
 
+def create_scalar_i8_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: int
+) -> Parameter:
+    if abs(parameter) > pow(2, 7) - 1:
+        raise ValueError(f"parameter {parameter} is not a valid i8")
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.SIGNED,
+        pfc=PfcSigned.ONE_BYTE,
+        rows=1,
+        columns=1,
+        param_raw=struct.pack("b", parameter),
+    )
+
+
+def create_scalar_u16_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: int
+) -> Parameter:
+    if parameter < 0 or parameter > pow(2, 16) - 1:
+        raise ValueError(f"parameter {parameter} is not a valid u16")
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.UNSIGNED,
+        pfc=PfcUnsigned.TWO_BYTES,
+        rows=1,
+        columns=1,
+        param_raw=struct.pack("!H", parameter),
+    )
+
+
+def create_scalar_i16_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: int
+) -> Parameter:
+    if abs(parameter) > pow(2, 15) - 1:
+        raise ValueError(f"parameter {parameter} is not a valid i16")
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.SIGNED,
+        pfc=PfcSigned.TWO_BYTES,
+        rows=1,
+        columns=1,
+        param_raw=struct.pack("!h", parameter),
+    )
+
+
+def create_scalar_u32_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: int
+) -> Parameter:
+    if parameter < 0 or parameter > pow(2, 32) - 1:
+        raise ValueError(f"parameter {parameter} is not a valid u32")
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.UNSIGNED,
+        pfc=PfcUnsigned.FOUR_BYTES,
+        rows=1,
+        columns=1,
+        param_raw=struct.pack("!I", parameter),
+    )
+
+
+def create_scalar_i32_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameter: int
+) -> Parameter:
+    if abs(parameter) > pow(2, 31) - 1:
+        raise ValueError(f"parameter {parameter} is not a valid i32")
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.SIGNED,
+        pfc=PfcSigned.FOUR_BYTES,
+        rows=1,
+        columns=1,
+        param_raw=struct.pack("!i", parameter),
+    )
+
+
 def create_scalar_double_parameter(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
 ) -> Parameter:
@@ -245,4 +333,100 @@ def create_scalar_float_parameter(
         rows=1,
         columns=1,
         param_raw=struct.pack("!f", parameter),
+    )
+
+
+def create_vector_float_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameters: Sequence[float]
+):
+    if not parameters:
+        raise ValueError("passed parameter vector is empty or invalid")
+    param_raw = bytearray()
+    for param in parameters:
+        param_raw.extend(struct.pack("!f", param))
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.REAL,
+        pfc=PfcReal.FLOAT_SIMPLE_PRECISION_IEEE,
+        rows=1,
+        columns=len(parameters),
+        param_raw=param_raw,
+    )
+
+
+def create_vector_double_parameter(
+    object_id: bytes, domain_id: int, unique_id: int, parameters: Sequence[float]
+):
+    if not parameters:
+        raise ValueError("passed parameter vector is empty or invalid")
+    param_raw = bytearray()
+    for param in parameters:
+        param_raw.extend(struct.pack("!d", param))
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.REAL,
+        pfc=PfcReal.DOUBLE_PRECISION_IEEE,
+        rows=1,
+        columns=len(parameters),
+        param_raw=param_raw,
+    )
+
+
+def create_matrix_float_parameter(
+    object_id: bytes,
+    domain_id: int,
+    unique_id: int,
+    parameters: Sequence[Sequence[float]],
+):
+    if not parameters:
+        raise ValueError("passed parameter matrix is empty or invalid")
+    rows = len(parameters)
+    columns = len(parameters[0])
+    param_raw = bytearray()
+    for param_row in parameters:
+        if len(param_row) != columns:
+            raise ValueError(
+                "rows in passed mastrix do not have uniform number of columns"
+            )
+        for val_at_column in param_row:
+            param_raw.extend(struct.pack("!f", val_at_column))
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.REAL,
+        pfc=PfcReal.FLOAT_SIMPLE_PRECISION_IEEE,
+        rows=rows,
+        columns=columns,
+        param_raw=param_raw,
+    )
+
+
+def create_matrix_double_parameter(
+    object_id: bytes,
+    domain_id: int,
+    unique_id: int,
+    parameters: Sequence[Sequence[float]],
+):
+    if not parameters:
+        raise ValueError("passed parameter matrix is empty or invalid")
+    rows = len(parameters)
+    columns = len(parameters[0])
+    param_raw = bytearray()
+    for param_row in parameters:
+        if len(param_row) != columns:
+            raise ValueError(
+                "rows in passed mastrix do not have uniform number of columns"
+            )
+        for val_at_column in param_row:
+            param_raw.extend(struct.pack("!d", val_at_column))
+    return Parameter(
+        object_id=object_id,
+        param_id=ParameterId(domain_id, unique_id, 0),
+        ptc=Ptc.REAL,
+        pfc=PfcReal.DOUBLE_PRECISION_IEEE,
+        rows=rows,
+        columns=columns,
+        param_raw=param_raw,
     )
