@@ -60,4 +60,4 @@ It is also possible to supply custom interfaces.
 .. _`Packet Utilisation Standard (PUS)`: https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
 .. _`CCSDS Space Packets`: https://public.ccsds.org/Pubs/133x0b2e1.pdf
 .. _`spacepackets`: https://github.com/us-irs/py-spacepackets
-.. _`CFDP standard conformant`: https://public.ccsds.org/Pubs/727x0b5.pdf`
+.. _`CFDP standard conformant`: https://public.ccsds.org/Pubs/727x0b5.pdf
