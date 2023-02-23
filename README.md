@@ -18,10 +18,6 @@ used either as a command line tool or as a GUI tool. The GUI features require a 
 This package also has dedicated support to send and receive ECSS PUS packets or other generic
 CCSDS packets.
 
-The TMTC commander also includes some telemetry handling components and telecommand packaging
-helpers. Some of those components are tailored towards usage with the
-[Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/).
-
 ## Features
 
 - Generic communication interface abstraction which can also be used without the other components
@@ -31,6 +27,9 @@ helpers. Some of those components are tailored towards usage with the
   packets and [CCSDS Space Packets](https://public.ccsds.org/Pubs/133x0b2e1.pdf).
   This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
   packet implementations.
+- High level CFDP components which allow to build
+  [CFDP standard conformant](https://public.ccsds.org/Pubs/727x0b5.pdf) CFDP handlers. Currently
+  only supports unacknowledged mode.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
@@ -38,6 +37,7 @@ helpers. Some of those components are tailored towards usage with the
 - Listener mode to only listen to incoming telemetry
 - Basic logger components which can be used to store sent Telecommands and incoming Telemetry
   in files
+
 - Some components are tailored towards usage with the
   [Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/)
 

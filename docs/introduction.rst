@@ -33,6 +33,8 @@ Features
   more information and examples.
 - Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
   This library uses the `spacepackets`_ library for most packet implementations.
+- High level CFDP components which allow to build `CFDP standard conformant`_ CFDP handlers.
+  Currently only supports unacknowledged mode.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
@@ -58,3 +60,4 @@ It is also possible to supply custom interfaces.
 .. _`Packet Utilisation Standard (PUS)`: https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
 .. _`CCSDS Space Packets`: https://public.ccsds.org/Pubs/133x0b2e1.pdf
 .. _`spacepackets`: https://github.com/us-irs/py-spacepackets
+.. _`CFDP standard conformant`: https://public.ccsds.org/Pubs/727x0b5.pdf`

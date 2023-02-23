@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v4.1.1] 2023-02-23
+
+## Changed
+
+- Improvements for documentation: Added `spacepackets` cross-references.
+
 # [v4.1.0] 2023-02-23
 
 ## Added

@@ -151,7 +151,7 @@ class SourceHandler:
     The following core functions are the primary interface for a direct usage or for a composite
     handler with a source handler and a destination handler as member objects:
 
-     1. :py:meth:`start_transaction` : Can be used to start transactions, most notably to start
+     1. :py:meth:`start_cfdp_transaction` : Can be used to start transactions, most notably to start
         and perform a Copy File procedure
      2. :py:meth:`state_machine` : This state machine generates the necessary CFDP PDUs necessary
         to perform a CFDP file transfer. The PDUs are returned in a special wrapper result type.
