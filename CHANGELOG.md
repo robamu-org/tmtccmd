@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 ## Added
 
 - Added various parameter helpers in the `pus.s20_fsfw_param` module. This includes
-  helper methods to pack signed values (i8, i16 and i32) and float/double vectors and matrices.
+  helper methods to pack signed values (i8, i16 and i32), float/double vectors and matrices
+  parameters.
 
 # [v4.0.0] 2023-02-17
 
