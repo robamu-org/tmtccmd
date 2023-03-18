@@ -107,7 +107,6 @@ class CustomTmtccmdFormatter(ColoredFormatter):
         super().__init__(fmt="%(levelno)d: %(msg)s", datefmt=datefmt, style="%")
 
     def format(self, record):
-
         # Save the original format configured by the user
         # when the logger formatter was instantiated
         format_orig = self._style._fmt

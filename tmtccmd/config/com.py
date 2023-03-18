@@ -246,7 +246,6 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
 def create_default_serial_interface(
     com_if_key: str, json_cfg_path: str, serial_cfg: SerialCfg
 ) -> Optional[ComInterface]:
-
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :func:`set_up_serial_cfg` for more details.
 

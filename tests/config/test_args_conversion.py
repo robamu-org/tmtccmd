@@ -33,7 +33,6 @@ class TestArgs(TestCase):
         self.pargs.listener = True
 
     def test_basic(self):
-
         # For some reason, those fields need to be reset manually
         self.params.backend_params.mode = ""
         self.params.backend_params.com_if_id = ""
