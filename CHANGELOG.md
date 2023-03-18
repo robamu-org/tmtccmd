@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v4.1.2] 2023-03-18
+
+## Fixed
+
+- `logging` usage for GUI.
+
 # [v4.1.1] 2023-02-23
 
 ## Changed
