@@ -9,6 +9,18 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Added
+
+- Added FSFW parameter service API to dump parameters.
+- Added FSFW parameter service `ParameterFsfwId` class to uniquely identify a parameter in a
+  FSFW context.
+
+## Changed
+
+- The FSFW parameter service helper class `Parameter` is now a composition of the raw parameter data
+  and the new `ParameterFsfwId` class.
+- The `create_load_param_cmd` API now expects a `Paramter` instead of raw data.
+
 # [v4.1.2] 2023-03-18
 
 ## Fixed
