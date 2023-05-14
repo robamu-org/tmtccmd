@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v5.0.0a0] 2023-05-14
+
 ## Added
 
 - Added FSFW parameter service API to dump parameters.
