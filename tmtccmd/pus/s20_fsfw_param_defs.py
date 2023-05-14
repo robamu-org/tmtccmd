@@ -154,7 +154,7 @@ class Parameter:
         if len(data) < 12:
             raise ValueError("passed raw parameter data size smaller than 12 bytes")
         try:
-            ptc = Ptc(data[8])
+            Ptc(data[8])
         except TypeError:
             raise ValueError(f"ptc with unknown raw value {data[8]}")
         return cls(
