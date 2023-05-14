@@ -50,7 +50,7 @@ class ParameterId:
 
 
 @dataclasses.dataclass
-class ParameterFsfwId:
+class FsfwParamId:
     """Wrapper for the whole FSFW specific parameter data.
      It contains the ECSS PTC and PFC numbers and the number of columns and rows in the parameter.
     See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
@@ -73,7 +73,7 @@ class ParameterFsfwId:
     columns: int
 
     @classmethod
-    def unpack(cls, data: bytes) -> ParameterFsfwId:
+    def unpack(cls, data: bytes) -> FsfwParamId:
         if len(data) < 12:
             raise ValueError("passed raw parameter data size smaller than 12 bytes")
         try:
@@ -102,37 +102,37 @@ class ParameterFsfwId:
 
 @dataclasses.dataclass
 class Parameter:
-    param_fsfw_id: ParameterFsfwId
+    fsfw_param_id: FsfwParamId
     param_raw: bytes
 
     @property
     def ptc(self):
-        return self.param_fsfw_id.ptc
+        return self.fsfw_param_id.ptc
 
     @property
     def pfc(self):
-        return self.param_fsfw_id.pfc
+        return self.fsfw_param_id.pfc
 
     @property
     def object_id(self):
-        return self.param_fsfw_id.object_id
+        return self.fsfw_param_id.object_id
 
     @property
     def rows(self):
-        return self.param_fsfw_id.rows
+        return self.fsfw_param_id.rows
 
     @property
     def columns(self):
-        return self.param_fsfw_id.columns
+        return self.fsfw_param_id.columns
 
     @property
     def param_id(self):
-        return self.param_fsfw_id.param_id
+        return self.fsfw_param_id.param_id
 
     @classmethod
     def empty(cls):
         return cls(
-            param_fsfw_id=ParameterFsfwId(
+            fsfw_param_id=FsfwParamId(
                 object_id=bytes([0, 0, 0, 0]),
                 param_id=ParameterId.empty(),
                 ptc=None,
@@ -145,7 +145,7 @@ class Parameter:
 
     def pack(self) -> bytearray:
         """Convert the wrapper to the raw byte format expected for PUS TC or PUS TM creation."""
-        raw = self.param_fsfw_id.pack()
+        raw = self.fsfw_param_id.pack()
         raw.extend(self.param_raw)
         return raw
 
@@ -158,7 +158,7 @@ class Parameter:
         except TypeError:
             raise ValueError(f"ptc with unknown raw value {data[8]}")
         return cls(
-            param_fsfw_id=ParameterFsfwId.unpack(data),
+            fsfw_param_id=FsfwParamId.unpack(data),
             param_raw=data[12:],
         )
 
@@ -266,7 +266,7 @@ def create_scalar_u8_parameter(
     if parameter < 0 or parameter > pow(2, 8) - 1:
         raise ValueError(f"parameter {parameter} is not a valid u8")
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.UNSIGNED,
@@ -284,7 +284,7 @@ def create_scalar_i8_parameter(
     if abs(parameter) > pow(2, 7) - 1:
         raise ValueError(f"parameter {parameter} is not a valid i8")
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.SIGNED,
@@ -302,7 +302,7 @@ def create_scalar_u16_parameter(
     if parameter < 0 or parameter > pow(2, 16) - 1:
         raise ValueError(f"parameter {parameter} is not a valid u16")
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.UNSIGNED,
@@ -320,7 +320,7 @@ def create_scalar_i16_parameter(
     if abs(parameter) > pow(2, 15) - 1:
         raise ValueError(f"parameter {parameter} is not a valid i16")
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.SIGNED,
@@ -338,7 +338,7 @@ def create_scalar_u32_parameter(
     if parameter < 0 or parameter > pow(2, 32) - 1:
         raise ValueError(f"parameter {parameter} is not a valid u32")
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.UNSIGNED,
@@ -356,7 +356,7 @@ def create_scalar_i32_parameter(
     if abs(parameter) > pow(2, 31) - 1:
         raise ValueError(f"parameter {parameter} is not a valid i32")
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.SIGNED,
@@ -372,7 +372,7 @@ def create_scalar_double_parameter(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
 ) -> Parameter:
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.REAL,
@@ -388,7 +388,7 @@ def create_scalar_float_parameter(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
 ) -> Parameter:
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.REAL,
@@ -409,7 +409,7 @@ def create_vector_float_parameter(
     for param in parameters:
         param_raw.extend(struct.pack("!f", param))
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.REAL,
@@ -430,7 +430,7 @@ def create_vector_double_parameter(
     for param in parameters:
         param_raw.extend(struct.pack("!d", param))
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.REAL,
@@ -461,7 +461,7 @@ def create_matrix_float_parameter(
         for val_at_column in param_row:
             param_raw.extend(struct.pack("!f", val_at_column))
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.REAL,
@@ -492,7 +492,7 @@ def create_matrix_double_parameter(
         for val_at_column in param_row:
             param_raw.extend(struct.pack("!d", val_at_column))
     return Parameter(
-        param_fsfw_id=ParameterFsfwId(
+        fsfw_param_id=FsfwParamId(
             object_id=object_id,
             param_id=ParameterId(domain_id, unique_id, 0),
             ptc=Ptc.REAL,
