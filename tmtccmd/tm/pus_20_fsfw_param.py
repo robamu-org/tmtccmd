@@ -14,7 +14,7 @@ from spacepackets.ecss.tm import AbstractPusTm
 from tmtccmd.pus.s20_fsfw_param import (
     CustomSubservice,
 )
-from tmtccmd.pus.s20_fsfw_param_defs import ParameterId, Parameter, ParameterFsfwId
+from tmtccmd.pus.s20_fsfw_param_defs import ParameterId, Parameter, FsfwParamId
 
 
 class Service20ParamDumpWrapper:
@@ -44,7 +44,7 @@ class Service20ParamDumpWrapper:
         columns = self.param_tm.source_data[11]
         param_data = self.param_tm.source_data[12:]
         return Parameter(
-            param_fsfw_id=ParameterFsfwId(
+            fsfw_param_id=FsfwParamId(
                 object_id=self.param_tm.source_data[0:4],
                 param_id=param_id,
                 ptc=Ptc(ptc),
