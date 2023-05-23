@@ -118,6 +118,13 @@ class FsfwTmTcPrinter:
             self.file_logger.info(f"{get_current_time_string(True)}: {generic_info}")
 
     def print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
+        printout = FsfwTmTcPrinter.get_validity_buffer(validity_buffer, num_vars)
+        print(printout)
+        if self.file_logger:
+            self.file_logger.info(printout)
+
+    @staticmethod
+    def get_validity_buffer(validity_buffer: bytes, num_vars: int) -> str:
         """
         :param validity_buffer: Validity buffer in bytes format
         :param num_vars: Number of variables
@@ -127,14 +134,14 @@ class FsfwTmTcPrinter:
         counter = 0
         for index, byte in enumerate(validity_buffer):
             for bit in range(1, 9):
-                if self.bit_extractor(byte, bit) == 1:
+                if FsfwTmTcPrinter.bit_extractor(byte, bit) == 1:
                     valid_list.append(True)
                 else:
                     valid_list.append(False)
                 counter += 1
                 if counter == num_vars:
                     break
-        validity_lists = list(self.chunks(n=16, lst=valid_list))
+        validity_lists = list(FsfwTmTcPrinter.chunks(n=16, lst=valid_list))
         for valid_list in validity_lists:
             printout = "Valid: ["
             for idx, valid in enumerate(valid_list):
@@ -146,9 +153,8 @@ class FsfwTmTcPrinter:
                     printout += ","
                 else:
                     printout += "]"
-            print(printout)
-            if self.file_logger is not None:
-                self.file_logger.info(printout)
+            return printout
+        return ""
 
     @staticmethod
     def generic_action_packet_tm_print(
