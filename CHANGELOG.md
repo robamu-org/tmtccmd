@@ -11,6 +11,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [v5.0.0a0] 2023-05-14
 
+`spacepackets` version: v0.16.0
+
 ## Added
 
 - Added FSFW parameter service API to dump parameters.
@@ -22,6 +24,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - The FSFW parameter service helper class `Parameter` is now a composition of the raw parameter data
   and the new `ParameterFsfwId` class.
 - The `create_load_param_cmd` API now expects a `Paramter` instead of raw data.
+
+## Fixed
+
+- Bumped `spacepackets` to v0.16.0 for important bugfix in PDU header format.
 
 # [v4.1.2] 2023-03-18
 
