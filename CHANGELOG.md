@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Changed
+
+- Moved `tmtccmd.util.tmtc_printer` module to `tmtccmd.fsfw.tmtc_printer`. Old module references
+  new module, old module marked deprecated.
+- The `FsfwTmtcPrinter` `get_validity_buffer` function is a `staticmethod` now.
+
 # [v5.0.0a0] 2023-05-14
 
 `spacepackets` version: v0.16.0
@@ -16,13 +22,13 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 ## Added
 
 - Added FSFW parameter service API to dump parameters.
-- Added FSFW parameter service `ParameterFsfwId` class to uniquely identify a parameter in a
+- Added FSFW parameter service `FsfwParamId` class to uniquely identify a parameter in a
   FSFW context.
 
 ## Changed
 
 - The FSFW parameter service helper class `Parameter` is now a composition of the raw parameter data
-  and the new `ParameterFsfwId` class.
+  and the new `FsfwParamId` class.
 - The `create_load_param_cmd` API now expects a `Paramter` instead of raw data.
 
 ## Fixed
