@@ -13,6 +13,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 - Moved `tmtccmd.util.tmtc_printer` module to `tmtccmd.fsfw.tmtc_printer`. Old module references
   new module, old module marked deprecated.
+- The `FsfwTmtcPrinter` `get_validity_buffer` function is a `staticmethod` now.
 
 # [v5.0.0a0] 2023-05-14
 
