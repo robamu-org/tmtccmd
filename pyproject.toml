@@ -36,7 +36,7 @@ dependencies = [
     "deprecation~=2.1",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets~=0.16",
+    "spacepackets~=0.17",
 ]
 
 [project.optional-dependencies]
