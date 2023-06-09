@@ -9,11 +9,20 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v5.0.0rc0] 2023-06-09
+
+`spacepackets` version: v0.17.0
+
 ## Changed
 
 - Moved `tmtccmd.util.tmtc_printer` module to `tmtccmd.fsfw.tmtc_printer`. Old module references
   new module, old module marked deprecated.
 - The `FsfwTmtcPrinter` `get_validity_buffer` function is a `staticmethod` now.
+
+## Fixed
+
+- Bump of `spacepackets`: Bugfix in spacepacket parser which lead to broken packets in the TCP
+  communication interface.
 
 # [v5.0.0a0] 2023-05-14
 
