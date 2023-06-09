@@ -41,6 +41,7 @@ from tmtccmd.cfdp.handler.defs import (
     InvalidPduDirection,
     InvalidSourceId,
     InvalidDestinationId,
+    NoRemoteEntityCfgFound,
 )
 from tmtccmd.cfdp.mib import EntityType
 from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
@@ -228,7 +229,7 @@ class SourceHandler:
         return True
 
     def pass_packet(self, packet: AbstractFileDirectiveBase):
-        """Pass PDU file directives going towards the file sender to the CFDP source handler
+        """Pass PDU file directives going towards the file sender to the CFDP source handler.
 
         :raises InvalidPduDirection: PDU direction field wrong
         :raises InvalidPduForSourceHandler: Invalid PDU file directive type
@@ -239,6 +240,10 @@ class SourceHandler:
             )
         if packet.source_entity_id != self.source_id:
             raise InvalidSourceId(self.source_id, packet.source_entity_id)
+        # TODO: This can happen if a packet is received for which no transaction was started..
+        #       A better exception might be worth a thought..
+        if self._params.remote_cfg is None:
+            raise NoRemoteEntityCfgFound(entity_id=packet.dest_entity_id)
         if packet.dest_entity_id != self._params.remote_cfg.entity_id:
             raise InvalidDestinationId(
                 self._params.remote_cfg.entity_id, packet.dest_entity_id
@@ -479,7 +484,6 @@ class SourceHandler:
         else:
             self._params.fp.file_size = size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
-        self._params.remote_cfg = self._params.remote_cfg
         self._get_next_transfer_seq_num()
         self._params.transaction = TransactionId(
             source_entity_id=self.cfg.local_entity_id,
