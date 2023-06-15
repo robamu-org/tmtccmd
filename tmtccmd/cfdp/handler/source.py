@@ -448,6 +448,18 @@ class SourceHandler:
                 for pdu in pdu_list:
                     holder = PduHolder(pdu)
                     finish_pdu = holder.to_finished_pdu()
+                    if (
+                        finish_pdu.transaction_seq_num
+                        != self._params.transaction_seq_num
+                    ):
+                        # Ignore packet not related to current transfer. Still yield a warning,
+                        # because ideally those packets are not passed.
+                        _LOGGER.warning(
+                            f"Received Finished PDU with sequence number "
+                            f"{finish_pdu.transaction_seq_num} not related to current transfer "
+                            f"{self._params.transaction_seq_num}"
+                        )
+                        return
                     # TODO: I think there are some more conditions where we can issue a notice
                     #       of completion
                     if finish_pdu.condition_code == ConditionCode.NO_ERROR:
