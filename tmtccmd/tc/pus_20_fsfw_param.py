@@ -24,15 +24,33 @@ from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
     create_vector_float_parameter,
     create_matrix_float_parameter,
     create_matrix_double_parameter,
+    Parameter,
+    ParameterFsfwId,
 )
 from spacepackets.ecss.tc import PusTelecommand
 
 
-def create_load_param_cmd(app_data: bytes) -> PusTelecommand:
+def create_load_param_cmd(parameter: Parameter) -> PusTelecommand:
     return PusTelecommand(
         service=PusService.S20_PARAMETER,
         subservice=CustomSubservice.TC_LOAD,
-        app_data=app_data,
+        app_data=parameter.pack(),
+    )
+
+
+def create_dump_param_cmd(param_fsfw_id: ParameterFsfwId) -> PusTelecommand:
+    return PusTelecommand(
+        service=PusService.S20_PARAMETER,
+        subservice=CustomSubservice.TC_LOAD,
+        app_data=param_fsfw_id.pack(),
+    )
+
+
+def create_load_param_cmd_from_raw(parameter_raw: bytes) -> PusTelecommand:
+    return PusTelecommand(
+        service=PusService.S20_PARAMETER,
+        subservice=CustomSubservice.TC_LOAD,
+        app_data=parameter_raw,
     )
 
 
