@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v4.1.3] 2023-06-19
+
+## Fixed
+
+- Dependency specifier for `spacepackets`, dependency specifier for pre v1.0 versions in general.
+
 # [v4.1.2] 2023-03-18
 
 ## Fixed
