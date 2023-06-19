@@ -29,14 +29,14 @@ classifiers = [
 ]
 dependencies = [
     "crcmod~=1.7",
-    "colorama~=0.4",
+    "colorama~=0.4.0",
     "colorlog~=6.6",
     "cobs~=1.2",
     "prompt-toolkit~=3.0",
     "deprecation~=2.1",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets~=0.15",
+    "spacepackets~=0.15.0",
 ]
 
 [project.optional-dependencies]
