@@ -9,6 +9,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Changed
+
+- `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
+
 # [v5.0.0rc0] 2023-06-09
 
 `spacepackets` version: v0.17.0
