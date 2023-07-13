@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v5.0.0] 2023-07-13
+
 ## Changed
 
 - `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
