@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v5.0.0] 2023-07-13
+
+## Changed
+
+- `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
+
 # [v5.0.0rc0] 2023-06-09
 
 `spacepackets` version: v0.17.0
@@ -28,6 +34,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 `spacepackets` version: v0.16.0
 
+## Fixed
+
+- Bumped `spacepackets` to v0.16.0 for important bugfix in PDU header format.
+
 ## Added
 
 - Added FSFW parameter service API to dump parameters.
@@ -40,9 +50,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   and the new `FsfwParamId` class.
 - The `create_load_param_cmd` API now expects a `Paramter` instead of raw data.
 
+# [v4.1.3] 2023-06-19
+
 ## Fixed
 
-- Bumped `spacepackets` to v0.16.0 for important bugfix in PDU header format.
+- Dependency specifier for `spacepackets`, dependency specifier for pre v1.0 versions in general.
 
 # [v4.1.2] 2023-03-18
 

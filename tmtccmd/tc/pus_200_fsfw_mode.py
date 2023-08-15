@@ -11,6 +11,8 @@ from tmtccmd.pus.s200_fsfw_mode import Subservice
 
 
 class Mode(enum.IntEnum):
+    """Standard modes when commanding objects. These mode IDs are reserved by the FSFW,
+    so it is recommended to avoid these numbers for custom modes."""
     OFF = 0
     ON = 1
     NORMAL = 2
