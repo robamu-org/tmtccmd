@@ -11,6 +11,8 @@ from tmtccmd.pus.s200_fsfw_mode import Subservice
 
 
 class Mode(enum.IntEnum):
+    """Standard modes when commanding objects like device handlers."""
+
     OFF = 0
     ON = 1
     NORMAL = 2

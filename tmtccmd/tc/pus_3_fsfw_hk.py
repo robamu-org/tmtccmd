@@ -2,6 +2,7 @@
 """
 import struct
 import deprecation
+from typing import Tuple
 
 from tmtccmd import __version__
 from spacepackets.ecss.tc import PusTelecommand
@@ -33,19 +34,34 @@ def create_enable_periodic_hk_command(sid: bytes) -> PusTelecommand:
 
 # TODO: Add deprecation notice
 @deprecation.deprecated(
-    deprecated_in="v5.0.0a0",
+    deprecated_in="v6.0.0rc0",
     current_version=__version__,
-    details="use diagnostic agnostic API instead",
+    details="use diagnostic agnostic API if possible",
 )
-def create_enable_periodic_hk_command_with_diag(diag: bool, sid: bytes) -> PusTelecommand:
+def create_enable_periodic_hk_command_with_diag(
+    diag: bool, sid: bytes
+) -> PusTelecommand:
     return __generate_periodic_hk_command_legacy(diag=diag, enable=True, sid=sid)
 
 
-def create_enable_periodic_hk_command_with_interval(
+@deprecation.deprecated(
+    deprecated_in="v6.0.0rc0",
+    current_version=__version__,
+    details="use diagnostic agnostic API if possible",
+)
+def create_enable_periodic_hk_command_with_interval_with_diag(
     diag: bool, sid: bytes, interval_seconds: float
-) -> (PusTelecommand, PusTelecommand):
-    cmd0 = create_modify_collection_interval_cmd(diag, sid, interval_seconds)
+) -> Tuple[PusTelecommand, PusTelecommand]:
+    cmd0 = create_modify_collection_interval_cmd_with_diag(diag, sid, interval_seconds)
     cmd1 = __generate_periodic_hk_command_legacy(diag=diag, enable=True, sid=sid)
+    return cmd0, cmd1
+
+
+def create_enable_periodic_hk_command_with_interval(
+    sid: bytes, interval_seconds: float
+) -> Tuple[PusTelecommand, PusTelecommand]:
+    cmd0 = create_modify_collection_interval_cmd(sid, interval_seconds)
+    cmd1 = __generate_periodic_hk_command(enable=True, sid=sid)
     return cmd0, cmd1
 
 
@@ -56,11 +72,24 @@ def create_enable_periodic_hk_command_with_interval(
 )
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
-) -> (PusTelecommand, PusTelecommand):
-    return create_enable_periodic_hk_command_with_interval(diag, sid, interval_seconds)
+) -> Tuple[PusTelecommand, PusTelecommand]:
+    return create_enable_periodic_hk_command_with_interval_with_diag(
+        diag, sid, interval_seconds
+    )
 
 
-def create_disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
+def create_disable_periodic_hk_command(sid: bytes) -> PusTelecommand:
+    return __generate_periodic_hk_command(enable=False, sid=sid)
+
+
+@deprecation.deprecated(
+    deprecated_in="v6.0.0rc0",
+    current_version=__version__,
+    details="use diagnostic agnostic API if possible",
+)
+def create_disable_periodic_hk_command_with_diag(
+    diag: bool, sid: bytes
+) -> PusTelecommand:
     return __generate_periodic_hk_command_legacy(diag=diag, enable=False, sid=sid)
 
 
@@ -70,12 +99,10 @@ def create_disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand
     details="use create... API instead",
 )
 def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
-    return create_disable_periodic_hk_command(diag, sid)
+    return create_disable_periodic_hk_command_with_diag(diag, sid)
 
 
-def __generate_periodic_hk_command(
-    enable: bool, sid: bytes
-) -> PusTelecommand:
+def __generate_periodic_hk_command(enable: bool, sid: bytes) -> PusTelecommand:
     app_data = bytearray(sid)
     if enable:
         subservice = Subservice.TC_ENABLE_PERIODIC_HK_GEN
@@ -109,10 +136,24 @@ def __generate_periodic_hk_command_legacy(
 def modify_collection_interval(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> PusTelecommand:
-    return create_modify_collection_interval_cmd(diag, sid, interval_seconds)
+    return create_modify_collection_interval_cmd_with_diag(diag, sid, interval_seconds)
 
 
 def create_modify_collection_interval_cmd(
+    sid: bytes, interval_seconds: float
+) -> PusTelecommand:
+    app_data = bytearray(sid)
+    app_data += make_interval(interval_seconds)
+    subservice = Subservice.TC_MODIFY_PARAMETER_REPORT_COLLECTION_INTERVAL
+    return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
+
+
+@deprecation.deprecated(
+    deprecated_in="v6.0.0rc0",
+    current_version=__version__,
+    details="use diagnostic agnostic API if possible",
+)
+def create_modify_collection_interval_cmd_with_diag(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> PusTelecommand:
     app_data = bytearray(sid)
