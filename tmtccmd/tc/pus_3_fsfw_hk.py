@@ -32,7 +32,6 @@ def create_enable_periodic_hk_command(sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(enable=True, sid=sid)
 
 
-# TODO: Add deprecation notice
 @deprecation.deprecated(
     deprecated_in="v6.0.0rc0",
     current_version=__version__,
