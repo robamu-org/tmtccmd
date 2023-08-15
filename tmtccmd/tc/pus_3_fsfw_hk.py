@@ -24,18 +24,28 @@ def make_interval(interval_seconds: float) -> bytearray:
     details="use create... API instead",
 )
 def enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
-    return create_enable_periodic_hk_command(diag, sid)
+    return create_enable_periodic_hk_command_with_diag(diag, sid)
 
 
-def create_enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
-    return __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
+def create_enable_periodic_hk_command(sid: bytes) -> PusTelecommand:
+    return __generate_periodic_hk_command(enable=True, sid=sid)
+
+
+# TODO: Add deprecation notice
+@deprecation.deprecated(
+    deprecated_in="v5.0.0a0",
+    current_version=__version__,
+    details="use diagnostic agnostic API instead",
+)
+def create_enable_periodic_hk_command_with_diag(diag: bool, sid: bytes) -> PusTelecommand:
+    return __generate_periodic_hk_command_legacy(diag=diag, enable=True, sid=sid)
 
 
 def create_enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
 ) -> (PusTelecommand, PusTelecommand):
     cmd0 = create_modify_collection_interval_cmd(diag, sid, interval_seconds)
-    cmd1 = __generate_periodic_hk_command(diag=diag, enable=True, sid=sid)
+    cmd1 = __generate_periodic_hk_command_legacy(diag=diag, enable=True, sid=sid)
     return cmd0, cmd1
 
 
@@ -51,7 +61,7 @@ def enable_periodic_hk_command_with_interval(
 
 
 def create_disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
-    return __generate_periodic_hk_command(diag=diag, enable=False, sid=sid)
+    return __generate_periodic_hk_command_legacy(diag=diag, enable=False, sid=sid)
 
 
 @deprecation.deprecated(
@@ -64,6 +74,17 @@ def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
 
 
 def __generate_periodic_hk_command(
+    enable: bool, sid: bytes
+) -> PusTelecommand:
+    app_data = bytearray(sid)
+    if enable:
+        subservice = Subservice.TC_ENABLE_PERIODIC_HK_GEN
+    else:
+        subservice = Subservice.TC_DISABLE_PERIODIC_HK_GEN
+    return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
+
+
+def __generate_periodic_hk_command_legacy(
     diag: bool, enable: bool, sid: bytes
 ) -> PusTelecommand:
     app_data = bytearray(sid)
