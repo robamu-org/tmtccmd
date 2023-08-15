@@ -614,7 +614,9 @@ class PreArgsParsingWrapper:
                 "function or assigning args_parser"
             )
 
-    def add_def_proc_and_cfdp_as_subparsers(self):
+    def add_def_proc_and_cfdp_as_subparsers(
+        self,
+    ) -> (argparse.ArgumentParser, argparse.ArgumentParser):
         """Add the default tmtc and cfdp procedure as subparsers."""
         self._monkey_patch_missing_subparser = True
         subparser = self.args_parser.add_subparsers(dest="proc_type")
@@ -636,6 +638,7 @@ class PreArgsParsingWrapper:
             parents=[self.parent_parser],
         )
         add_cfdp_procedure_arguments(cfdp_parser)
+        return tmtc_parser, cfdp_parser
 
 
 class PostArgsParsingWrapper:

@@ -51,8 +51,8 @@ class ParameterId:
 
 @dataclasses.dataclass
 class FsfwParamId:
-    """Wrapper for the whole FSFW specific parameter data.
-     It contains the ECSS PTC and PFC numbers and the number of columns and rows in the parameter.
+    """Wrapper for the whole FSFW specific parameter data. It contains the ECSS PTC and PFC numbers
+    and the number of columns and rows in the parameter.
     See https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
     p.428 for more information.
 

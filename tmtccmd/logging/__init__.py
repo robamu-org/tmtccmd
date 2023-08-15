@@ -16,7 +16,7 @@ ERROR_LOG_FILE_NAME = "tmtc_error.log"
 
 
 def add_colorlog_console_logger(logger: logging.Logger, log_level: int = logging.INFO):
-    """This function can be used to apply the default library console logging output format
+    """This function can be used to apply the default library console logging output format to
     a custom logger.
     """
     from colorlog import StreamHandler

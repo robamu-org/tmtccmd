@@ -9,19 +9,52 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v5.0.0] 2023-07-13
+
+## Changed
+
+- `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
+
+# [v5.0.0rc0] 2023-06-09
+
+`spacepackets` version: v0.17.0
+
+## Changed
+
+- Moved `tmtccmd.util.tmtc_printer` module to `tmtccmd.fsfw.tmtc_printer`. Old module references
+  new module, old module marked deprecated.
+- The `FsfwTmtcPrinter` `get_validity_buffer` function is a `staticmethod` now.
+
+## Fixed
+
+- Bump of `spacepackets`: Bugfix in spacepacket parser which lead to broken packets in the TCP
+  communication interface.
+
 # [v5.0.0a0] 2023-05-14
+
+`spacepackets` version: v0.16.0
+
+## Fixed
+
+- Bumped `spacepackets` to v0.16.0 for important bugfix in PDU header format.
 
 ## Added
 
 - Added FSFW parameter service API to dump parameters.
-- Added FSFW parameter service `ParameterFsfwId` class to uniquely identify a parameter in a
+- Added FSFW parameter service `FsfwParamId` class to uniquely identify a parameter in a
   FSFW context.
 
 ## Changed
 
 - The FSFW parameter service helper class `Parameter` is now a composition of the raw parameter data
-  and the new `ParameterFsfwId` class.
+  and the new `FsfwParamId` class.
 - The `create_load_param_cmd` API now expects a `Paramter` instead of raw data.
+
+# [v4.1.3] 2023-06-19
+
+## Fixed
+
+- Dependency specifier for `spacepackets`, dependency specifier for pre v1.0 versions in general.
 
 # [v4.1.2] 2023-03-18
 
