@@ -9,6 +9,15 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v6.0.0rc0]
+
+## Changed
+
+- Adapted the FSFW specific Housekeeping service API to make HK requests diagnostic agnostic.
+  The PUS interface has proven to be cumbersome and problematic, so the split between diagnostic
+  and regular HK packets has been removed in newer version of the FSFW. The new API reflects that.
+  The old API is still available by using the `*_with_diag` suffix.
+
 # [v5.0.0] 2023-07-13
 
 ## Changed
