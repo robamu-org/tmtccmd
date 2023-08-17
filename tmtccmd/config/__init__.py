@@ -25,7 +25,6 @@ from .args import (
     DefaultProcedureParams,
     PreArgsParsingWrapper,
     ProcedureParamsWrapper,
-    CfdpParams,
 )
 from .defs import (
     CoreModeList,
@@ -35,6 +34,7 @@ from .defs import (
     default_json_path,
     CoreServiceList,
     ComIfDictT,
+    CfdpParams,
 )
 from .prompt import prompt_op_code, prompt_service
 from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase

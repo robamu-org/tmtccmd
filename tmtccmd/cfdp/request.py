@@ -13,7 +13,7 @@ from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
 
-from tmtccmd.config import CfdpParams
+from tmtccmd.config.defs import CfdpParams
 
 
 class CfdpRequestBase:

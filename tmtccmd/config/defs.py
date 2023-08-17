@@ -1,9 +1,27 @@
 import enum
-from typing import Tuple, Dict, Union
+from dataclasses import dataclass
+from typing import Tuple, Dict, Union, Optional
+
+from spacepackets.cfdp import TransmissionMode
 
 # Com Interface Types
 ComIfValueT = Tuple[str, any]
 ComIfDictT = Dict[str, ComIfValueT]
+
+
+@dataclass
+class DefaultProcedureParams:
+    service: Optional[str] = None
+    op_code: Optional[str] = None
+
+
+@dataclass
+class CfdpParams:
+    source = ""
+    target = ""
+    closure_requested = False
+    transmission_mode = TransmissionMode.UNACKNOWLEDGED
+    proxy_op = False
 
 
 def default_json_path() -> str:

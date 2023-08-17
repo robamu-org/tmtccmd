@@ -14,7 +14,13 @@ from tmtccmd.tc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.com import ComInterface
 
-from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
+from .defs import (
+    CoreModeList,
+    CoreComInterfaces,
+    CoreModeConverter,
+    DefaultProcedureParams,
+    CfdpParams,
+)
 from .hook import HookBase
 
 
@@ -42,21 +48,6 @@ def create_default_args_parser(
         formatter_class=argparse.RawTextHelpFormatter,
         parents=[parent_parser],
     )
-
-
-@dataclass
-class DefaultProcedureParams:
-    service: Optional[str] = None
-    op_code: Optional[str] = None
-
-
-@dataclass
-class CfdpParams:
-    source = ""
-    target = ""
-    closure_requested = False
-    transmission_mode = TransmissionMode.UNACKNOWLEDGED
-    proxy_op = False
 
 
 class ProcedureParamsWrapper:

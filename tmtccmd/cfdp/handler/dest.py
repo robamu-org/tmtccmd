@@ -13,7 +13,7 @@ from spacepackets.cfdp import (
     ChecksumType,
     TransmissionMode,
     ConditionCode,
-    TlvTypes,
+    TlvType,
     PduConfig,
     Direction,
     FaultHandlerCode,
