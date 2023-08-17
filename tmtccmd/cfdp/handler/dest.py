@@ -222,7 +222,7 @@ class DestHandler:
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
             for tlv in metadata_pdu.options:
-                if tlv.tlv_type == TlvTypes.MESSAGE_TO_USER:
+                if tlv.tlv_type == TlvType.MESSAGE_TO_USER:
                     msgs_to_user_list.append(tlv)
         params = MetadataRecvParams(
             transaction_id=self._params.transaction_id,
