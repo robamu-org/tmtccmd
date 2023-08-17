@@ -33,7 +33,7 @@ class PutRequest:
     seg_ctrl: Optional[
         SegmentationControl
     ] = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
-    fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
+    fault_handler_overrides: Optional[List[FaultHandlerOverrideTlv]] = None
     flow_label_tlv: Optional[FlowLabelTlv] = None
     msgs_to_user: Optional[List[MessageToUserTlv]] = None
     fs_requests: Optional[List[FileStoreRequestTlv]] = None

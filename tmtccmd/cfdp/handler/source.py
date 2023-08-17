@@ -476,14 +476,17 @@ class SourceHandler:
         self._params.closure_requested = closure_req_to_set
 
     def _transaction_start(self):
-        if not self._put_req.source_file.exists():
-            # TODO: Handle this exception in the handler, reset CFDP state machine
-            raise SourceFileDoesNotExist(self._put_req.source_file)
-        size = self._put_req.source_file.stat().st_size
-        if size == 0:
+        if self._put_req.metadata_only:
             self._params.fp.no_file_data = True
         else:
-            self._params.fp.file_size = size
+            if not self._put_req.source_file.exists():
+                # TODO: Handle this exception in the handler, reset CFDP state machine
+                raise SourceFileDoesNotExist(self._put_req.source_file)
+            size = self._put_req.source_file.stat().st_size
+            if size == 0:
+                self._params.fp.no_file_data = True
+            else:
+                self._params.fp.file_size = size
         self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
         self._get_next_transfer_seq_num()
         self._params.transaction = TransactionId(
@@ -497,19 +500,40 @@ class SourceHandler:
             raise PacketSendNotConfirmed(
                 f"Must send current packet {self.pdu_holder.base} first"
             )
-        self._params.pdu_conf.seg_ctrl = self._put_req.seg_ctrl
-        self._params.pdu_conf.dest_entity_id = self._put_req.destination_id
-        self._params.pdu_conf.crc_flag = self._params.remote_cfg.crc_on_transmission
-        self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
-        params = MetadataParams(
-            dest_file_name=self._put_req.dest_file,
-            source_file_name=self._put_req.source_file.as_posix(),
-            checksum_type=self._params.crc_helper.checksum_type,
-            closure_requested=self._params.closure_requested,
-            file_size=self._params.fp.file_size,
-        )
+        options = []
+        if self._put_req.metadata_only:
+            params = MetadataParams(
+                closure_requested=self._params.closure_requested,
+                checksum_type=self._params.crc_helper.checksum_type,
+                file_size=0,
+                dest_file_name=None,
+                source_file_name=None,
+            )
+        else:
+            self._params.pdu_conf.seg_ctrl = self._put_req.seg_ctrl
+            self._params.pdu_conf.dest_entity_id = self._put_req.destination_id
+            self._params.pdu_conf.crc_flag = self._params.remote_cfg.crc_on_transmission
+            self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
+            params = MetadataParams(
+                dest_file_name=self._put_req.dest_file,
+                source_file_name=self._put_req.source_file.as_posix(),
+                checksum_type=self._params.crc_helper.checksum_type,
+                closure_requested=self._params.closure_requested,
+                file_size=self._params.fp.file_size,
+            )
+        if self._put_req.fs_requests is not None:
+            for fs_request in self._put_req.fs_requests:
+                options.append(fs_request)
+        if self._put_req.fault_handler_overrides is not None:
+            for fh_override in self._put_req.fault_handler_overrides:
+                options.append(fh_override)
+        if self._put_req.flow_label_tlv is not None:
+            options.append(self._put_req.flow_label_tlv)
+        if self._put_req.msgs_to_user is not None:
+            for msg_to_user in self._put_req.msgs_to_user:
+                options.append(msg_to_user)
         self.pdu_holder.base = MetadataPdu(
-            pdu_conf=self._params.pdu_conf, params=params
+            pdu_conf=self._params.pdu_conf, params=params, options=options
         )
 
     def _prepare_next_file_data_pdu(self) -> bool:
