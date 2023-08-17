@@ -13,6 +13,8 @@ from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
 
+from tmtccmd.config import CfdpParams
+
 
 class CfdpRequestBase:
     def __init__(self, req_type: CfdpRequestType):
@@ -38,19 +40,22 @@ class PutRequestCfg:
 
 
 class PutRequest(CfdpRequestBase):
-    def __init__(self, cfg: PutRequestCfg):
+    def __init__(self, cfg: CfdpParams):
         super().__init__(CfdpRequestType.PUT)
         self.cfg = cfg
 
     def __repr__(self):
         return f"{self.__class__.__name__}(cfg={self.cfg})"
 
+    """ 
     @property
     def metadata_only(self):
-        if self.cfg.source_file is None and self.cfg.dest_file is None:
+        if self.cfg.source is None and self.cfg.dest_file is None:
             return True
         return False
+    """
 
+    """
     def __str__(self):
         src_file_str = "Unknown source file"
         dest_file_str = "Unknown destination file"
@@ -80,6 +85,7 @@ class PutRequest(CfdpRequestBase):
             # TODO: Print out other parameters
             print_str = f"Destination ID: {self.cfg.destination_id}"
         return print_str
+    """
 
 
 class CfdpRequestWrapper:

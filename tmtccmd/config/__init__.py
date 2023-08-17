@@ -141,7 +141,7 @@ def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
             source_file=None,
             trans_mode=None,
         )
-    proc_info.request_wrapper.base = PutRequest(put_req_cfg)
+    proc_info.request_wrapper.base = PutRequest(params)
     return proc_info
 
 
