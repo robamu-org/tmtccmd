@@ -31,7 +31,7 @@ from tmtccmd.cfdp import (
     TransactionId,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.defs import CfdpRequestType, CfdpStates
+from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.filestore import VirtualFilestore
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
@@ -44,10 +44,11 @@ from tmtccmd.cfdp.handler.defs import (
     NoRemoteEntityCfgFound,
 )
 from tmtccmd.cfdp.mib import EntityType
-from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequestWrapper
+from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -175,7 +176,7 @@ class SourceHandler:
         self.user = user
         self.seq_num_provider = seq_num_provider
         self._params = TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
-        self._current_req = CfdpRequestWrapper(None)
+        self._put_req: Optional[PutRequest] = None
         self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
     @property
@@ -195,23 +196,11 @@ class SourceHandler:
         self.cfg.local_entity_id = source_id
         self._params.source_id = source_id
 
-    def start_cfdp_transaction(
-        self, wrapper: CfdpRequestWrapper, remote_cfg: RemoteEntityCfg
-    ) -> bool:
-        """Start a CFDP transaction.
-
-        :param wrapper:
-        :param remote_cfg:
-        :return: Whether transaction was started successfully.
-        """
-        if wrapper.request_type == CfdpRequestType.PUT:
-            return self.put_request(wrapper.to_put_request(), remote_cfg)
-
-    def put_request(self, request: PutRequestWrapper, remote_cfg: RemoteEntityCfg):
+    def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
         if self.states.state != CfdpStates.IDLE:
             _LOGGER.debug("CFDP source handler is busy, can't process put request")
             return False
-        self._current_req.base = request
+        self._put_req = request
         self._params.remote_cfg = remote_cfg
         self._params.dest_id = remote_cfg.entity_id
         self.states.packet_ready = False
@@ -262,13 +251,13 @@ class SourceHandler:
         else:
             self._rec_dict.update({packet.directive_type: [packet]})
 
-    def __fsm_crc_procedure(self, put_req: PutRequestWrapper):
+    def __fsm_crc_procedure(self):
         if self._params.fp.file_size == 0:
             # Empty file, use null checksum
             self._params.fp.crc32 = NULL_CHECKSUM_U32
         else:
             self._params.fp.crc32 = self._params.crc_helper.calc_for_file(
-                file=put_req.cfg.source_file,
+                file=self._put_req.source_file,
                 file_sz=self._params.fp.file_size,
                 segment_len=self._params.fp.segment_len,
             )
@@ -278,20 +267,21 @@ class SourceHandler:
     def __fsm_naked(  # noqa: C901  # complexity is okay here
         self,
     ) -> Optional[FsmResult]:
-        put_req = self._current_req.to_put_request()
+        if self._put_req is None:
+            return FsmResult(self.pdu_holder, self.states)
         if self.states.step == TransactionStep.IDLE:
             self.states.step = TransactionStep.TRANSACTION_START
         if self.states.step == TransactionStep.TRANSACTION_START:
-            self._transaction_start(put_req)
+            self._transaction_start()
             self.states.step = TransactionStep.CRC_PROCEDURE
         if self.states.step == TransactionStep.CRC_PROCEDURE:
-            self.__fsm_crc_procedure(put_req)
+            self.__fsm_crc_procedure()
         if self.states.step == TransactionStep.SENDING_METADATA:
-            self._prepare_metadata_pdu(put_req)
+            self._prepare_metadata_pdu()
             self.states.packet_ready = True
             return FsmResult(self.pdu_holder, self.states)
         if self.states.step == TransactionStep.SENDING_FILE_DATA:
-            if self._prepare_next_file_data_pdu(put_req):
+            if self._prepare_next_file_data_pdu():
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_holder, self.states)
             else:
@@ -472,25 +462,24 @@ class SourceHandler:
                         )
 
     def _setup_transmission_mode(self):
-        put_req = self._current_req.to_put_request()
         # Transmission mode settings in the put request override settings from the remote MIB
-        if put_req.cfg.trans_mode is not None:
-            trans_mode_to_set = put_req.cfg.trans_mode
+        if self._put_req.trans_mode is not None:
+            trans_mode_to_set = self._put_req.trans_mode
         else:
             trans_mode_to_set = self._params.remote_cfg.default_transmission_mode
         self._params.transmission_mode = trans_mode_to_set
-        if put_req.cfg.closure_requested is not None:
-            closure_req_to_set = put_req.cfg.closure_requested
+        if self._put_req.closure_requested is not None:
+            closure_req_to_set = self._put_req.closure_requested
         else:
             closure_req_to_set = self._params.remote_cfg.closure_requested
         self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
         self._params.closure_requested = closure_req_to_set
 
-    def _transaction_start(self, put_req: PutRequestWrapper):
-        if not put_req.cfg.source_file.exists():
+    def _transaction_start(self):
+        if not self._put_req.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
-            raise SourceFileDoesNotExist(put_req.cfg.source_file)
-        size = put_req.cfg.source_file.stat().st_size
+            raise SourceFileDoesNotExist(self._put_req.source_file)
+        size = self._put_req.source_file.stat().st_size
         if size == 0:
             self._params.fp.no_file_data = True
         else:
@@ -503,18 +492,18 @@ class SourceHandler:
         )
         self.user.transaction_indication(self._params.transaction)
 
-    def _prepare_metadata_pdu(self, put_req: PutRequestWrapper):
+    def _prepare_metadata_pdu(self):
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
                 f"Must send current packet {self.pdu_holder.base} first"
             )
-        self._params.pdu_conf.seg_ctrl = put_req.cfg.seg_ctrl
-        self._params.pdu_conf.dest_entity_id = put_req.cfg.destination_id
+        self._params.pdu_conf.seg_ctrl = self._put_req.seg_ctrl
+        self._params.pdu_conf.dest_entity_id = self._put_req.destination_id
         self._params.pdu_conf.crc_flag = self._params.remote_cfg.crc_on_transmission
         self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
         params = MetadataParams(
-            dest_file_name=put_req.cfg.dest_file,
-            source_file_name=put_req.cfg.source_file.as_posix(),
+            dest_file_name=self._put_req.dest_file,
+            source_file_name=self._put_req.source_file.as_posix(),
             checksum_type=self._params.crc_helper.checksum_type,
             closure_requested=self._params.closure_requested,
             file_size=self._params.fp.file_size,
@@ -523,17 +512,16 @@ class SourceHandler:
             pdu_conf=self._params.pdu_conf, params=params
         )
 
-    def _prepare_next_file_data_pdu(self, request: PutRequestWrapper) -> bool:
+    def _prepare_next_file_data_pdu(self) -> bool:
         """Prepare the next file data PDU
 
-        :param request:
         :return: True if a packet was prepared, False if PDU handling is done and the next steps
             in the Copy File procedure can be performed
         """
         # No need to send a file data PDU for an empty file
         if self._params.fp.no_file_data:
             return False
-        with open(request.cfg.source_file, "rb") as of:
+        with open(self._put_req.source_file, "rb") as of:
             if self._params.fp.progress == self._params.fp.file_size:
                 return False
             if self.states.packet_ready:
