@@ -8,11 +8,12 @@ Submodules:
   and arguments converts to create the data structures expected by this library from passed CLI
   arguments.
 """
+import logging
 from pathlib import Path
 from typing import Optional
 
 from spacepackets.cfdp import CfdpLv
-from spacepackets.util import ByteFieldEmpty, UnsignedByteField
+from spacepackets.util import UnsignedByteField
 from spacepackets.cfdp.tlv import ProxyPutRequest
 from tmtccmd.core import TmMode, TcMode
 
@@ -48,6 +49,9 @@ from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
 from tmtccmd.core.base import ModeWrapper
 
 
+_LOGGER = logging.getLogger(__name__)
+
+
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
     if mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
@@ -64,9 +68,7 @@ def get_global_hook_obj() -> Optional[HookBase]:
     """This function can be used to get the handle to the global hook object.
     :return:
     """
-    from tmtccmd import get_console_logger
 
-    logger = get_console_logger()
     try:
         from tmtccmd.core.globals_manager import get_global
         from tmtccmd.config.definitions import CoreGlobalIds
@@ -75,14 +77,14 @@ def get_global_hook_obj() -> Optional[HookBase]:
 
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
         if hook_obj_raw is None:
-            logger.error("Hook object is invalid!")
+            _LOGGER.error("Hook object is invalid!")
             return None
         return cast(HookBase, hook_obj_raw)
     except ImportError:
-        logger.exception("Issues importing modules to get global hook handle!")
+        _LOGGER.exception("Issues importing modules to get global hook handle!")
         return None
     except AttributeError:
-        logger.exception("Attribute error when trying to get global hook handle!")
+        _LOGGER.exception("Attribute error when trying to get global hook handle!")
         return None
 
 
