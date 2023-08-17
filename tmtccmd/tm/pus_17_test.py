@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import deprecation
 
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss import PusVersion, PusTelemetry
 from spacepackets.ecss.pus_17_test import Service17Tm
@@ -14,7 +14,7 @@ from tmtccmd.pus.s17_test import Subservice
 class Service17TmExtended(PusTmBase, PusTmInfoBase, Service17Tm):
     @deprecation.deprecated(
         deprecated_in="v3.0.0rc2",
-        current_version=__version__,
+        current_version=get_version(),
         details="Use Service17Tm from the spacepackets package instead",
     )
     def __init__(

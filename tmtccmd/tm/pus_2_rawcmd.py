@@ -9,14 +9,14 @@ import deprecation
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
 
 
 class Service2Tm(PusTmInfoBase, PusTmBase):
     @deprecation.deprecated(
         deprecated_in="v4.0.0a1",
-        current_version=__version__,
+        current_version=get_version(),
         details="use a custom wrapper type instead",
     )
     def __init__(

@@ -3,7 +3,7 @@ import time
 
 import deprecation
 
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 from tmtccmd.com import ComInterface
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg
 from tmtccmd.tm import TelemetryListT
@@ -17,7 +17,7 @@ SERIAL_FRAME_MAX_LENGTH = 4096
 #       is not really the best approach..
 @deprecation.deprecated(
     deprecated_in="4.0.0a0",
-    current_version=__version__,
+    current_version=get_version(),
     details="Please use a serial interface using a transport layer like SerialCobsComIF",
 )
 class SerialFixedFrameComIF(SerialComBase, ComInterface):

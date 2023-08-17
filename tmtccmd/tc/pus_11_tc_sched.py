@@ -1,6 +1,6 @@
 import deprecation
 
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 from spacepackets.ecss import PusTelecommand, PusService
 from tmtccmd.pus.s11_tc_sched import Subservice
 
@@ -18,7 +18,7 @@ def __generic_param_less_tc_sched_cmd(
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def generate_enable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
@@ -33,7 +33,7 @@ def create_enable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecomm
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def generate_disable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
@@ -48,7 +48,7 @@ def create_disable_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecom
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def generate_reset_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
@@ -63,7 +63,7 @@ def create_reset_tc_sched_cmd(apid: int = 0, seq_count: int = 0) -> PusTelecomma
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def generate_time_tagged_cmd(release_time: bytes, tc_to_insert: PusTelecommand):

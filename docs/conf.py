@@ -14,7 +14,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 
 # -- Project information -----------------------------------------------------
 
@@ -23,7 +23,7 @@ copyright = "2021-2023, Robin Mueller"
 author = "Robin Mueller"
 
 # The full version, including alpha/beta/rc tags
-version = release = __version__
+version = release = get_version()
 
 # -- General configuration ---------------------------------------------------
 

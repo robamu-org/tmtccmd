@@ -34,6 +34,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 - The CFDP source handler `start_cfdp_transaction` API was removed. It was only able to process
   put requests in its current form anyway. The `put_request` method is sufficient for now.
+- Package version is single-sourced using the `importlib.metadata` variant: The `pyproject.toml`
+  now contains the version information, but the informatio can be retrieved at runtime
+  by using the new `version.get_version` API or `importlib.metadata.version("spacepackets")`.
+- `setup.py` which is not required anymore.
 
 # [v5.0.0] 2023-07-13
 
