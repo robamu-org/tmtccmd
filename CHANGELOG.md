@@ -14,6 +14,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - The `CfdpParams` config wrapper now has an additional `proxy_op` field.
 - New `cfdp_req_to_put_req_regular` and `cfdp_req_to_put_req_proxy_get_req` API to convert standard
   `CfdpParams` instances to `PutRequest`s
+- The CFPD source handler is now able to convert PutRequest metadata fields to options. It is also
+  able to request metadata only PDUs now, allowing it to perform proxy operations.
 
 ## Changed
 
