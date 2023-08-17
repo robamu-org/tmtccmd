@@ -285,8 +285,15 @@ class SourceHandler:
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_holder, self.states)
             else:
-                # Special case: Empty file.
-                self.states.step = TransactionStep.SENDING_EOF
+                if self._params.fp.no_eof:
+                    # Special case: Metadata Only.
+                    if self._params.closure_requested:
+                        self.states.step = TransactionStep.WAIT_FOR_FINISH
+                    else:
+                        self.states.step = TransactionStep.NOTICE_OF_COMPLETION
+                else:
+                    # Special case: Empty file.
+                    self.states.step = TransactionStep.SENDING_EOF
         if self.states.step == TransactionStep.SENDING_EOF:
             self._prepare_eof_pdu()
             self.states.packet_ready = True
@@ -478,6 +485,7 @@ class SourceHandler:
     def _transaction_start(self):
         if self._put_req.metadata_only:
             self._params.fp.no_file_data = True
+            self._params.fp.no_eof = True
         else:
             if not self._put_req.source_file.exists():
                 # TODO: Handle this exception in the handler, reset CFDP state machine
