@@ -4,6 +4,8 @@ import sys
 
 from crcmod.predefined import PredefinedCrc
 
+from spacepackets.cfdp import CfdpLv
+from spacepackets.cfdp.tlv import ProxyPutRequest
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
@@ -86,6 +88,24 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
         self.source_handler.confirm_packet_sent_advance_fsm()
         self._test_transaction_completion()
+
+    def test_proxy_get_request(self):
+        proxy_op = ProxyPutRequest(
+            self.local_cfg.local_entity_id,
+            CfdpLv.from_str("/tmp/source.txt"),
+            CfdpLv.from_str("/tmp/dest.txt"),
+        )
+        put_req = PutRequest(
+            destination_id=self.dest_id,
+            source_file=None,
+            dest_file=None,
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
+            closure_requested=None,
+            msgs_to_user=[proxy_op.to_generic_msg_to_user_tlv()],
+        )
+        self.source_handler.put_request(put_req, self.remote_cfg)
+        fsm_res = self.source_handler.state_machine()
 
     def _second_file_segment_handling(self, source_handler: SourceHandler):
         source_handler.confirm_packet_sent_advance_fsm()
