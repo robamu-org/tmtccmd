@@ -56,6 +56,7 @@ class CfdpParams:
     target = ""
     closure_requested = False
     transmission_mode = TransmissionMode.UNACKNOWLEDGED
+    proxy_op = False
 
 
 class ProcedureParamsWrapper:
@@ -425,6 +426,7 @@ def args_to_params_cfdp(
     cfdp_params.source = pargs.source
     cfdp_params.target = pargs.target
     cfdp_params.closure_requested = not pargs.no_closure
+    cfdp_params.proxy_op = pargs.proxy
     if pargs.type in ["0", "nak"]:
         cfdp_params.transmission_mode = TransmissionMode.UNACKNOWLEDGED
     elif pargs.type in ["1", "ack"]:

@@ -11,7 +11,9 @@ Submodules:
 from pathlib import Path
 from typing import Optional
 
+from spacepackets.cfdp import CfdpLv
 from spacepackets.util import ByteFieldEmpty
+from spacepackets.cfdp.tlv import ProxyPutRequest
 from tmtccmd.core import TmMode, TcMode
 
 from .args import (
@@ -117,13 +119,28 @@ def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedure
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
     proc_info = CfdpProcedureInfo()
-    put_req_cfg = PutRequestCfg(
-        destination_id=ByteFieldEmpty(),
-        source_file=Path(params.source),
-        dest_file=params.target,
-        closure_requested=params.closure_requested,
-        trans_mode=params.transmission_mode,
-    )
+    if not params.proxy_op:
+        put_req_cfg = PutRequestCfg(
+            destination_id=ByteFieldEmpty(),
+            source_file=Path(params.source),
+            dest_file=params.target,
+            closure_requested=params.closure_requested,
+            trans_mode=params.transmission_mode,
+        )
+    else:
+        proxy_put_req = ProxyPutRequest(
+            dest_entity_id=ByteFieldEmpty(),
+            source_file_name=CfdpLv.from_str(params.source),
+            dest_file_name=CfdpLv.from_str(params.target),
+        )
+        put_req_cfg = PutRequestCfg(
+            destination_id=ByteFieldEmpty(),
+            msgs_to_user=[proxy_put_req.to_generic_msg_to_user_tlv()],
+            closure_requested=None,
+            dest_file=None,
+            source_file=None,
+            trans_mode=None,
+        )
     proc_info.request_wrapper.base = PutRequest(put_req_cfg)
     return proc_info
 
