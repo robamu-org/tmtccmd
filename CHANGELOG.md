@@ -17,6 +17,13 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   The PUS interface has proven to be cumbersome and problematic, so the split between diagnostic
   and regular HK packets has been removed in newer version of the FSFW. The new API reflects that.
   The old API is still available by using the `*_with_diag` suffix.
+- Package version is single-sourced using the `importlib.metadata` variant: The `pyproject.toml`
+  now contains the version information, but the informatio can be retrieved at runtime
+  by using the new `version.get_version` API or `importlib.metadata.version("spacepackets")`.
+
+## Removed
+
+- `setup.py` which is not required anymore.
 
 # [v5.0.0] 2023-07-13
 
