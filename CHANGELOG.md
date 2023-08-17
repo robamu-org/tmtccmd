@@ -9,9 +9,23 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Added
+
+- The `CfdpParams` config wrapper now has an additional `proxy_op` field.
+- New `cfdp_req_to_put_req_regular` and `cfdp_req_to_put_req_proxy_get_req` API to convert standard
+  `CfdpParams` instances to `PutRequest`s
+
 ## Changed
 
 - `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
+- The former `PutRequestCfg` dataclass is now named `PutRequest`. The former `PutRequest` class
+  is now named `PutRequestCfgWrapper` and simply wraps a `CfdpParams` dataclass.
+- The CFDP source handler expects the `PutRequest` dataclass instead of a CFDP request wrapper now
+  for the `put_request` API.
+
+## Removed
+
+- The CFDP source handler `start_cfdp_transaction` API was removed.
 
 # [v5.0.0rc0] 2023-06-09
 
