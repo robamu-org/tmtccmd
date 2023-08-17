@@ -4,12 +4,12 @@ import deprecation
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.pus.s8_fsfw_funccmd_defs import CustomSubservice
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def make_fsfw_action_cmd(

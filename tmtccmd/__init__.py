@@ -1,8 +1,4 @@
 """Contains core methods called by entry point files to setup and start a tmtccmd application"""
-# I think this needs to be in string representation to be parsed so we can't
-# use a formatted string here.
-__version__ = "5.0.0"
-
 import logging
 import sys
 import os
@@ -36,18 +32,10 @@ from tmtccmd.tc import (
 )
 
 
-VERSION_MAJOR = 5
-VERSION_MINOR = 0
-VERSION_REVISION = 0
-
 __TMTCCMD_LOGGER = logging.getLogger(__name__)
 
 __SETUP_WAS_CALLED = False
 __SETUP_FOR_GUI = False
-
-
-def version() -> str:
-    return __version__
 
 
 def init_logger(propagate: bool = False, log_level: int = logging.INFO):

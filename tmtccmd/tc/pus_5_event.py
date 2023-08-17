@@ -2,14 +2,14 @@
 """
 import deprecation
 
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_5_event import Subservice
 
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a0",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def pack_enable_event_reporting_command(
@@ -31,7 +31,7 @@ def create_enable_event_reporting_command(
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a0",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def pack_disable_event_reporting_command(

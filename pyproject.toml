@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "tmtccmd"
 description = "TMTC Commander Core"
 readme = "README.md"
-dynamic = ["version"]
 requires-python = ">=3.8"
 license = {text = "Apache-2.0"}
 authors = [
@@ -50,9 +49,6 @@ test = [
 
 [project.urls]
 "Homepage" = "https://github.com/robamu-org/tmtccmd"
-
-[tool.setuptools.dynamic]
-version = {attr = "tmtccmd.__version__"}
 
 # Auto-Discovery is problematic for some reason, so use custom-discovery
 [tool.setuptools.packages]

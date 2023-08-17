@@ -1,7 +1,7 @@
 """
 @brief      This module is used to set up the global loggers
 """
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 import logging
 import os
 import sys
@@ -58,7 +58,7 @@ def add_error_file_logger(logger: logging.Logger):
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a4",
-    current_version=__version__,
+    current_version=get_version(),
     details="Use a custom application logger or tmtccmd.get_lib_logger instead.",
 )
 def get_console_logger() -> logging.Logger:

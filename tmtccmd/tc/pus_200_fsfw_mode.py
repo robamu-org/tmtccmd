@@ -5,7 +5,7 @@ import deprecation
 from typing import Union
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 
@@ -13,6 +13,7 @@ from tmtccmd.pus.s200_fsfw_mode import Subservice
 class Mode(enum.IntEnum):
     """Standard modes when commanding objects. These mode IDs are reserved by the FSFW,
     so it is recommended to avoid these numbers for custom modes."""
+
     OFF = 0
     ON = 1
     NORMAL = 2
@@ -28,7 +29,7 @@ def pack_mode_data(object_id: bytes, mode: Union[Mode, int], submode: int) -> by
 
 @deprecation.deprecated(
     deprecated_in="v4.0.0a2",
-    current_version=__version__,
+    current_version=get_version(),
     details="use create... API instead",
 )
 def pack_mode_command(
