@@ -94,7 +94,6 @@ class FileParamsBase:
     segment_len: int
     crc32: bytes
     no_file_data: bool
-    no_eof: bool
     file_size: int
 
     @classmethod
@@ -105,7 +104,6 @@ class FileParamsBase:
             crc32=bytes(),
             file_size=0,
             no_file_data=False,
-            no_eof=False,
         )
 
     def reset(self):

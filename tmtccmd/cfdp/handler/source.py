@@ -1,3 +1,4 @@
+from __future__ import annotations
 import enum
 import logging
 from dataclasses import dataclass
@@ -67,6 +68,25 @@ class TransactionStep(enum.Enum):
 
 
 @dataclass
+class SourceFileParams(FileParamsBase):
+    no_eof: bool = False
+
+    @classmethod
+    def empty(cls) -> SourceFileParams:
+        return cls(
+            progress=0,
+            segment_len=0,
+            crc32=bytes(),
+            file_size=0,
+            no_eof=False,
+            no_file_data=False,
+        )
+
+    def reset(self):
+        super().reset()
+
+
+@dataclass
 class SourceStateWrapper:
     state: CfdpStates = CfdpStates.IDLE
     step: TransactionStep = TransactionStep.IDLE
@@ -78,7 +98,7 @@ class TransferFieldWrapper:
         self.crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, vfs)
         self.transaction: Optional[TransactionId] = None
         self.check_limit: Optional[Countdown] = None
-        self.fp = FileParamsBase.empty()
+        self.fp = SourceFileParams.empty()
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self.closure_requested: bool = False
         self.pdu_conf = PduConfig.empty()
