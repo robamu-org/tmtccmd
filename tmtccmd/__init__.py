@@ -128,10 +128,12 @@ def start(
 
 
 def init_printout(use_gui: bool):
+    from tmtccmd.version import get_version
+
     if use_gui:
-        print(f"-- tmtccmd v{version()} GUI Mode --")
+        print(f"-- tmtccmd v{get_version()} GUI Mode --")
     else:
-        print(f"-- tmtccmd v{version()} CLI Mode --")
+        print(f"-- tmtccmd v{get_version()} CLI Mode --")
 
 
 # TODO: Remove globals altogether

@@ -1,7 +1,6 @@
 """Contains definitions and functions related to PUS Service 3 Telecommands.
 """
 import struct
-from webbrowser import get
 import deprecation
 from typing import Tuple
 

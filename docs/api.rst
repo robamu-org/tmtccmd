@@ -74,3 +74,5 @@ Other Submodules
    api/tmtccmd.util
    api/tmtccmd.logging
    api/tmtccmd.fsfw
+   api/tmtccmd.version
+
