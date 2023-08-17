@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v6.0.0rc0]
+
 ## Added
 
 - The `CfdpParams` config wrapper now has an additional `proxy_op` field.
@@ -19,7 +21,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 ## Changed
 
-- `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
+- Adapted the FSFW specific Housekeeping service API to make HK requests diagnostic agnostic.
+  The PUS interface has proven to be cumbersome and problematic, so the split between diagnostic
+  and regular HK packets has been removed in newer version of the FSFW. The new API reflects that.
+  The old API is still available by using the `*_with_diag` suffix.
 - The former `PutRequestCfg` dataclass is now named `PutRequest`. The former `PutRequest` class
   is now named `PutRequestCfgWrapper` and simply wraps a `CfdpParams` dataclass.
 - The CFDP source handler expects the `PutRequest` dataclass instead of a CFDP request wrapper now
@@ -27,7 +32,14 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 ## Removed
 
-- The CFDP source handler `start_cfdp_transaction` API was removed.
+- The CFDP source handler `start_cfdp_transaction` API was removed. It was only able to process
+  put requests in its current form anyway. The `put_request` method is sufficient for now.
+
+# [v5.0.0] 2023-07-13
+
+## Changed
+
+- `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
 
 # [v5.0.0rc0] 2023-06-09
 
