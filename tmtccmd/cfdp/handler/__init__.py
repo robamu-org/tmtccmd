@@ -12,7 +12,7 @@ from tmtccmd.cfdp import (
     CfdpUserBase,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.request import PutRequestWrapper, PutRequest
+from tmtccmd.cfdp.request import PutRequestCfgWrapper, PutRequest
 from tmtccmd.cfdp.defs import CfdpStates
 from .defs import NoRemoteEntityCfgFound, BusyError
 

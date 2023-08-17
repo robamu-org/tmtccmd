@@ -8,7 +8,7 @@ from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.source import TransactionStep
-from tmtccmd.cfdp.request import PutRequestWrapper, PutRequest
+from tmtccmd.cfdp.request import PutRequestCfgWrapper, PutRequest
 from .test_src_handler import TestCfdpSourceHandler
 
 

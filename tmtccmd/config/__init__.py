@@ -45,7 +45,7 @@ from tmtccmd.tc.procedure import (
     TcProcedureType,
     ProcedureWrapper,
 )
-from tmtccmd.cfdp.request import PutRequest, PutRequestWrapper
+from tmtccmd.cfdp.request import PutRequest, PutRequestCfgWrapper
 from tmtccmd.core.base import ModeWrapper
 
 
@@ -121,7 +121,7 @@ def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedure
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
     proc_info = CfdpProcedureInfo()
-    proc_info.request_wrapper.base = PutRequestWrapper(params)
+    proc_info.request_wrapper.base = PutRequestCfgWrapper(params)
     return proc_info
 
 

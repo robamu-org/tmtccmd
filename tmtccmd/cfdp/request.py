@@ -75,7 +75,7 @@ class PutRequest:
         return print_str
 
 
-class PutRequestWrapper(CfdpRequestBase):
+class PutRequestCfgWrapper(CfdpRequestBase):
     def __init__(self, cfg: CfdpParams):
         super().__init__(CfdpRequestType.PUT)
         self.cfg = cfg
@@ -96,9 +96,9 @@ class CfdpRequestWrapper:
     def request(self) -> CfdpRequestType:
         return self.base.req_type
 
-    def to_put_request(self) -> PutRequestWrapper:
+    def to_put_request(self) -> PutRequestCfgWrapper:
         if self.base.req_type != CfdpRequestType.PUT:
             raise TypeError(
-                f"Request is not a {PutRequestWrapper.__name__}: {self.base!r}"
+                f"Request is not a {PutRequestCfgWrapper.__name__}: {self.base!r}"
             )
-        return cast(PutRequestWrapper, self.base)
+        return cast(PutRequestCfgWrapper, self.base)
