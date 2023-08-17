@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from spacepackets.cfdp import CfdpLv
-from spacepackets.util import ByteFieldEmpty
+from spacepackets.util import ByteFieldEmpty, UnsignedByteField
 from spacepackets.cfdp.tlv import ProxyPutRequest
 from tmtccmd.core import TmMode, TcMode
 
@@ -119,30 +119,42 @@ def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedure
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
     proc_info = CfdpProcedureInfo()
+    proc_info.request_wrapper.base = PutRequest(params)
+    return proc_info
+
+
+def cfdp_req_to_put_req_regular(
+    params: CfdpParams, dest_id: UnsignedByteField
+) -> Optional[PutRequestCfg]:
     if not params.proxy_op:
-        put_req_cfg = PutRequestCfg(
-            destination_id=ByteFieldEmpty(),
+        return PutRequestCfg(
+            destination_id=dest_id,
             source_file=Path(params.source),
             dest_file=params.target,
             closure_requested=params.closure_requested,
             trans_mode=params.transmission_mode,
         )
-    else:
-        proxy_put_req = ProxyPutRequest(
-            dest_entity_id=ByteFieldEmpty(),
-            source_file_name=CfdpLv.from_str(params.source),
-            dest_file_name=CfdpLv.from_str(params.target),
-        )
-        put_req_cfg = PutRequestCfg(
-            destination_id=ByteFieldEmpty(),
-            msgs_to_user=[proxy_put_req.to_generic_msg_to_user_tlv()],
-            closure_requested=None,
-            dest_file=None,
-            source_file=None,
-            trans_mode=None,
-        )
-    proc_info.request_wrapper.base = PutRequest(params)
-    return proc_info
+    return None
+
+
+def cfdp_req_to_put_req_proxy_get_req(
+    params: CfdpParams, local_id: UnsignedByteField, dest_id: UnsignedByteField
+) -> Optional[PutRequestCfg]:
+    if params.proxy_op:
+        return None
+    proxy_put_req = ProxyPutRequest(
+        dest_entity_id=local_id,
+        source_file_name=CfdpLv.from_str(params.source),
+        dest_file_name=CfdpLv.from_str(params.target),
+    )
+    return PutRequestCfg(
+        destination_id=dest_id,
+        msgs_to_user=[proxy_put_req.to_generic_msg_to_user_tlv()],
+        closure_requested=None,
+        dest_file=None,
+        source_file=None,
+        trans_mode=None,
+    )
 
 
 def params_to_procedure_conversion(
