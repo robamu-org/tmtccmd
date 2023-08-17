@@ -11,7 +11,7 @@ from tmtccmd.cfdp.handler.defs import (
     InvalidDestinationId,
 )
 from tmtccmd.cfdp.handler.source import TransactionStep
-from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
+from tmtccmd.cfdp.request import PutRequest, PutRequestWrapper
 from .test_src_handler import TestCfdpSourceHandler
 
 
@@ -71,9 +71,9 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(finish_pdu.transaction_seq_num.value, 2)
         return finish_pdu
 
-    def _prepare_dummy_put_req(self, dest_id: UnsignedByteField) -> PutRequest:
-        return PutRequest(
-            PutRequestCfg(
+    def _prepare_dummy_put_req(self, dest_id: UnsignedByteField) -> PutRequestWrapper:
+        return PutRequestWrapper(
+            PutRequest(
                 destination_id=dest_id,
                 source_file=self.file_path,
                 dest_file="dummy.txt",

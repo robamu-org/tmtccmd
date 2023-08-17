@@ -8,7 +8,7 @@ from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.source import TransactionStep
-from tmtccmd.cfdp.request import PutRequest, PutRequestCfg
+from tmtccmd.cfdp.request import PutRequestWrapper, PutRequest
 from .test_src_handler import TestCfdpSourceHandler
 
 
@@ -98,7 +98,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
     def _transaction_with_file_data_wrapper(
         self, dest_path: str, data: bytes
     ) -> (int, bytes):
-        put_req_cfg = PutRequestCfg(
+        put_req_cfg = PutRequest(
             destination_id=self.dest_id,
             source_file=self.file_path,
             dest_file=dest_path,
@@ -113,7 +113,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
             of.write(data)
         file_size = self.file_path.stat().st_size
         self.local_cfg.local_entity_id = self.source_id
-        self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
+        self._start_source_transaction(self.dest_id, PutRequestWrapper(put_req_cfg))
         return file_size, crc32
 
     def _first_file_segment_handling(

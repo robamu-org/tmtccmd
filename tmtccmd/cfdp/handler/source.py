@@ -44,7 +44,7 @@ from tmtccmd.cfdp.handler.defs import (
     NoRemoteEntityCfgFound,
 )
 from tmtccmd.cfdp.mib import EntityType
-from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequest
+from tmtccmd.cfdp.request import CfdpRequestWrapper, PutRequestWrapper
 from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
@@ -207,7 +207,7 @@ class SourceHandler:
         if wrapper.request_type == CfdpRequestType.PUT:
             return self.put_request(wrapper.to_put_request(), remote_cfg)
 
-    def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
+    def put_request(self, request: PutRequestWrapper, remote_cfg: RemoteEntityCfg):
         if self.states.state != CfdpStates.IDLE:
             _LOGGER.debug("CFDP source handler is busy, can't process put request")
             return False
@@ -262,7 +262,7 @@ class SourceHandler:
         else:
             self._rec_dict.update({packet.directive_type: [packet]})
 
-    def __fsm_crc_procedure(self, put_req: PutRequest):
+    def __fsm_crc_procedure(self, put_req: PutRequestWrapper):
         if self._params.fp.file_size == 0:
             # Empty file, use null checksum
             self._params.fp.crc32 = NULL_CHECKSUM_U32
@@ -486,7 +486,7 @@ class SourceHandler:
         self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
         self._params.closure_requested = closure_req_to_set
 
-    def _transaction_start(self, put_req: PutRequest):
+    def _transaction_start(self, put_req: PutRequestWrapper):
         if not put_req.cfg.source_file.exists():
             # TODO: Handle this exception in the handler, reset CFDP state machine
             raise SourceFileDoesNotExist(put_req.cfg.source_file)
@@ -503,7 +503,7 @@ class SourceHandler:
         )
         self.user.transaction_indication(self._params.transaction)
 
-    def _prepare_metadata_pdu(self, put_req: PutRequest):
+    def _prepare_metadata_pdu(self, put_req: PutRequestWrapper):
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
                 f"Must send current packet {self.pdu_holder.base} first"
@@ -523,7 +523,7 @@ class SourceHandler:
             pdu_conf=self._params.pdu_conf, params=params
         )
 
-    def _prepare_next_file_data_pdu(self, request: PutRequest) -> bool:
+    def _prepare_next_file_data_pdu(self, request: PutRequestWrapper) -> bool:
         """Prepare the next file data PDU
 
         :param request:

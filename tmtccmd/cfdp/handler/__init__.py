@@ -12,7 +12,7 @@ from tmtccmd.cfdp import (
     CfdpUserBase,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.request import PutRequest
+from tmtccmd.cfdp.request import PutRequestWrapper
 from tmtccmd.cfdp.defs import CfdpStates
 from .defs import NoRemoteEntityCfgFound, BusyError
 
@@ -42,7 +42,7 @@ class CfdpHandler:
         self.dest_handler = DestHandler(cfg, user, self.remote_cfg_table)
         self.source_handler = SourceHandler(cfg, seq_cnt_provider, user)
 
-    def put_request(self, request: PutRequest):
+    def put_request(self, request: PutRequestWrapper):
         if not self.remote_cfg_table.get_cfg(request.cfg.destination_id):
             raise ValueError(
                 f"No remote CFDP config found for entity ID {request.cfg.destination_id}"

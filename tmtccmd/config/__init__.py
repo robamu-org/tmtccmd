@@ -45,7 +45,7 @@ from tmtccmd.tc.procedure import (
     TcProcedureType,
     ProcedureWrapper,
 )
-from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
+from tmtccmd.cfdp.request import PutRequest, PutRequestWrapper
 from tmtccmd.core.base import ModeWrapper
 
 
@@ -121,15 +121,15 @@ def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedure
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
     proc_info = CfdpProcedureInfo()
-    proc_info.request_wrapper.base = PutRequest(params)
+    proc_info.request_wrapper.base = PutRequestWrapper(params)
     return proc_info
 
 
 def cfdp_req_to_put_req_regular(
     params: CfdpParams, dest_id: UnsignedByteField
-) -> Optional[PutRequestCfg]:
+) -> Optional[PutRequest]:
     if not params.proxy_op:
-        return PutRequestCfg(
+        return PutRequest(
             destination_id=dest_id,
             source_file=Path(params.source),
             dest_file=params.target,
@@ -141,7 +141,7 @@ def cfdp_req_to_put_req_regular(
 
 def cfdp_req_to_put_req_proxy_get_req(
     params: CfdpParams, local_id: UnsignedByteField, dest_id: UnsignedByteField
-) -> Optional[PutRequestCfg]:
+) -> Optional[PutRequest]:
     if params.proxy_op:
         return None
     proxy_put_req = ProxyPutRequest(
@@ -149,7 +149,7 @@ def cfdp_req_to_put_req_proxy_get_req(
         source_file_name=CfdpLv.from_str(params.source),
         dest_file_name=CfdpLv.from_str(params.target),
     )
-    return PutRequestCfg(
+    return PutRequest(
         destination_id=dest_id,
         msgs_to_user=[proxy_put_req.to_generic_msg_to_user_tlv()],
         closure_requested=None,

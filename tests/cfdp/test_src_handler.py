@@ -20,7 +20,7 @@ from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.defs import PacketSendNotConfirmed
 from tmtccmd.cfdp.handler.source import TransactionStep
-from tmtccmd.cfdp.request import PutRequestCfg, PutRequest, CfdpRequestWrapper
+from tmtccmd.cfdp.request import PutRequest, PutRequestWrapper, CfdpRequestWrapper
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -69,7 +69,7 @@ class TestCfdpSourceHandler(TestCase):
         dest_path = "/tmp/hello_copy.txt"
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
-        put_req_cfg = PutRequestCfg(
+        put_req_cfg = PutRequest(
             destination_id=dest_id,
             source_file=self.file_path,
             dest_file=dest_path,
@@ -77,7 +77,7 @@ class TestCfdpSourceHandler(TestCase):
             trans_mode=None,
             closure_requested=None,
         )
-        self._start_source_transaction(dest_id, PutRequest(put_req_cfg))
+        self._start_source_transaction(dest_id, PutRequestWrapper(put_req_cfg))
         fsm_res = self.source_handler.state_machine()
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
@@ -102,7 +102,7 @@ class TestCfdpSourceHandler(TestCase):
         self.dest_id = ByteFieldU32(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
         self.source_handler.source_id = self.source_id
-        put_req_cfg = PutRequestCfg(
+        put_req_cfg = PutRequest(
             destination_id=self.dest_id,
             source_file=self.file_path,
             dest_file=dest_path,
@@ -117,7 +117,7 @@ class TestCfdpSourceHandler(TestCase):
             crc32 = crc32.digest()
             of.write(data)
         file_size = self.file_path.stat().st_size
-        self._start_source_transaction(self.dest_id, PutRequest(put_req_cfg))
+        self._start_source_transaction(self.dest_id, PutRequestWrapper(put_req_cfg))
         self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
         fsm_res = self.source_handler.state_machine()
         file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res)
@@ -146,7 +146,7 @@ class TestCfdpSourceHandler(TestCase):
         return fsm_res.pdu_holder.to_file_data_pdu()
 
     def _start_source_transaction(
-        self, dest_id: UnsignedByteField, put_request: PutRequest
+        self, dest_id: UnsignedByteField, put_request: PutRequestWrapper
     ):
         wrapper = CfdpRequestWrapper(put_request)
         self.remote_cfg.entity_id = dest_id
