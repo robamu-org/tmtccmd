@@ -9,6 +9,7 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
+from spacepackets.cfdp.tlv import ProxyPutRequest
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
@@ -71,7 +72,15 @@ class PutRequest:
             )
         else:
             # TODO: Print out other parameters
-            print_str = f"Destination ID: {self.destination_id}"
+            print_str = f"Metadata Only Put Request with Destination ID: {self.destination_id}\n"
+            if self.msgs_to_user is not None:
+                for idx, msg_to_user in enumerate(self.msgs_to_user):
+                    msg_to_user = cast(MessageToUserTlv, msg_to_user)
+                    if msg_to_user.is_cfdp_proxy_operation():
+                        proxy_msg_type = msg_to_user.get_cfdp_proxy_message_type()
+                        print_str += (
+                            f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
+                        )
         return print_str
 
 
