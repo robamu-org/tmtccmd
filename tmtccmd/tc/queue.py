@@ -9,7 +9,8 @@ from typing import Optional, Deque, cast, Any, Type
 
 
 from spacepackets.ccsds import SpacePacket
-from spacepackets.ecss import PusTelecommand, PusVerificator, PusService, check_pus_crc
+from spacepackets.ecss.tc import PusTelecommand
+from spacepackets.ecss import PusVerificator, PusService, check_pus_crc
 from tmtccmd.tc.procedure import TcProcedureBase, DefaultProcedureInfo
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.pus import Pus11Subservices
