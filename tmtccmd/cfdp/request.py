@@ -9,7 +9,7 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
-from spacepackets.cfdp.tlv import ProxyPutRequest
+from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyMessageType
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
@@ -84,6 +84,11 @@ class PutRequest:
                             #       parameters and print them, but I would prefer this to be a
                             #       special API of the reserved message.
                             print_str += f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
+                            if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
+                                put_request_params = (
+                                    reserved_msg.get_proxy_put_request_params()
+                                )
+                                print_str += f"\n{put_request_params}"
         return print_str
 
 

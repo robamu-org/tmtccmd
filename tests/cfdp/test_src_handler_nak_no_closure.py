@@ -6,7 +6,7 @@ from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import CfdpLv, DirectiveType, ConditionCode
 from spacepackets.cfdp.pdu import FileDeliveryStatus, DeliveryCode
-from spacepackets.cfdp.tlv import ProxyPutRequest
+from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
@@ -92,11 +92,12 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self._test_transaction_completion()
 
     def test_proxy_get_request(self):
-        proxy_op = ProxyPutRequest(
+        proxy_op_params = ProxyPutRequestParams(
             self.local_cfg.local_entity_id,
             CfdpLv.from_str("/tmp/source.txt"),
             CfdpLv.from_str("/tmp/dest.txt"),
         )
+        proxy_op = ProxyPutRequest(proxy_op_params)
         generic_tlv = proxy_op.to_generic_msg_to_user_tlv()
         put_req = PutRequest(
             destination_id=self.dest_id,

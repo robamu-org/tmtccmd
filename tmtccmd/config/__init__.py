@@ -14,7 +14,7 @@ from typing import Optional
 
 from spacepackets.cfdp import CfdpLv
 from spacepackets.util import UnsignedByteField
-from spacepackets.cfdp.tlv import ProxyPutRequest
+from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from tmtccmd.core import TmMode, TcMode
 
 from .args import (
@@ -125,6 +125,7 @@ def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
     return proc_info
 
 
+# TODO: Add unittests
 def cfdp_req_to_put_req_regular(
     params: CfdpParams, dest_id: UnsignedByteField
 ) -> Optional[PutRequest]:
@@ -139,18 +140,20 @@ def cfdp_req_to_put_req_regular(
     return None
 
 
+# TODO: Add unittests
 def cfdp_req_to_put_req_proxy_get_req(
-    params: CfdpParams, local_id: UnsignedByteField, dest_id: UnsignedByteField
+    params: CfdpParams, local_id: UnsignedByteField, remote_id: UnsignedByteField
 ) -> Optional[PutRequest]:
     if not params.proxy_op:
         return None
-    proxy_put_req = ProxyPutRequest(
+    proxy_put_params = ProxyPutRequestParams(
         dest_entity_id=local_id,
         source_file_name=CfdpLv.from_str(params.source),
         dest_file_name=CfdpLv.from_str(params.target),
     )
+    proxy_put_req = ProxyPutRequest(proxy_put_params)
     return PutRequest(
-        destination_id=dest_id,
+        destination_id=remote_id,
         msgs_to_user=[proxy_put_req.to_generic_msg_to_user_tlv()],
         closure_requested=None,
         dest_file=None,
