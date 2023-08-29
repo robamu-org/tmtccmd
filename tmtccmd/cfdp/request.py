@@ -76,11 +76,14 @@ class PutRequest:
             if self.msgs_to_user is not None:
                 for idx, msg_to_user in enumerate(self.msgs_to_user):
                     msg_to_user = cast(MessageToUserTlv, msg_to_user)
-                    if msg_to_user.is_cfdp_proxy_operation():
-                        proxy_msg_type = msg_to_user.get_cfdp_proxy_message_type()
-                        print_str += (
-                            f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
-                        )
+                    if msg_to_user.is_reserved_cfdp_message():
+                        reserved_msg = msg_to_user.to_reserved_msg_tlv()
+                        if reserved_msg.is_cfdp_proxy_operation():
+                            proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
+                            # TODO: I think it would be nice to extract back the proxy put operation
+                            #       parameters and print them, but I would prefer this to be a
+                            #       special API of the reserved message.
+                            print_str += f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
         return print_str
 
 
