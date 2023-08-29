@@ -222,6 +222,7 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
     parser_or_subparser.add_argument(
         "-p",
         "--proxy",
+        action="store_true",
         help="Used to trigger a proxy operation at the remote CFDP entity.\n"
         "Most commonly used to request a file from the remote entity.\n"
         "Please note that this inverses the meaning of the destination and file parameter.",
