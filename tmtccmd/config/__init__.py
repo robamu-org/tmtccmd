@@ -142,7 +142,7 @@ def cfdp_req_to_put_req_regular(
 def cfdp_req_to_put_req_proxy_get_req(
     params: CfdpParams, local_id: UnsignedByteField, dest_id: UnsignedByteField
 ) -> Optional[PutRequest]:
-    if params.proxy_op:
+    if not params.proxy_op:
         return None
     proxy_put_req = ProxyPutRequest(
         dest_entity_id=local_id,
