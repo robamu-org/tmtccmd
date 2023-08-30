@@ -75,7 +75,6 @@ class PutRequest:
         return print_str
 
     def __str_for_metadata_only(self) -> str:
-        # TODO: Print out other parameters
         print_str = f"Metadata Only Put Request with Destination ID: {self.destination_id}\n"
         if self.msgs_to_user is not None:
             for idx, msg_to_user in enumerate(self.msgs_to_user):
@@ -84,9 +83,6 @@ class PutRequest:
                     reserved_msg = msg_to_user.to_reserved_msg_tlv()
                     if reserved_msg.is_cfdp_proxy_operation():
                         proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
-                        # TODO: I think it would be nice to extract back the proxy put operation
-                        #       parameters and print them, but I would prefer this to be a
-                        #       special API of the reserved message.
                         print_str += f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
                         if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
                             put_request_params = (
