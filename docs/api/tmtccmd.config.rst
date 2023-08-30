@@ -20,6 +20,14 @@ tmtccmd.config.args module
    :undoc-members:
    :show-inheritance:
 
+tmtccmd.config.cfdp module
+--------------------------
+
+.. automodule:: tmtccmd.config.cfdp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tmtccmd.config.hook module
 -----------------------------
 

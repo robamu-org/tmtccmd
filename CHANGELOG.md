@@ -11,18 +11,32 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [v6.0.0rc0]
 
+## Added
+
+- The `CfdpParams` config wrapper now has an additional `proxy_op` field.
+- New `cfdp_req_to_put_req_regular` and `cfdp_req_to_put_req_proxy_get_req` API to convert standard
+  `CfdpParams` instances to `PutRequest`s
+- The CFPD source handler is now able to convert PutRequest metadata fields to options. It is also
+  able to request metadata only PDUs now, allowing it to perform proxy operations.
+
 ## Changed
 
 - Adapted the FSFW specific Housekeeping service API to make HK requests diagnostic agnostic.
   The PUS interface has proven to be cumbersome and problematic, so the split between diagnostic
   and regular HK packets has been removed in newer version of the FSFW. The new API reflects that.
   The old API is still available by using the `*_with_diag` suffix.
-- Package version is single-sourced using the `importlib.metadata` variant: The `pyproject.toml`
-  now contains the version information, but the informatio can be retrieved at runtime
-  by using the new `version.get_version` API or `importlib.metadata.version("spacepackets")`.
+- The former `PutRequestCfg` dataclass is now named `PutRequest`. The former `PutRequest` class
+  is now named `PutRequestCfgWrapper` and simply wraps a `CfdpParams` dataclass.
+- The CFDP source handler expects the `PutRequest` dataclass instead of a CFDP request wrapper now
+  for the `put_request` API.
 
 ## Removed
 
+- The CFDP source handler `start_cfdp_transaction` API was removed. It was only able to process
+  put requests in its current form anyway. The `put_request` method is sufficient for now.
+- Package version is single-sourced using the `importlib.metadata` variant: The `pyproject.toml`
+  now contains the version information, but the informatio can be retrieved at runtime
+  by using the new `version.get_version` API or `importlib.metadata.version("spacepackets")`.
 - `setup.py` which is not required anymore.
 
 # [v5.0.0] 2023-07-13

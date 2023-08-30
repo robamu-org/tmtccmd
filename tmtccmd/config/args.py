@@ -14,7 +14,13 @@ from tmtccmd.tc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.com import ComInterface
 
-from .defs import CoreModeList, CoreComInterfaces, CoreModeConverter
+from .defs import (
+    CoreModeList,
+    CoreComInterfaces,
+    CoreModeConverter,
+    DefaultProcedureParams,
+    CfdpParams,
+)
 from .hook import HookBase
 
 
@@ -42,20 +48,6 @@ def create_default_args_parser(
         formatter_class=argparse.RawTextHelpFormatter,
         parents=[parent_parser],
     )
-
-
-@dataclass
-class DefaultProcedureParams:
-    service: Optional[str] = None
-    op_code: Optional[str] = None
-
-
-@dataclass
-class CfdpParams:
-    source = ""
-    target = ""
-    closure_requested = False
-    transmission_mode = TransmissionMode.UNACKNOWLEDGED
 
 
 class ProcedureParamsWrapper:
@@ -230,6 +222,7 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
     parser_or_subparser.add_argument(
         "-p",
         "--proxy",
+        action="store_true",
         help="Used to trigger a proxy operation at the remote CFDP entity.\n"
         "Most commonly used to request a file from the remote entity.\n"
         "Please note that this inverses the meaning of the destination and file parameter.",
@@ -422,9 +415,10 @@ def args_to_params_cfdp(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
-    cfdp_params.source = pargs.source
-    cfdp_params.target = pargs.target
+    cfdp_params.source_file = pargs.source
+    cfdp_params.dest_file = pargs.target
     cfdp_params.closure_requested = not pargs.no_closure
+    cfdp_params.proxy_op = pargs.proxy
     if pargs.type in ["0", "nak"]:
         cfdp_params.transmission_mode = TransmissionMode.UNACKNOWLEDGED
     elif pargs.type in ["1", "ack"]:

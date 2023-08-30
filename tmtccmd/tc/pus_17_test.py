@@ -6,7 +6,7 @@ from spacepackets.ecss.pus_17_test import Subservice
 
 
 @deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
+    deprecated_in="4.0.0a2",
     current_version=get_version(),
     details="use create... API instead",
 )

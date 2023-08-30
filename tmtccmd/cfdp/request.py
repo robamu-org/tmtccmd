@@ -9,9 +9,12 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
+from spacepackets.cfdp.tlv import ProxyMessageType
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
+
+from tmtccmd.config.defs import CfdpParams
 
 
 class CfdpRequestBase:
@@ -20,7 +23,7 @@ class CfdpRequestBase:
 
 
 @dataclasses.dataclass
-class PutRequestCfg:
+class PutRequest:
     destination_id: UnsignedByteField
     # All the following fields are optional because a put request can also be a metadata-only
     # request
@@ -31,23 +34,14 @@ class PutRequestCfg:
     seg_ctrl: Optional[
         SegmentationControl
     ] = SegmentationControl.NO_RECORD_BOUNDARIES_PRESERVATION
-    fault_handler_overrides: Optional[FaultHandlerOverrideTlv] = None
+    fault_handler_overrides: Optional[List[FaultHandlerOverrideTlv]] = None
     flow_label_tlv: Optional[FlowLabelTlv] = None
     msgs_to_user: Optional[List[MessageToUserTlv]] = None
     fs_requests: Optional[List[FileStoreRequestTlv]] = None
 
-
-class PutRequest(CfdpRequestBase):
-    def __init__(self, cfg: PutRequestCfg):
-        super().__init__(CfdpRequestType.PUT)
-        self.cfg = cfg
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(cfg={self.cfg})"
-
     @property
     def metadata_only(self):
-        if self.cfg.source_file is None and self.cfg.dest_file is None:
+        if self.source_file is None and self.dest_file is None:
             return True
         return False
 
@@ -55,17 +49,17 @@ class PutRequest(CfdpRequestBase):
         src_file_str = "Unknown source file"
         dest_file_str = "Unknown destination file"
         if not self.metadata_only:
-            src_file_str = f"Source File: {self.cfg.source_file}"
-            dest_file_str = f"Destination File: {self.cfg.dest_file}"
-        if self.cfg.trans_mode:
-            if self.cfg.trans_mode == TransmissionMode.ACKNOWLEDGED:
+            src_file_str = f"Source File: {self.source_file}"
+            dest_file_str = f"Destination File: {self.dest_file}"
+        if self.trans_mode:
+            if self.trans_mode == TransmissionMode.ACKNOWLEDGED:
                 trans_mode_str = "Transmission Mode: Class 2 Acknowledged"
             else:
                 trans_mode_str = "Transmission Mode: Class 1 Unacknowledged"
         else:
             trans_mode_str = "Transmission Mode from MIB"
-        if self.cfg.closure_requested is not None:
-            if self.cfg.closure_requested:
+        if self.closure_requested is not None:
+            if self.closure_requested:
                 closure_str = "Closure requested"
             else:
                 closure_str = "No closure requested"
@@ -73,13 +67,42 @@ class PutRequest(CfdpRequestBase):
             closure_str = "Closure information from MIB"
         if not self.metadata_only:
             print_str = (
-                f"Destination ID: {self.cfg.destination_id}\n"
+                f"Destination ID: {self.destination_id}\n"
                 f"{src_file_str}\n{dest_file_str}\n{trans_mode_str}\n{closure_str}"
             )
         else:
-            # TODO: Print out other parameters
-            print_str = f"Destination ID: {self.cfg.destination_id}"
+            return self.__str_for_metadata_only()
         return print_str
+
+    def __str_for_metadata_only(self) -> str:
+        print_str = (
+            f"Metadata Only Put Request with Destination ID: {self.destination_id}\n"
+        )
+        if self.msgs_to_user is not None:
+            for idx, msg_to_user in enumerate(self.msgs_to_user):
+                msg_to_user = cast(MessageToUserTlv, msg_to_user)
+                if msg_to_user.is_reserved_cfdp_message():
+                    reserved_msg = msg_to_user.to_reserved_msg_tlv()
+                    if reserved_msg.is_cfdp_proxy_operation():
+                        proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
+                        print_str += (
+                            f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
+                        )
+                        if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
+                            put_request_params = (
+                                reserved_msg.get_proxy_put_request_params()
+                            )
+                            print_str += f"\n{put_request_params}"
+        return print_str
+
+
+class PutRequestCfgWrapper(CfdpRequestBase):
+    def __init__(self, cfg: CfdpParams):
+        super().__init__(CfdpRequestType.PUT)
+        self.cfg = cfg
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(cfg={self.cfg})"
 
 
 class CfdpRequestWrapper:
@@ -94,7 +117,9 @@ class CfdpRequestWrapper:
     def request(self) -> CfdpRequestType:
         return self.base.req_type
 
-    def to_put_request(self) -> PutRequest:
+    def to_put_request(self) -> PutRequestCfgWrapper:
         if self.base.req_type != CfdpRequestType.PUT:
-            raise TypeError(f"Request is not a {PutRequest.__name__}: {self.base!r}")
-        return cast(PutRequest, self.base)
+            raise TypeError(
+                f"Request is not a {PutRequestCfgWrapper.__name__}: {self.base!r}"
+            )
+        return cast(PutRequestCfgWrapper, self.base)
