@@ -415,8 +415,8 @@ def args_to_params_cfdp(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
-    cfdp_params.source = pargs.source
-    cfdp_params.target = pargs.target
+    cfdp_params.source_file = pargs.source
+    cfdp_params.dest_file = pargs.target
     cfdp_params.closure_requested = not pargs.no_closure
     cfdp_params.proxy_op = pargs.proxy
     if pargs.type in ["0", "nak"]:

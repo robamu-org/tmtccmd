@@ -20,7 +20,7 @@ from tmtccmd.cfdp.defs import CfdpStates
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.defs import PacketSendNotConfirmed
 from tmtccmd.cfdp.handler.source import TransactionStep
-from tmtccmd.cfdp.request import PutRequest, PutRequestCfgWrapper, CfdpRequestWrapper
+from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser

@@ -17,11 +17,11 @@ class DefaultProcedureParams:
 
 @dataclass
 class CfdpParams:
-    source = ""
-    target = ""
-    closure_requested = False
-    transmission_mode = TransmissionMode.UNACKNOWLEDGED
-    proxy_op = False
+    source_file: str = ""
+    dest_file: str = ""
+    closure_requested: bool = False
+    transmission_mode: TransmissionMode = TransmissionMode.UNACKNOWLEDGED
+    proxy_op: bool = False
 
 
 def default_json_path() -> str:

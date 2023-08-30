@@ -9,7 +9,7 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
-from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyMessageType
+from spacepackets.cfdp.tlv import ProxyMessageType
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
@@ -71,24 +71,28 @@ class PutRequest:
                 f"{src_file_str}\n{dest_file_str}\n{trans_mode_str}\n{closure_str}"
             )
         else:
-            # TODO: Print out other parameters
-            print_str = f"Metadata Only Put Request with Destination ID: {self.destination_id}\n"
-            if self.msgs_to_user is not None:
-                for idx, msg_to_user in enumerate(self.msgs_to_user):
-                    msg_to_user = cast(MessageToUserTlv, msg_to_user)
-                    if msg_to_user.is_reserved_cfdp_message():
-                        reserved_msg = msg_to_user.to_reserved_msg_tlv()
-                        if reserved_msg.is_cfdp_proxy_operation():
-                            proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
-                            # TODO: I think it would be nice to extract back the proxy put operation
-                            #       parameters and print them, but I would prefer this to be a
-                            #       special API of the reserved message.
-                            print_str += f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
-                            if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
-                                put_request_params = (
-                                    reserved_msg.get_proxy_put_request_params()
-                                )
-                                print_str += f"\n{put_request_params}"
+            return self.__str_for_metadata_only()
+        return print_str
+
+    def __str_for_metadata_only(self) -> str:
+        # TODO: Print out other parameters
+        print_str = f"Metadata Only Put Request with Destination ID: {self.destination_id}\n"
+        if self.msgs_to_user is not None:
+            for idx, msg_to_user in enumerate(self.msgs_to_user):
+                msg_to_user = cast(MessageToUserTlv, msg_to_user)
+                if msg_to_user.is_reserved_cfdp_message():
+                    reserved_msg = msg_to_user.to_reserved_msg_tlv()
+                    if reserved_msg.is_cfdp_proxy_operation():
+                        proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
+                        # TODO: I think it would be nice to extract back the proxy put operation
+                        #       parameters and print them, but I would prefer this to be a
+                        #       special API of the reserved message.
+                        print_str += f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
+                        if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
+                            put_request_params = (
+                                reserved_msg.get_proxy_put_request_params()
+                            )
+                            print_str += f"\n{put_request_params}"
         return print_str
 
 
