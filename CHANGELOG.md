@@ -9,11 +9,9 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
-# [v6.0.0rc1]
+# [v6.0.0rc0]
 
 - Bumped `spacepackets` to v0.18.0rc1
-
-# [v6.0.0rc0]
 
 ## Added
 
