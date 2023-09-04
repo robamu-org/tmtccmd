@@ -1,6 +1,8 @@
 Checklist for new releases
 ========
 
+The steps shown here are for Ubuntu/MacOS.
+
 # Pre-Release
 
 1. Make sure the docs build with Sphinx, using `make html` inside the
@@ -10,9 +12,16 @@ Checklist for new releases
    with date and new `unreleased`section.
 4. Run tests with `pytest .`
 5. Run auto-formatter with `black .`
-6. Run linter script `./lint.py`
+6. Run linter with `flake8 .`
 7. Wait for CI/CD results. This also runs the tests on different
    operating systems
+
+# Release
+
+1. Delete existing distributions: `rm dist/*`
+2. Build the package. Requires the `build` package: `python3 -m build`
+3. Upload the source and build distribution: `python3 -m twine upload dist/*`. You might require
+   a PyPI upload token to do this.
 
 # Post-Release
 
