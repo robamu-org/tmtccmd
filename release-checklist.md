@@ -7,7 +7,7 @@ The steps shown here are for Ubuntu/MacOS.
 
 1. Make sure the docs build with Sphinx, using `make html` inside the
    `docs` directory with dependencies in `docs/requirements.txt` installed.
-2. Bump version inside the `tmtccmd/__init__.py` file.
+2. Bump version inside the `pyproject.toml` file.
 3. Update `CHANGELOG.md`: Convert `unreleased` section into version section
    with date and new `unreleased`section.
 4. Run tests with `pytest .`
