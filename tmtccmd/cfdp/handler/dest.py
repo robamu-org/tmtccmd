@@ -284,8 +284,9 @@ class DestHandler:
 
     def __receiving_fd_pdus_nacknowledged(self):
         # TODO: Sequence count check
-        for file_data_pdu in self._params.file_data_deque:
-            self.__handle_one_fd_pdu(file_data_pdu)
+        while self._params.file_data_deque:
+            next_fd = self._params.file_data_deque.popleft()
+            self.__handle_one_fd_pdu(next_fd)
         # TODO: Support for check timer missing
         eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
         if eof_pdus is not None:

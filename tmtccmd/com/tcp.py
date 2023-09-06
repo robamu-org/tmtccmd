@@ -1,5 +1,6 @@
 """TCP communication interface"""
 import logging
+import queue
 import socket
 import time
 import enum
@@ -37,7 +38,7 @@ class TcpSpacePacketsComIF(ComInterface):
         space_packet_ids: Sequence[PacketId],
         tm_polling_freqency: float,
         target_address: EthAddr,
-        max_packets_stored: int = 50,
+        max_packets_stored: Optional[int] = None,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP.
 
@@ -61,7 +62,7 @@ class TcpSpacePacketsComIF(ComInterface):
         self.__tcp_conn_thread: Optional[threading.Thread] = threading.Thread(
             target=self.__tcp_tm_client, daemon=True
         )
-        self.__tm_queue = deque()
+        self.__tm_queue = queue.Queue()
         self.__analysis_queue = deque()
         self.tm_packet_list = []
 
@@ -151,8 +152,8 @@ class TcpSpacePacketsComIF(ComInterface):
         return tm_packet_list
 
     def __tm_queue_to_packet_list(self):
-        while self.__tm_queue:
-            self.__analysis_queue.appendleft(self.__tm_queue.pop())
+        while self.__tm_queue.qsize() > 0:
+            self.__analysis_queue.append(self.__tm_queue.get())
         # TCP is stream based, so there might be broken packets or multiple packets in one recv
         # call. We parse the space packets contained in the stream here
         if self.com_type == TcpCommunicationType.SPACE_PACKETS:
@@ -164,7 +165,7 @@ class TcpSpacePacketsComIF(ComInterface):
             )
         else:
             while self.__analysis_queue:
-                self.tm_packet_list.append(self.__analysis_queue.pop())
+                self.tm_packet_list.append(self.__analysis_queue.popleft())
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
@@ -177,8 +178,10 @@ class TcpSpacePacketsComIF(ComInterface):
 
     def __receive_tm_packets(self):
         try:
-            ready = select.select([self.__tcp_socket], [], [], 0)
-            if ready[0]:
+            while True:
+                ready = select.select([self.__tcp_socket], [], [], 0)
+                if not ready[0]:
+                    break
                 bytes_recvd = self.__tcp_socket.recv(4096)
                 if bytes_recvd == b"":
                     self.__close_tcp_socket()
@@ -186,16 +189,19 @@ class TcpSpacePacketsComIF(ComInterface):
                     return
                 else:
                     self.connected = True
-                if self.__tm_queue.__len__() >= self.max_packets_stored:
+                if (
+                    self.max_packets_stored is not None
+                    and self.__tm_queue.qsize() >= self.max_packets_stored
+                ):
                     _LOGGER.warning(
                         "Number of packets in TCP queue too large. "
                         "Overwriting old packets.."
                     )
-                    self.__tm_queue.pop()
+                    self.__tm_queue.get()
                     # TODO: If segments are received but the receiver is unable to parse packets
                     #       properly, it might make sense to have a timeout which then also
                     #       logs that there might be an issue reading packets
-                self.__tm_queue.appendleft(bytes(bytes_recvd))
+                self.__tm_queue.put(bytes(bytes_recvd))
         except ConnectionResetError:
             self.__close_tcp_socket()
             _LOGGER.exception("ConnectionResetError. TCP server might not be up")
