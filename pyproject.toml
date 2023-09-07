@@ -8,7 +8,7 @@ description = "TMTC Commander Core"
 readme = "README.md"
 version = "6.0.0rc0"
 requires-python = ">=3.8"
-license = {text = "Apache-2.0"}
+license = {text = "Apache-2.0 or MIT" }
 authors = [
     {name = "Robin Mueller", email = "robin.mueller.m@gmail.com"}
 ]
@@ -36,8 +36,8 @@ dependencies = [
     "deprecation~=2.1",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets==0.18.0rc1",
-    # "spacepackets @ git+https://github.com/us-irs/spacepackets-py#egg=main"
+    # "spacepackets==0.18.0rc1",
+    "spacepackets @ git+https://github.com/us-irs/spacepackets-py#egg=main"
 ]
 
 [project.optional-dependencies]
