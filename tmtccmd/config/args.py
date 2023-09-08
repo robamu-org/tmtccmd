@@ -406,7 +406,25 @@ def args_to_params_generic(
         params.com_if = hook_obj.assign_communication_interface(params.com_if_id)
 
 
-def args_to_params_cfdp(
+def cfdp_args_to_cfdp_params(pargs: argparse.Namespace, cfdp_params: CfdpParams):
+    """Convert the argument parser CFDP arguments provided by this library to the internalized
+    :py:class:`tmtccmd.config.defs.CfdpParams` dataclass."""
+    if hasattr(pargs, "source"):
+        cfdp_params.source = pargs.source
+    if hasattr(pargs, "target"):
+        cfdp_params.target = pargs.target
+    if hasattr(pargs, "no_closure"):
+        cfdp_params.closure_requested = not pargs.no_closure
+    if hasattr(pargs, "type"):
+        if pargs.type in ["0", "nak"]:
+            cfdp_params.transmission_mode = TransmissionMode.UNACKNOWLEDGED
+        elif pargs.type in ["1", "ack"]:
+            cfdp_params.transmission_mode = TransmissionMode.ACKNOWLEDGED
+    if hasattr(pargs, "proxy_op"):
+        cfdp_params.proxy_op = pargs.proxy
+
+
+def args_to_all_params_for_cfdp(
     pargs: argparse.Namespace,
     params: SetupParams,
     cfdp_params: CfdpParams,
@@ -414,7 +432,7 @@ def args_to_params_cfdp(
     use_prompts: bool,
     assign_com_if: bool,
 ):
-    """Helper function to convert CFDP command line arguments to CFDP setup parameters."""
+    """Helper function to convert CFDP command line arguments to the setup parameters."""
     args_to_params_generic(
         pargs=pargs,
         params=params,
@@ -422,14 +440,7 @@ def args_to_params_cfdp(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
-    cfdp_params.source_file = pargs.source
-    cfdp_params.dest_file = pargs.target
-    cfdp_params.closure_requested = not pargs.no_closure
-    cfdp_params.proxy_op = pargs.proxy
-    if pargs.type in ["0", "nak"]:
-        cfdp_params.transmission_mode = TransmissionMode.UNACKNOWLEDGED
-    elif pargs.type in ["1", "ack"]:
-        cfdp_params.transmission_mode = TransmissionMode.ACKNOWLEDGED
+    cfdp_args_to_cfdp_params(pargs, cfdp_params)
     # TODO: Listener mode is also relevant.
     #       Basically, if -l is specified, use listener after mqueue mode or right aways when
     #       no transaction parameter are specified
@@ -444,7 +455,7 @@ def args_to_params_cfdp(
         params.tc_params.delay = float(pargs.delay)
 
 
-def args_to_params_tmtc(
+def args_to_all_params_tmtc(
     pargs: argparse.Namespace,
     params: SetupParams,
     def_tmtc_params: DefaultProcedureParams,
@@ -742,7 +753,7 @@ class PostArgsParsingWrapper:
         use_prompts: bool,
     ):
         try:
-            args_to_params_tmtc(
+            args_to_all_params_tmtc(
                 pargs=self.args_raw,
                 params=self.params,
                 hook_obj=self.hook_obj,
@@ -757,7 +768,7 @@ class PostArgsParsingWrapper:
 
     def _set_cfdp_params(self, cfdp_params: CfdpParams, use_prompts: bool):
         try:
-            args_to_params_cfdp(
+            args_to_all_params_for_cfdp(
                 pargs=self.args_raw,
                 cfdp_params=cfdp_params,
                 params=self.params,

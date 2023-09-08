@@ -3,7 +3,11 @@ from unittest import TestCase
 
 from tests.hook_obj_mock import create_hook_mock
 from tmtccmd import CoreModeList, CoreModeConverter
-from tmtccmd.config.args import args_to_params_tmtc, SetupParams, DefaultProcedureParams
+from tmtccmd.config.args import (
+    args_to_all_params_tmtc,
+    SetupParams,
+    DefaultProcedureParams,
+)
 
 
 class TestArgs(TestCase):
@@ -41,7 +45,7 @@ class TestArgs(TestCase):
         self.assertEqual(self.params.backend_params.mode, "")
         self.assertEqual(self.params.backend_params.com_if_id, "")
         def_params = DefaultProcedureParams()
-        args_to_params_tmtc(
+        args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
             hook_obj=self.hook_mock,
@@ -68,7 +72,7 @@ class TestArgs(TestCase):
         self.simple_pargs_cli_set()
         self.pargs.delay = 2.0
         def_params = DefaultProcedureParams()
-        args_to_params_tmtc(
+        args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
             hook_obj=self.hook_mock,
@@ -83,7 +87,7 @@ class TestArgs(TestCase):
     def test_auto_listener_mode(self):
         self.auto_listener_cli_set()
         def_params = DefaultProcedureParams()
-        args_to_params_tmtc(
+        args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
             hook_obj=self.hook_mock,

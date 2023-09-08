@@ -20,6 +20,13 @@ Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.
 - TCP communication interface:
   - Frame limit is optional now.
   - Small change to allow handling more than 4096 bytes in one polling cycle.
+- Renamed `args_to_params_tmtc` to `args_to_all_params_tmtc` and `args_to_params_cfdp` to
+  `args_to_all_params_cfdp`
+
+## Added
+
+- Added new `cfdp_args_to_cfdp_params` function which only performs the conversion of CFDP
+  argparse arguments to the internalized `CfdpParams` type.
 
 # [v6.0.0rc0] 2023-09-04
 
