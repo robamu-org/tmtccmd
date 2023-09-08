@@ -106,7 +106,7 @@ class TestCfdpDestHandler(TestCase):
             params=metadata_params, pdu_conf=self.src_pdu_conf
         )
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
-        self.dest_handler.pass_packet(file_transfer_init)
+        self.dest_handler.insert_packet(file_transfer_init)
         fsm_res = self.dest_handler.state_machine()
         self.assertFalse(fsm_res.states.packet_ready)
         self.assertEqual(
@@ -115,7 +115,7 @@ class TestCfdpDestHandler(TestCase):
         eof_pdu = EofPdu(
             file_size=0, file_checksum=NULL_CHECKSUM_U32, pdu_conf=self.src_pdu_conf
         )
-        self.dest_handler.pass_packet(eof_pdu)
+        self.dest_handler.insert_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self._check_eof_recv_indication(fsm_res)
@@ -139,7 +139,7 @@ class TestCfdpDestHandler(TestCase):
             read_data = rf.read()
         fd_params = FileDataParams(file_data=read_data, offset=0)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
+        self.dest_handler.insert_packet(file_data_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
@@ -149,7 +149,7 @@ class TestCfdpDestHandler(TestCase):
             file_checksum=crc32,
             pdu_conf=self.src_pdu_conf,
         )
-        self.dest_handler.pass_packet(eof_pdu)
+        self.dest_handler.insert_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self._check_eof_recv_indication(fsm_res)
@@ -183,7 +183,7 @@ class TestCfdpDestHandler(TestCase):
             offset=self.file_segment_len,
         )
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
+        self.dest_handler.insert_packet(file_data_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
@@ -193,7 +193,7 @@ class TestCfdpDestHandler(TestCase):
             file_checksum=file_info.crc32,
             pdu_conf=self.src_pdu_conf,
         )
-        self.dest_handler.pass_packet(eof_pdu)
+        self.dest_handler.insert_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self._check_eof_recv_indication(fsm_res)
@@ -238,7 +238,7 @@ class TestCfdpDestHandler(TestCase):
             file_checksum=file_info.crc32,
             pdu_conf=self.src_pdu_conf,
         )
-        self.dest_handler.pass_packet(eof_pdu)
+        self.dest_handler.insert_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
         self.cfdp_user.transaction_finished_indication.assert_called_once()
         finished_args = cast(
@@ -296,7 +296,7 @@ class TestCfdpDestHandler(TestCase):
     def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
+        self.dest_handler.insert_packet(file_data_pdu)
         return self.dest_handler.state_machine()
 
     def _state_checker(
@@ -329,7 +329,7 @@ class TestCfdpDestHandler(TestCase):
             params=metadata_params, pdu_conf=self.src_pdu_conf
         )
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
-        self.dest_handler.pass_packet(file_transfer_init)
+        self.dest_handler.insert_packet(file_transfer_init)
 
     def tearDown(self) -> None:
         # self.dest_handler.finish()

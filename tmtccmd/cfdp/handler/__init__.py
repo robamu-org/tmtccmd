@@ -1,5 +1,8 @@
+import enum
 from dataclasses import dataclass
 from typing import Sequence, Optional, Tuple
+
+import deprecation
 
 from spacepackets import SpacePacket, SpacePacketHeader, PacketType
 from spacepackets.cfdp import GenericPduPacket, PduType, DirectiveType, PduFactory
@@ -12,8 +15,9 @@ from tmtccmd.cfdp import (
     CfdpUserBase,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.request import PutRequestCfgWrapper, PutRequest
+from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.defs import CfdpStates
+from tmtccmd.version import get_version
 from .defs import NoRemoteEntityCfgFound, BusyError
 
 from .dest import DestStateWrapper
@@ -29,7 +33,56 @@ class StateWrapper:
     dest_handler_state = DestStateWrapper()
 
 
+class PacketDestination(enum.Enum):
+    SOURCE_HANDLER = 0
+    DEST_HANDLER = 1
+
+
+def get_packet_destination(packet: GenericPduPacket) -> PacketDestination:
+    """This function routes the packets based on PDU type and directive type if applicable.
+
+    The routing is based on section 4.5 of the CFDP standard which specifies the PDU forwarding
+    procedure."""
+    if packet.pdu_type == PduType.FILE_DATA:
+        return PacketDestination.DEST_HANDLER
+    else:
+        if packet.directive_type in [
+            DirectiveType.METADATA_PDU,
+            DirectiveType.EOF_PDU,
+            DirectiveType.PROMPT_PDU,
+        ]:
+            # Section b) of 4.5.3: These PDUs should always be targeted towards the file
+            # receiver a.k.a. the destination handler
+            return PacketDestination.DEST_HANDLER
+        elif packet.directive_type in [
+            DirectiveType.FINISHED_PDU,
+            DirectiveType.NAK_PDU,
+            DirectiveType.KEEP_ALIVE_PDU,
+        ]:
+            # Section c) of 4.5.3: These PDUs should always be targeted towards the file sender
+            # a.k.a. the source handler
+            return PacketDestination.SOURCE_HANDLER
+        elif packet.directive_type == DirectiveType.ACK_PDU:
+            # Section a): Recipient depends on the type of PDU that is being acknowledged.
+            # We can simply extract the PDU type from the raw stream. If it is an EOF PDU,
+            # this packet is passed to the source handler. For a finished PDU, it is
+            # passed to the destination handler
+            pdu_holder = PduHolder(packet)
+            ack_pdu = pdu_holder.to_ack_pdu()
+            if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
+                return PacketDestination.SOURCE_HANDLER
+            elif ack_pdu.directive_code_of_acked_pdu == DirectiveType.FINISHED_PDU:
+                return PacketDestination.DEST_HANDLER
+
+
 class CfdpHandler:
+    """Wrapper class which wraps both the :py:class:`tmtccmd.cfdp.handler.source.SourceHandler` and
+    :py:class:`tmtccmd.cfdp.handler.dest.DestHandler` in a sensible way.
+
+    If you have special requirements, for example you want to spawn a new destination handler
+    for each file copy transfer to allow multiple consecutive file transfers, it might be a good
+    idea to write a custom wrapper."""
+
     def __init__(
         self,
         cfg: LocalEntityCfg,
@@ -88,45 +141,41 @@ class CfdpHandler:
     def confirm_source_packet_sent(self):
         self.source_handler.confirm_packet_sent_advance_fsm()
 
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc0",
+        current_version=get_version(),
+        details="Use insert_packet instead",
+    )
     def pass_packet(self, packet: GenericPduPacket):
+        self.insert_packet(packet)
+
+    def insert_packet(self, packet: GenericPduPacket):
         """This function routes the packets based on PDU type and directive type if applicable.
 
-        The routing is based on section 4.5 of the CFDP standard whcih specifies the PDU forwarding
-        procedure.
-        """
-        if packet.pdu_type == PduType.FILE_DATA:
-            self.dest_handler.pass_packet(packet)
-        else:
-            if packet.directive_type in [
-                DirectiveType.METADATA_PDU,
-                DirectiveType.EOF_PDU,
-                DirectiveType.PROMPT_PDU,
-            ]:
-                # Section b) of 4.5.3: These PDUs should always be targeted towards the file
-                # receiver a.k.a. the destination handler
-                self.dest_handler.pass_packet(packet)
-            elif packet.directive_type in [
-                DirectiveType.FINISHED_PDU,
-                DirectiveType.NAK_PDU,
-                DirectiveType.KEEP_ALIVE_PDU,
-            ]:
-                # Section c) of 4.5.3: These PDUs should always be targeted towards the file sender
-                # a.k.a. the source handler
-                self.source_handler.pass_packet(packet)
-            elif packet.directive_type == DirectiveType.ACK_PDU:
-                # Section a): Recipient depends on the type of PDU that is being acknowledged.
-                # We can simply extract the PDU type from the raw stream. If it is an EOF PDU,
-                # this packet is passed to the source handler. For a finished PDU, it is
-                # passed to the destination handler
-                pdu_holder = PduHolder(packet)
-                ack_pdu = pdu_holder.to_ack_pdu()
-                if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
-                    self.source_handler.pass_packet(packet)
-                elif ack_pdu.directive_code_of_acked_pdu == DirectiveType.FINISHED_PDU:
-                    self.dest_handler.pass_packet(packet)
+        The routing is based on section 4.5 of the CFDP standard which specifies the PDU forwarding
+        procedure."""
+        if get_packet_destination(packet) == PacketDestination.DEST_HANDLER:
+            self.dest_handler.insert_packet(packet)
+        elif get_packet_destination(packet) == PacketDestination.SOURCE_HANDLER:
+            self.source_handler.insert_packet(packet)
 
 
 class CfdpInCcsdsHandler:
+    """Wrapper helper type used to wrap PDU packets into CCSDS packets and to extract PDU
+    packets from CCSDS packets.
+
+    :param cfg: Local CFDP entity configuration.
+    :param user: User wrapper. This contains the indication callback implementations and the
+        virtual filestore implementation.
+    :param cfdp_seq_cnt_provider: Every CFDP file transfer has a transaction sequence number.
+        This provider is used to retrieve that sequence number.
+    :param ccsds_seq_cnt_provider: Each CFDP PDU is wrapped into a CCSDS space packet, and each
+        space packet has a dedicated sequence count. This provider is used to retrieve the
+        sequence count.
+    :param ccsds_apid: APID to use for the CCSDS space packet header wrapped around each PDU.
+        This is important so that the OBSW can distinguish between regular PUS packets and
+        CFDP packets."""
+
     def __init__(
         self,
         cfg: LocalEntityCfg,
@@ -136,21 +185,6 @@ class CfdpInCcsdsHandler:
         cfdp_seq_cnt_provider: ProvidesSeqCount,
         ccsds_seq_cnt_provider: ProvidesSeqCount,
     ):
-        """Wrapper helper type used to wrap PDU packets into CCSDS packets and to extract PDU
-        packets from CCSDS packets.
-
-        :param cfg: Local CFDP entity configuration.
-        :param user: User wrapper. This contains the indication callback implementations and the
-            virtual filestore implementation.
-        :param cfdp_seq_cnt_provider: Every CFDP file transfer has a transaction sequence number.
-            This provider is used to retrieve that sequence number.
-        :param ccsds_seq_cnt_provider: Each CFDP PDU is wrapped into a CCSDS space packet, and each
-            space packet has a dedicated sequence count. This provider is used to retrieve the
-            sequence count.
-        :param ccsds_apid: APID to use for the CCSDS space packet header wrapped around each PDU.
-            This is important so that the OBSW can distinguish between regular PUS packets and
-            CFDP packets.
-        """
         self.cfdp_handler = CfdpHandler(cfg, user, cfdp_seq_cnt_provider, remote_cfgs)
         self.ccsds_seq_cnt_provider = ccsds_seq_cnt_provider
         self.ccsds_apid = ccsds_apid
