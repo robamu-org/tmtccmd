@@ -1,7 +1,7 @@
 <p align="center"> <img src="misc/logo.png" width="40%"> </p>
 
 TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
-[![package](https://github.com/robamu-org/tmtccmd/actions/workflows/package.yml/badge.svg)](https://github.com/robamu-org/tmtccmd/actions/workflows/package.yml)
+[![ci](https://github.com/robamu-org/tmtccmd/actions/workflows/ci.yml/badge.svg)](https://github.com/robamu-org/tmtccmd/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/robamu-org/tmtccmd/branch/main/graph/badge.svg?token=BVOE3A4WE4)](https://codecov.io/gh/robamu-org/tmtccmd)
 [![PyPI version](https://badge.fury.io/py/tmtccmd.svg)](https://badge.fury.io/py/tmtccmd)
 ====
