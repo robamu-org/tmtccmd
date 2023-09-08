@@ -12,6 +12,14 @@ Module contents
 Submodules
 ----------
 
+tmtccmd.config.defs module
+--------------------------
+
+.. automodule:: tmtccmd.config.defs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tmtccmd.config.args module
 --------------------------
 
