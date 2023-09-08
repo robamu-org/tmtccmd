@@ -192,9 +192,17 @@ class CfdpInCcsdsHandler:
     def put_request_pending(self):
         return self.cfdp_handler.put_request_pending()
 
-    def fsm(self):
+    def state_machine(self):
         self.source_handler.state_machine()
         self.dest_handler.state_machine()
+
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc1",
+        current_version=get_version(),
+        details="Use state_machine instead",
+    )
+    def fsm(self):
+        self.state_machine()
 
     @property
     def source_handler(self):

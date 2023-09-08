@@ -392,7 +392,7 @@ class DestHandler:
                 )
 
     @deprecation.deprecated(
-        deprecated_in="6.0.0rc0",
+        deprecated_in="6.0.0rc1",
         current_version=get_version(),
         details="Use insert_packet instead",
     )
