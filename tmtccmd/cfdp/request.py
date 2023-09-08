@@ -29,6 +29,7 @@ class PutRequest:
     :py:func:`tmtccmd.config.cfdp.cfdp_req_to_put_req_regular` and
     :py:func:`tmtccmd.config.cfdp.cfdp_req_to_put_req_proxy_get_req` API."""
 
+    destination_id: UnsignedByteField
     # All the following fields are optional because a put request can also be a metadata-only
     # request
     source_file: Optional[Path]

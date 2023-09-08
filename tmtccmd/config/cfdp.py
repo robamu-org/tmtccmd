@@ -2,17 +2,10 @@ from pathlib import Path
 from typing import Optional
 
 from spacepackets.cfdp import CfdpLv
-from spacepackets.cfdp.defs import Direction
 from spacepackets.cfdp.tlv import ProxyPutRequestParams, ProxyPutRequest
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.config.defs import CfdpParams
-
-
-class CfdpCfg:
-    direction = Direction.TOWARDS_SENDER
-    source_file_name = ""
-    dest_file_name = ""
 
 
 def cfdp_req_to_put_req_regular(

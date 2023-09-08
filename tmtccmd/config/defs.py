@@ -19,6 +19,7 @@ class DefaultProcedureParams:
 class CfdpParams:
     """Simplified dataclass to model the most important CFDP parameters. This can for example
     be used to internalize CFDP CLI or GUI options."""
+
     source_file: str = ""
     dest_file: str = ""
     closure_requested: bool = False
