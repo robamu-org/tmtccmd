@@ -95,7 +95,7 @@ class CfdpHandler:
         procedure.
         """
         if packet.pdu_type == PduType.FILE_DATA:
-            self.dest_handler.pass_packet(packet)
+            self.dest_handler.insert_packet(packet)
         else:
             if packet.directive_type in [
                 DirectiveType.METADATA_PDU,
@@ -104,7 +104,7 @@ class CfdpHandler:
             ]:
                 # Section b) of 4.5.3: These PDUs should always be targeted towards the file
                 # receiver a.k.a. the destination handler
-                self.dest_handler.pass_packet(packet)
+                self.dest_handler.insert_packet(packet)
             elif packet.directive_type in [
                 DirectiveType.FINISHED_PDU,
                 DirectiveType.NAK_PDU,
@@ -112,7 +112,7 @@ class CfdpHandler:
             ]:
                 # Section c) of 4.5.3: These PDUs should always be targeted towards the file sender
                 # a.k.a. the source handler
-                self.source_handler.pass_packet(packet)
+                self.source_handler.insert_packet(packet)
             elif packet.directive_type == DirectiveType.ACK_PDU:
                 # Section a): Recipient depends on the type of PDU that is being acknowledged.
                 # We can simply extract the PDU type from the raw stream. If it is an EOF PDU,
@@ -121,9 +121,9 @@ class CfdpHandler:
                 pdu_holder = PduHolder(packet)
                 ack_pdu = pdu_holder.to_ack_pdu()
                 if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
-                    self.source_handler.pass_packet(packet)
+                    self.source_handler.insert_packet(packet)
                 elif ack_pdu.directive_code_of_acked_pdu == DirectiveType.FINISHED_PDU:
-                    self.dest_handler.pass_packet(packet)
+                    self.dest_handler.insert_packet(packet)
 
 
 class CfdpInCcsdsHandler:
