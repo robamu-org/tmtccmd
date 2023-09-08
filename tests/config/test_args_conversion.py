@@ -93,8 +93,9 @@ class TestArgs(TestCase):
         self.pargs.target = "hello-dest.txt"
         self.pargs.no_closure = False
         self.pargs.proxy = True
-        self.pargs.nak = True
+        self.pargs.type = "nak"
         cfdp_params = CfdpParams()
+        cfdp_params.transmission_mode = TransmissionMode.ACKNOWLEDGED
         self.assertEqual(cfdp_params.closure_requested, False)
         self.assertEqual(cfdp_params.proxy_op, False)
         cfdp_args_to_cfdp_params(self.pargs, cfdp_params)
