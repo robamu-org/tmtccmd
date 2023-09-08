@@ -56,8 +56,7 @@ class TestPusVerifLog(TestCase):
             wrapper.log_to_console(srv_1_tm, res)
             self.assertTrue(
                 f"{'Acceptance success of TC'.ljust(25)} | "
-                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}"
-                in cm.output[0]
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
         srv_1_tm = create_start_success_tm(tc, time_provider=CdsShortTimestamp.empty())
@@ -66,8 +65,7 @@ class TestPusVerifLog(TestCase):
             wrapper.log_to_console(srv_1_tm, res)
             self.assertTrue(
                 f"{'Start success of TC'.ljust(25)} | "
-                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}"
-                in cm.output[0]
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
         srv_1_tm = create_step_success_tm(
@@ -78,8 +76,7 @@ class TestPusVerifLog(TestCase):
             wrapper.log_to_console(srv_1_tm, res)
             self.assertTrue(
                 f"{'Step success of TC'.ljust(25)} | "
-                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}"
-                in cm.output[0]
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
         srv_1_tm = create_completion_success_tm(
@@ -90,8 +87,7 @@ class TestPusVerifLog(TestCase):
             wrapper.log_to_console(srv_1_tm, res)
             self.assertTrue(
                 f"{'Completion success of TC'.ljust(25)} | "
-                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}"
-                in cm.output[0]
+                f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
 
