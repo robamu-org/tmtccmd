@@ -26,7 +26,7 @@ def cfdp_req_to_put_req_proxy_get_req(
     params: CfdpParams, local_id: UnsignedByteField, remote_id: UnsignedByteField
 ) -> Optional[PutRequest]:
     """This function converts the internalized CFDP parameters to the get request variant of the
-    :py:class:`tmtccmd.config.defs.PutRequest` class. Please note that the local ID refers to
+    :py:class:`tmtccmd.cfdp.request.PutRequest` class. Please note that the local ID refers to
     the receiver of the target of the file copy operation for a get request while the remote ID
     refers to the sender component for the file copy operation."""
     if not params.proxy_op:
