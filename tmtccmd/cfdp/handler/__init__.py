@@ -244,14 +244,30 @@ class CfdpInCcsdsHandler:
     def confirm_source_packet_sent(self):
         self.cfdp_handler.confirm_source_packet_sent()
 
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc1",
+        current_version=get_version(),
+        details="Use insert_space_packet instead",
+    )
     def pass_space_packet(self, space_packet: SpacePacket):
+        self.insert_space_packet(space_packet)
+
+    def insert_space_packet(self, space_packet: SpacePacket):
         # Unwrap the user data and pass it to the handler
         pdu_raw = space_packet.user_data
         pdu_base = PduFactory.from_raw(pdu_raw)
-        self.pass_pdu_packet(pdu_base)
+        self.insert_pdu_packet(pdu_base)
 
+    def insert_pdu_packet(self, pdu: GenericPduPacket):
+        self.cfdp_handler.insert_packet(pdu)
+
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc1",
+        current_version=get_version(),
+        details="Use insert_pdu_packet instead",
+    )
     def pass_pdu_packet(self, pdu_base: GenericPduPacket):
-        self.cfdp_handler.pass_packet(pdu_base)
+        self.insert_pdu_packet(pdu_base)
 
     def __iter__(self):
         return self
