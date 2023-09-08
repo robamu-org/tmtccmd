@@ -410,9 +410,9 @@ def cfdp_args_to_cfdp_params(pargs: argparse.Namespace, cfdp_params: CfdpParams)
     """Convert the argument parser CFDP arguments provided by this library to the internalized
     :py:class:`tmtccmd.config.defs.CfdpParams` dataclass."""
     if hasattr(pargs, "source"):
-        cfdp_params.source = pargs.source
+        cfdp_params.source_file = pargs.source
     if hasattr(pargs, "target"):
-        cfdp_params.target = pargs.target
+        cfdp_params.dest_file = pargs.target
     if hasattr(pargs, "no_closure"):
         cfdp_params.closure_requested = not pargs.no_closure
     if hasattr(pargs, "type"):
@@ -420,7 +420,7 @@ def cfdp_args_to_cfdp_params(pargs: argparse.Namespace, cfdp_params: CfdpParams)
             cfdp_params.transmission_mode = TransmissionMode.UNACKNOWLEDGED
         elif pargs.type in ["1", "ack"]:
             cfdp_params.transmission_mode = TransmissionMode.ACKNOWLEDGED
-    if hasattr(pargs, "proxy_op"):
+    if hasattr(pargs, "proxy"):
         cfdp_params.proxy_op = pargs.proxy
 
 
