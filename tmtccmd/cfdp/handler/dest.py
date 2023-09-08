@@ -147,8 +147,8 @@ class DestHandler:
     handler with a source handler and a destination handler as member objects:
 
      1. :py:meth:`insert_packet` : Can be used to insert packets into the destination
-        handler. Please note that the destination handler can also process metadata, EOF and
-        prompt PDUs in addition to ACK PDUs where the acknowledged PDU is the finished PDU.
+        handler. Please note that the destination handler can also only process Metadata, EOF and
+        Prompt PDUs in addition to ACK PDUs where the acknowledged PDU is the Finished PDU.
      2. :py:meth:`state_machine` : This state machine processes inserted packets while also
         generating the packets which need to be sent back to the initiator of a file copy
         operation.

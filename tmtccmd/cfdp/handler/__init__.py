@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Sequence, Optional, Tuple
 
+import deprecation
+
 from spacepackets import SpacePacket, SpacePacketHeader, PacketType
 from spacepackets.cfdp import GenericPduPacket, PduType, DirectiveType, PduFactory
 from spacepackets.cfdp.pdu import PduHolder
@@ -21,6 +23,7 @@ from .dest import DestHandler
 from .source import SourceHandler, SourceStateWrapper, FsmResult
 from .source import TransactionStep as SourceTransactionStep
 from .dest import TransactionStep as DestTransactionStep
+from ...version import get_version
 
 
 @dataclass
@@ -88,7 +91,15 @@ class CfdpHandler:
     def confirm_source_packet_sent(self):
         self.source_handler.confirm_packet_sent_advance_fsm()
 
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc0",
+        current_version=get_version(),
+        details="Use insert_packet instead",
+    )
     def pass_packet(self, packet: GenericPduPacket):
+        self.insert_packet(packet)
+
+    def insert_packet(self, packet: GenericPduPacket):
         """This function routes the packets based on PDU type and directive type if applicable.
 
         The routing is based on section 4.5 of the CFDP standard whcih specifies the PDU forwarding
