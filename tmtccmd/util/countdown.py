@@ -62,6 +62,7 @@ class Countdown:
 
     def __str__(self):
         return (
-            f"{self.__class__.__class__} with {timedelta(milliseconds=self._timeout_ms)} "
-            f"ms timeout, {self.rem_time()} time remaining"
+            f"{self.__class__.__class__} with"
+            f" {timedelta(milliseconds=self._timeout_ms)} ms timeout,"
+            f" {self.rem_time()} time remaining"
         )

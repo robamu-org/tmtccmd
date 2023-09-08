@@ -91,7 +91,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
                     else:
                         broken_cobs_frame = self.serial.read_until(bytes([0]))
                         self.logger.warning(
-                            f"Discarding possibly broken COBS frame: "
+                            "Discarding possibly broken COBS frame: "
                             f"{broken_cobs_frame.hex(sep=',')}"
                         )
                         last_byte_was_zero = True

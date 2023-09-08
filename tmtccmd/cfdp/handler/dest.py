@@ -282,7 +282,8 @@ class DestHandler:
         # a remote entity configuration exists for each CFDP sender.
         if self._params.remote_cfg is None:
             _LOGGER.warning(
-                f"No remote configuration found for remote ID {metadata_pdu.dest_entity_id}"
+                "No remote configuration found for remote ID"
+                f" {metadata_pdu.dest_entity_id}"
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
@@ -332,13 +333,13 @@ class DestHandler:
                 for other_pdu in self._params.file_directives_dict:
                     _LOGGER.warning(
                         f"Received {other_pdu} PDU without "
-                        f"first receiving metadata PDU first. Discarding it"
+                        "first receiving metadata PDU first. Discarding it"
                     )
                 self._params.file_directives_dict.clear()
             if self._params.file_data_deque:
                 _LOGGER.warning(
-                    f"Received {len(self._params.file_data_deque)} file data PDUs without "
-                    f"first receiving metadata PDU first. Discarding them"
+                    f"Received {len(self._params.file_data_deque)} file data PDUs"
+                    " without first receiving metadata PDU first. Discarding them"
                 )
                 self._params.file_data_deque.clear()
 

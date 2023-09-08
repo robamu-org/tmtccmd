@@ -90,8 +90,8 @@ def hamming_verify_256x(
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != len(data) / 256 * 3:
         _LOGGER.error(
-            "hamming_compute_256: Invalid input, original hamming code does not have the"
-            "correct size!"
+            "hamming_compute_256: Invalid input, original hamming code does not have"
+            " thecorrect size!"
         )
         return HammingReturnCodes.OTHER_ERROR
 
@@ -109,7 +109,8 @@ def hamming_verify_256x(
             # Assign corrected data
             data[current_data_idx : current_data_idx + 256] = current_data
             _LOGGER.info(
-                f"Corrected single bit error at data block starting at {current_data_idx}"
+                "Corrected single bit error at data block starting at"
+                f" {current_data_idx}"
             )
             error_code = HammingReturnCodes.ERROR_SINGLE_BIT
         elif error_code == HammingReturnCodes.ERROR_MULTI_BIT:

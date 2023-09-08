@@ -26,8 +26,10 @@ def add_colorlog_console_logger(logger: logging.Logger, log_level: int = logging
         "[%(name)s:%(lineno)d] %(reset)s%(message)s"
     )
     custom_formatter = CustomTmtccmdFormatter(
-        info_fmt="%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s."
-        "%(msecs)03d %(reset)s%(message)s",
+        info_fmt=(
+            "%(log_color)s%(levelname)-8s %(cyan)s%(asctime)s."
+            "%(msecs)03d %(reset)s%(message)s"
+        ),
         dbg_fmt=dbg_fmt,
         err_fmt=dbg_fmt,
         warn_fmt=dbg_fmt,
@@ -42,7 +44,10 @@ def add_colorlog_console_logger(logger: logging.Logger, log_level: int = logging
 
 def add_error_file_logger(logger: logging.Logger):
     file_format = logging.Formatter(
-        fmt="%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d] %(message)s",
+        fmt=(
+            "%(levelname)-8s: %(asctime)s.%(msecs)03d [%(filename)s:%(lineno)d]"
+            " %(message)s"
+        ),
         datefmt="%Y-%m-%d %H:%M:%S",
     )
     # TODO: Use path relative to script dir, otherwise this craps everything
@@ -87,8 +92,10 @@ def __set_up_coloredlogs_logger(logger: logging.Logger):
             level="INFO",
             logger=logger,
             milliseconds=True,
-            fmt="%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] "
-            "%(levelname)s %(message)s",
+            fmt=(
+                "%(asctime)s.%(msecs)03d %(hostname)s %(name)s[%(process)d] "
+                "%(levelname)s %(message)s"
+            ),
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     except ImportError:

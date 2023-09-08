@@ -146,7 +146,7 @@ def prompt_ip_address(type_str: str) -> EthAddr:
         _LOGGER.info(f"Specified {type_str} port: {port}")
 
         confirm = input("Please confirm selection ([Y]/n): ")
-        if not confirm.lower() in ["y", "yes", 1, ""]:
+        if confirm.lower() not in ["y", "yes", 1, ""]:
             continue
         break
     return addr

@@ -112,7 +112,8 @@ def __try_com_port_load(json_obj) -> (bool, bool, str):
         if not check_port_validity(com_port):
             while True:
                 _LOGGER.info(
-                    "Serial port from configuration file not contained within serial port list"
+                    "Serial port from configuration file not contained within serial"
+                    " port list"
                 )
                 reconfigure = input(
                     "Reconfigure serial port or try to determine from hint? "
@@ -212,7 +213,8 @@ def prompt_com_port() -> str:
         else:
             if not check_port_validity(com_port):
                 print(
-                    "Serial port not in list of available serial ports. Try again? ([Y]/n)"
+                    "Serial port not in list of available serial ports. Try again?"
+                    " ([Y]/n)"
                 )
                 try_again = input()
                 if try_again.lower() in ["y", "yes", ""]:
