@@ -101,7 +101,8 @@ class TcpSpacePacketsComIF(ComInterface):
                 self.connected = True
             except socket.timeout as e:
                 _LOGGER.warning(
-                    f"Could not connect to socket with address {self.target_address}: {e}"
+                    "Could not connect to socket with address"
+                    f" {self.target_address}: {e}"
                 )
             finally:
                 self.__tcp_socket.settimeout(None)

@@ -129,8 +129,8 @@ class CfdpUserBase(ABC):
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
         _LOGGER.warning(
-            f"Abandoned.indication for {transaction_id} | Condition Code: {cond_code} | "
-            f"Progress: {progress} bytes"
+            f"Abandoned.indication for {transaction_id} | Condition Code: {cond_code} |"
+            f" Progress: {progress} bytes"
         )
 
     @abstractmethod

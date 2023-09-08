@@ -55,3 +55,8 @@ test = [
 # Auto-Discovery is problematic for some reason, so use custom-discovery
 [tool.setuptools.packages]
 find = {}
+
+[tool.ruff]
+ignore = ["E501"]
+[tool.ruff.extend-per-file-ignores]
+"__init__.py" = ["F401"]

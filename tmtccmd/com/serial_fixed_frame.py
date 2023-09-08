@@ -18,7 +18,9 @@ SERIAL_FRAME_MAX_LENGTH = 4096
 @deprecation.deprecated(
     deprecated_in="4.0.0a0",
     current_version=get_version(),
-    details="Please use a serial interface using a transport layer like SerialCobsComIF",
+    details=(
+        "Please use a serial interface using a transport layer like SerialCobsComIF"
+    ),
 )
 class SerialFixedFrameComIF(SerialComBase, ComInterface):
     def __init__(self, ser_cfg: SerialCfg):
@@ -114,7 +116,8 @@ def parse_next_packets(
     if next_packet_size > SERIAL_FRAME_MAX_LENGTH:
         logger = logging.getLogger(__name__)
         logger.error(
-            "PUS Polling: Very large packet detected, packet splitting not implemented yet!"
+            "PUS Polling: Very large packet detected, packet splitting not implemented"
+            " yet!"
         )
         logger.error("Detected Size: " + str(next_packet_size))
         end_index = frame_size

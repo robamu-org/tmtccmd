@@ -58,7 +58,7 @@ class FsfwTmTcPrinter:
             self.__handle_additional_printout(info_if=info_if)
         except TypeError:
             _LOGGER.exception(
-                f"Type Error when trying to print TM Packet "
+                "Type Error when trying to print TM Packet "
                 f"[{packet_if.service}, {packet_if.subservice}]"
             )
 
@@ -110,8 +110,9 @@ class FsfwTmTcPrinter:
         if object_id.name == "":
             object_id.name = "Unknown Name"
         generic_info = (
-            f"{print_prefix} from Object ID {object_id.name} ({object_id.as_hex_string}) with "
-            f"Set ID {set_id} and {len(hk_data)} bytes of HK data"
+            f"{print_prefix} from Object ID"
+            f" {object_id.name} ({object_id.as_hex_string}) with Set ID {set_id} and"
+            f" {len(hk_data)} bytes of HK data"
         )
         _LOGGER.info(generic_info)
         if self.file_logger is not None:

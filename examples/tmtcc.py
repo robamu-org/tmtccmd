@@ -149,8 +149,9 @@ class PusTmHandler(SpecificApidHandlerBase):
             res = self.verif_wrapper.add_tm(verif_tm)
             if res is None:
                 _LOGGER.info(
-                    f"Received Verification TM[{tm_packet.service}, {tm_packet.subservice}] "
-                    f"with Request ID {verif_tm.tc_req_id.as_u32():#08x}"
+                    f"Received Verification TM[{tm_packet.service},"
+                    f" {tm_packet.subservice}] with Request ID"
+                    f" {verif_tm.tc_req_id.as_u32():#08x}"
                 )
                 _LOGGER.warning(
                     f"No matching telecommand found for {verif_tm.tc_req_id}"
@@ -172,7 +173,8 @@ class PusTmHandler(SpecificApidHandlerBase):
                 self.dlogger.info("Received Ping Reply TM[17,2]")
             else:
                 self.dlogger.info(
-                    f"Received Test Packet with unknown subservice {tm_packet.subservice}"
+                    "Received Test Packet with unknown subservice"
+                    f" {tm_packet.subservice}"
                 )
         if tm_packet is None:
             _LOGGER.info(

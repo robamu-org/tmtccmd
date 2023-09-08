@@ -168,7 +168,7 @@ def check_and_set_core_service_arg(
 
     if service_arg_invalid:
         logging.getLogger(__name__).warning(
-            f"Passed service argument might be invalid, "
+            "Passed service argument might be invalid, "
             f"setting to {CoreServiceList.SERVICE_17}"
         )
         service_value = CoreServiceList.SERVICE_17

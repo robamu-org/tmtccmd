@@ -383,7 +383,7 @@ class SourceHandler:
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
                 f"Must send current packet {self.pdu_holder.base} before "
-                f"advancing state machine"
+                "advancing state machine"
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self.states.step == TransactionStep.SENDING_METADATA:
@@ -482,9 +482,9 @@ class SourceHandler:
                         # Ignore packet not related to current transfer. Still yield a warning,
                         # because ideally those packets are not passed.
                         _LOGGER.warning(
-                            f"Received Finished PDU with sequence number "
-                            f"{finish_pdu.transaction_seq_num} not related to current transfer "
-                            f"{self._params.transaction_seq_num}"
+                            "Received Finished PDU with sequence number"
+                            f" {finish_pdu.transaction_seq_num} not related to current"
+                            f" transfer {self._params.transaction_seq_num}"
                         )
                         return
                     # TODO: I think there are some more conditions where we can issue a notice
@@ -495,7 +495,7 @@ class SourceHandler:
                         # TODO: Implement error handling
                         _LOGGER.warning(
                             f"Received condition code {finish_pdu.condition_code} in "
-                            f"Finished PDU"
+                            "Finished PDU"
                         )
 
     def _setup_transmission_mode(self):
@@ -635,7 +635,8 @@ class SourceHandler:
         next_seq_num = self.seq_num_provider.get_and_increment()
         if self.seq_num_provider.max_bit_width not in [8, 16, 32]:
             raise ValueError(
-                "Invalid bit width for sequence number provider, must be one of [8, 16, 32]"
+                "Invalid bit width for sequence number provider, must be one of [8,"
+                " 16, 32]"
             )
         self._params.pdu_conf.transaction_seq_num = ByteFieldGenerator.from_int(
             self.seq_num_provider.max_bit_width // 8, next_seq_num

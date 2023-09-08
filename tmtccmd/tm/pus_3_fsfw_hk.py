@@ -92,7 +92,8 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         tm_data = instance.tm_data
         if len(tm_data) < 8:
             raise ValueError(
-                f"Invalid Service 3 packet, is too short. Detected TM data length: {len(tm_data)}"
+                "Invalid Service 3 packet, is too short. Detected TM data length:"
+                f" {len(tm_data)}"
             )
         instance.min_hk_reply_size = minimum_reply_size
         instance.hk_structure_report_header_size = minimum_structure_report_header_size
@@ -146,9 +147,9 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         tm_data = self.tm_data
         if len(tm_data) < self.hk_structure_report_header_size:
             raise ValueError(
-                f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {self.object_id.as_hex_string}, is shorter "
-                f"than {self.hk_structure_report_header_size}"
+                "Service3TM: handle_filling_definition_arrays: Invalid structure"
+                f" report from {self.object_id.as_hex_string}, is shorter than"
+                f" {self.hk_structure_report_header_size}"
             )
         definitions_header = [
             "Object ID",
@@ -164,9 +165,9 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
         num_params = tm_data[14]
         if len(tm_data) < self.hk_structure_report_header_size + num_params * 4:
             raise ValueError(
-                f"Service3TM: handle_filling_definition_arrays: Invalid structure report "
-                f"from {self.object_id.as_hex_string}, is shorter than "
-                f"{self.hk_structure_report_header_size + num_params * 4}"
+                "Service3TM: handle_filling_definition_arrays: Invalid structure"
+                f" report from {self.object_id.as_hex_string}, is shorter than"
+                f" {self.hk_structure_report_header_size + num_params * 4}"
             )
 
         parameters = []

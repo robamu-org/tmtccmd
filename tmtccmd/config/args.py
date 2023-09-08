@@ -31,9 +31,9 @@ def get_default_descript_txt() -> str:
     from tmtccmd.util.conf_util import AnsiColors
 
     return (
-        f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n"
-        f"{AnsiColors.RESET}This application provides generic components to perform remote\n"
-        f"commanding with special support for space applications.\n"
+        f"{AnsiColors.GREEN}TMTC Client Command Line Interface\n{AnsiColors.RESET}This"
+        " application provides generic components to perform remote\ncommanding with"
+        " special support for space applications.\n"
     )
 
 
@@ -223,9 +223,11 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
         "-p",
         "--proxy",
         action="store_true",
-        help="Used to trigger a proxy operation at the remote CFDP entity.\n"
-        "Most commonly used to request a file from the remote entity.\n"
-        "Please note that this inverses the meaning of the destination and file parameter.",
+        help=(
+            "Used to trigger a proxy operation at the remote CFDP entity.\nMost"
+            " commonly used to request a file from the remote entity.\nPlease note that"
+            " this inverses the meaning of the destination and file parameter."
+        ),
     )
     parser_or_subparser.add_argument(
         "-t",
@@ -252,8 +254,10 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
     arg_parser.add_argument(
         "-i",
         "--interactive",
-        help="Enables interactive or multi-queue mode, where the backend will be configured\n"
-        "to handle multiple queues",
+        help=(
+            "Enables interactive or multi-queue mode, where the backend will be"
+            " configured\nto handle multiple queues"
+        ),
         action="store_true",
         default=False,
     )
@@ -273,11 +277,14 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config import CoreModeList, CoreModeConverter
 
-    help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
+    help_text = (
+        "Core Modes. Default:"
+        f" {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
+    )
     one_q = (
         f' - "{CoreModeList.ONE_QUEUE_MODE}" or '
         f'"{CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}": '
-        f"One Queue Command Mode\n"
+        "One Queue Command Mode\n"
     )
     listener_help = (
         f' - "{CoreModeList.LISTENER_MODE}" or '
@@ -286,7 +293,7 @@ def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
     multi_q = (
         f' - "{CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE}" or '
         f'"{CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE)}": '
-        f"Multi Queue and Interactive Command Mode\n"
+        "Multi Queue and Interactive Command Mode\n"
     )
     help_text += one_q + listener_help + multi_q
     arg_parser.add_argument(
@@ -303,10 +310,10 @@ def add_tmtc_listener_arg(arg_parser: argparse.ArgumentParser):
         "-l",
         "--listener",
         help=(
-            "The backend will be configured to go into listener mode after finishing the\n"
-            "first queue if a service argument is specified. If this flag is specified\n"
-            "without the -s flag and none of the queue modes are specified explicitly,\n"
-            "the mode will be set to the listener mode"
+            "The backend will be configured to go into listener mode after finishing"
+            " the\nfirst queue if a service argument is specified. If this flag is"
+            " specified\nwithout the -s flag and none of the queue modes are specified"
+            " explicitly,\nthe mode will be set to the listener mode"
         ),
         action="store_true",
         default=False,
@@ -315,8 +322,8 @@ def add_tmtc_listener_arg(arg_parser: argparse.ArgumentParser):
         "--pp",
         "--prompt-proc",
         help=(
-            "If this is specified in addition to the listener mode flag -l, the commander will\n"
-            "try to determine a service and operation code"
+            "If this is specified in addition to the listener mode flag -l, the"
+            " commander will\ntry to determine a service and operation code"
         ),
         dest="prompt_proc",
         action="store_true",
@@ -571,7 +578,8 @@ class PreArgsParsingWrapper:
                 or len(sys.argv) == 1
             ):
                 print(
-                    "No procedure type specified, inserting 'tmtc' into passed arguments"
+                    "No procedure type specified, inserting 'tmtc' into passed"
+                    " arguments"
                 )
                 patched_args = ["tmtc"]
                 patched_args.extend(sys.argv[1:])
@@ -616,9 +624,14 @@ class PreArgsParsingWrapper:
         subparser = self.args_parser.add_subparsers(dest="proc_type")
         tmtc_parser = subparser.add_parser(
             "tmtc",
-            help="Default TMTC Procedure Mode.\nDefault if no positional argument is specified",
-            description="Default TMTC Procedure Mode using a Service and Operation "
-            "Code Command Tuple to dispatch commands",
+            help=(
+                "Default TMTC Procedure Mode.\nDefault if no positional argument is"
+                " specified"
+            ),
+            description=(
+                "Default TMTC Procedure Mode using a Service and Operation "
+                "Code Command Tuple to dispatch commands"
+            ),
             formatter_class=argparse.RawTextHelpFormatter,
             parents=[self.parent_parser],
         )
@@ -677,7 +690,8 @@ class PostArgsParsingWrapper:
                 return TcProcedureType.CFDP
             else:
                 raise ValueError(
-                    'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
+                    'Procedure type argument destination unknown, should be "tmtc" or'
+                    ' "cfdp"'
                 )
         else:
             return TcProcedureType.DEFAULT
