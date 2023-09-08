@@ -2,9 +2,13 @@ import argparse
 from unittest import TestCase
 
 from tests.hook_obj_mock import create_hook_mock
+
+from spacepackets.cfdp import TransmissionMode
 from tmtccmd import CoreModeList, CoreModeConverter
+from tmtccmd.config import CfdpParams
 from tmtccmd.config.args import (
     args_to_all_params_tmtc,
+    cfdp_args_to_cfdp_params,
     SetupParams,
     DefaultProcedureParams,
 )
@@ -83,6 +87,29 @@ class TestArgs(TestCase):
         self.assertEqual(def_params.service, "17")
         self.assertEqual(def_params.op_code, "ping")
         self.assertEqual(self.params.tc_params.delay, 2.0)
+
+    def test_cfdp_conversion_basic(self):
+        self.pargs.source = "hello.txt"
+        self.pargs.target = "hello-dest.txt"
+        self.pargs.no_closure = False
+        self.pargs.proxy = True
+        self.pargs.type = "nak"
+        cfdp_params = CfdpParams()
+        cfdp_params.transmission_mode = TransmissionMode.ACKNOWLEDGED
+        self.assertEqual(cfdp_params.closure_requested, False)
+        self.assertEqual(cfdp_params.proxy_op, False)
+        cfdp_args_to_cfdp_params(self.pargs, cfdp_params)
+        self.assertEqual(cfdp_params.source_file, "hello.txt")
+        self.assertEqual(cfdp_params.dest_file, "hello-dest.txt")
+        self.assertEqual(cfdp_params.closure_requested, True)
+        self.assertEqual(cfdp_params.transmission_mode, TransmissionMode.UNACKNOWLEDGED)
+        self.assertEqual(cfdp_params.proxy_op, True)
+
+    def test_cfdp_conversion_acked(self):
+        self.pargs.type = "ack"
+        cfdp_params = CfdpParams()
+        cfdp_args_to_cfdp_params(self.pargs, cfdp_params)
+        self.assertEqual(cfdp_params.transmission_mode, TransmissionMode.ACKNOWLEDGED)
 
     def test_auto_listener_mode(self):
         self.auto_listener_cli_set()
