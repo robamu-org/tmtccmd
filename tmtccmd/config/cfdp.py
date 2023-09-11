@@ -15,7 +15,7 @@ def cfdp_req_to_put_req_regular(
         return PutRequest(
             destination_id=dest_id,
             source_file=Path(params.source_file),
-            dest_file=params.dest_file,
+            dest_file=Path(params.dest_file),
             closure_requested=params.closure_requested,
             trans_mode=params.transmission_mode,
         )
@@ -66,7 +66,7 @@ def cfdp_req_to_put_req_proxy_put_req(
 
 def generic_cfdp_params_to_put_request(
     params: CfdpParams,
-    _local_id: UnsignedByteField,
+    local_id: UnsignedByteField,  # noqa
     remote_id: UnsignedByteField,
     dest_id_proxy_put_req: UnsignedByteField,
 ) -> Optional[PutRequest]:
