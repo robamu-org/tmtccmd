@@ -33,7 +33,7 @@ class PutRequest:
     # All the following fields are optional because a put request can also be a metadata-only
     # request
     source_file: Optional[Path]
-    dest_file: Optional[str]
+    dest_file: Optional[Path]
     trans_mode: Optional[TransmissionMode]
     closure_requested: Optional[bool]
     seg_ctrl: Optional[
