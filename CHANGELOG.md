@@ -22,6 +22,7 @@ Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.
   - Small change to allow handling more than 4096 bytes in one polling cycle.
 - Renamed `args_to_params_tmtc` to `args_to_all_params_tmtc` and `args_to_params_cfdp` to
   `args_to_all_params_cfdp`
+- `PutRequest` model now stores both destination and source file path as a Python `Path`.
 
 ## Added
 

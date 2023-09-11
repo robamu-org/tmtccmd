@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import MagicMock
 
 from spacepackets.cfdp import ConditionCode, Direction
@@ -75,7 +76,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         return PutRequest(
             destination_id=dest_id,
             source_file=self.file_path,
-            dest_file="dummy.txt",
+            dest_file=Path("dummy.txt"),
             # Let the transmission mode be auto-determined by the remote MIB
             trans_mode=None,
             closure_requested=None,

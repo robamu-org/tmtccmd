@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+from pathlib import Path
 
 from crcmod.predefined import PredefinedCrc
 
@@ -44,7 +45,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
         self.source_handler.source_id = self.source_id
-        dest_path = "/tmp/hello_two_segments_copy.txt"
+        dest_path = Path("/tmp/hello_two_segments_copy.txt")
         file_size, crc32 = self._transaction_with_file_data_wrapper(
             dest_path, rand_data
         )
@@ -73,7 +74,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
         self.source_handler.source_id = self.source_id
-        dest_path = "/tmp/hello_two_segments_imperfect_copy.txt"
+        dest_path = Path("/tmp/hello_two_segments_imperfect_copy.txt")
         file_size, crc32 = self._transaction_with_file_data_wrapper(
             dest_path, rand_data
         )
@@ -151,7 +152,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         return fsm_res.pdu_holder.to_file_data_pdu()
 
     def _transaction_with_file_data_wrapper(
-        self, dest_path: str, data: bytes
+        self, dest_path: Path, data: bytes
     ) -> (int, bytes):
         put_req = PutRequest(
             destination_id=self.dest_id,
