@@ -553,7 +553,7 @@ class SourceHandler:
             self._params.pdu_conf.crc_flag = self._params.remote_cfg.crc_on_transmission
             self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
             params = MetadataParams(
-                dest_file_name=self._put_req.dest_file,
+                dest_file_name=self._put_req.dest_file.as_posix(),
                 source_file_name=self._put_req.source_file.as_posix(),
                 checksum_type=self._params.crc_helper.checksum_type,
                 closure_requested=self._params.closure_requested,

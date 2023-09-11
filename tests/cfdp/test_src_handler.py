@@ -66,7 +66,7 @@ class TestCfdpSourceHandler(TestCase):
         )
 
     def _common_empty_file_test(self):
-        dest_path = "/tmp/hello_copy.txt"
+        dest_path = Path("/tmp/hello_copy.txt")
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
         put_req = PutRequest(
@@ -97,7 +97,7 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
 
     def _common_small_file_test(self, closure_requested: bool, file_content: str):
-        dest_path = "/tmp/hello_copy.txt"
+        dest_path = Path("/tmp/hello_copy.txt")
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
@@ -167,7 +167,7 @@ class TestCfdpSourceHandler(TestCase):
             )
         self.assertEqual(metadata_pdu.checksum_type, ChecksumType.CRC_32)
         self.assertEqual(metadata_pdu.source_file_name, self.file_path.as_posix())
-        self.assertEqual(metadata_pdu.dest_file_name, put_request.dest_file)
+        self.assertEqual(metadata_pdu.dest_file_name, put_request.dest_file.as_posix())
         self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
         self.source_handler.confirm_packet_sent_advance_fsm()
 

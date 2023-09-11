@@ -41,7 +41,7 @@ def cfdp_req_to_put_req_proxy_put_req(
 ) -> Optional[PutRequest]:
     """Generic function to convert the internalized CFDP parameters to a proxy put request.
 
-    :param params CFDP parameters
+    :param params: CFDP parameters
     :param dest_id_put_request: Recipient of the put request.
     :param dest_id_proxy_put_req: Recipient of the proxy put operation. For a get request, this
         should the the ID of the sender.
