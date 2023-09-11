@@ -27,6 +27,12 @@ Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.
 
 - Added new `cfdp_args_to_cfdp_params` function which only performs the conversion of CFDP
   argparse arguments to the internalized `CfdpParams` type.
+- Explicit functions to convert internalized CFDP parameters to a put request:
+  1. `cfdp_req_to_put_req_get_req`
+  2. `cfdp_req_to_put_req_proxy_put_req`
+  3. `cfdp_req_to_put_req_regular`
+- Generic `generic_cfdp_params_to_put_request` conversion function which converts the
+  internalized CFDP parameters to a put request based on heuristics.
 
 # [v6.0.0rc0] 2023-09-04
 
