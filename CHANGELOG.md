@@ -9,7 +9,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
-Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.
+# [v6.0.0] 2023-09-14
+
+- Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.
+- spacepackets version v18.0.0
 
 ## Fixed
 
