@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Optional, Tuple, cast, Sequence
+from typing import Optional, cast, Sequence
 
 from spacepackets.ccsds import PacketId
 from tmtccmd.config.defs import CoreComInterfaces
@@ -42,7 +42,7 @@ class TcpipCfg(ComCfgBase):
         com_if_key: str,
         json_cfg_path: str,
         send_addr: EthAddr,
-        space_packet_ids: Optiona[Sequence[PacketId]],
+        space_packet_ids: Optional[Sequence[PacketId]],
         recv_addr: Optional[EthAddr] = None,
     ):
         super().__init__(com_if_key, json_cfg_path)
