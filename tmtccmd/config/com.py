@@ -42,7 +42,7 @@ class TcpipCfg(ComCfgBase):
         com_if_key: str,
         json_cfg_path: str,
         send_addr: EthAddr,
-        space_packet_ids: Optional[Sequence[PacketId]] = None,
+        space_packet_ids: Optiona[Sequence[PacketId]],
         recv_addr: Optional[EthAddr] = None,
     ):
         super().__init__(com_if_key, json_cfg_path)
@@ -59,7 +59,7 @@ class SerialCfgWrapper(ComCfgBase):
 
 
 def create_com_interface_cfg_default(
-    com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Tuple[int]]
+    com_if_key: str, json_cfg_path: str, space_packet_ids: Optional[Sequence[PacketId]]
 ) -> Optional[ComCfgBase]:
     if com_if_key == CoreComInterfaces.DUMMY.value:
         return ComCfgBase(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
@@ -71,6 +71,7 @@ def create_com_interface_cfg_default(
             space_packet_ids=space_packet_ids,
         )
     elif com_if_key == CoreComInterfaces.TCP.value:
+        assert space_packet_ids is not None
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
             json_cfg_path=json_cfg_path,
@@ -179,14 +180,12 @@ def default_tcpip_cfg_setup(
         determine_tcp_send_address,
     )
 
-    # TODO: Is this necessary? Where is it used?
-    update_global(CoreGlobalIds.USE_ETHERNET, True)
     if tcpip_type == TcpIpType.UDP:
         send_addr = determine_udp_send_address(json_cfg_path=json_cfg_path)
     elif tcpip_type == TcpIpType.TCP:
         send_addr = determine_tcp_send_address(json_cfg_path=json_cfg_path)
     else:
-        send_addr = ()
+        raise ValueError("Invalid TCP/IP server type")
     cfg = TcpipCfg(
         com_if_key=com_if_key,
         if_type=tcpip_type,
