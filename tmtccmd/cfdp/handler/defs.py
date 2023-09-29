@@ -14,6 +14,11 @@ class NoRemoteEntityCfgFound(Exception):
         return f"No remote entity found for entity ID {self.remote_entity_id}"
 
 
+class FsmNotCalledAfterPacketInsertion(Exception):
+    def __init__(self):
+        super().__init__("Call the state machine before inserting the next packet")
+
+
 class SourceFileDoesNotExist(Exception):
     def __init__(self, file: Path, *args, **kwargs):
         super().__init__(args, kwargs)

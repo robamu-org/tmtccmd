@@ -2,11 +2,12 @@ from __future__ import annotations
 import enum
 import logging
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Optional
 
 import deprecation
 
 from spacepackets.cfdp import (
+    PduType,
     TransmissionMode,
     NULL_CHECKSUM_U32,
     ConditionCode,
@@ -45,6 +46,7 @@ from tmtccmd.cfdp.handler.defs import (
     InvalidSourceId,
     InvalidDestinationId,
     NoRemoteEntityCfgFound,
+    FsmNotCalledAfterPacketInsertion,
 )
 from tmtccmd.cfdp.mib import EntityType
 from tmtccmd.cfdp.request import PutRequest
@@ -95,7 +97,7 @@ class SourceStateWrapper:
     packet_ready: bool = False
 
 
-class TransferFieldWrapper:
+class _TransferFieldWrapper:
     def __init__(self, local_entity_id: UnsignedByteField, vfs: VirtualFilestore):
         self.crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, vfs)
         self.transaction: Optional[TransactionId] = None
@@ -162,6 +164,13 @@ class InvalidPduForSourceHandler(Exception):
         return f"Invalid packet {self.packet} for source handler"
 
 
+class PduIgnored(Exception):
+    def __init__(self, ignored_packet: AbstractFileDirectiveBase):
+        # TODO: More useful error or context?
+        self.ignored_packet = ignored_packet
+        super().__init__(f"ignored packet: {ignored_packet}")
+
+
 class SourceHandler:
     """This is the primary CFDP source handler. It models the CFDP source entity, which is primarily
     responsible for handling put requests to send files to another CFDP destination entity.
@@ -197,9 +206,9 @@ class SourceHandler:
         self.cfg = cfg
         self.user = user
         self.seq_num_provider = seq_num_provider
-        self._params = TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
+        self._params = _TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
+        self._last_inserted_pdu = PduHolder(None)
         self._put_req: Optional[PutRequest] = None
-        self._rec_dict: Dict[DirectiveType, List[AbstractFileDirectiveBase]] = dict()
 
     @property
     def transaction_seq_num(self) -> UnsignedByteField:
@@ -252,7 +261,11 @@ class SourceHandler:
 
         :raises InvalidPduDirection: PDU direction field wrong
         :raises InvalidPduForSourceHandler: Invalid PDU file directive type
+        :raises
         """
+
+        if self._last_inserted_pdu.packet is not None:
+            raise FsmNotCalledAfterPacketInsertion()
         if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
             raise InvalidPduDirection(
                 Direction.TOWARDS_SENDER, packet.pdu_header.direction
@@ -267,25 +280,39 @@ class SourceHandler:
             raise InvalidDestinationId(
                 self._params.remote_cfg.entity_id, packet.dest_entity_id
             )
-        # TODO: What about prompt and keep alive PDU?
         if packet.directive_type in [
             DirectiveType.METADATA_PDU,
             DirectiveType.EOF_PDU,
+            DirectiveType.PROMPT_PDU,
         ]:
             raise InvalidPduForSourceHandler(packet)
-        # A dictionary is used to allow passing multiple received packets and store them until
-        # they are processed by the state machine.
-        if packet.directive_type in self._rec_dict:
-            pdu_directive_list = self._rec_dict.get(packet.directive_type)
-            pdu_directive_list.append(packet)
-        else:
-            self._rec_dict.update({packet.directive_type: [packet]})
+        if (
+            (
+                self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED
+                and (
+                    packet.directive_type == DirectiveType.KEEP_ALIVE_PDU
+                    or packet.directive_type == DirectiveType.NAK_PDU
+                )
+            )
+            or (
+                self.states.step == TransactionStep.WAIT_FOR_ACK
+                and packet.directive_type != DirectiveType.ACK_PDU
+            )
+            or (
+                self.states.step == TransactionStep.WAIT_FOR_FINISH
+                and packet.directive_type != DirectiveType.FINISHED_PDU
+            )
+        ):
+            raise PduIgnored(ignored_packet=packet)
+        self._last_inserted_pdu.packet = packet
 
     def __fsm_crc_procedure(self):
         if self._params.fp.file_size == 0:
             # Empty file, use null checksum
             self._params.fp.crc32 = NULL_CHECKSUM_U32
         else:
+            assert self._put_req is not None
+            assert self._put_req.source_file is not None
             self._params.fp.crc32 = self._params.crc_helper.calc_for_file(
                 file=self._put_req.source_file,
                 file_sz=self._params.fp.file_size,
@@ -400,9 +427,11 @@ class SourceHandler:
 
     def _handle_eof_sent(self):
         if self.cfg.indication_cfg.eof_sent_indication_required:
+            assert self._params.transaction is not None
             self.user.eof_sent_indication(self._params.transaction)
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             if self._params.closure_requested:
+                assert self._params.remote_cfg is not None
                 if self._params.remote_cfg.check_limit is not None:
                     self._params.check_limit = (
                         self._params.remote_cfg.check_limit.provide_check_limit(
@@ -426,22 +455,25 @@ class SourceHandler:
             _LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
-        pdu_list = self._rec_dict.get(DirectiveType.ACK_PDU)
-        if pdu_list is None:
+        if self._last_inserted_pdu.base is None:
             return FsmResult(self.pdu_holder, self.states)
-        for pdu in pdu_list:
-            holder = PduHolder(pdu)
-            ack_pdu = holder.to_ack_pdu()
-            if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
-                if ack_pdu.condition_code_of_acked_pdu != ConditionCode.NO_ERROR:
-                    # TODO: This is required for class 2 transfers. It might make sense
-                    #       to remember the condition code of the sent EOF PDU for a basic
-                    #       equality check here
-                    pass
-                self.states.step = TransactionStep.WAIT_FOR_FINISH
+        if (
+            self._last_inserted_pdu.pdu_type == PduType.FILE_DIRECTIVE
+            and self._last_inserted_pdu.pdu_directive_type != DirectiveType.ACK_PDU
+        ):
+            return FsmResult(self.pdu_holder, self.states)
+        ack_pdu = self._last_inserted_pdu.to_ack_pdu()
+        if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
+            if ack_pdu.condition_code_of_acked_pdu != ConditionCode.NO_ERROR:
+                # TODO: This is required for class 2 transfers. It might make sense
+                #       to remember the condition code of the sent EOF PDU for a basic
+                #       equality check here
+                pass
+            self.states.step = TransactionStep.WAIT_FOR_FINISH
 
     def _notice_of_completion(self):
         if self.cfg.indication_cfg.transaction_finished_indication_required:
+            assert self._params.transaction is not None
             indication_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction,
                 condition_code=ConditionCode.NO_ERROR,
@@ -457,46 +489,42 @@ class SourceHandler:
             _LOGGER.error(
                 "Invalid Finish PDU waiting function call, no closure requested"
             )
+        if not self._params.closure_requested:
+            return
+        if self._last_inserted_pdu.pdu_directive_type != DirectiveType.FINISHED_PDU:
+            return
+        # Check all entries for some robustness against out-of-order reception
+        finish_pdu = self._last_inserted_pdu.to_finished_pdu()
+        self._last_inserted_pdu.packet = None
+        if finish_pdu.transaction_seq_num != self._params.transaction_seq_num:
+            # Ignore packet not related to current transfer. Still yield a warning,
+            # because ideally those packets are not passed.
+            _LOGGER.warning(
+                "Received Finished PDU with sequence number"
+                f" {finish_pdu.transaction_seq_num} not related to current"
+                f" transfer {self._params.transaction_seq_num}"
+            )
+            return
+
+        # TODO: I think there are some more conditions where we can issue a notice
+        #       of completion
+        if finish_pdu.condition_code == ConditionCode.NO_ERROR:
+            self.states.step = TransactionStep.NOTICE_OF_COMPLETION
+        else:
+            # TODO: Implement error handling
+            _LOGGER.warning(
+                f"Received condition code {finish_pdu.condition_code} in "
+                "Finished PDU"
+            )
         # TODO: If transaction closure is requested, a user transaction can only be marked
         #       as finished if TX finished PDU was received. This might take a long time
         #       so it might make sense to think about storing the current state of
         #       the transaction in a source state config file which can be restored
         #       when re-starting the application
-        if self._params.closure_requested:
-            if self._params.check_limit is not None:
-                if self._params.check_limit.timed_out():
-                    self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
-                    _LOGGER.warning(
-                        f"Check limit countdown: {self._params.check_limit}"
-                    )
-            # Check all entries for some robustness against out-of-order reception
-            if DirectiveType.FINISHED_PDU in self._rec_dict:
-                pdu_list = self._rec_dict.get(DirectiveType.FINISHED_PDU)
-                for pdu in pdu_list:
-                    holder = PduHolder(pdu)
-                    finish_pdu = holder.to_finished_pdu()
-                    if (
-                        finish_pdu.transaction_seq_num
-                        != self._params.transaction_seq_num
-                    ):
-                        # Ignore packet not related to current transfer. Still yield a warning,
-                        # because ideally those packets are not passed.
-                        _LOGGER.warning(
-                            "Received Finished PDU with sequence number"
-                            f" {finish_pdu.transaction_seq_num} not related to current"
-                            f" transfer {self._params.transaction_seq_num}"
-                        )
-                        return
-                    # TODO: I think there are some more conditions where we can issue a notice
-                    #       of completion
-                    if finish_pdu.condition_code == ConditionCode.NO_ERROR:
-                        self.states.step = TransactionStep.NOTICE_OF_COMPLETION
-                    else:
-                        # TODO: Implement error handling
-                        _LOGGER.warning(
-                            f"Received condition code {finish_pdu.condition_code} in "
-                            "Finished PDU"
-                        )
+        if self._params.check_limit is not None:
+            if self._params.check_limit.timed_out():
+                self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
+                _LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
 
     def _setup_transmission_mode(self):
         # Transmission mode settings in the put request override settings from the remote MIB
@@ -570,7 +598,7 @@ class SourceHandler:
         if self._put_req.msgs_to_user is not None:
             for msg_to_user in self._put_req.msgs_to_user:
                 options.append(msg_to_user)
-        self.pdu_holder.base = MetadataPdu(
+        self.pdu_holder.packet = MetadataPdu(
             pdu_conf=self._params.pdu_conf, params=params, options=options
         )
 
