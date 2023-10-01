@@ -82,6 +82,7 @@ def create_com_interface_cfg_default(
         CoreComInterfaces.SERIAL_DLE.value,
         CoreComInterfaces.SERIAL_FIXED_FRAME.value,
         CoreComInterfaces.SERIAL_COBS.value,
+        CoreComInterfaces.SERIAL_QEMU.value,
     ]:
         # For a serial communication interface, there are some configuration values like
         # baud rate and serial port which need to be set once but are expected to stay
@@ -147,7 +148,7 @@ def __create_com_if(cfg: ComCfgBase) -> Optional[ComInterface]:
         serial_cfg = cast(SerialCfg, cfg)
         communication_interface = QEMUComIF(
             com_if_id=cfg.com_if_key,
-            serial_timeout=serial_cfg.serial_timeout,
+            serial_timeout=serial_cfg.serial_cfg.serial_timeout,
             ser_com_type=SerialCommunicationType.DLE_ENCODING,
         )
     else:

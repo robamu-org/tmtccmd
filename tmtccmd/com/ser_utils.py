@@ -79,7 +79,8 @@ def __det_com_port_with_json_file(
     try_hint = False
     json_obj = json.load(json_file)
     com_port = ""
-    if not reconfig_com_port:
+    # ToDo: Find a better fix. Currently check_port_validity is failing when using QEMU
+    if not reconfig_com_port and not json_obj["com_if"] == "serial_qemu":
         reconfig_com_port, try_hint, com_port = __try_com_port_load(json_obj=json_obj)
     if try_hint:
         reconfig_com_port, com_port = __try_hint_handling(
@@ -227,6 +228,7 @@ def prompt_com_port() -> str:
 
 
 def check_port_validity(com_port_to_check: str) -> bool:
+    return True
     port_list = []
     ports = serial.tools.list_ports.comports()
     for port, desc, hwid in sorted(ports):

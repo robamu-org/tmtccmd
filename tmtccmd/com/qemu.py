@@ -122,12 +122,10 @@ class QEMUComIF(ComInterface):
             )
 
     def open(self, args: any = None) -> None:
-        self.background_loop_thread.start_listener()
+        self.background_loop_thread.start()
         try:
-            self.usart = asyncio.run_coroutine_threadsafe(
-                Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop
-            ).result()
-            asyncio.run_coroutine_threadsafe(self.usart.open_port(), self.loop).result()
+            self.usart = Usart(QEMU_ADDR_AT91_USART0)
+            asyncio.run_coroutine_threadsafe(self.usart.open(), self.loop).result()
         except NotImplementedError:
             _LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
             sys.exit()
