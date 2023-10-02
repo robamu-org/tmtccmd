@@ -290,7 +290,7 @@ class SourceHandler:
         :raises FsmNotCalledAfterPackerInsertion: :py:meth:`state_machine` was not called after
             packet insertion.
         :raises InvalidPduForSourceHandler: Invalid PDU file directive type
-        :raises PduIgnored: The specified PDU can not be handled in the current state.
+        :raises PduIgnoredAtSource: The specified PDU can not be handled in the current state.
         :raises NoRemoteEntityCfgFound: No remote configuration found for specified destination
             entity.
         :raises InvalidDestinationId: Destination ID was found, but there is a mismatch between
