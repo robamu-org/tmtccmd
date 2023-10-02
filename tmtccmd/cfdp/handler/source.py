@@ -165,10 +165,22 @@ class InvalidPduForSourceHandler(Exception):
         return f"Invalid packet {self.packet} for source handler"
 
 
-class PduIgnored(Exception):
-    def __init__(self, ignored_packet: AbstractFileDirectiveBase):
+class PduIgnoredReason(enum.IntEnum):
+    # The received PDU can only be used for acknowledged mode.
+    ACK_MODE_PACKET_INVALID_MODE = 0
+    # Received a Finished PDU, but source handler is currently not expecting one.
+    NOT_WAITING_FOR_FINISHED_PDU = 1
+    # Received a ACK PDU, but source handler is currently not expecting one.
+    NOT_WAITING_FOR_ACK = 2
+
+
+class PduIgnoredAtSource(Exception):
+    def __init__(
+        self, reason: PduIgnoredReason, ignored_packet: AbstractFileDirectiveBase
+    ):
         self.ignored_packet = ignored_packet
-        super().__init__(f"ignored packet: {ignored_packet}")
+        self.reason = reason
+        super().__init__(f"ignored PDU packet at source handler: {reason!r}")
 
 
 class SourceHandler:
@@ -270,9 +282,19 @@ class SourceHandler:
 
     def insert_packet(self, packet: AbstractFileDirectiveBase):
         """Pass PDU file directives going towards the file sender to the CFDP source handler.
+        Please note that only one packet can be inserted into the source handler at a given time.
+        The packet is then handled by calling the :py:meth:`state_machine` and will be
+        cleared after the packet was successfully handled, allowing insertion of new packets.
 
         :raises InvalidPduDirection: PDU direction field wrong
+        :raises FsmNotCalledAfterPackerInsertion: :py:meth:`state_machine` was not called after
+            packet insertion.
         :raises InvalidPduForSourceHandler: Invalid PDU file directive type
+        :raises PduIgnored: The specified PDU can not be handled in the current state.
+        :raises NoRemoteEntityCfgFound: No remote configuration found for specified destination
+            entity.
+        :raises InvalidDestinationId: Destination ID was found, but there is a mismatch between
+            the packet destination ID and the remote configuration entity ID.
         :raises
         """
 
@@ -298,24 +320,29 @@ class SourceHandler:
             DirectiveType.PROMPT_PDU,
         ]:
             raise InvalidPduForSourceHandler(packet)
-        if (
-            (
-                self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED
-                and (
-                    packet.directive_type == DirectiveType.KEEP_ALIVE_PDU
-                    or packet.directive_type == DirectiveType.NAK_PDU
-                )
-            )
-            or (
-                self.states.step == TransactionStep.WAIT_FOR_ACK
-                and packet.directive_type != DirectiveType.ACK_PDU
-            )
-            or (
-                self.states.step == TransactionStep.WAIT_FOR_FINISH
-                and packet.directive_type != DirectiveType.FINISHED_PDU
-            )
+        if self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED and (
+            packet.directive_type == DirectiveType.KEEP_ALIVE_PDU
+            or packet.directive_type == DirectiveType.NAK_PDU
         ):
-            raise PduIgnored(ignored_packet=packet)
+            raise PduIgnoredAtSource(
+                reason=PduIgnoredReason.ACK_MODE_PACKET_INVALID_MODE,
+                ignored_packet=packet,
+            )
+        if (
+            self.states.step == TransactionStep.WAIT_FOR_ACK
+            and packet.directive_type != DirectiveType.ACK_PDU
+        ):
+            raise PduIgnoredAtSource(
+                reason=PduIgnoredReason.NOT_WAITING_FOR_ACK, ignored_packet=packet
+            )
+        if (
+            self.states.step == TransactionStep.WAIT_FOR_FINISH
+            and packet.directive_type != DirectiveType.FINISHED_PDU
+        ):
+            raise PduIgnoredAtSource(
+                reason=PduIgnoredReason.NOT_WAITING_FOR_FINISHED_PDU,
+                ignored_packet=packet,
+            )
         self._last_inserted_pdu.pdu = packet
 
     def __fsm_crc_procedure(self):
