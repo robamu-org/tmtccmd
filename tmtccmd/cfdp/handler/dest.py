@@ -110,6 +110,7 @@ class _DestFieldWrapper:
     fp: _DestFileParams = dataclasses.field(
         default_factory=lambda: _DestFileParams.empty()
     )
+    # TODO: Delete those, handle one packet at a time.
     file_directives_dict: Dict[
         DirectiveType, List[AbstractFileDirectiveBase]
     ] = dataclasses.field(default_factory=lambda: dict())
