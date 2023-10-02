@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+from typing import Tuple
 from pathlib import Path
 
 from crcmod.predefined import PredefinedCrc
@@ -117,8 +118,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         )
         metadata_pdu = fsm_res.pdu_holder.to_metadata_pdu()
         self.assertIsNotNone(metadata_pdu.options)
-        self.assertEqual(len(metadata_pdu.options), 1)
-        self.assertEqual(metadata_pdu.options[0], generic_tlv)
+        self.assertEqual(len(metadata_pdu.options), 1)  # type: ignore
+        self.assertEqual(metadata_pdu.options[0], generic_tlv)  # type: ignore
         self.assertIsNone(metadata_pdu.source_file_name)
         self.assertIsNone(metadata_pdu.dest_file_name)
         self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
@@ -153,7 +154,7 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
 
     def _transaction_with_file_data_wrapper(
         self, dest_path: Path, data: bytes
-    ) -> (int, bytes):
+    ) -> Tuple[int, bytes]:
         put_req = PutRequest(
             destination_id=self.dest_id,
             source_file=self.file_path,
