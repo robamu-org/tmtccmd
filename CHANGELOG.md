@@ -14,6 +14,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Setting a sequnce of space packet IDs for TCP space packet parsing is now mandatory
   for the TCP communication interface. This avoids confusing errors during run-time.
 - Removed some global usage for the TCP communication interface
+- The CFDP source and destination handlers can now only handle one packet at a time. This makes
+  reasoning about the logic of those handlers, and subsequently extending and adapting them
+  a lot easier. Multiple packets can still be inserted by calling the `insert_packet` and
+  `state_machine` function consecutively.
 
 # [v6.0.0] 2023-09-14
 
