@@ -214,7 +214,7 @@ class DestHandler:
             )
         # TODO: This can happen if a packet is received for which no transaction was started..
         #       A better exception might be worth a thought..
-        if self.remote_cfg_table.get_cfg(packet.dest_entity_id) is None:
+        if self.remote_cfg_table.get_cfg(packet.source_entity_id) is None:
             raise NoRemoteEntityCfgFound(entity_id=packet.dest_entity_id)
         if get_packet_destination(packet) == PacketDestination.SOURCE_HANDLER:
             raise InvalidPduForDestHandler(packet)

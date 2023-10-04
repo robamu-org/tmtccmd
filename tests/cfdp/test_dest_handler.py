@@ -55,16 +55,16 @@ class TestCfdpDestHandler(TestCase):
     def setUp(self) -> None:
         self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
-        self.entity_id = ByteFieldU16(2)
-        self.local_cfg = LocalEntityCfg(
-            self.entity_id, self.indication_cfg, self.fault_handler
-        )
         self.src_entity_id = ByteFieldU16(1)
+        self.dest_entity_id = ByteFieldU16(2)
         self.src_pdu_conf = PduConfig(
             source_entity_id=self.src_entity_id,
-            dest_entity_id=self.entity_id,
+            dest_entity_id=self.dest_entity_id,
             transaction_seq_num=ByteFieldU8(1),
             trans_mode=TransmissionMode.UNACKNOWLEDGED,
+        )
+        self.local_cfg = LocalEntityCfg(
+            self.dest_entity_id, self.indication_cfg, self.fault_handler
         )
         self.transaction_id = TransactionId(self.src_entity_id, ByteFieldU8(1))
         self.closure_requested = False
