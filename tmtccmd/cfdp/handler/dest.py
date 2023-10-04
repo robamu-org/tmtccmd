@@ -208,7 +208,6 @@ class DestHandler:
             raise InvalidPduDirection(
                 Direction.TOWARDS_RECEIVER, packet.pdu_header.direction
             )
-
         if packet.dest_entity_id != self.cfg.local_entity_id:
             raise InvalidDestinationId(
                 self.cfg.local_entity_id, packet.source_entity_id

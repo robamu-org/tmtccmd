@@ -12,7 +12,12 @@ def get_packet_destination(packet: GenericPduPacket) -> PacketDestination:
     """This function routes the packets based on PDU type and directive type if applicable.
 
     The routing is based on section 4.5 of the CFDP standard which specifies the PDU forwarding
-    procedure."""
+    procedure.
+
+    NOTE: The standard also specifies a direction flag, which could be used for that purpose as
+    well. However, I prefer the approach here to explicitely check the PDU types and event the ACK
+    PDU content. I think this is more reliable than relying on that bit.
+    """
     if packet.pdu_type == PduType.FILE_DATA:
         return PacketDestination.DEST_HANDLER
     if packet.directive_type in [  # type: ignore
