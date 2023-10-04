@@ -39,7 +39,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
-from tmtccmd.cfdp.handler import PacketDestination, get_packet_destination
+from tmtccmd.cfdp.handler.common import PacketDestination, get_packet_destination
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
@@ -204,9 +204,9 @@ class DestHandler:
     def insert_packet(self, packet: GenericPduPacket):
         if self._params.last_inserted_packet.pdu is not None:
             raise FsmNotCalledAfterPacketInsertion()
-        if packet.direction != Direction.TOWARDS_SENDER:
+        if packet.direction != Direction.TOWARDS_RECEIVER:
             raise InvalidPduDirection(
-                Direction.TOWARDS_SENDER, packet.pdu_header.direction
+                Direction.TOWARDS_RECEIVER, packet.pdu_header.direction
             )
 
         if packet.dest_entity_id != self.cfg.local_entity_id:

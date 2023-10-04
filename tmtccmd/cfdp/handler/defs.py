@@ -42,13 +42,10 @@ class PacketSendNotConfirmed(Exception):
 
 
 class InvalidPduDirection(Exception):
-    def __init__(self, expected_dir: Direction, found_dir: Direction, *args, **kwargs):
-        super().__init__(args, kwargs)
+    def __init__(self, expected_dir: Direction, found_dir: Direction):
         self.expected_dir = expected_dir
         self.found_dir = found_dir
-
-    def __str__(self):
-        return f"Expected direction {self.expected_dir}, got {self.found_dir}"
+        super().__init__(f"Expected direction {self.expected_dir}, got {self.found_dir}")
 
 
 class InvalidSourceId(Exception):
