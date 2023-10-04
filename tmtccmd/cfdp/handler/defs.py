@@ -59,15 +59,29 @@ class InvalidSourceId(Exception):
         self,
         expected_src_id: UnsignedByteField,
         found_src_id: UnsignedByteField,
-        *args,
-        **kwargs,
     ):
-        super().__init__(args, kwargs)
         self.expected_src_id = expected_src_id
         self.found_src_id = found_src_id
+        super().__init__(
+            f"Expected source {self.expected_src_id}, got {self.found_src_id}"
+        )
 
-    def __str__(self):
-        return f"Expected source {self.expected_src_id}, got {self.found_src_id}"
+
+class InvalidDestId(Exception):
+    """Invalid destination entity ID. This is not necessarily the sender of a packet but actually
+    the entity that is the recipient of a file copy operaiton, or the entity which is receiving a
+    file"""
+
+    def __init__(
+        self,
+        expected_dest_id: UnsignedByteField,
+        found_dest_id: UnsignedByteField,
+    ):
+        self.expected_dest_id = expected_dest_id
+        self.found_dest_id = found_dest_id
+        super().__init__(
+            f"Expected destination {self.expected_dest_id}, got {self.found_dest_id}"
+        )
 
 
 class InvalidDestinationId(Exception):

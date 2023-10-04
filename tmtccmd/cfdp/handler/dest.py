@@ -39,10 +39,13 @@ from tmtccmd.cfdp import (
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
+from tmtccmd.cfdp.handler import PacketDestination, get_packet_destination
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
     FsmNotCalledAfterPacketInsertion,
+    InvalidDestinationId,
+    InvalidPduDirection,
     PacketSendNotConfirmed,
     NoRemoteEntityCfgFound,
 )
@@ -54,6 +57,26 @@ from tmtccmd.cfdp.user import (
 from tmtccmd.version import get_version
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class InvalidPduForDestHandler(Exception):
+    def __init__(self, packet: GenericPduPacket):
+        self.packet = packet
+        super().__init__(f"Invalid packet {self.packet} for source handler")
+
+
+class PduIgnoredReason(enum.IntEnum):
+    # First packet received was not a metadata PDU.
+    FIRST_PACKET_NOT_METADATA_PDU = 0
+    # The received PDU can only be handled in acknowledged mode.
+    ACK_MODE_PACKET_INVALID_MODE = 1
+
+
+class PduIgnoredForDest(Exception):
+    def __init__(self, reason: PduIgnoredReason, ignored_packet: GenericPduPacket):
+        self.ignored_packet = ignored_packet
+        self.reason = reason
+        super().__init__(f"ignored PDU packet at destination handler: {reason!r}")
 
 
 @dataclass
@@ -110,14 +133,6 @@ class _DestFieldWrapper:
         default_factory=lambda: _DestFileParams.empty()
     )
     last_inserted_packet = PduHolder(None)
-
-    # TODO: Delete those, handle one packet at a time.
-    # file_directives_dict: Dict[
-    #    DirectiveType, List[AbstractFileDirectiveBase]
-    #] = dataclasses.field(default_factory=lambda: dict())
-    # file_data_deque: Deque[FileDataPdu] = dataclasses.field(
-    #    default_factory=lambda: deque()
-    # )
 
     def reset(self):
         self.transaction_id = None
@@ -184,24 +199,39 @@ class DestHandler:
         self.states.transaction = TransactionStep.IDLE
 
     def insert_packet(self, packet: GenericPduPacket):
-        # TODO: Sanity checks
         if self._params.last_inserted_packet.pdu is not None:
             raise FsmNotCalledAfterPacketInsertion()
-        if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
+        if packet.direction != Direction.TOWARDS_SENDER:
             raise InvalidPduDirection(
                 Direction.TOWARDS_SENDER, packet.pdu_header.direction
             )
-        if packet.pdu_type == PduType.FILE_DATA:
-            self._params.file_data_deque.append(cast(FileDataPdu, packet))
-        else:
-            if packet.directive_type in self._params.file_directives_dict:  # type: ignore
-                self._params.file_directives_dict.get(packet.directive_type).append(
-                    packet
-                )
-            else:
-                self._params.file_directives_dict.update(
-                    {packet.directive_type: [packet]}
-                )
+
+        if packet.dest_entity_id != self.cfg.local_entity_id:
+            raise InvalidDestinationId(
+                self.cfg.local_entity_id, packet.source_entity_id
+            )
+        # TODO: This can happen if a packet is received for which no transaction was started..
+        #       A better exception might be worth a thought..
+        if self.remote_cfg_table.get_cfg(packet.dest_entity_id) is None:
+            raise NoRemoteEntityCfgFound(entity_id=packet.dest_entity_id)
+        if get_packet_destination(packet) == PacketDestination.SOURCE_HANDLER:
+            raise InvalidPduForDestHandler(packet)
+        if self.states.state == CfdpStates.IDLE and (
+            packet.pdu_type == PduType.FILE_DATA
+            or packet.directive_type != DirectiveType.METADATA_PDU  # type: ignore
+        ):
+            raise PduIgnoredForDest(
+                PduIgnoredReason.FIRST_PACKET_NOT_METADATA_PDU, packet
+            )
+        if packet.pdu_type == PduType.FILE_DIRECTIVE and (
+            packet.directive_type  # type: ignore
+            in [DirectiveType.ACK_PDU, DirectiveType.PROMPT_PDU]
+            and self.states.state == CfdpStates.BUSY_CLASS_1_NACKED
+        ):
+            raise PduIgnoredForDest(
+                PduIgnoredReason.ACK_MODE_PACKET_INVALID_MODE, packet
+            )
+        self._params.last_inserted_packet.pdu = packet
 
     def confirm_packet_sent_advance_fsm(self):
         """Helper method which performs both :py:meth:`confirm_packet_sent` and
@@ -235,7 +265,7 @@ class DestHandler:
             self._params.fp.no_file_data = True
         else:
             self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
-        self._params.fp.size_from_metadata = metadata_pdu.file_size
+        self._params.fp.file_size = metadata_pdu.file_size
         self._params.pdu_conf = metadata_pdu.pdu_conf
         self._params.pdu_conf.direction = Direction.TOWARDS_SENDER
         self._params.transaction_id = TransactionId(
@@ -296,7 +326,7 @@ class DestHandler:
                 if tlv.tlv_type == TlvType.MESSAGE_TO_USER:
                     msgs_to_user_list.append(tlv)
         params = MetadataRecvParams(
-            transaction_id=self._params.transaction_id,
+            transaction_id=self._params.transaction_id,  # type: ignore
             file_size=metadata_pdu.file_size,
             source_id=metadata_pdu.source_entity_id,
             dest_file_name=metadata_pdu.dest_file_name,
@@ -307,42 +337,19 @@ class DestHandler:
         return True
 
     def __idle_fsm(self):
-        clear_all_other_pdus = True
-        for pdu_type, pdu_deque in self._params.file_directives_dict.items():
-            if pdu_type == DirectiveType.METADATA_PDU:
-                clear_metadata_deque = False
-                for pdu_base in pdu_deque:
-                    metadata_pdu = PduHolder(pdu_base).to_metadata_pdu()
-                    self._start_transaction(metadata_pdu)
-                    # CFDP 4.6.1.2.4: Any repeated metadata should be discarded.
-                    if self.states.state != CfdpStates.IDLE:
-                        clear_metadata_deque = True
-                        break
-                if clear_metadata_deque:
-                    pdu_deque.clear()
+        if self._params.last_inserted_packet.pdu is not None:
+            if (
+                self._params.last_inserted_packet.pdu.directive_type  # type: ignore
+                == DirectiveType.METADATA_PDU
+            ):
+                metadata_pdu = self._params.last_inserted_packet.to_metadata_pdu()
+                self._start_transaction(metadata_pdu)
             else:
-                # For unacknowledged transfers, there is no lost metadata detection in place.
-                # For now, simply discard all PDUs which arrive before the Metadata PDU.
-                # TODO: This is tricky for acknowledged mode. This implementation writes to the
-                #       virtual filestore directly. If lost segment detection is in place, all
-                #       PDUs which arrive successfully after a missing metadata PDU would have
-                #       to be counted as lost segments.
-                # clear_all_other_pdus = False
-                pass
-        if self.states.state == CfdpStates.IDLE and clear_all_other_pdus:
-            if self._params.file_directives_dict:
-                for other_pdu in self._params.file_directives_dict:
-                    _LOGGER.warning(
-                        f"Received {other_pdu} PDU without "
-                        "first receiving metadata PDU first. Discarding it"
-                    )
-                self._params.file_directives_dict.clear()
-            if self._params.file_data_deque:
-                _LOGGER.warning(
-                    f"Received {len(self._params.file_data_deque)} file data PDUs"
-                    " without first receiving metadata PDU first. Discarding them"
+                self._params.last_inserted_packet.pdu = None
+                raise ValueError(
+                    f"unexpected configuration error: {self._params.last_inserted_packet.pdu} in "
+                    f"IDLE state machine"
                 )
-                self._params.file_data_deque.clear()
 
     def __busy_naked_fsm(self):
         if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
@@ -354,6 +361,8 @@ class DestHandler:
             self.states.packet_ready = True
 
     def __receiving_fd_pdus_nacknowledged(self):
+        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA_PDU:
+            pass
         # TODO: Sequence count check
         while self._params.file_data_deque:
             next_fd = self._params.file_data_deque.popleft()
@@ -370,7 +379,7 @@ class DestHandler:
         offset = file_data_pdu.offset
         if self.cfg.indication_cfg.file_segment_recvd_indication_required:
             file_segment_indic_params = FileSegmentRecvdParams(
-                transaction_id=self._params.transaction_id,
+                transaction_id=self._params.transaction_id,  # type: ignore
                 length=len(file_data_pdu.file_data),
                 offset=offset,
                 record_cont_state=file_data_pdu.record_cont_state,
