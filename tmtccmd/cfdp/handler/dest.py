@@ -3,10 +3,9 @@ from __future__ import annotations
 import dataclasses
 import enum
 import logging
-from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Deque, cast, Optional
+from typing import cast, Optional
 
 import deprecation
 
@@ -22,7 +21,6 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import (
     DirectiveType,
-    AbstractFileDirectiveBase,
     MetadataPdu,
     FileDataPdu,
     EofPdu,
@@ -44,6 +42,7 @@ from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
+    FsmNotCalledAfterPacketInsertion,
     PacketSendNotConfirmed,
     NoRemoteEntityCfgFound,
 )
@@ -110,13 +109,15 @@ class _DestFieldWrapper:
     fp: _DestFileParams = dataclasses.field(
         default_factory=lambda: _DestFileParams.empty()
     )
+    last_inserted_packet = PduHolder(None)
+
     # TODO: Delete those, handle one packet at a time.
-    file_directives_dict: Dict[
-        DirectiveType, List[AbstractFileDirectiveBase]
-    ] = dataclasses.field(default_factory=lambda: dict())
-    file_data_deque: Deque[FileDataPdu] = dataclasses.field(
-        default_factory=lambda: deque()
-    )
+    # file_directives_dict: Dict[
+    #    DirectiveType, List[AbstractFileDirectiveBase]
+    #] = dataclasses.field(default_factory=lambda: dict())
+    # file_data_deque: Deque[FileDataPdu] = dataclasses.field(
+    #    default_factory=lambda: deque()
+    # )
 
     def reset(self):
         self.transaction_id = None
@@ -126,12 +127,7 @@ class _DestFieldWrapper:
         self.pdu_conf = PduConfig.empty()
         self.fp.reset()
         self.remote_cfg = None
-
-    def clear_file_deque(self):
-        self.file_data_deque.clear()
-
-    def clear_file_directive_dict(self):
-        self.file_directives_dict.clear()
+        self.last_inserted_packet.pdu = None
 
 
 class FsmResult:
@@ -183,18 +179,22 @@ class DestHandler:
     def finish(self):
         self._params.reset()
         # Not fully sure this is the best approach, but I think this is ok for now
-        self._params.clear_file_directive_dict()
-        self._params.clear_file_deque()
         self._params.transaction_id = None
         self.states.state = CfdpStates.IDLE
         self.states.transaction = TransactionStep.IDLE
 
     def insert_packet(self, packet: GenericPduPacket):
         # TODO: Sanity checks
+        if self._params.last_inserted_packet.pdu is not None:
+            raise FsmNotCalledAfterPacketInsertion()
+        if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
+            raise InvalidPduDirection(
+                Direction.TOWARDS_SENDER, packet.pdu_header.direction
+            )
         if packet.pdu_type == PduType.FILE_DATA:
             self._params.file_data_deque.append(cast(FileDataPdu, packet))
         else:
-            if packet.directive_type in self._params.file_directives_dict:
+            if packet.directive_type in self._params.file_directives_dict:  # type: ignore
                 self._params.file_directives_dict.get(packet.directive_type).append(
                     packet
                 )
