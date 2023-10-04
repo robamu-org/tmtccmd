@@ -1,4 +1,3 @@
-import enum
 from dataclasses import dataclass
 from typing import Sequence, Optional, Tuple
 
@@ -25,54 +24,13 @@ from .dest import DestHandler
 from .source import SourceHandler, SourceStateWrapper, FsmResult
 from .source import TransactionStep as SourceTransactionStep
 from .dest import TransactionStep as DestTransactionStep
+from .common import PacketDestination, get_packet_destination
 
 
 @dataclass
 class StateWrapper:
     source_handler_state = SourceStateWrapper()
     dest_handler_state = DestStateWrapper()
-
-
-class PacketDestination(enum.Enum):
-    SOURCE_HANDLER = 0
-    DEST_HANDLER = 1
-
-
-def get_packet_destination(packet: GenericPduPacket) -> PacketDestination:
-    """This function routes the packets based on PDU type and directive type if applicable.
-
-    The routing is based on section 4.5 of the CFDP standard which specifies the PDU forwarding
-    procedure."""
-    if packet.pdu_type == PduType.FILE_DATA:
-        return PacketDestination.DEST_HANDLER
-    if packet.directive_type in [  # type: ignore
-        DirectiveType.METADATA_PDU,
-        DirectiveType.EOF_PDU,
-        DirectiveType.PROMPT_PDU,
-    ]:
-        # Section b) of 4.5.3: These PDUs should always be targeted towards the file
-        # receiver a.k.a. the destination handler
-        return PacketDestination.DEST_HANDLER
-    elif packet.directive_type in [  # type: ignore
-        DirectiveType.FINISHED_PDU,
-        DirectiveType.NAK_PDU,
-        DirectiveType.KEEP_ALIVE_PDU,
-    ]:
-        # Section c) of 4.5.3: These PDUs should always be targeted towards the file sender
-        # a.k.a. the source handler
-        return PacketDestination.SOURCE_HANDLER
-    elif packet.directive_type == DirectiveType.ACK_PDU:  # type: ignore
-        # Section a): Recipient depends on the type of PDU that is being acknowledged.
-        # We can simply extract the PDU type from the raw stream. If it is an EOF PDU,
-        # this packet is passed to the source handler. For a finished PDU, it is
-        # passed to the destination handler
-        pdu_holder = PduHolder(packet)
-        ack_pdu = pdu_holder.to_ack_pdu()
-        if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
-            return PacketDestination.SOURCE_HANDLER
-        elif ack_pdu.directive_code_of_acked_pdu == DirectiveType.FINISHED_PDU:
-            return PacketDestination.DEST_HANDLER
-    raise ValueError(f"unexpected directive type {packet.directive_type}")  # type: ignore
 
 
 class CfdpHandler:
@@ -119,7 +77,7 @@ class CfdpHandler:
     def __iter__(self):
         return self
 
-    def __next__(self) -> (Optional[PduHolder], Optional[PduHolder]):
+    def __next__(self) -> Tuple[Optional[PduHolder], Optional[PduHolder]]:
         """The iterator for this class will returns a tuple of optional PDUs wrapped b a
         :py:class:`PduHolder`.
 
@@ -157,7 +115,7 @@ class CfdpHandler:
         if get_packet_destination(packet) == PacketDestination.DEST_HANDLER:
             self.dest_handler.insert_packet(packet)
         elif get_packet_destination(packet) == PacketDestination.SOURCE_HANDLER:
-            self.source_handler.insert_packet(packet)
+            self.source_handler.insert_packet(packet)  # type: ignore
 
 
 class CfdpInCcsdsHandler:
@@ -252,11 +210,18 @@ class CfdpInCcsdsHandler:
     def pass_space_packet(self, space_packet: SpacePacket):
         self.insert_space_packet(space_packet)
 
-    def insert_space_packet(self, space_packet: SpacePacket):
+    def insert_space_packet(self, space_packet: SpacePacket) -> bool:
+        if space_packet.user_data is None:
+            raise ValueError(
+                "space packet is empty, expected packet containing a CFDP PDU"
+            )
         # Unwrap the user data and pass it to the handler
         pdu_raw = space_packet.user_data
         pdu_base = PduFactory.from_raw(pdu_raw)
-        self.insert_pdu_packet(pdu_base)
+        if pdu_base:
+            self.insert_pdu_packet(pdu_base)
+            return True
+        return False
 
     def insert_pdu_packet(self, pdu: GenericPduPacket):
         self.cfdp_handler.insert_packet(pdu)
