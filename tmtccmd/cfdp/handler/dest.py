@@ -82,6 +82,7 @@ class PduIgnoredForDest(Exception):
 @dataclass
 class _DestFileParams(FileParamsBase):
     file_name: Path
+    file_size_eof: Optional[int]
 
     @classmethod
     def empty(cls) -> _DestFileParams:
@@ -91,12 +92,14 @@ class _DestFileParams(FileParamsBase):
             crc32=bytes(),
             file_size=0,
             file_name=Path(),
+            file_size_eof=None,
             no_file_data=False,
         )
 
     def reset(self):
         super().reset()
         self.file_name = Path()
+        self.file_size_eof = None
 
 
 class TransactionStep(enum.Enum):
@@ -337,19 +340,20 @@ class DestHandler:
         return True
 
     def __idle_fsm(self):
-        if self._params.last_inserted_packet.pdu is not None:
-            if (
-                self._params.last_inserted_packet.pdu.directive_type  # type: ignore
-                == DirectiveType.METADATA_PDU
-            ):
-                metadata_pdu = self._params.last_inserted_packet.to_metadata_pdu()
-                self._start_transaction(metadata_pdu)
-            else:
-                self._params.last_inserted_packet.pdu = None
-                raise ValueError(
-                    f"unexpected configuration error: {self._params.last_inserted_packet.pdu} in "
-                    f"IDLE state machine"
-                )
+        if self._params.last_inserted_packet.pdu is None:
+            return
+        if (
+            self._params.last_inserted_packet.pdu.directive_type  # type: ignore
+            == DirectiveType.METADATA_PDU
+        ):
+            metadata_pdu = self._params.last_inserted_packet.to_metadata_pdu()
+            self._start_transaction(metadata_pdu)
+        else:
+            self._params.last_inserted_packet.pdu = None
+            raise ValueError(
+                f"unexpected configuration error: {self._params.last_inserted_packet.pdu} in "
+                f"IDLE state machine"
+            )
 
     def __busy_naked_fsm(self):
         if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
@@ -361,18 +365,19 @@ class DestHandler:
             self.states.packet_ready = True
 
     def __receiving_fd_pdus_nacknowledged(self):
-        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA_PDU:
-            pass
-        # TODO: Sequence count check
-        while self._params.file_data_deque:
-            next_fd = self._params.file_data_deque.popleft()
-            self.__handle_one_fd_pdu(next_fd)
-        # TODO: Support for check timer missing
-        eof_pdus = self._params.file_directives_dict.get(DirectiveType.EOF_PDU)
-        if eof_pdus is not None:
-            for pdu in eof_pdus:
-                eof_pdu = PduHolder(pdu).to_eof_pdu()
-                self._handle_eof_pdu(eof_pdu)
+        if self._params.last_inserted_packet.pdu is None:
+            return
+        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
+            self.__handle_one_fd_pdu(
+                self._params.last_inserted_packet.to_file_data_pdu()
+            )
+        elif (
+            self._params.last_inserted_packet.pdu.directive_type  # type: ignore
+            == DirectiveType.EOF_PDU
+        ):
+            self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
+        else:
+            self._params.last_inserted_packet.pdu = None
 
     def __handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
@@ -389,6 +394,15 @@ class DestHandler:
         try:
             self.user.vfs.write_data(self._params.fp.file_name, data, offset)
             self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+
+            if self._params.fp.file_size_eof is not None and (
+                offset + len(file_data_pdu.file_data) > self._params.fp.file_size_eof
+            ):
+                # CFDP 4.6.1.2.7 c): If the sum of the FD PDU offset and segment size exceeds
+                # the file size indicated in the first previously received EOF (No Error) PDU, if
+                # any, then then a File Size Errorfaul shall be declared.
+                # TODO: Declare File Size error instead of exception.
+                raise ValueError("CFDP File Size Error")
             # Ensure that the progress value is always incremented
             if offset + len(file_data_pdu.file_data) > self._params.fp.progress:
                 self._params.fp.progress = offset + len(file_data_pdu.file_data)
@@ -427,19 +441,23 @@ class DestHandler:
             self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
 
     def _handle_eof_pdu(self, eof_pdu: EofPdu):
-        # TODO: Error handling
+        # TODO: Error handling, cancel request handling.
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             self._params.fp.crc32 = eof_pdu.file_checksum
-            file_size_from_eof = eof_pdu.file_size
+            self._params.fp.file_size_eof = eof_pdu.file_size
             # CFDP 4.6.1.2.9: Declare file size error if progress exceeds file size
-            if self._params.fp.progress > file_size_from_eof:
+            if self._params.fp.progress > self._params.fp.file_size_eof:
                 # TODO: File Size error
-                pass
-            self._params.fp.file_size = file_size_from_eof
-            self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
+                raise ValueError("CFDP File Size Error")
+            if self._params.fp.file_size_eof != self._params.fp.file_size:
+                # Can or should this ever happen for a No Error EOF? Treat this like a non-fatal
+                # error for now..
+                _LOGGER.warn(
+                    "missmatch of EOF file size and Metadata File Size for success EOF"
+                )
             if self.cfg.indication_cfg.eof_recv_indication_required:
-                self.user.eof_recv_indication(self._params.transaction_id)
-            if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
+                self.user.eof_recv_indication(self._params.transaction_id)  # type: ignore
+            if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:  # type: ignore
                 if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
                     self.states.transaction = TransactionStep.TRANSFER_COMPLETION
                 elif self.states.state == CfdpStates.BUSY_CLASS_2_ACKED:
@@ -447,9 +465,7 @@ class DestHandler:
 
     def _checksum_verify(self):
         crc32 = self._crc_helper.calc_for_file(
-            self._params.fp.file_name,
-            self._params.fp.file_size,
-            self._params.fp.segment_len,
+            self._params.fp.file_name, self._params.fp.file_size
         )
         if crc32 != self._params.fp.crc32:
             # TODO: CFDP Checksum error handling
@@ -461,7 +477,7 @@ class DestHandler:
     def _notice_of_completion(self):
         if self.cfg.indication_cfg.transaction_finished_indication_required:
             finished_indic_params = TransactionFinishedParams(
-                transaction_id=self._params.transaction_id,
+                transaction_id=self._params.transaction_id,  # type: ignore
                 condition_code=self._params.condition_code,
                 delivery_code=self._params.delivery_code,
                 file_status=self._params.file_status,
