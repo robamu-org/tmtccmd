@@ -164,6 +164,8 @@ class DestHandler:
      1. :py:meth:`insert_packet` : Can be used to insert packets into the destination
         handler. Please note that the destination handler can also only process Metadata, EOF and
         Prompt PDUs in addition to ACK PDUs where the acknowledged PDU is the Finished PDU.
+        Right now, the handler processes one packet at a time, and each packer insertion needs
+        to be followed by a :py:meth:`state_machine` call.
      2. :py:meth:`state_machine` : This state machine processes inserted packets while also
         generating the packets which need to be sent back to the initiator of a file copy
         operation.
@@ -187,6 +189,8 @@ class DestHandler:
             ChecksumType.NULL_CHECKSUM, user.vfs
         )
 
+    """This is the primary call to run the state machine after packet insertion and/or after
+    having sent any packets which need to be sent to the sender of a file transaction."""
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
             self.__idle_fsm()
@@ -202,6 +206,22 @@ class DestHandler:
         self.states.transaction = TransactionStep.IDLE
 
     def insert_packet(self, packet: GenericPduPacket):
+        """Insert a packet into the state machine. The packet will be processed with the
+        next :py:meth:`state_machine` call, which might lead to state machine transitions
+        and/or new packets generated, which need to be sent to the file sender for the
+        corresponding file transaction.
+
+        :raise NoRemoteEntityCfgFound: No remote configuration found for source entity ID
+            extracted from the PDU packet.
+        :raise FsmNotCalledAfterPacketInsertion: :py:meth:`state_machine` needs to be called
+            to clear a previously inserted packet.
+        :raise InvalidPduDirection: PDU direction bit is invalid.
+        :raise InvalidDestinationId: The PDU destination entity ID is not equal to the configured
+            local ID.
+        :raise InvalidPduForDestHandler: The PDU type can not be handled by the destination handler
+        :raise PduIgnoredForDest: The PDU was ignored because it can not be handled for the current
+            transmission mode or internal state.
+        """
         if self._params.last_inserted_packet.pdu is not None:
             raise FsmNotCalledAfterPacketInsertion()
         if packet.direction != Direction.TOWARDS_RECEIVER:
