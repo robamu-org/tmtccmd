@@ -63,7 +63,7 @@ for the following conditions:
 Example application
 --------------------
 
-You can find an example application inside the `example directory <https://github.com/robamu-org/tmtccmd/tree/rework-cfdp-api/examples/cfdp>`_
+You can find an example application inside the `example directory <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp>`_
 which shows an end-to-end file transfer on a host computer. This should give you a general idea of
 how to source and destination handler work.
 
