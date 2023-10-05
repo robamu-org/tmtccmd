@@ -11,7 +11,6 @@ from tmtccmd.com.serial_base import (
 )
 
 from tmtccmd.com.serial_dle import SerialDleComIF
-from tmtccmd.com.serial_fixed_frame import SerialFixedFrameComIF
 from tmtccmd.com.serial_cobs import SerialCobsComIF
 
 from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
@@ -77,7 +76,6 @@ def create_com_interface_cfg_default(
         )
     elif com_if_key in [
         CoreComInterfaces.SERIAL_DLE.value,
-        CoreComInterfaces.SERIAL_FIXED_FRAME.value,
         CoreComInterfaces.SERIAL_COBS.value,
         CoreComInterfaces.SERIAL_QEMU.value,
     ]:
@@ -131,7 +129,6 @@ def __create_com_if(cfg: ComCfgBase) -> Optional[ComInterface]:
         communication_interface = create_default_tcpip_interface(cast(TcpipCfg, cfg))
     elif cfg.com_if_key in [
         CoreComInterfaces.SERIAL_DLE.value,
-        CoreComInterfaces.SERIAL_FIXED_FRAME.value,
         CoreComInterfaces.SERIAL_COBS.value,
     ]:
         serial_cfg_wrapper = cast(SerialCfgWrapper, cfg)
@@ -231,7 +228,6 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
     return communication_interface
 
 
-# TODO: Pass configuration explicitely instead of using globals..
 def create_default_serial_interface(
     com_if_key: str, json_cfg_path: str, serial_cfg: SerialCfg
 ) -> Optional[ComInterface]:
@@ -247,8 +243,6 @@ def create_default_serial_interface(
         if com_if_key == CoreComInterfaces.SERIAL_DLE.value:
             # Ignore the DLE config for now, it is not that important anyway
             communication_interface = SerialDleComIF(ser_cfg=serial_cfg, dle_cfg=None)
-        elif com_if_key == CoreComInterfaces.SERIAL_FIXED_FRAME.value:
-            communication_interface = SerialFixedFrameComIF(ser_cfg=serial_cfg)
         elif com_if_key == CoreComInterfaces.SERIAL_COBS.value:
             communication_interface = SerialCobsComIF(ser_cfg=serial_cfg)
         else:
