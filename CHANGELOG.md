@@ -20,6 +20,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Removed `serial_fixed_frame` module and `SerialFixedFrameComIF` class which has been
   deprecated since v4.0.0a0.
 - `SerialCommunicationType`: Removed `FIXED_FRAME_BASED` variant.
+- Hardcoded AT91 paths in `QEMUComIF`.
+
+## Fixed
+
+- Various fixes for the `QEMUComIF`.
 
 # [v6.0.0] 2023-09-14
 
