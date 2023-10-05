@@ -28,11 +28,11 @@ import sys
 import time
 from collections import deque
 from threading import Thread
+from typing import Optional
 
 from tmtccmd.com import ComInterface
-from tmtccmd.com.serial_fixed_frame import poll_pus_packets_fixed_frames
 from tmtccmd.tm import TelemetryListT
-from tmtccmd.com.serial_base import SerialCommunicationType
+from tmtccmd.com.serial_base import SerialCfg, SerialCommunicationType
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 _LOGGER = logging.getLogger(__name__)
@@ -41,8 +41,6 @@ DLE_FRAME_LENGTH = 1500
 
 # Paths to Unix Domain Sockets used by the emulator
 QEMU_ADDR_QMP = "/tmp/qemu"
-QEMU_ADDR_AT91_USART0 = "/tmp/qemu_at91_usart0"
-QEMU_ADDR_AT91_USART2 = "/tmp/qemu_at91_usart2"
 
 # Request/response category and command IDs
 IOX_CAT_DATA = 0x01
@@ -68,23 +66,18 @@ class QEMUComIF(ComInterface):
 
     def __init__(
         self,
-        com_if_id: str,
-        serial_timeout: float,
-        ser_com_type: SerialCommunicationType = SerialCommunicationType.FIXED_FRAME_BASED,
+        serial_cfg: SerialCfg,
+        ser_com_type: SerialCommunicationType = SerialCommunicationType.DLE_ENCODING,
     ):
-        self.com_if_id = com_if_id
-        self.serial_timeout = serial_timeout
+        self.cfg = serial_cfg
         self.loop = asyncio.get_event_loop()
         self.number_of_packets = 0
         self.data = []
-        self.background_loop_thread = None
+        self.background_loop_thread: Optional[Thread] = None
         self.usart = None
         self.encoder = None
         self.ser_com_type = ser_com_type
-        if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            # Set to default value.
-            self.serial_frame_size = 256
-        elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+        if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             self.encoder = DleEncoder()
             self.reception_buffer = None
             # Set to default value.
@@ -100,7 +93,7 @@ class QEMUComIF(ComInterface):
 
     @property
     def id(self) -> str:
-        return self.com_if_id
+        return self.cfg.com_if_id
 
     def set_fixed_frame_settings(self, serial_frame_size: int):
         self.serial_frame_size = serial_frame_size
@@ -112,7 +105,7 @@ class QEMUComIF(ComInterface):
         self.dle_max_frame = dle_max_frame
         self.dle_timeout = dle_timeout
 
-    def initialize(self, args: any = None) -> any:
+    def initialize(self, _=None):
         """
         Needs to be called by application code once for DLE mode!
         """
@@ -121,13 +114,12 @@ class QEMUComIF(ComInterface):
                 target=start_background_loop, args=(self.loop,), daemon=True
             )
 
-    def open(self, args: any = None) -> None:
-        self.background_loop_thread.start_listener()
+    def open(self, _=None) -> None:
+        assert self.background_loop_thread is not None
+        self.background_loop_thread.start()
         try:
-            self.usart = asyncio.run_coroutine_threadsafe(
-                Usart.create_async(QEMU_ADDR_AT91_USART0), self.loop
-            ).result()
-            asyncio.run_coroutine_threadsafe(self.usart.open_port(), self.loop).result()
+            self.usart = Usart(self.cfg.serial_port)
+            asyncio.run_coroutine_threadsafe(self.usart.open(), self.loop).result()
         except NotImplementedError:
             _LOGGER.exception("QEMU_SERIAL Initialization error, file does not exist!")
             sys.exit()
@@ -135,10 +127,11 @@ class QEMUComIF(ComInterface):
             self.reception_buffer = deque(maxlen=self.dle_queue_len)
             asyncio.run_coroutine_threadsafe(self.start_dle_polling(), self.loop)
 
-    def close(self, args: any = None) -> None:
+    def close(self, _=None) -> None:
         if self.loop.is_closed():
             return
 
+        assert self.usart is not None
         self.loop.call_soon_threadsafe(self.usart.close)
         self.loop.call_soon_threadsafe(self.loop.stop)
 
@@ -154,6 +147,7 @@ class QEMUComIF(ComInterface):
 
     def send(self, data: bytearray):
         if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+            assert self.encoder is not None
             data_encoded = self.encoder.encode(data)
         else:
             data_encoded = data
@@ -162,19 +156,14 @@ class QEMUComIF(ComInterface):
     def send_data(self, data: bytearray):
         asyncio.run_coroutine_threadsafe(self.send_data_async(data), self.loop).result()
 
-    def receive(self, parameters=0) -> TelemetryListT:
+    def receive(self, _) -> TelemetryListT:
+        assert self.usart is not None
         packet_list = []
-        if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            if self.data_available():
-                data = self.usart.read(self.serial_frame_size, self.serial_timeout)
-                pus_data_list = poll_pus_packets_fixed_frames(data)
-                for pus_packet in pus_data_list:
-                    packet_list.append(pus_packet)
 
-        elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+        if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             while self.reception_buffer:
                 data = self.reception_buffer.pop()
-                dle_retval, decoded_packet, read_len = self.encoder.decode(data)
+                dle_retval, decoded_packet, _ = self.encoder.decode(data)
                 if dle_retval == DleErrorCodes.OK:
                     packet_list.append(decoded_packet)
                 else:
@@ -182,17 +171,15 @@ class QEMUComIF(ComInterface):
 
         else:
             _LOGGER.warning("This communication type was not implemented yet!")
-
         return packet_list
 
-    def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
-        if self.ser_com_type == SerialCommunicationType.FIXED_FRAME_BASED:
-            return self.data_available_fixed_frame(timeout=timeout)
-        elif self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
+    def data_available(self, timeout: float = 0, _=0) -> int:
+        if self.ser_com_type == SerialCommunicationType.DLE_ENCODING:
             return self.data_available_dle(timeout=timeout)
         return 0
 
     def data_available_fixed_frame(self, timeout: float = 0) -> int:
+        assert self.usart is not None
         elapsed_time = 0
         start_time = time.time()
         sleep_time = timeout / 3.0
@@ -227,6 +214,8 @@ class QEMUComIF(ComInterface):
         asyncio.create_task(self.poll_dle_packets())
 
     async def poll_dle_packets(self):
+        assert self.usart is not None
+        assert self.reception_buffer is not None
         while True:
             rcvd = await self.usart.read_async(1, timeout=None)
 
@@ -236,7 +225,7 @@ class QEMUComIF(ComInterface):
             if data[0] == STX_CHAR:
                 data.extend(
                     await self.usart.read_until_async(
-                        bytes([ETX_CHAR]), DLE_FRAME_LENGTH, self.serial_timeout
+                        bytes([ETX_CHAR]), DLE_FRAME_LENGTH, self.cfg.serial_timeout
                     )
                 )
 

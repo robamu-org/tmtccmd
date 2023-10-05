@@ -1,11 +1,11 @@
 import enum
 from dataclasses import dataclass
-from typing import Tuple, Dict, Union, Optional
+from typing import Any, Tuple, Dict, Union, Optional
 
 from spacepackets.cfdp import TransmissionMode
 
 # Com Interface Types
-ComIfValueT = Tuple[str, any]
+ComIfValueT = Tuple[str, Any]
 ComIfDictT = Dict[str, ComIfValueT]
 
 
@@ -37,7 +37,6 @@ class CoreComInterfaces(str, enum.Enum):
     DUMMY = "dummy"
     UDP = "udp"
     TCP = "tcp"
-    SERIAL_FIXED_FRAME = "serial_fixed"
     SERIAL_COBS = "serial_cobs"
     SERIAL_DLE = "serial_dle"
     SERIAL_QEMU = "serial_qemu"
@@ -46,13 +45,10 @@ class CoreComInterfaces(str, enum.Enum):
 
 CORE_COM_IF_DICT = {
     CoreComInterfaces.DUMMY: ("Dummy Interface", None),
-    CoreComInterfaces.SERIAL_DLE: ("Serial Interace with DLE encoding", None),
     CoreComInterfaces.UDP: ("TCP/IP with UDP datagrams", None),
     CoreComInterfaces.TCP: ("TCP/IP with TCP", None),
-    CoreComInterfaces.SERIAL_FIXED_FRAME: (
-        "Serial Interface with fixed size frames",
-        None,
-    ),
+    CoreComInterfaces.SERIAL_COBS: ("Serial Interace with COBS encoding", None),
+    CoreComInterfaces.SERIAL_DLE: ("Serial Interace with DLE encoding", None),
     CoreComInterfaces.SERIAL_QEMU: ("Serial Interface using QEMU", None),
     CoreComInterfaces.UNSPECIFIED: ("Unspecified", None),
 }
@@ -92,6 +88,8 @@ class CoreModeConverter:
             return "multi-q"
         elif mode == CoreModeList.IDLE:
             return "idle"
+        else:
+            return ""
 
 
 class CoreServiceList(str, enum.Enum):
