@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import TextIO
+from typing import TextIO, Tuple
 
 import serial
 import serial.tools.list_ports
@@ -103,7 +103,7 @@ def __det_com_port_with_json_file(
     return com_port
 
 
-def __try_com_port_load(json_obj) -> (bool, bool, str):
+def __try_com_port_load(json_obj) -> Tuple[bool, bool, str]:
     reconfig_com_port = False
     try_hint = False
     com_port = ""
@@ -137,7 +137,7 @@ def __try_com_port_load(json_obj) -> (bool, bool, str):
 
 def __try_hint_handling(
     json_cfg_path: str, reconfig_com_port: bool, json_obj
-) -> (bool, str):
+) -> Tuple[bool, str]:
     reconfig_hint = False
     try:
         hint = json_obj[JsonKeyNames.SERIAL_HINT.value]
@@ -162,7 +162,7 @@ def __try_hint_handling(
     return reconfig_com_port, com_port
 
 
-def __prompt_hint_handling(json_obj) -> (bool, str):
+def __prompt_hint_handling(json_obj) -> Tuple[bool, str]:
     reconfig_hint = False
     hint = ""
     ports = serial.tools.list_ports.comports()
@@ -189,7 +189,7 @@ def __prompt_hint_handling(json_obj) -> (bool, str):
     return reconfig_hint, hint
 
 
-def find_com_port_from_hint(hint: str) -> (bool, str):
+def find_com_port_from_hint(hint: str) -> Tuple[bool, str]:
     """Find a COM port based on a hint string"""
     if hint == "":
         _LOGGER.warning("Invalid hint, is empty..")
@@ -228,7 +228,6 @@ def prompt_com_port() -> str:
 
 
 def check_port_validity(com_port_to_check: str) -> bool:
-    return True
     port_list = []
     ports = serial.tools.list_ports.comports()
     for port, desc, hwid in sorted(ports):
