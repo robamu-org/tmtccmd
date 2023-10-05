@@ -15,6 +15,17 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   for the TCP communication interface. This avoids confusing errors during run-time.
 - Removed some global usage for the TCP communication interface
 
+## Removed
+
+- Removed `serial_fixed_frame` module and `SerialFixedFrameComIF` class which has been
+  deprecated since v4.0.0a0.
+- `SerialCommunicationType`: Removed `FIXED_FRAME_BASED` variant.
+- Hardcoded AT91 paths in `QEMUComIF`.
+
+## Fixed
+
+- Various fixes for the `QEMUComIF`.
+
 # [v6.0.0] 2023-09-14
 
 - Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.

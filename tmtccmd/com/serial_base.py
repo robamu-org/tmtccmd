@@ -28,7 +28,6 @@ class SerialCommunicationType(enum.Enum):
     """
 
     COBS = 0
-    FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2
 
 
