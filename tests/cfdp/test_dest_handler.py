@@ -35,6 +35,7 @@ from tmtccmd.cfdp import (
 from tmtccmd.cfdp.defs import CfdpStates, TransactionId
 from tmtccmd.cfdp.handler.dest import (
     DestHandler,
+    PduIgnoredForDest,
     TransactionStep,
     FsmResult,
 )
@@ -55,16 +56,16 @@ class TestCfdpDestHandler(TestCase):
     def setUp(self) -> None:
         self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
+        self.entity_id = ByteFieldU16(2)
+        self.local_cfg = LocalEntityCfg(
+            self.entity_id, self.indication_cfg, self.fault_handler
+        )
         self.src_entity_id = ByteFieldU16(1)
-        self.dest_entity_id = ByteFieldU16(2)
         self.src_pdu_conf = PduConfig(
             source_entity_id=self.src_entity_id,
-            dest_entity_id=self.dest_entity_id,
+            dest_entity_id=self.entity_id,
             transaction_seq_num=ByteFieldU8(1),
             trans_mode=TransmissionMode.UNACKNOWLEDGED,
-        )
-        self.local_cfg = LocalEntityCfg(
-            self.dest_entity_id, self.indication_cfg, self.fault_handler
         )
         self.transaction_id = TransactionId(self.src_entity_id, ByteFieldU8(1))
         self.closure_requested = False
@@ -93,6 +94,9 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler = DestHandler(
             self.local_cfg, self.cfdp_user, self.remote_cfg_table
         )
+
+    def test_remote_cfg_does_not_exist(self):
+        pass
 
     def test_empty_file_reception(self):
         metadata_params = MetadataParams(
@@ -216,11 +220,12 @@ class TestCfdpDestHandler(TestCase):
 
     def test_file_data_pdu_before_metadata_is_discarded(self):
         file_info = self.random_data_two_file_segments()
-        # Pass file data PDU first. Will be discarded
-        fsm_res = self.pass_file_segment(
-            file_info.rand_data[0 : self.file_segment_len], 0
-        )
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        with self.assertRaises(PduIgnoredForDest):
+            # Pass file data PDU first. Will be discarded
+            fsm_res = self.pass_file_segment(
+                file_info.rand_data[0 : self.file_segment_len], 0
+            )
+            self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumType.CRC_32,
             file_size=file_info.file_size,
@@ -330,6 +335,10 @@ class TestCfdpDestHandler(TestCase):
         )
         self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
         self.dest_handler.insert_packet(file_transfer_init)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
+        )
 
     def tearDown(self) -> None:
         # self.dest_handler.finish()

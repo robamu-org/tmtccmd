@@ -268,7 +268,7 @@ class DestHandler:
         else:
             self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
         self._params.fp.file_size = metadata_pdu.file_size
-        self._params.pdu_conf = metadata_pdu.pdu_conf
+        self._params.pdu_conf = metadata_pdu.pdu_header.pdu_conf
         self._params.pdu_conf.direction = Direction.TOWARDS_SENDER
         self._params.transaction_id = TransactionId(
             source_entity_id=metadata_pdu.source_entity_id,
@@ -375,8 +375,7 @@ class DestHandler:
             == DirectiveType.EOF_PDU
         ):
             self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
-        else:
-            self._params.last_inserted_packet.pdu = None
+        self._params.last_inserted_packet.pdu = None
 
     def __handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data

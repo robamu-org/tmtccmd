@@ -45,7 +45,7 @@ class InvalidPduDirection(Exception):
     def __init__(self, expected_dir: Direction, found_dir: Direction):
         self.expected_dir = expected_dir
         self.found_dir = found_dir
-        super().__init__(f"Expected direction {self.expected_dir}, got {self.found_dir}")
+        super().__init__(f"Expected direction {self.expected_dir!r}, got {self.found_dir!r}")
 
 
 class InvalidSourceId(Exception):
