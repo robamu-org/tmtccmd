@@ -127,7 +127,7 @@ class QEMUComIF(ComInterface):
             self.reception_buffer = deque(maxlen=self.dle_queue_len)
             asyncio.run_coroutine_threadsafe(self.start_dle_polling(), self.loop)
 
-    def close(self, _ = None) -> None:
+    def close(self, _=None) -> None:
         if self.loop.is_closed():
             return
 
