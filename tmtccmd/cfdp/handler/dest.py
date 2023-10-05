@@ -191,12 +191,18 @@ class DestHandler:
 
     """This is the primary call to run the state machine after packet insertion and/or after
     having sent any packets which need to be sent to the sender of a file transaction."""
+
     def state_machine(self) -> FsmResult:
         if self.states.state == CfdpStates.IDLE:
             self.__idle_fsm()
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
             self.__busy_naked_fsm()
         return FsmResult(self.states, self.pdu_holder)
+
+    def closure_requested(self) -> bool:
+        """Returns whether a closure was requested for the current transaction. Please note that
+        this variable is only valid as long as the state is not IDLE"""
+        return self._params.closure_requested
 
     def finish(self):
         self._params.reset()
@@ -282,7 +288,7 @@ class DestHandler:
         elif metadata_pdu.pdu_header.trans_mode == TransmissionMode.ACKNOWLEDGED:
             self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
         self._crc_helper.checksum_type = metadata_pdu.checksum_type
-        self._closure_requested = metadata_pdu.closure_requested
+        self._params.closure_requested = metadata_pdu.closure_requested
         if metadata_pdu.dest_file_name is None:
             self._params.fp.no_file_data = True
         else:

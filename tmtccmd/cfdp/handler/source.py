@@ -445,7 +445,7 @@ class SourceHandler:
         """
         if self.states.packet_ready:
             raise PacketSendNotConfirmed(
-                f"Must send current packet {self.pdu_holder.base} before "
+                f"Must send current packet {self.pdu_holder.pdu} before "
                 "advancing state machine"
             )
         if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
