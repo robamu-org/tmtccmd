@@ -33,7 +33,7 @@ class Crc32Helper:
         self._verify_checksum()
         return PredefinedCrc(self.checksum_type_to_crcmod_str())
 
-    def calc_for_file(self, file: Path, file_sz: int, segment_len: int) -> bytes:
+    def calc_for_file(self, file: Path, file_sz: int, segment_len: int = 4096) -> bytes:
         if self.checksum_type == ChecksumType.NULL_CHECKSUM:
             return NULL_CHECKSUM_U32
         crc_obj = self.generate_crc_calculator()

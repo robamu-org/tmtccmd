@@ -45,7 +45,7 @@ from tmtccmd.tc import (
 )
 from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
-from tmtccmd.util.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.fsfw.tmtc_printer import FsfwTmTcPrinter
 
 _LOGGER = logging.getLogger()
 

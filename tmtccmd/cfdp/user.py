@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUserTlv
 from spacepackets.cfdp.pdu.file_data import RecordContinuationState
@@ -30,7 +30,7 @@ class TransactionFinishedParams:
     file_status: FileDeliveryStatus
     delivery_code: DeliveryCode
     fs_responses: Optional[List[FileStoreResponseTlv]] = None
-    status_report: Optional[any] = None
+    status_report: Optional[Any] = None
 
 
 @dataclass
@@ -93,7 +93,7 @@ class CfdpUserBase(ABC):
         print(params)
 
     @abstractmethod
-    def report_indication(self, transaction_id: TransactionId, status_report: any):
+    def report_indication(self, transaction_id: TransactionId, status_report: Any):
         # TODO: p.28 of the CFDP standard specifies what information the status report parameter
         #       could contain. I think it would be better to not hardcode the type of the status
         #       report here, but something like Union[any, CfdpStatusReport] with CfdpStatusReport
