@@ -28,6 +28,7 @@ Contents
    introduction
    gettingstarted
    communication
+   cfdp 
    api
 
 Indices and tables

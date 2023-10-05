@@ -21,9 +21,9 @@ from .defs import NoRemoteEntityCfgFound, BusyError
 
 from .dest import DestStateWrapper
 from .dest import DestHandler
+from .dest import TransactionStep as DestTransactionStep
 from .source import SourceHandler, SourceStateWrapper, FsmResult
 from .source import TransactionStep as SourceTransactionStep
-from .dest import TransactionStep as DestTransactionStep
 from .common import PacketDestination, get_packet_destination
 
 

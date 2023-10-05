@@ -1,0 +1,4 @@
+Acceptance success of TC  | Request ID 0x18efc001 | acc (S) sta (-) ste (-, 0) fin (-)
+Start success of TC       | Request ID 0x18efc001 | acc (S) sta (S) ste (-, 0) fin (-)
+Received Ping Reply TM[17,2]
+Completion success of TC  | Request ID 0x18efc001 | acc (S) sta (S) ste (-, 0) fin (S) S

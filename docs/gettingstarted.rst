@@ -5,8 +5,8 @@ Getting Started
 Example Project
 ================
 
-The `example application <https://github.com/robamu-org/tmtccmd/tree/main/examples>`_ is the best
-way to learn how this framework use and to get started. It shows how to set up handler
+The `example application <https://github.com/robamu-org/tmtccmd/tree/main/examples/app>`_ is the
+best way to learn how this framework works and to get started. It shows how to set up handler
 classes for TC and TM handling and then ties together all components.
 
 Some explanation of classes and modules inside the example are given here.
