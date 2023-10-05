@@ -40,6 +40,7 @@ from tmtccmd.cfdp.handler.dest import (
     FsmResult,
 )
 from tmtccmd.cfdp.user import TransactionFinishedParams, FileSegmentRecvdParams
+from tmtccmd.cfdp.handler import NoRemoteEntityCfgFound
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -96,7 +97,24 @@ class TestCfdpDestHandler(TestCase):
         )
 
     def test_remote_cfg_does_not_exist(self):
-        pass
+        # Re-create empty table
+        self.remote_cfg_table = RemoteEntityCfgTable()
+        self.dest_handler = DestHandler(
+            self.local_cfg, self.cfdp_user, self.remote_cfg_table
+        )
+        metadata_params = MetadataParams(
+            checksum_type=ChecksumType.NULL_CHECKSUM,
+            closure_requested=False,
+            source_file_name=self.src_file_path.as_posix(),
+            dest_file_name=self.dest_file_path.as_posix(),
+            file_size=0,
+        )
+        file_transfer_init = MetadataPdu(
+            params=metadata_params, pdu_conf=self.src_pdu_conf
+        )
+        self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
+        with self.assertRaises(NoRemoteEntityCfgFound):
+            self.dest_handler.insert_packet(file_transfer_init)
 
     def test_empty_file_reception(self):
         metadata_params = MetadataParams(
