@@ -1,3 +1,5 @@
+.. _cfdp:
+
 ====================================
 CCSDS File Delivery Protocol (CFDP)
 ====================================
@@ -37,7 +39,7 @@ a valid :py:class:`tmtccmd.cfdp.request.PutRequest` to perform a File Copy opera
    The PDU(s) will be returned as a :py:class:`spacepackets.cfdp.pdu.file_data.FileDataPdu`
    instance(s).
 3. Generate an EOF PDU be sent to a remote CFDP entity.
-   The PDU will be returned as a :py:class:`spacepackets.cfdp.pdu.eof.EofPdu` instance.
+   The PDU will be returnedf as a :py:class:`spacepackets.cfdp.pdu.eof.EofPdu` instance.
 
 CFDP destination entity
 ------------------------
