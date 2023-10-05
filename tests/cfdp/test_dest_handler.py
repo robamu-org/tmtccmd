@@ -12,12 +12,16 @@ from unittest.mock import MagicMock
 
 from spacepackets.cfdp import (
     ChecksumType,
+    Direction,
+    DirectiveType,
     PduConfig,
+    PduType,
     TransmissionMode,
     NULL_CHECKSUM_U32,
     ConditionCode,
 )
 from spacepackets.cfdp.pdu import (
+    DeliveryCode,
     MetadataPdu,
     MetadataParams,
     EofPdu,
@@ -116,10 +120,10 @@ class TestCfdpDestHandler(TestCase):
         with self.assertRaises(NoRemoteEntityCfgFound):
             self.dest_handler.insert_packet(file_transfer_init)
 
-    def test_empty_file_reception(self):
+    def _generic_empty_file_transfer_init(self):
         metadata_params = MetadataParams(
             checksum_type=ChecksumType.NULL_CHECKSUM,
-            closure_requested=False,
+            closure_requested=self.closure_requested,
             source_file_name=self.src_file_path.as_posix(),
             dest_file_name=self.dest_file_path.as_posix(),
             file_size=0,
@@ -131,6 +135,9 @@ class TestCfdpDestHandler(TestCase):
         self.dest_handler.insert_packet(file_transfer_init)
         fsm_res = self.dest_handler.state_machine()
         self.assertFalse(fsm_res.states.packet_ready)
+
+    def test_empty_file_reception(self):
+        self._generic_empty_file_transfer_init()
         self.assertEqual(
             self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
         )
@@ -144,6 +151,42 @@ class TestCfdpDestHandler(TestCase):
         self._check_finished_recv_indication_success(fsm_res)
         self.assertTrue(self.dest_file_path.exists())
         self.assertEqual(self.dest_file_path.stat().st_size, 0)
+
+    def _assert_generic_no_error_finished_pdu(self, fsm_res: FsmResult):
+        self.assertTrue(fsm_res.states.packet_ready)
+        self.assertEqual(fsm_res.pdu_holder.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(
+            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.FINISHED_PDU
+        )
+        finished_pdu = fsm_res.pdu_holder.to_finished_pdu()
+        self.assertEqual(finished_pdu.condition_code, ConditionCode.NO_ERROR)
+        self.assertEqual(finished_pdu.delivery_status, FileDeliveryStatus.FILE_RETAINED)
+        self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
+        self.assertEqual(finished_pdu.direction, Direction.TOWARDS_SENDER)
+        self.assertIsNone(finished_pdu.fault_location)
+        self.assertIsNone(finished_pdu.file_store_responses)
+
+    def test_empty_file_reception_with_closure(self):
+        self.closure_requested = True
+        self._generic_empty_file_transfer_init()
+        self.assertEqual(
+            self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
+        )
+        eof_pdu = EofPdu(
+            file_size=0, file_checksum=NULL_CHECKSUM_U32, pdu_conf=self.src_pdu_conf
+        )
+        self.dest_handler.insert_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res,
+            CfdpStates.BUSY_CLASS_1_NACKED,
+            TransactionStep.SENDING_FINISHED_PDU,
+        )
+        self._check_eof_recv_indication(fsm_res)
+        self._check_finished_recv_indication_success(fsm_res)
+        self.assertTrue(self.dest_file_path.exists())
+        self.assertEqual(self.dest_file_path.stat().st_size, 0)
+        self._assert_generic_no_error_finished_pdu(fsm_res)
 
     def test_small_file_reception(self):
         data = "Hello World\n".encode()
@@ -176,6 +219,45 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
         self._check_eof_recv_indication(fsm_res)
         self._check_finished_recv_indication_success(fsm_res)
+        self.assertFalse(fsm_res.states.packet_ready)
+
+    def test_small_file_reception_with_closure(self):
+        self.closure_requested = True
+        data = "Hello World\n".encode()
+        with open(self.src_file_path, "wb") as of:
+            of.write(data)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(data))
+        file_size = self.src_file_path.stat().st_size
+        self._source_simulator_transfer_init_with_metadata(
+            checksum=ChecksumType.CRC_32,
+            file_size=file_size,
+            file_path=self.src_file_path.as_posix(),
+        )
+        with open(self.src_file_path, "rb") as rf:
+            read_data = rf.read()
+        fd_params = FileDataParams(file_data=read_data, offset=0)
+        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
+        self.dest_handler.insert_packet(file_data_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
+        )
+        eof_pdu = EofPdu(
+            file_size=file_size,
+            file_checksum=crc32,
+            pdu_conf=self.src_pdu_conf,
+        )
+        self.dest_handler.insert_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res,
+            CfdpStates.BUSY_CLASS_1_NACKED,
+            TransactionStep.SENDING_FINISHED_PDU,
+        )
+        self._check_eof_recv_indication(fsm_res)
+        self._check_finished_recv_indication_success(fsm_res)
+        self._assert_generic_no_error_finished_pdu(fsm_res)
 
     def test_larger_file_reception(self):
         # This tests generates two file data PDUs, but the second one does not have a
