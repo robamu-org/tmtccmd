@@ -65,7 +65,7 @@ Example application
 
 You can find an example application inside the `example directory <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp>`_
 which shows an end-to-end file transfer on a host computer. This should give you a general idea of
-how to source and destination handler work.
+how the source and destination handler work in practice.
 
 .. _`CCSDS Blue Book 727.0-B-5`: https://public.ccsds.org/Pubs/727x0b5.pdf
 .. _`spacepackets`: https://github.com/us-irs/spacepackets-py
