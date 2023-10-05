@@ -65,14 +65,6 @@ tmtccmd.com.serial\_dle module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.serial\_fixed_frame module
--------------------------------------------
-
-.. automodule:: tmtccmd.com.serial_fixed_frame
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tmtccmd.com.serial\_base module
 --------------------------------------
 
