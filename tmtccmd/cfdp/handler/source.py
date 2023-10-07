@@ -407,11 +407,13 @@ class SourceHandler:
         if self._last_inserted_pdu.pdu_directive_type != DirectiveType.NAK_PDU:
             return False
         nak_pdu = self._last_inserted_pdu.to_nak_pdu()
-        # Special case: Metadata PDU is re-requested
-        if nak_pdu.start_of_scope == 0 and nak_pdu.end_of_scope == 0:
-            # Re-transmit the metadata PDU
-            self._prepare_metadata_pdu()
-            return True
+        for segment_req in nak_pdu.segment_requests:
+            # Special case: Metadata PDU is re-requested
+            if segment_req[0] == 0 and segment_req[1] == 0:
+                # Re-transmit the metadata PDU
+                self._prepare_metadata_pdu()
+                return True
+        return False
 
     def state_machine(self) -> FsmResult:
         """This is the primary state machine which performs the CFDP procedures like CRC calculation
