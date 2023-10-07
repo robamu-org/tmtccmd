@@ -374,6 +374,9 @@ class SourceHandler:
             self.states.packet_ready = True
             return FsmResult(self.pdu_holder, self.states)
         if self.states.step == TransactionStep.SENDING_FILE_DATA:
+            # Handle the re-transmission of missing files first
+            if self.states.state == CfdpStates.BUSY_CLASS_2_ACKED:
+                self.__handle_retransmission()
             if self._prepare_next_file_data_pdu():
                 self.states.packet_ready = True
                 return FsmResult(self.pdu_holder, self.states)
@@ -397,6 +400,18 @@ class SourceHandler:
             self._handle_wait_for_finish()
         if self.states.step == TransactionStep.NOTICE_OF_COMPLETION:
             self._notice_of_completion()
+
+    def __handle_retransmission(self) -> bool:
+        if self._last_inserted_pdu.pdu is None:
+            return False
+        if self._last_inserted_pdu.pdu_directive_type != DirectiveType.NAK_PDU:
+            return False
+        nak_pdu = self._last_inserted_pdu.to_nak_pdu()
+        # Special case: Metadata PDU is re-requested
+        if nak_pdu.start_of_scope == 0 and nak_pdu.end_of_scope == 0:
+            # Re-transmit the metadata PDU
+            self._prepare_metadata_pdu()
+            return True
 
     def state_machine(self) -> FsmResult:
         """This is the primary state machine which performs the CFDP procedures like CRC calculation
