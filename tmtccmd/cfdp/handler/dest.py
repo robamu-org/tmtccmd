@@ -270,9 +270,7 @@ class DestHandler:
 
     def advance_fsm(self):
         if self.states.packet_ready:
-            raise UnretrievedPdusToBeSent(
-                f"Must send current packet {self.pdu_holder.base} first"
-            )
+            raise UnretrievedPdusToBeSent()
         if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
             self.finish()
 
@@ -511,9 +509,7 @@ class DestHandler:
 
     def _prepare_finished_pdu(self):
         if self.states.packet_ready:
-            raise UnretrievedPdusToBeSent(
-                f"Must send current packet {self.pdu_holder.base} first"
-            )
+            raise UnretrievedPdusToBeSent()
         finished_params = FinishedParams(
             condition_code=self._params.condition_code,
             # TODO: Find out how those are used
@@ -525,4 +521,4 @@ class DestHandler:
             # The configuration was cached when the first metadata arrived
             pdu_conf=self._params.pdu_conf,
         )
-        self.pdu_holder.base = finished_pdu
+        self.pdu_holder.pdu = finished_pdu
