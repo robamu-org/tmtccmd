@@ -5,7 +5,7 @@ from spacepackets.cfdp import ConditionCode, Direction
 from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField, ByteFieldU16, ByteFieldEmpty
-from tmtccmd.cfdp.defs import CfdpStates
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.defs import (
     InvalidPduDirection,
     InvalidSourceId,
@@ -26,7 +26,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self._state_checker(fsm_res, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
@@ -36,7 +36,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self._state_checker(fsm_res, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -84,7 +84,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def _pass_simple_finish_pdu_to_source_handler(self):
         self._state_checker(
-            None, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.WAIT_FOR_FINISH
+            None, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.WAITING_FOR_FINISHED
         )
         self.source_handler.insert_packet(self._prepare_finish_pdu())
 

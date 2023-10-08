@@ -21,8 +21,6 @@ from tmtccmd.config import (
 )
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
-from tmtccmd.core.globals_manager import update_global
-from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
 from tmtccmd.tc import (
     DefaultProcedureInfo,

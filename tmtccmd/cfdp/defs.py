@@ -27,7 +27,7 @@ class CfdpIndication(enum.Enum):
     EOF_RECV = 10
 
 
-class CfdpStates(enum.Enum):
+class CfdpState(enum.Enum):
     IDLE = 0
     BUSY_CLASS_1_NACKED = 1
     BUSY_CLASS_2_ACKED = 2

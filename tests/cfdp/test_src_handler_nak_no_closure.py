@@ -6,11 +6,11 @@ from pathlib import Path
 
 from crcmod.predefined import PredefinedCrc
 
-from spacepackets.cfdp import CfdpLv, DirectiveType, ConditionCode
-from spacepackets.cfdp.pdu import FileDeliveryStatus, DeliveryCode
+from spacepackets.cfdp import CfdpLv, DirectiveType, ConditionCode, PduType
+from spacepackets.cfdp.pdu import FileDataPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
-from tmtccmd.cfdp.defs import CfdpStates, TransactionId
+from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequest
@@ -27,8 +27,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         fsm_res = self.source_handler.state_machine()
         self.cfdp_user.transaction_finished_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
-        self.source_handler.confirm_packet_sent_advance_fsm()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpState.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
@@ -58,10 +58,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
             rand_data[self.file_segment_len :],
         )
         self.assertEqual(file_data_pdu.offset, self.file_segment_len)
-        self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
-        self.source_handler.confirm_packet_sent_advance_fsm()
         self._test_transaction_completion()
 
     def test_segmented_file_pdu_generation(self):
@@ -87,10 +85,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
             rand_data[self.file_segment_len :],
         )
         self.assertEqual(file_data_pdu.offset, self.file_segment_len)
-        self.source_handler.confirm_packet_sent_advance_fsm()
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, file_size, crc32)
-        self.source_handler.confirm_packet_sent_advance_fsm()
         self._test_transaction_completion()
 
     def test_proxy_get_request(self):
@@ -112,24 +108,22 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         )
         self.source_handler.put_request(put_req, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
-        self.assertTrue(fsm_res.pdu_holder.is_file_directive)
-        self.assertEqual(
-            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.METADATA_PDU
-        )
-        metadata_pdu = fsm_res.pdu_holder.to_metadata_pdu()
+        next_packet = self.source_handler.get_next_packet()
+        assert next_packet is not None
+        self.assertEqual(next_packet.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_packet.pdu_directive_type, DirectiveType.METADATA_PDU)
+        metadata_pdu = next_packet.to_metadata_pdu()
         self.assertIsNotNone(metadata_pdu.options)
         self.assertEqual(len(metadata_pdu.options), 1)  # type: ignore
         self.assertEqual(metadata_pdu.options[0], generic_tlv)  # type: ignore
         self.assertIsNone(metadata_pdu.source_file_name)
         self.assertIsNone(metadata_pdu.dest_file_name)
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.state, CfdpState.BUSY_CLASS_1_NACKED)
         self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_METADATA)
         expected_id = TransactionId(
             metadata_pdu.source_entity_id, metadata_pdu.transaction_seq_num
         )
         self.cfdp_user.transaction_indication.assert_called_once_with(expected_id)
-
-        self.source_handler.confirm_packet_sent_advance_fsm()
         # Now the state machine should be finished.
         fsm_res = self.source_handler.state_machine()
         finished_params = TransactionFinishedParams(
@@ -141,16 +135,19 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.cfdp_user.transaction_finished_indication.assert_called_once_with(
             finished_params
         )
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.state, CfdpState.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
 
-    def _second_file_segment_handling(self, source_handler: SourceHandler):
-        source_handler.confirm_packet_sent_advance_fsm()
+    def _second_file_segment_handling(
+        self, source_handler: SourceHandler
+    ) -> FileDataPdu:
         fsm_res = source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.state, CfdpState.BUSY_CLASS_1_NACKED)
         self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_FILE_DATA)
-        self.assertFalse(fsm_res.pdu_holder.is_file_directive)
-        return fsm_res.pdu_holder.to_file_data_pdu()
+        next_packet = source_handler.get_next_packet()
+        assert next_packet is not None
+        self.assertFalse(next_packet.is_file_directive)
+        return next_packet.to_file_data_pdu()
 
     def _transaction_with_file_data_wrapper(
         self, dest_path: Path, data: bytes
@@ -177,7 +174,9 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self, source_handler: SourceHandler, all_data: bytes
     ):
         fsm_res = source_handler.state_machine()
-        file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res)
+        next_packet = source_handler.get_next_packet()
+        assert next_packet is not None
+        file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res, next_packet)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
         self.assertEqual(
             file_data_pdu.file_data[0 : self.file_segment_len],
@@ -186,15 +185,19 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.assertEqual(file_data_pdu.offset, 0)
 
     def _test_eof_file_pdu(self, fsm_res: FsmResult, file_size: int, crc32: bytes):
-        self.assertEqual(fsm_res.states.state, CfdpStates.BUSY_CLASS_1_NACKED)
+        self.assertEqual(fsm_res.states.state, CfdpState.BUSY_CLASS_1_NACKED)
         self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_EOF)
-        eof_pdu = fsm_res.pdu_holder.to_eof_pdu()
+        next_packet = self.source_handler.get_next_packet()
+        assert next_packet is not None
+        self.assertEqual(next_packet.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_packet.pdu_directive_type, DirectiveType.EOF_PDU)
+        eof_pdu = next_packet.to_eof_pdu()
         self.assertEqual(eof_pdu.file_size, file_size)
         self.assertEqual(eof_pdu.file_checksum, crc32)
 
     def _test_transaction_completion(self):
         fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpStates.IDLE)
+        self.assertEqual(fsm_res.states.state, CfdpState.IDLE)
         self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
         self.cfdp_user.transaction_finished_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)

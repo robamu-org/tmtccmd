@@ -15,7 +15,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.request import PutRequest
-from tmtccmd.cfdp.defs import CfdpStates
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.version import get_version
 from .defs import NoRemoteEntityCfgFound, BusyError
 
@@ -64,7 +64,7 @@ class CfdpHandler:
 
     def pull_next_source_packet(self) -> Optional[PduHolder]:
         res = self.source_handler.state_machine()
-        if res.states.packet_ready:
+        if res.states.packets_ready:
             return self.source_handler.pdu_holder
         return None
 
@@ -91,7 +91,7 @@ class CfdpHandler:
         return next_source_packet, next_dest_packet
 
     def put_request_pending(self) -> bool:
-        return self.source_handler.states.state != CfdpStates.IDLE
+        return self.source_handler.states.state != CfdpState.IDLE
 
     def confirm_dest_packet_sent(self):
         self.dest_handler.confirm_packet_sent_advance_fsm()
