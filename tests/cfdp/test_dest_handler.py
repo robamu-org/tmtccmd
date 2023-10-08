@@ -164,7 +164,7 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
         self.assertEqual(finished_pdu.direction, Direction.TOWARDS_SENDER)
         self.assertIsNone(finished_pdu.fault_location)
-        self.assertIsNone(finished_pdu.file_store_responses)
+        self.assertEqual(len(finished_pdu.file_store_responses), 0)
 
     def test_empty_file_reception_with_closure(self):
         self.closure_requested = True

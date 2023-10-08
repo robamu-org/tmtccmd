@@ -20,6 +20,8 @@ from spacepackets.cfdp import (
     FaultHandlerCode,
 )
 from spacepackets.cfdp.pdu import (
+    DeliveryCode,
+    FileDeliveryStatus,
     PduHolder,
     EofPdu,
     FileDataPdu,
@@ -606,7 +608,13 @@ class SourceHandler:
     def _notice_of_completion(self):
         if self.cfg.indication_cfg.transaction_finished_indication_required:
             assert self._params.transaction is not None
-            assert self._params.finished_params is not None
+            # This happens for unacknowledged file copy operation with no closure.
+            if self._params.finished_params is None:
+                self._params.finished_params = FinishedParams(
+                    DeliveryCode.DATA_COMPLETE,
+                    FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                    ConditionCode.NO_ERROR,
+                )
             indication_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction,
                 condition_code=self._params.finished_params.condition_code,
