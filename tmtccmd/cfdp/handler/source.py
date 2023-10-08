@@ -68,7 +68,6 @@ _LOGGER = logging.getLogger(__name__)
 class TransactionStep(enum.Enum):
     IDLE = 0
     TRANSACTION_START = 1
-    CRC_PROCEDURE = 2
     # The following three are used for the Copy File Procedure
     SENDING_METADATA = 3
     SENDING_FILE_DATA = 4
@@ -290,6 +289,15 @@ class SourceHandler:
             )
         return True
 
+    def cancel_request(self, transaction_id: TransactionId) -> bool:
+        if (
+            self._params.transaction is not None
+            and transaction_id == self._params.transaction
+        ):
+            self._declare_fault(ConditionCode.CANCEL_REQUEST_RECEIVED)
+            return True
+        return False
+
     @deprecation.deprecated(
         deprecated_in="6.0.0rc1",
         current_version=get_version(),
@@ -370,20 +378,19 @@ class SourceHandler:
             return None
         return self._pdus_to_be_sent.popleft()
 
-    def __crc_procedure(self):
+    def _checksum_calculation(self, size_to_calculate: int) -> bytes:
         if self._params.fp.file_size == 0:
             # Empty file, use null checksum
-            self._params.fp.crc32 = NULL_CHECKSUM_U32
+            crc = NULL_CHECKSUM_U32
         else:
             assert self._put_req is not None
             assert self._put_req.source_file is not None
-            self._params.fp.crc32 = self._params.crc_helper.calc_for_file(
+            crc = self._params.crc_helper.calc_for_file(
                 file=self._put_req.source_file,
-                file_sz=self._params.fp.file_size,
+                file_sz=size_to_calculate,
                 segment_len=self._params.fp.segment_len,
             )
-
-        self.states.step = TransactionStep.SENDING_METADATA
+        return crc
 
     def _fsm_non_idle(self):
         self._fsm_advancement_after_packets_were_sent()
@@ -393,9 +400,7 @@ class SourceHandler:
             self.states.step = TransactionStep.TRANSACTION_START
         if self.states.step == TransactionStep.TRANSACTION_START:
             self._transaction_start()
-            self.states.step = TransactionStep.CRC_PROCEDURE
-        if self.states.step == TransactionStep.CRC_PROCEDURE:
-            self.__crc_procedure()
+            self.states.step = TransactionStep.SENDING_METADATA
         if self.states.step == TransactionStep.SENDING_METADATA:
             self._prepare_metadata_pdu()
             return
@@ -403,9 +408,11 @@ class SourceHandler:
             if self._sending_file_data_fsm():
                 return
         if self.states.step == TransactionStep.SENDING_EOF:
-            self._prepare_eof_pdu()
-            self.states.packets_ready = True
-            return FsmResult(self.states)
+            self._prepare_eof_pdu(
+                ConditionCode.NO_ERROR,
+                self._checksum_calculation(self._params.fp.file_size),
+            )
+            return
         if self.states.step == TransactionStep.WAITING_FOR_EOF_ACK:
             self._handle_wait_for_ack()
         if self.states.step == TransactionStep.WAITING_FOR_FINISHED:
@@ -512,13 +519,11 @@ class SourceHandler:
         if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             if self._params.closure_requested:
                 assert self._params.remote_cfg is not None
-                if self._params.remote_cfg.check_limit is not None:
-                    self._params.check_limit = (
-                        self._params.remote_cfg.check_limit.provide_check_limit(
-                            local_entity_id=self.cfg.local_entity_id,
-                            remote_entity_id=self._params.remote_cfg.entity_id,
-                            entity_type=EntityType.SENDING,
-                        )
+                if self._params.remote_cfg.check_limit_provider is not None:
+                    self._params.check_limit = self._params.remote_cfg.check_limit_provider.provide_check_limit(
+                        local_entity_id=self.cfg.local_entity_id,
+                        remote_entity_id=self._params.remote_cfg.entity_id,
+                        entity_type=EntityType.SENDING,
                     )
                 self.states.step = TransactionStep.WAITING_FOR_FINISHED
             else:
@@ -603,8 +608,8 @@ class SourceHandler:
         #       when re-starting the application
         if self._params.check_limit is not None:
             if self._params.check_limit.timed_out():
-                self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
                 _LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
+                self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
 
     def _prepare_finished_ack_packet(self, condition_code: ConditionCode):
         ack_pdu = AckPdu(
@@ -750,14 +755,13 @@ class SourceHandler:
             )
             self._add_packet_to_be_sent(file_data_pdu)
 
-    def _prepare_eof_pdu(self):
-        self._pdus_to_be_sent.append(
-            PduHolder(
-                EofPdu(
-                    file_checksum=self._params.fp.crc32,
-                    file_size=self._params.fp.file_size,
-                    pdu_conf=self._params.pdu_conf,
-                )
+    def _prepare_eof_pdu(self, condition_code: ConditionCode, checksum: bytes):
+        self._add_packet_to_be_sent(
+            EofPdu(
+                file_checksum=checksum,
+                file_size=self._params.fp.progress,
+                pdu_conf=self._params.pdu_conf,
+                condition_code=condition_code,
             )
         )
 
@@ -779,21 +783,25 @@ class SourceHandler:
         )
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
-            self._notice_of_cancellation()
+            self._notice_of_cancellation(cond)
         elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
         self.cfg.default_fault_handlers.report_fault(cond)
 
-    def _notice_of_cancellation(self):
-        # TODO: Implement
-        pass
+    def _notice_of_cancellation(self, condition_code: ConditionCode):
+        # As specified in 4.11.2.2, prepare an EOF PDU to be sent to the remote entity. Supply
+        # the checksum for the file copy progress sent so far.
+        self._prepare_eof_pdu(
+            condition_code, self._checksum_calculation(self._params.fp.progress)
+        )
 
     def _notice_of_suspension(self):
         # TODO: Implement
         pass
 
     def _abandon_transaction(self):
-        # TODO: Implement
-        pass
+        # I guess an abandoned transaction just stops whatever it is doing.. The implementation
+        # for this is quite easy.
+        self.reset()

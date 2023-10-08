@@ -130,7 +130,7 @@ class RemoteEntityCfg:
     crc_on_transmission: bool
     default_transmission_mode: TransmissionMode
     crc_type: ChecksumType
-    check_limit: Optional[CheckLimitProvider]
+    check_limit_provider: Optional[CheckLimitProvider]
     # NOTE: Only this version is supported
     cfdp_version: int = CFDP_VERSION_2
 

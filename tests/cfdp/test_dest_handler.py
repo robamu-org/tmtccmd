@@ -88,7 +88,7 @@ class TestCfdpDestHandler(TestCase):
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
-            check_limit=None,
+            check_limit_provider=None,
             crc_type=ChecksumType.CRC_32,
             closure_requested=False,
             crc_on_transmission=False,

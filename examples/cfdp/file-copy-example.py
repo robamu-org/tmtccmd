@@ -55,7 +55,7 @@ REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     crc_on_transmission=False,
     default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
     crc_type=ChecksumType.CRC_32,
-    check_limit=None,
+    check_limit_provider=None,
 )
 REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
 REMOTE_CFG_FOR_DEST_ENTITY.entity_id = DEST_ENTITY_ID
