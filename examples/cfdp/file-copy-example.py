@@ -232,9 +232,13 @@ def source_entity_handler(source_handler: SourceHandler):
         except Empty:
             no_packet_received = True
         fsm_result = source_handler.state_machine()
+        no_packet_sent = False
         if fsm_result.states.packets_ready:
-            SOURCE_TO_DEST_QUEUE.put(fsm_result.pdu_holder.pdu)
-            source_handler.confirm_packet_sent_advance_fsm()
+            next_packet = source_handler.get_next_packet()
+            # Send all packets which need to be sent.
+            while next_packet is not None:
+                SOURCE_TO_DEST_QUEUE.put(next_packet.pdu)
+                next_packet = source_handler.get_next_packet()
             no_packet_sent = False
         else:
             no_packet_sent = True
