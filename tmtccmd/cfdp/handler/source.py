@@ -260,10 +260,24 @@ class SourceHandler:
         self.cfg.local_entity_id = source_id
         self._params.source_id = source_id
 
+    @property
+    def state(self) -> CfdpState:
+        return self.states.state
+
+    @property
+    def step(self) -> TransactionStep:
+        return self.states.step
+
+    @property
+    def packets_ready(self) -> bool:
+        return self.states.packets_ready
+
     def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
         """You can call this function to pass a put request to the source handler, which is
-        also used to start a file copy operation. Please note that the source handler can
-        also process one put request at a time.
+        also used to start a file copy operation. As such, this function models the Put.request
+        CFDP primtiive.
+
+        Please note that the source handler can also process one put request at a time.
         The caller is responsible of creating a new source handler, one handler can only handle
         one file copy request at a time.
 
@@ -290,6 +304,10 @@ class SourceHandler:
         return True
 
     def cancel_request(self, transaction_id: TransactionId) -> bool:
+        """This function models the Cancel.request CFDP primtive and is the recommended way
+        to cancel a transaction. It will cause a Notice Of Cancellation at this entity."""
+        if self.states.packets_ready:
+            raise UnretrievedPdusToBeSent()
         if (
             self._params.transaction is not None
             and transaction_id == self._params.transaction
@@ -374,6 +392,8 @@ class SourceHandler:
         self._inserted_pdu.pdu = packet
 
     def get_next_packet(self) -> Optional[PduHolder]:
+        if len(self._pdus_to_be_sent) <= 1:
+            self.states.packets_ready = False
         if len(self._pdus_to_be_sent) == 0:
             return None
         return self._pdus_to_be_sent.popleft()
@@ -400,6 +420,10 @@ class SourceHandler:
             return FsmResult(self.states)
         self._fsm_non_idle()
         return FsmResult(self.states)
+
+    @property
+    def transaction_id(self) -> Optional[TransactionId]:
+        return self._params.transaction
 
     def reset(self):
         """This function is public to allow completely resetting the handler, but it is explicitely
@@ -760,10 +784,6 @@ class SourceHandler:
         )
 
     def _declare_fault(self, cond: ConditionCode):
-        _LOGGER.warning(
-            f"Fault with condition code {cond} was declared for "
-            f"transaction {self._params.transaction}"
-        )
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self._notice_of_cancellation(cond)
@@ -779,6 +799,7 @@ class SourceHandler:
         self._prepare_eof_pdu(
             condition_code, self._checksum_calculation(self._params.fp.progress)
         )
+        self.states.step = TransactionStep.SENDING_EOF
 
     def _notice_of_suspension(self):
         # TODO: Implement

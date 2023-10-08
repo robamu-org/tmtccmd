@@ -1,10 +1,7 @@
 import os
 import random
 import sys
-from typing import Tuple
 from pathlib import Path
-
-from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import CfdpLv, DirectiveType, ConditionCode, PduType
 from spacepackets.cfdp.pdu import FileDataPdu, FileDeliveryStatus, DeliveryCode
@@ -33,8 +30,8 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
-        self._common_small_file_test(False, file_content)
-        self._verify_eof_indication()
+        transaction_id = self._common_small_file_test(False, file_content)
+        self._verify_eof_indication(transaction_id)
         self._test_transaction_completion()
 
     def test_perfectly_segmented_file_pdu_generation(self):
@@ -47,9 +44,11 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         self.dest_id = ByteFieldU8(2)
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_copy.txt")
-        file_size, crc32 = self._transaction_with_file_data_wrapper(
+        transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
             dest_path, rand_data
         )
+        self.assertEqual(transaction_id.source_id, self.source_id)
+        self.assertEqual(transaction_id.seq_num.value, 0)
         self._first_file_segment_handling(self.source_handler, rand_data)
         file_data_pdu = self._second_file_segment_handling(self.source_handler)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
@@ -70,13 +69,15 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         else:
             rand_data = os.urandom(round(self.file_segment_len * 1.3))
         remainder_len = len(rand_data) - self.file_segment_len
-        self.source_id = ByteFieldU16(1)
-        self.dest_id = ByteFieldU16(2)
+        self.source_id = ByteFieldU16(2)
+        self.dest_id = ByteFieldU16(3)
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_imperfect_copy.txt")
-        file_size, crc32 = self._transaction_with_file_data_wrapper(
+        transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
             dest_path, rand_data
         )
+        self.assertEqual(transaction_id.source_id, self.source_id)
+        self.assertEqual(transaction_id.seq_num.value, 0)
         self._first_file_segment_handling(self.source_handler, rand_data)
         file_data_pdu = self._second_file_segment_handling(self.source_handler)
         self.assertEqual(len(file_data_pdu.file_data), remainder_len)
@@ -148,41 +149,6 @@ class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
         assert next_packet is not None
         self.assertFalse(next_packet.is_file_directive)
         return next_packet.to_file_data_pdu()
-
-    def _transaction_with_file_data_wrapper(
-        self, dest_path: Path, data: bytes
-    ) -> Tuple[int, bytes]:
-        put_req = PutRequest(
-            destination_id=self.dest_id,
-            source_file=self.file_path,
-            dest_file=dest_path,
-            # Let the transmission mode be auto-determined by the remote MIB
-            trans_mode=None,
-            closure_requested=False,
-        )
-        with open(self.file_path, "wb") as of:
-            crc32 = PredefinedCrc("crc32")
-            crc32.update(data)
-            crc32 = crc32.digest()
-            of.write(data)
-        file_size = self.file_path.stat().st_size
-        self.local_cfg.local_entity_id = self.source_id
-        self._start_source_transaction(self.dest_id, put_req)
-        return file_size, crc32
-
-    def _first_file_segment_handling(
-        self, source_handler: SourceHandler, all_data: bytes
-    ):
-        fsm_res = source_handler.state_machine()
-        next_packet = source_handler.get_next_packet()
-        assert next_packet is not None
-        file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res, next_packet)
-        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
-        self.assertEqual(
-            file_data_pdu.file_data[0 : self.file_segment_len],
-            all_data[0 : self.file_segment_len],
-        )
-        self.assertEqual(file_data_pdu.offset, 0)
 
     def _test_eof_file_pdu(self, fsm_res: FsmResult, file_size: int, crc32: bytes):
         self.assertEqual(fsm_res.states.state, CfdpState.BUSY_CLASS_1_NACKED)

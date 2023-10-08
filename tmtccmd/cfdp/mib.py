@@ -37,18 +37,19 @@ class DefaultFaultHandlerBase(ABC):
     """
 
     def __init__(self):
-        # The initial default handle will be to ignore the error
+        # The initial default handle will be to cancel the transaction
         self._handler_dict: Dict[ConditionCode, FaultHandlerCode] = {
-            ConditionCode.POSITIVE_ACK_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.KEEP_ALIVE_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.INVALID_TRANSMISSION_MODE: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.FILE_CHECKSUM_FAILURE: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.FILE_SIZE_ERROR: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.FILESTORE_REJECTION: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.NAK_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.INACTIVITY_DETECTED: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.CHECK_LIMIT_REACHED: FaultHandlerCode.IGNORE_ERROR,
-            ConditionCode.UNSUPPORTED_CHECKSUM_TYPE: FaultHandlerCode.IGNORE_ERROR,
+            ConditionCode.CANCEL_REQUEST_RECEIVED: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.POSITIVE_ACK_LIMIT_REACHED: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.KEEP_ALIVE_LIMIT_REACHED: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.INVALID_TRANSMISSION_MODE: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.FILE_CHECKSUM_FAILURE: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.FILE_SIZE_ERROR: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.FILESTORE_REJECTION: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.NAK_LIMIT_REACHED: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.INACTIVITY_DETECTED: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.CHECK_LIMIT_REACHED: FaultHandlerCode.NOTICE_OF_CANCELLATION,
+            ConditionCode.UNSUPPORTED_CHECKSUM_TYPE: FaultHandlerCode.NOTICE_OF_CANCELLATION,
         }
 
     def get_fault_handler(self, condition: ConditionCode) -> Optional[FaultHandlerCode]:

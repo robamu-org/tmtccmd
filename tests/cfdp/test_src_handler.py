@@ -1,7 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -18,7 +18,7 @@ from spacepackets.cfdp import (
 from spacepackets.cfdp.pdu import DirectiveType, FileDataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg
-from tmtccmd.cfdp.defs import CfdpState
+from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.defs import UnretrievedPdusToBeSent
 from tmtccmd.cfdp.handler.source import TransactionStep
@@ -79,10 +79,10 @@ class TestCfdpSourceHandler(TestCase):
             trans_mode=None,
             closure_requested=None,
         )
-        self._start_source_transaction(dest_id, put_req)
+        transaction_id = self._start_source_transaction(dest_id, put_req)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(
-            fsm_res, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
+            fsm_res, True, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
         )
         self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
         next_packet = self.source_handler.get_next_packet()
@@ -97,11 +97,11 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(eof_pdu.fault_location, None)
         fsm_res = self.source_handler.state_machine()
-        # This indication will be called if the EOF send was confirmed
-        self.cfdp_user.eof_sent_indication.assert_called_once()
-        self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
+        self._verify_eof_indication(transaction_id)
 
-    def _common_small_file_test(self, closure_requested: bool, file_content: str):
+    def _common_small_file_test(
+        self, closure_requested: bool, file_content: str
+    ) -> TransactionId:
         dest_path = Path("/tmp/hello_copy.txt")
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
@@ -122,9 +122,13 @@ class TestCfdpSourceHandler(TestCase):
             crc32 = crc32.digest()
             of.write(data)
         file_size = self.file_path.stat().st_size
-        self._start_source_transaction(self.dest_id, put_req)
+        transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        self.assertEqual(transaction_id.source_id, self.source_handler.source_id)
+        self.assertEqual(transaction_id.seq_num.value, 2)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
         fsm_res = self.source_handler.state_machine()
+        with self.assertRaises(UnretrievedPdusToBeSent):
+            self.source_handler.state_machine()
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
         file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res, next_packet)
@@ -134,7 +138,7 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(file_data_pdu.offset, 0)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(
-            fsm_res, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
+            fsm_res, True, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
         )
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
@@ -143,26 +147,71 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(crc32, eof_pdu.file_checksum)
         self.assertEqual(eof_pdu.file_size, file_size)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
+        return transaction_id
+
+    def _transaction_with_file_data_wrapper(
+        self, dest_path: Path, data: bytes
+    ) -> Tuple[TransactionId, int, bytes]:
+        put_req = PutRequest(
+            destination_id=self.dest_id,
+            source_file=self.file_path,
+            dest_file=dest_path,
+            # Let the transmission mode be auto-determined by the remote MIB
+            trans_mode=None,
+            closure_requested=False,
+        )
+        with open(self.file_path, "wb") as of:
+            crc32 = PredefinedCrc("crc32")
+            crc32.update(data)
+            crc32 = crc32.digest()
+            of.write(data)
+        file_size = self.file_path.stat().st_size
+        self.local_cfg.local_entity_id = self.source_id
+        transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        return transaction_id, file_size, crc32
+
+    def _first_file_segment_handling(
+        self, source_handler: SourceHandler, all_data: bytes
+    ):
+        fsm_res = source_handler.state_machine()
+        next_packet = source_handler.get_next_packet()
+        assert next_packet is not None
+        file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res, next_packet)
+        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
+        self.assertEqual(
+            file_data_pdu.file_data[0 : self.file_segment_len],
+            all_data[0 : self.file_segment_len],
+        )
+        self.assertEqual(file_data_pdu.offset, 0)
+        next_packet = source_handler.get_next_packet()
+        assert next_packet is None
 
     def _check_fsm_and_contained_file_data(
         self, fsm_res: FsmResult, pdu_holder: PduHolder
     ) -> FileDataPdu:
         self._state_checker(
-            fsm_res, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_FILE_DATA
+            fsm_res,
+            False,
+            CfdpState.BUSY_CLASS_1_NACKED,
+            TransactionStep.SENDING_FILE_DATA,
         )
-        assert pdu_holder is not None
         self.assertFalse(pdu_holder.is_file_directive)
         return pdu_holder.to_file_data_pdu()
 
     def _start_source_transaction(
         self, dest_id: UnsignedByteField, put_request: PutRequest
-    ):
+    ) -> TransactionId:
         self.remote_cfg.entity_id = dest_id
         self.source_handler.put_request(put_request, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(
-            fsm_res, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_METADATA
+            fsm_res,
+            True,
+            CfdpState.BUSY_CLASS_1_NACKED,
+            TransactionStep.SENDING_METADATA,
         )
+        transaction_id = self.source_handler.transaction_id
+        assert transaction_id is not None
         self.cfdp_user.transaction_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
         next_packet = self.source_handler.get_next_packet()
@@ -179,15 +228,20 @@ class TestCfdpSourceHandler(TestCase):
         assert put_request.dest_file is not None
         self.assertEqual(metadata_pdu.dest_file_name, put_request.dest_file.as_posix())
         self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
+        return transaction_id
 
-    def _verify_eof_indication(self):
+    def _verify_eof_indication(self, expected_transaction_id: TransactionId):
         self.source_handler.state_machine()
         self.cfdp_user.eof_sent_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
+        self.assertIsNotNone(
+            self.cfdp_user.eof_sent_indication.call_args[0], expected_transaction_id
+        )
 
     def _state_checker(
         self,
         fsm_res: Optional[FsmResult],
+        packet_ready: bool,
         expected_state: CfdpState,
         expected_step: TransactionStep,
     ):
@@ -196,6 +250,10 @@ class TestCfdpSourceHandler(TestCase):
             self.assertEqual(fsm_res.states.step, expected_step)
         self.assertEqual(self.source_handler.states.state, expected_state)
         self.assertEqual(self.source_handler.states.step, expected_step)
+        self.assertEqual(self.source_handler.states.packets_ready, packet_ready)
+        self.assertEqual(self.source_handler.state, expected_state)
+        self.assertEqual(self.source_handler.step, expected_step)
+        self.assertEqual(self.source_handler.packets_ready, packet_ready)
 
     def tearDown(self) -> None:
         if self.file_path.exists():
