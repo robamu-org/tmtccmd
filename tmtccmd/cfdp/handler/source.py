@@ -166,12 +166,9 @@ class FsmResult:
 
 
 class InvalidPduForSourceHandler(Exception):
-    def __init__(self, packet: AbstractFileDirectiveBase, *args, **kwargs):
-        super().__init__(args, kwargs)
+    def __init__(self, packet: AbstractFileDirectiveBase):
         self.packet = packet
-
-    def __str__(self):
-        return f"Invalid packet {self.packet} for source handler"
+        super().__init__(f"Invalid packet {self.packet} for source handler")
 
 
 class PduIgnoredReason(enum.IntEnum):
