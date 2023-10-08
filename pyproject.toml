@@ -36,8 +36,8 @@ dependencies = [
     "deprecation~=2.1",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets~=0.19.0",
-    # "spacepackets @ git+https://github.com/us-irs/spacepackets-py@57efbe4752f34e2f3416fd8c7b4a53a2504ac45b"
+    # "spacepackets~=0.19.0",
+    "spacepackets @ git+https://github.com/us-irs/spacepackets-py@4fd75c5588cbb3f066be4b69bea1ae50d6c0553"
 ]
 
 [project.optional-dependencies]

@@ -21,8 +21,6 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import (
     PduHolder,
-    FileDeliveryStatus,
-    DeliveryCode,
     EofPdu,
     FileDataPdu,
     MetadataPdu,
@@ -32,6 +30,7 @@ from spacepackets.cfdp.pdu import (
     AbstractFileDirectiveBase,
     TransactionStatus,
 )
+from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd.cfdp import (
@@ -111,6 +110,7 @@ class _TransferFieldWrapper:
         self.transaction: Optional[TransactionId] = None
         self.check_limit: Optional[Countdown] = None
         self.fp = _SourceFileParams.empty()
+        self.finished_params: Optional[FinishedParams] = None
         self.remote_cfg: Optional[RemoteEntityCfg] = None
         self.closure_requested: bool = False
         self.pdu_conf = PduConfig.empty()
@@ -155,6 +155,7 @@ class _TransferFieldWrapper:
         self.check_limit = None
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
+        self.finished_params = None
 
 
 class FsmResult:
@@ -576,10 +577,6 @@ class SourceHandler:
             self.states.step = TransactionStep.WAITING_FOR_FINISHED
 
     def _handle_wait_for_finish(self):
-        if not self._params.closure_requested:
-            _LOGGER.error(
-                "Invalid Finish PDU waiting function call, no closure requested"
-            )
         if (
             (
                 self.states.state == CfdpState.BUSY_CLASS_1_NACKED
@@ -589,29 +586,33 @@ class SourceHandler:
             or self._inserted_pdu.pdu_directive_type is None
             or self._inserted_pdu.pdu_directive_type != DirectiveType.FINISHED_PDU
         ):
+            # TODO: Store finished PDU parameters for later processing in the notice of completion.
+            if self._params.check_limit is not None:
+                if self._params.check_limit.timed_out():
+                    _LOGGER.warning(
+                        f"Check limit countdown: {self._params.check_limit}"
+                    )
+                    self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
             return
         finished_pdu = self._inserted_pdu.to_finished_pdu()
         self._inserted_pdu.pdu = None
-
         if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
             self._prepare_finished_ack_packet(finished_pdu.condition_code)
             self.states.step = TransactionStep.SENDING_ACK_OF_FINISHED
         else:
             self.states.step = TransactionStep.NOTICE_OF_COMPLETION
-            # TODO: Store finished PDU parameters for later processing in the notice of completion.
-        if self._params.check_limit is not None:
-            if self._params.check_limit.timed_out():
-                _LOGGER.warning(f"Check limit countdown: {self._params.check_limit}")
-                self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
+            self._params.finished_params = finished_pdu.finished_params
 
     def _notice_of_completion(self):
         if self.cfg.indication_cfg.transaction_finished_indication_required:
             assert self._params.transaction is not None
+            assert self._params.finished_params is not None
             indication_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction,
-                condition_code=ConditionCode.NO_ERROR,
-                file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
-                delivery_code=DeliveryCode.DATA_COMPLETE,
+                condition_code=self._params.finished_params.condition_code,
+                file_status=self._params.finished_params.delivery_status,
+                delivery_code=self._params.finished_params.delivery_code,
+                fs_responses=self._params.finished_params.file_store_responses,
             )
             self.user.transaction_finished_indication(indication_params)
         # Transaction finished
