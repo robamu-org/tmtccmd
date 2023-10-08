@@ -34,7 +34,9 @@ class TestCfdpSourceHandler(TestCase):
     from these PDUs
     """
 
-    def common_setup(self, closure_requested: bool):
+    def common_setup(
+        self, closure_requested: bool, default_transmission_mode: TransmissionMode
+    ):
         self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
         self.local_cfg = LocalEntityCfg(
@@ -58,7 +60,7 @@ class TestCfdpSourceHandler(TestCase):
             max_file_segment_len=self.file_segment_len,
             closure_requested=closure_requested,
             crc_on_transmission=False,
-            default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
+            default_transmission_mode=default_transmission_mode,
             crc_type=ChecksumType.CRC_32,
             check_limit_provider=None,
         )

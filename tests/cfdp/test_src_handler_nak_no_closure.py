@@ -3,7 +3,13 @@ import random
 import sys
 from pathlib import Path
 
-from spacepackets.cfdp import CfdpLv, DirectiveType, ConditionCode, PduType
+from spacepackets.cfdp import (
+    CfdpLv,
+    DirectiveType,
+    ConditionCode,
+    PduType,
+    TransmissionMode,
+)
 from spacepackets.cfdp.pdu import FileDataPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
@@ -15,9 +21,9 @@ from tmtccmd.cfdp.user import TransactionFinishedParams
 from .test_src_handler import TestCfdpSourceHandler
 
 
-class TestCfdpSourceHandlerNoClosure(TestCfdpSourceHandler):
+class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
-        self.common_setup(False)
+        self.common_setup(False, TransmissionMode.UNACKNOWLEDGED)
 
     def test_empty_file(self):
         self._common_empty_file_test()

@@ -4,7 +4,7 @@ import random
 import sys
 from unittest.mock import MagicMock
 
-from spacepackets.cfdp import ConditionCode, Direction, DirectiveType
+from spacepackets.cfdp import ConditionCode, Direction, DirectiveType, TransmissionMode
 from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import (
@@ -24,9 +24,9 @@ from tmtccmd.cfdp.request import PutRequest
 from .test_src_handler import TestCfdpSourceHandler
 
 
-class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
+class TestCfdpSourceHandlerNackedWithClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
-        self.common_setup(True)
+        self.common_setup(True, TransmissionMode.UNACKNOWLEDGED)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
 
     def test_empty_file_pdu_generation(self):
