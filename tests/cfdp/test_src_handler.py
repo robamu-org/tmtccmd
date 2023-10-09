@@ -69,7 +69,9 @@ class TestCfdpSourceHandler(TestCase):
             self.local_cfg, self.seq_num_provider, self.cfdp_user
         )
 
-    def _common_empty_file_test(self):
+    def _common_empty_file_test(
+        self, transmission_mode: Optional[TransmissionMode], expected_state: CfdpState
+    ):
         dest_path = Path("/tmp/hello_copy.txt")
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
@@ -78,14 +80,14 @@ class TestCfdpSourceHandler(TestCase):
             source_file=self.file_path,
             dest_file=dest_path,
             # Let the transmission mode be auto-determined by the remote MIB
-            trans_mode=None,
+            trans_mode=transmission_mode,
             closure_requested=None,
         )
-        transaction_id = self._start_source_transaction(dest_id, put_req)
-        fsm_res = self.source_handler.state_machine()
-        self._state_checker(
-            fsm_res, True, CfdpState.BUSY_CLASS_1_NACKED, TransactionStep.SENDING_EOF
+        transaction_id = self._start_source_transaction(
+            dest_id, put_req, expected_state
         )
+        fsm_res = self.source_handler.state_machine()
+        self._state_checker(fsm_res, True, expected_state, TransactionStep.SENDING_EOF)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
         next_packet = self.source_handler.get_next_packet()
         self.assertIsNotNone(next_packet)
@@ -94,6 +96,8 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(next_packet.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = next_packet.to_eof_pdu()
         self.assertEqual(eof_pdu.transaction_seq_num.value, 3)
+        # For an empty file, checksum verification does not really make sense, so we expect
+        # a null checksum here.
         self.assertEqual(eof_pdu.file_checksum, NULL_CHECKSUM_U32)
         self.assertEqual(eof_pdu.file_size, 0)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
@@ -102,7 +106,7 @@ class TestCfdpSourceHandler(TestCase):
         self._verify_eof_indication(transaction_id)
 
     def _common_small_file_test(
-        self, closure_requested: bool, file_content: str
+        self, closure_requested: bool, file_content: str, expected_state: CfdpState
     ) -> TransactionId:
         dest_path = Path("/tmp/hello_copy.txt")
         self.source_id = ByteFieldU32(1)
@@ -124,7 +128,9 @@ class TestCfdpSourceHandler(TestCase):
             crc32 = crc32.digest()
             of.write(data)
         file_size = self.file_path.stat().st_size
-        transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        transaction_id = self._start_source_transaction(
+            self.dest_id, put_req, expected_state
+        )
         self.assertEqual(transaction_id.source_id, self.source_handler.source_id)
         self.assertEqual(transaction_id.seq_num.value, 2)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
@@ -152,7 +158,7 @@ class TestCfdpSourceHandler(TestCase):
         return transaction_id
 
     def _transaction_with_file_data_wrapper(
-        self, dest_path: Path, data: bytes
+        self, dest_path: Path, data: bytes, expected_state: CfdpState
     ) -> Tuple[TransactionId, int, bytes]:
         put_req = PutRequest(
             destination_id=self.dest_id,
@@ -169,7 +175,9 @@ class TestCfdpSourceHandler(TestCase):
             of.write(data)
         file_size = self.file_path.stat().st_size
         self.local_cfg.local_entity_id = self.source_id
-        transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        transaction_id = self._start_source_transaction(
+            self.dest_id, put_req, expected_state
+        )
         return transaction_id, file_size, crc32
 
     def _first_file_segment_handling(
@@ -201,7 +209,10 @@ class TestCfdpSourceHandler(TestCase):
         return pdu_holder.to_file_data_pdu()
 
     def _start_source_transaction(
-        self, dest_id: UnsignedByteField, put_request: PutRequest
+        self,
+        dest_id: UnsignedByteField,
+        put_request: PutRequest,
+        expected_state: CfdpState,
     ) -> TransactionId:
         self.remote_cfg.entity_id = dest_id
         self.source_handler.put_request(put_request, self.remote_cfg)
@@ -209,7 +220,7 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res,
             True,
-            CfdpState.BUSY_CLASS_1_NACKED,
+            expected_state,
             TransactionStep.SENDING_METADATA,
         )
         transaction_id = self.source_handler.transaction_id

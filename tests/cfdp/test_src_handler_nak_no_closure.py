@@ -25,8 +25,23 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
         self.common_setup(False, TransmissionMode.UNACKNOWLEDGED)
 
-    def test_empty_file(self):
-        self._common_empty_file_test()
+    def test_empty_file_nacked_by_def_config(self):
+        self._common_empty_file_test(
+            transmission_mode=None, expected_state=CfdpState.BUSY_CLASS_1_NACKED
+        )
+        fsm_res = self.source_handler.state_machine()
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
+        self.source_handler.state_machine()
+        self.assertEqual(fsm_res.states.state, CfdpState.IDLE)
+        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
+
+    def test_empty_file_explicit_nacked(self):
+        self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
+        self._common_empty_file_test(
+            transmission_mode=TransmissionMode.UNACKNOWLEDGED,
+            expected_state=CfdpState.BUSY_CLASS_1_NACKED,
+        )
         fsm_res = self.source_handler.state_machine()
         self.cfdp_user.transaction_finished_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
@@ -36,7 +51,9 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
-        transaction_id = self._common_small_file_test(False, file_content)
+        transaction_id = self._common_small_file_test(
+            False, file_content, CfdpState.BUSY_CLASS_1_NACKED
+        )
         self._verify_eof_indication(transaction_id)
         self._test_transaction_completion()
 
@@ -51,7 +68,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_copy.txt")
         transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
-            dest_path, rand_data
+            dest_path, rand_data, CfdpState.BUSY_CLASS_1_NACKED
         )
         self.assertEqual(transaction_id.source_id, self.source_id)
         self.assertEqual(transaction_id.seq_num.value, 0)
@@ -80,7 +97,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_imperfect_copy.txt")
         transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
-            dest_path, rand_data
+            dest_path, rand_data, CfdpState.BUSY_CLASS_1_NACKED
         )
         self.assertEqual(transaction_id.source_id, self.source_id)
         self.assertEqual(transaction_id.seq_num.value, 0)
