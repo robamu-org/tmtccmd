@@ -30,39 +30,38 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
 
     def test_empty_file_pdu_generation_nacked_by_remote_cfg(self):
-        self._common_empty_file_test(None, CfdpState.BUSY_CLASS_1_NACKED)
+        self._common_empty_file_test(None)
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_empty_file_pdu_generation_nacked_explicitely(self):
         self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
-        self._common_empty_file_test(
-            TransmissionMode.UNACKNOWLEDGED, CfdpState.BUSY_CLASS_1_NACKED
-        )
+        self._common_empty_file_test(TransmissionMode.UNACKNOWLEDGED)
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
-        transaction_id = self._common_small_file_test(
-            True, file_content, CfdpState.BUSY_CLASS_1_NACKED
+        _, transaction_id = self._common_small_file_test(
+            TransmissionMode.UNACKNOWLEDGED, True, file_content
         )
         self._verify_eof_indication(transaction_id)
         self.source_handler.state_machine()
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)
-        self._start_source_transaction(
-            dest_id, self._prepare_dummy_put_req(dest_id), CfdpState.BUSY_CLASS_1_NACKED
-        )
+        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
         finish_pdu = self._prepare_finish_pdu()
         finish_pdu.pdu_file_directive.pdu_header.direction = Direction.TOWARDS_RECEIVER
         with self.assertRaises(InvalidPduDirection):
@@ -82,7 +81,6 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
             dest_path,
             rand_data[0 : self.file_segment_len],
-            CfdpState.BUSY_CLASS_1_NACKED,
         )
         self._first_file_segment_handling(self.source_handler, rand_data)
         self.assertTrue(self.source_handler.cancel_request(transaction_id))
@@ -96,7 +94,8 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(eof_pdu.file_size, self.file_segment_len)
         self.assertEqual(eof_pdu.file_size, file_size)
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_invalid_source_id_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -119,9 +118,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(exception.expected_dest_id, ByteFieldU16(3))
 
     def _regular_transaction_start(self, dest_id: UnsignedByteField) -> FinishedPdu:
-        self._start_source_transaction(
-            dest_id, self._prepare_dummy_put_req(dest_id), CfdpState.BUSY_CLASS_1_NACKED
-        )
+        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
         finish_pdu = self._prepare_finish_pdu()
         self.assertEqual(finish_pdu.transaction_seq_num.value, 2)
         return finish_pdu
@@ -140,7 +137,6 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._state_checker(
             None,
             False,
-            CfdpState.BUSY_CLASS_1_NACKED,
             TransactionStep.WAITING_FOR_FINISHED,
         )
         self.source_handler.insert_packet(self._prepare_finish_pdu())

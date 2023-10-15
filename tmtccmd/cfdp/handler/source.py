@@ -1,7 +1,6 @@
 from __future__ import annotations
 from collections import deque
 import enum
-import copy
 import logging
 from dataclasses import dataclass
 from typing import Deque, Optional, Tuple
@@ -701,17 +700,15 @@ class SourceHandler:
         assert self._put_req is not None
         assert self._params.remote_cfg is not None
         # Transmission mode settings in the put request override settings from the remote MIB
-        if self._put_req.trans_mode is not None:
-            trans_mode_to_set = self._put_req.trans_mode
-        else:
+        trans_mode_to_set = self._put_req.trans_mode
+        if trans_mode_to_set is None:
             trans_mode_to_set = self._params.remote_cfg.default_transmission_mode
-        self._params.transmission_mode = trans_mode_to_set
-        if self._put_req.closure_requested is not None:
-            closure_req_to_set = self._put_req.closure_requested
-        else:
+        closure_req_to_set = self._put_req.closure_requested
+        if closure_req_to_set is None:
             closure_req_to_set = self._params.remote_cfg.closure_requested
-        self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
+        self._params.transmission_mode = trans_mode_to_set
         self._params.closure_requested = closure_req_to_set
+        self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
 
     def _add_packet_to_be_sent(self, packet: GenericPduPacket):
         self._pdus_to_be_sent.append(PduHolder(packet))

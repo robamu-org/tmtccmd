@@ -8,6 +8,7 @@ from spacepackets.cfdp import (
 from spacepackets.cfdp.pdu import (
     AckPdu,
     DeliveryCode,
+    EofPdu,
     FileDeliveryStatus,
     FinishedPdu,
     TransactionStatus,
@@ -22,18 +23,14 @@ from .test_src_handler import TestCfdpSourceHandler
 class TestSourceHandlerAcked(TestCfdpSourceHandler):
     def setUp(self) -> None:
         self.common_setup(True, TransmissionMode.ACKNOWLEDGED)
+        self.expected_cfdp_state = CfdpState.BUSY_CLASS_2_ACKED
 
-    def test_empty_file_transfer(self):
-        eof_pdu = self._common_empty_file_test(None, CfdpState.BUSY_CLASS_2_ACKED)
+    def _generic_success_ack_handling(self, eof_pdu: EofPdu):
         self._state_checker(
             None,
             False,
-            CfdpState.BUSY_CLASS_2_ACKED,
             TransactionStep.WAITING_FOR_EOF_ACK,
         )
-        # TODO: 1: Acknowledge EOF PDU by inserting ACK, 2: Insert Finished PDU, 3: Retrieve
-        # and check ACK PDU generated as a response to the Finished PDU.
-        # pdu_conf = PduConfig(eof_pdu.source_entity_id, eof_pdu.dest_entity_id, eof_pdu.transaction_seq_num, eof_pdu.transmission_mode)
         pdu_conf = eof_pdu.pdu_header.pdu_conf
         ack_pdu = AckPdu(
             pdu_conf,
@@ -47,7 +44,6 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             False,
-            CfdpState.BUSY_CLASS_2_ACKED,
             TransactionStep.WAITING_FOR_FINISHED,
         )
         finished_pdu = FinishedPdu(
@@ -63,7 +59,6 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             True,
-            CfdpState.BUSY_CLASS_2_ACKED,
             TransactionStep.SENDING_ACK_OF_FINISHED,
         )
         next_pdu = self.source_handler.get_next_packet()
@@ -80,9 +75,21 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         pdu_conf.direction = Direction.TOWARDS_RECEIVER
         self.assertEqual(ack_pdu.pdu_header.pdu_conf, pdu_conf)
         self.source_handler.state_machine()
+        self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(
             None,
             False,
-            CfdpState.IDLE,
             TransactionStep.IDLE,
         )
+
+    def test_empty_file_transfer(self):
+        eof_pdu = self._common_empty_file_test(None)
+        self._generic_success_ack_handling(eof_pdu)
+
+    def test_small_file_transfer(self):
+        eof_pdu, _ = self._common_small_file_test(
+            TransmissionMode.ACKNOWLEDGED,
+            True,
+            "Hello World!",
+        )
+        self._generic_success_ack_handling(eof_pdu)
