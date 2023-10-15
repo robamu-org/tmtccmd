@@ -93,3 +93,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
             "Hello World!",
         )
         self._generic_success_ack_handling(eof_pdu)
+
+    def test_missing_metadata_pdu_retransmission(self):
+        pass
+
+    def test_missing_filedata_pdu_retransmission(self):
+        pass
