@@ -15,7 +15,7 @@ from spacepackets.cfdp import (
     ConditionCode,
     ChecksumType,
 )
-from spacepackets.cfdp.pdu import DirectiveType, FileDataPdu
+from spacepackets.cfdp.pdu import DirectiveType, EofPdu, FileDataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
@@ -71,7 +71,7 @@ class TestCfdpSourceHandler(TestCase):
 
     def _common_empty_file_test(
         self, transmission_mode: Optional[TransmissionMode], expected_state: CfdpState
-    ):
+    ) -> EofPdu:
         dest_path = Path("/tmp/hello_copy.txt")
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
@@ -104,6 +104,7 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.fault_location, None)
         fsm_res = self.source_handler.state_machine()
         self._verify_eof_indication(transaction_id)
+        return eof_pdu
 
     def _common_small_file_test(
         self, closure_requested: bool, file_content: str, expected_state: CfdpState

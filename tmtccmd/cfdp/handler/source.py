@@ -1,6 +1,7 @@
 from __future__ import annotations
 from collections import deque
 import enum
+import copy
 import logging
 from dataclasses import dataclass
 from typing import Deque, Optional, Tuple
@@ -597,6 +598,7 @@ class SourceHandler:
                 #       equality check here
                 pass
             self.states.step = TransactionStep.WAITING_FOR_FINISHED
+        self._inserted_pdu.pdu = None
 
     def _handle_wait_for_finish(self):
         if (
