@@ -223,6 +223,9 @@ class TestCfdpSourceHandler(TestCase):
         assert transaction_id is not None
         self.cfdp_user.transaction_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
+        self.assertEqual(len(self.cfdp_user.transaction_indication.call_args[0]), 1)
+        call_args = self.cfdp_user.transaction_indication.call_args[0]
+        self.assertEqual(call_args[0], transaction_id)
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
         self.assertEqual(next_packet.pdu_type, PduType.FILE_DIRECTIVE)
@@ -243,9 +246,9 @@ class TestCfdpSourceHandler(TestCase):
         self.source_handler.state_machine()
         self.cfdp_user.eof_sent_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.eof_sent_indication.call_count, 1)
-        self.assertIsNotNone(
-            self.cfdp_user.eof_sent_indication.call_args[0], expected_transaction_id
-        )
+        call_args = self.cfdp_user.eof_sent_indication.call_args[0]
+        self.assertEqual(len(call_args), 1)
+        self.assertEqual(call_args[0], expected_transaction_id)
 
     def _state_checker(
         self,
