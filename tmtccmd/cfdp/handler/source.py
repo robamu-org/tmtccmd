@@ -34,7 +34,10 @@ from spacepackets.cfdp.pdu import (
     TransactionStatus,
 )
 from spacepackets.cfdp.pdu.finished import FinishedParams
-from spacepackets.cfdp.pdu.file_data import FileDataParams
+from spacepackets.cfdp.pdu.file_data import (
+    FileDataParams,
+    get_max_file_seg_len_for_max_packet_len_and_pdu_cfg,
+)
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd.cfdp import (
     LocalEntityCfg,
@@ -541,10 +544,8 @@ class SourceHandler:
 
     def _calculate_max_file_seg_len(self):
         assert self._params.remote_cfg is not None
-        derived_max_seg_len = (
-            FileDataPdu.get_max_file_seg_len_for_max_packet_len_and_pdu_cfg(
-                self._params.pdu_conf, self._params.remote_cfg.max_packet_len
-            )
+        derived_max_seg_len = get_max_file_seg_len_for_max_packet_len_and_pdu_cfg(
+            self._params.pdu_conf, self._params.remote_cfg.max_packet_len
         )
         self._params.fp.segment_len = derived_max_seg_len
         if (
