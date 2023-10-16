@@ -84,11 +84,11 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         )
 
     def test_empty_file_transfer(self):
-        eof_pdu = self._common_empty_file_test(None)
+        _, eof_pdu = self._common_empty_file_test(None)
         self._generic_success_ack_handling(eof_pdu)
 
     def test_small_file_transfer(self):
-        eof_pdu, _ = self._common_small_file_test(
+        _, _, _, eof_pdu = self._common_small_file_test(
             TransmissionMode.ACKNOWLEDGED,
             True,
             "Hello World!",
@@ -96,10 +96,42 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._generic_success_ack_handling(eof_pdu)
 
     def test_missing_metadata_pdu_retransmission(self):
-        eof_pdu = self._common_empty_file_test(None)
+        first_metadata_pdu, eof_pdu = self._common_empty_file_test(None)
         # Generate appropriate NAK PDU and insert it.
-        # nak_missing_metadata = NakPdu()
-        pass
+        nak_missing_metadata = NakPdu(eof_pdu.pdu_header.pdu_conf, 0, 0, [(0, 0)])
+        self.source_handler.insert_packet(nak_missing_metadata)
+        self.source_handler.state_machine()
+        self._state_checker(
+            None,
+            True,
+            TransactionStep.RETRANSMITTING,
+        )
+        next_pdu = self.source_handler.get_next_packet()
+        assert next_pdu is not None
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.METADATA_PDU)
+        metadata_pdu = next_pdu.to_metadata_pdu()
+        self.assertEqual(metadata_pdu, first_metadata_pdu)
 
     def test_missing_filedata_pdu_retransmission(self):
-        pass
+        file_content = "Hello World!"
+        _, _, first_fd_pdu, eof_pdu = self._common_small_file_test(
+            TransmissionMode.ACKNOWLEDGED, True, file_content
+        )
+        end_of_scope = len(file_content.encode())
+        # Generate appropriate NAK PDU and insert it.
+        nak_missing_metadata = NakPdu(
+            eof_pdu.pdu_header.pdu_conf, 0, end_of_scope, [(0, end_of_scope)]
+        )
+        self.source_handler.insert_packet(nak_missing_metadata)
+        self.source_handler.state_machine()
+        self._state_checker(
+            None,
+            True,
+            TransactionStep.RETRANSMITTING,
+        )
+        next_pdu = self.source_handler.get_next_packet()
+        assert next_pdu is not None
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DATA)
+        fd_pdu = next_pdu.to_file_data_pdu()
+        self.assertEqual(fd_pdu, first_fd_pdu)

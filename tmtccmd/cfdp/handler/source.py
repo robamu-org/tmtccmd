@@ -73,7 +73,8 @@ class TransactionStep(enum.Enum):
     # The following three are used for the Copy File Procedure
     SENDING_METADATA = 3
     SENDING_FILE_DATA = 4
-    SENDING_FILE_DATA_RETRANSMITTING = 5
+    RETRANSMITTING = 5
+    """Re-transmitting missing packets in acknowledged mode."""
     SENDING_EOF = 6
     WAITING_FOR_EOF_ACK = 7
     WAITING_FOR_FINISHED = 8
@@ -383,21 +384,22 @@ class SourceHandler:
                 reason=PduIgnoredReason.ACK_MODE_PACKET_INVALID_MODE,
                 ignored_packet=packet,
             )
-        if (
-            self.states.step == TransactionStep.WAITING_FOR_EOF_ACK
-            and packet.directive_type != DirectiveType.ACK_PDU
-        ):
-            raise PduIgnoredAtSource(
-                reason=PduIgnoredReason.NOT_WAITING_FOR_ACK, ignored_packet=packet
-            )
-        if (
-            self.states.step == TransactionStep.WAITING_FOR_FINISHED
-            and packet.directive_type != DirectiveType.FINISHED_PDU
-        ):
-            raise PduIgnoredAtSource(
-                reason=PduIgnoredReason.NOT_WAITING_FOR_FINISHED_PDU,
-                ignored_packet=packet,
-            )
+        if packet.directive_type != DirectiveType.NAK_PDU:
+            if (
+                self.states.step == TransactionStep.WAITING_FOR_EOF_ACK
+                and packet.directive_type != DirectiveType.ACK_PDU
+            ):
+                raise PduIgnoredAtSource(
+                    reason=PduIgnoredReason.NOT_WAITING_FOR_ACK, ignored_packet=packet
+                )
+            if (
+                self.states.step == TransactionStep.WAITING_FOR_FINISHED
+                and packet.directive_type != DirectiveType.FINISHED_PDU
+            ):
+                raise PduIgnoredAtSource(
+                    reason=PduIgnoredReason.NOT_WAITING_FOR_FINISHED_PDU,
+                    ignored_packet=packet,
+                )
         self._inserted_pdu.pdu = packet
 
     def get_next_packet(self) -> Optional[PduHolder]:
@@ -634,6 +636,8 @@ class SourceHandler:
                     segment_req[0], segment_req[1] - segment_req[0]
                 )
                 packet_prepared = True
+        if packet_prepared:
+            self.states.step = TransactionStep.RETRANSMITTING
         return packet_prepared
 
     def _handle_waiting_for_ack(self):
@@ -641,6 +645,9 @@ class SourceHandler:
             _LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
+
+        if self.__handle_retransmission():
+            return
         if self._inserted_pdu.pdu is None or (
             self._inserted_pdu.pdu_type == PduType.FILE_DIRECTIVE
             and self._inserted_pdu.pdu_directive_type != DirectiveType.ACK_PDU
@@ -658,6 +665,11 @@ class SourceHandler:
         self._inserted_pdu.pdu = None
 
     def _handle_wait_for_finish(self):
+        if (
+            self.states.state == CfdpState.BUSY_CLASS_2_ACKED
+            and self.__handle_retransmission()
+        ):
+            return
         if (
             (
                 self.states.state == CfdpState.BUSY_CLASS_1_NACKED
@@ -713,7 +725,7 @@ class SourceHandler:
             )
         if self.states.step == TransactionStep.SENDING_METADATA:
             self.states.step = TransactionStep.SENDING_FILE_DATA
-        elif self.states.step == TransactionStep.SENDING_FILE_DATA_RETRANSMITTING:
+        elif self.states.step == TransactionStep.RETRANSMITTING:
             self.states.step = TransactionStep.SENDING_FILE_DATA
         elif self.states.step == TransactionStep.SENDING_FILE_DATA:
             self._handle_file_data_sent()

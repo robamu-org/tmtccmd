@@ -50,7 +50,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
-        eof_pdu, transaction_id = self._common_small_file_test(
+        transaction_id, _, _, _ = self._common_small_file_test(
             None, False, file_content
         )
         self._verify_eof_indication(transaction_id)

@@ -74,7 +74,7 @@ class TestCfdpSourceHandler(TestCase):
 
     def _common_empty_file_test(
         self, transmission_mode: Optional[TransmissionMode]
-    ) -> EofPdu:
+    ) -> Tuple[MetadataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
@@ -86,7 +86,7 @@ class TestCfdpSourceHandler(TestCase):
             trans_mode=transmission_mode,
             closure_requested=None,
         )
-        _, transaction_id = self._start_source_transaction(dest_id, put_req)
+        metadata_pdu, transaction_id = self._start_source_transaction(dest_id, put_req)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(fsm_res, True, TransactionStep.SENDING_EOF)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
@@ -105,14 +105,14 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.fault_location, None)
         fsm_res = self.source_handler.state_machine()
         self._verify_eof_indication(transaction_id)
-        return eof_pdu
+        return metadata_pdu, eof_pdu
 
     def _common_small_file_test(
         self,
         transmission_mode: Optional[TransmissionMode],
         closure_requested: bool,
         file_content: str,
-    ) -> Tuple[EofPdu, TransactionId]:
+    ) -> Tuple[TransactionId, MetadataPdu, FileDataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
@@ -133,7 +133,9 @@ class TestCfdpSourceHandler(TestCase):
             crc32 = crc32.digest()
             of.write(data)
         file_size = self.file_path.stat().st_size
-        _, transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        metadata_pdu, transaction_id = self._start_source_transaction(
+            self.dest_id, put_req
+        )
         self.assertEqual(transaction_id.source_id, self.source_handler.source_id)
         self.assertEqual(transaction_id.seq_num.value, 2)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
@@ -158,7 +160,7 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         fsm_res = self.source_handler.state_machine()
         self._verify_eof_indication(transaction_id)
-        return eof_pdu, transaction_id
+        return transaction_id, metadata_pdu, file_data_pdu, eof_pdu
 
     def _transaction_with_file_data_wrapper(
         self, dest_path: Path, data: bytes
