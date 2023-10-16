@@ -16,7 +16,7 @@ class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     def __init__(
         self,
         subservice_id: int,
-        object_id: bytearray,
+        object_id: bytes,
         time: Optional[CdsShortTimestamp],
         return_value: int = 0,
         mode: int = 0,
