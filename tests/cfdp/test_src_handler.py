@@ -15,7 +15,7 @@ from spacepackets.cfdp import (
     ConditionCode,
     ChecksumType,
 )
-from spacepackets.cfdp.pdu import DirectiveType, EofPdu, FileDataPdu
+from spacepackets.cfdp.pdu import DirectiveType, EofPdu, FileDataPdu, MetadataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
@@ -84,7 +84,7 @@ class TestCfdpSourceHandler(TestCase):
             trans_mode=transmission_mode,
             closure_requested=None,
         )
-        transaction_id = self._start_source_transaction(dest_id, put_req)
+        _, transaction_id = self._start_source_transaction(dest_id, put_req)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(fsm_res, True, TransactionStep.SENDING_EOF)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
@@ -131,7 +131,7 @@ class TestCfdpSourceHandler(TestCase):
             crc32 = crc32.digest()
             of.write(data)
         file_size = self.file_path.stat().st_size
-        transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        _, transaction_id = self._start_source_transaction(self.dest_id, put_req)
         self.assertEqual(transaction_id.source_id, self.source_handler.source_id)
         self.assertEqual(transaction_id.seq_num.value, 2)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
@@ -176,7 +176,7 @@ class TestCfdpSourceHandler(TestCase):
             of.write(data)
         file_size = self.file_path.stat().st_size
         self.local_cfg.local_entity_id = self.source_id
-        transaction_id = self._start_source_transaction(self.dest_id, put_req)
+        _, transaction_id = self._start_source_transaction(self.dest_id, put_req)
         return transaction_id, file_size, crc32
 
     def _first_file_segment_handling(
@@ -210,7 +210,7 @@ class TestCfdpSourceHandler(TestCase):
         self,
         dest_id: UnsignedByteField,
         put_request: PutRequest,
-    ) -> TransactionId:
+    ) -> Tuple[MetadataPdu, TransactionId]:
         self.remote_cfg.entity_id = dest_id
         self.source_handler.put_request(put_request, self.remote_cfg)
         fsm_res = self.source_handler.state_machine()
@@ -240,7 +240,7 @@ class TestCfdpSourceHandler(TestCase):
         assert put_request.dest_file is not None
         self.assertEqual(metadata_pdu.dest_file_name, put_request.dest_file.as_posix())
         self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
-        return transaction_id
+        return metadata_pdu, transaction_id
 
     def _verify_eof_indication(self, expected_transaction_id: TransactionId):
         self.source_handler.state_machine()

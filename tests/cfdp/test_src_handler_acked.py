@@ -11,6 +11,7 @@ from spacepackets.cfdp.pdu import (
     EofPdu,
     FileDeliveryStatus,
     FinishedPdu,
+    NakPdu,
     TransactionStatus,
 )
 from spacepackets.cfdp.pdu.finished import FinishedParams
@@ -95,6 +96,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._generic_success_ack_handling(eof_pdu)
 
     def test_missing_metadata_pdu_retransmission(self):
+        eof_pdu = self._common_empty_file_test(None)
+        # Generate appropriate NAK PDU and insert it.
+        nak_missing_metadata = NakPdu()
         pass
 
     def test_missing_filedata_pdu_retransmission(self):
