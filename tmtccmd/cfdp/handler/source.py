@@ -532,7 +532,7 @@ class SourceHandler:
         )
 
     def _sending_file_data_fsm(self) -> bool:
-        """This function returns whether the internal state was advanced or not."""
+        # This function returns whether the internal state was advanced or not.
         # During the PDU send phase, handle the re-transmission of missing files in
         # acknowledged mode.
         if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
