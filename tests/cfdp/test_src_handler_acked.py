@@ -98,7 +98,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
     def test_missing_metadata_pdu_retransmission(self):
         eof_pdu = self._common_empty_file_test(None)
         # Generate appropriate NAK PDU and insert it.
-        nak_missing_metadata = NakPdu()
+        # nak_missing_metadata = NakPdu()
         pass
 
     def test_missing_filedata_pdu_retransmission(self):

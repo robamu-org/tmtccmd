@@ -118,6 +118,9 @@ class IndicationCfg:
 
 @dataclass
 class LocalEntityCfg:
+    """This models the remote entity configuration information as specified in chapter 8.2
+    of the CFDP standard."""
+
     local_entity_id: UnsignedByteField
     indication_cfg: IndicationCfg
     default_fault_handlers: DefaultFaultHandlerBase
@@ -136,12 +139,15 @@ class RemoteEntityCfg:
     -----------
     entity_id:
         The ID of the remote entity.
-    max_file_segment_len:
-        The maximum file segment length which determines the maximum size
-        of file data PDUs in addition to the `max_packet_len` attribute.
     max_packet_len:
         This determines of all PDUs generated for that remote entity in addition to the
         `max_file_segment_len` attribute which also determines the size of file data PDUs.
+    max_file_segment_len:
+        The maximum file segment length which determines the maximum size
+        of file data PDUs in addition to the `max_packet_len` attribute. If this field is set
+        to None, the maximum file segment length will be derived from the maximum packet length.
+        If this has some value which is smaller than the segment value derived from
+        `max_packet_len`, this value will be picked.
     closure_requested:
         If the closure requested field is not supplied as part of the Put Request, it will be
         determined from this field in the remote configuration.
@@ -160,7 +166,7 @@ class RemoteEntityCfg:
     """
 
     entity_id: UnsignedByteField
-    max_file_segment_len: int
+    max_file_segment_len: Optional[int]
     max_packet_len: int
     closure_requested: bool
     crc_on_transmission: bool
@@ -172,6 +178,9 @@ class RemoteEntityCfg:
 
 
 class RemoteEntityCfgTable:
+    """Thin abstraction for a dictionary containing remote configurations with the remote entity ID
+    being used as a key."""
+
     def __init__(self):
         self._remote_entity_dict = dict()
 

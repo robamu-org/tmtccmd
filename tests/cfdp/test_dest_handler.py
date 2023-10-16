@@ -94,6 +94,7 @@ class TestCfdpDestHandler(TestCase):
             crc_on_transmission=False,
             default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
             max_file_segment_len=self.file_segment_len,
+            max_packet_len=self.file_segment_len,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
         self.dest_handler = DestHandler(

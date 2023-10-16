@@ -330,15 +330,23 @@ class SourceHandler:
         The packet is then handled by calling the :py:meth:`state_machine` and will be
         cleared after the packet was successfully handled, allowing insertion of new packets.
 
-        :raises InvalidPduDirection: PDU direction field wrong.
-        :raises FsmNotCalledAfterPacketInsertion: :py:meth:`state_machine` was not called after
-            packet insertion.
-        :raises InvalidPduForSourceHandler: Invalid PDU file directive type.
-        :raises PduIgnoredAtSource: The specified PDU can not be handled in the current state.
-        :raises NoRemoteEntityCfgFound: No remote configuration found for specified destination
-            entity.
-        :raises InvalidDestinationId: Destination ID was found, but there is a mismatch between
-            the packet destination ID and the remote configuration entity ID."""
+        Raises
+        -------
+        InvalidPduDirection
+            PDU direction field wrong.
+        FsmNotCalledAfterPacketInsertion
+            :py:meth:`state_machine` was not called after packet insertion.
+        InvalidPduForSourceHandler
+            Invalid PDU file directive type.
+        PduIgnoredAtSource
+            The specified PDU can not be handled in the current state.
+        NoRemoteEntityCfgFound
+            No remote configuration found for specified destination entity.
+        InvalidDestinationId
+            Destination ID was found, but there is a mismatch between the packet destination ID
+            and the remote configuration entity ID.
+
+        """
         if self._inserted_pdu.pdu is not None:
             raise FsmNotCalledAfterPacketInsertion()
         if packet.pdu_header.direction != Direction.TOWARDS_SENDER:
@@ -409,12 +417,14 @@ class SourceHandler:
         There is also the helper method :py:meth:`confirm_packet_sent_advance_fsm` available
         to perform both steps.
 
-        :raises PacketSendNotConfirmed: The FSM generated a packet to be sent but the packet send
-            was not confirmed
-        :raises ChecksumNotImplemented: Right now, only a subset of the checksums specified for
-            the CFDP standard are implemented.
-        :raises SourceFileDoesNotExist: The source file for which a transaction was requested
-            does not exist.
+        Raises
+        --------
+        PacketSendNotConfirmed
+            The FSM generated a packet to be sent but the packet send was not confirmed
+        ChecksumNotImplemented
+            Right now, only a subset of the checksums specified for the CFDP standard are implemented.
+        SourceFileDoesNotExist
+            The source file for which a transaction was requested does not exist.
         """
         if self.states.state == CfdpState.IDLE:
             return FsmResult(self.states)
@@ -478,13 +488,16 @@ class SourceHandler:
             else:
                 self._params.fp.file_size = size
         assert self._params.remote_cfg is not None
-        self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
+        self._calculate_max_file_seg_len()
         self._get_next_transfer_seq_num()
         self._params.transaction = TransactionId(
             source_entity_id=self.cfg.local_entity_id,
             transaction_seq_num=self.transaction_seq_num,
         )
         self.user.transaction_indication(self._params.transaction)
+
+    def _calculate_max_file_seg_len(self):
+        self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
 
     def _prepare_metadata_pdu(self):
         assert self._put_req is not None
@@ -752,9 +765,7 @@ class SourceHandler:
             #       e.g. abstractmethod of this handler as a first way, another one being
             #       to expect the user to supply some helper class to split up a file
             fd_params = FileDataParams(
-                file_data=file_data,
-                offset=offset,
-                segment_metadata_flag=False,
+                file_data=file_data, offset=offset, segment_metadata=None
             )
             file_data_pdu = FileDataPdu(
                 pdu_conf=self._params.pdu_conf, params=fd_params
