@@ -10,6 +10,7 @@ import deprecation
 from spacepackets.cfdp import (
     CrcFlag,
     GenericPduPacket,
+    LargeFileFlag,
     PduType,
     TransmissionMode,
     NULL_CHECKSUM_U32,
@@ -473,6 +474,18 @@ class SourceHandler:
             self._notice_of_completion()
 
     def _transaction_start(self):
+        file_size = 0
+        self._prepare_file_params()
+        self._prepare_pdu_conf(file_size)
+        self._get_next_transfer_seq_num()
+        self._calculate_max_file_seg_len()
+        self._params.transaction = TransactionId(
+            source_entity_id=self.cfg.local_entity_id,
+            transaction_seq_num=self.transaction_seq_num,
+        )
+        self.user.transaction_indication(self._params.transaction)
+
+    def _prepare_file_params(self):
         assert self._put_req is not None
         if self._put_req.metadata_only:
             self._params.fp.no_file_data = True
@@ -482,22 +495,61 @@ class SourceHandler:
             if not self._put_req.source_file.exists():
                 # TODO: Handle this exception in the handler, reset CFDP state machine
                 raise SourceFileDoesNotExist(self._put_req.source_file)
-            size = self._put_req.source_file.stat().st_size
-            if size == 0:
+            file_size = self._put_req.source_file.stat().st_size
+            if file_size == 0:
                 self._params.fp.no_file_data = True
             else:
-                self._params.fp.file_size = size
+                self._params.fp.file_size = file_size
+
+    def _prepare_pdu_conf(self, file_size: int):
+        # Please note that the transmission mode and closure requested field were set in
+        # a previous step.
+        assert self._put_req is not None
         assert self._params.remote_cfg is not None
-        self._calculate_max_file_seg_len()
-        self._get_next_transfer_seq_num()
-        self._params.transaction = TransactionId(
-            source_entity_id=self.cfg.local_entity_id,
-            transaction_seq_num=self.transaction_seq_num,
+        if file_size > pow(2, 32) - 1:
+            self._params.pdu_conf.file_flag = LargeFileFlag.LARGE
+        else:
+            self._params.pdu_conf.file_flag = LargeFileFlag.NORMAL
+        if self._put_req.seg_ctrl is not None:
+            self._params.pdu_conf.seg_ctrl = self._put_req.seg_ctrl
+        # Both the source entity and destination entity ID field must have the same size.
+        # We use the larger of either the Put Request destination ID or the local entity ID
+        # as the size for the new entity IDs.
+        larger_entity_width = max(
+            self.cfg.local_entity_id.byte_len, self._put_req.destination_id.byte_len
         )
-        self.user.transaction_indication(self._params.transaction)
+        if larger_entity_width != self.cfg.local_entity_id.byte_len:
+            self._params.pdu_conf.source_entity_id = UnsignedByteField(
+                self.cfg.local_entity_id.value, larger_entity_width
+            )
+        else:
+            self._params.pdu_conf.source_entity_id = self.cfg.local_entity_id
+
+        if larger_entity_width != self._put_req.destination_id.byte_len:
+            self._params.pdu_conf.dest_entity_id = UnsignedByteField(
+                self._put_req.destination_id.value, larger_entity_width
+            )
+        else:
+            self._params.pdu_conf.dest_entity_id = self._put_req.destination_id
+
+        self._params.pdu_conf.crc_flag = CrcFlag(
+            self._params.remote_cfg.crc_on_transmission
+        )
+        self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
 
     def _calculate_max_file_seg_len(self):
-        self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
+        assert self._params.remote_cfg is not None
+        derived_max_seg_len = (
+            FileDataPdu.get_max_file_seg_len_for_max_packet_len_and_pdu_cfg(
+                self._params.pdu_conf, self._params.remote_cfg.max_packet_len
+            )
+        )
+        self._params.fp.segment_len = derived_max_seg_len
+        if (
+            self._params.remote_cfg.max_file_segment_len is not None
+            and self._params.remote_cfg.max_file_segment_len < derived_max_seg_len
+        ):
+            self._params.fp.segment_len = self._params.remote_cfg.max_file_segment_len
 
     def _prepare_metadata_pdu(self):
         assert self._put_req is not None
@@ -528,14 +580,7 @@ class SourceHandler:
             MetadataPdu(pdu_conf=self._params.pdu_conf, params=params, options=options)
         )
 
-    def _prepare_metadata_base_params_with_metadata(self) -> MetadataParams:  # type: ignore
-        if self._put_req.seg_ctrl is not None:  # type: ignore
-            self._params.pdu_conf.seg_ctrl = self._put_req.seg_ctrl  # type: ignore
-        self._params.pdu_conf.dest_entity_id = self._put_req.destination_id  # type: ignore
-        self._params.pdu_conf.crc_flag = CrcFlag(
-            self._params.remote_cfg.crc_on_transmission  # type: ignore
-        )
-        self._params.pdu_conf.direction = Direction.TOWARDS_RECEIVER
+    def _prepare_metadata_base_params_with_metadata(self) -> MetadataParams:
         return MetadataParams(
             dest_file_name=self._put_req.dest_file.as_posix(),  # type: ignore
             source_file_name=self._put_req.source_file.as_posix(),  # type: ignore
@@ -596,7 +641,7 @@ class SourceHandler:
             _LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
-        if self._inserted_pdu.base is None or (
+        if self._inserted_pdu.pdu is None or (
             self._inserted_pdu.pdu_type == PduType.FILE_DIRECTIVE
             and self._inserted_pdu.pdu_directive_type != DirectiveType.ACK_PDU
         ):
@@ -719,7 +764,9 @@ class SourceHandler:
         closure_req_to_set = self._put_req.closure_requested
         if closure_req_to_set is None:
             closure_req_to_set = self._params.remote_cfg.closure_requested
+        # This also sets the field of the PDU configuration struct.
         self._params.transmission_mode = trans_mode_to_set
+        # This also sets the field of the PDU configuration struct.
         self._params.closure_requested = closure_req_to_set
         self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
 

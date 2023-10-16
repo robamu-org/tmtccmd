@@ -56,10 +56,10 @@ class TestCfdpSourceHandler(TestCase):
         with open(self.file_path, "w"):
             pass
         self.file_segment_len = 256
-        self.max_packet_len = 256
+        self.max_packet_len = 512
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.dest_id,
-            max_packet_len=self.file_segment_len,
+            max_packet_len=self.max_packet_len,
             max_file_segment_len=self.file_segment_len,
             closure_requested=closure_requested,
             crc_on_transmission=False,
