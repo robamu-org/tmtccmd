@@ -23,15 +23,15 @@ class DefaultFaultHandlerBase(ABC):
     a way to specify custom user error handlers.
 
     It does so by mapping each applicable CFDP :py:class:`ConditionCode` to a fault handler which
-    is denoted by the four :py:class:`FaultHandlerCodes`. This code is used to dispatch
-    to a user-provided callback function:
+    is denoted by the four :py:class:`spacepackets.cfdp.defs.FaultHandlerCode` s. This code is used
+    to dispatch to a user-provided callback function:
 
-     1. `FaultHandlerCodes.IGNORE_ERROR` -> :py:meth:`ignore_cb`
-     2. `FaultHandlerCodes.NOTICE_OF_CANCELLATION` -> :py:meth:`notice_of_cancellation_cb`
-     3. `FaultHandlerCodes.NOTICE_OF_SUSPENSION` -> :py:meth:`notice_of_suspension_cb`
-     4. `FaultHandlerCodes.ABANDON_TRANSACTION` -> :py:meth:`abandon_transaction_cb`
+     1. `IGNORE_ERROR` -> :py:meth:`ignore_cb`
+     2. `NOTICE_OF_CANCELLATION` -> :py:meth:`notice_of_cancellation_cb`
+     3. `NOTICE_OF_SUSPENSION` -> :py:meth:`notice_of_suspension_cb`
+     4. `ABANDON_TRANSACTION` -> :py:meth:`abandon_transaction_cb`
 
-    For each error reported by :py:meth:`report_error`, the appropriate fault handler callback
+    For each error reported by :py:meth:`report_fault`, the appropriate fault handler callback
     will be called. The user provides the callbacks by providing a custom class which implements
     these base class and all abstract fault handler callbacks.
     """
@@ -132,14 +132,33 @@ class RemoteEntityCfg:
     were omitted. Some other fields which are not contained inside the standard but are considered
     necessary for the Python implementation are included.
 
-    Attributes
+    Arguments
     -----------
-        entity_id: The ID of the remote entity
-        max_file_segment_len: The maximum file segment length which determines the maximum size
-            of file data PDUs in addition to the `max_packet_len` attribute.
-        max_packet_len: This determines of all PDUs generated for that remote entity.
+    entity_id:
+        The ID of the remote entity.
+    max_file_segment_len:
+        The maximum file segment length which determines the maximum size
+        of file data PDUs in addition to the `max_packet_len` attribute.
+    max_packet_len:
+        This determines of all PDUs generated for that remote entity in addition to the
+        `max_file_segment_len` attribute which also determines the size of file data PDUs.
+    closure_requested:
+        If the closure requested field is not supplied as part of the Put Request, it will be
+        determined from this field in the remote configuration.
+    crc_on_transmission:
+        If the CRC option is not supplied as part of the Put Request, it will be
+        determined from this field in the remote configuration.
+    default_transmission_mode:
+        If the transmission mode is not supplied as part of the Put Request, it will be
+        determined from this field in the remote configuration.
+    crc_type:
+        Default checksum type used to calculate for all file transmissions to this remote entity.
+    check_limit_provider:
+        Both the source and destination handler use a check limit for the unacknowledged mode.
+        This generic provider allows the user to configure the check limit at run time as well.
 
     """
+
     entity_id: UnsignedByteField
     max_file_segment_len: int
     max_packet_len: int
