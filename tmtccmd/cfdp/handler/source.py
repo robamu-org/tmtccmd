@@ -456,7 +456,7 @@ class SourceHandler:
             )
             return
         if self.states.step == TransactionStep.WAITING_FOR_EOF_ACK:
-            self._handle_wait_for_ack()
+            self._handle_waiting_for_ack()
         if self.states.step == TransactionStep.WAITING_FOR_FINISHED:
             self._handle_wait_for_finish()
         if self.states.step == TransactionStep.NOTICE_OF_COMPLETION:
@@ -578,18 +578,17 @@ class SourceHandler:
                 packet_prepared = True
         return packet_prepared
 
-    def _handle_wait_for_ack(self):
+    def _handle_waiting_for_ack(self):
         if self.states.state != CfdpState.BUSY_CLASS_2_ACKED:
             _LOGGER.error(
                 f"Invalid ACK waiting function call for state {self.states.state}"
             )
-        if self._inserted_pdu.base is None:
-            return FsmResult(self.states)
-        if (
+        if self._inserted_pdu.base is None or (
             self._inserted_pdu.pdu_type == PduType.FILE_DIRECTIVE
             and self._inserted_pdu.pdu_directive_type != DirectiveType.ACK_PDU
         ):
-            return FsmResult(self.states)
+            return
+        # TODO: Implement Positive Acknowledgement Procedures according to 4.7.1
         ack_pdu = self._inserted_pdu.to_ack_pdu()
         if ack_pdu.directive_code_of_acked_pdu == DirectiveType.EOF_PDU:
             if ack_pdu.condition_code_of_acked_pdu != ConditionCode.NO_ERROR:
@@ -598,6 +597,7 @@ class SourceHandler:
                 #       equality check here
                 pass
             self.states.step = TransactionStep.WAITING_FOR_FINISHED
+        self._inserted_pdu.pdu = None
 
     def _handle_wait_for_finish(self):
         if (
@@ -653,15 +653,16 @@ class SourceHandler:
             raise UnretrievedPdusToBeSent(
                 f"{len(self._pdus_to_be_sent)} packets left to send"
             )
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
-            if self.states.step == TransactionStep.SENDING_METADATA:
-                self.states.step = TransactionStep.SENDING_FILE_DATA
-            elif self.states.step == TransactionStep.SENDING_FILE_DATA_RETRANSMITTING:
-                self.states.step = TransactionStep.SENDING_FILE_DATA
-            elif self.states.step == TransactionStep.SENDING_FILE_DATA:
-                self._handle_file_data_sent()
-            elif self.states.step == TransactionStep.SENDING_EOF:
-                self._handle_eof_sent()
+        if self.states.step == TransactionStep.SENDING_METADATA:
+            self.states.step = TransactionStep.SENDING_FILE_DATA
+        elif self.states.step == TransactionStep.SENDING_FILE_DATA_RETRANSMITTING:
+            self.states.step = TransactionStep.SENDING_FILE_DATA
+        elif self.states.step == TransactionStep.SENDING_FILE_DATA:
+            self._handle_file_data_sent()
+        elif self.states.step == TransactionStep.SENDING_ACK_OF_FINISHED:
+            self.states.step = TransactionStep.NOTICE_OF_COMPLETION
+        elif self.states.step == TransactionStep.SENDING_EOF:
+            self._handle_eof_sent()
 
     def _handle_eof_sent(self):
         if self.cfg.indication_cfg.eof_sent_indication_required:
@@ -699,17 +700,15 @@ class SourceHandler:
         assert self._put_req is not None
         assert self._params.remote_cfg is not None
         # Transmission mode settings in the put request override settings from the remote MIB
-        if self._put_req.trans_mode is not None:
-            trans_mode_to_set = self._put_req.trans_mode
-        else:
+        trans_mode_to_set = self._put_req.trans_mode
+        if trans_mode_to_set is None:
             trans_mode_to_set = self._params.remote_cfg.default_transmission_mode
-        self._params.transmission_mode = trans_mode_to_set
-        if self._put_req.closure_requested is not None:
-            closure_req_to_set = self._put_req.closure_requested
-        else:
+        closure_req_to_set = self._put_req.closure_requested
+        if closure_req_to_set is None:
             closure_req_to_set = self._params.remote_cfg.closure_requested
-        self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
+        self._params.transmission_mode = trans_mode_to_set
         self._params.closure_requested = closure_req_to_set
+        self._params.crc_helper.checksum_type = self._params.remote_cfg.crc_type
 
     def _add_packet_to_be_sent(self, packet: GenericPduPacket):
         self._pdus_to_be_sent.append(PduHolder(packet))

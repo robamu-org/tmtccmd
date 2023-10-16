@@ -281,9 +281,9 @@ class DestHandler:
     def __transaction_start_metadata_pdu_to_params(self, metadata_pdu: MetadataPdu):
         self._params.reset()
         self.states.transaction = TransactionStep.TRANSACTION_START
-        if metadata_pdu.pdu_header.trans_mode == TransmissionMode.UNACKNOWLEDGED:
+        if metadata_pdu.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             self.states.state = CfdpState.BUSY_CLASS_1_NACKED
-        elif metadata_pdu.pdu_header.trans_mode == TransmissionMode.ACKNOWLEDGED:
+        elif metadata_pdu.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self.states.state = CfdpState.BUSY_CLASS_2_ACKED
         self._crc_helper.checksum_type = metadata_pdu.checksum_type
         self._params.closure_requested = metadata_pdu.closure_requested

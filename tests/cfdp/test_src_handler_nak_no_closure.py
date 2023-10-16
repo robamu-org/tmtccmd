@@ -25,18 +25,34 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
         self.common_setup(False, TransmissionMode.UNACKNOWLEDGED)
 
-    def test_empty_file(self):
-        self._common_empty_file_test()
+    def test_empty_file_nacked_by_def_config(self):
+        self._common_empty_file_test(
+            transmission_mode=None,
+        )
         fsm_res = self.source_handler.state_machine()
         self.cfdp_user.transaction_finished_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
         self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpState.IDLE)
-        self.assertEqual(fsm_res.states.step, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
+
+    def test_empty_file_explicit_nacked(self):
+        self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
+        self._common_empty_file_test(
+            transmission_mode=TransmissionMode.UNACKNOWLEDGED,
+        )
+        fsm_res = self.source_handler.state_machine()
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
+        self.source_handler.state_machine()
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
-        transaction_id = self._common_small_file_test(False, file_content)
+        eof_pdu, transaction_id = self._common_small_file_test(
+            None, False, file_content
+        )
         self._verify_eof_indication(transaction_id)
         self._test_transaction_completion()
 
