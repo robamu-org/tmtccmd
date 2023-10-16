@@ -125,8 +125,24 @@ class LocalEntityCfg:
 
 @dataclass
 class RemoteEntityCfg:
+    """This models the remote entity configuration information as specified in chapter 8.3
+    of the CFDP standard.
+
+    Some of the fields which were not considered necessary for the Python implementation
+    were omitted. Some other fields which are not contained inside the standard but are considered
+    necessary for the Python implementation are included.
+
+    Attributes
+    -----------
+        entity_id: The ID of the remote entity
+        max_file_segment_len: The maximum file segment length which determines the maximum size
+            of file data PDUs in addition to the `max_packet_len` attribute.
+        max_packet_len: This determines of all PDUs generated for that remote entity.
+
+    """
     entity_id: UnsignedByteField
     max_file_segment_len: int
+    max_packet_len: int
     closure_requested: bool
     crc_on_transmission: bool
     default_transmission_mode: TransmissionMode
@@ -152,5 +168,5 @@ class RemoteEntityCfgTable:
                 continue
             self._remote_entity_dict.update({cfg.entity_id: cfg})
 
-    def get_cfg(self, remote_entity_id: UnsignedByteField) -> RemoteEntityCfg:
+    def get_cfg(self, remote_entity_id: UnsignedByteField) -> Optional[RemoteEntityCfg]:
         return self._remote_entity_dict.get(remote_entity_id)
