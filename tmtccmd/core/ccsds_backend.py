@@ -8,15 +8,15 @@ from typing import Optional
 from tmtccmd.core.backend_base import BackendBase
 from tmtccmd.core.backend_state import BackendState
 from tmtccmd.core.base import TcMode, TmMode, BackendRequest
-from tmtccmd.tc import TcProcedureBase, ProcedureWrapper
-from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
+from tmtccmd.tmtc import TcProcedureBase, ProcedureWrapper
+from tmtccmd.tmtc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.util.exit import keyboard_interrupt_handler
-from tmtccmd.tc.queue import QueueWrapper
-from tmtccmd.tc.ccsds_seq_sender import (
+from tmtccmd.tmtc.queue import QueueWrapper
+from tmtccmd.tmtc.ccsds_seq_sender import (
     SequentialCcsdsSender,
     SenderMode,
 )
-from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
+from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.com import ComInterface
 
 

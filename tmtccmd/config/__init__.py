@@ -39,7 +39,7 @@ from .defs import (
 from .prompt import prompt_op_code, prompt_service
 from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase
 from .hook import HookBase
-from tmtccmd.tc.procedure import (
+from tmtccmd.tmtc.procedure import (
     DefaultProcedureInfo,
     CfdpProcedureInfo,
     TcProcedureType,

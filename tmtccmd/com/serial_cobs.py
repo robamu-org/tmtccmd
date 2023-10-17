@@ -5,7 +5,7 @@ from typing import Optional
 
 from tmtccmd.com import ComInterface, ReceptionDecodeError
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc import TelemetryListT
 from cobs import cobs
 
 

@@ -27,7 +27,7 @@ Communication Submodule
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.com
+   api/com
 
 Configuration Submodule
 =========================
@@ -49,7 +49,7 @@ This currently contains the CFDP support.
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.cfdp
+   api/cfdp
    api/tmtccmd.cfdp.handler
 
 ECSS Submodules
@@ -61,9 +61,7 @@ ECSS Submodules
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.pus
-   api/tmtccmd.tc
-   api/tmtccmd.tm
+   api/pus
 
 Other Submodules
 =========================
@@ -71,6 +69,7 @@ Other Submodules
 .. toctree::
    :maxdepth: 2
 
+   api/tmtccmd.tmtc
    api/tmtccmd.util
    api/tmtccmd.logging
    api/tmtccmd.fsfw

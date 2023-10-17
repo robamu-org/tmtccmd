@@ -4,14 +4,14 @@ import logging
 from datetime import timedelta
 from typing import Optional
 
-from tmtccmd.tc import (
+from tmtccmd.tmtc import (
     TcQueueEntryBase,
     TcQueueEntryType,
     QueueEntryHelper,
     ProcedureWrapper,
 )
-from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
-from tmtccmd.tc.queue import QueueWrapper
+from tmtccmd.tmtc.handler import TcHandlerBase, SendCbParams
+from tmtccmd.tmtc.queue import QueueWrapper
 from tmtccmd.com import ComInterface
 from tmtccmd.util.countdown import Countdown
 

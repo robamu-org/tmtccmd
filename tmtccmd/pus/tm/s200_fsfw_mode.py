@@ -10,7 +10,7 @@ from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
 
 
 class Service200FsfwReader:

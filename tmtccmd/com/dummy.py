@@ -16,7 +16,7 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 
 from tmtccmd.com import ComInterface
 from tmtccmd.config import CoreComInterfaces
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc import TelemetryListT
 from tmtccmd.pus.s1_verification import Subservice as Pus1Subservice
 from tmtccmd.pus.s17_test import Subservice as Pus17Subservice
 

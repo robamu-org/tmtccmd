@@ -8,14 +8,14 @@ from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
 from tmtccmd.com.dummy import DummyComIF
 from tmtccmd.core import TcMode, TmMode, BackendRequest
 from tmtccmd.core.ccsds_backend import NoValidProcedureSet
-from tmtccmd.tc import (
+from tmtccmd.tmtc import (
     TcProcedureBase,
     DefaultProcedureInfo,
     TcProcedureType,
     ProcedureWrapper,
 )
-from tmtccmd.tc.handler import FeedWrapper, SendCbParams
-from tmtccmd.tc.queue import DefaultPusQueueHelper, QueueWrapper
+from tmtccmd.tmtc.handler import FeedWrapper, SendCbParams
+from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 
 
 class TcHandlerMock(TcHandlerBase):

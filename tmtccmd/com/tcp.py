@@ -12,7 +12,7 @@ from typing import Optional, Sequence
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
 from tmtccmd.com import ComInterface, SendError
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc import TelemetryListT
 from tmtccmd.com.tcpip_utils import EthAddr
 
 _LOGGER = logging.getLogger(__name__)

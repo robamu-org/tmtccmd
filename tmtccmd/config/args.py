@@ -10,7 +10,7 @@ from prompt_toolkit.shortcuts import CompleteStyle
 
 from spacepackets.cfdp import TransmissionMode
 from tmtccmd.com.utils import determine_com_if
-from tmtccmd.tc.procedure import TcProcedureType
+from tmtccmd.tmtc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_op_code, prompt_service
 from tmtccmd.com import ComInterface
 

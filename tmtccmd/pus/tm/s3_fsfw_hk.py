@@ -7,7 +7,7 @@ import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
-from tmtccmd.tm.pus_3_hk_base import (  # noqa: F401
+from .s3_hk_base import (  # noqa: F401
     Service3Base,
     ObjectIdU32,
     HkContentType,

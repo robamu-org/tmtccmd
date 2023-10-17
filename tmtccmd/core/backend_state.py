@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from .base import ModeWrapper, BackendRequest
-from tmtccmd.tc.ccsds_seq_sender import SeqResultWrapper, SenderMode
+from tmtccmd.tmtc.ccsds_seq_sender import SeqResultWrapper, SenderMode
 
 
 class BackendState:

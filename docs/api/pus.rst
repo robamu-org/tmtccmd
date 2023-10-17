@@ -28,7 +28,7 @@ Service 1 Telecommand Verification Module
 Service 2 Raw Commanding Telemetry Module
 -------------------------------------------
 
-.. automodule:: tmtccmd.tm.pus_2_rawcmd
+.. automodule:: tmtccmd.pus.tm.s2_rawcmd
    :members:
    :undoc-members:
    :show-inheritance:
@@ -108,7 +108,7 @@ Service 8 Action Commanding Module
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: tmtccmd.pus.tc.s8_fsfw_funccmd
+.. automodule:: tmtccmd.pus.tc.s8_fsfw_action
    :members:
    :undoc-members:
    :show-inheritance:
@@ -157,7 +157,7 @@ Service 20 Parameter Module - FSFW support
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: tmtccmd.tm.s20_fsfw_param
+.. automodule:: tmtccmd.pus.tm.s20_fsfw_param
    :members:
    :undoc-members:
    :show-inheritance:

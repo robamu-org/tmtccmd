@@ -1,9 +1,9 @@
 import dataclasses
 import functools
 
-from tmtccmd.tc import TcHandlerBase
-from tmtccmd.tc.procedure import DefaultProcedureInfo
-from tmtccmd.tc.queue import DefaultPusQueueHelper
+from tmtccmd.tmtc import TcHandlerBase
+from tmtccmd.tmtc.procedure import DefaultProcedureInfo
+from tmtccmd.tmtc.queue import DefaultPusQueueHelper
 
 SERVICE_HANDLER_DICT = dict()
 

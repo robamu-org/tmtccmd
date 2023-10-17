@@ -21,6 +21,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Moved all `pus_*` modules located inside the `tm` and `tc` module to the new`pus/tm` `pus/tc`
   submodule.
 - Renamed all `pus_*` modules to `s_*` modules (service)
+- Unified `tc` and `tm` module into `tmtc` module.
 
 ## Removed
 

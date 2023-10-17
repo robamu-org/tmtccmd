@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple
 
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
 
-from tmtccmd.tm import TelemetryQueueT, CcsdsTmHandler
+from tmtccmd.tmtc.common import TelemetryQueueT, CcsdsTmHandler
 from tmtccmd.com import ComInterface
 
 

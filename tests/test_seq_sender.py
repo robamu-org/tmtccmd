@@ -1,5 +1,4 @@
 import time
-from collections import deque
 from typing import cast
 from unittest import TestCase
 from datetime import timedelta
@@ -7,14 +6,15 @@ from unittest.mock import MagicMock, ANY
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd.com import ComInterface
-from tmtccmd.tc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
-from tmtccmd.tc.handler import TcHandlerBase, SendCbParams
-from tmtccmd.tc.queue import QueueWrapper, DefaultPusQueueHelper
+from tmtccmd.tmtc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
+from tmtccmd.tmtc.handler import TcHandlerBase, SendCbParams
+from tmtccmd.tmtc.procedure import DefaultProcedureInfo
+from tmtccmd.tmtc.queue import QueueWrapper, DefaultPusQueueHelper
 
 
 class TestSendReceive(TestCase):
     def setUp(self) -> None:
-        self.queue_wrapper = QueueWrapper(info=None, queue=deque())
+        self.queue_wrapper = QueueWrapper.empty()
         self.queue_helper = DefaultPusQueueHelper(
             self.queue_wrapper,
             tc_sched_timestamp_len=4,
@@ -45,7 +45,7 @@ class TestSendReceive(TestCase):
         self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
         send_cb_params = cast(SendCbParams, call_args.args[0])
-        self.assertIsNone(send_cb_params.info.base)
+        self.assertEqual(send_cb_params.info.base, DefaultProcedureInfo.empty())
         raw_tc_entry = send_cb_params.entry.to_raw_tc_entry()
         self.assertEqual(raw_tc_entry.tc, bytes([0, 1, 2]))
         # Queue should be empty now

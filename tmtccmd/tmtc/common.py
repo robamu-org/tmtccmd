@@ -1,10 +1,10 @@
 import enum
+import abc
 import logging
-from abc import abstractmethod, ABC
-from typing import Any, Deque, List, Union, Dict, Optional
+from typing import Deque, List, Union, Any, Dict, Optional
+from spacepackets.ecss.tm import PusTelemetry
+from .base import PusTmInfoInterface, PusTmInterface
 
-from spacepackets.ecss import PusTelemetry
-from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
 
 TelemetryListT = List[bytes]
 TelemetryQueueT = Deque[bytes]
@@ -17,20 +17,7 @@ PusIFListT = List[Union[PusTmInfoInterface, PusTmInterface]]
 PusIFQueueT = Deque[PusIFListT]
 
 
-class TmTypes(enum.Enum):
-    NONE = enum.auto
-    CCSDS_SPACE_PACKETS = enum.auto
-
-
-class TmHandlerBase:
-    def __init__(self, tm_type: TmTypes):
-        self._tm_type = tm_type
-
-    def get_type(self):
-        return self._tm_type
-
-
-class SpecificApidHandlerBase(ABC):
+class SpecificApidHandlerBase(abc.ABC):
     """Abstract base class for an CCSDS APID specific handler. The user can implement a TM handler
     by implementing this class and then adding it to the :py:class:`CcsdsTmHandler`.
     If a CCSDS space packet with a specific APID is received, it will be routed to this handler
@@ -41,14 +28,14 @@ class SpecificApidHandlerBase(ABC):
         self.apid = apid
         self.user_args: Any = user_args
 
-    @abstractmethod
+    @abc.abstractmethod
     def handle_tm(self, _packet: bytes, _user_args: Any):
         logging.getLogger(__name__).warning(
             f"No TM handling implemented for APID {self.apid}"
         )
 
 
-class GenericApidHandlerBase(ABC):
+class GenericApidHandlerBase(abc.ABC):
     """This class is similar to the :py:class:`SpecificApidHandlerBase` but it is not specific
     for an APID and the found APID will be passed to the callback
     """
@@ -56,7 +43,7 @@ class GenericApidHandlerBase(ABC):
     def __init__(self, user_args: Any):
         self.user_args: Any = user_args
 
-    @abstractmethod
+    @abc.abstractmethod
     def handle_tm(self, apid: int, _packet: bytes, _user_args: Any):
         pass
 
@@ -70,6 +57,17 @@ class DefaultApidHandler(GenericApidHandlerBase):
 
 HandlerDictT = Dict[int, SpecificApidHandlerBase]
 
+class TmTypes(enum.Enum):
+    NONE = enum.auto
+    CCSDS_SPACE_PACKETS = enum.auto
+
+
+class TmHandlerBase:
+    def __init__(self, tm_type: TmTypes):
+        self._tm_type = tm_type
+
+    def get_type(self):
+        return self._tm_type
 
 class CcsdsTmHandler(TmHandlerBase):
     """Generic CCSDS handler class. The user can create an instance of this class to handle
