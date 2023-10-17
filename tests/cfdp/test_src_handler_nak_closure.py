@@ -1,11 +1,19 @@
+import os
 from pathlib import Path
+import random
+import sys
 from unittest.mock import MagicMock
 
-from spacepackets.cfdp import ConditionCode, Direction
+from spacepackets.cfdp import ConditionCode, Direction, DirectiveType, TransmissionMode
 from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
-from spacepackets.util import UnsignedByteField, ByteFieldU16, ByteFieldEmpty
-from tmtccmd.cfdp.defs import CfdpStates
+from spacepackets.util import (
+    ByteFieldU8,
+    UnsignedByteField,
+    ByteFieldU16,
+    ByteFieldEmpty,
+)
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.defs import (
     InvalidPduDirection,
     InvalidSourceId,
@@ -18,25 +26,38 @@ from .test_src_handler import TestCfdpSourceHandler
 
 class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
     def setUp(self) -> None:
-        self.common_setup(True)
+        self.common_setup(True, TransmissionMode.UNACKNOWLEDGED)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
 
-    def test_empty_file_pdu_generation(self):
-        self._common_empty_file_test()
+    def test_empty_file_pdu_generation_nacked_by_remote_cfg(self):
+        self._common_empty_file_test(None)
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
+
+    def test_empty_file_pdu_generation_nacked_explicitely(self):
+        self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
+        self._common_empty_file_test(TransmissionMode.UNACKNOWLEDGED)
+        self._pass_simple_finish_pdu_to_source_handler()
+        # Transaction should be finished
+        fsm_res = self.source_handler.state_machine()
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
-        self._common_small_file_test(True, file_content)
-        self._verify_eof_indication()
+        transaction_id, _, _, _ = self._common_small_file_test(
+            TransmissionMode.UNACKNOWLEDGED, True, file_content
+        )
+        self._verify_eof_indication(transaction_id)
         self.source_handler.state_machine()
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -45,6 +66,36 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         finish_pdu.pdu_file_directive.pdu_header.direction = Direction.TOWARDS_RECEIVER
         with self.assertRaises(InvalidPduDirection):
             self.source_handler.insert_packet(finish_pdu)
+
+    def test_cancelled_transaction(self):
+        # This tests generates two file data PDUs
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(self.file_segment_len * 2)
+        else:
+            rand_data = os.urandom(self.file_segment_len * 2)
+        self.source_id = ByteFieldU8(1)
+        self.dest_id = ByteFieldU8(2)
+        self.source_handler.source_id = self.source_id
+        dest_path = Path("/tmp/hello_two_segments_copy.txt")
+        # The calculated CRC in the EOF (Cancel) PDU will only be calculated for the first segment
+        transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
+            dest_path,
+            rand_data[0 : self.file_segment_len],
+        )
+        self._first_file_segment_handling(self.source_handler, rand_data)
+        self.assertTrue(self.source_handler.cancel_request(transaction_id))
+        self.assertEqual(self.source_handler.step, TransactionStep.SENDING_EOF)
+        next_packet = self.source_handler.get_next_packet()
+        assert next_packet is not None
+        self.assertTrue(next_packet.is_file_directive)
+        self.assertEqual(next_packet.pdu_directive_type, DirectiveType.EOF_PDU)
+        eof_pdu = next_packet.to_eof_pdu()
+        self.assertEqual(crc32, eof_pdu.file_checksum)
+        self.assertEqual(eof_pdu.file_size, self.file_segment_len)
+        self.assertEqual(eof_pdu.file_size, file_size)
+        fsm_res = self.source_handler.state_machine()
+        self.expected_cfdp_state = CfdpState.IDLE
+        self._state_checker(fsm_res, False, TransactionStep.IDLE)
 
     def test_invalid_source_id_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -84,7 +135,9 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def _pass_simple_finish_pdu_to_source_handler(self):
         self._state_checker(
-            None, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.WAIT_FOR_FINISH
+            None,
+            False,
+            TransactionStep.WAITING_FOR_FINISHED,
         )
         self.source_handler.insert_packet(self._prepare_finish_pdu())
 

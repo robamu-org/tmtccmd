@@ -2,6 +2,8 @@
 external hardware or an extra socket
 """
 from typing import Optional
+from tmtccmd.version import get_version
+import deprecation
 
 from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.pus_1_verification import (
@@ -26,7 +28,15 @@ class DummyHandler:
         self.current_ssc = 0
         self.reply_pending = False
 
+    @deprecation.deprecated(
+        deprecated_in="6.0.0",
+        current_version=get_version(),
+        details="Use insert_telecommand instead",
+    )
     def pass_telecommand(self, data: bytearray):
+        self.insert_telecommand(data)
+
+    def insert_telecommand(self, data: bytes):
         self.last_tc = PusTelecommand.unpack(data)
         self.reply_pending = True
         self.generate_reply_package()
@@ -40,6 +50,7 @@ class DummyHandler:
                 current_time_stamp = CdsShortTimestamp.from_now()
                 tm_packer = Service1Tm(
                     subservice=Pus1Subservice.TM_ACCEPTANCE_SUCCESS,
+                    apid=self.last_tc.apid,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
@@ -54,6 +65,7 @@ class DummyHandler:
                 self.next_telemetry_package.append(tm_packet_raw)
                 tm_packer = Service1Tm(
                     subservice=Pus1Subservice.TM_START_SUCCESS,
+                    apid=self.last_tc.apid,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
@@ -68,6 +80,7 @@ class DummyHandler:
 
                 tm_packer = Service17Tm(
                     subservice=Pus17Subservice.TM_REPLY,
+                    apid=self.last_tc.apid,
                     time_provider=current_time_stamp,
                 )
                 tm_packet_raw = tm_packer.pack()
@@ -76,6 +89,7 @@ class DummyHandler:
 
                 tm_packer = Service1Tm(
                     subservice=Pus1Subservice.TM_COMPLETION_SUCCESS,
+                    apid=self.last_tc.apid,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
@@ -131,4 +145,4 @@ class DummyComIF(ComInterface):
 
     def send(self, data: bytearray):
         if data is not None:
-            self.dummy_handler.pass_telecommand(data)
+            self.dummy_handler.insert_telecommand(data)

@@ -38,7 +38,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.defs import CfdpStates, TransactionId
+from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler.common import PacketDestination, get_packet_destination
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
@@ -46,7 +46,7 @@ from tmtccmd.cfdp.handler.defs import (
     FsmNotCalledAfterPacketInsertion,
     InvalidDestinationId,
     InvalidPduDirection,
-    PacketSendNotConfirmed,
+    UnretrievedPdusToBeSent,
     NoRemoteEntityCfgFound,
 )
 from tmtccmd.cfdp.user import (
@@ -115,7 +115,7 @@ class TransactionStep(enum.Enum):
 
 @dataclass
 class DestStateWrapper:
-    state: CfdpStates = CfdpStates.IDLE
+    state: CfdpState = CfdpState.IDLE
     transaction: TransactionStep = TransactionStep.IDLE
     transaction_id: Optional[TransactionId] = None
     packet_ready: bool = False
@@ -193,9 +193,9 @@ class DestHandler:
     having sent any packets which need to be sent to the sender of a file transaction."""
 
     def state_machine(self) -> FsmResult:
-        if self.states.state == CfdpStates.IDLE:
+        if self.states.state == CfdpState.IDLE:
             self.__idle_fsm()
-        if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             self.__busy_naked_fsm()
         return FsmResult(self.states, self.pdu_holder)
 
@@ -208,7 +208,7 @@ class DestHandler:
         self._params.reset()
         # Not fully sure this is the best approach, but I think this is ok for now
         self._params.transaction_id = None
-        self.states.state = CfdpStates.IDLE
+        self.states.state = CfdpState.IDLE
         self.states.transaction = TransactionStep.IDLE
 
     def insert_packet(self, packet: GenericPduPacket):
@@ -244,7 +244,7 @@ class DestHandler:
             raise NoRemoteEntityCfgFound(entity_id=packet.dest_entity_id)
         if get_packet_destination(packet) == PacketDestination.SOURCE_HANDLER:
             raise InvalidPduForDestHandler(packet)
-        if self.states.state == CfdpStates.IDLE and (
+        if self.states.state == CfdpState.IDLE and (
             packet.pdu_type == PduType.FILE_DATA
             or packet.directive_type != DirectiveType.METADATA_PDU  # type: ignore
         ):
@@ -254,7 +254,7 @@ class DestHandler:
         if packet.pdu_type == PduType.FILE_DIRECTIVE and (
             packet.directive_type  # type: ignore
             in [DirectiveType.ACK_PDU, DirectiveType.PROMPT_PDU]
-            and self.states.state == CfdpStates.BUSY_CLASS_1_NACKED
+            and self.states.state == CfdpState.BUSY_CLASS_1_NACKED
         ):
             raise PduIgnoredForDest(
                 PduIgnoredReason.ACK_MODE_PACKET_INVALID_MODE, packet
@@ -270,9 +270,7 @@ class DestHandler:
 
     def advance_fsm(self):
         if self.states.packet_ready:
-            raise PacketSendNotConfirmed(
-                f"Must send current packet {self.pdu_holder.base} first"
-            )
+            raise UnretrievedPdusToBeSent()
         if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
             self.finish()
 
@@ -283,10 +281,10 @@ class DestHandler:
     def __transaction_start_metadata_pdu_to_params(self, metadata_pdu: MetadataPdu):
         self._params.reset()
         self.states.transaction = TransactionStep.TRANSACTION_START
-        if metadata_pdu.pdu_header.trans_mode == TransmissionMode.UNACKNOWLEDGED:
-            self.states.state = CfdpStates.BUSY_CLASS_1_NACKED
-        elif metadata_pdu.pdu_header.trans_mode == TransmissionMode.ACKNOWLEDGED:
-            self.states.state = CfdpStates.BUSY_CLASS_2_ACKED
+        if metadata_pdu.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
+            self.states.state = CfdpState.BUSY_CLASS_1_NACKED
+        elif metadata_pdu.transmission_mode == TransmissionMode.ACKNOWLEDGED:
+            self.states.state = CfdpState.BUSY_CLASS_2_ACKED
         self._crc_helper.checksum_type = metadata_pdu.checksum_type
         self._params.closure_requested = metadata_pdu.closure_requested
         if metadata_pdu.dest_file_name is None:
@@ -332,7 +330,7 @@ class DestHandler:
             )
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
-        if self.states.state != CfdpStates.IDLE:
+        if self.states.state != CfdpState.IDLE:
             return False
         self.__transaction_start_metadata_pdu_to_params(metadata_pdu)
         # I am not fully sure whether a remote configuration is strictly required for
@@ -456,12 +454,12 @@ class DestHandler:
         ):
             self._params.condition_code = ConditionCode.NO_ERROR
         self._notice_of_completion()
-        if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             if self._params.closure_requested:
                 self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
             else:
                 self.finish()
-        elif self.states.state == CfdpStates.BUSY_CLASS_2_ACKED:
+        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
             self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
 
     def _handle_eof_pdu(self, eof_pdu: EofPdu):
@@ -482,9 +480,9 @@ class DestHandler:
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)  # type: ignore
             if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:  # type: ignore
-                if self.states.state == CfdpStates.BUSY_CLASS_1_NACKED:
+                if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
                     self.states.transaction = TransactionStep.TRANSFER_COMPLETION
-                elif self.states.state == CfdpStates.BUSY_CLASS_2_ACKED:
+                elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
                     self.states.transaction = TransactionStep.SENDING_ACK_PDU
 
     def _checksum_verify(self):
@@ -511,9 +509,7 @@ class DestHandler:
 
     def _prepare_finished_pdu(self):
         if self.states.packet_ready:
-            raise PacketSendNotConfirmed(
-                f"Must send current packet {self.pdu_holder.base} first"
-            )
+            raise UnretrievedPdusToBeSent()
         finished_params = FinishedParams(
             condition_code=self._params.condition_code,
             # TODO: Find out how those are used
@@ -525,4 +521,4 @@ class DestHandler:
             # The configuration was cached when the first metadata arrived
             pdu_conf=self._params.pdu_conf,
         )
-        self.pdu_holder.base = finished_pdu
+        self.pdu_holder.pdu = finished_pdu
