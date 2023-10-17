@@ -48,6 +48,7 @@ from tmtccmd.cfdp.handler import NoRemoteEntityCfgFound
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
+from .common import TestCheckTimerProvider
 
 
 @dataclasses.dataclass
@@ -98,14 +99,20 @@ class TestCfdpDestHandler(TestCase):
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
         self.dest_handler = DestHandler(
-            self.local_cfg, self.cfdp_user, self.remote_cfg_table
+            self.local_cfg,
+            self.cfdp_user,
+            self.remote_cfg_table,
+            TestCheckTimerProvider(),
         )
 
     def test_remote_cfg_does_not_exist(self):
         # Re-create empty table
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.dest_handler = DestHandler(
-            self.local_cfg, self.cfdp_user, self.remote_cfg_table
+            self.local_cfg,
+            self.cfdp_user,
+            self.remote_cfg_table,
+            TestCheckTimerProvider(),
         )
         metadata_params = MetadataParams(
             checksum_type=ChecksumType.NULL_CHECKSUM,

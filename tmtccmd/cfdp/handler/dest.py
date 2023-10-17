@@ -39,6 +39,8 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
     RemoteEntityCfg,
 )
+from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
+from tmtccmd.util.countdown import Countdown
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler.common import PacketDestination, get_packet_destination
 from tmtccmd.cfdp.handler.crc import Crc32Helper
@@ -138,6 +140,8 @@ class _DestFieldWrapper:
 
     transaction_id: Optional[TransactionId] = None
     remote_cfg: Optional[RemoteEntityCfg] = None
+    check_timer: Optional[Countdown] = None
+    current_check_count: int = 0
     closure_requested: bool = False
     finished_params: FinishedParams = FinishedParams.empty()
     completion_disposition: CompletionDisposition = CompletionDisposition.COMPLETED
@@ -191,11 +195,13 @@ class DestHandler:
         cfg: LocalEntityCfg,
         user: CfdpUserBase,
         remote_cfg_table: RemoteEntityCfgTable,
+        check_timer_provider: CheckTimerProvider,
     ):
         self.cfg = cfg
         self.remote_cfg_table = remote_cfg_table
         self.states = DestStateWrapper()
         self.user = user
+        self.check_timer_provider = check_timer_provider
         self._params = _DestFieldWrapper()
         self._cksum_verif_helper: Crc32Helper = Crc32Helper(
             ChecksumType.NULL_CHECKSUM, user.vfs
@@ -394,7 +400,8 @@ class DestHandler:
             self._handle_transfer_completion()
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
-            self.states.packets_ready = True
+        if self.states.step == TransactionStep.WAITING_FOR_CHECK_TIMER:
+            self._check_limit_handling()
 
     def __receiving_fd_and_eof_pdus(self):
         if self._params.last_inserted_packet.pdu is None:
@@ -433,8 +440,11 @@ class DestHandler:
                 # CFDP 4.6.1.2.7 c): If the sum of the FD PDU offset and segment size exceeds
                 # the file size indicated in the first previously received EOF (No Error) PDU, if
                 # any, then then a File Size Error fault shall be declared.
-                self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
-                return
+                if (
+                    self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
+                    != FaultHandlerCode.IGNORE_ERROR
+                ):
+                    return
             # Ensure that the progress value is always incremented
             if offset + len(file_data_pdu.file_data) > self._params.fp.progress:
                 self._params.fp.progress = offset + len(file_data_pdu.file_data)
@@ -490,8 +500,11 @@ class DestHandler:
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             # CFDP 4.6.1.2.9: Declare file size error if progress exceeds file size
             if self._params.fp.progress > self._params.fp.file_size_eof:
-                self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
-                return
+                if (
+                    self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
+                    != FaultHandlerCode.IGNORE_ERROR
+                ):
+                    return
             if self._params.fp.file_size_eof != self._params.fp.file_size:
                 # Can or should this ever happen for a No Error EOF? Treat this like a non-fatal
                 # error for now..
@@ -527,6 +540,18 @@ class DestHandler:
             self._params.finished_params.condition_code = (
                 ConditionCode.FILE_CHECKSUM_FAILURE
             )
+            self.states.step = TransactionStep.WAITING_FOR_CHECK_TIMER
+            if (
+                self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
+                != FaultHandlerCode.IGNORE_ERROR
+            ):
+                return
+            assert self._params.remote_cfg is not None
+            self._params.check_timer = self.check_timer_provider.provide_check_timer(
+                self.cfg.local_entity_id,
+                self._params.remote_cfg.entity_id,
+                EntityType.RECEIVING,
+            )
 
     def _notice_of_completion(self):
         if self._params.completion_disposition == CompletionDisposition.COMPLETED:
@@ -561,8 +586,20 @@ class DestHandler:
         self._pdus_to_be_sent.append(PduHolder(packet))
         self.states.packets_ready = True
 
-    def _declare_fault(self, cond: ConditionCode):
+    def _check_limit_handling(self):
+        assert self._params.check_timer is not None
+        assert self._params.remote_cfg is not None
+        if self._params.check_timer.timed_out():
+            self._params.current_check_count += 1
+            if self._params.current_check_count == self._params.remote_cfg.check_limit:
+                self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
+            else:
+                self._params.check_timer.reset()
+
+    def _declare_fault(self, cond: ConditionCode) -> FaultHandlerCode:
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
+        if fh is None:
+            raise ValueError(f"invalid condition code {cond!r} for fault declaration")
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self._notice_of_cancellation(cond)
         elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
@@ -570,6 +607,7 @@ class DestHandler:
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
         self.cfg.default_fault_handlers.report_fault(cond)
+        return fh
 
     def _notice_of_cancellation(self, condition_code: ConditionCode):
         # TODO: Implement
