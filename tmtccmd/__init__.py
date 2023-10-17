@@ -1,4 +1,6 @@
-"""Contains core methods called by entry point files to setup and start a tmtccmd application"""
+"""Contains core methods called by entry point files to setup and start a tmtccmd application.
+It also re-exports commonly used classes and functions.
+"""
 import logging
 import sys
 import os

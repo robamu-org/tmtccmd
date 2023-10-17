@@ -6,8 +6,7 @@ Submodules:
   by the framework to retrieve certain configuration from the user.
 * :py:mod:`tmtccmd.config.args` - Various helper methods and classes to create the argument parsers
   and arguments converts to create the data structures expected by this library from passed CLI
-  arguments.
-"""
+  arguments."""
 import logging
 from pathlib import Path
 from typing import Optional
