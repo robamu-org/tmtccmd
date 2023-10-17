@@ -43,7 +43,7 @@ from tmtccmd.tc import (
     TcHandlerBase,
     QueueWrapper,
 )
-from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
+from tmtccmd.pus.s5_fsfw_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
 from tmtccmd.fsfw.tmtc_printer import FsfwTmTcPrinter
 
@@ -61,6 +61,7 @@ class ExampleHookClass(HookBase):
         super().__init__(json_cfg_path=json_cfg_path)
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
+        assert self.cfg_path is not None
         print("Communication interface assignment function was called")
         from tmtccmd.config.com import (
             create_com_interface_default,
@@ -72,6 +73,7 @@ class ExampleHookClass(HookBase):
             json_cfg_path=self.cfg_path,
             space_packet_ids=None,
         )
+        assert cfg is not None
         return create_com_interface_default(cfg)
 
     def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
