@@ -1,15 +1,10 @@
 import enum
 import logging
 from abc import abstractmethod, ABC
-from typing import Deque, List, Union, Dict, Optional
+from typing import Any, Deque, List, Union, Dict, Optional
 
 from spacepackets.ecss import PusTelemetry
 from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
-from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
-from tmtccmd.tm.pus_8_fsfw_funccmd import Service8FsfwTm
-from tmtccmd.tm.pus_3_fsfw_hk import Service3FsfwTm
-from tmtccmd.tm.pus_20_fsfw_param import Service20FsfwTm
-from tmtccmd.tm.pus_200_fsfw_mode import Service200FsfwTm
 
 TelemetryListT = List[bytes]
 TelemetryQueueT = Deque[bytes]
@@ -42,12 +37,12 @@ class SpecificApidHandlerBase(ABC):
     using the :py:func:`handle_tm` callback function
     """
 
-    def __init__(self, apid: int, user_args: any):
+    def __init__(self, apid: int, user_args: Any):
         self.apid = apid
-        self.user_args: any = user_args
+        self.user_args: Any = user_args
 
     @abstractmethod
-    def handle_tm(self, _packet: bytes, _user_args: any):
+    def handle_tm(self, _packet: bytes, _user_args: Any):
         logging.getLogger(__name__).warning(
             f"No TM handling implemented for APID {self.apid}"
         )
@@ -58,16 +53,16 @@ class GenericApidHandlerBase(ABC):
     for an APID and the found APID will be passed to the callback
     """
 
-    def __init__(self, user_args: any):
-        self.user_args: any = user_args
+    def __init__(self, user_args: Any):
+        self.user_args: Any = user_args
 
     @abstractmethod
-    def handle_tm(self, apid: int, _packet: bytes, _user_args: any):
+    def handle_tm(self, apid: int, _packet: bytes, _user_args: Any):
         pass
 
 
 class DefaultApidHandler(GenericApidHandlerBase):
-    def handle_tm(self, apid: int, _packet: bytes, _user_args: any):
+    def handle_tm(self, apid: int, _packet: bytes, _user_args: Any):
         logging.getLogger(__name__).warning(
             f"No TM handling implemented for unknown APID {apid}"
         )
