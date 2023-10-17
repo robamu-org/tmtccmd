@@ -6,8 +6,8 @@ from typing import List, Optional
 
 from spacepackets.util import get_printable_data_string, PrintFormats
 
-from tmtccmd.pus.s8_fsfw_funccmd import Service8FsfwTm
-from tmtccmd.tm.base import PusTmInfoInterface, PusTmInterface
+from tmtccmd.pus.s8_fsfw_action import Service8FsfwTm
+from tmtccmd.tmtc.base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdBase
 from tmtccmd.pus.tm.s3_hk_base import HkContentType
 from tmtccmd.logging import get_current_time_string

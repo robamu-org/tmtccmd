@@ -27,10 +27,10 @@ The TC handler
 ---------------
 
 This object is responsible for the telecommand handling. Therefore this object implements
-the :py:class:`tmtccmd.tc.handler.TcHandlerBase`.
+the :py:class:`tmtccmd.tmtc.handler.TcHandlerBase`.
 
 In the example case, the handler object is reponsible for returning telecommand queues based on
-input information. This task is done by the :py:meth:`tmtccmd.tc.handler.TcHandlerBase.feed_cb`
+input information. This task is done by the :py:meth:`tmtccmd.tmtc.handler.TcHandlerBase.feed_cb`
 callback method.
 
 The actual handling of telecommand queue entries is done in the
@@ -44,7 +44,7 @@ The PUS TM handler
 
 This object is responsible for the handling of PUS telemetry. In the example case, the
 handler object is responsible space packets with a certain application process identifier (APID).
-Therefore, this object implements the :py:class:`tmtccmd.tm.SpecificApidHandlerBase`.
+Therefore, this object implements the :py:class:`tmtccmd.tmtc.SpecificApidHandlerBase`.
 
 The `handle_tm` method implementation is the primary functions where incoming PUS packets
 are handled. This can something like prinouts or logging, either to a file or to a database.

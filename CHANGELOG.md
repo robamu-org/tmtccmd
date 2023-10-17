@@ -21,6 +21,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Moved all `pus_*` modules located inside the `tm` and `tc` module to the new`pus/tm` `pus/tc`
   submodule.
 - Renamed all `pus_*` modules to `s_*` modules (service)
+- Renamed `funccmd` PUS modules to `action`.
 - Unified `tc` and `tm` module into `tmtc` module.
 
 ## Removed
@@ -29,6 +30,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   deprecated since v4.0.0a0.
 - `SerialCommunicationType`: Removed `FIXED_FRAME_BASED` variant.
 - Hardcoded AT91 paths in `QEMUComIF`.
+- Removed deprecated TM modules.
 
 ## Fixed
 

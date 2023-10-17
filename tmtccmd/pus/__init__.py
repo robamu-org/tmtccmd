@@ -4,8 +4,6 @@ telecommands.
 Content:
 
 * :py:class:`tmtccmd.pus.VerificationWrapper` helper class
-* Re-export of the most important PUS service specific data structures from their respective
-  :py:mod:`tmtccmd.tc` and :py:mod:`tmtccmd.tm` module.
 """
 from enum import IntEnum
 from typing import Optional

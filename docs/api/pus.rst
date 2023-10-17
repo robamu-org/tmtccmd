@@ -54,7 +54,7 @@ Service 3 Housekeeping Modules
 Service 5 Event Module
 -------------------------
 
-.. automodule:: tmtccmd.tc.s5_event
+.. automodule:: tmtccmd.pus.tc.s5_event
    :members:
    :undoc-members:
    :show-inheritance:

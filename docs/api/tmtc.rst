@@ -1,4 +1,4 @@
-tmtccmd.tc package
+TMTC submodule
 =======================
 
 Module contents
