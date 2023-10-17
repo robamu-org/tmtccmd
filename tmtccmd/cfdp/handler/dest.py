@@ -115,8 +115,10 @@ class TransactionStep(enum.Enum):
     TRANSACTION_START = 1
     """Metadata was received, which triggered a transaction start."""
     RECEIVING_FILE_DATA = 2
-    WAITING_FOR_CHECK_TIMER = 3
-    """This is the check timer step as specified in chapter 4.6.3.3 b) of the standard."""
+    RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING = 3
+    """This is the check timer step as specified in chapter 4.6.3.3 b) of the standard.
+    The destination handler will still check for file data PDUs which might lead to a full
+    file transfer completion."""
     SENDING_EOF_ACK_PDU = 4
     """Sending the ACK (EOF) packet."""
     TRANSFER_COMPLETION = 5
@@ -394,14 +396,17 @@ class DestHandler:
 
     def __non_idle_fsm(self):
         self._fsm_advancement_after_packets_were_sent()
-        if self.states.step == TransactionStep.RECEIVING_FILE_DATA:
+        if self.states.step in [
+            TransactionStep.RECEIVING_FILE_DATA,
+            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
+        ]:
             self.__receiving_fd_and_eof_pdus()
+        if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
+            self._check_limit_handling()
         if self.states.step == TransactionStep.TRANSFER_COMPLETION:
             self._handle_transfer_completion()
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
-        if self.states.step == TransactionStep.WAITING_FOR_CHECK_TIMER:
-            self._check_limit_handling()
 
     def __receiving_fd_and_eof_pdus(self):
         if self._params.last_inserted_packet.pdu is None:
@@ -528,6 +533,10 @@ class DestHandler:
                 self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
 
     def _checksum_verify(self):
+        if self._params.fp.crc32 is None:
+            # This can happen if no EOF has been received but the transaction is still completed
+            # or cancelled for some reason.
+            return
         crc32 = self._cksum_verif_helper.calc_for_file(
             self._params.fp.file_name, self._params.fp.progress
         )
@@ -538,7 +547,7 @@ class DestHandler:
             self._params.finished_params.condition_code = (
                 ConditionCode.FILE_CHECKSUM_FAILURE
             )
-            self.states.step = TransactionStep.WAITING_FOR_CHECK_TIMER
+            self.states.step = TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING
             if (
                 self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
                 != FaultHandlerCode.IGNORE_ERROR
@@ -607,9 +616,9 @@ class DestHandler:
         self.cfg.default_fault_handlers.report_fault(cond)
         return fh
 
-    def _notice_of_cancellation(self, condition_code: ConditionCode):
-        # TODO: Implement
-        pass
+    def _notice_of_cancellation(self, _: ConditionCode):
+        self.states.step = TransactionStep.TRANSFER_COMPLETION
+        self._params.completion_disposition = CompletionDisposition.CANCELED
 
     def _notice_of_suspension(self):
         # TODO: Implement
