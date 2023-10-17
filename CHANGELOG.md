@@ -22,7 +22,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   submodule.
 - Renamed all `pus_*` modules to `s_*` modules (service)
 - Renamed `funccmd` PUS modules to `action`.
-- Unified `tc` and `tm` module into `tmtc` module.
+- Unified `tc` and `tm` module into `tmtc` module. All `tmtccmd.tm` and `tmtccmd.tc` imports
+  needs to be replaced with `tmtccmd.tmtc`.
 
 ## Removed
 
