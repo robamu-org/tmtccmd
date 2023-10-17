@@ -18,6 +18,9 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   reasoning about the logic of those handlers, and subsequently extending and adapting them
   a lot easier. Multiple packets can still be inserted by calling the `insert_packet` and
   `state_machine` function consecutively.
+- Moved all `pus_*` modules located inside the `tm` and `tc` module to the new`pus/tm` `pus/tc`
+  submodule.
+- Renamed all `pus_*` modules to `s_*` modules (service)
 
 ## Removed
 
