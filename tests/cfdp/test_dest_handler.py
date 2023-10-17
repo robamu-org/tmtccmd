@@ -88,7 +88,7 @@ class TestCfdpDestHandler(TestCase):
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
-            check_limit_provider=None,
+            check_limit=2,
             crc_type=ChecksumType.CRC_32,
             closure_requested=False,
             crc_on_transmission=False,
@@ -140,7 +140,7 @@ class TestCfdpDestHandler(TestCase):
     def test_empty_file_reception(self):
         self._generic_empty_file_transfer_init()
         self.assertEqual(
-            self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
+            self.dest_handler.states.step, TransactionStep.RECEIVING_FILE_DATA
         )
         eof_pdu = EofPdu(
             file_size=0, file_checksum=NULL_CHECKSUM_U32, pdu_conf=self.src_pdu_conf
@@ -172,7 +172,7 @@ class TestCfdpDestHandler(TestCase):
         self.closure_requested = True
         self._generic_empty_file_transfer_init()
         self.assertEqual(
-            self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
+            self.dest_handler.states.step, TransactionStep.RECEIVING_FILE_DATA
         )
         eof_pdu = EofPdu(
             file_size=0, file_checksum=NULL_CHECKSUM_U32, pdu_conf=self.src_pdu_conf
@@ -376,9 +376,13 @@ class TestCfdpDestHandler(TestCase):
             self.cfdp_user.transaction_finished_indication.call_args.args[0],
         )
         # At least one segment was stored
-        self.assertEqual(finished_args.file_status, FileDeliveryStatus.FILE_RETAINED)
         self.assertEqual(
-            finished_args.condition_code, ConditionCode.FILE_CHECKSUM_FAILURE
+            finished_args.finished_params.delivery_status,
+            FileDeliveryStatus.FILE_RETAINED,
+        )
+        self.assertEqual(
+            finished_args.finished_params.condition_code,
+            ConditionCode.FILE_CHECKSUM_FAILURE,
         )
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
@@ -421,7 +425,9 @@ class TestCfdpDestHandler(TestCase):
         )
         self.assertEqual(finished_params.transaction_id, self.transaction_id)
         self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
-        self.assertEqual(finished_params.condition_code, ConditionCode.NO_ERROR)
+        self.assertEqual(
+            finished_params.finished_params.condition_code, ConditionCode.NO_ERROR
+        )
 
     def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
@@ -438,10 +444,10 @@ class TestCfdpDestHandler(TestCase):
     ):
         if fsm_res is not None:
             self.assertEqual(fsm_res.states.state, expected_state)
-            self.assertEqual(fsm_res.states.transaction, expected_transaction)
+            self.assertEqual(fsm_res.states.step, expected_transaction)
             self.assertEqual(fsm_res.states.packets_ready, packets_ready)
         self.assertEqual(self.dest_handler.states.state, expected_state)
-        self.assertEqual(self.dest_handler.states.transaction, expected_transaction)
+        self.assertEqual(self.dest_handler.states.step, expected_transaction)
         self.assertEqual(self.dest_handler.packets_ready, packets_ready)
 
     def _source_simulator_transfer_init_with_metadata(

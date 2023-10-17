@@ -11,6 +11,7 @@ from spacepackets.cfdp import (
     TransmissionMode,
 )
 from spacepackets.cfdp.pdu import FileDataPdu, FileDeliveryStatus, DeliveryCode
+from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
@@ -151,9 +152,11 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         fsm_res = self.source_handler.state_machine()
         finished_params = TransactionFinishedParams(
             transaction_id=expected_id,
-            condition_code=ConditionCode.NO_ERROR,
-            file_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
-            delivery_code=DeliveryCode.DATA_COMPLETE,
+            finished_params=FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                delivery_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
         )
         self.cfdp_user.transaction_finished_indication.assert_called_once_with(
             finished_params

@@ -95,9 +95,9 @@ class EntityType(enum.IntEnum):
     RECEIVING = 1
 
 
-class CheckLimitProvider(ABC):
+class CheckTimerProvider(ABC):
     @abc.abstractmethod
-    def provide_check_limit(
+    def provide_check_timer(
         self,
         local_entity_id: UnsignedByteField,
         remote_entity_id: UnsignedByteField,
@@ -157,11 +157,15 @@ class RemoteEntityCfg:
     default_transmission_mode:
         If the transmission mode is not supplied as part of the Put Request, it will be
         determined from this field in the remote configuration.
+    disposition_on_cancellation:
+        Determines whether an incomplete received file is discard on transaction cancellation.
+        Defaults to False.
     crc_type:
         Default checksum type used to calculate for all file transmissions to this remote entity.
-    check_limit_provider:
-        Both the source and destination handler use a check limit for the unacknowledged mode.
-        This generic provider allows the user to configure the check limit at run time as well.
+    check_limit:
+        this timer determines the expiry period for incrementing a check counter after an EOF PDU
+        is received for an incomplete file transfer. This allows out-of-order reception of file
+        data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2.
 
     """
 
@@ -172,7 +176,8 @@ class RemoteEntityCfg:
     crc_on_transmission: bool
     default_transmission_mode: TransmissionMode
     crc_type: ChecksumType
-    check_limit_provider: Optional[CheckLimitProvider]
+    check_limit: int = 2
+    disposition_on_cancellation: bool = False
     # NOTE: Only this version is supported
     cfdp_version: int = CFDP_VERSION_2
 

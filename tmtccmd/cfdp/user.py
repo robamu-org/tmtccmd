@@ -1,11 +1,11 @@
 import logging
 from abc import abstractmethod, ABC
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional, Any
 
-from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUserTlv
+from spacepackets.cfdp import ConditionCode, MessageToUserTlv
 from spacepackets.cfdp.pdu.file_data import SegmentMetadata
-from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
+from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import TransactionId
 from tmtccmd.cfdp.filestore import VirtualFilestore, HostFilestore
@@ -26,10 +26,7 @@ class MetadataRecvParams:
 @dataclass
 class TransactionFinishedParams:
     transaction_id: TransactionId
-    condition_code: ConditionCode
-    file_status: FileDeliveryStatus
-    delivery_code: DeliveryCode
-    fs_responses: List[FileStoreResponseTlv] = field(default_factory=lambda: [])
+    finished_params: FinishedParams
     status_report: Optional[Any] = None
 
 

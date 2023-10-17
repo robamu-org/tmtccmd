@@ -60,7 +60,7 @@ from tmtccmd.cfdp.handler.defs import (
     NoRemoteEntityCfgFound,
     FsmNotCalledAfterPacketInsertion,
 )
-from tmtccmd.cfdp.mib import EntityType
+from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
@@ -115,7 +115,7 @@ class _TransferFieldWrapper:
     def __init__(self, local_entity_id: UnsignedByteField, vfs: VirtualFilestore):
         self.crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, vfs)
         self.transaction: Optional[TransactionId] = None
-        self.check_limit: Optional[Countdown] = None
+        self.check_timer: Optional[Countdown] = None
         self.fp = _SourceFileParams.empty()
         self.finished_params: Optional[FinishedParams] = None
         self.remote_cfg: Optional[RemoteEntityCfg] = None
@@ -159,7 +159,7 @@ class _TransferFieldWrapper:
         self.fp.reset()
         self.remote_cfg = None
         self.transaction = None
-        self.check_limit = None
+        self.check_timer = None
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
         self.finished_params = None
@@ -237,11 +237,13 @@ class SourceHandler:
         cfg: LocalEntityCfg,
         seq_num_provider: ProvidesSeqCount,
         user: CfdpUserBase,
+        check_timer_provider: CheckTimerProvider,
     ):
         self.states = SourceStateWrapper()
         self.cfg = cfg
         self.user = user
         self.seq_num_provider = seq_num_provider
+        self.check_timer_provider = check_timer_provider
         self._params = _TransferFieldWrapper(cfg.local_entity_id, self.user.vfs)
         self._put_req: Optional[PutRequest] = None
         self._ack_ctx: _AckedModeContext = _AckedModeContext()
@@ -682,10 +684,10 @@ class SourceHandler:
             or self._inserted_pdu.pdu_directive_type != DirectiveType.FINISHED_PDU
         ):
             # TODO: Store finished PDU parameters for later processing in the notice of completion.
-            if self._params.check_limit is not None:
-                if self._params.check_limit.timed_out():
+            if self._params.check_timer is not None:
+                if self._params.check_timer.timed_out():
                     _LOGGER.warning(
-                        f"Check limit countdown: {self._params.check_limit}"
+                        f"Check limit countdown: {self._params.check_timer}"
                     )
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
             return
@@ -710,10 +712,7 @@ class SourceHandler:
                 )
             indication_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction,
-                condition_code=self._params.finished_params.condition_code,
-                file_status=self._params.finished_params.delivery_status,
-                delivery_code=self._params.finished_params.delivery_code,
-                fs_responses=self._params.finished_params.file_store_responses,
+                finished_params=self._params.finished_params,
             )
             self.user.transaction_finished_indication(indication_params)
         # Transaction finished
@@ -743,12 +742,13 @@ class SourceHandler:
         if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             if self._params.closure_requested:
                 assert self._params.remote_cfg is not None
-                if self._params.remote_cfg.check_limit_provider is not None:
-                    self._params.check_limit = self._params.remote_cfg.check_limit_provider.provide_check_limit(
+                self._params.check_timer = (
+                    self.check_timer_provider.provide_check_timer(
                         local_entity_id=self.cfg.local_entity_id,
                         remote_entity_id=self._params.remote_cfg.entity_id,
                         entity_type=EntityType.SENDING,
                     )
+                )
                 self.states.step = TransactionStep.WAITING_FOR_FINISHED
             else:
                 self.states.step = TransactionStep.NOTICE_OF_COMPLETION
