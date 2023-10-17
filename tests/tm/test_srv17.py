@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#:wq/usr/bin/env python3
 from unittest import TestCase
 
 from spacepackets.ccsds.time import CdsShortTimestamp

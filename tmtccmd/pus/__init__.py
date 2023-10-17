@@ -10,7 +10,6 @@ Content:
 from enum import IntEnum
 from typing import Optional
 
-from .s11_tc_sched import Subservice as Pus11Subservices
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import RequestId
 import spacepackets.ecss.pus_1_verification as pus_1

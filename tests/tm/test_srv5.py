@@ -1,6 +1,6 @@
 import struct
 from unittest import TestCase
-from tmtccmd.pus.tm.pus_5_fsfw_event import Service5Tm, Subservice, EventDefinition
+from tmtccmd.pus.s5_fsfw_event import Service5Tm, Subservice, EventDefinition
 
 
 class TestSrv5Tm(TestCase):

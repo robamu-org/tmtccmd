@@ -8,7 +8,7 @@ from spacepackets.ecss.pus_1_verification import (
     VerificationParams,
     FailureNotice,
 )
-from tmtccmd.tm.pus_1_verification import Service1FsfwWrapper
+from tmtccmd.pus.tm.s1_verification import Service1FsfwWrapper
 
 
 class TestVerif1TmWrapper(TestCase):
