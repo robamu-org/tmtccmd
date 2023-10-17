@@ -37,7 +37,11 @@ class ChecksumNotImplemented(Exception):
         return f"{self.checksum_type} not implemented"
 
 
-class PacketSendNotConfirmed(Exception):
+class UnretrievedPdusToBeSent(Exception):
+    pass
+
+
+class InvalidNakPdu(Exception):
     pass
 
 
@@ -62,7 +66,7 @@ class InvalidSourceId(Exception):
         self.expected_src_id = expected_src_id
         self.found_src_id = found_src_id
         super().__init__(
-            f"Expected source {self.expected_src_id}, got {self.found_src_id}"
+            f"expected source {self.expected_src_id}, got {self.found_src_id}"
         )
 
 
@@ -79,7 +83,7 @@ class InvalidDestId(Exception):
         self.expected_dest_id = expected_dest_id
         self.found_dest_id = found_dest_id
         super().__init__(
-            f"Expected destination {self.expected_dest_id}, got {self.found_dest_id}"
+            f"expected destination {self.expected_dest_id}, got {self.found_dest_id}"
         )
 
 
@@ -91,15 +95,21 @@ class InvalidDestinationId(Exception):
         self,
         expected_dest_id: UnsignedByteField,
         found_dest_id: UnsignedByteField,
-        *args,
-        **kwargs,
     ):
-        super().__init__(args, kwargs)
         self.expected_dest_id = expected_dest_id
         self.found_dest_id = found_dest_id
+        super().__init__(
+            f"expected destination {self.expected_dest_id}, got {self.found_dest_id}"
+        )
 
-    def __str__(self):
-        return f"Expected destination {self.expected_dest_id}, got {self.found_dest_id}"
+
+class InvalidTransactionSeqNum(Exception):
+    def __init__(self, expected: UnsignedByteField, received: UnsignedByteField):
+        self.expected = expected
+        self.received = received
+        super().__init__(
+            f"expected sequence number {expected}, reiceved {self.received}"
+        )
 
 
 class BusyError(Exception):

@@ -21,8 +21,6 @@ from tmtccmd.config import (
 )
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
-from tmtccmd.core.globals_manager import update_global
-from tmtccmd.config.globals import set_default_globals_pre_args_parsing
 from tmtccmd.core import ModeWrapper
 from tmtccmd.tc import (
     DefaultProcedureInfo,
@@ -83,10 +81,6 @@ def setup(setup_args: SetupWrapper):
         import colorama
 
         colorama.init()
-    if setup_args.params.use_gui:
-        set_default_globals_pre_args_parsing(setup_args.params.apid)
-    if not setup_args.params.use_gui:
-        __handle_cli_args_and_globals(setup_args)
     __SETUP_FOR_GUI = setup_args.params.use_gui
     __SETUP_WAS_CALLED = True
 
@@ -134,11 +128,6 @@ def init_printout(use_gui: bool):
         print(f"-- tmtccmd v{get_version()} GUI Mode --")
     else:
         print(f"-- tmtccmd v{get_version()} CLI Mode --")
-
-
-# TODO: Remove globals altogether
-def __handle_cli_args_and_globals(setup_args: SetupWrapper):
-    set_default_globals_pre_args_parsing(setup_args.params.apid)
 
 
 def __start_tmtc_commander_cli(tmtc_backend: BackendBase):

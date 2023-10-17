@@ -17,7 +17,7 @@ from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
 from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
 from spacepackets.util import ByteFieldU16
 
-from tmtccmd.cfdp.defs import CfdpStates, TransactionId
+from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler.dest import DestHandler
 from tmtccmd.cfdp.handler.source import SourceHandler
 from tmtccmd.cfdp.mib import (
@@ -55,7 +55,7 @@ REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     crc_on_transmission=False,
     default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
     crc_type=ChecksumType.CRC_32,
-    check_limit=None,
+    check_limit_provider=None,
 )
 REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
 REMOTE_CFG_FOR_DEST_ENTITY.entity_id = DEST_ENTITY_ID
@@ -232,16 +232,20 @@ def source_entity_handler(source_handler: SourceHandler):
         except Empty:
             no_packet_received = True
         fsm_result = source_handler.state_machine()
-        if fsm_result.states.packet_ready:
-            SOURCE_TO_DEST_QUEUE.put(fsm_result.pdu_holder.pdu)
-            source_handler.confirm_packet_sent_advance_fsm()
+        no_packet_sent = False
+        if fsm_result.states.packets_ready:
+            next_packet = source_handler.get_next_packet()
+            # Send all packets which need to be sent.
+            while next_packet is not None:
+                SOURCE_TO_DEST_QUEUE.put(next_packet.pdu)
+                next_packet = source_handler.get_next_packet()
             no_packet_sent = False
         else:
             no_packet_sent = True
         if no_packet_received and no_packet_sent:
             time.sleep(0.5)
         # Transaction done
-        if fsm_result.states.state == CfdpStates.IDLE:
+        if fsm_result.states.state == CfdpState.IDLE:
             _LOGGER.info("Source entity operation done.")
             break
 
@@ -268,7 +272,7 @@ def dest_entity_handler(dest_handler: DestHandler):
         if no_packet_received and no_packet_sent:
             time.sleep(0.5)
         # Transaction done
-        if not first_packet and fsm_result.states.state == CfdpStates.IDLE:
+        if not first_packet and fsm_result.states.state == CfdpState.IDLE:
             _LOGGER.info("Destination entity operation done.")
             break
     with open(DEST_FILE) as file:

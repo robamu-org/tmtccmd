@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod, ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional, Any
 
 from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUserTlv
@@ -29,7 +29,7 @@ class TransactionFinishedParams:
     condition_code: ConditionCode
     file_status: FileDeliveryStatus
     delivery_code: DeliveryCode
-    fs_responses: Optional[List[FileStoreResponseTlv]] = None
+    fs_responses: List[FileStoreResponseTlv] = field(default_factory=lambda: [])
     status_report: Optional[Any] = None
 
 
