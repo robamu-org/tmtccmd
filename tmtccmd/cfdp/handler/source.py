@@ -406,6 +406,7 @@ class SourceHandler:
         self._inserted_pdu.pdu = packet
 
     def get_next_packet(self) -> Optional[PduHolder]:
+        """Retrieve the next packet which should be sent to the remote CFDP destination entity."""
         if len(self._pdus_to_be_sent) <= 1:
             self.states.packets_ready = False
         if len(self._pdus_to_be_sent) == 0:

@@ -201,22 +201,6 @@ class DestHandler:
             self.__non_idle_fsm()
         return FsmResult(self.states)
 
-    def closure_requested(self) -> bool:
-        """Returns whether a closure was requested for the current transaction. Please note that
-        this variable is only valid as long as the state is not IDLE"""
-        return self._params.closure_requested
-
-    def reset(self):
-        """This function is public to allow completely resetting the handler, but it is explicitely
-        discouraged to do this. CFDP generally has mechanism to detect issues and errors on itself.
-        """
-        self._params.reset()
-        # Not fully sure this is the best approach, but I think this is ok for now
-        self._params.transaction_id = None
-        self._pdus_to_be_sent.clear()
-        self.states.state = CfdpState.IDLE
-        self.states.transaction = TransactionStep.IDLE
-
     def insert_packet(self, packet: GenericPduPacket):
         """Insert a packet into the state machine. The packet will be processed with the
         next :py:meth:`state_machine` call, which might lead to state machine transitions
@@ -268,11 +252,32 @@ class DestHandler:
         self._params.last_inserted_packet.pdu = packet
 
     def get_next_packet(self) -> Optional[PduHolder]:
+        """Retrieve the next packet which should be sent to the remote CFDP source entity."""
         if len(self._pdus_to_be_sent) <= 1:
             self.states.packets_ready = False
         if len(self._pdus_to_be_sent) == 0:
             return None
         return self._pdus_to_be_sent.popleft()
+
+    def closure_requested(self) -> bool:
+        """Returns whether a closure was requested for the current transaction. Please note that
+        this variable is only valid as long as the state is not IDLE"""
+        return self._params.closure_requested
+
+    @property
+    def packets_ready(self) -> bool:
+        return self.states.packets_ready
+
+    def reset(self):
+        """This function is public to allow completely resetting the handler, but it is explicitely
+        discouraged to do this. CFDP generally has mechanism to detect issues and errors on itself.
+        """
+        self._params.reset()
+        # Not fully sure this is the best approach, but I think this is ok for now
+        self._params.transaction_id = None
+        self._pdus_to_be_sent.clear()
+        self.states.state = CfdpState.IDLE
+        self.states.transaction = TransactionStep.IDLE
 
     def _fsm_advancement_after_packets_were_sent(self):
         """Advance the internal FSM after all packets to be sent were retrieved from the handler."""
