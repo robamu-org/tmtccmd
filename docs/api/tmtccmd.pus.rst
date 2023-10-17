@@ -12,16 +12,55 @@ Module contents
    :undoc-members:
    :show-inheritance:
 
-s1\_verification module
-------------------------
+Service 1 Telecommand Verification Module
+--------------------------------------------
 
 .. automodule:: tmtccmd.pus.s1_verification
    :members:
    :undoc-members:
    :show-inheritance:
 
-s5\_satrs\_event module
-------------------------
+.. automodule:: tmtccmd.pus.tm.s1_verification
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 2 Raw Commanding Telemetry Module
+-------------------------------------------
+
+.. automodule:: tmtccmd.tm.pus_2_rawcmd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 3 Housekeeping Modules
+-----------------------------------------
+
+.. automodule:: tmtccmd.pus.tm.s3_fsfw_hk
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.pus.tm.s3_hk_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.pus.tc.s3_fsfw_hk
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 5 Event Module
+-------------------------
+
+.. automodule:: tmtccmd.tc.s5_event
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 5 Event Module - sat-rs support
+-----------------------------------------
 
 .. automodule:: tmtccmd.pus.s5_satrs_event
    :members:
@@ -33,8 +72,8 @@ s5\_satrs\_event module
    :undoc-members:
    :show-inheritance:
 
-s5\_fsfw\_event module
-------------------------
+Service 5 Event Module - FSFW support
+---------------------------------------
 
 .. automodule:: tmtccmd.pus.s5_fsfw_event
    :members:
@@ -46,21 +85,36 @@ s5\_fsfw\_event module
    :undoc-members:
    :show-inheritance:
 
-s8\_fsfw\_funccmd module
----------------------------
-
-.. automodule:: tmtccmd.pus.s8_fsfw_funccmd
+.. automodule:: tmtccmd.pus.tm.s5_fsfw_event
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: tmtccmd.pus.s8_fsfw_funccmd_defs
+Service 8 Action Commanding Module
+-----------------------------------
+
+.. automodule:: tmtccmd.pus.s8_fsfw_action
    :members:
    :undoc-members:
    :show-inheritance:
 
-s11\_tc\_sched module
----------------------------
+.. automodule:: tmtccmd.pus.s8_fsfw_action_defs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.pus.tm.s8_fsfw_action
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.pus.tc.s8_fsfw_funccmd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 11 Telecommand Scheduling Module
+-----------------------------------------
 
 .. automodule:: tmtccmd.pus.s11_tc_sched
    :members:
@@ -72,8 +126,8 @@ s11\_tc\_sched module
    :undoc-members:
    :show-inheritance:
 
-s17\_test module
-------------------
+Service 17 Test Module
+------------------------
 
 .. automodule:: tmtccmd.pus.s17_test
    :members:
@@ -85,8 +139,8 @@ s17\_test module
    :undoc-members:
    :show-inheritance:
 
-s20\_fsfw\_params module
----------------------------
+Service 20 Parameter Module - FSFW support
+--------------------------------------------
 
 .. automodule:: tmtccmd.pus.s20_fsfw_param
    :members:
@@ -98,8 +152,18 @@ s20\_fsfw\_params module
    :undoc-members:
    :show-inheritance:
 
-s200\_fsfw\_mode module
-------------------------
+.. automodule:: tmtccmd.pus.tc.s20_fsfw_param
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.tm.s20_fsfw_param
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 200 Mode Commanding Module - FSFW support
+----------------------------------------------------
 
 .. automodule:: tmtccmd.pus.s200_fsfw_mode
    :members:
@@ -111,8 +175,18 @@ s200\_fsfw\_mode module
    :undoc-members:
    :show-inheritance:
 
-s201\_fsfw\_health module
----------------------------
+.. automodule:: tmtccmd.pus.tc.s200_fsfw_mode
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: tmtccmd.pus.tm.s200_fsfw_mode
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Service 201 Health Commanding Module - FSFW support
+-----------------------------------------------------
 
 .. automodule:: tmtccmd.pus.s201_fsfw_health
    :members:
