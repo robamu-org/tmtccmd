@@ -1,3 +1,4 @@
+from __future__ import annotations
 import enum
 from typing import Any, cast, Type, Optional
 
@@ -16,7 +17,7 @@ class TcProcedureBase:
 
 
 class CustomProcedureInfo(TcProcedureBase):
-    def __init__(self, info: any):
+    def __init__(self, info: Any):
         super().__init__(TcProcedureType.CUSTOM)
         self.info = info
 
@@ -40,6 +41,9 @@ class DefaultProcedureInfo(TcProcedureBase):
 
     def __repr__(self):
         return f"CmdInfo(service={self.service!r}, op_code={self.op_code!r})"
+
+    def __eq__(self, other: DefaultProcedureInfo) -> bool:
+        return self.service == other.service and self.op_code == other.op_code
 
 
 class CfdpProcedureInfo(TcProcedureBase):

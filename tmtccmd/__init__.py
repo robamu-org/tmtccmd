@@ -1,4 +1,6 @@
-"""Contains core methods called by entry point files to setup and start a tmtccmd application"""
+"""Contains core methods called by entry point files to setup and start a tmtccmd application.
+It also re-exports commonly used classes and functions.
+"""
 import logging
 import sys
 import os
@@ -8,7 +10,7 @@ from typing import Union, cast, Optional
 from tmtccmd.config.args import ProcedureParamsWrapper
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.core.base import FrontendBase, BackendRequest
-from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
+from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import (
     HookBase,
     backend_mode_conversion,
@@ -20,9 +22,9 @@ from tmtccmd.config import (
     DefaultProcedureParams,
 )
 from tmtccmd.core.ccsds_backend import BackendBase
-from tmtccmd.tm import TmTypes, TmHandlerBase, CcsdsTmHandler
+from tmtccmd.tmtc import TmTypes, TmHandlerBase, CcsdsTmHandler
 from tmtccmd.core import ModeWrapper
-from tmtccmd.tc import (
+from tmtccmd.tmtc import (
     DefaultProcedureInfo,
     TcProcedureBase,
     ProcedureWrapper,

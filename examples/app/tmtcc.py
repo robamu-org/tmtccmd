@@ -3,7 +3,7 @@
 import logging
 import sys
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import tmtccmd
 from spacepackets.ccsds import CdsShortTimestamp
@@ -15,7 +15,6 @@ from spacepackets.util import UnsignedByteField
 from tmtccmd import CcsdsTmtcBackend, ProcedureParamsWrapper, BackendRequest
 from tmtccmd.com import ComInterface
 from tmtccmd.pus import VerificationWrapper
-from tmtccmd.tm import CcsdsTmHandler, SpecificApidHandlerBase
 from tmtccmd.config import (
     default_json_path,
     SetupParams,
@@ -33,7 +32,9 @@ from tmtccmd.logging.pus import (
     RawTmtcTimedLogWrapper,
     TimedLogWhen,
 )
-from tmtccmd.tc import (
+from tmtccmd.tmtc import (
+    CcsdsTmHandler,
+    SpecificApidHandlerBase,
     TcQueueEntryType,
     ProcedureWrapper,
     TcProcedureType,
@@ -43,7 +44,7 @@ from tmtccmd.tc import (
     TcHandlerBase,
     QueueWrapper,
 )
-from tmtccmd.tm.pus_5_fsfw_event import Service5Tm
+from tmtccmd.pus.s5_fsfw_event import Service5Tm
 from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
 from tmtccmd.fsfw.tmtc_printer import FsfwTmTcPrinter
 
@@ -61,6 +62,7 @@ class ExampleHookClass(HookBase):
         super().__init__(json_cfg_path=json_cfg_path)
 
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
+        assert self.cfg_path is not None
         print("Communication interface assignment function was called")
         from tmtccmd.config.com import (
             create_com_interface_default,
@@ -134,7 +136,7 @@ class PusTmHandler(SpecificApidHandlerBase):
         assert self.printer.file_logger is not None
         self.dlogger = DualLogger(self.printer.file_logger, _LOGGER)
 
-    def handle_tm(self, packet: bytes, _user_args: any):
+    def handle_tm(self, packet: bytes, _user_args: Any):
         try:
             tm_packet = PusTelemetry.unpack(
                 packet, time_reader=CdsShortTimestamp.empty()

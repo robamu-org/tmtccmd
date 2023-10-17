@@ -41,6 +41,7 @@ DEST_ENTITY_ID = ByteFieldU16(2)
 
 FILE_CONTENT = "Hello World!\n"
 FILE_SEGMENT_SIZE = len(FILE_CONTENT)
+MAX_PACKET_LEN = 512
 SOURCE_FILE = Path("/tmp/cfdp-test-source.txt")
 DEST_FILE = Path("/tmp/cfdp-test-dest.txt")
 
@@ -50,6 +51,7 @@ _LOGGER = logging.getLogger()
 
 REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     entity_id=SOURCE_ENTITY_ID,
+    max_packet_len=MAX_PACKET_LEN,
     max_file_segment_len=FILE_SEGMENT_SIZE,
     closure_requested=True,
     crc_on_transmission=False,

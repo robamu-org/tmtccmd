@@ -9,7 +9,7 @@ from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
 from tmtccmd.com import ComInterface
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc import TelemetryListT
 
 
 @dataclasses.dataclass

@@ -3,16 +3,45 @@
 from __future__ import annotations
 import struct
 from typing import Optional
+from deprecation import deprecated
 
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
+
+
+class Service200FsfwReader:
+    def __init__(self, tm: PusTelemetry) -> None:
+        self.tm = tm
+        if len(tm.source_data) < 4:
+            raise ValueError("service 200 TM can not even hold object ID")
+        self.object_id = tm.source_data[0:4]
+        self.return_value = None
+        if tm.subservice == Subservice.TM_CANT_REACH_MODE:
+            self.return_value = struct.unpack("!H", tm.source_data[4:6])
+        self.mode = None
+        self.submode = None
+        if (
+            tm.subservice == Subservice.TM_MODE_REPLY
+            or tm.subservice == Subservice.TM_WRONG_MODE_REPLY
+        ):
+            self.mode = struct.unpack("!I", tm.source_data[4:8])
+            self.submode = tm.source_data[8]
+
+    def contains_mode(self) -> bool:
+        if self.mode is not None and self.submode is not None:
+            return True
+        return False
+
+    def is_cant_reach_mode_reply(self) -> bool:
+        return self.tm.subservice == Subservice.TM_CANT_REACH_MODE
 
 
 class Service200FsfwTm(PusTmBase, PusTmInfoBase):
+    @deprecated(deprecated_in="7.0.0", details="use Service200FsfwReader instead")
     def __init__(
         self,
         subservice_id: int,

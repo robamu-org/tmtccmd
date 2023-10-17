@@ -1,8 +1,8 @@
 from abc import abstractmethod, ABC
 
 from tmtccmd.com import ComInterface
-from tmtccmd.tc.procedure import ProcedureWrapper
-from tmtccmd.tc.queue import QueueWrapper, QueueEntryHelper
+from tmtccmd.tmtc.procedure import ProcedureWrapper
+from tmtccmd.tmtc.queue import QueueWrapper, QueueEntryHelper
 
 
 class FeedWrapper:

@@ -11,9 +11,9 @@ from typing import Optional, Deque, cast, Any, Type
 from spacepackets.ccsds import SpacePacket
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ecss import PusVerificator, PusService, check_pus_crc
-from tmtccmd.tc.procedure import TcProcedureBase, DefaultProcedureInfo
+from tmtccmd.tmtc.procedure import TcProcedureBase, DefaultProcedureInfo
 from tmtccmd.util import ProvidesSeqCount
-from tmtccmd.pus import Pus11Subservices
+from tmtccmd.pus.s11_tc_sched import Subservice as Pus11Subservice
 
 
 class TcQueueEntryType(Enum):
@@ -245,7 +245,7 @@ class DefaultPusQueueHelper(QueueHelperBase):
             pus_entry = cast(PusTcEntry, entry)
             if (
                 pus_entry.pus_tc.service == PusService.S11_TC_SCHED
-                and pus_entry.pus_tc.subservice == Pus11Subservices.TC_INSERT
+                and pus_entry.pus_tc.subservice == Pus11Subservice.TC_INSERT
             ):
                 self._handle_time_tagged_tc(pus_entry.pus_tc)
             self._pus_packet_handler(pus_entry.pus_tc)

@@ -4,13 +4,10 @@ telecommands.
 Content:
 
 * :py:class:`tmtccmd.pus.VerificationWrapper` helper class
-* Re-export of the most important PUS service specific data structures from their respective
-  :py:mod:`tmtccmd.tc` and :py:mod:`tmtccmd.tm` module.
 """
 from enum import IntEnum
 from typing import Optional
 
-from .s11_tc_sched import Subservice as Pus11Subservices
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import RequestId
 import spacepackets.ecss.pus_1_verification as pus_1

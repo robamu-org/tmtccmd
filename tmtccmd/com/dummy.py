@@ -16,9 +16,9 @@ from spacepackets.ccsds.time import CdsShortTimestamp
 
 from tmtccmd.com import ComInterface
 from tmtccmd.config import CoreComInterfaces
-from tmtccmd.tm import TelemetryListT
-from tmtccmd.tm.pus_1_verification import Subservice as Pus1Subservices
-from tmtccmd.tm.pus_17_test import Subservice as Pus17Subservices
+from tmtccmd.tmtc import TelemetryListT
+from tmtccmd.pus.s1_verification import Subservice as Pus1Subservice
+from tmtccmd.pus.s17_test import Subservice as Pus17Subservice
 
 
 class DummyHandler:
@@ -49,8 +49,8 @@ class DummyHandler:
             if self.last_tc.subservice == 1:
                 current_time_stamp = CdsShortTimestamp.from_now()
                 tm_packer = Service1Tm(
+                    subservice=Pus1Subservice.TM_ACCEPTANCE_SUCCESS,
                     apid=self.last_tc.apid,
-                    subservice=Pus1Subservices.TM_ACCEPTANCE_SUCCESS,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
@@ -64,8 +64,8 @@ class DummyHandler:
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
                 tm_packer = Service1Tm(
+                    subservice=Pus1Subservice.TM_START_SUCCESS,
                     apid=self.last_tc.apid,
-                    subservice=Pus1Subservices.TM_START_SUCCESS,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
@@ -79,8 +79,8 @@ class DummyHandler:
                 self.current_ssc += 1
 
                 tm_packer = Service17Tm(
+                    subservice=Pus17Subservice.TM_REPLY,
                     apid=self.last_tc.apid,
-                    subservice=Pus17Subservices.TM_REPLY,
                     time_provider=current_time_stamp,
                 )
                 tm_packet_raw = tm_packer.pack()
@@ -88,8 +88,8 @@ class DummyHandler:
                 self.current_ssc += 1
 
                 tm_packer = Service1Tm(
+                    subservice=Pus1Subservice.TM_COMPLETION_SUCCESS,
                     apid=self.last_tc.apid,
-                    subservice=Pus1Subservices.TM_COMPLETION_SUCCESS,
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
