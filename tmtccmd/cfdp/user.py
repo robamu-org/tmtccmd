@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Any
 
 from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUserTlv
-from spacepackets.cfdp.pdu.file_data import RecordContinuationState
+from spacepackets.cfdp.pdu.file_data import SegmentMetadata
 from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import TransactionId
@@ -42,8 +42,7 @@ class FileSegmentRecvdParams:
     transaction_id: TransactionId
     offset: int
     length: int
-    record_cont_state: Optional[RecordContinuationState]
-    segment_metadata: Optional[bytes]
+    segment_metadata: Optional[SegmentMetadata]
 
 
 class CfdpUserBase(ABC):

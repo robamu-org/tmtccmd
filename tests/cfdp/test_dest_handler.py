@@ -135,7 +135,7 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(None, CfdpState.IDLE, TransactionStep.IDLE)
         self.dest_handler.insert_packet(file_transfer_init)
         fsm_res = self.dest_handler.state_machine()
-        self.assertFalse(fsm_res.states.packet_ready)
+        self.assertFalse(fsm_res.states.packets_ready)
 
     def test_empty_file_reception(self):
         self._generic_empty_file_transfer_init()
@@ -154,12 +154,13 @@ class TestCfdpDestHandler(TestCase):
         self.assertEqual(self.dest_file_path.stat().st_size, 0)
 
     def _assert_generic_no_error_finished_pdu(self, fsm_res: FsmResult):
-        self.assertTrue(fsm_res.states.packet_ready)
-        self.assertEqual(fsm_res.pdu_holder.pdu_type, PduType.FILE_DIRECTIVE)
-        self.assertEqual(
-            fsm_res.pdu_holder.pdu_directive_type, DirectiveType.FINISHED_PDU
-        )
-        finished_pdu = fsm_res.pdu_holder.to_finished_pdu()
+        self.assertTrue(fsm_res.states.packets_ready)
+        next_pdu = self.dest_handler.get_next_packet()
+        assert next_pdu is not None
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.FINISHED_PDU)
+
+        finished_pdu = next_pdu.to_finished_pdu()
         self.assertEqual(finished_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(finished_pdu.delivery_status, FileDeliveryStatus.FILE_RETAINED)
         self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
@@ -220,7 +221,7 @@ class TestCfdpDestHandler(TestCase):
         self._state_checker(fsm_res, CfdpState.IDLE, TransactionStep.IDLE)
         self._check_eof_recv_indication(fsm_res)
         self._check_finished_recv_indication_success(fsm_res)
-        self.assertFalse(fsm_res.states.packet_ready)
+        self.assertFalse(fsm_res.states.packets_ready)
 
     def test_small_file_reception_with_closure(self):
         self.closure_requested = True

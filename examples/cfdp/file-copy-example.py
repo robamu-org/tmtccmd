@@ -265,7 +265,7 @@ def dest_entity_handler(dest_handler: DestHandler):
         except Empty:
             no_packet_received = True
         fsm_result = dest_handler.state_machine()
-        if fsm_result.states.packet_ready:
+        if fsm_result.states.packets_ready:
             DEST_TO_SOURCE_QUEUE.put(fsm_result.pdu_holder.pdu)
             dest_handler.confirm_packet_sent_advance_fsm()
             no_packet_sent = False
