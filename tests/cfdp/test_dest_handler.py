@@ -332,6 +332,33 @@ class TestCfdpDestHandler(TestCase):
         self._check_eof_recv_indication(fsm_res)
         self._check_finished_recv_indication_success(fsm_res)
 
+    def test_check_timer_mechanism(self):
+        data = "Hello World\n".encode()
+        with open(self.src_file_path, "wb") as of:
+            of.write(data)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(data))
+        file_size = self.src_file_path.stat().st_size
+        self._source_simulator_transfer_init_with_metadata(
+            checksum=ChecksumType.CRC_32,
+            file_size=file_size,
+            file_path=self.src_file_path.as_posix(),
+        )
+        eof_pdu = EofPdu(
+            file_size=file_size,
+            file_checksum=crc32,
+            pdu_conf=self.src_pdu_conf,
+        )
+        self.dest_handler.insert_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res,
+            False,
+            CfdpState.BUSY_CLASS_1_NACKED,
+            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
+        )
+        self._check_eof_recv_indication(fsm_res)
+
     def random_data_two_file_segments(self):
         if sys.version_info >= (3, 9):
             rand_data = random.randbytes(round(self.file_segment_len * 1.3))
@@ -359,6 +386,10 @@ class TestCfdpDestHandler(TestCase):
             checksum=ChecksumType.CRC_32,
             file_size=file_info.file_size,
             file_path=self.src_file_path.as_posix(),
+        )
+        fsm_res = self.pass_file_segment(
+            segment=file_info.rand_data[: self.file_segment_len],
+            offset=self.file_segment_len,
         )
         fsm_res = self.pass_file_segment(
             segment=file_info.rand_data[self.file_segment_len :],

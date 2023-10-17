@@ -400,7 +400,8 @@ class DestHandler:
             TransactionStep.RECEIVING_FILE_DATA,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         ]:
-            self.__receiving_fd_and_eof_pdus()
+            if self.__receiving_fd_and_eof_pdus():
+                return
         if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
             self._check_limit_handling()
         if self.states.step == TransactionStep.TRANSFER_COMPLETION:
@@ -408,9 +409,11 @@ class DestHandler:
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
 
-    def __receiving_fd_and_eof_pdus(self):
+    def __receiving_fd_and_eof_pdus(self) -> bool:
+        """Returns whether to exit the FSM prematurely."""
+        exit_fsm = False
         if self._params.last_inserted_packet.pdu is None:
-            return
+            return exit_fsm
         if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
             self.__handle_one_fd_pdu(
                 self._params.last_inserted_packet.to_file_data_pdu()
@@ -419,8 +422,11 @@ class DestHandler:
             self._params.last_inserted_packet.pdu.directive_type  # type: ignore
             == DirectiveType.EOF_PDU
         ):
-            self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
+            exit_fsm = self._handle_eof_pdu(
+                self._params.last_inserted_packet.to_eof_pdu()
+            )
         self._params.last_inserted_packet.pdu = None
+        return exit_fsm
 
     def __handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
@@ -499,7 +505,8 @@ class DestHandler:
             pass
             # self.states.step = TransactionStep.SENDING_FINISHED_PDU
 
-    def _handle_eof_pdu(self, eof_pdu: EofPdu):
+    def _handle_eof_pdu(self, eof_pdu: EofPdu) -> bool:
+        """Returns whether to exit the FSM prematurely."""
         self._params.fp.crc32 = eof_pdu.file_checksum
         self._params.fp.file_size_eof = eof_pdu.file_size
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
@@ -509,7 +516,7 @@ class DestHandler:
                     self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
                     != FaultHandlerCode.IGNORE_ERROR
                 ):
-                    return
+                    return False
             if self._params.fp.file_size_eof != self._params.fp.file_size:
                 # Can or should this ever happen for a No Error EOF? Treat this like a non-fatal
                 # error for now..
@@ -518,6 +525,9 @@ class DestHandler:
                 )
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)  # type: ignore
+            if not self._checksum_verify():
+                self._start_check_limit_handling()
+                return True
         else:
             # This is an EOF (Cancel), perform Cancel Response Procedures according to chapter
             # 4.6.6 of the standard.
@@ -526,39 +536,45 @@ class DestHandler:
             # Store this as progress for the checksum calculation.
             self._params.fp.progress = self._params.fp.file_size_eof
             self._params.finished_params.delivery_code = DeliveryCode.DATA_INCOMPLETE
-        if self.states.step == TransactionStep.RECEIVING_FILE_DATA:  # type: ignore
-            if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
-                self.states.step = TransactionStep.TRANSFER_COMPLETION
-            elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
-                self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+            self._checksum_verify()
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
+        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+        return False
 
-    def _checksum_verify(self):
-        if self._params.fp.crc32 is None:
-            # This can happen if no EOF has been received but the transaction is still completed
-            # or cancelled for some reason.
-            return
+    def _checksum_verify(self) -> bool:
+        # if self._params.fp.crc32 is None:
+        # This can happen if no EOF has been received but the transaction is still completed
+        # or cancelled for some reason.
+        # return
         crc32 = self._cksum_verif_helper.calc_for_file(
             self._params.fp.file_name, self._params.fp.progress
         )
         if crc32 == self._params.fp.crc32:
             self._params.finished_params.delivery_code = DeliveryCode.DATA_COMPLETE
             self._params.finished_params.condition_code = ConditionCode.NO_ERROR
+            return True
         else:
             self._params.finished_params.condition_code = (
                 ConditionCode.FILE_CHECKSUM_FAILURE
             )
-            self.states.step = TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING
-            if (
-                self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
-                != FaultHandlerCode.IGNORE_ERROR
-            ):
-                return
-            assert self._params.remote_cfg is not None
-            self._params.check_timer = self.check_timer_provider.provide_check_timer(
-                self.cfg.local_entity_id,
-                self._params.remote_cfg.entity_id,
-                EntityType.RECEIVING,
-            )
+            return False
+
+    def _start_check_limit_handling(self):
+        self.states.step = TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING
+        if (
+            self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
+            != FaultHandlerCode.IGNORE_ERROR
+        ):
+            return
+        assert self._params.remote_cfg is not None
+        self._params.check_timer = self.check_timer_provider.provide_check_timer(
+            self.cfg.local_entity_id,
+            self._params.remote_cfg.entity_id,
+            EntityType.RECEIVING,
+        )
+        self._params.current_check_count = 0
 
     def _notice_of_completion(self):
         if self._params.completion_disposition == CompletionDisposition.COMPLETED:
