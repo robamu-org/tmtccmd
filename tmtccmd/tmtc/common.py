@@ -57,6 +57,7 @@ class DefaultApidHandler(GenericApidHandlerBase):
 
 HandlerDictT = Dict[int, SpecificApidHandlerBase]
 
+
 class TmTypes(enum.Enum):
     NONE = enum.auto
     CCSDS_SPACE_PACKETS = enum.auto
@@ -68,6 +69,7 @@ class TmHandlerBase:
 
     def get_type(self):
         return self._tm_type
+
 
 class CcsdsTmHandler(TmHandlerBase):
     """Generic CCSDS handler class. The user can create an instance of this class to handle

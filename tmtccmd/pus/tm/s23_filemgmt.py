@@ -8,7 +8,7 @@ from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
 
 
 class FileInfo:

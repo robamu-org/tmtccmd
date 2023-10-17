@@ -31,4 +31,4 @@ from .procedure import (
 from .handler import FeedWrapper, TcHandlerBase, SendCbParams
 from .decorator import service_provider, route_to_registered_service_handlers
 from .common import *  # noqa re-export
-from .ccsds_tm_listener import CcsdsTmListener # noqa re-export
+from .ccsds_tm_listener import CcsdsTmListener  # noqa re-export

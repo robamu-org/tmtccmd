@@ -34,7 +34,7 @@ input information. This task is done by the :py:meth:`tmtccmd.tmtc.handler.TcHan
 callback method.
 
 The actual handling of telecommand queue entries is done in the
-:py:meth:`tmtccmd.tc.handler.TcHandlerBase.send_cb` method implementation. One thing to note here
+:py:meth:`tmtccmd.tmtc.handler.TcHandlerBase.send_cb` method implementation. One thing to note here
 is that a queue entry does not necessarily have to be a command to be sent. For example,
 the queue can also contain something like log requests or delay requests, or even complete
 custom requests. These requests can then be handled by the user.

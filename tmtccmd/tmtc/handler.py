@@ -86,7 +86,7 @@ class TcHandlerBase(ABC):
         parameter like the inter-packet delay.
 
         :param info: Generic base class for a procedure. For example, the
-            py:class:`tmtccmd.tc.DefaultProcedureInfo` class uses a service string
+            py:class:`tmtccmd.tmtc.DefaultProcedureInfo` class uses a service string
             and op code string which can be used in the user code to select between different
             telecommand queues being packed
         :param wrapper: Wrapper type around the queue. It also contains a queue helper class
