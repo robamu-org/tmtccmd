@@ -74,7 +74,7 @@ class DefaultFaultHandlerBase(ABC):
         """
         if condition not in self._handler_dict:
             raise ValueError(
-                f"condition code {condition} not applicable for fault handling procedures"
+                f"condition code {condition!r} not applicable for fault handling procedures"
             )
         self._handler_dict.update({condition: handler})
 
@@ -88,7 +88,7 @@ class DefaultFaultHandlerBase(ABC):
         """
         if condition not in self._handler_dict:
             raise ValueError(
-                f"condition code {condition} not applicable for fault handling procedures"
+                f"condition code {condition!r} not applicable for fault handling procedures"
             )
         fh_code = self._handler_dict.get(condition)
         if fh_code == FaultHandlerCode.NOTICE_OF_CANCELLATION:

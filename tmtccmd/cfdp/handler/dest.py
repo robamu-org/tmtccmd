@@ -172,8 +172,8 @@ class DestHandler:
     """This is the primary CFDP destination handler. It models the CFDP source entity, which is
     primarily responsible for receiving files sent from another CFDP entity. It performs the
     reception side of File Copy Operations.
-    The following core functions are the primary interface for a direct usage or for a composite
-    handler with a source handler and a destination handler as member objects:
+    The following core functions are the primary interface for interacting with the destination
+    handler:
 
      1. :py:meth:`insert_packet` : Can be used to insert packets into the destination
         handler. Please note that the destination handler can also only process Metadata, EOF and
@@ -528,8 +528,6 @@ class DestHandler:
                 self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
 
     def _checksum_verify(self):
-        # If the transfer was cancelled, I don't really see a point in calculating the checksum..
-        # We need to report the reason for the cancellation.
         crc32 = self._cksum_verif_helper.calc_for_file(
             self._params.fp.file_name, self._params.fp.progress
         )
