@@ -6,7 +6,7 @@ from abc import abstractmethod
 import struct
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
 from .s3_hk_base import (  # noqa: F401
     Service3Base,
     ObjectIdU32,

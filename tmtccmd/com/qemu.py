@@ -31,7 +31,7 @@ from threading import Thread
 from typing import Optional
 
 from tmtccmd.com import ComInterface
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc import TelemetryListT
 from tmtccmd.com.serial_base import SerialCfg, SerialCommunicationType
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 

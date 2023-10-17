@@ -69,7 +69,7 @@ Other Submodules
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.tmtc
+   api/tmtc
    api/tmtccmd.util
    api/tmtccmd.logging
    api/tmtccmd.fsfw

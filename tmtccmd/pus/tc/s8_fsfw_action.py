@@ -3,7 +3,7 @@ import struct
 import deprecation
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.pus.s8_fsfw_funccmd_defs import CustomSubservice
+from tmtccmd.pus.s8_fsfw_action_defs import CustomSubservice
 from tmtccmd.version import get_version
 
 

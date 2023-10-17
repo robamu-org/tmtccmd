@@ -10,7 +10,7 @@ from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.version import get_version
-from tmtccmd.tm.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
 
 
 class Service2Tm(PusTmInfoBase, PusTmBase):
