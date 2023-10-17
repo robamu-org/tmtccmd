@@ -2,55 +2,27 @@
 API
 ====
 
-Core Submodules
-===============
-
-tmtccmd module
----------------------
-
-.. automodule:: tmtccmd
-   :noindex:
-
-
-.. toctree::
-   :maxdepth: 2
-
-   api/tmtccmd.core
-
 Communication Submodule
 ========================
 
 .. automodule:: tmtccmd.com
    :noindex:
 
-
 .. toctree::
    :maxdepth: 2
 
    api/com
 
-Configuration Submodule
-=========================
-
-.. automodule:: tmtccmd.config
-   :noindex:
-
-
-.. toctree::
-   :maxdepth: 2
-
-   api/tmtccmd.config
-
 CCSDS Submodules
 ===================
 
-This currently contains the CFDP support.
+This currently also contains the CFDP support.
 
 .. toctree::
    :maxdepth: 2
 
    api/cfdp
-   api/tmtccmd.cfdp.handler
+   api/cfdp.handler
 
 ECSS Submodules
 =========================
@@ -63,13 +35,29 @@ ECSS Submodules
 
    api/pus
 
-Other Submodules
+Application Modules
+=========================
+
+Module
+---------
+
+.. automodule:: tmtccmd
+   :noindex:
+
+.. toctree::
+   :maxdepth: 3
+
+   api/config
+   api/core
+   api/tm
+   api/tc
+
+Miscellaneous Submodules
 =========================
 
 .. toctree::
    :maxdepth: 2
 
-   api/tmtc
    api/tmtccmd.util
    api/tmtccmd.logging
    api/tmtccmd.fsfw
