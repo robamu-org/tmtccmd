@@ -312,7 +312,17 @@ class SourceHandler:
 
     def cancel_request(self, transaction_id: TransactionId) -> bool:
         """This function models the Cancel.request CFDP primtive and is the recommended way
-        to cancel a transaction. It will cause a Notice Of Cancellation at this entity."""
+        to cancel a transaction. It will cause a Notice Of Cancellation at this entity.
+        Please note that the state machine might still be active because a cancelled transfer
+        might still require some packets to be sent to the remote receiver entity.
+
+        Returns
+        --------
+        True if current transfer was cancelled, False if either the state machine is in the IDLE
+        state or there is a transaction ID missmatch.
+        """
+        if self.states.step == CfdpState.IDLE:
+            return False
         if self.states.packets_ready:
             raise UnretrievedPdusToBeSent()
         if (

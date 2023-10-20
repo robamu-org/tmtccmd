@@ -23,11 +23,17 @@ class Countdown:
         return cls(timedelta(milliseconds=timeout_ms))
 
     @property
-    def timeout(self):
+    def timeout_ms(self) -> int:
+        """Returns timeout as integer milliseconds."""
         return self._timeout_ms
+
+    @property
+    def timeout(self) -> timedelta:
+        return timedelta(milliseconds=self._timeout_ms)
 
     @timeout.setter
     def timeout(self, timeout: timedelta):
+        """Set a new timeout for the countdown instance."""
         self._timeout_ms = round(timeout / timedelta(milliseconds=1))
 
     def timed_out(self) -> bool:
