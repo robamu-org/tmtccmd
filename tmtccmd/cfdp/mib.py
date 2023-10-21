@@ -162,37 +162,51 @@ class RemoteEntityCfg:
     were omitted. Some other fields which are not contained inside the standard but are considered
     necessary for the Python implementation are included.
 
-    Arguments
+
+    Notes on the Positive Acknowledgment Procedures:
+
+    The ``positive_ack_timer_interval_ms`` and ``positive_ack_timer_expiration_limit`` will be used
+    for positive acknowledgement procedures as specified in CFDP chapter 4.7. The sending entity
+    will start the timer for any PDUs where an acknowledgment is required (e.g. EOF PDU). Once the
+    expected ACK response has not been received for that interval, as counter will be incremented
+    and the timer will be reset. Once the counter reached the
+    ``positive_ack_timer_expiration_limit``, a Positive ACK Limit Reached fault will be declared.
+
+    Parameters
     -----------
-    entity_id:
+    entity_id
         The ID of the remote entity.
-    max_packet_len:
+    max_packet_len
         This determines of all PDUs generated for that remote entity in addition to the
         `max_file_segment_len` attribute which also determines the size of file data PDUs.
-    max_file_segment_len:
+    max_file_segment_len
         The maximum file segment length which determines the maximum size
         of file data PDUs in addition to the `max_packet_len` attribute. If this field is set
         to None, the maximum file segment length will be derived from the maximum packet length.
         If this has some value which is smaller than the segment value derived from
         `max_packet_len`, this value will be picked.
-    closure_requested:
+    closure_requested
         If the closure requested field is not supplied as part of the Put Request, it will be
         determined from this field in the remote configuration.
-    crc_on_transmission:
+    crc_on_transmission
         If the CRC option is not supplied as part of the Put Request, it will be
         determined from this field in the remote configuration.
-    default_transmission_mode:
+    default_transmission_mode
         If the transmission mode is not supplied as part of the Put Request, it will be
         determined from this field in the remote configuration.
-    disposition_on_cancellation:
+    disposition_on_cancellation
         Determines whether an incomplete received file is discard on transaction cancellation.
         Defaults to False.
-    crc_type:
+    crc_type
         Default checksum type used to calculate for all file transmissions to this remote entity.
-    check_limit:
+    check_limit
         this timer determines the expiry period for incrementing a check counter after an EOF PDU
         is received for an incomplete file transfer. This allows out-of-order reception of file
         data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2.
+    positive_ack_timer_interval_ms
+        See the notes on the Positive Acknowledgment Procedures inside the class documentation.
+    positive_ack_timer_expiration_limit
+        See the notes on the Positive Acknowledgment Procedures inside the class documentation.
 
     """
 
@@ -203,6 +217,8 @@ class RemoteEntityCfg:
     crc_on_transmission: bool
     default_transmission_mode: TransmissionMode
     crc_type: ChecksumType
+    positive_ack_timer_interval_ms: int = 5000
+    positive_ack_timer_expiration_limit: int = 2
     check_limit: int = 2
     disposition_on_cancellation: bool = False
     # NOTE: Only this version is supported

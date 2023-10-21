@@ -138,4 +138,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
 
     def test_positive_ack_limit_reached(self):
         # TODO: Implement.
+        # 1. Trigger a re-send of a file data PDU.
+        # 2. Trigger a Positive ACK limit reached procedure.
+        # 3. Verify it does ???.
         pass
