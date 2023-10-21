@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 from spacepackets.cfdp import Direction, ChecksumType
 from spacepackets.util import UnsignedByteField
@@ -120,7 +121,7 @@ class BusyError(Exception):
 class FileParamsBase:
     progress: int
     segment_len: int
-    crc32: bytes
+    crc32: Optional[bytes]
     no_file_data: bool
     file_size: int
 
@@ -129,7 +130,7 @@ class FileParamsBase:
         return cls(
             progress=0,
             segment_len=0,
-            crc32=bytes(),
+            crc32=None,
             file_size=0,
             no_file_data=False,
         )
@@ -137,5 +138,5 @@ class FileParamsBase:
     def reset(self):
         self.progress = 0
         self.segment_len = 0
-        self.crc32 = bytes()
+        self.crc32 = None
         self.file_size = 0

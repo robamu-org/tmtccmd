@@ -1,11 +1,12 @@
 from __future__ import annotations
+from collections import deque
 
 import dataclasses
 import enum
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Deque, Optional
 
 import deprecation
 
@@ -38,6 +39,8 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
     RemoteEntityCfg,
 )
+from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
+from tmtccmd.util.countdown import Countdown
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler.common import PacketDestination, get_packet_destination
 from tmtccmd.cfdp.handler.crc import Crc32Helper
@@ -79,6 +82,11 @@ class PduIgnoredForDest(Exception):
         super().__init__(f"ignored PDU packet at destination handler: {reason!r}")
 
 
+class CompletionDisposition(enum.Enum):
+    COMPLETED = 0
+    CANCELED = 1
+
+
 @dataclass
 class _DestFileParams(FileParamsBase):
     file_name: Path
@@ -104,21 +112,28 @@ class _DestFileParams(FileParamsBase):
 
 class TransactionStep(enum.Enum):
     IDLE = 0
-    # Metadata was received
     TRANSACTION_START = 1
+    """Metadata was received, which triggered a transaction start."""
     RECEIVING_FILE_DATA = 2
-    SENDING_ACK_PDU = 3
-    # File transfer complete. Perform checksum verification and notice of completion
-    TRANSFER_COMPLETION = 4
-    SENDING_FINISHED_PDU = 5
+    RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING = 3
+    """This is the check timer step as specified in chapter 4.6.3.3 b) of the standard.
+    The destination handler will still check for file data PDUs which might lead to a full
+    file transfer completion."""
+    SENDING_EOF_ACK_PDU = 4
+    """Sending the ACK (EOF) packet."""
+    TRANSFER_COMPLETION = 5
+    """File transfer complete. Perform checksum verification and notice of completion. Please
+    note that this does not necessarily mean that the file transfer was completed succesfully."""
+    SENDING_FINISHED_PDU = 6
+    WAITING_FOR_FINISHED_ACK = 7
 
 
 @dataclass
 class DestStateWrapper:
     state: CfdpState = CfdpState.IDLE
-    transaction: TransactionStep = TransactionStep.IDLE
+    step: TransactionStep = TransactionStep.IDLE
     transaction_id: Optional[TransactionId] = None
-    packet_ready: bool = False
+    packets_ready: bool = False
 
 
 @dataclass
@@ -127,10 +142,11 @@ class _DestFieldWrapper:
 
     transaction_id: Optional[TransactionId] = None
     remote_cfg: Optional[RemoteEntityCfg] = None
+    check_timer: Optional[Countdown] = None
+    current_check_count: int = 0
     closure_requested: bool = False
-    condition_code: ConditionCode = ConditionCode.NO_CONDITION_FIELD
-    delivery_code: DeliveryCode = DeliveryCode.DATA_INCOMPLETE
-    file_status: FileDeliveryStatus = FileDeliveryStatus.DISCARDED_DELIBERATELY
+    finished_params: FinishedParams = FinishedParams.empty()
+    completion_disposition: CompletionDisposition = CompletionDisposition.COMPLETED
     pdu_conf: PduConfig = dataclasses.field(default_factory=lambda: PduConfig.empty())
     fp: _DestFileParams = dataclasses.field(
         default_factory=lambda: _DestFileParams.empty()
@@ -140,26 +156,26 @@ class _DestFieldWrapper:
     def reset(self):
         self.transaction_id = None
         self.closure_requested = False
-        self.condition_code = ConditionCode.NO_CONDITION_FIELD
-        self.delivery_code = DeliveryCode.DATA_INCOMPLETE
         self.pdu_conf = PduConfig.empty()
+        self.finished_params = FinishedParams.empty()
+        self.finished_params.delivery_status = FileDeliveryStatus.FILE_STATUS_UNREPORTED
+        self.completion_disposition = CompletionDisposition.COMPLETED
         self.fp.reset()
         self.remote_cfg = None
         self.last_inserted_packet.pdu = None
 
 
 class FsmResult:
-    def __init__(self, states: DestStateWrapper, pdu_holder: PduHolder):
+    def __init__(self, states: DestStateWrapper):
         self.states = states
-        self.pdu_holder = pdu_holder
 
 
 class DestHandler:
     """This is the primary CFDP destination handler. It models the CFDP source entity, which is
     primarily responsible for receiving files sent from another CFDP entity. It performs the
     reception side of File Copy Operations.
-    The following core functions are the primary interface for a direct usage or for a composite
-    handler with a source handler and a destination handler as member objects:
+    The following core functions are the primary interface for interacting with the destination
+    handler:
 
      1. :py:meth:`insert_packet` : Can be used to insert packets into the destination
         handler. Please note that the destination handler can also only process Metadata, EOF and
@@ -169,47 +185,39 @@ class DestHandler:
      2. :py:meth:`state_machine` : This state machine processes inserted packets while also
         generating the packets which need to be sent back to the initiator of a file copy
         operation.
-     3. :py:meth:`confirm_packet_sent_advance_fsm` : Confirm that the PDUs generated by the last
-        state machine iteration was sent successfully and advance the state machine.
-    """
+     3. :py:meth:`get_next_packet`: Retrieve next packet to be sent back to the remote CFDP source
+        entity ID.
+
+    A new file transfer (Metadata PDU reception) is only be accepted if the handler is in the IDLE
+    state. Furthermore, packet insertion is not allowed until all packets to send were retrieved
+    after a state machine call."""
 
     def __init__(
         self,
         cfg: LocalEntityCfg,
         user: CfdpUserBase,
         remote_cfg_table: RemoteEntityCfgTable,
+        check_timer_provider: CheckTimerProvider,
     ):
         self.cfg = cfg
         self.remote_cfg_table = remote_cfg_table
         self.states = DestStateWrapper()
         self.user = user
-        self.pdu_holder = PduHolder(None)
+        self.check_timer_provider = check_timer_provider
         self._params = _DestFieldWrapper()
-        self._crc_helper: Crc32Helper = Crc32Helper(
+        self._cksum_verif_helper: Crc32Helper = Crc32Helper(
             ChecksumType.NULL_CHECKSUM, user.vfs
         )
-
-    """This is the primary call to run the state machine after packet insertion and/or after
-    having sent any packets which need to be sent to the sender of a file transaction."""
+        self._pdus_to_be_sent: Deque[PduHolder] = deque()
 
     def state_machine(self) -> FsmResult:
+        """This is the primary call to run the state machine after packet insertion and/or after
+        having sent any packets which need to be sent to the sender of a file transaction."""
         if self.states.state == CfdpState.IDLE:
             self.__idle_fsm()
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
-            self.__busy_naked_fsm()
-        return FsmResult(self.states, self.pdu_holder)
-
-    def closure_requested(self) -> bool:
-        """Returns whether a closure was requested for the current transaction. Please note that
-        this variable is only valid as long as the state is not IDLE"""
-        return self._params.closure_requested
-
-    def finish(self):
-        self._params.reset()
-        # Not fully sure this is the best approach, but I think this is ok for now
-        self._params.transaction_id = None
-        self.states.state = CfdpState.IDLE
-        self.states.transaction = TransactionStep.IDLE
+        else:
+            self.__non_idle_fsm()
+        return FsmResult(self.states)
 
     def insert_packet(self, packet: GenericPduPacket):
         """Insert a packet into the state machine. The packet will be processed with the
@@ -261,31 +269,51 @@ class DestHandler:
             )
         self._params.last_inserted_packet.pdu = packet
 
-    def confirm_packet_sent_advance_fsm(self):
-        """Helper method which performs both :py:meth:`confirm_packet_sent` and
-        :py:meth:`advance_fsm`
+    def get_next_packet(self) -> Optional[PduHolder]:
+        """Retrieve the next packet which should be sent to the remote CFDP source entity."""
+        if len(self._pdus_to_be_sent) <= 1:
+            self.states.packets_ready = False
+        if len(self._pdus_to_be_sent) == 0:
+            return None
+        return self._pdus_to_be_sent.popleft()
+
+    def closure_requested(self) -> bool:
+        """Returns whether a closure was requested for the current transaction. Please note that
+        this variable is only valid as long as the state is not IDLE"""
+        return self._params.closure_requested
+
+    @property
+    def packets_ready(self) -> bool:
+        return self.states.packets_ready
+
+    def reset(self):
+        """This function is public to allow completely resetting the handler, but it is explicitely
+        discouraged to do this. CFDP generally has mechanism to detect issues and errors on itself.
         """
-        self.confirm_packet_sent()
-        self.advance_fsm()
+        self._params.reset()
+        # Not fully sure this is the best approach, but I think this is ok for now
+        self._params.transaction_id = None
+        self._pdus_to_be_sent.clear()
+        self.states.state = CfdpState.IDLE
+        self.states.step = TransactionStep.IDLE
 
-    def advance_fsm(self):
-        if self.states.packet_ready:
-            raise UnretrievedPdusToBeSent()
-        if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
-            self.finish()
-
-    def confirm_packet_sent(self):
-        """Confirm that a packet generated by the :py:meth:`operation` was sent successfully"""
-        self.states.packet_ready = False
+    def _fsm_advancement_after_packets_were_sent(self):
+        """Advance the internal FSM after all packets to be sent were retrieved from the handler."""
+        if len(self._pdus_to_be_sent) > 0:
+            raise UnretrievedPdusToBeSent(
+                f"{len(self._pdus_to_be_sent)} packets left to send"
+            )
+        if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
+            self.reset()
 
     def __transaction_start_metadata_pdu_to_params(self, metadata_pdu: MetadataPdu):
         self._params.reset()
-        self.states.transaction = TransactionStep.TRANSACTION_START
+        self.states.step = TransactionStep.TRANSACTION_START
         if metadata_pdu.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             self.states.state = CfdpState.BUSY_CLASS_1_NACKED
         elif metadata_pdu.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self.states.state = CfdpState.BUSY_CLASS_2_ACKED
-        self._crc_helper.checksum_type = metadata_pdu.checksum_type
+        self._cksum_verif_helper.checksum_type = metadata_pdu.checksum_type
         self._params.closure_requested = metadata_pdu.closure_requested
         if metadata_pdu.dest_file_name is None:
             self._params.fp.no_file_data = True
@@ -309,41 +337,29 @@ class DestHandler:
                 self.user.vfs.truncate_file(self._params.fp.file_name)
             else:
                 self.user.vfs.create_file(self._params.fp.file_name)
+            self._params.finished_params.delivery_status = (
+                FileDeliveryStatus.FILE_RETAINED
+            )
         except PermissionError:
-            self._params.file_status = FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
-            fh = self.cfg.default_fault_handlers.get_fault_handler(
-                ConditionCode.FILESTORE_REJECTION
+            self._params.finished_params.delivery_status = (
+                FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
             )
-            if fh == FaultHandlerCode.IGNORE_ERROR:
-                pass
-            elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
-                # TODO: Implement
-                pass
-            elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
-                # TODO: Implement
-                pass
-            elif fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
-                # TODO: Implement
-                pass
-            self.cfg.default_fault_handlers.report_fault(
-                ConditionCode.FILESTORE_REJECTION
-            )
+            self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
         if self.states.state != CfdpState.IDLE:
             return False
         self.__transaction_start_metadata_pdu_to_params(metadata_pdu)
-        # I am not fully sure whether a remote configuration is strictly required for
-        # a destination handler. I think to be fully standard-compliant or at least allow
-        # the flexibility to be standard-compliant in the future, we should require that
-        # a remote entity configuration exists for each CFDP sender.
+        # To be fully standard-compliant or at least allow the flexibility to be standard-compliant
+        # in the future, we should require that a remote entity configuration exists for each CFDP
+        # sender.
         if self._params.remote_cfg is None:
             _LOGGER.warning(
                 "No remote configuration found for remote ID"
                 f" {metadata_pdu.dest_entity_id}"
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
-        self.states.transaction = TransactionStep.RECEIVING_FILE_DATA
+        self.states.step = TransactionStep.RECEIVING_FILE_DATA
         self.__transaction_start_vfs_handling()
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
@@ -378,18 +394,26 @@ class DestHandler:
                 f"IDLE state machine"
             )
 
-    def __busy_naked_fsm(self):
-        if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:
-            self.__receiving_fd_pdus_nacknowledged()
-        if self.states.transaction == TransactionStep.TRANSFER_COMPLETION:
+    def __non_idle_fsm(self):
+        self._fsm_advancement_after_packets_were_sent()
+        if self.states.step in [
+            TransactionStep.RECEIVING_FILE_DATA,
+            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
+        ]:
+            if self.__receiving_fd_and_eof_pdus():
+                return
+        if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
+            self._check_limit_handling()
+        if self.states.step == TransactionStep.TRANSFER_COMPLETION:
             self._handle_transfer_completion()
-        if self.states.transaction == TransactionStep.SENDING_FINISHED_PDU:
+        if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
-            self.states.packet_ready = True
 
-    def __receiving_fd_pdus_nacknowledged(self):
+    def __receiving_fd_and_eof_pdus(self) -> bool:
+        """Returns whether to exit the FSM prematurely."""
+        exit_fsm = False
         if self._params.last_inserted_packet.pdu is None:
-            return
+            return exit_fsm
         if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
             self.__handle_one_fd_pdu(
                 self._params.last_inserted_packet.to_file_data_pdu()
@@ -398,8 +422,11 @@ class DestHandler:
             self._params.last_inserted_packet.pdu.directive_type  # type: ignore
             == DirectiveType.EOF_PDU
         ):
-            self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
+            exit_fsm = self._handle_eof_pdu(
+                self._params.last_inserted_packet.to_eof_pdu()
+            )
         self._params.last_inserted_packet.pdu = None
+        return exit_fsm
 
     def __handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
@@ -409,33 +436,47 @@ class DestHandler:
                 transaction_id=self._params.transaction_id,  # type: ignore
                 length=len(file_data_pdu.file_data),
                 offset=offset,
-                record_cont_state=file_data_pdu.record_cont_state,
                 segment_metadata=file_data_pdu.segment_metadata,
             )
             self.user.file_segment_recv_indication(file_segment_indic_params)
         try:
             self.user.vfs.write_data(self._params.fp.file_name, data, offset)
-            self._params.file_status = FileDeliveryStatus.FILE_RETAINED
+            self._params.finished_params.delivery_status = (
+                FileDeliveryStatus.FILE_RETAINED
+            )
 
             if self._params.fp.file_size_eof is not None and (
                 offset + len(file_data_pdu.file_data) > self._params.fp.file_size_eof
             ):
                 # CFDP 4.6.1.2.7 c): If the sum of the FD PDU offset and segment size exceeds
                 # the file size indicated in the first previously received EOF (No Error) PDU, if
-                # any, then then a File Size Errorfaul shall be declared.
-                # TODO: Declare File Size error instead of exception.
-                raise ValueError("CFDP File Size Error")
+                # any, then then a File Size Error fault shall be declared.
+                if (
+                    self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
+                    != FaultHandlerCode.IGNORE_ERROR
+                ):
+                    return
             # Ensure that the progress value is always incremented
             if offset + len(file_data_pdu.file_data) > self._params.fp.progress:
                 self._params.fp.progress = offset + len(file_data_pdu.file_data)
         except FileNotFoundError:
-            if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
-                self._params.file_status = FileDeliveryStatus.DISCARDED_DELIBERATELY
-        except PermissionError:
-            if self._params.file_status != FileDeliveryStatus.FILE_RETAINED:
-                self._params.file_status = (
+            if (
+                self._params.finished_params.delivery_status
+                != FileDeliveryStatus.FILE_RETAINED
+            ):
+                self._params.finished_params.delivery_status = (
                     FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
                 )
+                self._declare_fault(ConditionCode.FILESTORE_REJECTION)
+        except PermissionError:
+            if (
+                self._params.finished_params.delivery_status
+                != FileDeliveryStatus.FILE_RETAINED
+            ):
+                self._params.finished_params.delivery_status = (
+                    FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+                )
+                self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
     @deprecation.deprecated(
         deprecated_in="6.0.0rc1",
@@ -446,31 +487,36 @@ class DestHandler:
         self.insert_packet(packet)
 
     def _handle_transfer_completion(self):
-        if self._crc_helper.checksum_type != ChecksumType.NULL_CHECKSUM:
+        if self._cksum_verif_helper.checksum_type != ChecksumType.NULL_CHECKSUM:
             self._checksum_verify()
         elif (
             self._params.fp.no_file_data
-            or self._crc_helper.checksum_type == ChecksumType.NULL_CHECKSUM
+            or self._cksum_verif_helper.checksum_type == ChecksumType.NULL_CHECKSUM
         ):
-            self._params.condition_code = ConditionCode.NO_ERROR
+            self._params.finished_params.condition_code = ConditionCode.NO_ERROR
         self._notice_of_completion()
         if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
             if self._params.closure_requested:
-                self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
+                self.states.step = TransactionStep.SENDING_FINISHED_PDU
             else:
-                self.finish()
+                self.reset()
         elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
-            self.states.transaction = TransactionStep.SENDING_FINISHED_PDU
+            # TODO: Need to send ACK for the EOF PDU here..
+            pass
+            # self.states.step = TransactionStep.SENDING_FINISHED_PDU
 
-    def _handle_eof_pdu(self, eof_pdu: EofPdu):
-        # TODO: Error handling, cancel request handling.
+    def _handle_eof_pdu(self, eof_pdu: EofPdu) -> bool:
+        """Returns whether to exit the FSM prematurely."""
+        self._params.fp.crc32 = eof_pdu.file_checksum
+        self._params.fp.file_size_eof = eof_pdu.file_size
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
-            self._params.fp.crc32 = eof_pdu.file_checksum
-            self._params.fp.file_size_eof = eof_pdu.file_size
             # CFDP 4.6.1.2.9: Declare file size error if progress exceeds file size
             if self._params.fp.progress > self._params.fp.file_size_eof:
-                # TODO: File Size error
-                raise ValueError("CFDP File Size Error")
+                if (
+                    self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
+                    != FaultHandlerCode.IGNORE_ERROR
+                ):
+                    return False
             if self._params.fp.file_size_eof != self._params.fp.file_size:
                 # Can or should this ever happen for a No Error EOF? Treat this like a non-fatal
                 # error for now..
@@ -479,46 +525,122 @@ class DestHandler:
                 )
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)  # type: ignore
-            if self.states.transaction == TransactionStep.RECEIVING_FILE_DATA:  # type: ignore
-                if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
-                    self.states.transaction = TransactionStep.TRANSFER_COMPLETION
-                elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
-                    self.states.transaction = TransactionStep.SENDING_ACK_PDU
-
-    def _checksum_verify(self):
-        crc32 = self._crc_helper.calc_for_file(
-            self._params.fp.file_name, self._params.fp.file_size
-        )
-        if crc32 != self._params.fp.crc32:
-            # TODO: CFDP Checksum error handling
-            self._params.condition_code = ConditionCode.FILE_CHECKSUM_FAILURE
+            if not self._checksum_verify():
+                self._start_check_limit_handling()
+                return True
         else:
-            self._params.delivery_code = DeliveryCode.DATA_COMPLETE
-            self._params.condition_code = ConditionCode.NO_ERROR
+            # This is an EOF (Cancel), perform Cancel Response Procedures according to chapter
+            # 4.6.6 of the standard.
+            self._params.completion_disposition = CompletionDisposition.CANCELED
+            self._params.finished_params.condition_code = eof_pdu.condition_code
+            # Store this as progress for the checksum calculation.
+            self._params.fp.progress = self._params.fp.file_size_eof
+            self._params.finished_params.delivery_code = DeliveryCode.DATA_INCOMPLETE
+            self._checksum_verify()
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
+        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+        return False
+
+    def _checksum_verify(self) -> bool:
+        # if self._params.fp.crc32 is None:
+        # This can happen if no EOF has been received but the transaction is still completed
+        # or cancelled for some reason.
+        # return
+        crc32 = self._cksum_verif_helper.calc_for_file(
+            self._params.fp.file_name, self._params.fp.progress
+        )
+        if crc32 == self._params.fp.crc32:
+            self._params.finished_params.delivery_code = DeliveryCode.DATA_COMPLETE
+            self._params.finished_params.condition_code = ConditionCode.NO_ERROR
+            return True
+        else:
+            self._params.finished_params.condition_code = (
+                ConditionCode.FILE_CHECKSUM_FAILURE
+            )
+            return False
+
+    def _start_check_limit_handling(self):
+        self.states.step = TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING
+        if (
+            self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
+            != FaultHandlerCode.IGNORE_ERROR
+        ):
+            return
+        assert self._params.remote_cfg is not None
+        self._params.check_timer = self.check_timer_provider.provide_check_timer(
+            self.cfg.local_entity_id,
+            self._params.remote_cfg.entity_id,
+            EntityType.RECEIVING,
+        )
+        self._params.current_check_count = 0
 
     def _notice_of_completion(self):
+        if self._params.completion_disposition == CompletionDisposition.COMPLETED:
+            # TODO: Execute any filestore requests
+            pass
+        elif self._params.completion_disposition == CompletionDisposition.CANCELED:
+            assert self._params.remote_cfg is not None
+            if self._params.remote_cfg.disposition_on_cancellation:
+                self.user.vfs.delete_file(self._params.fp.file_name)
+                self._params.finished_params.delivery_status = (
+                    FileDeliveryStatus.DISCARDED_DELIBERATELY
+                )
         if self.cfg.indication_cfg.transaction_finished_indication_required:
             finished_indic_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction_id,  # type: ignore
-                condition_code=self._params.condition_code,
-                delivery_code=self._params.delivery_code,
-                file_status=self._params.file_status,
+                finished_params=self._params.finished_params,
                 status_report=None,
             )
             self.user.transaction_finished_indication(finished_indic_params)
 
     def _prepare_finished_pdu(self):
-        if self.states.packet_ready:
+        if self.states.packets_ready:
             raise UnretrievedPdusToBeSent()
-        finished_params = FinishedParams(
-            condition_code=self._params.condition_code,
-            # TODO: Find out how those are used
-            delivery_code=DeliveryCode.DATA_COMPLETE,
-            delivery_status=FileDeliveryStatus.FILE_RETAINED,
-        )
         finished_pdu = FinishedPdu(
-            params=finished_params,
+            params=self._params.finished_params,
             # The configuration was cached when the first metadata arrived
             pdu_conf=self._params.pdu_conf,
         )
-        self.pdu_holder.pdu = finished_pdu
+        self._add_packet_to_be_sent(finished_pdu)
+
+    def _add_packet_to_be_sent(self, packet: GenericPduPacket):
+        self._pdus_to_be_sent.append(PduHolder(packet))
+        self.states.packets_ready = True
+
+    def _check_limit_handling(self):
+        assert self._params.check_timer is not None
+        assert self._params.remote_cfg is not None
+        if self._params.check_timer.timed_out():
+            self._params.current_check_count += 1
+            if self._params.current_check_count == self._params.remote_cfg.check_limit:
+                self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
+            else:
+                self._params.check_timer.reset()
+
+    def _declare_fault(self, cond: ConditionCode) -> FaultHandlerCode:
+        fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
+        if fh is None:
+            raise ValueError(f"invalid condition code {cond!r} for fault declaration")
+        if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
+            self._notice_of_cancellation(cond)
+        elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
+            self._notice_of_suspension()
+        elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
+            self._abandon_transaction()
+        self.cfg.default_fault_handlers.report_fault(cond)
+        return fh
+
+    def _notice_of_cancellation(self, _: ConditionCode):
+        self.states.step = TransactionStep.TRANSFER_COMPLETION
+        self._params.completion_disposition = CompletionDisposition.CANCELED
+
+    def _notice_of_suspension(self):
+        # TODO: Implement
+        pass
+
+    def _abandon_transaction(self):
+        # I guess an abandoned transaction just stops whatever it is doing.. The implementation
+        # for this is quite easy.
+        self.reset()

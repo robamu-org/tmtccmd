@@ -24,6 +24,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Renamed `funccmd` PUS modules to `action`.
 - Unified `tc` and `tm` module into `tmtc` module. All `tmtccmd.tm` and `tmtccmd.tc` imports
   needs to be replaced with `tmtccmd.tmtc`.
+- The `CheckLimitProvider` abstraction must now be explicitely passed to the CFDP entity instead
+  of being passed via the remote configuration.
 
 ## Removed
 
@@ -36,6 +38,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 ## Fixed
 
 - Various fixes for the `QEMUComIF`.
+- Fixed the check timer and check limit mechanism for CFDP. The `RemoteEntityCfg` not only
+  expects a `check_limit` integer field which defaults to 2.
 
 # [v6.0.0] 2023-09-14
 

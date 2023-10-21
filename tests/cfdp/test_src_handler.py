@@ -26,6 +26,7 @@ from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
+from .common import TestCheckTimerProvider
 
 
 class TestCfdpSourceHandler(TestCase):
@@ -65,11 +66,14 @@ class TestCfdpSourceHandler(TestCase):
             crc_on_transmission=False,
             default_transmission_mode=default_transmission_mode,
             crc_type=ChecksumType.CRC_32,
-            check_limit_provider=None,
+            check_limit=3,
         )
         # Create an empty file and send it via CFDP
         self.source_handler = SourceHandler(
-            self.local_cfg, self.seq_num_provider, self.cfdp_user
+            self.local_cfg,
+            self.seq_num_provider,
+            self.cfdp_user,
+            TestCheckTimerProvider(),
         )
 
     def _common_empty_file_test(
