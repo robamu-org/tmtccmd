@@ -9,6 +9,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Added
+
+- The CFDP source and destination handler can now also handle cancel requests.
+
 ## Changed
 
 - Setting a sequnce of space packet IDs for TCP space packet parsing is now mandatory
@@ -26,6 +30,9 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   needs to be replaced with `tmtccmd.tmtc`.
 - The `CheckLimitProvider` abstraction must now be explicitely passed to the CFDP entity instead
   of being passed via the remote configuration.
+- `Countdown` class `timeout` property now returns a `timedelta` object to avoid inconsistency
+  of getter and setter property. There is a new `timeout_ms` property to returns the timeout
+  as milliseconds.
 
 ## Removed
 

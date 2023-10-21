@@ -1,3 +1,4 @@
+import time
 import dataclasses
 import os
 import random
@@ -98,11 +99,14 @@ class TestCfdpDestHandler(TestCase):
             max_packet_len=self.file_segment_len,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
+        self.timeout_check_limit_handling_ms = 10
         self.dest_handler = DestHandler(
             self.local_cfg,
             self.cfdp_user,
             self.remote_cfg_table,
-            TestCheckTimerProvider(),
+            TestCheckTimerProvider(
+                timeout_dest_entity_ms=self.timeout_check_limit_handling_ms
+            ),
         )
 
     def test_remote_cfg_does_not_exist(self):
@@ -112,7 +116,7 @@ class TestCfdpDestHandler(TestCase):
             self.local_cfg,
             self.cfdp_user,
             self.remote_cfg_table,
-            TestCheckTimerProvider(),
+            TestCheckTimerProvider(5),
         )
         metadata_params = MetadataParams(
             checksum_type=ChecksumType.NULL_CHECKSUM,
@@ -332,12 +336,11 @@ class TestCfdpDestHandler(TestCase):
         self._check_eof_recv_indication(fsm_res)
         self._check_finished_recv_indication_success(fsm_res)
 
-    def test_check_timer_mechanism(self):
-        data = "Hello World\n".encode()
+    def _generic_check_limit_test(self, file_data: bytes):
         with open(self.src_file_path, "wb") as of:
-            of.write(data)
+            of.write(file_data)
         crc32_func = mkPredefinedCrcFun("crc32")
-        crc32 = struct.pack("!I", crc32_func(data))
+        crc32 = struct.pack("!I", crc32_func(file_data))
         file_size = self.src_file_path.stat().st_size
         self._source_simulator_transfer_init_with_metadata(
             checksum=ChecksumType.CRC_32,
@@ -358,6 +361,56 @@ class TestCfdpDestHandler(TestCase):
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self._check_eof_recv_indication(fsm_res)
+
+    def test_check_timer_mechanism(self):
+        data = "Hello World\n".encode()
+        self._generic_check_limit_test(data)
+        fd_params = FileDataParams(
+            file_data=data,
+            offset=0,
+        )
+        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
+        self.dest_handler.insert_packet(file_data_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res,
+            False,
+            CfdpState.BUSY_CLASS_1_NACKED,
+            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
+        )
+        self.assertFalse(self.dest_handler.packets_ready)
+        time.sleep(0.015)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res,
+            False,
+            CfdpState.IDLE,
+            TransactionStep.IDLE,
+        )
+
+    def test_check_limit_reached(self):
+        data = "Hello World\n".encode()
+        self._generic_check_limit_test(data)
+        # Check counter should be incremented by one.
+        time.sleep(0.015)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res,
+            False,
+            CfdpState.BUSY_CLASS_1_NACKED,
+            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
+        )
+        self.assertEqual(self.dest_handler.current_check_counter, 1)
+        # Check counter reaches 2, check limit fault should be declared
+        time.sleep(0.015)
+        fsm_res = self.dest_handler.state_machine()
+        self.assertEqual(self.dest_handler.current_check_counter, 0)
+        self._state_checker(
+            fsm_res,
+            False,
+            CfdpState.IDLE,
+            TransactionStep.IDLE,
+        )
 
     def random_data_two_file_segments(self):
         if sys.version_info >= (3, 9):

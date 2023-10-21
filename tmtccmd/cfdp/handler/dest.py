@@ -163,6 +163,7 @@ class _DestFieldWrapper:
         self.fp.reset()
         self.remote_cfg = None
         self.last_inserted_packet.pdu = None
+        self.current_check_count = 0
 
 
 class FsmResult:
@@ -277,10 +278,45 @@ class DestHandler:
             return None
         return self._pdus_to_be_sent.popleft()
 
+    def cancel_request(self, transaction_id: TransactionId) -> bool:
+        """This function models the Cancel.request CFDP primtive and is the recommended way
+        to cancel a transaction. It will cause a Notice Of Cancellation at this entity.
+        Please note that the state machine might still be active because a canceled transfer
+        might still require some packets to be sent to the remote sender entity.
+
+        Returns
+        --------
+        True
+            Current transfer was cancelled
+        False
+            The state machine is in the IDLE state or there is a transaction ID missmatch.
+        """
+        if self.states.state == CfdpState.IDLE:
+            return False
+        if self.states.packets_ready:
+            raise UnretrievedPdusToBeSent()
+        if (
+            self._params.transaction_id is not None
+            and transaction_id == self._params.transaction_id
+        ):
+            self._trigger_notice_of_completion_canceled(
+                ConditionCode.CANCEL_REQUEST_RECEIVED
+            )
+            return True
+        return False
+
     def closure_requested(self) -> bool:
         """Returns whether a closure was requested for the current transaction. Please note that
         this variable is only valid as long as the state is not IDLE"""
         return self._params.closure_requested
+
+    @property
+    def current_check_counter(self) -> int:
+        """This is the check count used for the check limit mechanism for incomplete unacknowledged
+        file transfers. A Check Limit Reached fault will be declared once this check counter
+        reaches the configured check limit. More information can be found in chapter 4.6.3.3 b) of
+        the standard."""
+        return self._params.current_check_count
 
     @property
     def packets_ready(self) -> bool:
@@ -531,16 +567,12 @@ class DestHandler:
         else:
             # This is an EOF (Cancel), perform Cancel Response Procedures according to chapter
             # 4.6.6 of the standard.
-            self._params.completion_disposition = CompletionDisposition.CANCELED
-            self._params.finished_params.condition_code = eof_pdu.condition_code
+            self._trigger_notice_of_completion_canceled(eof_pdu.condition_code)
             # Store this as progress for the checksum calculation.
             self._params.fp.progress = self._params.fp.file_size_eof
             self._params.finished_params.delivery_code = DeliveryCode.DATA_INCOMPLETE
             self._checksum_verify()
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
-            self.states.step = TransactionStep.TRANSFER_COMPLETION
-        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
-            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+        self._file_transfer_complete_transition()
         return False
 
     def _checksum_verify(self) -> bool:
@@ -560,6 +592,16 @@ class DestHandler:
                 ConditionCode.FILE_CHECKSUM_FAILURE
             )
             return False
+
+    def _file_transfer_complete_transition(self):
+        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
+        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+
+    def _trigger_notice_of_completion_canceled(self, condition_code: ConditionCode):
+        self._params.completion_disposition = CompletionDisposition.CANCELED
+        self._params.finished_params.condition_code = condition_code
 
     def _start_check_limit_handling(self):
         self.states.step = TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING
@@ -613,6 +655,9 @@ class DestHandler:
         assert self._params.check_timer is not None
         assert self._params.remote_cfg is not None
         if self._params.check_timer.timed_out():
+            if self._checksum_verify():
+                self._file_transfer_complete_transition()
+                return
             self._params.current_check_count += 1
             if self._params.current_check_count == self._params.remote_cfg.check_limit:
                 self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
