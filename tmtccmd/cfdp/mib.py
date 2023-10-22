@@ -165,11 +165,11 @@ class RemoteEntityCfg:
 
     Notes on the Positive Acknowledgment Procedures:
 
-    The ``positive_ack_timer_interval_ms`` and ``positive_ack_timer_expiration_limit`` will be used
-    for positive acknowledgement procedures as specified in CFDP chapter 4.7. The sending entity
-    will start the timer for any PDUs where an acknowledgment is required (e.g. EOF PDU). Once the
-    expected ACK response has not been received for that interval, as counter will be incremented
-    and the timer will be reset. Once the counter reached the
+    The ``positive_ack_timer_interval_seconds`` and ``positive_ack_timer_expiration_limit`` will
+    be used for positive acknowledgement procedures as specified in CFDP chapter 4.7. The sending
+    entity will start the timer for any PDUs where an acknowledgment is required (e.g. EOF PDU).
+    Once the expected ACK response has not been received for that interval, as counter will be
+    incremented and the timer will be reset. Once the counter reached the
     ``positive_ack_timer_expiration_limit``, a Positive ACK Limit Reached fault will be declared.
 
     Parameters
@@ -203,8 +203,9 @@ class RemoteEntityCfg:
         this timer determines the expiry period for incrementing a check counter after an EOF PDU
         is received for an incomplete file transfer. This allows out-of-order reception of file
         data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2.
-    positive_ack_timer_interval_ms
+    positive_ack_timer_interval_seconds
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
+        Expected as floating point seconds.
     positive_ack_timer_expiration_limit
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
 
@@ -217,7 +218,7 @@ class RemoteEntityCfg:
     crc_on_transmission: bool
     default_transmission_mode: TransmissionMode
     crc_type: ChecksumType
-    positive_ack_timer_interval_ms: int = 5000
+    positive_ack_timer_interval_seconds: float = 5.0
     positive_ack_timer_expiration_limit: int = 2
     check_limit: int = 2
     disposition_on_cancellation: bool = False

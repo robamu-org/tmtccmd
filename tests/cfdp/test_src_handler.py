@@ -65,6 +65,8 @@ class TestCfdpSourceHandler(TestCase):
             closure_requested=closure_requested,
             crc_on_transmission=False,
             default_transmission_mode=default_transmission_mode,
+            positive_ack_timer_interval_ms=10,
+            positive_ack_timer_expiration_limit=2,
             crc_type=ChecksumType.CRC_32,
             check_limit=3,
         )

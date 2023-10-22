@@ -12,6 +12,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 ## Added
 
 - The CFDP source and destination handler can now also handle cancel requests.
+- New `from_seconds` classmethod for `Countdown` class.
 
 ## Changed
 
