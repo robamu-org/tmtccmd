@@ -1,6 +1,5 @@
 from __future__ import annotations
 from collections import deque
-from datetime import timedelta
 import enum
 import logging
 from dataclasses import dataclass
@@ -108,7 +107,22 @@ class _SourceFileParams(FileParamsBase):
 class SourceStateWrapper:
     state: CfdpState = CfdpState.IDLE
     step: TransactionStep = TransactionStep.IDLE
-    packets_ready: bool = False
+    _num_packets_ready: int = 0
+
+    @property
+    def num_packets_ready(self) -> int:
+        return self._num_packets_ready
+
+    @property
+    def packets_ready(self) -> bool:
+        return self.num_packets_ready > 0
+
+
+class _AckedModeParams:
+    def __init__(self) -> None:
+        self.step_before_retransmission: Optional[TransactionStep] = None
+        self.segment_reqs_to_handle: Optional[Tuple[int, int]] = None
+        self.segment_req_index: int = 0
 
 
 @dataclass
@@ -125,6 +139,7 @@ class _TransferFieldWrapper:
         self.positive_ack_params: _PositiveAckProcedureParams = (
             _PositiveAckProcedureParams()
         )
+        self.ack_params: _AckedModeParams = _AckedModeParams()
         self.fp: _SourceFileParams = _SourceFileParams.empty()
         self.finished_params: Optional[FinishedParams] = None
         self.remote_cfg: Optional[RemoteEntityCfg] = None
@@ -133,12 +148,16 @@ class _TransferFieldWrapper:
         self.pdu_conf.source_entity_id = local_entity_id
 
     @property
-    def source_id(self):
+    def source_id(self) -> UnsignedByteField:
         return self.pdu_conf.source_entity_id
 
     @source_id.setter
     def source_id(self, source_id: UnsignedByteField):
         self.pdu_conf.source_entity_id = source_id
+
+    @property
+    def positve_ack_counter(self) -> int:
+        return self.positive_ack_params.ack_counter
 
     @property
     def dest_id(self):
@@ -204,21 +223,17 @@ class PduIgnoredAtSource(Exception):
         super().__init__(f"ignored PDU packet at source handler: {reason!r}")
 
 
-class _AckedModeContext:
-    def __init__(self) -> None:
-        self.segment_reqs_to_handle: Optional[Tuple[int, int]] = None
-        self.segment_req_index: int = 0
-
-
 class SourceHandler:
-    """This is the primary CFDP source handler. It models the CFDP source entity, which is primarily
-    responsible for handling put requests to send files to another CFDP destination entity.
+    """This is the primary CFDP source handler. It models the CFDP source entity, which is
+    primarily responsible for handling put requests to send files to another CFDP destination
+    entity.
 
     As such, it contains a state machine to perform all operations necessary to perform a
     source-to-destination file transfer. This class does not send the CFDP PDU packets directly
     to allow for greater flexibility. For example, a user might want to wrap the CFDP packet
     entities into a CCSDS space packet or into a special frame type. The user is responsible for
-    sending the packets and confirming that they are sent successfully.
+    sending the packets and confirming that they are sent successfully. The handler can handle
+    both unacknowledged (class 1) and acknowledged (class 2) file tranfers.
 
     The following core functions are the primary interface:
 
@@ -257,7 +272,6 @@ class SourceHandler:
         self._params = _TransferFieldWrapper(cfg.local_entity_id)
         self._crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, self.user.vfs)
         self._put_req: Optional[PutRequest] = None
-        self._ack_ctx: _AckedModeContext = _AckedModeContext()
         self._inserted_pdu = PduHolder(None)
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
 
@@ -279,6 +293,10 @@ class SourceHandler:
         self._params.source_id = source_id
 
     @property
+    def positive_ack_counter(self) -> int:
+        return self._params.positve_ack_counter
+
+    @property
     def state(self) -> CfdpState:
         return self.states.state
 
@@ -289,6 +307,10 @@ class SourceHandler:
     @property
     def packets_ready(self) -> bool:
         return self.states.packets_ready
+
+    @property
+    def num_packets_ready(self) -> int:
+        return self.states.num_packets_ready
 
     def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
         """You can call this function to pass a put request to the source handler, which is
@@ -307,7 +329,7 @@ class SourceHandler:
         self._put_req = request
         self._params.remote_cfg = remote_cfg
         self._params.dest_id = remote_cfg.entity_id
-        self.states.packets_ready = False
+        self.states._num_packets_ready = 0
         self._setup_transmission_mode()
         if self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             _LOGGER.debug("Starting Put Request handling in NAK mode")
@@ -432,10 +454,9 @@ class SourceHandler:
 
     def get_next_packet(self) -> Optional[PduHolder]:
         """Retrieve the next packet which should be sent to the remote CFDP destination entity."""
-        if len(self._pdus_to_be_sent) <= 1:
-            self.states.packets_ready = False
         if len(self._pdus_to_be_sent) == 0:
             return None
+        self.states._num_packets_ready -= 1
         return self._pdus_to_be_sent.popleft()
 
     def state_machine(self) -> FsmResult:
@@ -626,7 +647,6 @@ class SourceHandler:
             if self.__handle_retransmission():
                 return True
         if self._prepare_progressing_file_data_pdu():
-            self.states.packets_ready = True
             return True
         if self._params.fp.no_eof:
             # Special case: Metadata Only.
@@ -664,7 +684,9 @@ class SourceHandler:
                 )
                 packet_prepared = True
         if packet_prepared:
+            self._params.ack_params.step_before_retransmission = self.states.step
             self.states.step = TransactionStep.RETRANSMITTING
+        self._inserted_pdu.pdu = None
         return packet_prepared
 
     def _handle_waiting_for_ack(self):
@@ -700,7 +722,6 @@ class SourceHandler:
         assert self._params.remote_cfg is not None
         if self._params.positive_ack_params.ack_timer.timed_out():
             assert self._params.positive_ack_params.cond_code_of_eof_pdu is not None
-            self._params.positive_ack_params.ack_counter += 1
             if (
                 self._params.positive_ack_params.ack_counter
                 == self._params.remote_cfg.positive_ack_timer_expiration_limit
@@ -708,6 +729,7 @@ class SourceHandler:
                 self._declare_fault(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
                 return
             self._params.positive_ack_params.ack_timer.reset()
+            self._params.positive_ack_params.ack_counter += 1
             self._prepare_eof_pdu(
                 self._params.positive_ack_params.cond_code_of_eof_pdu,
                 self._checksum_calculation(self._params.fp.file_size),
@@ -772,7 +794,8 @@ class SourceHandler:
         if self.states.step == TransactionStep.SENDING_METADATA:
             self.states.step = TransactionStep.SENDING_FILE_DATA
         elif self.states.step == TransactionStep.RETRANSMITTING:
-            self.states.step = TransactionStep.SENDING_FILE_DATA
+            assert self._params.ack_params.step_before_retransmission is not None
+            self.states.step = self._params.ack_params.step_before_retransmission
         elif self.states.step == TransactionStep.SENDING_FILE_DATA:
             self._handle_file_data_sent()
         elif self.states.step == TransactionStep.SENDING_ACK_OF_FINISHED:
@@ -816,10 +839,8 @@ class SourceHandler:
     def _start_positive_ack_procedure(self):
         assert self._params.remote_cfg is not None
         self.states.step = TransactionStep.WAITING_FOR_EOF_ACK
-        self._params.positive_ack_params.ack_timer = Countdown(
-            timedelta(
-                milliseconds=self._params.remote_cfg.positive_ack_timer_interval_ms
-            )
+        self._params.positive_ack_params.ack_timer = Countdown.from_seconds(
+            self._params.remote_cfg.positive_ack_timer_interval_seconds
         )
         self._params.positive_ack_params.ack_counter = 0
 
@@ -841,7 +862,7 @@ class SourceHandler:
 
     def _add_packet_to_be_sent(self, packet: GenericPduPacket):
         self._pdus_to_be_sent.append(PduHolder(packet))
-        self.states.packets_ready = True
+        self.states._num_packets_ready += 1
 
     def _prepare_progressing_file_data_pdu(self) -> bool:
         """Prepare the next file data PDU, which also progresses the file copy operation.
@@ -921,6 +942,19 @@ class SourceHandler:
         self.cfg.default_fault_handlers.report_fault(cond)
 
     def _notice_of_cancellation(self, condition_code: ConditionCode):
+        # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
+        # the EOF (cancel) PDU must result in abandonment of the transaction.
+        if (
+            self._params.positive_ack_params.cond_code_of_eof_pdu is not None
+            and self._params.positive_ack_params.cond_code_of_eof_pdu
+            != ConditionCode.NO_ERROR
+        ):
+            # We still call the abandonment callback to ensure the fault is logged.
+            self.cfg.default_fault_handlers.abandoned_cb(
+                self._params.positive_ack_params.cond_code_of_eof_pdu
+            )
+            self._abandon_transaction()
+            return
         # As specified in 4.11.2.2, prepare an EOF PDU to be sent to the remote entity. Supply
         # the checksum for the file copy progress sent so far.
         self._prepare_eof_pdu(

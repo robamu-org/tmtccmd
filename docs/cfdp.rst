@@ -4,15 +4,18 @@
 CCSDS File Delivery Protocol (CFDP)
 ====================================
 
-The `tmtccmd` package offers some high-level CCSDS File Delivery Protocol (CFDP) components to
+The ``tmtccmd`` package offers some high-level CCSDS File Delivery Protocol (CFDP) components to
 perform file transfers according to the `CCSDS Blue Book 727.0-B-5`_. The underlying base packet
 library used to generate the packets to be sent is the `spacepackets`_ library.
-The basic idea of CFDP is to convert files of any size to a stream of packets called packet
+The basic idea of CFDP is to convert files of any size into a stream of packets called packet
 data units (PDU). CFPD has an unacknowledged and acknowledged mode, with the option to request
-a transaction closure. Using the unacknowledged mode with no transaction closure is applicable
-for simplex communication paths, while the unacknowledged mode with closure is the easiest
-way to get a confirmation of a successfull file transfer, including a CRC check on the remote
-side to verify file integrity. Currently, this library only supports the unacknowledged mode.
+a transaction closure for the unacknowledged mode. Using the unacknowledged mode with no
+transaction closure is applicable for simplex communication paths, while the unacknowledged mode
+with closure is the easiest way to get a confirmation of a successfull file transfer, including a
+CRC check on the remote side to verify file integrity. The acknowledged mode is the most complex
+mode which includes multiple mechanism to ensure succesfull packet transaction even for unreliable
+connections, including lost segment detection. As such, it can be compared to a specialized TCP
+for file transfers with remote systems.
 
 The core of these high-level components are the :py:class:`tmtccmd.cfdp.handler.dest.DestHandler`
 and the :py:class:`tmtccmd.cfdp.handler.source.SourceHandler` component. These model the CFDP
@@ -20,6 +23,8 @@ destination and CFDP source entity respectively.
 
 CFDP source entity
 -------------------
+
+The source entity components support both acknowledged and unacknowledged transfers.
 
 The :py:class:`tmtccmd.cfdp.handler.source.SourceHandler` converts a
 :py:class:`tmtccmd.cfdp.request.PutRequest` into all packet data units (PDUs) which need to be
@@ -43,6 +48,8 @@ a valid :py:class:`tmtccmd.cfdp.request.PutRequest` to perform a File Copy opera
 
 CFDP destination entity
 ------------------------
+
+The destination entity components currently only support unacknowledged transfers.
 
 The :py:class:`tmtccmd.cfdp.handler.dest.DestHandler` can convert the PDUs sent from a remote
 source entity ID back to a file. A file copy operation on the receiver side is started with

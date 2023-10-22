@@ -205,9 +205,10 @@ class RemoteEntityCfg:
         data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2.
     positive_ack_timer_interval_seconds
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
-        Expected as floating point seconds.
+        Expected as floating point seconds. Defaults to 5 seconds.
     positive_ack_timer_expiration_limit
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
+        Defaults to 2.
 
     """
 
@@ -218,7 +219,7 @@ class RemoteEntityCfg:
     crc_on_transmission: bool
     default_transmission_mode: TransmissionMode
     crc_type: ChecksumType
-    positive_ack_timer_interval_seconds: float = 5.0
+    positive_ack_timer_interval_seconds: float = 10.0
     positive_ack_timer_expiration_limit: int = 2
     check_limit: int = 2
     disposition_on_cancellation: bool = False

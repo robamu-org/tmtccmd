@@ -133,7 +133,15 @@ class DestStateWrapper:
     state: CfdpState = CfdpState.IDLE
     step: TransactionStep = TransactionStep.IDLE
     transaction_id: Optional[TransactionId] = None
-    packets_ready: bool = False
+    _num_packets_ready: int = 0
+
+    @property
+    def num_packets_ready(self) -> int:
+        return self._num_packets_ready
+
+    @property
+    def packets_ready(self) -> bool:
+        return self.num_packets_ready > 0
 
 
 @dataclass
@@ -272,10 +280,9 @@ class DestHandler:
 
     def get_next_packet(self) -> Optional[PduHolder]:
         """Retrieve the next packet which should be sent to the remote CFDP source entity."""
-        if len(self._pdus_to_be_sent) <= 1:
-            self.states.packets_ready = False
         if len(self._pdus_to_be_sent) == 0:
             return None
+        self.states._num_packets_ready -= 1
         return self._pdus_to_be_sent.popleft()
 
     def cancel_request(self, transaction_id: TransactionId) -> bool:
@@ -649,7 +656,7 @@ class DestHandler:
 
     def _add_packet_to_be_sent(self, packet: GenericPduPacket):
         self._pdus_to_be_sent.append(PduHolder(packet))
-        self.states.packets_ready = True
+        self.states._num_packets_ready += 1
 
     def _check_limit_handling(self):
         assert self._params.check_timer is not None

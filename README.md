@@ -28,8 +28,9 @@ CCSDS packets.
   This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
   packet implementations.
 - High level CFDP components which allow to build
-  [CFDP standard conformant](https://public.ccsds.org/Pubs/727x0b5.pdf) CFDP handlers. Currently
-  only supports unacknowledged mode.
+  [CFDP standard conformant](https://public.ccsds.org/Pubs/727x0b5.pdf) CFDP handlers. Supports
+  unacknowledged and acknowledged file transfers for the file sender (source) side and only
+  unacknowledged transfers to the file receiver (destination) side.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
