@@ -99,7 +99,7 @@ class TestCfdpDestHandler(TestCase):
             max_packet_len=self.file_segment_len,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
-        self.timeout_check_limit_handling_ms = 10
+        self.timeout_check_limit_handling_ms = 30
         self.dest_handler = DestHandler(
             self.local_cfg,
             self.cfdp_user,
@@ -379,7 +379,7 @@ class TestCfdpDestHandler(TestCase):
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self.assertFalse(self.dest_handler.packets_ready)
-        time.sleep(0.02)
+        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res,
@@ -392,7 +392,7 @@ class TestCfdpDestHandler(TestCase):
         data = "Hello World\n".encode()
         self._generic_check_limit_test(data)
         # Check counter should be incremented by one.
-        time.sleep(0.015)
+        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res,
@@ -402,7 +402,7 @@ class TestCfdpDestHandler(TestCase):
         )
         self.assertEqual(self.dest_handler.current_check_counter, 1)
         # Check counter reaches 2, check limit fault should be declared
-        time.sleep(0.015)
+        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
         fsm_res = self.dest_handler.state_machine()
         self.assertEqual(self.dest_handler.current_check_counter, 0)
         self._state_checker(
