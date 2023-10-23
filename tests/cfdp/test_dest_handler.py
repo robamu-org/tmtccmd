@@ -49,7 +49,7 @@ from tmtccmd.cfdp.handler import NoRemoteEntityCfgFound
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
-from .common import TestCheckTimerProvider
+from .common import CheckTimerProviderForTest
 
 
 @dataclasses.dataclass
@@ -104,7 +104,7 @@ class TestCfdpDestHandler(TestCase):
             self.local_cfg,
             self.cfdp_user,
             self.remote_cfg_table,
-            TestCheckTimerProvider(
+            CheckTimerProviderForTest(
                 timeout_dest_entity_ms=self.timeout_check_limit_handling_ms
             ),
         )
@@ -116,7 +116,7 @@ class TestCfdpDestHandler(TestCase):
             self.local_cfg,
             self.cfdp_user,
             self.remote_cfg_table,
-            TestCheckTimerProvider(5),
+            CheckTimerProviderForTest(5),
         )
         metadata_params = MetadataParams(
             checksum_type=ChecksumType.NULL_CHECKSUM,
@@ -379,7 +379,7 @@ class TestCfdpDestHandler(TestCase):
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self.assertFalse(self.dest_handler.packets_ready)
-        time.sleep(0.015)
+        time.sleep(0.02)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res,

@@ -26,7 +26,7 @@ from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
-from .common import TestCheckTimerProvider
+from .common import CheckTimerProviderForTest
 
 
 class TestCfdpSourceHandler(TestCase):
@@ -80,7 +80,7 @@ class TestCfdpSourceHandler(TestCase):
             self.local_cfg,
             self.seq_num_provider,
             self.cfdp_user,
-            TestCheckTimerProvider(),
+            CheckTimerProviderForTest(),
         )
 
     def _common_empty_file_test(
