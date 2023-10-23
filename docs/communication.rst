@@ -33,8 +33,10 @@ PUS packets (a subtype of CCSDS space packets) to a UDP server
     	com_if.send(tc.pack())
 
     simulated_udp_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    addr = ("127.0.0.1", 60000)
+    # Let the OS assign an appropriate port.
+    addr = ("127.0.0.1", 0)
     simulated_udp_server.bind(addr)
+    addr = simulated_udp_server.getsockname()
 
     udp_client = UdpComIF("udp", send_address=EthAddr.from_tuple(addr))
     udp_client.initialize()
