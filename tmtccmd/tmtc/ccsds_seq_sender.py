@@ -118,8 +118,8 @@ class SequentialCcsdsSender:
 
     def __print_rem_timeout(self, op_divider: int, divisor: int = 15):
         if not self.__wait_cd_timed_out() and op_divider % divisor == 0:
-            rem_time = self._wait_cd.rem_time()
-            if self._wait_cd.rem_time() > timedelta():
+            rem_time = self._wait_cd.remaining_time()
+            if self._wait_cd.remaining_time() > timedelta():
                 print(f"{rem_time.total_seconds():.01f} seconds wait time remaining")
 
     def _check_next_telecommand(self, com_if: ComInterface):
@@ -196,5 +196,5 @@ class SequentialCcsdsSender:
 
     def _update_largest_delay(self):
         self._current_res.longest_rem_delay = max(
-            self._wait_cd.rem_time(), self._send_cd.rem_time()
+            self._wait_cd.remaining_time(), self._send_cd.remaining_time()
         )

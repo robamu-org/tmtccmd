@@ -64,7 +64,7 @@ class CfdpHandler:
 
     def pull_next_source_packet(self) -> Optional[PduHolder]:
         res = self.source_handler.state_machine()
-        if res.states.packets_ready:
+        if res.states.num_packets_ready:
             return self.source_handler.pdu_holder
         return None
 

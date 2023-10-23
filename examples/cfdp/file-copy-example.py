@@ -2,6 +2,7 @@
 """This example shows a end-to-end transfer of a small file using the CFDP high level
 components provided by the tmtccmd package."""
 import copy
+from datetime import timedelta
 import logging
 import os
 import threading
@@ -15,13 +16,15 @@ from typing import Any
 from spacepackets.cfdp import GenericPduPacket
 from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
 from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
-from spacepackets.util import ByteFieldU16
+from spacepackets.util import ByteFieldU16, UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
 from tmtccmd.cfdp.handler.dest import DestHandler
 from tmtccmd.cfdp.handler.source import SourceHandler
 from tmtccmd.cfdp.mib import (
+    CheckTimerProvider,
     DefaultFaultHandlerBase,
+    EntityType,
     IndicationCfg,
     LocalEntityCfg,
     RemoteEntityCfg,
@@ -34,6 +37,7 @@ from tmtccmd.cfdp.user import (
     MetadataRecvParams,
     TransactionFinishedParams,
 )
+from tmtccmd.util.countdown import Countdown
 from tmtccmd.util.seqcnt import SeqCountProvider
 
 SOURCE_ENTITY_ID = ByteFieldU16(1)
@@ -57,7 +61,6 @@ REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     crc_on_transmission=False,
     default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
     crc_type=ChecksumType.CRC_32,
-    check_limit_provider=None,
 )
 REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
 REMOTE_CFG_FOR_DEST_ENTITY.entity_id = DEST_ENTITY_ID
@@ -148,6 +151,16 @@ class CfdpUser(CfdpUserBase):
         _LOGGER.info(f"{self.base_str}: EOF-Recv.indication for {transaction_id}")
 
 
+class CustomCheckTimerProvider(CheckTimerProvider):
+    def provide_check_timer(
+        self,
+        local_entity_id: UnsignedByteField,
+        remote_entity_id: UnsignedByteField,
+        entity_type: EntityType,
+    ) -> Countdown:
+        return Countdown(timedelta(seconds=5.0))
+
+
 def main():
     basicConfig(level=logging.INFO)
     if SOURCE_FILE.exists():
@@ -165,7 +178,13 @@ def main():
     # 16 bit sequence count for transactions.
     src_seq_count_provider = SeqCountProvider(16)
     src_user = CfdpUser("SRC ENTITY")
-    source_handler = SourceHandler(src_entity_cfg, src_seq_count_provider, src_user)
+    check_timer_provider = CustomCheckTimerProvider()
+    source_handler = SourceHandler(
+        cfg=src_entity_cfg,
+        seq_num_provider=src_seq_count_provider,
+        user=src_user,
+        check_timer_provider=check_timer_provider,
+    )
     # Spawn a new thread and move the source handler there. This is scalable: If multiple number
     # of concurrent file operations are required, a new thread with a new source handler can
     # be spawned for each one.
@@ -182,7 +201,12 @@ def main():
     dest_user = CfdpUser("DEST ENTITY")
     remote_cfg_table = RemoteEntityCfgTable()
     remote_cfg_table.add_config(REMOTE_CFG_FOR_SOURCE_ENTITY)
-    dest_handler = DestHandler(dest_entity_cfg, dest_user, remote_cfg_table)
+    dest_handler = DestHandler(
+        cfg=dest_entity_cfg,
+        user=dest_user,
+        remote_cfg_table=remote_cfg_table,
+        check_timer_provider=check_timer_provider,
+    )
     # Spawn a new thread and move the destination handler there. This is scalable. One example
     # approach could be to keep a dictionary of active file copy operations, where the transaction
     # ID is the key. If a new Metadata PDU with a new transaction ID is detected, a new
@@ -235,15 +259,16 @@ def source_entity_handler(source_handler: SourceHandler):
             no_packet_received = True
         fsm_result = source_handler.state_machine()
         no_packet_sent = False
-        if fsm_result.states.packets_ready:
-            next_packet = source_handler.get_next_packet()
-            # Send all packets which need to be sent.
-            while next_packet is not None:
-                SOURCE_TO_DEST_QUEUE.put(next_packet.pdu)
-                next_packet = source_handler.get_next_packet()
+        if fsm_result.states.num_packets_ready > 0:
+            while fsm_result.states.num_packets_ready > 0:
+                next_pdu_wrapper = source_handler.get_next_packet()
+                assert next_pdu_wrapper is not None
+                # Send all packets which need to be sent.
+                SOURCE_TO_DEST_QUEUE.put(next_pdu_wrapper.pdu)
             no_packet_sent = False
         else:
             no_packet_sent = True
+        # If there is no work to do, put the thread to sleep.
         if no_packet_received and no_packet_sent:
             time.sleep(0.5)
         # Transaction done
@@ -265,12 +290,15 @@ def dest_entity_handler(dest_handler: DestHandler):
         except Empty:
             no_packet_received = True
         fsm_result = dest_handler.state_machine()
-        if fsm_result.states.packets_ready:
-            DEST_TO_SOURCE_QUEUE.put(fsm_result.pdu_holder.pdu)
-            dest_handler.confirm_packet_sent_advance_fsm()
+        if fsm_result.states.num_packets_ready > 0:
             no_packet_sent = False
+            while fsm_result.states.num_packets_ready > 0:
+                next_pdu_wrapper = dest_handler.get_next_packet()
+                assert next_pdu_wrapper is not None
+                DEST_TO_SOURCE_QUEUE.put(next_pdu_wrapper.pdu)
         else:
             no_packet_sent = True
+        # If there is no work to do, put the thread to sleep.
         if no_packet_received and no_packet_sent:
             time.sleep(0.5)
         # Transaction done

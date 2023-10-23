@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import time
 from typing import Optional
+from deprecation import deprecated
 from datetime import timedelta
+from tmtccmd.version import get_version
 
 
 def time_ms() -> int:
@@ -17,6 +19,10 @@ class Countdown:
         else:
             self._timeout_ms = 0
             self._start_time_ms = 0
+
+    @classmethod
+    def from_seconds(cls, timeout_seconds: float) -> Countdown:
+        return cls(timedelta(seconds=timeout_seconds))
 
     @classmethod
     def from_millis(cls, timeout_ms: int) -> Countdown:
@@ -56,7 +62,16 @@ class Countdown:
     def time_out(self):
         self._start_time_ms = 0
 
-    def rem_time(self) -> timedelta:
+    @deprecated(
+        deprecated_in="7.0.0",
+        details="use remaining_time method instead",
+        current_version=get_version(),
+    )
+    def rem_time(self):
+        return self.remaining_time()
+
+    def remaining_time(self) -> timedelta:
+        """Remaining time left."""
         end_time = self._start_time_ms + self._timeout_ms
         current = time_ms()
         if end_time < current:
@@ -70,5 +85,5 @@ class Countdown:
         return (
             f"{self.__class__.__class__} with"
             f" {timedelta(milliseconds=self._timeout_ms)} ms timeout,"
-            f" {self.rem_time()} time remaining"
+            f" {self.remaining_time()} time remaining"
         )
