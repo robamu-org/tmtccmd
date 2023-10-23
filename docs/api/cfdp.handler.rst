@@ -1,18 +1,15 @@
-tmtccmd.cfdp.handler package
+CFDP Handler Package 
 =============================
 
-Module contents
----------------
+Package Contents
+-----------------
 
 .. automodule:: tmtccmd.cfdp.handler
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
-tmtccmd.cfdp.handler.source module
+Source Handler Module
 -------------------------------------
 
 .. automodule:: tmtccmd.cfdp.handler.source
@@ -20,7 +17,7 @@ tmtccmd.cfdp.handler.source module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.cfdp.handler.dest module
+Destination Handler Module
 -------------------------------------
 
 .. automodule:: tmtccmd.cfdp.handler.dest
@@ -28,7 +25,7 @@ tmtccmd.cfdp.handler.dest module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.cfdp.handler.defs module
+Defintions Module
 -------------------------------------
 
 .. automodule:: tmtccmd.cfdp.handler.defs

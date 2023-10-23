@@ -1,4 +1,4 @@
-Telecommand Handling Module
+Telecommand Handling Package
 =============================
 
 TC Handler Submodule

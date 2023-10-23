@@ -1,4 +1,4 @@
-tmtccmd.com package
+Communication Package
 =======================
 
 .. automodule:: tmtccmd.com
@@ -6,18 +6,7 @@ tmtccmd.com package
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
-tmtccmd.com.utils module
------------------------------------------
-
-.. automodule:: tmtccmd.com.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com.tcp module
+TCP Client Module
 -------------------------------------------
 
 .. automodule:: tmtccmd.com.tcp
@@ -25,7 +14,12 @@ tmtccmd.com.tcp module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.udp module
+.. automodule:: tmtccmd.com.tcpip_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+UDP Client Module
 -------------------------------------
 
 .. automodule:: tmtccmd.com.udp
@@ -33,23 +27,7 @@ tmtccmd.com.udp module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.tcpip\_utils module
--------------------------------------
-
-.. automodule:: tmtccmd.com.tcpip_utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com.qemu module
-------------------------------------
-
-.. automodule:: tmtccmd.com.qemu
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.com.serial\_cobs module
+Serial Communication with COBS Module
 --------------------------------------
 
 .. automodule:: tmtccmd.com.serial_cobs
@@ -57,7 +35,7 @@ tmtccmd.com.serial\_cobs module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.serial\_dle module
+Serial Communication with DLE Module
 --------------------------------------
 
 .. automodule:: tmtccmd.com.serial_dle
@@ -65,7 +43,7 @@ tmtccmd.com.serial\_dle module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.serial\_base module
+Generic Serial Modules
 --------------------------------------
 
 .. automodule:: tmtccmd.com.serial_base
@@ -73,18 +51,31 @@ tmtccmd.com.serial\_base module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.ser\_utils module
-----------------------------------------
-
 .. automodule:: tmtccmd.com.ser_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.com.dummy module
+Dummy Module
 ------------------------------------------
 
 .. automodule:: tmtccmd.com.dummy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Utilities Module
+-----------------------------------------
+
+.. automodule:: tmtccmd.com.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+QEMU Module
+------------------------------------
+
+.. automodule:: tmtccmd.com.qemu
    :members:
    :undoc-members:
    :show-inheritance:
