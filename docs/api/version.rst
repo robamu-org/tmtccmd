@@ -1,4 +1,4 @@
-tmtccmd.version package
+Version Module
 =======================
 
 .. automodule:: tmtccmd.version

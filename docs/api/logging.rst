@@ -1,4 +1,4 @@
-tmtccmd.logging package
+Logging Package
 =======================
 
 Submodules

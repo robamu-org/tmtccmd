@@ -1,4 +1,4 @@
-tmtccmd.pus package
+PUS Package
 ===================
 
 Submodules

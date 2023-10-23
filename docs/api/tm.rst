@@ -1,4 +1,4 @@
-Telemetry Handling Module
+Telemetry Handling Package 
 =============================
 
 CCSDS TM Listener Module

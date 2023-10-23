@@ -3,8 +3,7 @@
    :undoc-members:
    :show-inheritance:
 
-
-tmtccmd.core package
+Core Package
 ====================
 
 Module contents
