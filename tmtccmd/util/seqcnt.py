@@ -28,7 +28,7 @@ class ProvidesSeqCount(ABC):
 class FileSeqCountProvider(ProvidesSeqCount):
     """Sequence count provider which uses a disk file to store the current sequence count
     in a non-volatile way. The first call with the next built-in or using the base
-    class :py:meth:`get` call will yield a 0
+    class :py:meth:`current` call will yield a 0
     """
 
     def __init__(self, max_bit_width: int, file_name: Path = Path("seqcnt.txt")):
@@ -61,7 +61,7 @@ class FileSeqCountProvider(ProvidesSeqCount):
         with open(self.file_name, "r+") as file:
             curr_seq_cnt = self.check_count(file.readline())
             file.seek(0)
-            file.write(f"{self.increment_with_rollover(curr_seq_cnt)}\n")
+            file.write(f"{self._increment_with_rollover(curr_seq_cnt)}\n")
             return curr_seq_cnt
 
     def check_count(self, line: str) -> int:
@@ -73,7 +73,7 @@ class FileSeqCountProvider(ProvidesSeqCount):
             raise ValueError("Sequence count in file has invalid value")
         return curr_seq_cnt
 
-    def increment_with_rollover(self, seq_cnt: int) -> int:
+    def _increment_with_rollover(self, seq_cnt: int) -> int:
         """CCSDS Sequence count has maximum size of 14 bit. Rollover after that size by default"""
         if seq_cnt >= pow(2, self.max_bit_width) - 1:
             return 0
