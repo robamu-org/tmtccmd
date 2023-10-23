@@ -4,7 +4,7 @@ from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
 from tmtccmd.util.countdown import Countdown
 
 
-class TestCheckTimerProvider(CheckTimerProvider):
+class CheckTimerProviderForTest(CheckTimerProvider):
     def __init__(
         self, timeout_dest_entity_ms: int = 5, timeout_source_entity_ms: int = 5
     ) -> None:
