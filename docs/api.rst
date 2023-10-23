@@ -2,7 +2,7 @@
 API
 ====
 
-Communication Submodule
+Communication Package 
 ========================
 
 .. automodule:: tmtccmd.com
@@ -13,7 +13,7 @@ Communication Submodule
 
    api/com
 
-CCSDS Submodules
+CCSDS Package 
 ===================
 
 This currently also contains the CFDP support.
@@ -24,7 +24,7 @@ This currently also contains the CFDP support.
    api/cfdp
    api/cfdp.handler
 
-ECSS Submodules
+ECSS Package 
 =========================
 
 .. automodule:: tmtccmd.pus
@@ -35,7 +35,7 @@ ECSS Submodules
 
    api/pus
 
-Application Modules
+Application Package 
 =========================
 
 Module
@@ -44,7 +44,7 @@ Module
 .. automodule:: tmtccmd
    :noindex:
 
-Configuration Submodule
+Configuration Package 
 --------------------------
 
 .. automodule:: tmtccmd.config
@@ -55,7 +55,7 @@ Configuration Submodule
 
    api/config
 
-Core Submodule
+Core Package 
 -----------------
 
 .. automodule:: tmtccmd.core
@@ -69,7 +69,7 @@ Core Submodule
 .. automodule:: tmtccmd.tmtc
    :noindex:
 
-Telemetry Handling Submodules
+Telemetry Handling Package 
 ------------------------------
 
 .. toctree::
@@ -78,7 +78,7 @@ Telemetry Handling Submodules
    api/tm
 
 
-Telecommand Handling Submodules
+Telecommand Handling Package 
 --------------------------------
 
 .. toctree::
@@ -86,31 +86,30 @@ Telecommand Handling Submodules
 
    api/tc
 
-Miscellaneous Submodules
+Miscellaneous Modules 
 =========================
 
-Logging submodule
+Logging Module 
 -------------------
 
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.logging
+   api/logging
 
-Version submodule
+Version Module 
 -------------------
 
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.version
+   api/version
 
-Other submodules
+Other Modules 
 -----------------
 
 .. toctree::
    :maxdepth: 2
 
-   api/tmtccmd.util
-   api/tmtccmd.fsfw
-
+   api/util
+   api/fsfw

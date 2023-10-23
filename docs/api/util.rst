@@ -1,8 +1,16 @@
-tmtccmd.util package
+Utility Package
 =======================
 
 Submodules
 ----------
+
+JSON Module
+------------------------------------
+
+.. automodule:: tmtccmd.util.json
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 tmtccmd.utility.exit module
 ------------------------------------
@@ -16,14 +24,6 @@ tmtccmd.utility.hammingcode module
 ----------------------------------
 
 .. automodule:: tmtccmd.util.hammingcode
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.utility.json module
-------------------------------------
-
-.. automodule:: tmtccmd.util.json
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,4 +1,4 @@
-tmtccmd.config package
+Configuration Package
 ======================
 
 Module contents

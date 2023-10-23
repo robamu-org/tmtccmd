@@ -1,5 +1,5 @@
-tmtccmd.fsfw package
-=====================
+Flight Software Framework (FSFW) Support Package
+=================================================
 
 Submodules
 ----------

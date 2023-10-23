@@ -1,4 +1,4 @@
-tmtccmd.cfdp package
+CFDP Package
 =======================
 
 Module contents
@@ -9,19 +9,7 @@ Module contents
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
-tmtccmd.cfdp.defs module
---------------------------
-
-.. automodule:: tmtccmd.cfdp.defs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-tmtccmd.cfdp.filestore module
+Filestore Module
 -------------------------------
 
 .. automodule:: tmtccmd.cfdp.filestore
@@ -30,15 +18,15 @@ tmtccmd.cfdp.filestore module
    :show-inheritance:
 
 
-tmtccmd.cfdp.mib module
--------------------------------
+Management Information Base (MIB) Module
+-------------------------------------------
 
 .. automodule:: tmtccmd.cfdp.mib
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.cfdp.request module
+Request Module
 -------------------------------
 
 .. automodule:: tmtccmd.cfdp.request
@@ -46,10 +34,20 @@ tmtccmd.cfdp.request module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.cfdp.user module
+User Module
 -------------------------------
 
 .. automodule:: tmtccmd.cfdp.user
    :members:
    :undoc-members:
    :show-inheritance:
+
+Definitions Module
+--------------------------
+
+.. automodule:: tmtccmd.cfdp.defs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
