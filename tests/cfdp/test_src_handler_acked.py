@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+import os
+import random
 import time
 from unittest.mock import MagicMock
 from spacepackets.cfdp import (
@@ -166,6 +170,30 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
         self._generic_acked_transfer_completion(initial_eof_pdu)
+
+    def test_large_missing_chunk_retransmission(self):
+        # This tests generates three file data PDUs
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(self.file_segment_len * 3)
+        else:
+            rand_data = os.urandom(self.file_segment_len * 2)
+        dest_path = Path("/tmp/hello_three_segments_copy.txt")
+        _transaction_params = self._transaction_with_file_data_wrapper(
+            dest_path, rand_data
+        )
+        current_idx = 0
+        while current_idx < len(rand_data):
+            self._handle_next_file_data_pdu(
+                current_idx,
+                rand_data[current_idx : current_idx + self.file_segment_len],
+                0,
+            )
+            current_idx += self.file_segment_len
+
+        # TODO: 1. Finish EOF handling and checks
+        # 2. Generate the NAK PDU to re-request the whole file.
+        # 3. Verify that all file data is re-requested.
+        # all_missing_filedata = NakPdu(eof_pdu.pdu_header.pdu_conf, 0, 0, [(0, 0)])
 
     def _generic_acked_transfer_completion(self, eof_pdu: EofPdu):
         self._state_checker(
