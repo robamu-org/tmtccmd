@@ -17,6 +17,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 ## Changed
 
+- CFDP handler transmission mode and CFDP state are separate from each other now. The
+  transmission mode can be retrieved using a new `transmission_mode` property for both handlers,
+  and the `CfdpState` `BUSY_CLASS_2_ACKED` and `BUSY_CLASS_1_NACKED` variants were merged into a
+  `BUSY` variant.
 - Setting a sequnce of space packet IDs for TCP space packet parsing is now mandatory
   for the TCP communication interface. This avoids confusing errors during run-time.
 - Removed some global usage for the TCP communication interface
