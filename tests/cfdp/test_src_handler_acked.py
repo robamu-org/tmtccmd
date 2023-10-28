@@ -177,7 +177,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         if sys.version_info >= (3, 9):
             rand_data = random.randbytes(self.file_segment_len * 3)
         else:
-            rand_data = os.urandom(self.file_segment_len * 2)
+            rand_data = os.urandom(self.file_segment_len * 3)
         crc32 = PredefinedCrc("crc32")
         crc32.update(rand_data)
         crc32 = crc32.digest()
