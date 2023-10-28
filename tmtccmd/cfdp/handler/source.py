@@ -297,6 +297,12 @@ class SourceHandler:
         return self._params.positve_ack_counter
 
     @property
+    def transmission_mode(self) -> Optional[TransmissionMode]:
+        if self.state == CfdpState.IDLE:
+            return None
+        return self._params.transmission_mode
+
+    @property
     def state(self) -> CfdpState:
         return self.states.state
 
@@ -330,13 +336,12 @@ class SourceHandler:
         self._params.remote_cfg = remote_cfg
         self._params.dest_id = remote_cfg.entity_id
         self.states._num_packets_ready = 0
+        self.states.state = CfdpState.BUSY
         self._setup_transmission_mode()
         if self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             _LOGGER.debug("Starting Put Request handling in NAK mode")
-            self.states.state = CfdpState.BUSY_CLASS_1_NACKED
         elif self._params.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             _LOGGER.debug("Starting Put Request handling in ACK mode")
-            self.states.state = CfdpState.BUSY_CLASS_2_ACKED
         else:
             raise ValueError(
                 f"Invalid transmission mode {self._params.transmission_mode} passed"
@@ -643,7 +648,7 @@ class SourceHandler:
         # This function returns whether the internal state was advanced or not.
         # During the PDU send phase, handle the re-transmission of missing files in
         # acknowledged mode.
-        if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+        if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             if self.__handle_retransmission():
                 return True
         if self._prepare_progressing_file_data_pdu():
@@ -693,9 +698,10 @@ class SourceHandler:
                 missing_chunk_len -= chunk_size
 
     def _handle_waiting_for_ack(self):
-        if self.states.state != CfdpState.BUSY_CLASS_2_ACKED:
+        if self.transmission_mode != TransmissionMode.UNACKNOWLEDGED:
             _LOGGER.error(
-                f"invalid ACK waiting function call for state {self.states.state}"
+                f"invalid ACK waiting function call for transmission mode "
+                f"{self.transmission_mode!r}"
             )
 
         if self.__handle_retransmission():
@@ -740,13 +746,13 @@ class SourceHandler:
 
     def _handle_wait_for_finish(self):
         if (
-            self.states.state == CfdpState.BUSY_CLASS_2_ACKED
+            self.transmission_mode == TransmissionMode.ACKNOWLEDGED
             and self.__handle_retransmission()
         ):
             return
         if (
             (
-                self.states.state == CfdpState.BUSY_CLASS_1_NACKED
+                self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
                 and not self._params.closure_requested
             )
             or self._inserted_pdu.pdu is None
@@ -763,7 +769,7 @@ class SourceHandler:
             return
         finished_pdu = self._inserted_pdu.to_finished_pdu()
         self._inserted_pdu.pdu = None
-        if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+        if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self._prepare_finished_ack_packet(finished_pdu.condition_code)
             self.states.step = TransactionStep.SENDING_ACK_OF_FINISHED
         else:
@@ -810,7 +816,7 @@ class SourceHandler:
         if self.cfg.indication_cfg.eof_sent_indication_required:
             assert self._params.transaction_id is not None
             self.user.eof_sent_indication(self._params.transaction_id)
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
+        if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             if self._params.closure_requested:
                 assert self._params.remote_cfg is not None
                 self._params.check_timer = (

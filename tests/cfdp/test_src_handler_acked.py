@@ -33,7 +33,6 @@ from .test_src_handler import TestCfdpSourceHandler
 class TestSourceHandlerAcked(TestCfdpSourceHandler):
     def setUp(self) -> None:
         self.common_setup(True, TransmissionMode.ACKNOWLEDGED)
-        self.expected_cfdp_state = CfdpState.BUSY_CLASS_2_ACKED
 
     def test_empty_file_transfer(self):
         _, eof_pdu = self._common_empty_file_test(None)
@@ -56,6 +55,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             True,
+            CfdpState.BUSY,
             TransactionStep.RETRANSMITTING,
         )
         next_pdu = self.source_handler.get_next_packet()
@@ -82,6 +82,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             True,
+            CfdpState.BUSY,
             TransactionStep.RETRANSMITTING,
         )
         next_pdu = self.source_handler.get_next_packet()
@@ -123,6 +124,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             1,
+            CfdpState.BUSY,
             TransactionStep.SENDING_EOF,
         )
         cancelation_cb_mock: MagicMock = self.fault_handler.notice_of_cancellation_cb  # type: ignore
@@ -143,7 +145,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         # Calling the state machine again confirms we sent or handled the EOF packet,
         # and only then will the positive ACK counter be reset.
         self.source_handler.state_machine()
-        self._state_checker(None, 0, TransactionStep.WAITING_FOR_EOF_ACK)
+        self._state_checker(
+            None, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_EOF_ACK
+        )
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(eof_pdu_for_cancellation, 1)
@@ -156,6 +160,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             0,
+            CfdpState.IDLE,
             TransactionStep.IDLE,
         )
         abandoned_cb_mock: MagicMock = self.fault_handler.abandoned_cb  # type: ignore
@@ -205,7 +210,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         )
         self.source_handler.insert_packet(all_missing_filedata)
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, 3, TransactionStep.RETRANSMITTING)
+        self._state_checker(fsm_res, 3, CfdpState.BUSY, TransactionStep.RETRANSMITTING)
         # All file data PDUs should be re-sent now.
         for i in range(3):
             next_pdu = self.source_handler.get_next_packet()
@@ -220,6 +225,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             0,
+            CfdpState.BUSY,
             TransactionStep.WAITING_FOR_EOF_ACK,
         )
         pdu_conf = eof_pdu.pdu_header.pdu_conf
@@ -231,6 +237,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             False,
+            CfdpState.IDLE,
             TransactionStep.IDLE,
         )
 
@@ -248,6 +255,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             True,
+            CfdpState.BUSY,
             TransactionStep.SENDING_ACK_OF_FINISHED,
         )
 
@@ -294,5 +302,6 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._state_checker(
             None,
             False,
+            CfdpState.BUSY,
             TransactionStep.WAITING_FOR_FINISHED,
         )

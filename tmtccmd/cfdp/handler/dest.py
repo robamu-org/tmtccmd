@@ -35,6 +35,7 @@ from spacepackets.cfdp.pdu.finished import (
     DeliveryCode,
     FileDeliveryStatus,
 )
+from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from tmtccmd.cfdp import (
     CfdpUserBase,
@@ -153,6 +154,73 @@ class DestStateWrapper:
         return self.num_packets_ready > 0
 
 
+class LostSegmentTracker:
+    def __init__(self):
+        self.lost_segments = {}
+
+    def add_lost_segment(self, lost_seg: Tuple[int, int]):
+        self.lost_segments.update({lost_seg[0]: lost_seg[1]})
+        self.lost_segments = dict(sorted(self.lost_segments.items()))
+
+    def coalesce_lost_segments(self):
+        merged_segments = []
+        current_start, current_end = next(iter(self.lost_segments.items()))
+
+        for seg_start, seg_end in self.lost_segments.items():
+            if seg_start == current_end:
+                current_end = seg_end
+            else:
+                merged_segments.append((current_start, current_end))
+                current_start, current_end = seg_start, seg_end
+
+        merged_segments.append((current_start, current_end))
+        self.lost_segments = {start: end for (start, end) in merged_segments}
+
+    def remove_lost_segment(self, segment_to_remove: Tuple[int, int]) -> bool:
+        """Please note that this method can only handle the removal of segments
+        which do not overlap the boundaries of an existing lost segment. It is however able
+        to remove lost segments which are only a subset of an existing section.
+
+        Returns
+        ---------
+
+        Returns whether the internal dictionary was manipulated in any way.
+        """
+        if segment_to_remove[1] - segment_to_remove[0] == 0:
+            return False
+        did_something = False
+        end = self.lost_segments.get(segment_to_remove[0])
+        if end is not None:
+            if segment_to_remove[1] > end:
+                raise ValueError(
+                    "Specified lost segment end exceeds existing lost segment end"
+                )
+            did_something = True
+            if segment_to_remove[1] == end:
+                self.lost_segments.pop(segment_to_remove[0])
+            elif segment_to_remove[1] < end:
+                self.lost_segments.pop(segment_to_remove[0])
+                # Re-insert the rest of the missing segment
+                self.lost_segments.update({segment_to_remove[1]: end})
+        else:
+            for seg_start, seg_end in list(self.lost_segments.items()):
+                if seg_start < segment_to_remove[0] < seg_end:
+                    if segment_to_remove[1] > seg_end:
+                        raise ValueError(
+                            "Specified lost segment end exceeds existing lost segment end"
+                        )
+                    if segment_to_remove[1] == seg_end:
+                        self.lost_segments.update({seg_start: segment_to_remove[0]})
+                    else:
+                        self.lost_segments.update({seg_start: segment_to_remove[0]})
+                        self.lost_segments.update({segment_to_remove[1]: seg_end})
+                    did_something = True
+                    break
+        if did_something:
+            self.lost_segments = dict(sorted(self.lost_segments.items()))
+        return did_something
+
+
 @dataclass
 class _AckedModeParams:
     lost_segments: Set[Tuple[int, int]] = dataclasses.field(
@@ -160,6 +228,9 @@ class _AckedModeParams:
     )
     last_start_offset: int = 0
     last_end_offset: int = 0
+    deferred_lost_segment_detection_active: bool = False
+    procedure_timer: Optional[Countdown] = None
+    nak_activity_counter: int = 0
 
     def coalesce_adjacent_or_overlapping_lost_segments(self):
         """This implementation first sorts the lost segment list based on the starting points.
@@ -213,6 +284,7 @@ class _DestFieldWrapper:
         self.finished_params.delivery_status = FileDeliveryStatus.FILE_STATUS_UNREPORTED
         self.completion_disposition = CompletionDisposition.COMPLETED
         self.fp.reset()
+        self.acked_params = _AckedModeParams()
         self.remote_cfg = None
         self.last_inserted_packet.pdu = None
         self.current_check_count = 0
@@ -315,7 +387,8 @@ class DestHandler:
         if packet.pdu_type == PduType.FILE_DIRECTIVE and (
             packet.directive_type  # type: ignore
             in [DirectiveType.ACK_PDU, DirectiveType.PROMPT_PDU]
-            and self.states.state == CfdpState.BUSY_CLASS_1_NACKED
+            and self.states.state == CfdpState.BUSY
+            and self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
         ):
             raise PduIgnoredForDest(
                 PduIgnoredReason.ACK_MODE_PACKET_INVALID_MODE, packet
@@ -362,6 +435,20 @@ class DestHandler:
         return self._params.closure_requested
 
     @property
+    def transmission_mode(self) -> Optional[TransmissionMode]:
+        if self.states.state == CfdpState.IDLE:
+            return None
+        return self._params.pdu_conf.trans_mode
+
+    @property
+    def state(self) -> CfdpState:
+        return self.states.state
+
+    @property
+    def step(self) -> TransactionStep:
+        return self.states.step
+
+    @property
     def current_check_counter(self) -> int:
         """This is the check count used for the check limit mechanism for incomplete unacknowledged
         file transfers. A Check Limit Reached fault will be declared once this check counter
@@ -382,8 +469,6 @@ class DestHandler:
         discouraged to do this. CFDP generally has mechanism to detect issues and errors on itself.
         """
         self._params.reset()
-        # Not fully sure this is the best approach, but I think this is ok for now
-        self._params.transaction_id = None
         self._pdus_to_be_sent.clear()
         self.states.state = CfdpState.IDLE
         self.states.step = TransactionStep.IDLE
@@ -395,20 +480,23 @@ class DestHandler:
                 f"{len(self._pdus_to_be_sent)} packets left to send"
             )
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
-            if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+            if (
+                self.states.state == CfdpState.BUSY
+                and self.transmission_mode == TransmissionMode.ACKNOWLEDGED
+            ):
                 self.states.step = TransactionStep.WAITING_FOR_FINISHED_ACK
                 return
             self.reset()
         if self.states.step == TransactionStep.SENDING_EOF_ACK_PDU:
-            self.states.step = TransactionStep.SENDING_FINISHED_PDU
+            if self._params.acked_params.deferred_lost_segment_detection_active:
+                self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
+            else:
+                self.states.step = TransactionStep.SENDING_FINISHED_PDU
 
     def __transaction_start_metadata_pdu_to_params(self, metadata_pdu: MetadataPdu):
         self._params.reset()
         self.states.step = TransactionStep.TRANSACTION_START
-        if metadata_pdu.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
-            self.states.state = CfdpState.BUSY_CLASS_1_NACKED
-        elif metadata_pdu.transmission_mode == TransmissionMode.ACKNOWLEDGED:
-            self.states.state = CfdpState.BUSY_CLASS_2_ACKED
+        self.states.state = CfdpState.BUSY
         self._cksum_verif_helper.checksum_type = metadata_pdu.checksum_type
         self._params.closure_requested = metadata_pdu.closure_requested
         if metadata_pdu.dest_file_name is None:
@@ -496,7 +584,7 @@ class DestHandler:
             TransactionStep.RECEIVING_FILE_DATA,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         ]:
-            if self.__receiving_fd_and_eof_pdus():
+            if self._receiving_fd_and_eof_pdus():
                 return
         if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
             self._check_limit_handling()
@@ -504,11 +592,13 @@ class DestHandler:
             self._handle_transfer_completion()
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
+        if self.states.step == TransactionStep.WAITING_FOR_MISSING_DATA:
+            self._deferred_lost_segment_handling()
         if self.states.step == TransactionStep.WAITING_FOR_FINISHED_ACK:
             # TODO: Implement the waiting for the ACK PDU, including positive ACK procedures.
-            pass
+            self._handle_waiting_for_finished_ack()
 
-    def __receiving_fd_and_eof_pdus(self) -> bool:
+    def _receiving_fd_and_eof_pdus(self) -> bool:
         """Returns whether to exit the FSM prematurely."""
         exit_fsm = False
         if self._params.last_inserted_packet.pdu is None:
@@ -527,6 +617,10 @@ class DestHandler:
         self._params.last_inserted_packet.pdu = None
         return exit_fsm
 
+    def _handle_waiting_for_finished_ack(self):
+        # TODO: Implement
+        pass
+
     def _handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
         offset = file_data_pdu.offset
@@ -540,7 +634,7 @@ class DestHandler:
             self.user.file_segment_recv_indication(file_segment_indic_params)
         try:
             next_expected_progress = offset + len(data)
-            if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+            if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
                 self._lost_segment_detection(offset, len(data))
             self.user.vfs.write_data(self._params.fp.file_name, data, offset)
             self._params.finished_params.delivery_status = (
@@ -597,14 +691,13 @@ class DestHandler:
         ):
             self._params.finished_params.condition_code = ConditionCode.NO_ERROR
         self._notice_of_completion()
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
-            if self._params.closure_requested:
-                self.states.step = TransactionStep.SENDING_FINISHED_PDU
-            else:
-                self.reset()
-        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
-            self._prepare_eof_ack_packet()
-            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+        if (
+            self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
+            and self._params.closure_requested
+        ) or self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
+            self.states.step = TransactionStep.SENDING_FINISHED_PDU
+        else:
+            self.reset()
 
     def _lost_segment_detection(self, offset: int, data_len: int):
         """Lost segment detection: 4.6.4.3.1 a) and b) are covered by this code. c) is covered
@@ -630,10 +723,63 @@ class DestHandler:
         self._params.acked_params.last_start_offset = offset
         self._params.acked_params.last_end_offset = offset + data_len
 
+    def _deferred_lost_segment_handling(self):
+        assert self._params.remote_cfg is not None
+        assert self._params.fp.file_size_eof is not None
+        if not self._params.acked_params.deferred_lost_segment_detection_active:
+            return
+        # This is the case if this is the first issuance of NAK PDUs
+        # A timer needs to be instantiated
+        if self._params.acked_params.procedure_timer is None:
+            self._params.acked_params.procedure_timer = Countdown.from_seconds(
+                self._params.remote_cfg.nak_timer_interval_seconds
+            )
+        elif self._params.acked_params.procedure_timer.busy():
+            # There were or there was a previous NAK sequence(s). Wait for timeout before issuing
+            # a new NAK sequence.
+            return
+        if (
+            self._params.acked_params.nak_activity_counter
+            == self._params.remote_cfg.nak_timer_expiration_limit
+        ):
+            self._declare_fault(ConditionCode.NAK_LIMIT_REACHED)
+            return
+        if len(self._params.acked_params.lost_segments) == 0:
+            # We are done and have received everything.
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
+            return
+        max_segments_in_one_pdu = get_max_seg_reqs_for_max_packet_size_and_pdu_cfg(
+            self._params.remote_cfg.max_packet_len, self._params.pdu_conf
+        )
+        next_segment_reqs = []
+        for lost_segment in self._params.acked_params.lost_segments:
+            next_segment_reqs.append(lost_segment)
+            if len(next_segment_reqs) == max_segments_in_one_pdu:
+                self._add_packet_to_be_sent(
+                    NakPdu(
+                        self._params.pdu_conf,
+                        0,
+                        self._params.fp.file_size_eof,
+                        next_segment_reqs,
+                    )
+                )
+                next_segment_reqs = []
+        if len(next_segment_reqs) > 0:
+            self._add_packet_to_be_sent(
+                NakPdu(
+                    self._params.pdu_conf,
+                    0,
+                    self._params.fp.file_size_eof,
+                    next_segment_reqs,
+                )
+            )
+        self._params.acked_params.nak_activity_counter += 1
+
     def _handle_eof_pdu(self, eof_pdu: EofPdu) -> bool:
         """Returns whether to exit the FSM prematurely."""
         self._params.fp.crc32 = eof_pdu.file_checksum
         self._params.fp.file_size_eof = eof_pdu.file_size
+        self._params.fp.condition_code_eof = eof_pdu.condition_code
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
             # CFDP 4.6.1.2.9: Declare file size error if progress exceeds file size
             if self._params.fp.progress > self._params.fp.file_size_eof:
@@ -650,6 +796,15 @@ class DestHandler:
                 )
             if self.cfg.indication_cfg.eof_recv_indication_required:
                 self.user.eof_recv_indication(self._params.transaction_id)  # type: ignore
+            # TODO: Add start of deferred lost segment detection here for ACKed mode.
+            if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
+                self._prepare_eof_ack_packet()
+                self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+                if len(self._params.acked_params.lost_segments) > 0:
+                    self._params.acked_params.deferred_lost_segment_detection_active = (
+                        True
+                    )
+                self._deferred_lost_segment_handling()
             if not self._checksum_verify():
                 self._start_check_limit_handling()
                 return True
@@ -689,9 +844,9 @@ class DestHandler:
             return False
 
     def _file_transfer_complete_transition(self):
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
+        if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             self.states.step = TransactionStep.TRANSFER_COMPLETION
-        elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+        elif self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
 
     def _trigger_notice_of_completion_canceled(self, condition_code: ConditionCode):

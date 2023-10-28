@@ -140,7 +140,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self._state_checker(
             fsm_res,
             False,
-            CfdpState.BUSY_CLASS_1_NACKED,
+            CfdpState.BUSY,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self.assertFalse(self.dest_handler.packets_ready)
@@ -162,7 +162,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self._state_checker(
             fsm_res,
             False,
-            CfdpState.BUSY_CLASS_1_NACKED,
+            CfdpState.BUSY,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self.assertEqual(self.dest_handler.current_check_counter, 1)
@@ -278,7 +278,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self._state_checker(
             fsm_res,
             False,
-            CfdpState.BUSY_CLASS_1_NACKED,
+            CfdpState.BUSY,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self._generic_eof_recv_indication_check(fsm_res)

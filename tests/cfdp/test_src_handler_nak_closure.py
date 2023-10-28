@@ -35,7 +35,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
-        self._state_checker(fsm_res, False, TransactionStep.IDLE)
+        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_empty_file_pdu_generation_nacked_explicitely(self):
         self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
@@ -44,7 +44,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
-        self._state_checker(fsm_res, False, TransactionStep.IDLE)
+        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n"
@@ -57,7 +57,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
-        self._state_checker(fsm_res, False, TransactionStep.IDLE)
+        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -95,7 +95,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(eof_pdu.file_size, tparams.file_size)
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
-        self._state_checker(fsm_res, False, TransactionStep.IDLE)
+        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_invalid_source_id_pdu_passed(self):
         dest_id = ByteFieldU16(2)
@@ -137,6 +137,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._state_checker(
             None,
             False,
+            CfdpState.BUSY,
             TransactionStep.WAITING_FOR_FINISHED,
         )
         self.source_handler.insert_packet(self._prepare_finish_pdu())

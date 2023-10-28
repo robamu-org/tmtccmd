@@ -62,7 +62,7 @@ class TestCfdpSourceHandler(TestCase):
         self.cfdp_user.transaction_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
         self.seq_num_provider = SeqCountProvider(bit_width=8)
-        self.expected_cfdp_state = CfdpState.BUSY_CLASS_1_NACKED
+        self.expected_mode = default_transmission_mode
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
         self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
@@ -117,7 +117,7 @@ class TestCfdpSourceHandler(TestCase):
         expected_file_size: int,
     ) -> EofPdu:
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, 1, TransactionStep.SENDING_EOF)
+        self._state_checker(fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_EOF)
         self.assertEqual(self.source_handler.transaction_seq_num, id.seq_num)
         next_packet = self.source_handler.get_next_packet()
         self.assertIsNotNone(next_packet)
@@ -134,10 +134,11 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.fault_location, None)
         fsm_res = self.source_handler.state_machine()
         self._verify_eof_indication(id)
-        if self.expected_cfdp_state == CfdpState.BUSY_CLASS_2_ACKED:
+        if self.expected_mode == TransmissionMode.ACKNOWLEDGED:
             self._state_checker(
                 None,
                 0,
+                CfdpState.BUSY,
                 TransactionStep.WAITING_FOR_EOF_ACK,
             )
         return eof_pdu
@@ -226,6 +227,7 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res,
             0,
+            CfdpState.BUSY,
             TransactionStep.SENDING_FILE_DATA,
         )
         self.assertFalse(pdu_holder.is_file_directive)
@@ -242,6 +244,7 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res,
             1,
+            CfdpState.BUSY,
             TransactionStep.SENDING_METADATA,
         )
         transaction_id = self.source_handler.transaction_id
@@ -279,21 +282,24 @@ class TestCfdpSourceHandler(TestCase):
         self,
         fsm_res: Optional[FsmResult],
         num_packets_ready: int,
+        expected_state: CfdpState,
         expected_step: TransactionStep,
     ):
         if fsm_res is not None:
-            self.assertEqual(fsm_res.states.state, self.expected_cfdp_state)
+            self.assertEqual(fsm_res.states.state, expected_state)
             self.assertEqual(fsm_res.states.step, expected_step)
             if num_packets_ready > 0:
                 self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
         if num_packets_ready > 0:
             self.assertTrue(self.source_handler.packets_ready)
-        self.assertEqual(self.source_handler.states.state, self.expected_cfdp_state)
+        if expected_state != CfdpState.IDLE:
+            self.assertEqual(self.source_handler.transmission_mode, self.expected_mode)
+        self.assertEqual(self.source_handler.states.state, expected_state)
         self.assertEqual(self.source_handler.states.step, expected_step)
         self.assertEqual(
             self.source_handler.states.num_packets_ready, num_packets_ready
         )
-        self.assertEqual(self.source_handler.state, self.expected_cfdp_state)
+        self.assertEqual(self.source_handler.state, expected_state)
         self.assertEqual(self.source_handler.step, expected_step)
         self.assertEqual(self.source_handler.num_packets_ready, num_packets_ready)
 

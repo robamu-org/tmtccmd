@@ -52,19 +52,20 @@ class FileInfo:
     crc32: bytes
 
 
-__FILE_COUNT = 0
-__COUNTER_LOCK = Lock()
+_FILE_COUNT = 0
+_COUNTER_LOCK = Lock()
 
 
 class TestDestHandlerBase(TestCase):
     def _generate_unique_filenames(self) -> Tuple[Path, Path]:
-        global __FILE_COUNT
-        with __COUNTER_LOCK:
-            src_path = Path(f"{tempfile.gettempdir()}/__cfdp_test{__FILE_COUNT}.txt")
+        global _FILE_COUNT
+        global _COUNTER_LOCK
+        with _COUNTER_LOCK:
+            src_path = Path(f"{tempfile.gettempdir()}/__cfdp_test{_FILE_COUNT}.txt")
             dest_path = Path(
-                f"{tempfile.gettempdir()}/__cfdp_test{__FILE_COUNT}_dest.txt"
+                f"{tempfile.gettempdir()}/__cfdp_test{_FILE_COUNT}_dest.txt"
             )
-            __FILE_COUNT += 1
+            _FILE_COUNT += 1
         return src_path, dest_path
 
     def common_setup(self, trans_mode: TransmissionMode):
@@ -82,6 +83,7 @@ class TestDestHandlerBase(TestCase):
             trans_mode=trans_mode,
         )
         self.transaction_id = TransactionId(self.src_entity_id, ByteFieldU8(1))
+        self.expected_mode = trans_mode
         self.closure_requested = False
         self.cfdp_user = CfdpUser()
         self.file_segment_len = 128
@@ -124,8 +126,12 @@ class TestDestHandlerBase(TestCase):
             if num_packets_ready > 0:
                 self.assertTrue(fsm_res.states.packets_ready)
             self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
+        if expected_state != CfdpState.IDLE:
+            self.assertEqual(self.dest_handler.transmission_mode, self.expected_mode)
         self.assertEqual(self.dest_handler.states.state, expected_state)
         self.assertEqual(self.dest_handler.states.step, expected_transaction)
+        self.assertEqual(self.dest_handler.state, expected_state)
+        self.assertEqual(self.dest_handler.step, expected_transaction)
         self.assertEqual(self.dest_handler.num_packets_ready, num_packets_ready)
 
     def _generic_transfer_init(self, file_size: int):
@@ -167,7 +173,7 @@ class TestDestHandlerBase(TestCase):
         self._state_checker(
             fsm_res,
             0,
-            CfdpState.BUSY_CLASS_1_NACKED,
+            CfdpState.BUSY,
             TransactionStep.RECEIVING_FILE_DATA,
         )
         return fsm_res
@@ -178,16 +184,30 @@ class TestDestHandlerBase(TestCase):
         )
         self.dest_handler.insert_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
-        if self.closure_requested:
-            self._state_checker(
-                fsm_res,
-                1,
-                CfdpState.BUSY_CLASS_1_NACKED,
-                TransactionStep.SENDING_FINISHED_PDU,
-            )
+        if self.expected_mode == TransmissionMode.UNACKNOWLEDGED:
+            if self.closure_requested:
+                self._state_checker(
+                    fsm_res,
+                    1,
+                    CfdpState.BUSY,
+                    TransactionStep.SENDING_FINISHED_PDU,
+                )
+            else:
+                self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
         else:
-            self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+            self._generic_verify_eof_ack_packet(fsm_res)
+
         return fsm_res
+
+    def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):
+        self._state_checker(
+            fsm_res,
+            1,
+            CfdpState.BUSY,
+            TransactionStep.SENDING_EOF_ACK_PDU,
+        )
+        next_pdu = self.dest_handler.get_next_packet()
+        assert next_pdu is not None
 
     def _generic_eof_recv_indication_check(self, fsm_res: FsmResult):
         self.cfdp_user.eof_recv_indication.assert_called_once()

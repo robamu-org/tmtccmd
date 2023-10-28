@@ -29,9 +29,8 @@ class CfdpIndication(enum.Enum):
 
 class CfdpState(enum.Enum):
     IDLE = 0
-    BUSY_CLASS_1_NACKED = 1
-    BUSY_CLASS_2_ACKED = 2
-    SUSPENDED = 3
+    BUSY = 1
+    SUSPENDED = 2
 
 
 class TransactionId:
