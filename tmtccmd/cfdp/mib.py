@@ -162,8 +162,7 @@ class RemoteEntityCfg:
     were omitted. Some other fields which are not contained inside the standard but are considered
     necessary for the Python implementation are included.
 
-
-    Notes on the Positive Acknowledgment Procedures:
+    **Notes on Positive Acknowledgment Procedures**
 
     The ``positive_ack_timer_interval_seconds`` and ``positive_ack_timer_expiration_limit`` will
     be used for positive acknowledgement procedures as specified in CFDP chapter 4.7. The sending
@@ -172,7 +171,7 @@ class RemoteEntityCfg:
     incremented and the timer will be reset. Once the counter reached the
     ``positive_ack_timer_expiration_limit``, a Positive ACK Limit Reached fault will be declared.
 
-    Notes on the Deferred Lost Segment Procedure:
+    **Notes on Deferred Lost Segment Procedures**
 
     This procedure will be active if an EOF (No Error) PDU is received in acknowledged mode. After
     issuing the NAK sequence which has the whole file scope, a timer will be started. The timer is
@@ -182,6 +181,7 @@ class RemoteEntityCfg:
 
     Parameters
     -----------
+
     entity_id
         The ID of the remote entity.
     max_packet_len

@@ -155,7 +155,9 @@ class DestStateWrapper:
 
 @dataclass
 class _AckedModeParams:
-    lost_segments: Set[Tuple[int, int]] = set()
+    lost_segments: Set[Tuple[int, int]] = dataclasses.field(
+        default_factory=lambda: set()
+    )
     last_start_offset: int = 0
     last_end_offset: int = 0
 
