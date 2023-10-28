@@ -665,10 +665,10 @@ class DestHandler:
             if self._checksum_verify():
                 self._file_transfer_complete_transition()
                 return
-            self._params.current_check_count += 1
             if self._params.current_check_count == self._params.remote_cfg.check_limit:
                 self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
             else:
+                self._params.current_check_count += 1
                 self._params.check_timer.reset()
 
     def _declare_fault(self, cond: ConditionCode) -> FaultHandlerCode:

@@ -169,7 +169,7 @@ class RemoteEntityCfg:
     be used for positive acknowledgement procedures as specified in CFDP chapter 4.7. The sending
     entity will start the timer for any PDUs where an acknowledgment is required (e.g. EOF PDU).
     Once the expected ACK response has not been received for that interval, as counter will be
-    incremented and the timer will be reset. Once the counter reached the
+    incremented and the timer will be reset. Once the counter exceeds the
     ``positive_ack_timer_expiration_limit``, a Positive ACK Limit Reached fault will be declared.
 
     Parameters
@@ -202,13 +202,14 @@ class RemoteEntityCfg:
     check_limit
         this timer determines the expiry period for incrementing a check counter after an EOF PDU
         is received for an incomplete file transfer. This allows out-of-order reception of file
-        data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2.
+        data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2, so the
+        check limit timer may expire twice.
     positive_ack_timer_interval_seconds
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
         Expected as floating point seconds. Defaults to 5 seconds.
     positive_ack_timer_expiration_limit
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
-        Defaults to 2.
+        Defaults to 2, so the timer may expire twice.
 
     """
 

@@ -404,7 +404,16 @@ class TestCfdpDestHandler(TestCase):
         # Check counter reaches 2, check limit fault should be declared
         time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
         fsm_res = self.dest_handler.state_machine()
-        self.assertEqual(self.dest_handler.current_check_counter, 0)
+        self._state_checker(
+            fsm_res,
+            False,
+            CfdpState.BUSY_CLASS_1_NACKED,
+            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
+        )
+        self.assertEqual(self.dest_handler.current_check_counter, 2)
+        # Check counter has maximum value, check limit fault should be declared
+        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
+        fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res,
             False,
