@@ -329,6 +329,10 @@ class DestHandler:
     def packets_ready(self) -> bool:
         return self.states.packets_ready
 
+    @property
+    def num_packets_ready(self) -> int:
+        return self.states.num_packets_ready
+
     def reset(self):
         """This function is public to allow completely resetting the handler, but it is explicitely
         discouraged to do this. CFDP generally has mechanism to detect issues and errors on itself.
