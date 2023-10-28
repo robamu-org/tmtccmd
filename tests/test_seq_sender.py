@@ -169,7 +169,7 @@ class TestSendReceive(TestCase):
         self.assertEqual(send_cb_params.entry.to_raw_tc_entry().tc, bytes([0, 1, 2]))
 
     def test_delay_at_end(self):
-        delay_at_end = timedelta(milliseconds=20)
+        delay_at_end = timedelta(milliseconds=50)
         self.queue_helper.add_raw_tc(bytes([3, 2, 1]))
         self.queue_helper.add_wait(delay_at_end)
         self.seq_sender.resume()
