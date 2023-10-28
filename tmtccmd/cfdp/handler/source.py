@@ -660,34 +660,37 @@ class SourceHandler:
         return False
 
     def __handle_retransmission(self) -> bool:
+        """Returns whether a packet was generated and re-transmission is active."""
         if self._inserted_pdu.pdu is None:
             return False
         if self._inserted_pdu.pdu_directive_type != DirectiveType.NAK_PDU:
             return False
         nak_pdu = self._inserted_pdu.to_nak_pdu()
-        packet_prepared = False
         for segment_req in nak_pdu.segment_requests:
-            # Special case: Metadata PDU is re-requested
-            if segment_req[0] == 0 and segment_req[1] == 0:
-                # Re-transmit the metadata PDU
-                self._prepare_metadata_pdu()
-                packet_prepared = True
-            else:
-                if segment_req[1] < segment_req[0]:
-                    raise InvalidNakPdu("end offset larger than start offset")
-                elif segment_req[0] > self._params.fp.progress:
-                    raise InvalidNakPdu(
-                        "start offset larger than current file progress"
-                    )
-                self._prepare_file_data_pdu(
-                    segment_req[0], segment_req[1] - segment_req[0]
-                )
-                packet_prepared = True
-        if packet_prepared:
-            self._params.ack_params.step_before_retransmission = self.states.step
-            self.states.step = TransactionStep.RETRANSMITTING
+            self._handle_segment_req(segment_req)
+        self._params.ack_params.step_before_retransmission = self.states.step
+        self.states.step = TransactionStep.RETRANSMITTING
         self._inserted_pdu.pdu = None
-        return packet_prepared
+        return True
+
+    def _handle_segment_req(self, segment_req: Tuple[int, int]):
+        # Special case: Metadata PDU is re-requested
+        if segment_req[0] == 0 and segment_req[1] == 0:
+            # Re-transmit the metadata PDU
+            self._prepare_metadata_pdu()
+        else:
+            if segment_req[1] < segment_req[0]:
+                raise InvalidNakPdu("end offset larger than start offset")
+            elif segment_req[0] > self._params.fp.progress:
+                raise InvalidNakPdu("start offset larger than current file progress")
+
+            missing_chunk_len = segment_req[1] - segment_req[0]
+            current_offset = segment_req[0]
+            while missing_chunk_len > 0:
+                chunk_size = min(missing_chunk_len, self._params.fp.segment_len)
+                self._prepare_file_data_pdu(current_offset, chunk_size)
+                current_offset += chunk_size
+                missing_chunk_len -= chunk_size
 
     def _handle_waiting_for_ack(self):
         if self.states.state != CfdpState.BUSY_CLASS_2_ACKED:

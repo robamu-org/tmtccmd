@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 import tempfile
 from pathlib import Path
 from typing import Optional, Tuple
@@ -27,6 +28,14 @@ from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
 from .common import CheckTimerProviderForTest
+
+
+@dataclass
+class TransactionStartParams:
+    id: TransactionId
+    metadata_pdu: MetadataPdu
+    file_size: int
+    crc_32: bytes
 
 
 class TestCfdpSourceHandler(TestCase):
@@ -61,8 +70,8 @@ class TestCfdpSourceHandler(TestCase):
             os.remove(self.file_path)
         with open(self.file_path, "w"):
             pass
-        self.file_segment_len = 256
-        self.max_packet_len = 512
+        self.file_segment_len = 64
+        self.max_packet_len = 256
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.dest_id,
             max_packet_len=self.max_packet_len,
@@ -98,31 +107,40 @@ class TestCfdpSourceHandler(TestCase):
             closure_requested=None,
         )
         metadata_pdu, transaction_id = self._start_source_transaction(dest_id, put_req)
+        eof_pdu = self._handle_eof_pdu(transaction_id, NULL_CHECKSUM_U32, 0)
+        return metadata_pdu, eof_pdu
+
+    def _handle_eof_pdu(
+        self,
+        id: TransactionId,
+        expected_checksum: bytes,
+        expected_file_size: int,
+    ) -> EofPdu:
         fsm_res = self.source_handler.state_machine()
         self._state_checker(fsm_res, 1, TransactionStep.SENDING_EOF)
-        self.assertEqual(self.source_handler.transaction_seq_num.value, 3)
+        self.assertEqual(self.source_handler.transaction_seq_num, id.seq_num)
         next_packet = self.source_handler.get_next_packet()
         self.assertIsNotNone(next_packet)
         assert next_packet is not None
         self.assertEqual(next_packet.pdu_type, PduType.FILE_DIRECTIVE)
         self.assertEqual(next_packet.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = next_packet.to_eof_pdu()
-        self.assertEqual(eof_pdu.transaction_seq_num.value, 3)
+        self.assertEqual(eof_pdu.transaction_seq_num, id.seq_num)
         # For an empty file, checksum verification does not really make sense, so we expect
         # a null checksum here.
-        self.assertEqual(eof_pdu.file_checksum, NULL_CHECKSUM_U32)
-        self.assertEqual(eof_pdu.file_size, 0)
+        self.assertEqual(eof_pdu.file_checksum, expected_checksum)
+        self.assertEqual(eof_pdu.file_size, expected_file_size)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(eof_pdu.fault_location, None)
         fsm_res = self.source_handler.state_machine()
-        self._verify_eof_indication(transaction_id)
+        self._verify_eof_indication(id)
         if self.expected_cfdp_state == CfdpState.BUSY_CLASS_2_ACKED:
             self._state_checker(
                 None,
                 0,
                 TransactionStep.WAITING_FOR_EOF_ACK,
             )
-        return metadata_pdu, eof_pdu
+        return eof_pdu
 
     def _common_small_file_test(
         self,
@@ -162,26 +180,12 @@ class TestCfdpSourceHandler(TestCase):
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
         file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res, next_packet)
-        self.assertFalse(file_data_pdu.has_segment_metadata)
-        self.assertEqual(file_data_pdu.transaction_seq_num.value, 2)
-        self.assertEqual(file_data_pdu.file_data, file_content.encode())
-        self.assertEqual(file_data_pdu.offset, 0)
-        fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, 1, TransactionStep.SENDING_EOF)
-        next_packet = self.source_handler.get_next_packet()
-        assert next_packet is not None
-        self.assertEqual(next_packet.pdu_directive_type, DirectiveType.EOF_PDU)
-        eof_pdu = next_packet.to_eof_pdu()
-        self.assertEqual(crc32, eof_pdu.file_checksum)
-        self.assertEqual(eof_pdu.file_size, file_size)
-        self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
-        fsm_res = self.source_handler.state_machine()
-        self._verify_eof_indication(transaction_id)
+        eof_pdu = self._handle_eof_pdu(transaction_id, crc32, file_size)
         return transaction_id, metadata_pdu, file_data_pdu, eof_pdu
 
     def _transaction_with_file_data_wrapper(
         self, dest_path: Path, data: bytes
-    ) -> Tuple[TransactionId, int, bytes]:
+    ) -> TransactionStartParams:
         put_req = PutRequest(
             destination_id=self.dest_id,
             source_file=self.file_path,
@@ -197,24 +201,24 @@ class TestCfdpSourceHandler(TestCase):
             of.write(data)
         file_size = self.file_path.stat().st_size
         self.local_cfg.local_entity_id = self.source_id
-        _, transaction_id = self._start_source_transaction(self.dest_id, put_req)
-        return transaction_id, file_size, crc32
+        metadata_pdu, transaction_id = self._start_source_transaction(
+            self.dest_id, put_req
+        )
+        return TransactionStartParams(transaction_id, metadata_pdu, file_size, crc32)
 
-    def _first_file_segment_handling(
-        self, source_handler: SourceHandler, all_data: bytes
-    ):
-        fsm_res = source_handler.state_machine()
-        next_packet = source_handler.get_next_packet()
+    def _handle_next_file_data_pdu(
+        self, expected_offset: int, expected_file_data: bytes, expected_seq_num: int
+    ) -> FileDataPdu:
+        fsm_res = self.source_handler.state_machine()
+        next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
         file_data_pdu = self._check_fsm_and_contained_file_data(fsm_res, next_packet)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
-        self.assertEqual(
-            file_data_pdu.file_data[0 : self.file_segment_len],
-            all_data[0 : self.file_segment_len],
-        )
-        self.assertEqual(file_data_pdu.offset, 0)
-        next_packet = source_handler.get_next_packet()
-        assert next_packet is None
+        self.assertEqual(file_data_pdu.file_data, expected_file_data)
+        self.assertEqual(file_data_pdu.offset, expected_offset)
+        self.assertEqual(file_data_pdu.transaction_seq_num.value, expected_seq_num)
+        self.assertFalse(file_data_pdu.has_segment_metadata)
+        return file_data_pdu
 
     def _check_fsm_and_contained_file_data(
         self, fsm_res: FsmResult, pdu_holder: PduHolder
@@ -291,7 +295,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         self.assertEqual(self.source_handler.state, self.expected_cfdp_state)
         self.assertEqual(self.source_handler.step, expected_step)
-        self.assertEqual(self.source_handler.packets_ready, num_packets_ready)
+        self.assertEqual(self.source_handler.num_packets_ready, num_packets_ready)
 
     def tearDown(self) -> None:
         if self.file_path.exists():

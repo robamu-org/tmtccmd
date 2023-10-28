@@ -67,12 +67,10 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.dest_id = ByteFieldU8(2)
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_copy.txt")
-        transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
-            dest_path, rand_data
-        )
-        self.assertEqual(transaction_id.source_id, self.source_id)
-        self.assertEqual(transaction_id.seq_num.value, 0)
-        self._first_file_segment_handling(self.source_handler, rand_data)
+        tparams = self._transaction_with_file_data_wrapper(dest_path, rand_data)
+        self.assertEqual(tparams.id.source_id, self.source_id)
+        self.assertEqual(tparams.id.seq_num.value, 0)
+        self._handle_next_file_data_pdu(0, rand_data[0 : self.file_segment_len], 0)
         file_data_pdu = self._second_file_segment_handling(self.source_handler)
         self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
         self.assertEqual(
@@ -81,7 +79,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         )
         self.assertEqual(file_data_pdu.offset, self.file_segment_len)
         fsm_res = self.source_handler.state_machine()
-        self._test_eof_file_pdu(fsm_res, file_size, crc32)
+        self._test_eof_file_pdu(fsm_res, tparams.file_size, tparams.crc_32)
         self._test_transaction_completion()
 
     def test_segmented_file_pdu_generation(self):
@@ -96,12 +94,10 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.dest_id = ByteFieldU16(3)
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_imperfect_copy.txt")
-        transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
-            dest_path, rand_data
-        )
-        self.assertEqual(transaction_id.source_id, self.source_id)
-        self.assertEqual(transaction_id.seq_num.value, 0)
-        self._first_file_segment_handling(self.source_handler, rand_data)
+        tparams = self._transaction_with_file_data_wrapper(dest_path, rand_data)
+        self.assertEqual(tparams.id.source_id, self.source_id)
+        self.assertEqual(tparams.id.seq_num.value, 0)
+        self._handle_next_file_data_pdu(0, rand_data[0 : self.file_segment_len], 0)
         file_data_pdu = self._second_file_segment_handling(self.source_handler)
         self.assertEqual(len(file_data_pdu.file_data), remainder_len)
         self.assertEqual(
@@ -110,7 +106,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         )
         self.assertEqual(file_data_pdu.offset, self.file_segment_len)
         fsm_res = self.source_handler.state_machine()
-        self._test_eof_file_pdu(fsm_res, file_size, crc32)
+        self._test_eof_file_pdu(fsm_res, tparams.file_size, tparams.crc_32)
         self._test_transaction_completion()
 
     def test_proxy_get_request(self):

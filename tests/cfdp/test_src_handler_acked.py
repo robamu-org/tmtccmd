@@ -1,5 +1,10 @@
+from pathlib import Path
+import sys
+import os
+import random
 import time
 from unittest.mock import MagicMock
+from crcmod.predefined import PredefinedCrc
 from spacepackets.cfdp import (
     NULL_CHECKSUM_U32,
     ConditionCode,
@@ -167,10 +172,54 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
         self._generic_acked_transfer_completion(initial_eof_pdu)
 
+    def test_large_missing_chunk_retransmission(self):
+        # This tests generates three file data PDUs
+        if sys.version_info >= (3, 9):
+            rand_data = random.randbytes(self.file_segment_len * 3)
+        else:
+            rand_data = os.urandom(self.file_segment_len * 3)
+        crc32 = PredefinedCrc("crc32")
+        crc32.update(rand_data)
+        crc32 = crc32.digest()
+        dest_path = Path("/tmp/hello_three_segments_copy.txt")
+        transaction_params = self._transaction_with_file_data_wrapper(
+            dest_path, rand_data
+        )
+        current_idx = 0
+        fd_pdu_list = []
+        while current_idx < len(rand_data):
+            fd_pdu_list.append(
+                self._handle_next_file_data_pdu(
+                    current_idx,
+                    rand_data[current_idx : current_idx + self.file_segment_len],
+                    0,
+                )
+            )
+            current_idx += self.file_segment_len
+        eof_pdu = self._handle_eof_pdu(transaction_params.id, crc32, len(rand_data))
+        all_missing_filedata = NakPdu(
+            pdu_conf=eof_pdu.pdu_header.pdu_conf,
+            start_of_scope=0,
+            end_of_scope=len(rand_data),
+            segment_requests=[(0, len(rand_data))],
+        )
+        self.source_handler.insert_packet(all_missing_filedata)
+        fsm_res = self.source_handler.state_machine()
+        self._state_checker(fsm_res, 3, TransactionStep.RETRANSMITTING)
+        # All file data PDUs should be re-sent now.
+        for i in range(3):
+            next_pdu = self.source_handler.get_next_packet()
+            assert next_pdu is not None
+            self.assertEqual(fd_pdu_list[i], next_pdu.pdu)
+        next_pdu = self.source_handler.get_next_packet()
+        assert next_pdu is None
+        self.source_handler.state_machine()
+        self._generic_acked_transfer_completion(eof_pdu)
+
     def _generic_acked_transfer_completion(self, eof_pdu: EofPdu):
         self._state_checker(
             None,
-            False,
+            0,
             TransactionStep.WAITING_FOR_EOF_ACK,
         )
         pdu_conf = eof_pdu.pdu_header.pdu_conf

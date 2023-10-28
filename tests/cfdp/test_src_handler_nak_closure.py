@@ -78,21 +78,21 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.source_handler.source_id = self.source_id
         dest_path = Path("/tmp/hello_two_segments_copy.txt")
         # The calculated CRC in the EOF (Cancel) PDU will only be calculated for the first segment
-        transaction_id, file_size, crc32 = self._transaction_with_file_data_wrapper(
+        tparams = self._transaction_with_file_data_wrapper(
             dest_path,
             rand_data[0 : self.file_segment_len],
         )
-        self._first_file_segment_handling(self.source_handler, rand_data)
-        self.assertTrue(self.source_handler.cancel_request(transaction_id))
+        self._handle_next_file_data_pdu(0, rand_data[0 : self.file_segment_len], 2)
+        self.assertTrue(self.source_handler.cancel_request(tparams.id))
         self.assertEqual(self.source_handler.step, TransactionStep.SENDING_EOF)
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
         self.assertTrue(next_packet.is_file_directive)
         self.assertEqual(next_packet.pdu_directive_type, DirectiveType.EOF_PDU)
         eof_pdu = next_packet.to_eof_pdu()
-        self.assertEqual(crc32, eof_pdu.file_checksum)
+        self.assertEqual(tparams.crc_32, eof_pdu.file_checksum)
         self.assertEqual(eof_pdu.file_size, self.file_segment_len)
-        self.assertEqual(eof_pdu.file_size, file_size)
+        self.assertEqual(eof_pdu.file_size, tparams.file_size)
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, TransactionStep.IDLE)
