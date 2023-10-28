@@ -172,6 +172,14 @@ class RemoteEntityCfg:
     incremented and the timer will be reset. Once the counter reached the
     ``positive_ack_timer_expiration_limit``, a Positive ACK Limit Reached fault will be declared.
 
+    Notes on the Deferred Lost Segment Procedure:
+
+    This procedure will be active if an EOF (No Error) PDU is received in acknowledged mode. After
+    issuing the NAK sequence which has the whole file scope, a timer will be started. The timer is
+    reset when missing segments or missing metadata is received. The timer will be deactivated if
+    all missing data is received. If the timer expires, a new NAK sequence will be issued and a
+    counter will be incremented, which can lead to a NAK Limit Reached fault being declared.
+
     Parameters
     -----------
     entity_id
@@ -205,10 +213,19 @@ class RemoteEntityCfg:
         data PDUs and EOF PDUs. Also see 4.6.3.3 of the CFDP standard. Defaults to 2.
     positive_ack_timer_interval_seconds
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
-        Expected as floating point seconds. Defaults to 5 seconds.
+        Expected as floating point seconds. Defaults to 10 seconds.
     positive_ack_timer_expiration_limit
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
         Defaults to 2.
+    immediate_nak_mode:
+        Specifies whether a NAK sequence should be issued immediately when a file data gap or
+        lost metadata is detected in the acknowledged mode. Defaults to True.
+    nak_timer_interval_seconds:
+        See the notes on the Deferred Lost Segment Procedure inside the class documentation.
+        Expected as floating point seconds. Defaults to 10 seconds.
+    nak_timer_expiration_limit:
+        See the notes on the Deferred Lost Segment Procedure inside the class documentation.
+        Defaults to 3.
 
     """
 
@@ -223,6 +240,9 @@ class RemoteEntityCfg:
     positive_ack_timer_expiration_limit: int = 2
     check_limit: int = 2
     disposition_on_cancellation: bool = False
+    immediate_nak_mode: bool = True
+    nak_timer_interval_seconds: float = 10.0
+    nak_timer_expiration_limit: int = 3
     # NOTE: Only this version is supported
     cfdp_version: int = CFDP_VERSION_2
 

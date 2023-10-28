@@ -6,7 +6,7 @@ import enum
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Deque, Optional
+from typing import Deque, Optional, Set, Tuple
 
 import deprecation
 
@@ -21,12 +21,15 @@ from spacepackets.cfdp import (
     FaultHandlerCode,
 )
 from spacepackets.cfdp.pdu import (
+    AckPdu,
     DirectiveType,
     MetadataPdu,
     FileDataPdu,
     EofPdu,
     FinishedPdu,
+    NakPdu,
 )
+from spacepackets.cfdp.pdu.ack import TransactionStatus
 from spacepackets.cfdp.pdu.finished import (
     FinishedParams,
     DeliveryCode,
@@ -91,6 +94,7 @@ class CompletionDisposition(enum.Enum):
 class _DestFileParams(FileParamsBase):
     file_name: Path
     file_size_eof: Optional[int]
+    condition_code_eof: Optional[ConditionCode]
 
     @classmethod
     def empty(cls) -> _DestFileParams:
@@ -102,12 +106,14 @@ class _DestFileParams(FileParamsBase):
             file_name=Path(),
             file_size_eof=None,
             no_file_data=False,
+            condition_code_eof=None,
         )
 
     def reset(self):
         super().reset()
         self.file_name = Path()
         self.file_size_eof = None
+        self.condition_code_eof = None
 
 
 class TransactionStep(enum.Enum):
@@ -121,11 +127,14 @@ class TransactionStep(enum.Enum):
     file transfer completion."""
     SENDING_EOF_ACK_PDU = 4
     """Sending the ACK (EOF) packet."""
-    TRANSFER_COMPLETION = 5
+    WAITING_FOR_MISSING_DATA = 5
+    """Only relevant for acknowledged mode: Wait for lost metadata and file segments as part of
+    the deferred lost segments detection procedure."""
+    TRANSFER_COMPLETION = 6
     """File transfer complete. Perform checksum verification and notice of completion. Please
     note that this does not necessarily mean that the file transfer was completed succesfully."""
-    SENDING_FINISHED_PDU = 6
-    WAITING_FOR_FINISHED_ACK = 7
+    SENDING_FINISHED_PDU = 7
+    WAITING_FOR_FINISHED_ACK = 8
 
 
 @dataclass
@@ -145,6 +154,38 @@ class DestStateWrapper:
 
 
 @dataclass
+class _AckedModeParams:
+    lost_segments: Set[Tuple[int, int]] = set()
+    last_start_offset: int = 0
+    last_end_offset: int = 0
+
+    def coalesce_adjacent_or_overlapping_lost_segments(self):
+        """This implementation first sorts the lost segment list based on the starting points.
+        Then, it iterates through the sorted semgents and coalesces adjacent segments if they
+        overlap or are directly adjacent."""
+        sorted_segments = sorted(self.lost_segments)
+        coalesced_segments = []
+
+        if not sorted_segments:
+            return
+
+        current_segment = sorted_segments[0]
+
+        for next_segment in sorted_segments[1:]:
+            if next_segment[0] <= current_segment[1]:
+                current_segment = (
+                    current_segment[0],
+                    max(current_segment[1], next_segment[1]),
+                )
+            else:
+                coalesced_segments.append(current_segment)
+                current_segment = (next_segment[0], next_segment[1])
+
+        coalesced_segments.append(current_segment)
+        self.lost_segments = set(coalesced_segments)
+
+
+@dataclass
 class _DestFieldWrapper:
     """Private wrapper class for internal use only."""
 
@@ -159,6 +200,7 @@ class _DestFieldWrapper:
     fp: _DestFileParams = dataclasses.field(
         default_factory=lambda: _DestFileParams.empty()
     )
+    acked_params: _AckedModeParams = _AckedModeParams()
     last_inserted_packet = PduHolder(None)
 
     def reset(self):
@@ -351,7 +393,12 @@ class DestHandler:
                 f"{len(self._pdus_to_be_sent)} packets left to send"
             )
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
+            if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+                self.states.step = TransactionStep.WAITING_FOR_FINISHED_ACK
+                return
             self.reset()
+        if self.states.step == TransactionStep.SENDING_EOF_ACK_PDU:
+            self.states.step = TransactionStep.SENDING_FINISHED_PDU
 
     def __transaction_start_metadata_pdu_to_params(self, metadata_pdu: MetadataPdu):
         self._params.reset()
@@ -455,6 +502,9 @@ class DestHandler:
             self._handle_transfer_completion()
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
+        if self.states.step == TransactionStep.WAITING_FOR_FINISHED_ACK:
+            # TODO: Implement the waiting for the ACK PDU, including positive ACK procedures.
+            pass
 
     def __receiving_fd_and_eof_pdus(self) -> bool:
         """Returns whether to exit the FSM prematurely."""
@@ -462,7 +512,7 @@ class DestHandler:
         if self._params.last_inserted_packet.pdu is None:
             return exit_fsm
         if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
-            self.__handle_one_fd_pdu(
+            self._handle_one_fd_pdu(
                 self._params.last_inserted_packet.to_file_data_pdu()
             )
         elif (
@@ -475,7 +525,7 @@ class DestHandler:
         self._params.last_inserted_packet.pdu = None
         return exit_fsm
 
-    def __handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
+    def _handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
         offset = file_data_pdu.offset
         if self.cfg.indication_cfg.file_segment_recvd_indication_required:
@@ -487,6 +537,9 @@ class DestHandler:
             )
             self.user.file_segment_recv_indication(file_segment_indic_params)
         try:
+            next_expected_progress = offset + len(data)
+            if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+                self._lost_segment_detection(offset, len(data))
             self.user.vfs.write_data(self._params.fp.file_name, data, offset)
             self._params.finished_params.delivery_status = (
                 FileDeliveryStatus.FILE_RETAINED
@@ -504,8 +557,8 @@ class DestHandler:
                 ):
                     return
             # Ensure that the progress value is always incremented
-            if offset + len(file_data_pdu.file_data) > self._params.fp.progress:
-                self._params.fp.progress = offset + len(file_data_pdu.file_data)
+            if next_expected_progress > self._params.fp.progress:
+                self._params.fp.progress = next_expected_progress
         except FileNotFoundError:
             if (
                 self._params.finished_params.delivery_status
@@ -548,9 +601,32 @@ class DestHandler:
             else:
                 self.reset()
         elif self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
-            # TODO: Need to send ACK for the EOF PDU here..
-            pass
-            # self.states.step = TransactionStep.SENDING_FINISHED_PDU
+            self._prepare_eof_ack_packet()
+            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
+
+    def _lost_segment_detection(self, offset: int, data_len: int):
+        """Lost segment detection: 4.6.4.3.1 a) and b) are covered by this code. c) is covered
+        by dedicated code which is run when the EOF PDU is handled."""
+        if offset > self._params.acked_params.last_end_offset:
+            lost_segment = (self._params.acked_params.last_start_offset, offset)
+            self._params.acked_params.lost_segments.add(
+                (self._params.acked_params.last_start_offset, offset)
+            )
+            assert self._params.remote_cfg is not None
+            if self._params.remote_cfg.immediate_nak_mode:
+                self._add_packet_to_be_sent(
+                    NakPdu(
+                        self._params.pdu_conf,
+                        0,
+                        offset + data_len,
+                        segment_requests=[lost_segment],
+                    )
+                )
+        elif offset < self._params.acked_params.last_end_offset:
+            # Not sure what to do. Discard for now and treat it like a repeated file segment.
+            return
+        self._params.acked_params.last_start_offset = offset
+        self._params.acked_params.last_end_offset = offset + data_len
 
     def _handle_eof_pdu(self, eof_pdu: EofPdu) -> bool:
         """Returns whether to exit the FSM prematurely."""
@@ -586,11 +662,17 @@ class DestHandler:
         self._file_transfer_complete_transition()
         return False
 
+    def _prepare_eof_ack_packet(self):
+        assert self._params.fp.condition_code_eof is not None
+        ack_pdu = AckPdu(
+            self._params.pdu_conf,
+            DirectiveType.EOF_PDU,
+            self._params.fp.condition_code_eof,
+            TransactionStatus.ACTIVE,
+        )
+        self._add_packet_to_be_sent(ack_pdu)
+
     def _checksum_verify(self) -> bool:
-        # if self._params.fp.crc32 is None:
-        # This can happen if no EOF has been received but the transaction is still completed
-        # or cancelled for some reason.
-        # return
         crc32 = self._cksum_verif_helper.calc_for_file(
             self._params.fp.file_name, self._params.fp.progress
         )
