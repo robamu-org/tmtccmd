@@ -35,7 +35,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self.common_setup(True, TransmissionMode.ACKNOWLEDGED)
 
     def test_empty_file_transfer(self):
-        _, eof_pdu = self._common_empty_file_test(None)
+        _, _, eof_pdu = self._common_empty_file_test(None)
         self._generic_acked_transfer_completion(eof_pdu)
 
     def test_small_file_transfer(self):
@@ -47,7 +47,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._generic_acked_transfer_completion(eof_pdu)
 
     def test_missing_metadata_pdu_retransmission(self):
-        first_metadata_pdu, eof_pdu = self._common_empty_file_test(None)
+        _, first_metadata_pdu, eof_pdu = self._common_empty_file_test(None)
         # Generate appropriate NAK PDU and insert it.
         nak_missing_metadata = NakPdu(eof_pdu.pdu_header.pdu_conf, 0, 0, [(0, 0)])
         self.source_handler.insert_packet(nak_missing_metadata)
@@ -97,7 +97,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         # 1. Send EOF PDU.
         # 2. Verify EOF PDU is sent again after ACK limit is reached once.
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
-        _, initial_eof_pdu = self._common_empty_file_test(None)
+        _, _, initial_eof_pdu = self._common_empty_file_test(None)
         # 10 ms timeout, sleep of 15 ms should trigger EOF re-send.
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
@@ -106,7 +106,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         # This tests fully checks the case where the ACK limit is reached and a corresponding
         # fault is declared.
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
-        _, initial_eof_pdu = self._common_empty_file_test(None)
+        transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
         # 10 ms timeout, sleep of 15 ms should trigger EOF re-send.
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
@@ -129,7 +129,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         )
         cancelation_cb_mock: MagicMock = self.fault_handler.notice_of_cancellation_cb  # type: ignore
         cancelation_cb_mock.assert_called_once()
-        cancelation_cb_mock.assert_called_with(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
+        cancelation_cb_mock.assert_called_with(
+            transaction_id, ConditionCode.POSITIVE_ACK_LIMIT_REACHED, 0
+        )
 
         next_pdu = self.source_handler.get_next_packet()
         assert next_pdu is not None
@@ -165,13 +167,15 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         )
         abandoned_cb_mock: MagicMock = self.fault_handler.abandoned_cb  # type: ignore
         abandoned_cb_mock.assert_called_once()
-        abandoned_cb_mock.assert_called_with(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
+        abandoned_cb_mock.assert_called_with(
+            transaction_id, ConditionCode.POSITIVE_ACK_LIMIT_REACHED, 0
+        )
 
     def test_ack_procedure_success(self):
         # 1. Send EOF PDU.
         # 2. Verify EOF PDU is sent again after ACK limit is reached once.
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
-        _, initial_eof_pdu = self._common_empty_file_test(None)
+        transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
         # 10 ms timeout, sleep of 15 ms should trigger EOF re-send.
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)

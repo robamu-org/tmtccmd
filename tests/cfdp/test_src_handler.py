@@ -94,7 +94,7 @@ class TestCfdpSourceHandler(TestCase):
 
     def _common_empty_file_test(
         self, transmission_mode: Optional[TransmissionMode]
-    ) -> Tuple[MetadataPdu, EofPdu]:
+    ) -> Tuple[TransactionId, MetadataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
@@ -108,7 +108,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         metadata_pdu, transaction_id = self._start_source_transaction(dest_id, put_req)
         eof_pdu = self._handle_eof_pdu(transaction_id, NULL_CHECKSUM_U32, 0)
-        return metadata_pdu, eof_pdu
+        return transaction_id, metadata_pdu, eof_pdu
 
     def _handle_eof_pdu(
         self,

@@ -942,13 +942,17 @@ class SourceHandler:
 
     def _declare_fault(self, cond: ConditionCode):
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
+        transaction_id = self._params.transaction_id
+        assert transaction_id is not None
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self._notice_of_cancellation(cond)
         elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
-        self.cfg.default_fault_handlers.report_fault(cond)
+        self.cfg.default_fault_handlers.report_fault(
+            transaction_id, cond, self._params.fp.progress
+        )
 
     def _notice_of_cancellation(self, condition_code: ConditionCode):
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
@@ -958,9 +962,12 @@ class SourceHandler:
             and self._params.positive_ack_params.cond_code_of_eof_pdu
             != ConditionCode.NO_ERROR
         ):
+            assert self._params.transaction_id is not None
             # We still call the abandonment callback to ensure the fault is logged.
             self.cfg.default_fault_handlers.abandoned_cb(
-                self._params.positive_ack_params.cond_code_of_eof_pdu
+                self._params.transaction_id,
+                self._params.positive_ack_params.cond_code_of_eof_pdu,
+                self._params.fp.progress,
             )
             self._abandon_transaction()
             return

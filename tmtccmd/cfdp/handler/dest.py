@@ -6,7 +6,7 @@ import enum
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Deque, Optional, Set, Tuple
+from typing import Deque, Optional, Tuple
 
 import deprecation
 
@@ -158,6 +158,10 @@ class LostSegmentTracker:
     def __init__(self):
         self.lost_segments = {}
 
+    @property
+    def num_lost_segments(self):
+        return len(self.lost_segments)
+
     def add_lost_segment(self, lost_seg: Tuple[int, int]):
         self.lost_segments.update({lost_seg[0]: lost_seg[1]})
         self.lost_segments = dict(sorted(self.lost_segments.items()))
@@ -223,39 +227,12 @@ class LostSegmentTracker:
 
 @dataclass
 class _AckedModeParams:
-    lost_segments: Set[Tuple[int, int]] = dataclasses.field(
-        default_factory=lambda: set()
-    )
+    lost_seg_tracker: LostSegmentTracker = LostSegmentTracker()
     last_start_offset: int = 0
     last_end_offset: int = 0
     deferred_lost_segment_detection_active: bool = False
     procedure_timer: Optional[Countdown] = None
     nak_activity_counter: int = 0
-
-    def coalesce_adjacent_or_overlapping_lost_segments(self):
-        """This implementation first sorts the lost segment list based on the starting points.
-        Then, it iterates through the sorted semgents and coalesces adjacent segments if they
-        overlap or are directly adjacent."""
-        sorted_segments = sorted(self.lost_segments)
-        coalesced_segments = []
-
-        if not sorted_segments:
-            return
-
-        current_segment = sorted_segments[0]
-
-        for next_segment in sorted_segments[1:]:
-            if next_segment[0] <= current_segment[1]:
-                current_segment = (
-                    current_segment[0],
-                    max(current_segment[1], next_segment[1]),
-                )
-            else:
-                coalesced_segments.append(current_segment)
-                current_segment = (next_segment[0], next_segment[1])
-
-        coalesced_segments.append(current_segment)
-        self.lost_segments = set(coalesced_segments)
 
 
 @dataclass
@@ -293,6 +270,30 @@ class _DestFieldWrapper:
 class FsmResult:
     def __init__(self, states: DestStateWrapper):
         self.states = states
+
+
+def acknowledge_inactive_eof_pdu(eof_pdu: EofPdu, status: TransactionStatus) -> AckPdu:
+    """This function can be used to fulfill chapter 4.7.2 of the CFDP standard: Every EOF PDU
+    received from the CFDP sender entity MUST be acknowledged, even if the transaction ID of
+    the EOF PDU is not active at the receiver entity. The
+    :py:class:`spacepackets.cfdp.pdu.ack.TransactionStatus` is user provided with the following
+    options:
+
+    1. ``UNDEFINED``: The CFDP implementation does not retain a transaction history, so it might
+       have been formerly active and terminated since then, or never active at all.
+    2. ``TERMINATED``: The CFDP implementation does retain a transaction history and is known
+       to have been active at this entity.
+    3. ``UNRECOGNIZED``: The CFDP implementation does retain a transaction history and has never been
+       active at this entity.
+
+    See the :py:class:`tmtccmd.cfdp.user.CfdpUserBase` and the documentation for a possible way to
+    keep a transaction history.
+    """
+    if status == TransactionStatus.ACTIVE:
+        raise ValueError("invalid transaction status for inactive transaction")
+    pdu_conf = eof_pdu.pdu_header.pdu_conf
+    pdu_conf.direction = Direction.TOWARDS_SENDER
+    return AckPdu(pdu_conf, DirectiveType.EOF_PDU, eof_pdu.condition_code, status)
 
 
 class DestHandler:
@@ -704,7 +705,7 @@ class DestHandler:
         by dedicated code which is run when the EOF PDU is handled."""
         if offset > self._params.acked_params.last_end_offset:
             lost_segment = (self._params.acked_params.last_start_offset, offset)
-            self._params.acked_params.lost_segments.add(
+            self._params.acked_params.lost_seg_tracker.add_lost_segment(
                 (self._params.acked_params.last_start_offset, offset)
             )
             assert self._params.remote_cfg is not None
@@ -744,7 +745,7 @@ class DestHandler:
         ):
             self._declare_fault(ConditionCode.NAK_LIMIT_REACHED)
             return
-        if len(self._params.acked_params.lost_segments) == 0:
+        if self._params.acked_params.lost_seg_tracker.num_lost_segments == 0:
             # We are done and have received everything.
             self.states.step = TransactionStep.TRANSFER_COMPLETION
             return
@@ -752,7 +753,7 @@ class DestHandler:
             self._params.remote_cfg.max_packet_len, self._params.pdu_conf
         )
         next_segment_reqs = []
-        for lost_segment in self._params.acked_params.lost_segments:
+        for lost_segment in self._params.acked_params.lost_seg_tracker.lost_segments:
             next_segment_reqs.append(lost_segment)
             if len(next_segment_reqs) == max_segments_in_one_pdu:
                 self._add_packet_to_be_sent(
@@ -788,6 +789,15 @@ class DestHandler:
                     != FaultHandlerCode.IGNORE_ERROR
                 ):
                     return False
+            elif (
+                self._params.fp.progress < self._params.fp.file_size_eof
+            ) and self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
+                # CFDP 4.6.4.3.1: The end offset of the last received file segment and the file
+                # size as stated in the EOF PDU is not the same, so we need to add that segment to
+                # the lost segments for the deferred lost segment detection procedure.
+                self._params.acked_params.lost_seg_tracker.add_lost_segment(
+                    (self._params.fp.progress, self._params.fp.file_size_eof)
+                )
             if self._params.fp.file_size_eof != self._params.fp.file_size:
                 # Can or should this ever happen for a No Error EOF? Treat this like a non-fatal
                 # error for now..
@@ -795,16 +805,12 @@ class DestHandler:
                     "missmatch of EOF file size and Metadata File Size for success EOF"
                 )
             if self.cfg.indication_cfg.eof_recv_indication_required:
-                self.user.eof_recv_indication(self._params.transaction_id)  # type: ignore
-            # TODO: Add start of deferred lost segment detection here for ACKed mode.
+                assert self._params.transaction_id is not None
+                self.user.eof_recv_indication(self._params.transaction_id)
             if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
                 self._prepare_eof_ack_packet()
                 self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
-                if len(self._params.acked_params.lost_segments) > 0:
-                    self._params.acked_params.deferred_lost_segment_detection_active = (
-                        True
-                    )
-                self._deferred_lost_segment_handling()
+                self._start_deferred_lost_segment_handling()
             if not self._checksum_verify():
                 self._start_check_limit_handling()
                 return True
@@ -818,6 +824,11 @@ class DestHandler:
             self._checksum_verify()
         self._file_transfer_complete_transition()
         return False
+
+    def _start_deferred_lost_segment_handling(self):
+        if self._params.acked_params.lost_seg_tracker.num_lost_segments > 0:
+            self._params.acked_params.deferred_lost_segment_detection_active = True
+            self._deferred_lost_segment_handling()
 
     def _prepare_eof_ack_packet(self):
         assert self._params.fp.condition_code_eof is not None
@@ -916,6 +927,9 @@ class DestHandler:
 
     def _declare_fault(self, cond: ConditionCode) -> FaultHandlerCode:
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
+        transaction_id = self._params.transaction_id
+        progress = self._params.fp.progress
+        assert transaction_id is not None
         if fh is None:
             raise ValueError(f"invalid condition code {cond!r} for fault declaration")
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
@@ -924,7 +938,7 @@ class DestHandler:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
-        self.cfg.default_fault_handlers.report_fault(cond)
+        self.cfg.default_fault_handlers.report_fault(transaction_id, cond, progress)
         return fh
 
     def _notice_of_cancellation(self, _: ConditionCode):

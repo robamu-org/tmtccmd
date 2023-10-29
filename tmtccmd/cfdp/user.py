@@ -69,6 +69,12 @@ class CfdpUserBase(ABC):
 
     @abstractmethod
     def transaction_finished_indication(self, params: TransactionFinishedParams):
+        """This is the ``Transaction-Finished.Indication`` as specified in chapter 3.4.8 of the
+        standard.
+
+        The user implementation of this function could be used to keep a (failed) transaction
+        history, which might be useful for the positive ACK procedures expected from a receiving
+        CFDP entity."""
         _LOGGER.info(
             f"Transaction-Finished.indication for {params.transaction_id}. Parameters:"
         )
@@ -115,6 +121,12 @@ class CfdpUserBase(ABC):
     def fault_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
+        """This is the ``Fault.Indication`` as specified in chapter 3.4.14 of the
+        standard.
+
+        The user implementation of this function could be used to keep a (failed) transaction
+        history, which might be useful for the positive ACK procedures expected from a receiving
+        CFDP entity."""
         _LOGGER.warning(
             f"Fault.indication for {transaction_id} | Condition Code: {cond_code} | "
             f"Progress: {progress} bytes"
@@ -124,6 +136,12 @@ class CfdpUserBase(ABC):
     def abandoned_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
+        """This is the ``Fault.Indication`` as specified in chapter 3.4.15 of the
+        standard.
+
+        The user implementation of this function could be used to keep a (failed) transaction
+        history, which might be useful for the positive ACK procedures expected from a receiving
+        CFDP entity."""
         _LOGGER.warning(
             f"Abandoned.indication for {transaction_id} | Condition Code: {cond_code} |"
             f" Progress: {progress} bytes"

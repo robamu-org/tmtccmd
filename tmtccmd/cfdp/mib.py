@@ -13,6 +13,7 @@ from spacepackets.cfdp.defs import (
 )
 from spacepackets.util import UnsignedByteField
 from tmtccmd.util.countdown import Countdown
+from tmtccmd.cfdp import TransactionId
 
 
 class DefaultFaultHandlerBase(ABC):
@@ -26,14 +27,15 @@ class DefaultFaultHandlerBase(ABC):
     is denoted by the four :py:class:`spacepackets.cfdp.defs.FaultHandlerCode` s. This code is used
     to dispatch to a user-provided callback function:
 
-     1. `IGNORE_ERROR` -> :py:meth:`ignore_cb`
-     2. `NOTICE_OF_CANCELLATION` -> :py:meth:`notice_of_cancellation_cb`
-     3. `NOTICE_OF_SUSPENSION` -> :py:meth:`notice_of_suspension_cb`
-     4. `ABANDON_TRANSACTION` -> :py:meth:`abandon_transaction_cb`
+     1. ``IGNORE_ERROR`` -> :py:meth:`ignore_cb`
+     2. ``NOTICE_OF_CANCELLATION`` -> :py:meth:`notice_of_cancellation_cb`
+     3. ``NOTICE_OF_SUSPENSION`` -> :py:meth:`notice_of_suspension_cb`
+     4. ``ABANDON_TRANSACTION`` -> :py:meth:`abandon_transaction_cb`
 
     For each error reported by :py:meth:`report_fault`, the appropriate fault handler callback
     will be called. The user provides the callbacks by providing a custom class which implements
-    this base class and all abstract fault handler callbacks.
+    this base class and all abstract fault handler callbacks. This allows logging of the errors
+    as specified in chapter 4.8.3.
 
     Some note on the provided default settings:
 
@@ -78,7 +80,9 @@ class DefaultFaultHandlerBase(ABC):
             )
         self._handler_dict.update({condition: handler})
 
-    def report_fault(self, condition: ConditionCode):
+    def report_fault(
+        self, transaction_id: TransactionId, condition: ConditionCode, progress: int
+    ):
         """
         Raises
         -------
@@ -92,28 +96,36 @@ class DefaultFaultHandlerBase(ABC):
             )
         fh_code = self._handler_dict.get(condition)
         if fh_code == FaultHandlerCode.NOTICE_OF_CANCELLATION:
-            self.notice_of_cancellation_cb(condition)
+            self.notice_of_cancellation_cb(transaction_id, condition, progress)
         elif fh_code == FaultHandlerCode.NOTICE_OF_SUSPENSION:
-            self.notice_of_suspension_cb(condition)
+            self.notice_of_suspension_cb(transaction_id, condition, progress)
         elif fh_code == FaultHandlerCode.IGNORE_ERROR:
-            self.ignore_cb(condition)
+            self.ignore_cb(transaction_id, condition, progress)
         elif fh_code == FaultHandlerCode.ABANDON_TRANSACTION:
-            self.abandoned_cb(condition)
+            self.abandoned_cb(transaction_id, condition, progress)
 
     @abc.abstractmethod
-    def notice_of_suspension_cb(self, cond: ConditionCode):
+    def notice_of_suspension_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
     @abc.abstractmethod
-    def notice_of_cancellation_cb(self, cond: ConditionCode):
+    def notice_of_cancellation_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
     @abc.abstractmethod
-    def abandoned_cb(self, cond: ConditionCode):
+    def abandoned_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
     @abc.abstractmethod
-    def ignore_cb(self, cond: ConditionCode):
+    def ignore_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
 
