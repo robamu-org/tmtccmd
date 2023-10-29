@@ -21,6 +21,7 @@ from spacepackets.cfdp.pdu import (
     EofPdu,
     FileDataPdu,
     FileDeliveryStatus,
+    FinishedPdu,
     MetadataPdu,
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
@@ -196,7 +197,6 @@ class TestDestHandlerBase(TestCase):
                 self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
         else:
             self._generic_verify_eof_ack_packet(fsm_res)
-
         return fsm_res
 
     def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):
@@ -206,8 +206,6 @@ class TestDestHandlerBase(TestCase):
             CfdpState.BUSY,
             TransactionStep.SENDING_EOF_ACK_PDU,
         )
-        next_pdu = self.dest_handler.get_next_packet()
-        assert next_pdu is not None
 
     def _generic_eof_recv_indication_check(self, fsm_res: FsmResult):
         self.cfdp_user.eof_recv_indication.assert_called_once()
@@ -216,7 +214,10 @@ class TestDestHandlerBase(TestCase):
         )
         self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
 
-    def _generic_no_error_finished_pdu_check(self, fsm_res: FsmResult):
+    def _generic_no_error_finished_pdu_check(self, fsm_res: FsmResult) -> FinishedPdu:
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
+        )
         self.assertTrue(fsm_res.states.packets_ready)
         next_pdu = self.dest_handler.get_next_packet()
         assert next_pdu is not None
@@ -230,6 +231,7 @@ class TestDestHandlerBase(TestCase):
         self.assertEqual(finished_pdu.direction, Direction.TOWARDS_SENDER)
         self.assertIsNone(finished_pdu.fault_location)
         self.assertEqual(len(finished_pdu.file_store_responses), 0)
+        return finished_pdu
 
     def _generic_verify_transfer_completion(
         self, fsm_res: FsmResult, expected_file_size: int
@@ -238,9 +240,15 @@ class TestDestHandlerBase(TestCase):
         self.assertTrue(self.dest_file_path.exists())
         self.assertEqual(self.dest_file_path.stat().st_size, expected_file_size)
         fsm_res = self.dest_handler.state_machine()
-        self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+        if self.expected_mode == TransmissionMode.UNACKNOWLEDGED:
+            self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+        else:
+            self._state_checker(
+                fsm_res, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_FINISHED_ACK
+            )
 
     def _generic_transfer_finished_indication_success_check(self, fsm_res: FsmResult):
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
         finished_params = cast(
             TransactionFinishedParams,
             self.cfdp_user.transaction_finished_indication.call_args.args[0],

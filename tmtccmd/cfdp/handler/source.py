@@ -373,14 +373,6 @@ class SourceHandler:
             return True
         return False
 
-    @deprecation.deprecated(
-        deprecated_in="6.0.0rc1",
-        current_version=get_version(),
-        details="Use insert_packet instead",
-    )
-    def pass_packet(self, packet: AbstractFileDirectiveBase):
-        self.insert_packet(packet)
-
     def insert_packet(self, packet: AbstractFileDirectiveBase):
         """Pass PDU file directives going towards the file sender to the CFDP source handler.
         Please note that only one packet can be inserted into the source handler at a given time.
@@ -999,3 +991,11 @@ class SourceHandler:
                 segment_len=self._params.fp.segment_len,
             )
         return crc
+
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc1",
+        current_version=get_version(),
+        details="Use insert_packet instead",
+    )
+    def pass_packet(self, packet: AbstractFileDirectiveBase):
+        self.insert_packet(packet)
