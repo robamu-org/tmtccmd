@@ -942,7 +942,7 @@ class DestHandler:
         if self._params.fp.file_size_eof != self._params.fp.file_size:
             # Can or should this ever happen for a No Error EOF? Treat this like a non-fatal
             # error for now..
-            _LOGGER.warn(
+            _LOGGER.warning(
                 "missmatch of EOF file size and Metadata File Size for success EOF"
             )
         if self.cfg.indication_cfg.eof_recv_indication_required:
