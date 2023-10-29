@@ -46,7 +46,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self._generic_eof_recv_indication_check(fsm_res)
         if self.closure_requested:
             self._generic_no_error_finished_pdu_check(fsm_res)
-        self._generic_verify_transfer_completion(fsm_res, 0)
+        self._generic_verify_transfer_completion(fsm_res, bytes())
 
     def test_empty_file_reception(self):
         self._generic_empty_file_test()
@@ -70,7 +70,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self._generic_eof_recv_indication_check(fsm_res)
         if self.closure_requested:
             self._generic_no_error_finished_pdu_check(fsm_res)
-        self._generic_verify_transfer_completion(fsm_res, len(data))
+        self._generic_verify_transfer_completion(fsm_res, data)
 
     def test_small_file_reception_no_closure(self):
         self._generic_small_file_test()
@@ -95,7 +95,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self._generic_eof_recv_indication_check(fsm_res)
         if self.closure_requested:
             self._generic_no_error_finished_pdu_check(fsm_res)
-        self._generic_verify_transfer_completion(fsm_res, file_info.file_size)
+        self._generic_verify_transfer_completion(fsm_res, file_info.rand_data)
 
     def test_larger_file_reception(self):
         self._generic_larger_file_reception_test()

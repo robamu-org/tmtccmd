@@ -27,7 +27,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self._generic_verify_eof_ack_packet(fsm_res)
         fsm_res = self.dest_handler.state_machine()
         finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
-        self._generic_verify_transfer_completion(fsm_res, 0)
+        self._generic_verify_transfer_completion(fsm_res, bytes())
         self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def test_acked_small_file_transfer(self):
@@ -44,7 +44,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self._generic_verify_eof_ack_packet(fsm_res)
         fsm_res = self.dest_handler.state_machine()
         finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
-        self._generic_verify_transfer_completion(fsm_res, len(file_content))
+        self._generic_verify_transfer_completion(fsm_res, file_content)
         self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):

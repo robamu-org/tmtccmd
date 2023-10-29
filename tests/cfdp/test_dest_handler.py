@@ -224,11 +224,15 @@ class TestDestHandlerBase(TestCase):
         return finished_pdu
 
     def _generic_verify_transfer_completion(
-        self, fsm_res: FsmResult, expected_file_size: int
+        self,
+        fsm_res: FsmResult,
+        expected_file_data: bytes,
     ):
         self._generic_transfer_finished_indication_success_check(fsm_res)
         self.assertTrue(self.dest_file_path.exists())
-        self.assertEqual(self.dest_file_path.stat().st_size, expected_file_size)
+        self.assertEqual(self.dest_file_path.stat().st_size, len(expected_file_data))
+        with open(self.dest_file_path, "rb") as file:
+            self.assertEqual(expected_file_data, file.read())
         fsm_res = self.dest_handler.state_machine()
         if self.expected_mode == TransmissionMode.UNACKNOWLEDGED:
             self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
