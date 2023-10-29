@@ -124,9 +124,9 @@ class TestDestHandlerBase(TestCase):
         if fsm_res is not None:
             self.assertEqual(fsm_res.states.state, expected_state)
             self.assertEqual(fsm_res.states.step, expected_transaction)
+            self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
             if num_packets_ready > 0:
                 self.assertTrue(fsm_res.states.packets_ready)
-            self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
         if expected_state != CfdpState.IDLE:
             self.assertEqual(self.dest_handler.transmission_mode, self.expected_mode)
         self.assertEqual(self.dest_handler.states.state, expected_state)
@@ -195,17 +195,7 @@ class TestDestHandlerBase(TestCase):
                 )
             else:
                 self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
-        else:
-            self._generic_verify_eof_ack_packet(fsm_res)
         return fsm_res
-
-    def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):
-        self._state_checker(
-            fsm_res,
-            1,
-            CfdpState.BUSY,
-            TransactionStep.SENDING_EOF_ACK_PDU,
-        )
 
     def _generic_eof_recv_indication_check(self, fsm_res: FsmResult):
         self.cfdp_user.eof_recv_indication.assert_called_once()
