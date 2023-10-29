@@ -943,6 +943,7 @@ class SourceHandler:
     def _declare_fault(self, cond: ConditionCode):
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
         transaction_id = self._params.transaction_id
+        progress = self._params.fp.progress
         assert transaction_id is not None
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self._notice_of_cancellation(cond)
@@ -950,9 +951,7 @@ class SourceHandler:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
-        self.cfg.default_fault_handlers.report_fault(
-            transaction_id, cond, self._params.fp.progress
-        )
+        self.cfg.default_fault_handlers.report_fault(transaction_id, cond, progress)
 
     def _notice_of_cancellation(self, condition_code: ConditionCode):
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
