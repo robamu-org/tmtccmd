@@ -252,13 +252,15 @@ class _DestFieldWrapper:
     check_timer: Optional[Countdown] = None
     current_check_count: int = 0
     closure_requested: bool = False
-    finished_params: FinishedParams = FinishedParams.empty()
+    finished_params: FinishedParams = dataclasses.field(
+        default_factory=lambda: FinishedParams.empty()
+    )
     completion_disposition: CompletionDisposition = CompletionDisposition.COMPLETED
     pdu_conf: PduConfig = dataclasses.field(default_factory=lambda: PduConfig.empty())
     fp: _DestFileParams = dataclasses.field(
         default_factory=lambda: _DestFileParams.empty()
     )
-    acked_params: _AckedModeParams = _AckedModeParams()
+    acked_params: _AckedModeParams = dataclasses.field(default_factory=lambda: _AckedModeParams())
     last_inserted_packet = PduHolder(None)
 
     def reset(self):
@@ -382,7 +384,8 @@ class DestHandler:
 
     def state_machine(self) -> FsmResult:
         """This is the primary call to run the state machine after packet insertion and/or after
-        having sent any packets which need to be sent to the sender of a file transaction."""
+        having sent any packets which need to be sent to the sender of a file transaction.
+        """
         if self.states.state == CfdpState.IDLE:
             self.__idle_fsm()
         else:
