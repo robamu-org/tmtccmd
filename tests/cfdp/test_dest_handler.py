@@ -72,6 +72,7 @@ class TestDestHandlerBase(TestCase):
     def common_setup(self, trans_mode: TransmissionMode):
         self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
+        self.fault_handler.notice_of_cancellation_cb = MagicMock()
         self.entity_id = ByteFieldU16(2)
         self.local_cfg = LocalEntityCfg(
             self.entity_id, self.indication_cfg, self.fault_handler
@@ -103,7 +104,7 @@ class TestDestHandlerBase(TestCase):
             max_packet_len=self.file_segment_len,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
-        self.timeout_check_limit_handling_ms = 30
+        self.timeout_check_limit_handling_ms = 40
         self.dest_handler = DestHandler(
             self.local_cfg,
             self.cfdp_user,
@@ -236,205 +237,6 @@ class TestDestHandlerBase(TestCase):
         fsm_res = self.dest_handler.state_machine()
         if self.expected_mode == TransmissionMode.UNACKNOWLEDGED:
             self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
-        eof_pdu = EofPdu(
-            file_size=file_size,
-            file_checksum=crc32,
-            pdu_conf=self.src_pdu_conf,
-        )
-        self.dest_handler.insert_packet(eof_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
-        self._check_eof_recv_indication(fsm_res)
-        self._check_finished_recv_indication_success(fsm_res)
-
-    def test_small_file_reception_with_closure(self):
-        self.closure_requested = True
-        data = "Hello World\n".encode()
-        with open(self.src_file_path, "wb") as of:
-            of.write(data)
-        crc32_func = mkPredefinedCrcFun("crc32")
-        crc32 = struct.pack("!I", crc32_func(data))
-        file_size = self.src_file_path.stat().st_size
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumType.CRC_32,
-            file_size=file_size,
-            file_path=self.src_file_path.as_posix(),
-        )
-        with open(self.src_file_path, "rb") as rf:
-            read_data = rf.read()
-        fd_params = FileDataParams(file_data=read_data, offset=0)
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.insert_packet(file_data_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECEIVING_FILE_DATA,
-        )
-        eof_pdu = EofPdu(
-            file_size=file_size,
-            file_checksum=crc32,
-            pdu_conf=self.src_pdu_conf,
-        )
-        self.dest_handler.insert_packet(eof_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            True,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.SENDING_FINISHED_PDU,
-        )
-        self._check_eof_recv_indication(fsm_res)
-        self._check_finished_recv_indication_success(fsm_res)
-        self._assert_generic_no_error_finished_pdu(fsm_res)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.IDLE,
-            TransactionStep.IDLE,
-        )
-
-    def test_larger_file_reception(self):
-        # This tests generates two file data PDUs, but the second one does not have a
-        # full segment length
-        file_info = self.random_data_two_file_segments()
-        self._state_checker(None, False, CfdpState.IDLE, TransactionStep.IDLE)
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumType.CRC_32,
-            file_size=file_info.file_size,
-            file_path=self.src_file_path.as_posix(),
-        )
-        fsm_res = self.pass_file_segment(
-            file_info.rand_data[0 : self.file_segment_len], 0
-        )
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECEIVING_FILE_DATA,
-        )
-        self.cfdp_user.file_segment_recv_indication.assert_called()
-        self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 1)
-        seg_recv_params = cast(
-            FileSegmentRecvdParams,
-            self.cfdp_user.file_segment_recv_indication.call_args.args[0],
-        )
-        self.assertEqual(seg_recv_params.transaction_id, self.transaction_id)
-        fd_params = FileDataParams(
-            file_data=file_info.rand_data[self.file_segment_len :],
-            offset=self.file_segment_len,
-        )
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.insert_packet(file_data_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECEIVING_FILE_DATA,
-        )
-        eof_pdu = EofPdu(
-            file_size=file_info.file_size,
-            file_checksum=file_info.crc32,
-            pdu_conf=self.src_pdu_conf,
-        )
-        self.dest_handler.insert_packet(eof_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
-        self._check_eof_recv_indication(fsm_res)
-        self._check_finished_recv_indication_success(fsm_res)
-
-    def _generic_check_limit_test(self, file_data: bytes):
-        with open(self.src_file_path, "wb") as of:
-            of.write(file_data)
-        crc32_func = mkPredefinedCrcFun("crc32")
-        crc32 = struct.pack("!I", crc32_func(file_data))
-        file_size = self.src_file_path.stat().st_size
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumType.CRC_32,
-            file_size=file_size,
-            file_path=self.src_file_path.as_posix(),
-        )
-        eof_pdu = EofPdu(
-            file_size=file_size,
-            file_checksum=crc32,
-            pdu_conf=self.src_pdu_conf,
-        )
-        self.dest_handler.insert_packet(eof_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
-        )
-        self._check_eof_recv_indication(fsm_res)
-
-    def test_check_timer_mechanism(self):
-        data = "Hello World\n".encode()
-        self._generic_check_limit_test(data)
-        fd_params = FileDataParams(
-            file_data=data,
-            offset=0,
-        )
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.insert_packet(file_data_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
-        )
-        self.assertFalse(self.dest_handler.packets_ready)
-        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.IDLE,
-            TransactionStep.IDLE,
-        )
-
-    def test_check_limit_reached(self):
-        data = "Hello World\n".encode()
-        self._generic_check_limit_test(data)
-        # Check counter should be incremented by one.
-        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
-        )
-        self.assertEqual(self.dest_handler.current_check_counter, 1)
-        # Check counter reaches 2, check limit fault should be declared
-        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.BUSY_CLASS_1_NACKED,
-            TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
-        )
-        self.assertEqual(self.dest_handler.current_check_counter, 2)
-        # Check counter has maximum value, check limit fault should be declared
-        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res,
-            False,
-            CfdpState.IDLE,
-            TransactionStep.IDLE,
-        )
-
-    def random_data_two_file_segments(self):
-        if sys.version_info >= (3, 9):
-            rand_data = random.randbytes(round(self.file_segment_len * 1.3))
->>>>>>> origin/main
         else:
             self._state_checker(
                 fsm_res, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_FINISHED_ACK

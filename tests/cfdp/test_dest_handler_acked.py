@@ -64,7 +64,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
             fsm_res, 1, CfdpState.BUSY, TransactionStep.WAITING_FOR_MISSING_DATA
         )
         self.assertTrue(self.dest_handler.deferred_lost_segment_procedure_active)
-        self.assertEqual(self.dest_handler.nak_activity_counter, 1)
+        self.assertEqual(self.dest_handler.nak_activity_counter, 0)
         next_pdu = self.dest_handler.get_next_packet()
         assert next_pdu is not None
         # finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)

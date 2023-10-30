@@ -238,7 +238,7 @@ class RemoteEntityCfg:
         Expected as floating point seconds. Defaults to 10 seconds.
     nak_timer_expiration_limit:
         See the notes on the Deferred Lost Segment Procedure inside the class documentation.
-        Defaults to 3, so the timer may expire three times.
+        Defaults to 2, so the timer may expire two times.
 
     """
 
@@ -255,7 +255,7 @@ class RemoteEntityCfg:
     disposition_on_cancellation: bool = False
     immediate_nak_mode: bool = True
     nak_timer_interval_seconds: float = 10.0
-    nak_timer_expiration_limit: int = 3
+    nak_timer_expiration_limit: int = 2
     # NOTE: Only this version is supported
     cfdp_version: int = CFDP_VERSION_2
 

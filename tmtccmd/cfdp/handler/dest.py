@@ -252,8 +252,10 @@ class _DestFieldWrapper:
     check_timer: Optional[Countdown] = None
     current_check_count: int = 0
     closure_requested: bool = False
-    finished_params: FinishedParams = dataclasses.field(
-        default_factory=lambda: FinishedParams.empty()
+    finished_params: FinishedParams = FinishedParams(
+        DeliveryCode.DATA_INCOMPLETE,
+        FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+        ConditionCode.NO_ERROR,
     )
     completion_disposition: CompletionDisposition = CompletionDisposition.COMPLETED
     pdu_conf: PduConfig = dataclasses.field(default_factory=lambda: PduConfig.empty())
@@ -269,7 +271,11 @@ class _DestFieldWrapper:
         self.transaction_id = None
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
-        self.finished_params = FinishedParams.empty()
+        self.finished_params = FinishedParams(
+            DeliveryCode.DATA_INCOMPLETE,
+            FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+            ConditionCode.NO_ERROR,
+        )
         self.finished_params.delivery_status = FileDeliveryStatus.FILE_STATUS_UNREPORTED
         self.completion_disposition = CompletionDisposition.COMPLETED
         self.fp.reset()
@@ -367,6 +373,10 @@ class DestHandler:
     @property
     def step(self) -> TransactionStep:
         return self.states.step
+
+    @property
+    def transaction_id(self) -> Optional[TransactionId]:
+        return self._params.transaction_id
 
     @property
     def current_check_counter(self) -> int:
@@ -562,6 +572,7 @@ class DestHandler:
             ):
                 self._start_deferred_lost_segment_handling()
             else:
+                self._checksum_verify()
                 self.states.step = TransactionStep.TRANSFER_COMPLETION
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
@@ -821,13 +832,6 @@ class DestHandler:
                 self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
     def _handle_transfer_completion(self):
-        if self._cksum_verif_helper.checksum_type != ChecksumType.NULL_CHECKSUM:
-            self._checksum_verify()
-        elif (
-            self._params.fp.no_file_data
-            or self._cksum_verif_helper.checksum_type == ChecksumType.NULL_CHECKSUM
-        ):
-            self._params.finished_params.condition_code = ConditionCode.NO_ERROR
         self._notice_of_completion()
         if (
             self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
@@ -868,26 +872,32 @@ class DestHandler:
         assert self._params.fp.file_size_eof is not None
         if not self._params.acked_params.deferred_lost_segment_detection_active:
             return
+        if self._params.acked_params.lost_seg_tracker.num_lost_segments == 0:
+            # We are done and have received everything.
+            self._checksum_verify()
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
+            self._params.acked_params.deferred_lost_segment_detection_active = False
+            return
+        first_nak_issuance = False
         # This is the case if this is the first issuance of NAK PDUs
-        # A timer needs to be instantiated
+        # A timer needs to be instantiated, but we do not increment the activity counter yet.
         if self._params.acked_params.procedure_timer is None:
             self._params.acked_params.procedure_timer = Countdown.from_seconds(
                 self._params.remote_cfg.nak_timer_interval_seconds
             )
+            first_nak_issuance = True
         elif self._params.acked_params.procedure_timer.busy():
             # There were or there was a previous NAK sequence(s). Wait for timeout before issuing
             # a new NAK sequence.
             return
         if (
-            self._params.acked_params.nak_activity_counter
+            not first_nak_issuance
+            and self._params.acked_params.nak_activity_counter + 1
             == self._params.remote_cfg.nak_timer_expiration_limit
         ):
             self._declare_fault(ConditionCode.NAK_LIMIT_REACHED)
             return
-        if self._params.acked_params.lost_seg_tracker.num_lost_segments == 0:
-            # We are done and have received everything.
-            self.states.step = TransactionStep.TRANSFER_COMPLETION
-            return
+        # This is not the first NAK issuance and the timer expired.
         max_segments_in_one_pdu = get_max_seg_reqs_for_max_packet_size_and_pdu_cfg(
             self._params.remote_cfg.max_packet_len, self._params.pdu_conf
         )
@@ -915,8 +925,9 @@ class DestHandler:
                     next_segment_reqs,
                 )
             )
-        self._params.acked_params.procedure_timer.reset()
-        self._params.acked_params.nak_activity_counter += 1
+        if not first_nak_issuance:
+            self._params.acked_params.nak_activity_counter += 1
+            self._params.acked_params.procedure_timer.reset()
 
     def _handle_eof_pdu(self, eof_pdu: EofPdu) -> bool:
         """Returns whether to exit the FSM prematurely."""
@@ -968,7 +979,10 @@ class DestHandler:
             self._prepare_eof_ack_packet()
             self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
             return True, True
-        if not self._checksum_verify():
+        if (
+            self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
+            and not self._checksum_verify()
+        ):
             self._start_check_limit_handling()
             return True, True
         return False, False
@@ -990,18 +1004,24 @@ class DestHandler:
         self._add_packet_to_be_sent(ack_pdu)
 
     def _checksum_verify(self) -> bool:
-        crc32 = self._cksum_verif_helper.calc_for_file(
-            self._params.fp.file_name, self._params.fp.progress
-        )
-        if crc32 == self._params.fp.crc32:
+        file_delivery_complete = False
+        if (
+            self._cksum_verif_helper.checksum_type == ChecksumType.NULL_CHECKSUM
+            or self._params.fp.no_file_data
+        ):
+            file_delivery_complete = True
+        else:
+            crc32 = self._cksum_verif_helper.calc_for_file(
+                self._params.fp.file_name, self._params.fp.progress
+            )
+            if crc32 == self._params.fp.crc32:
+                file_delivery_complete = True
+            else:
+                self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
+        if file_delivery_complete:
             self._params.finished_params.delivery_code = DeliveryCode.DATA_COMPLETE
             self._params.finished_params.condition_code = ConditionCode.NO_ERROR
-            return True
-        else:
-            self._params.finished_params.condition_code = (
-                ConditionCode.FILE_CHECKSUM_FAILURE
-            )
-            return False
+        return file_delivery_complete
 
     def _file_transfer_complete_transition(self):
         if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
@@ -1068,7 +1088,10 @@ class DestHandler:
             if self._checksum_verify():
                 self._file_transfer_complete_transition()
                 return
-            if self._params.current_check_count == self._params.remote_cfg.check_limit:
+            if (
+                self._params.current_check_count + 1
+                >= self._params.remote_cfg.check_limit
+            ):
                 self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
             else:
                 self._params.current_check_count += 1
@@ -1090,8 +1113,9 @@ class DestHandler:
         self.cfg.default_fault_handlers.report_fault(transaction_id, cond, progress)
         return fh
 
-    def _notice_of_cancellation(self, _: ConditionCode):
+    def _notice_of_cancellation(self, condition_code: ConditionCode):
         self.states.step = TransactionStep.TRANSFER_COMPLETION
+        self._params.finished_params.condition_code = condition_code
         self._params.completion_disposition = CompletionDisposition.CANCELED
 
     def _notice_of_suspension(self):

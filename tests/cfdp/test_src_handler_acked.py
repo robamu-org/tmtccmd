@@ -96,17 +96,17 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
     def test_positive_ack_procedure(self):
         # 1. Send EOF PDU.
         # 2. Verify EOF PDU is sent again after ACK limit is reached once.
-        self.assertEqual(self.source_handler.positive_ack_counter, 0)
         _, _, initial_eof_pdu = self._common_empty_file_test(None)
-        # 10 ms timeout, sleep of 15 ms should trigger EOF re-send.
+        self.assertEqual(self.source_handler.positive_ack_counter, 0)
+        # 100 ms timeout, sleep of 150 ms should trigger EOF re-send.
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
 
     def test_ack_limit_reached(self):
         # This tests fully checks the case where the ACK limit is reached and a corresponding
         # fault is declared.
-        self.assertEqual(self.source_handler.positive_ack_counter, 0)
         transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
+        self.assertEqual(self.source_handler.positive_ack_counter, 0)
         # 100 ms timeout, sleep of 150 ms should trigger EOF re-send.
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)

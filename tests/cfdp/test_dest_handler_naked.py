@@ -13,6 +13,7 @@ from spacepackets.cfdp import (
     TransmissionMode,
 )
 from spacepackets.cfdp.pdu import (
+    DeliveryCode,
     EofPdu,
     FileDataPdu,
     FileDeliveryStatus,
@@ -20,6 +21,7 @@ from spacepackets.cfdp.pdu import (
     MetadataPdu,
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
+from spacepackets.cfdp.pdu.finished import FinishedParams
 
 from tests.cfdp.common import CheckTimerProviderForTest
 from tests.cfdp.test_dest_handler import FileInfo, TestDestHandlerBase
@@ -156,25 +158,43 @@ class TestCfdpDestHandler(TestDestHandlerBase):
     def test_check_limit_reached(self):
         data = "Hello World\n".encode()
         self._generic_check_limit_test(data)
+        transaction_id = self.dest_handler.transaction_id
+        assert transaction_id is not None
         # Check counter should be incremented by one.
-        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
+        time.sleep(self.timeout_check_limit_handling_ms * 1.25 / 1000.0)
         fsm_res = self.dest_handler.state_machine()
         self._state_checker(
             fsm_res,
-            False,
+            0,
             CfdpState.BUSY,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         )
         self.assertEqual(self.dest_handler.current_check_counter, 1)
-        # Check counter reaches 2, check limit fault should be declared
-        time.sleep(self.timeout_check_limit_handling_ms * 1.15 / 1000.0)
+        # After this delay, the expiry limit (2) is reached and a check limit fault
+        # is declared
+        time.sleep(self.timeout_check_limit_handling_ms * 1.25 / 1000.0)
         fsm_res = self.dest_handler.state_machine()
         self.assertEqual(self.dest_handler.current_check_counter, 0)
         self._state_checker(
             fsm_res,
-            False,
+            0,
             CfdpState.IDLE,
             TransactionStep.IDLE,
+        )
+        self.fault_handler.notice_of_cancellation_cb.assert_called_once()
+        self.fault_handler.notice_of_cancellation_cb.assert_called_with(
+            transaction_id, ConditionCode.CHECK_LIMIT_REACHED, 0
+        )
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.cfdp_user.transaction_finished_indication.assert_called_with(
+            TransactionFinishedParams(
+                transaction_id,
+                FinishedParams(
+                    DeliveryCode.DATA_INCOMPLETE,
+                    FileDeliveryStatus.FILE_RETAINED,
+                    ConditionCode.CHECK_LIMIT_REACHED,
+                ),
+            )
         )
 
     def test_file_is_overwritten(self):
@@ -195,7 +215,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         )
         fsm_res = self._insert_file_segment(
             segment=file_info.rand_data[: self.file_segment_len],
-            offset=self.file_segment_len,
+            offset=0,
         )
         fsm_res = self._insert_file_segment(
             segment=file_info.rand_data[self.file_segment_len :],
@@ -220,7 +240,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         )
         self.assertEqual(
             finished_args.finished_params.condition_code,
-            ConditionCode.FILE_CHECKSUM_FAILURE,
+            ConditionCode.NO_ERROR,
         )
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
