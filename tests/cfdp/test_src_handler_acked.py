@@ -107,7 +107,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         # fault is declared.
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
         transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
-        # 10 ms timeout, sleep of 15 ms should trigger EOF re-send.
+        # 100 ms timeout, sleep of 150 ms should trigger EOF re-send.
         time.sleep(0.015)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
         time.sleep(0.015)

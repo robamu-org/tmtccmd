@@ -132,7 +132,6 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.file_size, expected_file_size)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(eof_pdu.fault_location, None)
-        fsm_res = self.source_handler.state_machine()
         self._verify_eof_indication(id)
         if self.expected_mode == TransmissionMode.ACKNOWLEDGED:
             self._state_checker(
