@@ -260,7 +260,9 @@ class _DestFieldWrapper:
     fp: _DestFileParams = dataclasses.field(
         default_factory=lambda: _DestFileParams.empty()
     )
-    acked_params: _AckedModeParams = dataclasses.field(default_factory=lambda: _AckedModeParams())
+    acked_params: _AckedModeParams = dataclasses.field(
+        default_factory=lambda: _AckedModeParams()
+    )
     last_inserted_packet = PduHolder(None)
 
     def reset(self):
