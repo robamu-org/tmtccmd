@@ -377,6 +377,14 @@ class DestHandler:
         return self._params.current_check_count
 
     @property
+    def deferred_lost_segment_procedure_active(self) -> bool:
+        return self._params.acked_params.deferred_lost_segment_detection_active
+
+    @property
+    def nak_activity_counter(self) -> int:
+        return self._params.acked_params.nak_activity_counter
+
+    @property
     def packets_ready(self) -> bool:
         return self.states.packets_ready
 
@@ -548,8 +556,11 @@ class DestHandler:
                 return
             self.reset()
         if self.states.step == TransactionStep.SENDING_EOF_ACK_PDU:
-            if self._params.acked_params.deferred_lost_segment_detection_active:
-                self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
+            if (
+                self._params.acked_params.lost_seg_tracker.num_lost_segments > 0
+                or self._params.acked_params.metadata_missing
+            ):
+                self._start_deferred_lost_segment_handling()
             else:
                 self.states.step = TransactionStep.TRANSFER_COMPLETION
 
@@ -956,23 +967,17 @@ class DestHandler:
         if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self._prepare_eof_ack_packet()
             self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
-            self._start_deferred_lost_segment_handling(False)
             return True, True
         if not self._checksum_verify():
             self._start_check_limit_handling()
             return True, True
         return False, False
 
-    def _start_deferred_lost_segment_handling(self, set_step: bool):
-        if set_step:
-            self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
-        if (
-            self._params.acked_params.lost_seg_tracker.num_lost_segments > 0
-            or self._params.acked_params.metadata_missing
-        ):
-            self._params.acked_params.deferred_lost_segment_detection_active = True
-            self._params.acked_params.lost_seg_tracker.coalesce_lost_segments()
-            self._deferred_lost_segment_handling()
+    def _start_deferred_lost_segment_handling(self):
+        self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
+        self._params.acked_params.deferred_lost_segment_detection_active = True
+        self._params.acked_params.lost_seg_tracker.coalesce_lost_segments()
+        self._deferred_lost_segment_handling()
 
     def _prepare_eof_ack_packet(self):
         assert self._params.fp.condition_code_eof is not None

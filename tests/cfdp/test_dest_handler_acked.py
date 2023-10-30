@@ -47,6 +47,30 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self._generic_verify_transfer_completion(fsm_res, file_content)
         self._generic_insert_finished_pdu_ack(finished_pdu)
 
+    def test_missing_file_segment_is_rerequested(self):
+        file_content = "Hello World!".encode()
+        with open(self.src_file_path, "wb") as of:
+            of.write(file_content)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(file_content))
+        # Basic acknowledged empty file transfer.
+        self._generic_transfer_init(len(file_content))
+        self._insert_file_segment(file_content[0:5], 0)
+        fsm_res = self._generic_insert_eof_pdu(len(file_content), crc32)
+        self._generic_eof_recv_indication_check(fsm_res)
+        self._generic_verify_eof_ack_packet(fsm_res)
+        self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.WAITING_FOR_MISSING_DATA
+        )
+        self.assertTrue(self.dest_handler.deferred_lost_segment_procedure_active)
+        self.assertEqual(self.dest_handler.nak_activity_counter, 1)
+        next_pdu = self.dest_handler.get_next_packet()
+        assert next_pdu is not None
+        # finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
+        # self._generic_verify_transfer_completion(fsm_res, file_content)
+        # self._generic_insert_finished_pdu_ack(finished_pdu)
+
     def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):
         self._state_checker(
             fsm_res,
