@@ -690,12 +690,11 @@ class SourceHandler:
                 missing_chunk_len -= chunk_size
 
     def _handle_waiting_for_ack(self):
-        if self.transmission_mode != TransmissionMode.UNACKNOWLEDGED:
+        if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             _LOGGER.error(
                 f"invalid ACK waiting function call for transmission mode "
                 f"{self.transmission_mode!r}"
             )
-
         if self.__handle_retransmission():
             return
         if self._inserted_pdu.pdu is None or (
