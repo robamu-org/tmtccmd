@@ -68,11 +68,11 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._generic_acked_transfer_completion(eof_pdu)
 
     def test_missing_filedata_pdu_retransmission(self):
-        file_content = "Hello World!"
+        file_content = "Hello World!".encode()
         _, _, first_fd_pdu, eof_pdu = self._common_small_file_test(
             TransmissionMode.ACKNOWLEDGED, True, file_content
         )
-        end_of_scope = len(file_content.encode())
+        end_of_scope = len(file_content)
         # Generate appropriate NAK PDU and insert it.
         nak_missing_metadata = NakPdu(
             eof_pdu.pdu_header.pdu_conf, 0, end_of_scope, [(0, end_of_scope)]
@@ -81,7 +81,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self.source_handler.state_machine()
         self._state_checker(
             None,
-            True,
+            1,
             CfdpState.BUSY,
             TransactionStep.RETRANSMITTING,
         )
