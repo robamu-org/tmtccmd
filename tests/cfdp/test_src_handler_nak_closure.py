@@ -47,7 +47,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_small_file_pdu_generation(self):
-        file_content = "Hello World\n"
+        file_content = "Hello World\n".encode()
         transaction_id, _, _, _ = self._common_small_file_test(
             TransmissionMode.UNACKNOWLEDGED, True, file_content
         )

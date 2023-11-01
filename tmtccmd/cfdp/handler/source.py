@@ -59,6 +59,7 @@ from tmtccmd.cfdp.handler.defs import (
     NoRemoteEntityCfgFound,
     FsmNotCalledAfterPacketInsertion,
 )
+from tmtccmd.cfdp.handler.common import _PositiveAckProcedureParams
 from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
@@ -123,13 +124,6 @@ class _AckedModeParams:
         self.step_before_retransmission: Optional[TransactionStep] = None
         self.segment_reqs_to_handle: Optional[Tuple[int, int]] = None
         self.segment_req_index: int = 0
-
-
-@dataclass
-class _PositiveAckProcedureParams:
-    ack_timer: Optional[Countdown] = None
-    ack_counter: int = 0
-    cond_code_of_eof_pdu: Optional[ConditionCode] = None
 
 
 class _TransferFieldWrapper:
@@ -721,7 +715,7 @@ class SourceHandler:
         assert self._params.positive_ack_params.ack_timer is not None
         assert self._params.remote_cfg is not None
         if self._params.positive_ack_params.ack_timer.timed_out():
-            assert self._params.positive_ack_params.cond_code_of_eof_pdu is not None
+            assert self._params.positive_ack_params.cond_code_of_acked_pdu is not None
             if (
                 self._params.positive_ack_params.ack_counter + 1
                 >= self._params.remote_cfg.positive_ack_timer_expiration_limit
@@ -731,7 +725,7 @@ class SourceHandler:
             self._params.positive_ack_params.ack_timer.reset()
             self._params.positive_ack_params.ack_counter += 1
             self._prepare_eof_pdu(
-                self._params.positive_ack_params.cond_code_of_eof_pdu,
+                self._params.positive_ack_params.cond_code_of_acked_pdu,
                 self._checksum_calculation(self._params.fp.file_size),
             )
 
@@ -910,7 +904,7 @@ class SourceHandler:
             self._add_packet_to_be_sent(file_data_pdu)
 
     def _prepare_eof_pdu(self, condition_code: ConditionCode, checksum: bytes):
-        self._params.positive_ack_params.cond_code_of_eof_pdu = condition_code
+        self._params.positive_ack_params.cond_code_of_acked_pdu = condition_code
         self._add_packet_to_be_sent(
             EofPdu(
                 file_checksum=checksum,
@@ -948,15 +942,15 @@ class SourceHandler:
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
         # the EOF (cancel) PDU must result in abandonment of the transaction.
         if (
-            self._params.positive_ack_params.cond_code_of_eof_pdu is not None
-            and self._params.positive_ack_params.cond_code_of_eof_pdu
+            self._params.positive_ack_params.cond_code_of_acked_pdu is not None
+            and self._params.positive_ack_params.cond_code_of_acked_pdu
             != ConditionCode.NO_ERROR
         ):
             assert self._params.transaction_id is not None
             # We still call the abandonment callback to ensure the fault is logged.
             self.cfg.default_fault_handlers.abandoned_cb(
                 self._params.transaction_id,
-                self._params.positive_ack_params.cond_code_of_eof_pdu,
+                self._params.positive_ack_params.cond_code_of_acked_pdu,
                 self._params.fp.progress,
             )
             self._abandon_transaction()

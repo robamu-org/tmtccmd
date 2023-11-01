@@ -42,7 +42,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         _, _, _, eof_pdu = self._common_small_file_test(
             TransmissionMode.ACKNOWLEDGED,
             True,
-            "Hello World!",
+            "Hello World!".encode(),
         )
         self._generic_acked_transfer_completion(eof_pdu)
 

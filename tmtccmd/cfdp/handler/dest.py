@@ -1,15 +1,13 @@
 from __future__ import annotations
-from collections import deque
 
-import dataclasses
 import enum
 import logging
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Deque, List, Optional, Tuple
 
 import deprecation
-
 from spacepackets.cfdp import (
     PduType,
     ChecksumType,
@@ -35,18 +33,21 @@ from spacepackets.cfdp.pdu.finished import (
     DeliveryCode,
     FileDeliveryStatus,
 )
-from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
+from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
+
 from tmtccmd.cfdp import (
     CfdpUserBase,
     LocalEntityCfg,
     RemoteEntityCfgTable,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
-from tmtccmd.util.countdown import Countdown
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
-from tmtccmd.cfdp.handler.common import PacketDestination, get_packet_destination
+from tmtccmd.cfdp.handler.common import (
+    PacketDestination,
+    get_packet_destination,
+    _PositiveAckProcedureParams,
+)
 from tmtccmd.cfdp.handler.crc import Crc32Helper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
@@ -56,12 +57,15 @@ from tmtccmd.cfdp.handler.defs import (
     UnretrievedPdusToBeSent,
     NoRemoteEntityCfgFound,
 )
+from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
 from tmtccmd.cfdp.user import (
     MetadataRecvParams,
     FileSegmentRecvdParams,
     TransactionFinishedParams,
 )
+from tmtccmd.util.countdown import Countdown
 from tmtccmd.version import get_version
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -243,29 +247,29 @@ class _AckedModeParams:
     nak_activity_counter: int = 0
 
 
-@dataclass
 class _DestFieldWrapper:
     """Private wrapper class for internal use only."""
 
-    transaction_id: Optional[TransactionId] = None
-    remote_cfg: Optional[RemoteEntityCfg] = None
-    check_timer: Optional[Countdown] = None
-    current_check_count: int = 0
-    closure_requested: bool = False
-    finished_params: FinishedParams = FinishedParams(
-        DeliveryCode.DATA_INCOMPLETE,
-        FileDeliveryStatus.FILE_STATUS_UNREPORTED,
-        ConditionCode.NO_ERROR,
-    )
-    completion_disposition: CompletionDisposition = CompletionDisposition.COMPLETED
-    pdu_conf: PduConfig = dataclasses.field(default_factory=lambda: PduConfig.empty())
-    fp: _DestFileParams = dataclasses.field(
-        default_factory=lambda: _DestFileParams.empty()
-    )
-    acked_params: _AckedModeParams = dataclasses.field(
-        default_factory=lambda: _AckedModeParams()
-    )
-    last_inserted_packet = PduHolder(None)
+    def __init__(self):
+        self.transaction_id: Optional[TransactionId] = None
+        self.remote_cfg: Optional[RemoteEntityCfg] = None
+        self.check_timer: Optional[Countdown] = None
+        self.current_check_count: int = 0
+        self.closure_requested: bool = False
+        self.finished_params: FinishedParams = FinishedParams(
+            DeliveryCode.DATA_INCOMPLETE,
+            FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+            ConditionCode.NO_ERROR,
+        )
+        self.completion_disposition: CompletionDisposition = (
+            CompletionDisposition.COMPLETED
+        )
+        self.pdu_conf = PduConfig.empty()
+        self.fp: _DestFileParams = _DestFileParams.empty()
+
+        self.acked_params = _AckedModeParams()
+        self.positive_ack_params = _PositiveAckProcedureParams()
+        self.last_inserted_packet = PduHolder(None)
 
     def reset(self):
         self.transaction_id = None
@@ -570,6 +574,7 @@ class DestHandler:
                 self.states.state == CfdpState.BUSY
                 and self.transmission_mode == TransmissionMode.ACKNOWLEDGED
             ):
+                self._start_positive_ack_procedure()
                 self.states.step = TransactionStep.WAITING_FOR_FINISHED_ACK
                 return
             self.reset()
@@ -762,8 +767,15 @@ class DestHandler:
         self._params.last_inserted_packet.pdu = None
 
     def _handle_waiting_for_finished_ack(self):
-        if self._params.last_inserted_packet.pdu is None:
+        if (
+            self._params.last_inserted_packet.pdu is None
+            or self._params.last_inserted_packet.pdu_type == PduType.FILE_DATA
+            or self._params.last_inserted_packet.pdu_directive_type
+            != DirectiveType.ACK_PDU
+        ):
+            self._handle_positive_ack_procedures()
             return
+
         if (
             self._params.last_inserted_packet.pdu_type == PduType.FILE_DIRECTIVE
             and self._params.last_inserted_packet.pdu_directive_type
@@ -777,6 +789,22 @@ class DestHandler:
                 )
             # We are done.
             self.reset()
+
+    def _handle_positive_ack_procedures(self):
+        """Positive ACK procedures according to chapter 4.7.1 of the CFDP standard."""
+        assert self._params.positive_ack_params.ack_timer is not None
+        assert self._params.remote_cfg is not None
+        if self._params.positive_ack_params.ack_timer.timed_out():
+            assert self._params.positive_ack_params.cond_code_of_acked_pdu is not None
+            if (
+                self._params.positive_ack_params.ack_counter + 1
+                >= self._params.remote_cfg.positive_ack_timer_expiration_limit
+            ):
+                self._declare_fault(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
+                return
+            self._params.positive_ack_params.ack_timer.reset()
+            self._params.positive_ack_params.ack_counter += 1
+            self._prepare_finished_pdu()
 
     def _handle_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
@@ -1082,6 +1110,13 @@ class DestHandler:
             pdu_conf=self._params.pdu_conf,
         )
         self._add_packet_to_be_sent(finished_pdu)
+
+    def _start_positive_ack_procedure(self):
+        assert self._params.remote_cfg is not None
+        self._params.positive_ack_params.ack_timer = Countdown.from_seconds(
+            self._params.remote_cfg.positive_ack_timer_interval_seconds
+        )
+        self._params.positive_ack_params.ack_counter = 0
 
     def _add_packet_to_be_sent(self, packet: GenericPduPacket):
         self._pdus_to_be_sent.append(PduHolder(packet))

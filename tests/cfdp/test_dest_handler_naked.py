@@ -130,10 +130,10 @@ class TestCfdpDestHandler(TestDestHandlerBase):
             self.dest_handler.insert_packet(file_transfer_init)
 
     def test_check_timer_mechanism(self):
-        data = "Hello World\n".encode()
-        self._generic_check_limit_test(data)
+        file_data = "Hello World\n".encode()
+        self._generic_check_limit_test(file_data)
         fd_params = FileDataParams(
-            file_data=data,
+            file_data=file_data,
             offset=0,
         )
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
