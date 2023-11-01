@@ -145,7 +145,7 @@ class TestDestHandlerBase(TestCase):
             closure_requested=self.closure_requested,
             source_file_name=self.src_file_path.as_posix(),
             dest_file_name=self.dest_file_path.as_posix(),
-            file_size=0,
+            file_size=file_size,
         )
         file_transfer_init = MetadataPdu(
             params=metadata_params, pdu_conf=self.src_pdu_conf
@@ -162,6 +162,7 @@ class TestDestHandlerBase(TestCase):
         self,
         segment: bytes,
         offset: int,
+        expected_packets: int = 0,
         expected_step: TransactionStep = TransactionStep.RECEIVING_FILE_DATA,
     ) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
@@ -179,7 +180,7 @@ class TestDestHandlerBase(TestCase):
             self.cfdp_user.file_segment_recv_indication.reset_mock()
         self._state_checker(
             fsm_res,
-            0,
+            expected_packets,
             CfdpState.BUSY,
             expected_step,
         )

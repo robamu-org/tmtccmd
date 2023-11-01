@@ -536,15 +536,21 @@ class DestHandler:
             TransactionStep.RECEIVING_FILE_DATA,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         ]:
-            if self._handle_fd_and_eof_pdus():
-                return
+            if self._params.last_inserted_packet.pdu is not None:
+                exit_fsm = self._handle_fd_or_eof_pdu()
+                self._params.last_inserted_packet.pdu = None
+                if exit_fsm:
+                    return
         if self.states.step == TransactionStep.WAITING_FOR_METADATA:
             self._handle_waiting_for_missing_metadata()
         if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
             self._check_limit_handling()
         if self.states.step == TransactionStep.WAITING_FOR_MISSING_DATA:
             if self._params.last_inserted_packet.pdu is not None:
-                self._handle_fd_pdu()
+                self._handle_fd_pdu(
+                    self._params.last_inserted_packet.to_file_data_pdu()
+                )
+                self._params.last_inserted_packet.pdu = None
             self._deferred_lost_segment_handling()
         if self.states.step == TransactionStep.TRANSFER_COMPLETION:
             self._handle_transfer_completion()
@@ -722,29 +728,15 @@ class DestHandler:
             )
             self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
-    def _handle_fd_and_eof_pdus(self) -> bool:
+    def _handle_fd_or_eof_pdu(self) -> bool:
         """Returns whether to exit the FSM prematurely."""
-        exit_fsm = False
-        if self._params.last_inserted_packet.pdu is None:
-            return exit_fsm
-
-        if not self._handle_fd_pdu() and (
+        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
+            self._handle_fd_pdu(self._params.last_inserted_packet.to_file_data_pdu())
+        elif (
             self._params.last_inserted_packet.pdu.directive_type
             == DirectiveType.EOF_PDU
         ):
-            exit_fsm = self._handle_eof_pdu(
-                self._params.last_inserted_packet.to_eof_pdu()
-            )
-        self._params.last_inserted_packet.pdu = None
-        return exit_fsm
-
-    def _handle_fd_pdu(self) -> bool:
-        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
-            self._handle_one_fd_pdu(
-                self._params.last_inserted_packet.to_file_data_pdu()
-            )
-            return True
-        return False
+            return self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
 
     def _handle_waiting_for_missing_metadata(self):
         if self._params.last_inserted_packet.pdu is None:
@@ -767,6 +759,7 @@ class DestHandler:
             self._handle_eof_without_previous_metadata(
                 self._params.last_inserted_packet.to_eof_pdu()
             )
+        self._params.last_inserted_packet.pdu = None
 
     def _handle_waiting_for_finished_ack(self):
         if self._params.last_inserted_packet.pdu is None:
@@ -785,7 +778,7 @@ class DestHandler:
             # We are done.
             self.reset()
 
-    def _handle_one_fd_pdu(self, file_data_pdu: FileDataPdu):
+    def _handle_fd_pdu(self, file_data_pdu: FileDataPdu):
         data = file_data_pdu.file_data
         offset = file_data_pdu.offset
         if self.cfg.indication_cfg.file_segment_recvd_indication_required:
@@ -852,7 +845,7 @@ class DestHandler:
         """Lost segment detection: 4.6.4.3.1 a) and b) are covered by this code. c) is covered
         by dedicated code which is run when the EOF PDU is handled."""
         if offset > self._params.acked_params.last_end_offset:
-            lost_segment = (self._params.acked_params.last_start_offset, offset)
+            lost_segment = (self._params.acked_params.last_end_offset, offset)
             self._params.acked_params.lost_seg_tracker.add_lost_segment(
                 (self._params.acked_params.last_end_offset, offset)
             )
@@ -866,13 +859,14 @@ class DestHandler:
                         segment_requests=[lost_segment],
                     )
                 )
-        elif offset < self._params.acked_params.last_end_offset:
+        if offset >= self._params.acked_params.last_end_offset:
+            self._params.acked_params.last_start_offset = offset
+            self._params.acked_params.last_end_offset = offset + data_len
+        if offset + data_len <= self._params.acked_params.last_start_offset:
             # Might be a re-requested FD PDU.
             self._params.acked_params.lost_seg_tracker.remove_lost_segment(
                 (offset, offset + data_len)
             )
-        self._params.acked_params.last_start_offset = offset
-        self._params.acked_params.last_end_offset = offset + data_len
 
     def _deferred_lost_segment_handling(self):
         assert self._params.remote_cfg is not None
@@ -1001,6 +995,8 @@ class DestHandler:
         self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
         self._params.acked_params.deferred_lost_segment_detection_active = True
         self._params.acked_params.lost_seg_tracker.coalesce_lost_segments()
+        self._params.acked_params.last_start_offset = self._params.fp.file_size_eof
+        self._params.acked_params.last_end_offset = self._params.fp.file_size_eof
         self._deferred_lost_segment_handling()
 
     def _prepare_eof_ack_packet(self):
