@@ -288,7 +288,15 @@ class TestCfdpSourceHandler(TestCase):
             self.assertEqual(fsm_res.states.state, expected_state)
             self.assertEqual(fsm_res.states.step, expected_step)
             if num_packets_ready > 0:
-                self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
+                if fsm_res.states.num_packets_ready != num_packets_ready:
+                    self.assertEqual(
+                        fsm_res.states.num_packets_ready, num_packets_ready
+                    )
+            elif num_packets_ready == 0 and fsm_res.states.num_packets_ready > 0:
+                packets = []
+                while True:
+                    packets.append(self.source_handler.get_next_packet().pdu)
+                raise AssertionError(f"Expected no packets, found: {packets}")
         if num_packets_ready > 0:
             self.assertTrue(self.source_handler.packets_ready)
         if expected_state != CfdpState.IDLE:
