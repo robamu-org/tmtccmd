@@ -158,7 +158,12 @@ class TestDestHandlerBase(TestCase):
             self.dest_handler.states.step, TransactionStep.RECEIVING_FILE_DATA
         )
 
-    def _insert_file_segment(self, segment: bytes, offset) -> FsmResult:
+    def _insert_file_segment(
+        self,
+        segment: bytes,
+        offset: int,
+        expected_step: TransactionStep = TransactionStep.RECEIVING_FILE_DATA,
+    ) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
         self.dest_handler.insert_packet(file_data_pdu)
@@ -176,7 +181,7 @@ class TestDestHandlerBase(TestCase):
             fsm_res,
             0,
             CfdpState.BUSY,
-            TransactionStep.RECEIVING_FILE_DATA,
+            expected_step,
         )
         return fsm_res
 

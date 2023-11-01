@@ -536,18 +536,20 @@ class DestHandler:
             TransactionStep.RECEIVING_FILE_DATA,
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         ]:
-            if self._receiving_fd_and_eof_pdus():
+            if self._handle_fd_and_eof_pdus():
                 return
         if self.states.step == TransactionStep.WAITING_FOR_METADATA:
             self._handle_waiting_for_missing_metadata()
         if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
             self._check_limit_handling()
+        if self.states.step == TransactionStep.WAITING_FOR_MISSING_DATA:
+            if self._params.last_inserted_packet.pdu is not None:
+                self._handle_fd_pdu()
+            self._deferred_lost_segment_handling()
         if self.states.step == TransactionStep.TRANSFER_COMPLETION:
             self._handle_transfer_completion()
         if self.states.step == TransactionStep.SENDING_FINISHED_PDU:
             self._prepare_finished_pdu()
-        if self.states.step == TransactionStep.WAITING_FOR_MISSING_DATA:
-            self._deferred_lost_segment_handling()
         if self.states.step == TransactionStep.WAITING_FOR_FINISHED_ACK:
             self._handle_waiting_for_finished_ack()
 
@@ -720,17 +722,14 @@ class DestHandler:
             )
             self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
-    def _receiving_fd_and_eof_pdus(self) -> bool:
+    def _handle_fd_and_eof_pdus(self) -> bool:
         """Returns whether to exit the FSM prematurely."""
         exit_fsm = False
         if self._params.last_inserted_packet.pdu is None:
             return exit_fsm
-        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
-            self._handle_one_fd_pdu(
-                self._params.last_inserted_packet.to_file_data_pdu()
-            )
-        elif (
-            self._params.last_inserted_packet.pdu.directive_type  # type: ignore
+
+        if not self._handle_fd_pdu() and (
+            self._params.last_inserted_packet.pdu.directive_type
             == DirectiveType.EOF_PDU
         ):
             exit_fsm = self._handle_eof_pdu(
@@ -738,6 +737,14 @@ class DestHandler:
             )
         self._params.last_inserted_packet.pdu = None
         return exit_fsm
+
+    def _handle_fd_pdu(self) -> bool:
+        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
+            self._handle_one_fd_pdu(
+                self._params.last_inserted_packet.to_file_data_pdu()
+            )
+            return True
+        return False
 
     def _handle_waiting_for_missing_metadata(self):
         if self._params.last_inserted_packet.pdu is None:
@@ -904,8 +911,11 @@ class DestHandler:
         next_segment_reqs = []
         if self._params.acked_params.metadata_missing:
             next_segment_reqs.append((0, 0))
-        for lost_segment in self._params.acked_params.lost_seg_tracker.lost_segments:
-            next_segment_reqs.append(lost_segment)
+        for (
+            start,
+            end,
+        ) in self._params.acked_params.lost_seg_tracker.lost_segments.items():
+            next_segment_reqs.append((start, end))
             if len(next_segment_reqs) == max_segments_in_one_pdu:
                 self._add_packet_to_be_sent(
                     NakPdu(

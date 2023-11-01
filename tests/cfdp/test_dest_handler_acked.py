@@ -1,4 +1,5 @@
 import struct
+
 from spacepackets.cfdp import (
     NULL_CHECKSUM_U32,
     ConditionCode,
@@ -8,11 +9,10 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import AckPdu, FinishedPdu, TransactionStatus
 from spacepackets.crc import mkPredefinedCrcFun
-from tmtccmd.cfdp.defs import CfdpState
-
-from tmtccmd.cfdp.handler.dest import FsmResult, TransactionStep
 
 from .test_dest_handler import TestDestHandlerBase
+from tmtccmd.cfdp.defs import CfdpState
+from tmtccmd.cfdp.handler.dest import FsmResult, TransactionStep
 
 
 class TestDestHandlerAcked(TestDestHandlerBase):
@@ -67,9 +67,22 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self.assertEqual(self.dest_handler.nak_activity_counter, 0)
         next_pdu = self.dest_handler.get_next_packet()
         assert next_pdu is not None
-        # finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
-        # self._generic_verify_transfer_completion(fsm_res, file_content)
-        # self._generic_insert_finished_pdu_ack(finished_pdu)
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.NAK_PDU)
+        nak_pdu = next_pdu.to_nak_pdu()
+        self.assertEqual(nak_pdu.start_of_scope, 0)
+        self.assertEqual(nak_pdu.end_of_scope, len(file_content))
+        self.assertEqual(nak_pdu.segment_requests, [(5, len(file_content))])
+        self._insert_file_segment(
+            file_content[5:], 5, TransactionStep.WAITING_FOR_MISSING_DATA
+        )
+        self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
+        )
+        finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
+        self._generic_verify_transfer_completion(fsm_res, file_content)
+        self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):
         self._state_checker(
