@@ -147,7 +147,7 @@ class TestCfdpSourceHandler(TestCase):
         self,
         transmission_mode: Optional[TransmissionMode],
         closure_requested: bool,
-        file_content: str,
+        file_content: bytes,
     ) -> Tuple[TransactionId, MetadataPdu, FileDataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
         self.source_id = ByteFieldU32(1)
@@ -164,7 +164,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         with open(self.file_path, "wb") as of:
             crc32 = PredefinedCrc("crc32")
-            data = file_content.encode()
+            data = file_content
             crc32.update(data)
             crc32 = crc32.digest()
             of.write(data)

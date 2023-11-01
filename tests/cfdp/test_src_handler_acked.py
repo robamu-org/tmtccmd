@@ -171,8 +171,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         # 2. Verify EOF PDU is sent again after ACK limit is reached once.
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
         transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
-        # 10 ms timeout, sleep of 15 ms should trigger EOF re-send.
-        time.sleep(0.015)
+        time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
         self._generic_acked_transfer_completion(initial_eof_pdu)
 
