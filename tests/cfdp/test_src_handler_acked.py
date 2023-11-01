@@ -98,8 +98,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         # 2. Verify EOF PDU is sent again after ACK limit is reached once.
         _, _, initial_eof_pdu = self._common_empty_file_test(None)
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
-        # 100 ms timeout, sleep of 150 ms should trigger EOF re-send.
-        time.sleep(0.015)
+        time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
 
     def test_ack_limit_reached(self):
@@ -108,11 +107,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
         # 100 ms timeout, sleep of 150 ms should trigger EOF re-send.
-        time.sleep(0.015)
+        time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
-        time.sleep(0.015)
-        self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 2)
-        time.sleep(0.015)
+        time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self.source_handler.state_machine()
         # That's odd but expected. The ACK limit reached fault will trigger a notice
         # of cancellation by default, which causes it to send an EOF PDU with the appropriate
@@ -151,11 +148,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
             None, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_EOF_ACK
         )
         self.assertEqual(self.source_handler.positive_ack_counter, 0)
-        time.sleep(0.015)
+        time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self._verify_eof_pdu_for_positive_ack(eof_pdu_for_cancellation, 1)
-        time.sleep(0.015)
-        self._verify_eof_pdu_for_positive_ack(eof_pdu_for_cancellation, 2)
-        time.sleep(0.015)
+        time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
         # Transaction was abandoned.

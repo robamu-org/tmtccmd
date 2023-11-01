@@ -72,6 +72,7 @@ class TestCfdpSourceHandler(TestCase):
             pass
         self.file_segment_len = 64
         self.max_packet_len = 256
+        self.positive_ack_intvl_seconds = 0.02
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.dest_id,
             max_packet_len=self.max_packet_len,
@@ -79,10 +80,10 @@ class TestCfdpSourceHandler(TestCase):
             closure_requested=closure_requested,
             crc_on_transmission=False,
             default_transmission_mode=default_transmission_mode,
-            positive_ack_timer_interval_seconds=0.01,
+            positive_ack_timer_interval_seconds=self.positive_ack_intvl_seconds,
             positive_ack_timer_expiration_limit=2,
             crc_type=ChecksumType.CRC_32,
-            check_limit=3,
+            check_limit=2,
         )
         # Create an empty file and send it via CFDP
         self.source_handler = SourceHandler(

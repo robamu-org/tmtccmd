@@ -723,8 +723,8 @@ class SourceHandler:
         if self._params.positive_ack_params.ack_timer.timed_out():
             assert self._params.positive_ack_params.cond_code_of_eof_pdu is not None
             if (
-                self._params.positive_ack_params.ack_counter
-                == self._params.remote_cfg.positive_ack_timer_expiration_limit
+                self._params.positive_ack_params.ack_counter + 1
+                >= self._params.remote_cfg.positive_ack_timer_expiration_limit
             ):
                 self._declare_fault(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
                 return
