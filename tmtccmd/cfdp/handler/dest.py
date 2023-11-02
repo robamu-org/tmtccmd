@@ -405,6 +405,10 @@ class DestHandler:
         return self._params.acked_params.nak_activity_counter
 
     @property
+    def positive_ack_counter(self) -> int:
+        return self._params.positive_ack_params.ack_counter
+
+    @property
     def packets_ready(self) -> bool:
         return self.states.packets_ready
 
@@ -831,7 +835,6 @@ class DestHandler:
         assert self._params.positive_ack_params.ack_timer is not None
         assert self._params.remote_cfg is not None
         if self._params.positive_ack_params.ack_timer.timed_out():
-            assert self._params.positive_ack_params.cond_code_of_acked_pdu is not None
             if (
                 self._params.positive_ack_params.ack_counter + 1
                 >= self._params.remote_cfg.positive_ack_timer_expiration_limit

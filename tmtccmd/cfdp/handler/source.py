@@ -133,6 +133,7 @@ class _TransferFieldWrapper:
         self.positive_ack_params: _PositiveAckProcedureParams = (
             _PositiveAckProcedureParams()
         )
+        self.cond_code_eof: Optional[ConditionCode] = None
         self.ack_params: _AckedModeParams = _AckedModeParams()
         self.fp: _SourceFileParams = _SourceFileParams.empty()
         self.finished_params: Optional[FinishedParams] = None
@@ -182,6 +183,7 @@ class _TransferFieldWrapper:
         self.remote_cfg = None
         self.transaction_id = None
         self.check_timer = None
+        self.cond_code_eof = None
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
         self.finished_params = None
@@ -505,7 +507,6 @@ class SourceHandler:
                 return
         if self.states.step == TransactionStep.SENDING_EOF:
             self._prepare_eof_pdu(
-                ConditionCode.NO_ERROR,
                 self._checksum_calculation(self._params.fp.file_size),
             )
             return
@@ -647,6 +648,7 @@ class SourceHandler:
                 self.states.step = TransactionStep.NOTICE_OF_COMPLETION
         else:
             # Special case: Empty file.
+            self._params.cond_code_eof = ConditionCode.NO_ERROR
             self.states.step = TransactionStep.SENDING_EOF
         return False
 
@@ -715,7 +717,6 @@ class SourceHandler:
         assert self._params.positive_ack_params.ack_timer is not None
         assert self._params.remote_cfg is not None
         if self._params.positive_ack_params.ack_timer.timed_out():
-            assert self._params.positive_ack_params.cond_code_of_acked_pdu is not None
             if (
                 self._params.positive_ack_params.ack_counter + 1
                 >= self._params.remote_cfg.positive_ack_timer_expiration_limit
@@ -725,7 +726,6 @@ class SourceHandler:
             self._params.positive_ack_params.ack_timer.reset()
             self._params.positive_ack_params.ack_counter += 1
             self._prepare_eof_pdu(
-                self._params.positive_ack_params.cond_code_of_acked_pdu,
                 self._checksum_calculation(self._params.fp.file_size),
             )
 
@@ -819,6 +819,7 @@ class SourceHandler:
 
     def _handle_file_data_sent(self):
         if self._params.fp.progress == self._params.fp.file_size:
+            self._params.cond_code_eof = ConditionCode.NO_ERROR
             self.states.step = TransactionStep.SENDING_EOF
 
     def _prepare_finished_ack_packet(self, condition_code: ConditionCode):
@@ -903,14 +904,14 @@ class SourceHandler:
             )
             self._add_packet_to_be_sent(file_data_pdu)
 
-    def _prepare_eof_pdu(self, condition_code: ConditionCode, checksum: bytes):
-        self._params.positive_ack_params.cond_code_of_acked_pdu = condition_code
+    def _prepare_eof_pdu(self, checksum: bytes):
+        assert self._params.cond_code_eof is not None
         self._add_packet_to_be_sent(
             EofPdu(
                 file_checksum=checksum,
                 file_size=self._params.fp.progress,
                 pdu_conf=self._params.pdu_conf,
-                condition_code=condition_code,
+                condition_code=self._params.cond_code_eof,
             )
         )
 
@@ -942,24 +943,22 @@ class SourceHandler:
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
         # the EOF (cancel) PDU must result in abandonment of the transaction.
         if (
-            self._params.positive_ack_params.cond_code_of_acked_pdu is not None
-            and self._params.positive_ack_params.cond_code_of_acked_pdu
-            != ConditionCode.NO_ERROR
+            self._params.cond_code_eof is not None
+            and self._params.cond_code_eof != ConditionCode.NO_ERROR
         ):
             assert self._params.transaction_id is not None
             # We still call the abandonment callback to ensure the fault is logged.
             self.cfg.default_fault_handlers.abandoned_cb(
                 self._params.transaction_id,
-                self._params.positive_ack_params.cond_code_of_acked_pdu,
+                self._params.cond_code_eof,
                 self._params.fp.progress,
             )
             self._abandon_transaction()
             return
+        self._params.cond_code_eof = condition_code
         # As specified in 4.11.2.2, prepare an EOF PDU to be sent to the remote entity. Supply
         # the checksum for the file copy progress sent so far.
-        self._prepare_eof_pdu(
-            condition_code, self._checksum_calculation(self._params.fp.progress)
-        )
+        self._prepare_eof_pdu(self._checksum_calculation(self._params.fp.progress))
         self.states.step = TransactionStep.SENDING_EOF
 
     def _notice_of_suspension(self):

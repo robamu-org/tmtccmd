@@ -395,8 +395,17 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def test_positive_ack_procedure_finished_pdu(self):
-        # TODO: Implement
-        pass
+        # Basic acknowledged empty file transfer.
+        self._generic_regular_transfer_init(0)
+        fsm_res = self._generic_insert_eof_pdu(0, NULL_CHECKSUM_U32)
+        self._generic_eof_recv_indication_check(fsm_res)
+        self._generic_verify_eof_ack_packet(fsm_res)
+        fsm_res = self.dest_handler.state_machine()
+        self._generic_no_error_finished_pdu_check(fsm_res)
+        self._generic_verify_transfer_completion(fsm_res, bytes())
+        time.sleep(self.timeout_positive_ack_procedure_seconds * 1.1)
+        fsm_res = self.dest_handler.state_machine()
+        self.assertEqual(self.dest_handler.positive_ack_counter, 1)
 
     def _generic_verify_missing_segment_requested(
         self,

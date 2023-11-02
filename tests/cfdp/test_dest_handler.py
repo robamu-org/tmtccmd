@@ -94,6 +94,7 @@ class TestDestHandlerBase(TestCase):
         self.cfdp_user.transaction_finished_indication = MagicMock()
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.timeout_nak_procedure_seconds = 0.05
+        self.timeout_positive_ack_procedure_seconds = 0.05
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
             check_limit=2,
@@ -105,6 +106,8 @@ class TestDestHandlerBase(TestCase):
             max_packet_len=self.file_segment_len,
             nak_timer_expiration_limit=2,
             nak_timer_interval_seconds=self.timeout_nak_procedure_seconds,
+            positive_ack_timer_interval_seconds=self.timeout_positive_ack_procedure_seconds,
+            positive_ack_timer_expiration_limit=2,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
         self.timeout_check_limit_handling_ms = 50

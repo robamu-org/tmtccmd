@@ -2,7 +2,7 @@ import enum
 from dataclasses import dataclass
 from typing import Optional
 
-from spacepackets.cfdp import ConditionCode, DirectiveType, GenericPduPacket, PduType
+from spacepackets.cfdp import DirectiveType, GenericPduPacket, PduType
 from spacepackets.cfdp.pdu import PduHolder
 
 from tmtccmd.util.countdown import Countdown
@@ -59,4 +59,3 @@ def get_packet_destination(packet: GenericPduPacket) -> PacketDestination:
 class _PositiveAckProcedureParams:
     ack_timer: Optional[Countdown] = None
     ack_counter: int = 0
-    cond_code_of_acked_pdu: Optional[ConditionCode] = None
