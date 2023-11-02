@@ -1,3 +1,4 @@
+import time
 import struct
 from typing import List, Tuple
 
@@ -9,6 +10,7 @@ from spacepackets.cfdp import (
     TransmissionMode,
 )
 from spacepackets.cfdp.pdu import AckPdu, FinishedPdu, TransactionStatus
+from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
 from spacepackets.crc import mkPredefinedCrcFun
 
 from .test_dest_handler import TestDestHandlerBase
@@ -292,17 +294,105 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         )
         self._generic_verify_missing_segment_requested(0, 0, [(0, 0)])
         fsm_res = self._generic_transfer_init(
-            0, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_METADATA
+            0,
+            expected_init_packets=0,
+            expected_init_state=CfdpState.BUSY,
+            expected_init_step=TransactionStep.WAITING_FOR_METADATA,
         )
-        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
+        )
         finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
         self._generic_verify_transfer_completion(fsm_res, bytes())
         self._generic_insert_finished_pdu_ack(finished_pdu)
-        # self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+
+    def _generic_deferred_lost_segment_handling_with_timeout(self, file_content: bytes):
+        with open(self.src_file_path, "wb") as of:
+            of.write(file_content)
+        crc32_func = mkPredefinedCrcFun("crc32")
+        crc32 = struct.pack("!I", crc32_func(file_content))
+        self._generic_regular_transfer_init(len(file_content))
+        self._insert_file_segment(file_content[0:2], 0)
+        self._insert_file_segment(file_content[4:6], 4, 1)
+        # First missing segment.
+        self._generic_verify_missing_segment_requested(0, 6, [(2, 4)])
+
+        # Second missing segment directly after that.
+        self._insert_file_segment(file_content[8:], 8, 1)
+        self._generic_verify_missing_segment_requested(0, len(file_content), [(6, 8)])
+
+        # This should trigger deferred EOF handling.
+        fsm_res = self._generic_insert_eof_pdu(len(file_content), crc32)
+        self._generic_eof_recv_indication_check(fsm_res)
+        self._generic_verify_eof_ack_packet(fsm_res)
+        self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.WAITING_FOR_MISSING_DATA
+        )
+        self.assertTrue(self.dest_handler.deferred_lost_segment_procedure_active)
+        self.assertEqual(self.dest_handler.nak_activity_counter, 0)
+        # We now receive a NAK sequence with both missing file segments.
+        self._generic_verify_missing_segment_requested(
+            0, len(file_content), [(2, 4), (6, 8)]
+        )
+        time.sleep(self.timeout_nak_procedure_seconds * 1.1)
+        self.dest_handler.state_machine()
+        self.assertTrue(self.dest_handler.deferred_lost_segment_procedure_active)
+        self.assertEqual(self.dest_handler.nak_activity_counter, 1)
+        # We now receive a NAK sequence with both missing file segments.
+        self._generic_verify_missing_segment_requested(
+            0, len(file_content), [(2, 4), (6, 8)]
+        )
 
     def test_deferred_lost_segment_handling_after_timeout(self):
-        # TODO: Implement
-        pass
+        file_content = "Hello World!".encode()
+        self._generic_deferred_lost_segment_handling_with_timeout(file_content)
+        time.sleep(self.timeout_nak_procedure_seconds * 1.1)
+        fsm_res = self.dest_handler.state_machine()
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
+        )
+        next_pdu = self.dest_handler.get_next_packet()
+        self.assertIsNotNone(next_pdu)
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.FINISHED_PDU)
+        finished_pdu = next_pdu.to_finished_pdu()
+        self.assertEqual(finished_pdu.condition_code, ConditionCode.NAK_LIMIT_REACHED)
+        self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_INCOMPLETE)
+        self.assertEqual(finished_pdu.delivery_status, FileDeliveryStatus.FILE_RETAINED)
+
+    def test_deferred_lost_segment_handling_after_timeout_activity_reset(self):
+        file_content = "Hello World!".encode()
+        self._generic_deferred_lost_segment_handling_with_timeout(file_content)
+        # Insert one segment, which should reset the NAK activity parameters.
+        self._insert_file_segment(
+            file_content[2:4],
+            2,
+            expected_packets=0,
+            expected_step=TransactionStep.WAITING_FOR_MISSING_DATA,
+        )
+        self.dest_handler.state_machine()
+        # Now that we inserted a packet, the NAK activity counter should be reset.
+        self.assertTrue(self.dest_handler.deferred_lost_segment_procedure_active)
+        self.assertEqual(self.dest_handler.nak_activity_counter, 0)
+        self._state_checker(
+            None, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_MISSING_DATA
+        )
+        time.sleep(self.timeout_nak_procedure_seconds * 1.1)
+        self.dest_handler.state_machine()
+        self.assertTrue(self.dest_handler.deferred_lost_segment_procedure_active)
+        self.assertEqual(self.dest_handler.nak_activity_counter, 1)
+        # We now receive a NAK sequence with the only file segment missing
+        self._generic_verify_missing_segment_requested(0, len(file_content), [(6, 8)])
+        fsm_res = self._insert_file_segment(
+            file_content[6:8],
+            6,
+            expected_packets=1,
+            expected_step=TransactionStep.SENDING_FINISHED_PDU,
+        )
+        finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
+        self._generic_verify_transfer_completion(fsm_res, file_content)
+        self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def test_positive_ack_procedure_finished_pdu(self):
         # TODO: Implement

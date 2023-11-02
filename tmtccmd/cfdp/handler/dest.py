@@ -563,6 +563,8 @@ class DestHandler:
                 self._handle_fd_pdu(
                     self._params.last_inserted_packet.to_file_data_pdu()
                 )
+                if self._params.acked_params.deferred_lost_segment_detection_active:
+                    self._reset_nak_activity_parameters()
                 self._params.last_inserted_packet.pdu = None
             self._deferred_lost_segment_handling()
         if self.states.step == TransactionStep.TRANSFER_COMPLETION:
@@ -783,6 +785,8 @@ class DestHandler:
             self._handle_metadata_packet(
                 self._params.last_inserted_packet.to_metadata_pdu()
             )
+            if self._params.acked_params.deferred_lost_segment_detection_active:
+                self._reset_nak_activity_parameters()
         elif (
             self._params.last_inserted_packet.pdu.directive_type  # type: ignore
             == DirectiveType.EOF_PDU
@@ -790,7 +794,13 @@ class DestHandler:
             self._handle_eof_without_previous_metadata(
                 self._params.last_inserted_packet.to_eof_pdu()
             )
+            if self._params.acked_params.deferred_lost_segment_detection_active:
+                self._reset_nak_activity_parameters()
         self._params.last_inserted_packet.pdu = None
+
+    def _reset_nak_activity_parameters(self):
+        self._params.acked_params.nak_activity_counter = 0
+        self._params.acked_params.procedure_timer.reset()
 
     def _handle_waiting_for_finished_ack(self):
         if (

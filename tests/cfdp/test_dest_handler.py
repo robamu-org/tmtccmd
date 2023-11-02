@@ -93,6 +93,7 @@ class TestDestHandlerBase(TestCase):
         self.cfdp_user.file_segment_recv_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
         self.remote_cfg_table = RemoteEntityCfgTable()
+        self.timeout_nak_procedure_seconds = 0.05
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
             check_limit=2,
@@ -102,9 +103,11 @@ class TestDestHandlerBase(TestCase):
             default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
             max_file_segment_len=self.file_segment_len,
             max_packet_len=self.file_segment_len,
+            nak_timer_expiration_limit=2,
+            nak_timer_interval_seconds=self.timeout_nak_procedure_seconds,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
-        self.timeout_check_limit_handling_ms = 40
+        self.timeout_check_limit_handling_ms = 50
         self.dest_handler = DestHandler(
             self.local_cfg,
             self.cfdp_user,
