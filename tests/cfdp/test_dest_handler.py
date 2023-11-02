@@ -136,7 +136,24 @@ class TestDestHandlerBase(TestCase):
         self.assertEqual(self.dest_handler.step, expected_transaction)
         self.assertEqual(self.dest_handler.num_packets_ready, num_packets_ready)
 
-    def _generic_transfer_init(self, file_size: int):
+    def _generic_regular_transfer_init(
+        self,
+        file_size: int,
+    ):
+        fsm_res = self._generic_transfer_init(
+            file_size, 0, CfdpState.IDLE, TransactionStep.IDLE
+        )
+        self._state_checker(
+            fsm_res, 0, CfdpState.BUSY, TransactionStep.RECEIVING_FILE_DATA
+        )
+
+    def _generic_transfer_init(
+        self,
+        file_size: int,
+        expected_init_packets: int,
+        expected_init_state: CfdpState,
+        expected_init_step: TransactionStep,
+    ) -> FsmResult:
         checksum_type = ChecksumType.NULL_CHECKSUM
         if file_size > 0:
             checksum_type = ChecksumType.CRC_32
@@ -150,13 +167,11 @@ class TestDestHandlerBase(TestCase):
         file_transfer_init = MetadataPdu(
             params=metadata_params, pdu_conf=self.src_pdu_conf
         )
-        self._state_checker(None, False, CfdpState.IDLE, TransactionStep.IDLE)
-        self.dest_handler.insert_packet(file_transfer_init)
-        fsm_res = self.dest_handler.state_machine()
-        self.assertFalse(fsm_res.states.packets_ready)
-        self.assertEqual(
-            self.dest_handler.states.step, TransactionStep.RECEIVING_FILE_DATA
+        self._state_checker(
+            None, expected_init_packets, expected_init_state, expected_init_step
         )
+        self.dest_handler.insert_packet(file_transfer_init)
+        return self.dest_handler.state_machine()
 
     def _insert_file_segment(
         self,
@@ -164,12 +179,16 @@ class TestDestHandlerBase(TestCase):
         offset: int,
         expected_packets: int = 0,
         expected_step: TransactionStep = TransactionStep.RECEIVING_FILE_DATA,
+        check_indication: bool = True,
     ) -> FsmResult:
         fd_params = FileDataParams(file_data=segment, offset=offset)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
         self.dest_handler.insert_packet(file_data_pdu)
         fsm_res = self.dest_handler.state_machine()
-        if self.indication_cfg.file_segment_recvd_indication_required:
+        if (
+            self.indication_cfg.file_segment_recvd_indication_required
+            and check_indication
+        ):
             self.cfdp_user.file_segment_recv_indication.assert_called_once()
             self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 1)
             seg_recv_params = cast(

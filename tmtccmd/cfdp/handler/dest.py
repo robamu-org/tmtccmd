@@ -131,7 +131,8 @@ class TransactionStep(enum.Enum):
     WAITING_FOR_METADATA = 2
     """Special state which is only used for acknowledged mode. The CFDP entity is still waiting
     for a missing metadata PDU to be re-sent. Until then, all arriving file data PDUs will only
-    update the internal lost semgent tracker."""
+    update the internal lost segment tracker. If the EOF PDU is arrive, the state will go to.
+    Please note that deferred lost segment handling might also be active when this state is set."""
     RECEIVING_FILE_DATA = 3
     RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING = 4
     """This is the check timer step as specified in chapter 4.6.3.3 b) of the standard.
@@ -173,11 +174,16 @@ class LostSegmentTracker:
     def num_lost_segments(self):
         return len(self.lost_segments)
 
+    def reset(self):
+        self.lost_segments.clear()
+
     def add_lost_segment(self, lost_seg: Tuple[int, int]):
         self.lost_segments.update({lost_seg[0]: lost_seg[1]})
         self.lost_segments = dict(sorted(self.lost_segments.items()))
 
     def coalesce_lost_segments(self):
+        if len(self.lost_segments) <= 1:
+            return
         merged_segments = []
         current_start, current_end = next(iter(self.lost_segments.items()))
 
@@ -516,13 +522,12 @@ class DestHandler:
             assert self._params.last_inserted_packet.pdu_directive_type is not None
             if (
                 self._params.last_inserted_packet.pdu_directive_type
-                == PduType.FILE_DIRECTIVE
+                == DirectiveType.EOF_PDU
             ):
                 eof_pdu = self._params.last_inserted_packet.to_eof_pdu()
                 self._start_transaction_missing_metadata_recv_eof(eof_pdu)
-
-            if (
-                self._params.last_inserted_packet.pdu.directive_type  # type: ignore
+            elif (
+                self._params.last_inserted_packet.pdu.directive_type
                 == DirectiveType.METADATA_PDU
             ):
                 metadata_pdu = self._params.last_inserted_packet.to_metadata_pdu()
@@ -547,10 +552,14 @@ class DestHandler:
                     return
         if self.states.step == TransactionStep.WAITING_FOR_METADATA:
             self._handle_waiting_for_missing_metadata()
+            self._deferred_lost_segment_handling()
         if self.states.step == TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING:
             self._check_limit_handling()
         if self.states.step == TransactionStep.WAITING_FOR_MISSING_DATA:
-            if self._params.last_inserted_packet.pdu is not None:
+            if (
+                self._params.last_inserted_packet.pdu is not None
+                and self._params.last_inserted_packet.pdu_type == PduType.FILE_DATA
+            ):
                 self._handle_fd_pdu(
                     self._params.last_inserted_packet.to_file_data_pdu()
                 )
@@ -617,17 +626,24 @@ class DestHandler:
 
     def _handle_eof_without_previous_metadata(self, eof_pdu: EofPdu):
         self._params.fp.progress = eof_pdu.file_size
+        self._params.fp.file_size_eof = eof_pdu.file_size
+        self._params.fp.condition_code_eof = eof_pdu.condition_code
+        self._params.acked_params.metadata_missing = True
         if self._params.fp.progress > 0:
+            # Clear old list, deferred procedure for the whole file is now active.
+            self._params.acked_params.lost_seg_tracker.reset()
             # I will just wait until the metadata has been received with re-requesting the file
             # data PDU. How does the standard expect me to process file data PDUs where I do not
-            # even know the filenames? How would I even generically do this? I don't like that the
-            # standard does not specify this. I will add the whole file to the lost segments map
-            # for now.
+            # even know the filenames? How would I even generically do this? I will add the whole
+            # file to the lost segments map for now.
             self._params.acked_params.lost_seg_tracker.add_lost_segment(
                 (0, eof_pdu.file_size)
             )
-        # Re-requesting will be done by the deferred lost segment procedure.
-        self._start_deferred_lost_segment_handling(True)
+        if self.cfg.indication_cfg.eof_recv_indication_required:
+            assert self._params.transaction_id is not None
+            self.user.eof_recv_indication(self._params.transaction_id)
+        self._prepare_eof_ack_packet()
+        self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
 
     def _start_transaction_missing_metadata_recv_fd(self, fd_pdu: FileDataPdu):
         self._common_first_packet_not_metadata_pdu_handler(fd_pdu)
@@ -638,14 +654,23 @@ class DestHandler:
     ):
         self._params.fp.progress = fd_pdu.offset + len(fd_pdu.file_data)
         if len(fd_pdu.file_data) > 0:
+            start = fd_pdu.offset
+            if first_pdu:
+                start = 0
             # I will just wait until the metadata has been received with re-requesting the file
             # data PDU. How does the standard expect me to process file data PDUs where I do not
-            # even know the filenames? How would I even generically do this? I don't like that the
-            # standard does not specify this.. I will add this file segment (and all others which
-            # came before and might be missing as well) to the lost segment list.
+            # even know the filenames? How would I even generically do this?
+            # I will add this file segment (and all others which came before and might be missing
+            # as well) to the lost segment list.
             self._params.acked_params.lost_seg_tracker.add_lost_segment(
-                (0, self._params.fp.progress)
+                (start, self._params.fp.progress)
             )
+            # This is a bit tricky: We need to set those variables to an appropriate value so
+            # the removal of handled lost segments works properly. However, we can not set the
+            # start offset to the regular value because we have to treat the current segment
+            # like a lost segment as well.
+            self._params.acked_params.last_start_offset = self._params.fp.progress
+            self._params.acked_params.last_end_offset = self._params.fp.progress
         assert self._params.remote_cfg is not None
         # Re-request the metadata PDU.
         if self._params.remote_cfg.immediate_nak_mode:
@@ -686,6 +711,7 @@ class DestHandler:
     def _handle_metadata_packet(self, metadata_pdu: MetadataPdu):
         self._cksum_verif_helper.checksum_type = metadata_pdu.checksum_type
         self._params.closure_requested = metadata_pdu.closure_requested
+        self._params.acked_params.metadata_missing = False
         if metadata_pdu.dest_file_name is None:
             self._params.fp.no_file_data = True
         else:
@@ -897,11 +923,14 @@ class DestHandler:
             )
 
     def _deferred_lost_segment_handling(self):
-        assert self._params.remote_cfg is not None
-        assert self._params.fp.file_size_eof is not None
         if not self._params.acked_params.deferred_lost_segment_detection_active:
             return
-        if self._params.acked_params.lost_seg_tracker.num_lost_segments == 0:
+        assert self._params.remote_cfg is not None
+        assert self._params.fp.file_size_eof is not None
+        if (
+            self._params.acked_params.lost_seg_tracker.num_lost_segments == 0
+            and not self._params.acked_params.metadata_missing
+        ):
             # We are done and have received everything.
             self._checksum_verify()
             self.states.step = TransactionStep.TRANSFER_COMPLETION
@@ -1020,7 +1049,10 @@ class DestHandler:
         return False, False
 
     def _start_deferred_lost_segment_handling(self):
-        self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
+        if self._params.acked_params.metadata_missing:
+            self.states.step = TransactionStep.WAITING_FOR_METADATA
+        else:
+            self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
         self._params.acked_params.deferred_lost_segment_detection_active = True
         self._params.acked_params.lost_seg_tracker.coalesce_lost_segments()
         self._params.acked_params.last_start_offset = self._params.fp.file_size_eof

@@ -43,7 +43,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         self.common_setup(TransmissionMode.UNACKNOWLEDGED)
 
     def _generic_empty_file_test(self):
-        self._generic_transfer_init(0)
+        self._generic_regular_transfer_init(0)
         fsm_res = self._generic_insert_eof_pdu(0, NULL_CHECKSUM_U32)
         self._generic_eof_recv_indication_check(fsm_res)
         if self.closure_requested:
@@ -64,7 +64,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         crc32_func = mkPredefinedCrcFun("crc32")
         crc32 = struct.pack("!I", crc32_func(data))
         file_size = self.src_file_path.stat().st_size
-        self._generic_transfer_init(
+        self._generic_regular_transfer_init(
             file_size=file_size,
         )
         self._insert_file_segment(segment=data, offset=0)
@@ -86,7 +86,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         # full segment length
         file_info = self._random_data_two_file_segments()
         self._state_checker(None, False, CfdpState.IDLE, TransactionStep.IDLE)
-        self._generic_transfer_init(
+        self._generic_regular_transfer_init(
             file_size=file_info.file_size,
         )
         self._insert_file_segment(file_info.rand_data[0 : self.file_segment_len], 0)
@@ -210,7 +210,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
                 file_info.rand_data[0 : self.file_segment_len], 0
             )
             self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
-        self._generic_transfer_init(
+        self._generic_regular_transfer_init(
             file_size=file_info.file_size,
         )
         fsm_res = self._insert_file_segment(
@@ -285,7 +285,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         crc32_func = mkPredefinedCrcFun("crc32")
         crc32 = struct.pack("!I", crc32_func(file_data))
         file_size = self.src_file_path.stat().st_size
-        self._generic_transfer_init(
+        self._generic_regular_transfer_init(
             file_size=file_size,
         )
         eof_pdu = EofPdu(
