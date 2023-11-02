@@ -1,6 +1,11 @@
 import enum
-from spacepackets.cfdp import GenericPduPacket, PduType, DirectiveType
+from dataclasses import dataclass
+from typing import Optional
+
+from spacepackets.cfdp import DirectiveType, GenericPduPacket, PduType
 from spacepackets.cfdp.pdu import PduHolder
+
+from tmtccmd.util.countdown import Countdown
 
 
 class PacketDestination(enum.Enum):
@@ -48,3 +53,9 @@ def get_packet_destination(packet: GenericPduPacket) -> PacketDestination:
         elif ack_pdu.directive_code_of_acked_pdu == DirectiveType.FINISHED_PDU:
             return PacketDestination.DEST_HANDLER
     raise ValueError(f"unexpected directive type {packet.directive_type}")  # type: ignore
+
+
+@dataclass
+class _PositiveAckProcedureParams:
+    ack_timer: Optional[Countdown] = None
+    ack_counter: int = 0

@@ -2,7 +2,9 @@
 """This example shows a end-to-end transfer of a small file using the CFDP high level
 components provided by the tmtccmd package."""
 import copy
+import argparse
 from datetime import timedelta
+from dataclasses import dataclass
 import logging
 import os
 import threading
@@ -50,6 +52,12 @@ SOURCE_FILE = Path("/tmp/cfdp-test-source.txt")
 DEST_FILE = Path("/tmp/cfdp-test-dest.txt")
 
 
+@dataclass
+class TransferParams:
+    transmission_mode: TransmissionMode
+    verbose_level: int
+
+
 _LOGGER = logging.getLogger()
 
 
@@ -59,7 +67,7 @@ REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     max_file_segment_len=FILE_SEGMENT_SIZE,
     closure_requested=True,
     crc_on_transmission=False,
-    default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
+    default_transmission_mode=TransmissionMode.ACKNOWLEDGED,
     crc_type=ChecksumType.CRC_32,
 )
 REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
@@ -162,13 +170,40 @@ class CustomCheckTimerProvider(CheckTimerProvider):
 
 
 def main():
-    basicConfig(level=logging.INFO)
+    help_txt = (
+        "This mini application shows the source and destination entity handlers in action. "
+        "You can configure the transmission mode with the -t argument, which defaults to the "
+        "acknowledged mode. It is also possible to increase the verbosity level to print all "
+        "packets being exchanged."
+    )
+    parser = argparse.ArgumentParser(
+        prog="CFDP File Copy Example Application",
+        description=help_txt
+    )
+    parser.add_argument("-t", "--type", choices=["nak", "ack"], default="ack")
+    parser.add_argument("-v", "--verbose", action="count", default=0)
+    args = parser.parse_args()
+    if args.type == "nak":
+        transmission_mode = TransmissionMode.UNACKNOWLEDGED
+    elif args.type == "ack":
+        transmission_mode = TransmissionMode.ACKNOWLEDGED
+    else:
+        transmission_mode = None
+    if args.verbose == 0:
+        logging_level = logging.INFO
+    elif args.verbose >= 1:
+        logging_level = logging.DEBUG
+    transfer_params = TransferParams(transmission_mode, args.verbose)
+    basicConfig(level=logging_level)
+
+    # If the test files already exist, delete them.
     if SOURCE_FILE.exists():
         os.remove(SOURCE_FILE)
     if DEST_FILE.exists():
         os.remove(DEST_FILE)
     with open(SOURCE_FILE, "w") as file:
         file.write(FILE_CONTENT)
+
     # Enable all indications.
     src_indication_cfg = IndicationCfg()
     src_fault_handler = CfdpFaultHandler()
@@ -189,7 +224,7 @@ def main():
     # of concurrent file operations are required, a new thread with a new source handler can
     # be spawned for each one.
     source_thread = threading.Thread(
-        target=source_entity_handler, args=[source_handler]
+        target=source_entity_handler, args=[transfer_params, source_handler]
     )
 
     # Enable all indications.
@@ -211,7 +246,9 @@ def main():
     # approach could be to keep a dictionary of active file copy operations, where the transaction
     # ID is the key. If a new Metadata PDU with a new transaction ID is detected, a new
     # destination handler in a new thread could be spawned to handle the file copy operation.
-    dest_thread = threading.Thread(target=dest_entity_handler, args=[dest_handler])
+    dest_thread = threading.Thread(
+        target=dest_entity_handler, args=[transfer_params, dest_handler]
+    )
 
     source_thread.start()
     dest_thread.start()
@@ -233,13 +270,15 @@ def main():
     _LOGGER.info("Done.")
 
 
-def source_entity_handler(source_handler: SourceHandler):
+def source_entity_handler(
+    transfer_params: TransferParams, source_handler: SourceHandler
+):
     # This put request could in principle also be sent from something like a front end application.
     put_request = PutRequest(
         destination_id=DEST_ENTITY_ID,
         source_file=SOURCE_FILE,
         dest_file=DEST_FILE,
-        trans_mode=TransmissionMode.UNACKNOWLEDGED,
+        trans_mode=transfer_params.transmission_mode,
         closure_requested=True,
     )
     no_packet_received = False
@@ -263,6 +302,8 @@ def source_entity_handler(source_handler: SourceHandler):
             while fsm_result.states.num_packets_ready > 0:
                 next_pdu_wrapper = source_handler.get_next_packet()
                 assert next_pdu_wrapper is not None
+                if transfer_params.verbose_level >= 1:
+                    _LOGGER.debug(f"SRC Handler: Sending packet {next_pdu_wrapper.pdu}")
                 # Send all packets which need to be sent.
                 SOURCE_TO_DEST_QUEUE.put(next_pdu_wrapper.pdu)
             no_packet_sent = False
@@ -277,7 +318,7 @@ def source_entity_handler(source_handler: SourceHandler):
             break
 
 
-def dest_entity_handler(dest_handler: DestHandler):
+def dest_entity_handler(transfer_params: TransferParams, dest_handler: DestHandler):
     first_packet = True
     no_packet_received = False
     while True:
@@ -295,6 +336,10 @@ def dest_entity_handler(dest_handler: DestHandler):
             while fsm_result.states.num_packets_ready > 0:
                 next_pdu_wrapper = dest_handler.get_next_packet()
                 assert next_pdu_wrapper is not None
+                if transfer_params.verbose_level >= 1:
+                    _LOGGER.debug(
+                        f"DEST Handler: Sending packet {next_pdu_wrapper.pdu}"
+                    )
                 DEST_TO_SOURCE_QUEUE.put(next_pdu_wrapper.pdu)
         else:
             no_packet_sent = True

@@ -13,6 +13,7 @@ from spacepackets.cfdp.defs import (
 )
 from spacepackets.util import UnsignedByteField
 from tmtccmd.util.countdown import Countdown
+from tmtccmd.cfdp import TransactionId
 
 
 class DefaultFaultHandlerBase(ABC):
@@ -26,14 +27,15 @@ class DefaultFaultHandlerBase(ABC):
     is denoted by the four :py:class:`spacepackets.cfdp.defs.FaultHandlerCode` s. This code is used
     to dispatch to a user-provided callback function:
 
-     1. `IGNORE_ERROR` -> :py:meth:`ignore_cb`
-     2. `NOTICE_OF_CANCELLATION` -> :py:meth:`notice_of_cancellation_cb`
-     3. `NOTICE_OF_SUSPENSION` -> :py:meth:`notice_of_suspension_cb`
-     4. `ABANDON_TRANSACTION` -> :py:meth:`abandon_transaction_cb`
+     1. ``IGNORE_ERROR`` -> :py:meth:`ignore_cb`
+     2. ``NOTICE_OF_CANCELLATION`` -> :py:meth:`notice_of_cancellation_cb`
+     3. ``NOTICE_OF_SUSPENSION`` -> :py:meth:`notice_of_suspension_cb`
+     4. ``ABANDON_TRANSACTION`` -> :py:meth:`abandon_transaction_cb`
 
     For each error reported by :py:meth:`report_fault`, the appropriate fault handler callback
     will be called. The user provides the callbacks by providing a custom class which implements
-    this base class and all abstract fault handler callbacks.
+    this base class and all abstract fault handler callbacks. This allows logging of the errors
+    as specified in chapter 4.8.3.
 
     Some note on the provided default settings:
 
@@ -78,7 +80,9 @@ class DefaultFaultHandlerBase(ABC):
             )
         self._handler_dict.update({condition: handler})
 
-    def report_fault(self, condition: ConditionCode):
+    def report_fault(
+        self, transaction_id: TransactionId, condition: ConditionCode, progress: int
+    ):
         """
         Raises
         -------
@@ -92,28 +96,36 @@ class DefaultFaultHandlerBase(ABC):
             )
         fh_code = self._handler_dict.get(condition)
         if fh_code == FaultHandlerCode.NOTICE_OF_CANCELLATION:
-            self.notice_of_cancellation_cb(condition)
+            self.notice_of_cancellation_cb(transaction_id, condition, progress)
         elif fh_code == FaultHandlerCode.NOTICE_OF_SUSPENSION:
-            self.notice_of_suspension_cb(condition)
+            self.notice_of_suspension_cb(transaction_id, condition, progress)
         elif fh_code == FaultHandlerCode.IGNORE_ERROR:
-            self.ignore_cb(condition)
+            self.ignore_cb(transaction_id, condition, progress)
         elif fh_code == FaultHandlerCode.ABANDON_TRANSACTION:
-            self.abandoned_cb(condition)
+            self.abandoned_cb(transaction_id, condition, progress)
 
     @abc.abstractmethod
-    def notice_of_suspension_cb(self, cond: ConditionCode):
+    def notice_of_suspension_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
     @abc.abstractmethod
-    def notice_of_cancellation_cb(self, cond: ConditionCode):
+    def notice_of_cancellation_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
     @abc.abstractmethod
-    def abandoned_cb(self, cond: ConditionCode):
+    def abandoned_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
     @abc.abstractmethod
-    def ignore_cb(self, cond: ConditionCode):
+    def ignore_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
         pass
 
 
@@ -162,8 +174,7 @@ class RemoteEntityCfg:
     were omitted. Some other fields which are not contained inside the standard but are considered
     necessary for the Python implementation are included.
 
-
-    Notes on the Positive Acknowledgment Procedures:
+    **Notes on Positive Acknowledgment Procedures**
 
     The ``positive_ack_timer_interval_seconds`` and ``positive_ack_timer_expiration_limit`` will
     be used for positive acknowledgement procedures as specified in CFDP chapter 4.7. The sending
@@ -172,8 +183,17 @@ class RemoteEntityCfg:
     incremented and the timer will be reset. Once the counter exceeds the
     ``positive_ack_timer_expiration_limit``, a Positive ACK Limit Reached fault will be declared.
 
+    **Notes on Deferred Lost Segment Procedures**
+
+    This procedure will be active if an EOF (No Error) PDU is received in acknowledged mode. After
+    issuing the NAK sequence which has the whole file scope, a timer will be started. The timer is
+    reset when missing segments or missing metadata is received. The timer will be deactivated if
+    all missing data is received. If the timer expires, a new NAK sequence will be issued and a
+    counter will be incremented, which can lead to a NAK Limit Reached fault being declared.
+
     Parameters
     -----------
+
     entity_id
         The ID of the remote entity.
     max_packet_len
@@ -206,10 +226,19 @@ class RemoteEntityCfg:
         check limit timer may expire twice.
     positive_ack_timer_interval_seconds
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
-        Expected as floating point seconds. Defaults to 5 seconds.
+        Expected as floating point seconds. Defaults to 10 seconds.
     positive_ack_timer_expiration_limit
         See the notes on the Positive Acknowledgment Procedures inside the class documentation.
         Defaults to 2, so the timer may expire twice.
+    immediate_nak_mode:
+        Specifies whether a NAK sequence should be issued immediately when a file data gap or
+        lost metadata is detected in the acknowledged mode. Defaults to True.
+    nak_timer_interval_seconds:
+        See the notes on the Deferred Lost Segment Procedure inside the class documentation.
+        Expected as floating point seconds. Defaults to 10 seconds.
+    nak_timer_expiration_limit:
+        See the notes on the Deferred Lost Segment Procedure inside the class documentation.
+        Defaults to 2, so the timer may expire two times.
 
     """
 
@@ -224,6 +253,9 @@ class RemoteEntityCfg:
     positive_ack_timer_expiration_limit: int = 2
     check_limit: int = 2
     disposition_on_cancellation: bool = False
+    immediate_nak_mode: bool = True
+    nak_timer_interval_seconds: float = 10.0
+    nak_timer_expiration_limit: int = 2
     # NOTE: Only this version is supported
     cfdp_version: int = CFDP_VERSION_2
 

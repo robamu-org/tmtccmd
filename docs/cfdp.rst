@@ -24,8 +24,6 @@ destination and CFDP source entity respectively.
 CFDP source entity
 -------------------
 
-The source entity components support both acknowledged and unacknowledged transfers.
-
 The :py:class:`tmtccmd.cfdp.handler.source.SourceHandler` converts a
 :py:class:`tmtccmd.cfdp.request.PutRequest` into all packet data units (PDUs) which need to be
 sent to a remote CFDP entity to perform a File Copy operation to a remote entity. The source entity
@@ -44,12 +42,23 @@ a valid :py:class:`tmtccmd.cfdp.request.PutRequest` to perform a File Copy opera
    The PDU(s) will be returned as a :py:class:`spacepackets.cfdp.pdu.file_data.FileDataPdu`
    instance(s).
 3. Generate an EOF PDU be sent to a remote CFDP entity.
-   The PDU will be returnedf as a :py:class:`spacepackets.cfdp.pdu.eof.EofPdu` instance.
+   The PDU will be returned as a :py:class:`spacepackets.cfdp.pdu.eof.EofPdu` instance.
+
+If this is an unacknowledged transfer with no transaction closure, the file transfer will be done
+after these steps. In any other case:
+
+**Unacknowledged transfer with requested closure**
+
+4. A Finished PDU will be awaited, for example one generated using :py:class:`spacepackets.cfdp.pdu.finished.FinishedPdu`.
+
+**Acknowledged transfer**
+
+4. A EOF ACK packet will be awaited, for example one generated using :py:class:`spacepackets.cfdp.pdu.ack.AckPdu`.
+5. A Finished PDU will be awaited, for example one generated using :py:class:`spacepackets.cfdp.pdu.finished.FinishedPdu`.
+6. A Finished PDU ACK packet will be sent to the remote CFDP entity.
 
 CFDP destination entity
 ------------------------
-
-The destination entity components currently only support unacknowledged transfers.
 
 The :py:class:`tmtccmd.cfdp.handler.dest.DestHandler` can convert the PDUs sent from a remote
 source entity ID back to a file. A file copy operation on the receiver side is started with
@@ -64,15 +73,39 @@ for the following conditions:
 2. All check timers have elapsed. These check timers allow and out-of-order reception of EOF and
    file data PDUs, provided that the interval between the EOF PDU and the last file data PDUs is
    not too large. Check timer support is not implemented yet.
-3. All confirmation packets like Finished PDUs have been sent back and confirmed by the remote side
-   where applicable. 
+3. All confirmation packets like Finished PDUs or the EOF ACK PDU have been sent back and confirmed
+   by the remote side where applicable.
+
+Current List of unimplemented features
+----------------------------------------
+
+The following features have not been implemented yet. PRs or notifications for demand are welcome!
+
+- Suspending transfers
+- Inactivity handling
+- Start and end of transmission and reception opportunity handling
+- Keep Alive and Prompt PDU handling
 
 Example application
 --------------------
 
 You can find an example application inside the `example directory <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp>`_
 which shows an end-to-end file transfer on a host computer. This should give you a general idea of
-how the source and destination handler work in practice.
+how the source and destination handler work in practice. Simply running the script with
+
+.. code-block:: console
+
+   ./file-copy-example.py
+
+will perform an acknowledged transfer of a file on the same host system.
+You can also perform an unacknowledged transfer using
+
+.. code-block:: console
+
+   ./file-copy-example.py -t nak
+
+It is also possible to supply the ``-v`` verbosity argument to the application to print all
+packets being exchanged between the source and destination handler.
 
 .. _`CCSDS Blue Book 727.0-B-5`: https://public.ccsds.org/Pubs/727x0b5.pdf
 .. _`spacepackets`: https://github.com/us-irs/spacepackets-py

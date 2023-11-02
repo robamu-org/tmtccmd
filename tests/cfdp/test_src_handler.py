@@ -62,7 +62,7 @@ class TestCfdpSourceHandler(TestCase):
         self.cfdp_user.transaction_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
         self.seq_num_provider = SeqCountProvider(bit_width=8)
-        self.expected_cfdp_state = CfdpState.BUSY_CLASS_1_NACKED
+        self.expected_mode = default_transmission_mode
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
         self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
@@ -72,6 +72,7 @@ class TestCfdpSourceHandler(TestCase):
             pass
         self.file_segment_len = 64
         self.max_packet_len = 256
+        self.positive_ack_intvl_seconds = 0.02
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.dest_id,
             max_packet_len=self.max_packet_len,
@@ -79,10 +80,10 @@ class TestCfdpSourceHandler(TestCase):
             closure_requested=closure_requested,
             crc_on_transmission=False,
             default_transmission_mode=default_transmission_mode,
-            positive_ack_timer_interval_seconds=0.01,
+            positive_ack_timer_interval_seconds=self.positive_ack_intvl_seconds,
             positive_ack_timer_expiration_limit=2,
             crc_type=ChecksumType.CRC_32,
-            check_limit=3,
+            check_limit=2,
         )
         # Create an empty file and send it via CFDP
         self.source_handler = SourceHandler(
@@ -94,7 +95,7 @@ class TestCfdpSourceHandler(TestCase):
 
     def _common_empty_file_test(
         self, transmission_mode: Optional[TransmissionMode]
-    ) -> Tuple[MetadataPdu, EofPdu]:
+    ) -> Tuple[TransactionId, MetadataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
         dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
@@ -108,7 +109,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         metadata_pdu, transaction_id = self._start_source_transaction(dest_id, put_req)
         eof_pdu = self._handle_eof_pdu(transaction_id, NULL_CHECKSUM_U32, 0)
-        return metadata_pdu, eof_pdu
+        return transaction_id, metadata_pdu, eof_pdu
 
     def _handle_eof_pdu(
         self,
@@ -117,7 +118,7 @@ class TestCfdpSourceHandler(TestCase):
         expected_file_size: int,
     ) -> EofPdu:
         fsm_res = self.source_handler.state_machine()
-        self._state_checker(fsm_res, 1, TransactionStep.SENDING_EOF)
+        self._state_checker(fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_EOF)
         self.assertEqual(self.source_handler.transaction_seq_num, id.seq_num)
         next_packet = self.source_handler.get_next_packet()
         self.assertIsNotNone(next_packet)
@@ -132,12 +133,12 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(eof_pdu.file_size, expected_file_size)
         self.assertEqual(eof_pdu.condition_code, ConditionCode.NO_ERROR)
         self.assertEqual(eof_pdu.fault_location, None)
-        fsm_res = self.source_handler.state_machine()
         self._verify_eof_indication(id)
-        if self.expected_cfdp_state == CfdpState.BUSY_CLASS_2_ACKED:
+        if self.expected_mode == TransmissionMode.ACKNOWLEDGED:
             self._state_checker(
                 None,
                 0,
+                CfdpState.BUSY,
                 TransactionStep.WAITING_FOR_EOF_ACK,
             )
         return eof_pdu
@@ -146,7 +147,7 @@ class TestCfdpSourceHandler(TestCase):
         self,
         transmission_mode: Optional[TransmissionMode],
         closure_requested: bool,
-        file_content: str,
+        file_content: bytes,
     ) -> Tuple[TransactionId, MetadataPdu, FileDataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
         self.source_id = ByteFieldU32(1)
@@ -163,7 +164,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         with open(self.file_path, "wb") as of:
             crc32 = PredefinedCrc("crc32")
-            data = file_content.encode()
+            data = file_content
             crc32.update(data)
             crc32 = crc32.digest()
             of.write(data)
@@ -226,6 +227,7 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res,
             0,
+            CfdpState.BUSY,
             TransactionStep.SENDING_FILE_DATA,
         )
         self.assertFalse(pdu_holder.is_file_directive)
@@ -242,6 +244,7 @@ class TestCfdpSourceHandler(TestCase):
         self._state_checker(
             fsm_res,
             1,
+            CfdpState.BUSY,
             TransactionStep.SENDING_METADATA,
         )
         transaction_id = self.source_handler.transaction_id
@@ -279,21 +282,32 @@ class TestCfdpSourceHandler(TestCase):
         self,
         fsm_res: Optional[FsmResult],
         num_packets_ready: int,
+        expected_state: CfdpState,
         expected_step: TransactionStep,
     ):
         if fsm_res is not None:
-            self.assertEqual(fsm_res.states.state, self.expected_cfdp_state)
+            self.assertEqual(fsm_res.states.state, expected_state)
             self.assertEqual(fsm_res.states.step, expected_step)
             if num_packets_ready > 0:
-                self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
+                if fsm_res.states.num_packets_ready != num_packets_ready:
+                    self.assertEqual(
+                        fsm_res.states.num_packets_ready, num_packets_ready
+                    )
+            elif num_packets_ready == 0 and fsm_res.states.num_packets_ready > 0:
+                packets = []
+                while True:
+                    packets.append(self.source_handler.get_next_packet().pdu)
+                raise AssertionError(f"Expected no packets, found: {packets}")
         if num_packets_ready > 0:
             self.assertTrue(self.source_handler.packets_ready)
-        self.assertEqual(self.source_handler.states.state, self.expected_cfdp_state)
+        if expected_state != CfdpState.IDLE:
+            self.assertEqual(self.source_handler.transmission_mode, self.expected_mode)
+        self.assertEqual(self.source_handler.states.state, expected_state)
         self.assertEqual(self.source_handler.states.step, expected_step)
         self.assertEqual(
             self.source_handler.states.num_packets_ready, num_packets_ready
         )
-        self.assertEqual(self.source_handler.state, self.expected_cfdp_state)
+        self.assertEqual(self.source_handler.state, expected_state)
         self.assertEqual(self.source_handler.step, expected_step)
         self.assertEqual(self.source_handler.num_packets_ready, num_packets_ready)
 

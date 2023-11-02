@@ -1,5 +1,7 @@
+import time
 import select
 import socket
+from typing import Any
 from unittest import TestCase
 
 from tmtccmd.com.tcpip_utils import EthAddr
@@ -29,11 +31,13 @@ class TestUdpIf(TestCase):
         data = bytes([0, 1, 2, 3])
         sender_addr = self._simple_send(data)
         self.udp_server.sendto(data, sender_addr)
+        time.sleep(0.05)
         self.assertTrue(self.udp_client.data_available())
         data_recv = self.udp_client.receive()
-        self.assertTrue(data_recv, data)
+        self.assertEqual(len(data_recv), 1)
+        self.assertEqual(data_recv[0], data)
 
-    def _simple_send(self, data: bytes) -> any:
+    def _simple_send(self, data: bytes) -> Any:
         self.udp_client.send(data)
         ready = select.select([self.udp_server], [], [], 0.1)
         self.assertTrue(ready[0])

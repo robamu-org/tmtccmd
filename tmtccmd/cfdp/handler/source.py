@@ -59,6 +59,7 @@ from tmtccmd.cfdp.handler.defs import (
     NoRemoteEntityCfgFound,
     FsmNotCalledAfterPacketInsertion,
 )
+from tmtccmd.cfdp.handler.common import _PositiveAckProcedureParams
 from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
@@ -125,13 +126,6 @@ class _AckedModeParams:
         self.segment_req_index: int = 0
 
 
-@dataclass
-class _PositiveAckProcedureParams:
-    ack_timer: Optional[Countdown] = None
-    ack_counter: int = 0
-    cond_code_of_eof_pdu: Optional[ConditionCode] = None
-
-
 class _TransferFieldWrapper:
     def __init__(self, local_entity_id: UnsignedByteField):
         self.transaction_id: Optional[TransactionId] = None
@@ -139,6 +133,7 @@ class _TransferFieldWrapper:
         self.positive_ack_params: _PositiveAckProcedureParams = (
             _PositiveAckProcedureParams()
         )
+        self.cond_code_eof: Optional[ConditionCode] = None
         self.ack_params: _AckedModeParams = _AckedModeParams()
         self.fp: _SourceFileParams = _SourceFileParams.empty()
         self.finished_params: Optional[FinishedParams] = None
@@ -188,6 +183,7 @@ class _TransferFieldWrapper:
         self.remote_cfg = None
         self.transaction_id = None
         self.check_timer = None
+        self.cond_code_eof = None
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
         self.finished_params = None
@@ -297,6 +293,12 @@ class SourceHandler:
         return self._params.positve_ack_counter
 
     @property
+    def transmission_mode(self) -> Optional[TransmissionMode]:
+        if self.state == CfdpState.IDLE:
+            return None
+        return self._params.transmission_mode
+
+    @property
     def state(self) -> CfdpState:
         return self.states.state
 
@@ -330,13 +332,12 @@ class SourceHandler:
         self._params.remote_cfg = remote_cfg
         self._params.dest_id = remote_cfg.entity_id
         self.states._num_packets_ready = 0
+        self.states.state = CfdpState.BUSY
         self._setup_transmission_mode()
         if self._params.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             _LOGGER.debug("Starting Put Request handling in NAK mode")
-            self.states.state = CfdpState.BUSY_CLASS_1_NACKED
         elif self._params.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             _LOGGER.debug("Starting Put Request handling in ACK mode")
-            self.states.state = CfdpState.BUSY_CLASS_2_ACKED
         else:
             raise ValueError(
                 f"Invalid transmission mode {self._params.transmission_mode} passed"
@@ -367,14 +368,6 @@ class SourceHandler:
             self._declare_fault(ConditionCode.CANCEL_REQUEST_RECEIVED)
             return True
         return False
-
-    @deprecation.deprecated(
-        deprecated_in="6.0.0rc1",
-        current_version=get_version(),
-        details="Use insert_packet instead",
-    )
-    def pass_packet(self, packet: AbstractFileDirectiveBase):
-        self.insert_packet(packet)
 
     def insert_packet(self, packet: AbstractFileDirectiveBase):
         """Pass PDU file directives going towards the file sender to the CFDP source handler.
@@ -514,7 +507,6 @@ class SourceHandler:
                 return
         if self.states.step == TransactionStep.SENDING_EOF:
             self._prepare_eof_pdu(
-                ConditionCode.NO_ERROR,
                 self._checksum_calculation(self._params.fp.file_size),
             )
             return
@@ -643,7 +635,7 @@ class SourceHandler:
         # This function returns whether the internal state was advanced or not.
         # During the PDU send phase, handle the re-transmission of missing files in
         # acknowledged mode.
-        if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+        if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             if self.__handle_retransmission():
                 return True
         if self._prepare_progressing_file_data_pdu():
@@ -656,6 +648,7 @@ class SourceHandler:
                 self.states.step = TransactionStep.NOTICE_OF_COMPLETION
         else:
             # Special case: Empty file.
+            self._params.cond_code_eof = ConditionCode.NO_ERROR
             self.states.step = TransactionStep.SENDING_EOF
         return False
 
@@ -693,11 +686,11 @@ class SourceHandler:
                 missing_chunk_len -= chunk_size
 
     def _handle_waiting_for_ack(self):
-        if self.states.state != CfdpState.BUSY_CLASS_2_ACKED:
+        if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             _LOGGER.error(
-                f"invalid ACK waiting function call for state {self.states.state}"
+                f"invalid ACK waiting function call for transmission mode "
+                f"{self.transmission_mode!r}"
             )
-
         if self.__handle_retransmission():
             return
         if self._inserted_pdu.pdu is None or (
@@ -724,29 +717,27 @@ class SourceHandler:
         assert self._params.positive_ack_params.ack_timer is not None
         assert self._params.remote_cfg is not None
         if self._params.positive_ack_params.ack_timer.timed_out():
-            assert self._params.positive_ack_params.cond_code_of_eof_pdu is not None
             if (
-                self._params.positive_ack_params.ack_counter
-                == self._params.remote_cfg.positive_ack_timer_expiration_limit
+                self._params.positive_ack_params.ack_counter + 1
+                >= self._params.remote_cfg.positive_ack_timer_expiration_limit
             ):
                 self._declare_fault(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
                 return
             self._params.positive_ack_params.ack_timer.reset()
             self._params.positive_ack_params.ack_counter += 1
             self._prepare_eof_pdu(
-                self._params.positive_ack_params.cond_code_of_eof_pdu,
                 self._checksum_calculation(self._params.fp.file_size),
             )
 
     def _handle_wait_for_finish(self):
         if (
-            self.states.state == CfdpState.BUSY_CLASS_2_ACKED
+            self.transmission_mode == TransmissionMode.ACKNOWLEDGED
             and self.__handle_retransmission()
         ):
             return
         if (
             (
-                self.states.state == CfdpState.BUSY_CLASS_1_NACKED
+                self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
                 and not self._params.closure_requested
             )
             or self._inserted_pdu.pdu is None
@@ -763,7 +754,7 @@ class SourceHandler:
             return
         finished_pdu = self._inserted_pdu.to_finished_pdu()
         self._inserted_pdu.pdu = None
-        if self.states.state == CfdpState.BUSY_CLASS_2_ACKED:
+        if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self._prepare_finished_ack_packet(finished_pdu.condition_code)
             self.states.step = TransactionStep.SENDING_ACK_OF_FINISHED
         else:
@@ -810,7 +801,7 @@ class SourceHandler:
         if self.cfg.indication_cfg.eof_sent_indication_required:
             assert self._params.transaction_id is not None
             self.user.eof_sent_indication(self._params.transaction_id)
-        if self.states.state == CfdpState.BUSY_CLASS_1_NACKED:
+        if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             if self._params.closure_requested:
                 assert self._params.remote_cfg is not None
                 self._params.check_timer = (
@@ -828,6 +819,7 @@ class SourceHandler:
 
     def _handle_file_data_sent(self):
         if self._params.fp.progress == self._params.fp.file_size:
+            self._params.cond_code_eof = ConditionCode.NO_ERROR
             self.states.step = TransactionStep.SENDING_EOF
 
     def _prepare_finished_ack_packet(self, condition_code: ConditionCode):
@@ -912,14 +904,14 @@ class SourceHandler:
             )
             self._add_packet_to_be_sent(file_data_pdu)
 
-    def _prepare_eof_pdu(self, condition_code: ConditionCode, checksum: bytes):
-        self._params.positive_ack_params.cond_code_of_eof_pdu = condition_code
+    def _prepare_eof_pdu(self, checksum: bytes):
+        assert self._params.cond_code_eof is not None
         self._add_packet_to_be_sent(
             EofPdu(
                 file_checksum=checksum,
                 file_size=self._params.fp.progress,
                 pdu_conf=self._params.pdu_conf,
-                condition_code=condition_code,
+                condition_code=self._params.cond_code_eof,
             )
         )
 
@@ -936,33 +928,37 @@ class SourceHandler:
 
     def _declare_fault(self, cond: ConditionCode):
         fh = self.cfg.default_fault_handlers.get_fault_handler(cond)
+        transaction_id = self._params.transaction_id
+        progress = self._params.fp.progress
+        assert transaction_id is not None
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
             self._notice_of_cancellation(cond)
         elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
-        self.cfg.default_fault_handlers.report_fault(cond)
+        self.cfg.default_fault_handlers.report_fault(transaction_id, cond, progress)
 
     def _notice_of_cancellation(self, condition_code: ConditionCode):
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
         # the EOF (cancel) PDU must result in abandonment of the transaction.
         if (
-            self._params.positive_ack_params.cond_code_of_eof_pdu is not None
-            and self._params.positive_ack_params.cond_code_of_eof_pdu
-            != ConditionCode.NO_ERROR
+            self._params.cond_code_eof is not None
+            and self._params.cond_code_eof != ConditionCode.NO_ERROR
         ):
+            assert self._params.transaction_id is not None
             # We still call the abandonment callback to ensure the fault is logged.
             self.cfg.default_fault_handlers.abandoned_cb(
-                self._params.positive_ack_params.cond_code_of_eof_pdu
+                self._params.transaction_id,
+                self._params.cond_code_eof,
+                self._params.fp.progress,
             )
             self._abandon_transaction()
             return
+        self._params.cond_code_eof = condition_code
         # As specified in 4.11.2.2, prepare an EOF PDU to be sent to the remote entity. Supply
         # the checksum for the file copy progress sent so far.
-        self._prepare_eof_pdu(
-            condition_code, self._checksum_calculation(self._params.fp.progress)
-        )
+        self._prepare_eof_pdu(self._checksum_calculation(self._params.fp.progress))
         self.states.step = TransactionStep.SENDING_EOF
 
     def _notice_of_suspension(self):
@@ -987,3 +983,11 @@ class SourceHandler:
                 segment_len=self._params.fp.segment_len,
             )
         return crc
+
+    @deprecation.deprecated(
+        deprecated_in="6.0.0rc1",
+        current_version=get_version(),
+        details="Use insert_packet instead",
+    )
+    def pass_packet(self, packet: AbstractFileDirectiveBase):
+        self.insert_packet(packet)
