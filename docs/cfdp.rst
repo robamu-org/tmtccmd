@@ -42,7 +42,20 @@ a valid :py:class:`tmtccmd.cfdp.request.PutRequest` to perform a File Copy opera
    The PDU(s) will be returned as a :py:class:`spacepackets.cfdp.pdu.file_data.FileDataPdu`
    instance(s).
 3. Generate an EOF PDU be sent to a remote CFDP entity.
-   The PDU will be returnedf as a :py:class:`spacepackets.cfdp.pdu.eof.EofPdu` instance.
+   The PDU will be returned as a :py:class:`spacepackets.cfdp.pdu.eof.EofPdu` instance.
+
+If this is an unacknowledged transfer with no transaction closure, the file transfer will be done
+after these steps. In any other case:
+
+**Unacknowledged transfer with requested closure**
+
+4. A Finished PDU will be awaited, for example one generated using :py:class:`spacepackets.cfdp.pdu.finished.FinishedPdu`.
+
+**Acknowledged transfer**
+
+4. A EOF ACK packet will be awaited, for example one generated using :py:class:`spacepackets.cfdp.pdu.ack.AckPdu`.
+5. A Finished PDU will be awaited, for example one generated using :py:class:`spacepackets.cfdp.pdu.finished.FinishedPdu`.
+6. A Finished PDU ACK packet will be sent to the remote CFDP entity.
 
 CFDP destination entity
 ------------------------
@@ -60,8 +73,8 @@ for the following conditions:
 2. All check timers have elapsed. These check timers allow and out-of-order reception of EOF and
    file data PDUs, provided that the interval between the EOF PDU and the last file data PDUs is
    not too large. Check timer support is not implemented yet.
-3. All confirmation packets like Finished PDUs have been sent back and confirmed by the remote side
-   where applicable. 
+3. All confirmation packets like Finished PDUs or the EOF ACK PDU have been sent back and confirmed
+   by the remote side where applicable.
 
 Current List of unimplemented features
 ----------------------------------------
