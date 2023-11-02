@@ -349,17 +349,12 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self._generic_deferred_lost_segment_handling_with_timeout(file_content)
         time.sleep(self.timeout_nak_procedure_seconds * 1.1)
         fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
+        self._generic_finished_pdu_with_error_check(
+            fsm_res,
+            ConditionCode.NAK_LIMIT_REACHED,
+            DeliveryCode.DATA_INCOMPLETE,
+            FileDeliveryStatus.FILE_RETAINED,
         )
-        next_pdu = self.dest_handler.get_next_packet()
-        self.assertIsNotNone(next_pdu)
-        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
-        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.FINISHED_PDU)
-        finished_pdu = next_pdu.to_finished_pdu()
-        self.assertEqual(finished_pdu.condition_code, ConditionCode.NAK_LIMIT_REACHED)
-        self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_INCOMPLETE)
-        self.assertEqual(finished_pdu.delivery_status, FileDeliveryStatus.FILE_RETAINED)
 
     def test_deferred_lost_segment_handling_after_timeout_activity_reset(self):
         file_content = "Hello World!".encode()
@@ -406,6 +401,41 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         time.sleep(self.timeout_positive_ack_procedure_seconds * 1.1)
         fsm_res = self.dest_handler.state_machine()
         self.assertEqual(self.dest_handler.positive_ack_counter, 1)
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.WAITING_FOR_FINISHED_ACK
+        )
+        self._generic_no_error_finished_pdu_check(
+            fsm_res, TransactionStep.WAITING_FOR_FINISHED_ACK
+        )
+        fsm_res = self.dest_handler.state_machine()
+        self.assertEqual(self.dest_handler.positive_ack_counter, 1)
+        time.sleep(self.timeout_positive_ack_procedure_seconds * 1.1)
+        fsm_res = self.dest_handler.state_machine()
+        self._generic_finished_pdu_with_error_check(
+            fsm_res,
+            ConditionCode.POSITIVE_ACK_LIMIT_REACHED,
+            DeliveryCode.DATA_COMPLETE,
+            FileDeliveryStatus.FILE_RETAINED,
+        )
+
+    def _generic_finished_pdu_with_error_check(
+        self,
+        fsm_res: FsmResult,
+        cond_code: ConditionCode,
+        delivery_code: DeliveryCode,
+        delivery_status: FileDeliveryStatus,
+    ):
+        self._state_checker(
+            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
+        )
+        next_pdu = self.dest_handler.get_next_packet()
+        self.assertIsNotNone(next_pdu)
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.FINISHED_PDU)
+        finished_pdu = next_pdu.to_finished_pdu()
+        self.assertEqual(finished_pdu.condition_code, cond_code)
+        self.assertEqual(finished_pdu.delivery_code, delivery_code)
+        self.assertEqual(finished_pdu.delivery_status, delivery_status)
 
     def _generic_verify_missing_segment_requested(
         self,

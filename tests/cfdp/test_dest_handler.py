@@ -236,10 +236,12 @@ class TestDestHandlerBase(TestCase):
         )
         self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
 
-    def _generic_no_error_finished_pdu_check(self, fsm_res: FsmResult) -> FinishedPdu:
-        self._state_checker(
-            fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
-        )
+    def _generic_no_error_finished_pdu_check(
+        self,
+        fsm_res: FsmResult,
+        expected_step: TransactionStep = TransactionStep.SENDING_FINISHED_PDU,
+    ) -> FinishedPdu:
+        self._state_checker(fsm_res, 1, CfdpState.BUSY, expected_step)
         self.assertTrue(fsm_res.states.packets_ready)
         next_pdu = self.dest_handler.get_next_packet()
         assert next_pdu is not None

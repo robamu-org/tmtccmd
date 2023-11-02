@@ -807,6 +807,7 @@ class DestHandler:
         self._params.acked_params.procedure_timer.reset()
 
     def _handle_waiting_for_finished_ack(self):
+        """Returns False if the FSM should be called again."""
         if (
             self._params.last_inserted_packet.pdu is None
             or self._params.last_inserted_packet.pdu_type == PduType.FILE_DATA
@@ -815,7 +816,6 @@ class DestHandler:
         ):
             self._handle_positive_ack_procedures()
             return
-
         if (
             self._params.last_inserted_packet.pdu_type == PduType.FILE_DIRECTIVE
             and self._params.last_inserted_packet.pdu_directive_type
@@ -831,7 +831,8 @@ class DestHandler:
             self.reset()
 
     def _handle_positive_ack_procedures(self):
-        """Positive ACK procedures according to chapter 4.7.1 of the CFDP standard."""
+        """Positive ACK procedures according to chapter 4.7.1 of the CFDP standard.
+        Returns False if the FSM should be called again."""
         assert self._params.positive_ack_params.ack_timer is not None
         assert self._params.remote_cfg is not None
         if self._params.positive_ack_params.ack_timer.timed_out():
@@ -840,7 +841,15 @@ class DestHandler:
                 >= self._params.remote_cfg.positive_ack_timer_expiration_limit
             ):
                 self._declare_fault(ConditionCode.POSITIVE_ACK_LIMIT_REACHED)
-                return
+                # This is a bit of a hack: We want the transfer completion and the corresponding
+                # re-send of the Finished PDU to happen in the same FSM cycle. However, the call
+                # order in the FSM prevents this from happening, so we just call the state machine
+                # again manually.
+                if (
+                    self._params.completion_disposition
+                    == CompletionDisposition.CANCELED
+                ):
+                    return self.state_machine()
             self._params.positive_ack_params.ack_timer.reset()
             self._params.positive_ack_params.ack_counter += 1
             self._prepare_finished_pdu()
@@ -1133,7 +1142,11 @@ class DestHandler:
             pass
         elif self._params.completion_disposition == CompletionDisposition.CANCELED:
             assert self._params.remote_cfg is not None
-            if self._params.remote_cfg.disposition_on_cancellation:
+            if (
+                self._params.remote_cfg.disposition_on_cancellation
+                and self._params.finished_params.delivery_code
+                == DeliveryCode.DATA_INCOMPLETE
+            ):
                 self.user.vfs.delete_file(self._params.fp.file_name)
                 self._params.finished_params.delivery_status = (
                     FileDeliveryStatus.DISCARDED_DELIBERATELY
