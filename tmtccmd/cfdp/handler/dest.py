@@ -328,6 +328,8 @@ class DestHandler:
     """This is the primary CFDP destination handler. It models the CFDP source entity, which is
     primarily responsible for receiving files sent from another CFDP entity. It performs the
     reception side of File Copy Operations.
+
+    This handler supports both acknowledged and unacknowledged CFDP file transfers.
     The following core functions are the primary interface for interacting with the destination
     handler:
 

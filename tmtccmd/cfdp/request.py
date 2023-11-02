@@ -56,7 +56,7 @@ class PutRequest:
         if not self.metadata_only:
             src_file_str = f"Source File: {self.source_file}"
             dest_file_str = f"Destination File: {self.dest_file}"
-        if self.trans_mode:
+        if self.trans_mode is not None:
             if self.trans_mode == TransmissionMode.ACKNOWLEDGED:
                 trans_mode_str = "Transmission Mode: Class 2 Acknowledged"
             else:
