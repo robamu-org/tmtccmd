@@ -170,7 +170,16 @@ class CustomCheckTimerProvider(CheckTimerProvider):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    help_txt = (
+        "This mini application shows the source and destination entity handlers in action. "
+        "You can configure the transmission mode with the -t argument, which defaults to the "
+        "acknowledged mode. It is also possible to increase the verbosity level to print all "
+        "packets being exchanged."
+    )
+    parser = argparse.ArgumentParser(
+        prog="CFDP File Copy Example Application",
+        description=help_txt
+    )
     parser.add_argument("-t", "--type", choices=["nak", "ack"], default="ack")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     args = parser.parse_args()

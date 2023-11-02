@@ -78,7 +78,21 @@ Example application
 
 You can find an example application inside the `example directory <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp>`_
 which shows an end-to-end file transfer on a host computer. This should give you a general idea of
-how the source and destination handler work in practice.
+how the source and destination handler work in practice. Simply running the script with
+
+.. code-block:: console
+
+   ./file-copy-example.py
+
+will perform an acknowledged transfer of a file on the same host system.
+You can also perform an unacknowledged transfer using
+
+.. code-block:: console
+
+   ./file-copy-example.py -t nak
+
+It is also possible to supply the ``-v`` verbosity argument to the application to print all
+packets being exchanged between the source and destination handler.
 
 .. _`CCSDS Blue Book 727.0-B-5`: https://public.ccsds.org/Pubs/727x0b5.pdf
 .. _`spacepackets`: https://github.com/us-irs/spacepackets-py
