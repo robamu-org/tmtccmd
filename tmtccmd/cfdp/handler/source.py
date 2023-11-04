@@ -46,7 +46,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler.crc import Crc32Helper
+from tmtccmd.cfdp.handler.crc import CrcHelper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
     InvalidNakPdu,
@@ -266,7 +266,7 @@ class SourceHandler:
         self.seq_num_provider = seq_num_provider
         self.check_timer_provider = check_timer_provider
         self._params = _TransferFieldWrapper(cfg.local_entity_id)
-        self._crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, self.user.vfs)
+        self._crc_helper = CrcHelper(ChecksumType.NULL_CHECKSUM, self.user.vfs)
         self._put_req: Optional[PutRequest] = None
         self._inserted_pdu = PduHolder(None)
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
@@ -980,7 +980,7 @@ class SourceHandler:
             assert self._put_req is not None
             assert self._put_req.source_file is not None
             crc = self._crc_helper.calc_for_file(
-                file=self._put_req.source_file,
+                file_path=self._put_req.source_file,
                 file_sz=size_to_calculate,
                 segment_len=self._params.fp.segment_len,
             )

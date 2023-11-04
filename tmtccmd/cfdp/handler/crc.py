@@ -9,27 +9,24 @@ from tmtccmd.cfdp.filestore import VirtualFilestore
 from tmtccmd.cfdp.handler.defs import ChecksumNotImplemented, SourceFileDoesNotExist
 
 
-def calc_modular_checksum(self, file_path: Path) -> bytes:
+def calc_modular_checksum(file_path: Path) -> bytes:
     """Calculates the modular checksum for a file in one go."""
+    checksum = 0
+
     with open(file_path, "rb") as file:
-        file_size = file.seek(0, 2)
-        checksum = 0
-        x = 0
+        while True:
+            data = file.read(4)
+            if not data:
+                break
+            checksum += int.from_bytes(
+                data.ljust(4, b"\0"), byteorder="big", signed=False
+            )
 
-        while x < file_size:
-            file.seek(x)
-            if x < file_size - 4:
-                data = file.read(file_size - x).ljust(4, b"\0x00")
-            else:
-                data = file.read(4)
-            checksum += int.from_bytes(data, byteorder="big", signed=False)
-            x += 4
-
-        checksum %= 2**32
-        return struct.pack("!I", checksum)
+    checksum %= 2**32
+    return struct.pack("!I", checksum)
 
 
-class Crc32Helper:
+class CrcHelper:
     def __init__(self, init_type: ChecksumType, vfs: VirtualFilestore):
         self.checksum_type = init_type
         self.vfs = vfs

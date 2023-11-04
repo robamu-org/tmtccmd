@@ -48,7 +48,7 @@ from tmtccmd.cfdp.handler.common import (
     get_packet_destination,
     _PositiveAckProcedureParams,
 )
-from tmtccmd.cfdp.handler.crc import Crc32Helper
+from tmtccmd.cfdp.handler.crc import CrcHelper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
     FsmNotCalledAfterPacketInsertion,
@@ -361,7 +361,7 @@ class DestHandler:
         self.user = user
         self.check_timer_provider = check_timer_provider
         self._params = _DestFieldWrapper()
-        self._cksum_verif_helper: Crc32Helper = Crc32Helper(
+        self._cksum_verif_helper: CrcHelper = CrcHelper(
             ChecksumType.NULL_CHECKSUM, user.vfs
         )
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
