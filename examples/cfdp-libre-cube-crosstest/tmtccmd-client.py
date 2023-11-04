@@ -17,7 +17,6 @@ from queue import Empty
 from typing import Any
 
 from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
-from spacepackets.cfdp.pdu import DirectiveType
 from spacepackets.util import ByteFieldU16, UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
@@ -58,6 +57,7 @@ DEST_FILE = Path("files/remote.txt")
 class TransferParams:
     transmission_mode: TransmissionMode
     verbose_level: int
+    no_closure: bool
 
 
 _LOGGER = logging.getLogger()
@@ -70,24 +70,44 @@ REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     closure_requested=True,
     crc_on_transmission=False,
     default_transmission_mode=TransmissionMode.ACKNOWLEDGED,
-    crc_type=ChecksumType.CRC_32,
+    crc_type=ChecksumType.MODULAR,
 )
 REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
 REMOTE_CFG_FOR_DEST_ENTITY.entity_id = DEST_ENTITY_ID
 
 
 class CfdpFaultHandler(DefaultFaultHandlerBase):
-    def notice_of_suspension_cb(self, cond: ConditionCode):
-        _LOGGER.warn(f"Received Notice of Suspension with condition code {cond!r}")
+    def notice_of_suspension_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
+        _LOGGER.warning(
+            f"Received Notice of Suspension for transaction {transaction_id!r} with condition "
+            f"code {cond!r}. Progress: {progress}"
+        )
 
-    def notice_of_cancellation_cb(self, cond: ConditionCode):
-        _LOGGER.warn(f"Received Notice of Cancellation with condition code {cond!r}")
+    def notice_of_cancellation_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
+        _LOGGER.warning(
+            f"Received Notice of Cancellation for transaction {transaction_id!r} with condition "
+            f"code {cond!r}. Progress: {progress}"
+        )
 
-    def abandoned_cb(self, cond: ConditionCode):
-        _LOGGER.warn(f"Received Abandoned Fault with condition code {cond!r}")
+    def abandoned_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
+        _LOGGER.warning(
+            f"Received Abanadoned Fault for transaction {transaction_id!r} with condition "
+            f"code {cond!r}. Progress: {progress}"
+        )
 
-    def ignore_cb(self, cond: ConditionCode):
-        _LOGGER.warn(f"Received Ignored Fault with condition code {cond!r}")
+    def ignore_cb(
+        self, transaction_id: TransactionId, cond: ConditionCode, progress: int
+    ):
+        _LOGGER.warning(
+            f"Ignored Fault for transaction {transaction_id!r} with condition "
+            f"code {cond!r}. Progress: {progress}"
+        )
 
 
 class CfdpUser(CfdpUserBase):
@@ -177,6 +197,7 @@ def main():
     )
     parser.add_argument("-t", "--type", choices=["nak", "ack"], default="ack")
     parser.add_argument("-v", "--verbose", action="count", default=0)
+    parser.add_argument("--no-closure", action="store_true", default=False)
     args = parser.parse_args()
     if args.type == "nak":
         transmission_mode = TransmissionMode.UNACKNOWLEDGED
@@ -188,7 +209,7 @@ def main():
         logging_level = logging.INFO
     elif args.verbose >= 1:
         logging_level = logging.DEBUG
-    transfer_params = TransferParams(transmission_mode, args.verbose)
+    transfer_params = TransferParams(transmission_mode, args.verbose, args.no_closure)
     basicConfig(level=logging_level)
 
     # If the test files already exist, delete them.
@@ -259,7 +280,7 @@ def source_entity_handler(
         source_file=SOURCE_FILE,
         dest_file=DEST_FILE,
         trans_mode=transfer_params.transmission_mode,
-        closure_requested=True,
+        closure_requested=not transfer_params.no_closure,
     )
     no_packet_received = False
     print(f"SRC HANDLER: Inserting Put Request: {put_request}")
@@ -288,9 +309,6 @@ def source_entity_handler(
             while fsm_result.states.num_packets_ready > 0:
                 next_pdu_wrapper = source_handler.get_next_packet()
                 assert next_pdu_wrapper is not None
-                if next_pdu_wrapper.pdu_directive_type == DirectiveType.EOF_PDU:
-                    eof_pdu = next_pdu_wrapper.to_eof_pdu()
-                    print(eof_pdu.file_checksum.hex(sep=','))
                 if transfer_params.verbose_level >= 1:
                     _LOGGER.debug(f"SRC Handler: Sending packet {next_pdu_wrapper.pdu}")
                 # Send all packets which need to be sent.

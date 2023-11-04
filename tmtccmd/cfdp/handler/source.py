@@ -746,12 +746,8 @@ class SourceHandler:
             or self._inserted_pdu.pdu_directive_type is None
             or self._inserted_pdu.pdu_directive_type != DirectiveType.FINISHED_PDU
         ):
-            # TODO: Store finished PDU parameters for later processing in the notice of completion.
             if self._params.check_timer is not None:
                 if self._params.check_timer.timed_out():
-                    _LOGGER.warning(
-                        f"Check limit countdown: {self._params.check_timer}"
-                    )
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
             return
         finished_pdu = self._inserted_pdu.to_finished_pdu()
@@ -934,14 +930,16 @@ class SourceHandler:
         progress = self._params.fp.progress
         assert transaction_id is not None
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
-            self._notice_of_cancellation(cond)
+            if not self._notice_of_cancellation(cond):
+                return
         elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
         self.cfg.default_fault_handlers.report_fault(transaction_id, cond, progress)
 
-    def _notice_of_cancellation(self, condition_code: ConditionCode):
+    def _notice_of_cancellation(self, condition_code: ConditionCode) -> bool:
+        """Returns whether the fault declaration handler can returns prematurely."""
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
         # the EOF (cancel) PDU must result in abandonment of the transaction.
         if (
@@ -956,12 +954,13 @@ class SourceHandler:
                 self._params.fp.progress,
             )
             self._abandon_transaction()
-            return
+            return False
         self._params.cond_code_eof = condition_code
         # As specified in 4.11.2.2, prepare an EOF PDU to be sent to the remote entity. Supply
         # the checksum for the file copy progress sent so far.
         self._prepare_eof_pdu(self._checksum_calculation(self._params.fp.progress))
         self.states.step = TransactionStep.SENDING_EOF
+        return True
 
     def _notice_of_suspension(self):
         # TODO: Implement
