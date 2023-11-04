@@ -17,6 +17,7 @@ from queue import Empty
 from typing import Any
 
 from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
+from spacepackets.cfdp.pdu import DirectiveType
 from spacepackets.util import ByteFieldU16, UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
@@ -46,7 +47,7 @@ from common import UDP_SERVER_PORT, UDP_TM_SERVER_PORT
 SOURCE_ENTITY_ID = ByteFieldU16(SOURCE_ENTITY_ID_RAW)
 DEST_ENTITY_ID = ByteFieldU16(REMOTE_ENTITY_ID_RAW)
 
-FILE_CONTENT = "Hello World!\n"
+FILE_CONTENT = "Hello World!"
 FILE_SEGMENT_SIZE = len(FILE_CONTENT)
 MAX_PACKET_LEN = 512
 SOURCE_FILE = Path("files/local.txt")
@@ -275,7 +276,6 @@ def source_entity_handler(
                 try:
                     source_handler.insert_packet(packet)
                 except InvalidSourceId:
-                    print(packet.source_entity_id)
                     _LOGGER.warning(f"invalid source ID in packet {packet}")
                 no_packet_received = False
             else:
@@ -288,6 +288,9 @@ def source_entity_handler(
             while fsm_result.states.num_packets_ready > 0:
                 next_pdu_wrapper = source_handler.get_next_packet()
                 assert next_pdu_wrapper is not None
+                if next_pdu_wrapper.pdu_directive_type == DirectiveType.EOF_PDU:
+                    eof_pdu = next_pdu_wrapper.to_eof_pdu()
+                    print(eof_pdu.file_checksum.hex(sep=','))
                 if transfer_params.verbose_level >= 1:
                     _LOGGER.debug(f"SRC Handler: Sending packet {next_pdu_wrapper.pdu}")
                 # Send all packets which need to be sent.
