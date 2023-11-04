@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """This example shows a end-to-end transfer of a small file using the CFDP high level
 components provided by the tmtccmd package."""
+import select
 import socket
 import copy
 import argparse
@@ -19,7 +20,7 @@ from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
 from spacepackets.util import ByteFieldU16, UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
-from tmtccmd.cfdp.handler.source import SourceHandler
+from tmtccmd.cfdp.handler.source import SourceHandler, InvalidSourceId
 from tmtccmd.cfdp.mib import (
     CheckTimerProvider,
     DefaultFaultHandlerBase,
@@ -37,6 +38,7 @@ from tmtccmd.cfdp.user import (
 )
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.util.seqcnt import SeqCountProvider
+from spacepackets.cfdp.pdu.helper import PduFactory
 from common import SOURCE_ENTITY_ID as SOURCE_ENTITY_ID_RAW
 from common import REMOTE_ENTITY_ID as REMOTE_ENTITY_ID_RAW
 from common import UDP_SERVER_PORT, UDP_TM_SERVER_PORT
@@ -214,6 +216,7 @@ def main():
     udp_client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     udp_tm_server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
     udp_tm_server.bind(("127.0.0.1", UDP_TM_SERVER_PORT))
+    udp_tm_server.setblocking(False)
 
     # Spawn a new thread and move the source handler there. This is scalable: If multiple number
     # of concurrent file operations are required, a new thread with a new source handler can
@@ -238,6 +241,8 @@ def main():
     _LOGGER.info("Source and destination file content are equal. Deleting files.")
     if SOURCE_FILE.exists():
         os.remove(SOURCE_FILE)
+    if DEST_FILE.exists():
+        os.remove(DEST_FILE)
     _LOGGER.info("Done.")
 
 
@@ -263,8 +268,18 @@ def source_entity_handler(
     assert source_handler.put_request(put_request, REMOTE_CFG_FOR_DEST_ENTITY)
     while True:
         try:
-            # TODO: Poll packets from TM UDP client.
-            no_packet_received = False
+            ready = select.select([tm_client], [], [], 0)
+            if ready[0]:
+                data, _ = tm_client.recvfrom(4096)
+                packet = PduFactory.from_raw(data)
+                try:
+                    source_handler.insert_packet(packet)
+                except InvalidSourceId:
+                    print(packet.source_entity_id)
+                    _LOGGER.warning(f"invalid source ID in packet {packet}")
+                no_packet_received = False
+            else:
+                no_packet_received = True
         except Empty:
             no_packet_received = True
         fsm_result = source_handler.state_machine()

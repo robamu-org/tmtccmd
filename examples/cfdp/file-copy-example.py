@@ -177,8 +177,7 @@ def main():
         "packets being exchanged."
     )
     parser = argparse.ArgumentParser(
-        prog="CFDP File Copy Example Application",
-        description=help_txt
+        prog="CFDP File Copy Example Application", description=help_txt
     )
     parser.add_argument("-t", "--type", choices=["nak", "ack"], default="ack")
     parser.add_argument("-v", "--verbose", action="count", default=0)

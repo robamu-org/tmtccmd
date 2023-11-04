@@ -387,6 +387,8 @@ class SourceHandler:
             The specified PDU can not be handled in the current state.
         NoRemoteEntityCfgFound
             No remote configuration found for specified destination entity.
+        InvalidSourceId
+            Source ID not identical to local entity ID.
         InvalidDestinationId
             Destination ID was found, but there is a mismatch between the packet destination ID
             and the remote configuration entity ID.
@@ -398,18 +400,18 @@ class SourceHandler:
             raise InvalidPduDirection(
                 Direction.TOWARDS_SENDER, packet.pdu_header.direction
             )
-        if packet.source_entity_id != self.source_id:
+        if packet.source_entity_id.value != self.source_id.value:
             raise InvalidSourceId(self.source_id, packet.source_entity_id)
         # TODO: This can happen if a packet is received for which no transaction was started..
         #       A better exception might be worth a thought..
         if self._params.remote_cfg is None:
             raise NoRemoteEntityCfgFound(entity_id=packet.dest_entity_id)
-        if packet.dest_entity_id != self._params.remote_cfg.entity_id:
+        if packet.dest_entity_id.value != self._params.remote_cfg.entity_id.value:
             raise InvalidDestinationId(
                 self._params.remote_cfg.entity_id, packet.dest_entity_id
             )
 
-        if packet.transaction_seq_num != self._params.transaction_seq_num:
+        if packet.transaction_seq_num.value != self._params.transaction_seq_num.value:
             raise InvalidTransactionSeqNum(
                 self._params.transaction_seq_num, packet.transaction_seq_num
             )

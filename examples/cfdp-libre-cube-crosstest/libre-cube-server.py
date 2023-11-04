@@ -20,4 +20,3 @@ input("Running. Press <Enter> to stop...\n")
 
 cfdp_entity.shutdown()
 udp_transport.unbind()
-
