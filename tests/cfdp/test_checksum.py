@@ -1,5 +1,7 @@
+import os
 import struct
-from unittest import TestCase
+from pyfakefs.fake_filesystem_unittest import TestCase
+from pathlib import Path
 from tmtccmd.cfdp.handler.crc import CrcHelper, calc_modular_checksum
 from tmtccmd.cfdp.user import HostFilestore
 from spacepackets.cfdp import ChecksumType
@@ -28,8 +30,9 @@ EXAMPLE_DATA_CFDP = bytes(
 
 class TestChecksumHelper(TestCase):
     def setUp(self):
+        self.setUpPyfakefs()
         self.crc_helper = CrcHelper(ChecksumType.NULL_CHECKSUM, HostFilestore())
-        self.file_path = "/tmp/crc_file"
+        self.file_path = Path("/tmp/crc_file")
         with open(self.file_path, "wb") as file:
             file.write(EXAMPLE_DATA_CFDP)
         segments_to_add = []
@@ -55,3 +58,7 @@ class TestChecksumHelper(TestCase):
         self.assertEqual(
             calc_modular_checksum(self.file_path), self.expected_checksum_for_example
         )
+
+    def tearDown(self):
+        if self.file_path.exists():
+            os.remove(self.file_path)
