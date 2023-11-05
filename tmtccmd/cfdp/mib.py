@@ -10,10 +10,10 @@ from spacepackets.cfdp.defs import (
     TransmissionMode,
     CFDP_VERSION_2,
     ConditionCode,
+    TransactionId,
 )
 from spacepackets.util import UnsignedByteField
 from tmtccmd.util.countdown import Countdown
-from tmtccmd.cfdp import TransactionId
 
 
 class DefaultFaultHandlerBase(ABC):

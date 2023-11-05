@@ -17,6 +17,7 @@ from spacepackets.cfdp import (
     PduConfig,
     Direction,
     FaultHandlerCode,
+    TransactionId,
 )
 from spacepackets.cfdp.pdu import (
     AckPdu,
@@ -28,11 +29,7 @@ from spacepackets.cfdp.pdu import (
     NakPdu,
 )
 from spacepackets.cfdp.pdu.ack import TransactionStatus
-from spacepackets.cfdp.pdu.finished import (
-    FinishedParams,
-    DeliveryCode,
-    FileDeliveryStatus,
-)
+from spacepackets.cfdp.pdu.finished import FinishedParams, DeliveryCode, FileStatus
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
 
@@ -42,7 +39,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.defs import CfdpState, TransactionId
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.common import (
     PacketDestination,
     get_packet_destination,
@@ -264,7 +261,7 @@ class _DestFieldWrapper:
         self.closure_requested: bool = False
         self.finished_params: FinishedParams = FinishedParams(
             DeliveryCode.DATA_INCOMPLETE,
-            FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+            FileStatus.FILE_STATUS_UNREPORTED,
             ConditionCode.NO_ERROR,
         )
         self.completion_disposition: CompletionDisposition = (
@@ -283,10 +280,10 @@ class _DestFieldWrapper:
         self.pdu_conf = PduConfig.empty()
         self.finished_params = FinishedParams(
             DeliveryCode.DATA_INCOMPLETE,
-            FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+            FileStatus.FILE_STATUS_UNREPORTED,
             ConditionCode.NO_ERROR,
         )
-        self.finished_params.delivery_status = FileDeliveryStatus.FILE_STATUS_UNREPORTED
+        self.finished_params.file_status = FileStatus.FILE_STATUS_UNREPORTED
         self.completion_disposition = CompletionDisposition.COMPLETED
         self.fp.reset()
         self.acked_params = _AckedModeParams()
@@ -758,12 +755,10 @@ class DestHandler:
                 self.user.vfs.truncate_file(self._params.fp.file_name)
             else:
                 self.user.vfs.create_file(self._params.fp.file_name)
-            self._params.finished_params.delivery_status = (
-                FileDeliveryStatus.FILE_RETAINED
-            )
+            self._params.finished_params.file_status = FileStatus.FILE_RETAINED
         except PermissionError:
-            self._params.finished_params.delivery_status = (
-                FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+            self._params.finished_params.file_status = (
+                FileStatus.DISCARDED_FILESTORE_REJECTION
             )
             self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
@@ -872,9 +867,7 @@ class DestHandler:
             if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
                 self._lost_segment_handling(offset, len(data))
             self.user.vfs.write_data(self._params.fp.file_name, data, offset)
-            self._params.finished_params.delivery_status = (
-                FileDeliveryStatus.FILE_RETAINED
-            )
+            self._params.finished_params.delivery_status = FileStatus.FILE_RETAINED
 
             if self._params.fp.file_size_eof is not None and (
                 offset + len(file_data_pdu.file_data) > self._params.fp.file_size_eof
@@ -891,21 +884,15 @@ class DestHandler:
             if next_expected_progress > self._params.fp.progress:
                 self._params.fp.progress = next_expected_progress
         except FileNotFoundError:
-            if (
-                self._params.finished_params.delivery_status
-                != FileDeliveryStatus.FILE_RETAINED
-            ):
+            if self._params.finished_params.delivery_status != FileStatus.FILE_RETAINED:
                 self._params.finished_params.delivery_status = (
-                    FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+                    FileStatus.DISCARDED_FILESTORE_REJECTION
                 )
                 self._declare_fault(ConditionCode.FILESTORE_REJECTION)
         except PermissionError:
-            if (
-                self._params.finished_params.delivery_status
-                != FileDeliveryStatus.FILE_RETAINED
-            ):
-                self._params.finished_params.delivery_status = (
-                    FileDeliveryStatus.DISCARDED_FILESTORE_REJECTION
+            if self._params.finished_params.file_status != FileStatus.FILE_RETAINED:
+                self._params.finished_params.file_status = (
+                    FileStatus.DISCARDED_FILESTORE_REJECTION
                 )
                 self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
@@ -1151,7 +1138,7 @@ class DestHandler:
             ):
                 self.user.vfs.delete_file(self._params.fp.file_name)
                 self._params.finished_params.delivery_status = (
-                    FileDeliveryStatus.DISCARDED_DELIBERATELY
+                    FileStatus.DISCARDED_DELIBERATELY
                 )
         if self.cfg.indication_cfg.transaction_finished_indication_required:
             finished_indic_params = TransactionFinishedParams(

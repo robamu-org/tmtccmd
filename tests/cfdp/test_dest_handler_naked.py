@@ -16,7 +16,7 @@ from spacepackets.cfdp.pdu import (
     DeliveryCode,
     EofPdu,
     FileDataPdu,
-    FileDeliveryStatus,
+    FileStatus,
     MetadataParams,
     MetadataPdu,
 )
@@ -191,7 +191,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
                 transaction_id,
                 FinishedParams(
                     DeliveryCode.DATA_INCOMPLETE,
-                    FileDeliveryStatus.FILE_RETAINED,
+                    FileStatus.FILE_RETAINED,
                     ConditionCode.CHECK_LIMIT_REACHED,
                 ),
             )
@@ -236,7 +236,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         # At least one segment was stored
         self.assertEqual(
             finished_args.finished_params.delivery_status,
-            FileDeliveryStatus.FILE_RETAINED,
+            FileStatus.FILE_RETAINED,
         )
         self.assertEqual(
             finished_args.finished_params.condition_code,

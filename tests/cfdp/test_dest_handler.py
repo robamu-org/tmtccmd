@@ -15,12 +15,13 @@ from spacepackets.cfdp import (
     PduConfig,
     PduType,
     TransmissionMode,
+    TransactionId,
 )
 from spacepackets.cfdp.pdu import (
     DeliveryCode,
     EofPdu,
     FileDataPdu,
-    FileDeliveryStatus,
+    FileStatus,
     FinishedPdu,
     MetadataPdu,
 )
@@ -33,7 +34,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
     RemoteEntityCfg,
 )
-from tmtccmd.cfdp.defs import CfdpState, TransactionId
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.dest import (
     DestHandler,
     FsmResult,
@@ -250,7 +251,7 @@ class TestDestHandlerBase(TestCase):
 
         finished_pdu = next_pdu.to_finished_pdu()
         self.assertEqual(finished_pdu.condition_code, ConditionCode.NO_ERROR)
-        self.assertEqual(finished_pdu.delivery_status, FileDeliveryStatus.FILE_RETAINED)
+        self.assertEqual(finished_pdu.file_status, FileStatus.FILE_RETAINED)
         self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
         self.assertEqual(finished_pdu.direction, Direction.TOWARDS_SENDER)
         self.assertIsNone(finished_pdu.fault_location)

@@ -5,7 +5,7 @@ import sys
 from unittest.mock import MagicMock
 
 from spacepackets.cfdp import ConditionCode, Direction, DirectiveType, TransmissionMode
-from spacepackets.cfdp.pdu import FinishedPdu, FileDeliveryStatus, DeliveryCode
+from spacepackets.cfdp.pdu import FinishedPdu, DeliveryCode, FileStatus
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import (
     ByteFieldU8,
@@ -149,7 +149,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         params = FinishedParams(
             delivery_code=DeliveryCode.DATA_COMPLETE,
             condition_code=ConditionCode.NO_ERROR,
-            delivery_status=FileDeliveryStatus.FILE_RETAINED,
+            file_status=FileStatus.FILE_RETAINED,
         )
         return FinishedPdu(
             params=params,

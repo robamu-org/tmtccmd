@@ -19,10 +19,11 @@ from spacepackets.cfdp import (
     PduConfig,
     ChecksumType,
     FaultHandlerCode,
+    TransactionId,
 )
 from spacepackets.cfdp.pdu import (
     DeliveryCode,
-    FileDeliveryStatus,
+    FileStatus,
     PduHolder,
     EofPdu,
     FileDataPdu,
@@ -42,7 +43,6 @@ from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd.cfdp import (
     LocalEntityCfg,
     CfdpUserBase,
-    TransactionId,
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpState
@@ -766,7 +766,7 @@ class SourceHandler:
             if self._params.finished_params is None:
                 self._params.finished_params = FinishedParams(
                     DeliveryCode.DATA_COMPLETE,
-                    FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                    FileStatus.FILE_STATUS_UNREPORTED,
                     ConditionCode.NO_ERROR,
                 )
             indication_params = TransactionFinishedParams(

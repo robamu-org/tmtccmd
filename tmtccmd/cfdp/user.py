@@ -3,11 +3,11 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from typing import List, Optional, Any
 
-from spacepackets.cfdp import ConditionCode, MessageToUserTlv
+from spacepackets.cfdp.defs import ConditionCode, TransactionId
+from spacepackets.cfdp.tlv import MessageToUserTlv
 from spacepackets.cfdp.pdu.file_data import SegmentMetadata
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField
-from tmtccmd.cfdp.defs import TransactionId
 from tmtccmd.cfdp.filestore import VirtualFilestore, HostFilestore
 
 _LOGGER = logging.getLogger(__name__)
