@@ -107,7 +107,7 @@ You can also perform an unacknowledged transfer using
 It is also possible to supply the ``-v`` verbosity argument to the application to print all
 packets being exchanged between the source and destination handler.
 
-There is also a `test application <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp-libre-cube-cross-test>`_
+There is also a `test application <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp-libre-cube-crosstest>`_
 which cross-tests the `tmtccmd` CFDP implementation with the
 `Libre Cube CFDP <https://gitlab.com/librecube/lib/python-cfdp>`_ implementation.
 
