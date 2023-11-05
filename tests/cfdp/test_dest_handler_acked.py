@@ -9,8 +9,13 @@ from spacepackets.cfdp import (
     PduType,
     TransmissionMode,
 )
-from spacepackets.cfdp.pdu import AckPdu, FinishedPdu, TransactionStatus
-from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
+from spacepackets.cfdp.pdu import (
+    AckPdu,
+    FinishedPdu,
+    TransactionStatus,
+    DeliveryCode,
+    FileStatus,
+)
 from spacepackets.crc import mkPredefinedCrcFun
 
 from .test_dest_handler import TestDestHandlerBase
@@ -353,7 +358,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
             fsm_res,
             ConditionCode.NAK_LIMIT_REACHED,
             DeliveryCode.DATA_INCOMPLETE,
-            FileDeliveryStatus.FILE_RETAINED,
+            FileStatus.FILE_RETAINED,
         )
 
     def test_deferred_lost_segment_handling_after_timeout_activity_reset(self):
@@ -415,7 +420,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
             fsm_res,
             ConditionCode.POSITIVE_ACK_LIMIT_REACHED,
             DeliveryCode.DATA_COMPLETE,
-            FileDeliveryStatus.FILE_RETAINED,
+            FileStatus.FILE_RETAINED,
         )
 
     def _generic_finished_pdu_with_error_check(
@@ -423,7 +428,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         fsm_res: FsmResult,
         cond_code: ConditionCode,
         delivery_code: DeliveryCode,
-        delivery_status: FileDeliveryStatus,
+        file_status: FileStatus,
     ):
         self._state_checker(
             fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_FINISHED_PDU
@@ -435,7 +440,7 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         finished_pdu = next_pdu.to_finished_pdu()
         self.assertEqual(finished_pdu.condition_code, cond_code)
         self.assertEqual(finished_pdu.delivery_code, delivery_code)
-        self.assertEqual(finished_pdu.delivery_status, delivery_status)
+        self.assertEqual(finished_pdu.file_status, file_status)
 
     def _generic_verify_missing_segment_requested(
         self,

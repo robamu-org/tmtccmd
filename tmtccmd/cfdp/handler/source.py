@@ -19,10 +19,11 @@ from spacepackets.cfdp import (
     PduConfig,
     ChecksumType,
     FaultHandlerCode,
+    TransactionId,
 )
 from spacepackets.cfdp.pdu import (
     DeliveryCode,
-    FileDeliveryStatus,
+    FileStatus,
     PduHolder,
     EofPdu,
     FileDataPdu,
@@ -42,11 +43,10 @@ from spacepackets.util import UnsignedByteField, ByteFieldGenerator
 from tmtccmd.cfdp import (
     LocalEntityCfg,
     CfdpUserBase,
-    TransactionId,
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler.crc import Crc32Helper
+from tmtccmd.cfdp.handler.crc import CrcHelper
 from tmtccmd.cfdp.handler.defs import (
     FileParamsBase,
     InvalidNakPdu,
@@ -266,7 +266,7 @@ class SourceHandler:
         self.seq_num_provider = seq_num_provider
         self.check_timer_provider = check_timer_provider
         self._params = _TransferFieldWrapper(cfg.local_entity_id)
-        self._crc_helper = Crc32Helper(ChecksumType.NULL_CHECKSUM, self.user.vfs)
+        self._crc_helper = CrcHelper(ChecksumType.NULL_CHECKSUM, self.user.vfs)
         self._put_req: Optional[PutRequest] = None
         self._inserted_pdu = PduHolder(None)
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
@@ -387,6 +387,8 @@ class SourceHandler:
             The specified PDU can not be handled in the current state.
         NoRemoteEntityCfgFound
             No remote configuration found for specified destination entity.
+        InvalidSourceId
+            Source ID not identical to local entity ID.
         InvalidDestinationId
             Destination ID was found, but there is a mismatch between the packet destination ID
             and the remote configuration entity ID.
@@ -398,18 +400,18 @@ class SourceHandler:
             raise InvalidPduDirection(
                 Direction.TOWARDS_SENDER, packet.pdu_header.direction
             )
-        if packet.source_entity_id != self.source_id:
+        if packet.source_entity_id.value != self.source_id.value:
             raise InvalidSourceId(self.source_id, packet.source_entity_id)
         # TODO: This can happen if a packet is received for which no transaction was started..
         #       A better exception might be worth a thought..
         if self._params.remote_cfg is None:
             raise NoRemoteEntityCfgFound(entity_id=packet.dest_entity_id)
-        if packet.dest_entity_id != self._params.remote_cfg.entity_id:
+        if packet.dest_entity_id.value != self._params.remote_cfg.entity_id.value:
             raise InvalidDestinationId(
                 self._params.remote_cfg.entity_id, packet.dest_entity_id
             )
 
-        if packet.transaction_seq_num != self._params.transaction_seq_num:
+        if packet.transaction_seq_num.value != self._params.transaction_seq_num.value:
             raise InvalidTransactionSeqNum(
                 self._params.transaction_seq_num, packet.transaction_seq_num
             )
@@ -744,12 +746,8 @@ class SourceHandler:
             or self._inserted_pdu.pdu_directive_type is None
             or self._inserted_pdu.pdu_directive_type != DirectiveType.FINISHED_PDU
         ):
-            # TODO: Store finished PDU parameters for later processing in the notice of completion.
             if self._params.check_timer is not None:
                 if self._params.check_timer.timed_out():
-                    _LOGGER.warning(
-                        f"Check limit countdown: {self._params.check_timer}"
-                    )
                     self._declare_fault(ConditionCode.CHECK_LIMIT_REACHED)
             return
         finished_pdu = self._inserted_pdu.to_finished_pdu()
@@ -768,7 +766,7 @@ class SourceHandler:
             if self._params.finished_params is None:
                 self._params.finished_params = FinishedParams(
                     DeliveryCode.DATA_COMPLETE,
-                    FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                    FileStatus.FILE_STATUS_UNREPORTED,
                     ConditionCode.NO_ERROR,
                 )
             indication_params = TransactionFinishedParams(
@@ -932,14 +930,16 @@ class SourceHandler:
         progress = self._params.fp.progress
         assert transaction_id is not None
         if fh == FaultHandlerCode.NOTICE_OF_CANCELLATION:
-            self._notice_of_cancellation(cond)
+            if not self._notice_of_cancellation(cond):
+                return
         elif fh == FaultHandlerCode.NOTICE_OF_SUSPENSION:
             self._notice_of_suspension()
         elif fh == FaultHandlerCode.ABANDON_TRANSACTION:
             self._abandon_transaction()
         self.cfg.default_fault_handlers.report_fault(transaction_id, cond, progress)
 
-    def _notice_of_cancellation(self, condition_code: ConditionCode):
+    def _notice_of_cancellation(self, condition_code: ConditionCode) -> bool:
+        """Returns whether the fault declaration handler can returns prematurely."""
         # CFDP standard 4.11.2.2.3: Any fault declared in the course of transferring
         # the EOF (cancel) PDU must result in abandonment of the transaction.
         if (
@@ -954,12 +954,13 @@ class SourceHandler:
                 self._params.fp.progress,
             )
             self._abandon_transaction()
-            return
+            return False
         self._params.cond_code_eof = condition_code
         # As specified in 4.11.2.2, prepare an EOF PDU to be sent to the remote entity. Supply
         # the checksum for the file copy progress sent so far.
         self._prepare_eof_pdu(self._checksum_calculation(self._params.fp.progress))
         self.states.step = TransactionStep.SENDING_EOF
+        return True
 
     def _notice_of_suspension(self):
         # TODO: Implement
@@ -978,7 +979,7 @@ class SourceHandler:
             assert self._put_req is not None
             assert self._put_req.source_file is not None
             crc = self._crc_helper.calc_for_file(
-                file=self._put_req.source_file,
+                file_path=self._put_req.source_file,
                 file_sz=size_to_calculate,
                 segment_len=self._params.fp.segment_len,
             )

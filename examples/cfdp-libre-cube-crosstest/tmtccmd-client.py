@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """This example shows a end-to-end transfer of a small file using the CFDP high level
 components provided by the tmtccmd package."""
+import select
+import socket
 import copy
 import argparse
 from datetime import timedelta
@@ -10,19 +12,15 @@ import os
 import threading
 import time
 from logging import basicConfig
-from multiprocessing import Queue
 from pathlib import Path
 from queue import Empty
 from typing import Any
 
-from spacepackets.cfdp import GenericPduPacket
 from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
-from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
 from spacepackets.util import ByteFieldU16, UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState, TransactionId
-from tmtccmd.cfdp.handler.dest import DestHandler
-from tmtccmd.cfdp.handler.source import SourceHandler
+from tmtccmd.cfdp.handler.source import SourceHandler, InvalidSourceId
 from tmtccmd.cfdp.mib import (
     CheckTimerProvider,
     DefaultFaultHandlerBase,
@@ -30,7 +28,6 @@ from tmtccmd.cfdp.mib import (
     IndicationCfg,
     LocalEntityCfg,
     RemoteEntityCfg,
-    RemoteEntityCfgTable,
 )
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import (
@@ -41,15 +38,19 @@ from tmtccmd.cfdp.user import (
 )
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.util.seqcnt import SeqCountProvider
+from spacepackets.cfdp.pdu.helper import PduFactory
+from common import SOURCE_ENTITY_ID as SOURCE_ENTITY_ID_RAW
+from common import REMOTE_ENTITY_ID as REMOTE_ENTITY_ID_RAW
+from common import UDP_SERVER_PORT, UDP_TM_SERVER_PORT
 
-SOURCE_ENTITY_ID = ByteFieldU16(1)
-DEST_ENTITY_ID = ByteFieldU16(2)
+SOURCE_ENTITY_ID = ByteFieldU16(SOURCE_ENTITY_ID_RAW)
+DEST_ENTITY_ID = ByteFieldU16(REMOTE_ENTITY_ID_RAW)
 
-FILE_CONTENT = "Hello World!\n"
+FILE_CONTENT = "Hello World!"
 FILE_SEGMENT_SIZE = len(FILE_CONTENT)
 MAX_PACKET_LEN = 512
-SOURCE_FILE = Path("/tmp/cfdp-test-source.txt")
-DEST_FILE = Path("/tmp/cfdp-test-dest.txt")
+SOURCE_FILE = Path("files/local.txt")
+DEST_FILE = Path("files/remote.txt")
 
 
 @dataclass
@@ -69,14 +70,10 @@ REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
     closure_requested=True,
     crc_on_transmission=False,
     default_transmission_mode=TransmissionMode.ACKNOWLEDGED,
-    crc_type=ChecksumType.CRC_32,
+    crc_type=ChecksumType.MODULAR,
 )
 REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
 REMOTE_CFG_FOR_DEST_ENTITY.entity_id = DEST_ENTITY_ID
-
-# These queues will be used to exchange PDUs between threads.
-SOURCE_TO_DEST_QUEUE = Queue()
-DEST_TO_SOURCE_QUEUE = Queue()
 
 
 class CfdpFaultHandler(DefaultFaultHandlerBase):
@@ -192,13 +189,11 @@ class CustomCheckTimerProvider(CheckTimerProvider):
 
 def main():
     help_txt = (
-        "This mini application shows the source and destination entity handlers in action. "
-        "You can configure the transmission mode with the -t argument, which defaults to the "
-        "acknowledged mode. It is also possible to increase the verbosity level to print all "
-        "packets being exchanged."
+        "This mini application cross tests the tmtccmd CFDP support and the LibreCube CFDP "
+        "implementation "
     )
     parser = argparse.ArgumentParser(
-        prog="CFDP File Copy Example Application", description=help_txt
+        prog="CFDP Libre Cube Cross Testing Application", description=help_txt
     )
     parser.add_argument("-t", "--type", choices=["nak", "ack"], default="ack")
     parser.add_argument("-v", "--verbose", action="count", default=0)
@@ -220,8 +215,6 @@ def main():
     # If the test files already exist, delete them.
     if SOURCE_FILE.exists():
         os.remove(SOURCE_FILE)
-    if DEST_FILE.exists():
-        os.remove(DEST_FILE)
     with open(SOURCE_FILE, "w") as file:
         file.write(FILE_CONTENT)
 
@@ -241,45 +234,29 @@ def main():
         user=src_user,
         check_timer_provider=check_timer_provider,
     )
+
+    udp_client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    udp_tm_server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+    udp_tm_server.bind(("127.0.0.1", UDP_TM_SERVER_PORT))
+    udp_tm_server.setblocking(False)
+
     # Spawn a new thread and move the source handler there. This is scalable: If multiple number
     # of concurrent file operations are required, a new thread with a new source handler can
     # be spawned for each one.
     source_thread = threading.Thread(
-        target=source_entity_handler, args=[transfer_params, source_handler]
-    )
-
-    # Enable all indications.
-    dest_indication_cfg = IndicationCfg()
-    dest_fault_handler = CfdpFaultHandler()
-    dest_entity_cfg = LocalEntityCfg(
-        DEST_ENTITY_ID, dest_indication_cfg, dest_fault_handler
-    )
-    dest_user = CfdpUser("DEST ENTITY")
-    remote_cfg_table = RemoteEntityCfgTable()
-    remote_cfg_table.add_config(REMOTE_CFG_FOR_SOURCE_ENTITY)
-    dest_handler = DestHandler(
-        cfg=dest_entity_cfg,
-        user=dest_user,
-        remote_cfg_table=remote_cfg_table,
-        check_timer_provider=check_timer_provider,
-    )
-    # Spawn a new thread and move the destination handler there. This is scalable. One example
-    # approach could be to keep a dictionary of active file copy operations, where the transaction
-    # ID is the key. If a new Metadata PDU with a new transaction ID is detected, a new
-    # destination handler in a new thread could be spawned to handle the file copy operation.
-    dest_thread = threading.Thread(
-        target=dest_entity_handler, args=[transfer_params, dest_handler]
+        target=source_entity_handler,
+        args=[udp_client, udp_tm_server, transfer_params, source_handler],
     )
 
     source_thread.start()
-    dest_thread.start()
     source_thread.join()
-    dest_thread.join()
 
     src_file_content = None
     with open(SOURCE_FILE) as file:
         src_file_content = file.read()
     dest_file_content = None
+    if not DEST_FILE.exists():
+        raise ValueError("Destination file does not exist!")
     with open(DEST_FILE) as file:
         dest_file_content = file.read()
     assert src_file_content == dest_file_content
@@ -292,7 +269,10 @@ def main():
 
 
 def source_entity_handler(
-    transfer_params: TransferParams, source_handler: SourceHandler
+    tc_client: socket.socket,
+    tm_client: socket.socket,
+    transfer_params: TransferParams,
+    source_handler: SourceHandler,
 ):
     # This put request could in principle also be sent from something like a front end application.
     put_request = PutRequest(
@@ -310,11 +290,17 @@ def source_entity_handler(
     assert source_handler.put_request(put_request, REMOTE_CFG_FOR_DEST_ENTITY)
     while True:
         try:
-            # We are getting the packets from a Queue here, they could for example also be polled
-            # from a network.
-            packet: AbstractFileDirectiveBase = DEST_TO_SOURCE_QUEUE.get(False)
-            source_handler.insert_packet(packet)
-            no_packet_received = False
+            ready = select.select([tm_client], [], [], 0)
+            if ready[0]:
+                data, _ = tm_client.recvfrom(4096)
+                packet = PduFactory.from_raw(data)
+                try:
+                    source_handler.insert_packet(packet)
+                except InvalidSourceId:
+                    _LOGGER.warning(f"invalid source ID in packet {packet}")
+                no_packet_received = False
+            else:
+                no_packet_received = True
         except Empty:
             no_packet_received = True
         fsm_result = source_handler.state_machine()
@@ -326,7 +312,9 @@ def source_entity_handler(
                 if transfer_params.verbose_level >= 1:
                     _LOGGER.debug(f"SRC Handler: Sending packet {next_pdu_wrapper.pdu}")
                 # Send all packets which need to be sent.
-                SOURCE_TO_DEST_QUEUE.put(next_pdu_wrapper.pdu)
+                tc_client.sendto(
+                    next_pdu_wrapper.pdu.pack(), ("127.0.0.1", UDP_SERVER_PORT)
+                )
             no_packet_sent = False
         else:
             no_packet_sent = True
@@ -337,43 +325,6 @@ def source_entity_handler(
         if fsm_result.states.state == CfdpState.IDLE:
             _LOGGER.info("Source entity operation done.")
             break
-
-
-def dest_entity_handler(transfer_params: TransferParams, dest_handler: DestHandler):
-    first_packet = True
-    no_packet_received = False
-    while True:
-        try:
-            packet: GenericPduPacket = SOURCE_TO_DEST_QUEUE.get(False)
-            dest_handler.insert_packet(packet)
-            no_packet_received = False
-            if first_packet:
-                first_packet = False
-        except Empty:
-            no_packet_received = True
-        fsm_result = dest_handler.state_machine()
-        if fsm_result.states.num_packets_ready > 0:
-            no_packet_sent = False
-            while fsm_result.states.num_packets_ready > 0:
-                next_pdu_wrapper = dest_handler.get_next_packet()
-                assert next_pdu_wrapper is not None
-                if transfer_params.verbose_level >= 1:
-                    _LOGGER.debug(
-                        f"DEST Handler: Sending packet {next_pdu_wrapper.pdu}"
-                    )
-                DEST_TO_SOURCE_QUEUE.put(next_pdu_wrapper.pdu)
-        else:
-            no_packet_sent = True
-        # If there is no work to do, put the thread to sleep.
-        if no_packet_received and no_packet_sent:
-            time.sleep(0.5)
-        # Transaction done
-        if not first_packet and fsm_result.states.state == CfdpState.IDLE:
-            _LOGGER.info("Destination entity operation done.")
-            break
-    with open(DEST_FILE) as file:
-        file_content = file.read()
-        print(f"File content of destination file {DEST_FILE}: {file_content}")
 
 
 if __name__ == "__main__":

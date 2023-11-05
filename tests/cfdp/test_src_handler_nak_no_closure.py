@@ -9,12 +9,13 @@ from spacepackets.cfdp import (
     ConditionCode,
     PduType,
     TransmissionMode,
+    TransactionId,
 )
-from spacepackets.cfdp.pdu import FileDataPdu, FileDeliveryStatus, DeliveryCode
+from spacepackets.cfdp.pdu import FileDataPdu, FileStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from spacepackets.util import ByteFieldU16, ByteFieldU8
-from tmtccmd.cfdp.defs import CfdpState, TransactionId
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler import FsmResult
 from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequest
@@ -153,7 +154,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
             transaction_id=expected_id,
             finished_params=FinishedParams(
                 condition_code=ConditionCode.NO_ERROR,
-                delivery_status=FileDeliveryStatus.FILE_STATUS_UNREPORTED,
+                file_status=FileStatus.FILE_STATUS_UNREPORTED,
                 delivery_code=DeliveryCode.DATA_COMPLETE,
             ),
         )

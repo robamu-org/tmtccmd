@@ -15,11 +15,11 @@ from spacepackets.cfdp import (
     NULL_CHECKSUM_U32,
     ConditionCode,
     ChecksumType,
+    TransactionId,
 )
 from spacepackets.cfdp.pdu import DirectiveType, EofPdu, FileDataPdu, MetadataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
-from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg
-from tmtccmd.cfdp.defs import CfdpState, TransactionId
+from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg, CfdpState
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.handler.defs import UnretrievedPdusToBeSent
 from tmtccmd.cfdp.handler.source import TransactionStep

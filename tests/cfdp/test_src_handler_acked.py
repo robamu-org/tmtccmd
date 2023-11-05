@@ -13,17 +13,17 @@ from spacepackets.cfdp import (
     PduConfig,
     PduType,
     TransmissionMode,
+    FinishedParams,
 )
 from spacepackets.cfdp.pdu import (
     AckPdu,
     DeliveryCode,
     EofPdu,
-    FileDeliveryStatus,
+    FileStatus,
     FinishedPdu,
     NakPdu,
     TransactionStatus,
 )
-from spacepackets.cfdp.pdu.finished import FinishedParams
 
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.source import TransactionStep
@@ -244,7 +244,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
             pdu_conf,
             FinishedParams(
                 DeliveryCode.DATA_COMPLETE,
-                FileDeliveryStatus.FILE_RETAINED,
+                FileStatus.FILE_RETAINED,
                 ConditionCode.NO_ERROR,
             ),
         )
