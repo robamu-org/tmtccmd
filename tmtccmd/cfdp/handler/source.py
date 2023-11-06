@@ -1,12 +1,12 @@
 from __future__ import annotations
-from collections import deque
+
 import enum
 import logging
+from collections import deque
 from dataclasses import dataclass
 from typing import Deque, Optional, Tuple
 
 import deprecation
-
 from spacepackets.cfdp import (
     CrcFlag,
     GenericPduPacket,
@@ -34,22 +34,19 @@ from spacepackets.cfdp.pdu import (
     AbstractFileDirectiveBase,
     TransactionStatus,
 )
-from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.cfdp.pdu.file_data import (
     FileDataParams,
     get_max_file_seg_len_for_max_packet_len_and_pdu_cfg,
 )
+from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField, ByteFieldGenerator
+
 from tmtccmd.cfdp import (
     LocalEntityCfg,
     CfdpUserBase,
     RemoteEntityCfg,
 )
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler.crc import CrcHelper
-from tmtccmd.cfdp.handler.defs import (
-    _FileParamsBase,
-)
 from tmtccmd.cfdp.exceptions import (
     InvalidNakPdu,
     InvalidTransactionSeqNum,
@@ -60,19 +57,22 @@ from tmtccmd.cfdp.exceptions import (
     InvalidDestinationId,
     NoRemoteEntityCfgFound,
     FsmNotCalledAfterPacketInsertion,
-)
-from tmtccmd.cfdp.handler.exceptions import (
     PduIgnoredForSource,
     PduIgnoredAtSourceReason,
     InvalidPduForSourceHandler,
 )
 from tmtccmd.cfdp.handler.common import _PositiveAckProcedureParams
+from tmtccmd.cfdp.handler.crc import CrcHelper
+from tmtccmd.cfdp.handler.defs import (
+    _FileParamsBase,
+)
 from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.version import get_version
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -451,8 +451,8 @@ class SourceHandler:
 
         Raises
         --------
-        PacketSendNotConfirmed
-            The FSM generated a packet to be sent but the packet send was not confirmed
+        UnretrievedPdusToBeSent
+            There are still PDUs which need to be sent before calling the FSM again.
         ChecksumNotImplemented
             Right now, only a subset of the checksums specified for the CFDP standard are implemented.
         SourceFileDoesNotExist
