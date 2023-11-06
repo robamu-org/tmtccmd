@@ -17,6 +17,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 ## Changed
 
+- All CFDP exceptions are now exposed via the `tmtccmd.cfdp.exceptions` module.
 - Both CFDP source destination handler now expect a `RemoteEntityCfgTable` for remote configuration
   setup.
 - CFDP source and dest handler now both have the `entity_id` property to retrieve the local ID.
