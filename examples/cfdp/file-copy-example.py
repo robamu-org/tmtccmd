@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """This example shows a end-to-end transfer of a small file using the CFDP high level
 components provided by the tmtccmd package."""
-import copy
 import argparse
-from datetime import timedelta
-from dataclasses import dataclass
+import copy
 import logging
 import os
 import threading
 import time
+from dataclasses import dataclass
+from datetime import timedelta
 from logging import basicConfig
 from multiprocessing import Queue
 from pathlib import Path
 from queue import Empty
 from typing import Any
 
-from spacepackets.cfdp import GenericPduPacket
+from spacepackets.cfdp import GenericPduPacket, TransactionId
 from spacepackets.cfdp.defs import ChecksumType, ConditionCode, TransmissionMode
 from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
 from spacepackets.util import ByteFieldU16, UnsignedByteField
 
-from tmtccmd.cfdp.defs import CfdpState, TransactionId
+from tmtccmd.cfdp import CfdpState
 from tmtccmd.cfdp.handler.dest import DestHandler
 from tmtccmd.cfdp.handler.source import SourceHandler
 from tmtccmd.cfdp.mib import (
