@@ -255,18 +255,17 @@ class SourceEntityHandler(Thread):
         self.tm_queue = tm_queue
 
     def _idle_handling(self) -> bool:
-        if self.source_handler.state == CfdpState.IDLE:
-            try:
-                put_req: PutRequest = self.put_req_queue.get(False)
-                _LOGGER.info(f"{self.base_str}: Handling Put Request: {put_req}")
-                if put_req.destination_id != REMOTE_ENTITY_ID:
-                    _LOGGER.warning(
-                        f"can only handle put requests target towards {REMOTE_ENTITY_ID}"
-                    )
-                else:
-                    self.source_handler.put_request(put_req, REMOTE_CFG_OF_LOCAL_ENTITY)
-            except Empty:
-                return False
+        try:
+            put_req: PutRequest = self.put_req_queue.get(False)
+            _LOGGER.info(f"{self.base_str}: Handling Put Request: {put_req}")
+            if put_req.destination_id != REMOTE_ENTITY_ID:
+                _LOGGER.warning(
+                    f"can only handle put requests target towards {REMOTE_ENTITY_ID}"
+                )
+            else:
+                self.source_handler.put_request(put_req, REMOTE_CFG_OF_LOCAL_ENTITY)
+        except Empty:
+            return False
 
     def _busy_handling(self):
         # We are getting the packets from a Queue here, they could for example also be polled
@@ -302,11 +301,13 @@ class SourceEntityHandler(Thread):
     def run(self):
         _LOGGER.info(f"Starting {self.base_str}")
         while True:
-            if not self._idle_handling():
-                time.sleep(0.2)
-                continue
-            if not self._busy_handling():
-                time.sleep(0.2)
+            if self.source_handler.state == CfdpState.IDLE:
+                if not self._idle_handling():
+                    time.sleep(0.2)
+                    continue
+            if self.source_handler.state == CfdpState.BUSY:
+                if not self._busy_handling():
+                    time.sleep(0.2)
 
 
 class DestEntityHandler(Thread):

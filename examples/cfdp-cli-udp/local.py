@@ -5,7 +5,6 @@ import logging
 from logging import basicConfig
 from multiprocessing import Queue
 
-from spacepackets.cfdp import TransmissionMode
 
 from common import (
     INDICATION_CFG,
