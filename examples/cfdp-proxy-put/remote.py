@@ -2,40 +2,35 @@
 """This component simulates the remote component."""
 import argparse
 import logging
-import os
-import threading
 from logging import basicConfig
 from multiprocessing import Queue
-from pathlib import Path
 
+from common import (
+    INDICATION_CFG,
+    REMOTE_ENTITY_ID,
+    REMOTE_PORT,
+    REMOTE_CFG_OF_LOCAL_ENTITY,
+    CfdpFaultHandler,
+    CfdpUser,
+    CustomCheckTimerProvider,
+    DestEntityHandler,
+    SourceEntityHandler,
+    UdpServer,
+)
 
 from tmtccmd.cfdp.handler.dest import DestHandler
 from tmtccmd.cfdp.handler.source import SourceHandler
 from tmtccmd.cfdp.mib import (
-    IndicationCfg,
     LocalEntityCfg,
     RemoteEntityCfgTable,
 )
 from tmtccmd.util.seqcnt import SeqCountProvider
-from common import (
-    CfdpUser,
-    CfdpFaultHandler,
-    CustomCheckTimerProvider,
-    SourceEntityHandler,
-    DestEntityHandler,
-    UdpServer,
-    REMOTE_ENTITY_ID,
-    INDICATION_CFG,
-    FILE_CONTENT,
-    REMOTE_PORT,
-)
-
-SOURCE_FILE = Path("/tmp/cfdp-test-source.txt")
-DEST_FILE = Path("/tmp/cfdp-test-dest.txt")
-
 
 _LOGGER = logging.getLogger()
 
+
+BASE_STR_SRC = "REMOTE SRC ENTITY"
+BASE_STR_DEST = "REMOTE DEST ENTITY"
 
 # This queue is used to send put requests.
 PUT_REQ_QUEUE = Queue()
@@ -50,10 +45,6 @@ DEST_ENTITY_QUEUE = Queue()
 TM_QUEUE = Queue()
 
 
-FAULT_HANDLER = CfdpFaultHandler()
-REMOTE_ENTITY_CFG = LocalEntityCfg(REMOTE_ENTITY_ID, INDICATION_CFG, FAULT_HANDLER)
-
-
 def main():
     parser = argparse.ArgumentParser(prog="CFDP Remote Entity Application")
     parser.add_argument("-v", "--verbose", action="count", default=0)
@@ -64,64 +55,44 @@ def main():
         logging_level = logging.DEBUG
     basicConfig(level=logging_level)
 
-    # If the test files already exist, delete them.
-    if SOURCE_FILE.exists():
-        os.remove(SOURCE_FILE)
-    if DEST_FILE.exists():
-        os.remove(DEST_FILE)
-    with open(SOURCE_FILE, "w") as file:
-        file.write(FILE_CONTENT)
-
+    src_fault_handler = CfdpFaultHandler(BASE_STR_SRC)
     # 16 bit sequence count for transactions.
     src_seq_count_provider = SeqCountProvider(16)
-    src_user = CfdpUser("REMOTE SRC ENTITY")
+    src_user = CfdpUser(BASE_STR_SRC)
     check_timer_provider = CustomCheckTimerProvider()
     source_handler = SourceHandler(
-        cfg=REMOTE_ENTITY_ID,
+        cfg=LocalEntityCfg(REMOTE_ENTITY_ID, INDICATION_CFG, src_fault_handler),
         seq_num_provider=src_seq_count_provider,
         user=src_user,
         check_timer_provider=check_timer_provider,
     )
     source_entity_task = SourceEntityHandler(
-        "REMOTE SRC ENTITY",
+        BASE_STR_SRC,
         logging_level,
         source_handler,
         PUT_REQ_QUEUE,
         SOURCE_ENTITY_QUEUE,
         TM_QUEUE,
     )
-    # Spawn a new thread and move the source handler there. This is scalable: If multiple number
-    # of concurrent file operations are required, a new thread with a new source handler can
-    # be spawned for each one.
-    source_thread = threading.Thread(target=source_entity_task)
 
     # Enable all indications.
-    dest_indication_cfg = IndicationCfg()
-    dest_fault_handler = CfdpFaultHandler()
-    dest_entity_cfg = LocalEntityCfg(
-        REMOTE_ENTITY_ID, dest_indication_cfg, dest_fault_handler
-    )
-    dest_user = CfdpUser("REMOTE DEST ENTITY")
+    dest_fault_handler = CfdpFaultHandler(BASE_STR_DEST)
+    dest_user = CfdpUser(BASE_STR_DEST)
     remote_cfg_table = RemoteEntityCfgTable()
-    remote_cfg_table.add_config()
+    remote_cfg_table.add_config(REMOTE_CFG_OF_LOCAL_ENTITY)
     dest_handler = DestHandler(
-        cfg=dest_entity_cfg,
+        cfg=LocalEntityCfg(REMOTE_ENTITY_ID, INDICATION_CFG, dest_fault_handler),
         user=dest_user,
         remote_cfg_table=remote_cfg_table,
         check_timer_provider=check_timer_provider,
     )
-    dest_entity_handler = DestEntityHandler(
-        "REMOTE DEST ENTITY",
+    dest_entity_task = DestEntityHandler(
+        BASE_STR_DEST,
         logging_level,
         dest_handler,
         DEST_ENTITY_QUEUE,
         TM_QUEUE,
     )
-    # Spawn a new thread and move the destination handler there. This is scalable. One example
-    # approach could be to keep a dictionary of active file copy operations, where the transaction
-    # ID is the key. If a new Metadata PDU with a new transaction ID is detected, a new
-    # destination handler in a new thread could be spawned to handle the file copy operation.
-    dest_thread = threading.Thread(target=dest_entity_handler)
 
     udp_server = UdpServer(
         0.1,
@@ -130,14 +101,13 @@ def main():
         SOURCE_ENTITY_QUEUE,
         DEST_ENTITY_QUEUE,
     )
-    udp_thread = threading.Thread(udp_server)
 
-    source_thread.start()
-    dest_thread.start()
-    source_thread.join()
-    dest_thread.join()
-    udp_thread.start()
-    udp_thread.join()
+    source_entity_task.start()
+    dest_entity_task.start()
+    udp_server.start()
+    source_entity_task.join()
+    dest_entity_task.join()
+    udp_server.join()
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ import socket
 import logging
 import copy
 
-from time import timedelta
+from datetime import timedelta
 from spacepackets.cfdp import GenericPduPacket
 from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
 from spacepackets.cfdp import (
@@ -189,8 +189,10 @@ class UdpServer(Thread):
         source_entity_queue: Queue,
         dest_entity_queue: Queue,
     ):
+        super().__init__()
         self.sleep_time = sleep_time
         self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.addr = addr
         self.udp_socket.bind(addr)
         self.last_sender: Optional[Tuple[str, int]] = None
         self.tm_queue = tm_queue
@@ -198,8 +200,10 @@ class UdpServer(Thread):
         self.dest_entity_queue = dest_entity_queue
 
     def run(self):
-        self.periodic_operation()
-        time.sleep(self.sleep_time)
+        _LOGGER.info(f"Starting UDP server on {self.addr}")
+        while True:
+            self.periodic_operation()
+            time.sleep(self.sleep_time)
 
     def periodic_operation(self) -> bool:
         while True:
@@ -243,6 +247,7 @@ class SourceEntityHandler(Thread):
         source_entity_queue: Queue,
         tm_queue: Queue,
     ):
+        super().__init__()
         self.base_str = base_str
         self.verbose_level = verbose_level
         self.source_handler = source_handler
@@ -296,6 +301,7 @@ class SourceEntityHandler(Thread):
             return False
 
     def run(self):
+        _LOGGER.info(f"Starting {self.base_str}")
         while True:
             if not self._idle_handling():
                 time.sleep(0.2)
@@ -309,17 +315,19 @@ class DestEntityHandler(Thread):
         self,
         base_str: str,
         verbose_level: int,
-        source_handler: DestHandler,
+        dest_handler: DestHandler,
         dest_entity_queue: Queue,
         tm_queue: Queue,
     ):
+        super().__init__()
         self.base_str = base_str
         self.verbose_level = verbose_level
-        self.source_handler = source_handler
+        self.dest_handler = dest_handler
         self.dest_entity_queue = dest_entity_queue
         self.tm_queue = tm_queue
 
     def run(self):
+        _LOGGER.info(f"Starting {self.base_str}")
         first_packet = True
         no_packet_received = False
         while True:
