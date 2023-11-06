@@ -58,7 +58,7 @@ from tmtccmd.cfdp.exceptions import (
     NoRemoteEntityCfgFound,
     FsmNotCalledAfterPacketInsertion,
     PduIgnoredForSource,
-    PduIgnoredAtSourceReason,
+    PduIgnoredForSourceReason,
     InvalidPduForSourceHandler,
 )
 from tmtccmd.cfdp.handler.common import _PositiveAckProcedureParams
@@ -366,7 +366,7 @@ class SourceHandler:
             :py:meth:`state_machine` was not called after packet insertion.
         InvalidPduForSourceHandler
             Invalid PDU file directive type.
-        PduIgnoredAtSource
+        PduIgnoredForSource
             The specified PDU can not be handled in the current state.
         NoRemoteEntityCfgFound
             No remote configuration found for specified destination entity.
@@ -409,7 +409,7 @@ class SourceHandler:
             or packet.directive_type == DirectiveType.NAK_PDU
         ):
             raise PduIgnoredForSource(
-                reason=PduIgnoredAtSourceReason.ACK_MODE_PACKET_INVALID_MODE,
+                reason=PduIgnoredForSourceReason.ACK_MODE_PACKET_INVALID_MODE,
                 ignored_packet=packet,
             )
         if packet.directive_type != DirectiveType.NAK_PDU:
@@ -418,7 +418,7 @@ class SourceHandler:
                 and packet.directive_type != DirectiveType.ACK_PDU
             ):
                 raise PduIgnoredForSource(
-                    reason=PduIgnoredAtSourceReason.NOT_WAITING_FOR_ACK,
+                    reason=PduIgnoredForSourceReason.NOT_WAITING_FOR_ACK,
                     ignored_packet=packet,
                 )
             if (
@@ -426,7 +426,7 @@ class SourceHandler:
                 and packet.directive_type != DirectiveType.FINISHED_PDU
             ):
                 raise PduIgnoredForSource(
-                    reason=PduIgnoredAtSourceReason.NOT_WAITING_FOR_FINISHED_PDU,
+                    reason=PduIgnoredForSourceReason.NOT_WAITING_FOR_FINISHED_PDU,
                     ignored_packet=packet,
                 )
         self._inserted_pdu.pdu = packet

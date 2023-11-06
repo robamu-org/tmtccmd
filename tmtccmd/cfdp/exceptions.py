@@ -117,7 +117,7 @@ class InvalidPduForSourceHandler(Exception):
         super().__init__(f"Invalid packet {self.packet} for source handler")
 
 
-class PduIgnoredAtSourceReason(enum.IntEnum):
+class PduIgnoredForSourceReason(enum.IntEnum):
     # The received PDU can only be used for acknowledged mode.
     ACK_MODE_PACKET_INVALID_MODE = 0
     # Received a Finished PDU, but source handler is currently not expecting one.
@@ -129,7 +129,7 @@ class PduIgnoredAtSourceReason(enum.IntEnum):
 class PduIgnoredForSource(Exception):
     def __init__(
         self,
-        reason: PduIgnoredAtSourceReason,
+        reason: PduIgnoredForSourceReason,
         ignored_packet: AbstractFileDirectiveBase,
     ):
         self.ignored_packet = ignored_packet
