@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""This component simulates the local component."""
+"""This component simulates the remote component."""
 import argparse
 import logging
-import threading
 from logging import basicConfig
 from multiprocessing import Queue
 
 from common import (
     INDICATION_CFG,
-    LOCAL_ENTITY_ID,
+    REMOTE_ENTITY_ID,
+    REMOTE_PORT,
     LOCAL_PORT,
+    REMOTE_CFG_OF_LOCAL_ENTITY,
     CfdpFaultHandler,
     CfdpUser,
     CustomCheckTimerProvider,
@@ -28,8 +29,9 @@ from tmtccmd.util.seqcnt import SeqCountProvider
 
 _LOGGER = logging.getLogger()
 
-BASE_STR_SRC = "LOCAL SRC ENTITY"
-BASE_STR_DEST = "LOCAL DEST ENTITY"
+
+BASE_STR_SRC = "REMOTE SRC ENTITY"
+BASE_STR_DEST = "REMOTE DEST ENTITY"
 
 # This queue is used to send put requests.
 PUT_REQ_QUEUE = Queue()
@@ -39,17 +41,13 @@ SOURCE_ENTITY_QUEUE = Queue()
 # All telecommands which should go to the destination handler should be put into this queue by
 # the UDP server.
 DEST_ENTITY_QUEUE = Queue()
-# All telemetry which should be sent to the remote entity is put into this queue and will then
+# All telemetry which should be sent to the local entity is put into this queue and will then
 # be sent by the UDP server.
 TM_QUEUE = Queue()
 
 
-FAULT_HANDLER = CfdpFaultHandler()
-REMOTE_ENTITY_CFG = LocalEntityCfg(LOCAL_ENTITY_ID, INDICATION_CFG, FAULT_HANDLER)
-
-
 def main():
-    parser = argparse.ArgumentParser(prog="CFDP Local Entity Application")
+    parser = argparse.ArgumentParser(prog="CFDP Remote Entity Application")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     args = parser.parse_args()
     if args.verbose == 0:
@@ -64,7 +62,7 @@ def main():
     src_user = CfdpUser(BASE_STR_SRC)
     check_timer_provider = CustomCheckTimerProvider()
     source_handler = SourceHandler(
-        cfg=LocalEntityCfg(LOCAL_ENTITY_ID, INDICATION_CFG, src_fault_handler),
+        cfg=LocalEntityCfg(REMOTE_ENTITY_ID, INDICATION_CFG, src_fault_handler),
         seq_num_provider=src_seq_count_provider,
         user=src_user,
         check_timer_provider=check_timer_provider,
@@ -82,9 +80,9 @@ def main():
     dest_fault_handler = CfdpFaultHandler(BASE_STR_DEST)
     dest_user = CfdpUser(BASE_STR_DEST)
     remote_cfg_table = RemoteEntityCfgTable()
-    remote_cfg_table.add_config()
+    remote_cfg_table.add_config(REMOTE_CFG_OF_LOCAL_ENTITY)
     dest_handler = DestHandler(
-        cfg=LocalEntityCfg(LOCAL_ENTITY_ID, INDICATION_CFG, dest_fault_handler),
+        cfg=LocalEntityCfg(REMOTE_ENTITY_ID, INDICATION_CFG, dest_fault_handler),
         user=dest_user,
         remote_cfg_table=remote_cfg_table,
         check_timer_provider=check_timer_provider,
@@ -99,6 +97,7 @@ def main():
 
     udp_server = UdpServer(
         0.1,
+        ("127.0.0.1", REMOTE_PORT),
         ("127.0.0.1", LOCAL_PORT),
         TM_QUEUE,
         SOURCE_ENTITY_QUEUE,
@@ -108,7 +107,6 @@ def main():
     source_entity_task.start()
     dest_entity_task.start()
     udp_server.start()
-
     source_entity_task.join()
     dest_entity_task.join()
     udp_server.join()

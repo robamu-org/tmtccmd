@@ -185,19 +185,20 @@ class UdpServer(Thread):
         self,
         sleep_time: float,
         addr: Tuple[str, int],
-        tm_queue: Queue,
-        source_entity_queue: Queue,
-        dest_entity_queue: Queue,
+        remote: Tuple[str, int],
+        tx_queue: Queue,
+        source_entity_rx_queue: Queue,
+        dest_entity_rx_queue: Queue,
     ):
         super().__init__()
         self.sleep_time = sleep_time
         self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.addr = addr
         self.udp_socket.bind(addr)
-        self.last_sender: Optional[Tuple[str, int]] = None
-        self.tm_queue = tm_queue
-        self.source_entity_queue = source_entity_queue
-        self.dest_entity_queue = dest_entity_queue
+        self.remote = remote
+        self.tm_queue = tx_queue
+        self.source_entity_queue = source_entity_rx_queue
+        self.dest_entity_queue = dest_entity_rx_queue
 
     def run(self):
         _LOGGER.info(f"Starting UDP server on {self.addr}")
@@ -216,8 +217,7 @@ class UdpServer(Thread):
                 self.dest_entity_queue.put(next_packet.pdu)
             elif packet_dest == PacketDestination.SOURCE_HANDLER:
                 self.source_entity_queue.put(next_packet.pdu)
-        if self.last_sender is not None:
-            self.send_telemetry()
+        self.send_packets()
 
     def poll_next_udp_packet(self) -> Optional[PduHolder]:
         ready = select.select([self.udp_socket], [], [], 0)
@@ -226,13 +226,12 @@ class UdpServer(Thread):
             return PduFactory.from_raw_to_holder(data)
         return None
 
-    def send_telemetry(self) -> bool:
-        assert self.last_sender is not None
+    def send_packets(self) -> bool:
         while True:
             try:
                 next_tm = self.tm_queue.get(False)
                 assert isinstance(next_tm, bytes) or isinstance(next_tm, bytearray)
-                self.udp_socket.sendto(next_tm, self.last_sender)
+                self.udp_socket.sendto(next_tm, self.remote)
             except Empty:
                 break
 
@@ -260,9 +259,9 @@ class SourceEntityHandler(Thread):
             try:
                 put_req: PutRequest = self.put_req_queue.get(False)
                 _LOGGER.info(f"{self.base_str}: Handling Put Request: {put_req}")
-                if put_req.destination_id != REMOTE_CFG_OF_LOCAL_ENTITY.entity_id:
+                if put_req.destination_id != REMOTE_ENTITY_ID:
                     _LOGGER.warning(
-                        f"can only handle put requests target towards {REMOTE_CFG_OF_LOCAL_ENTITY.entity_id}"
+                        f"can only handle put requests target towards {REMOTE_ENTITY_ID}"
                     )
                 else:
                     self.source_handler.put_request(put_req, REMOTE_CFG_OF_LOCAL_ENTITY)
@@ -327,7 +326,9 @@ class DestEntityHandler(Thread):
         self.tm_queue = tm_queue
 
     def run(self):
-        _LOGGER.info(f"Starting {self.base_str}")
+        _LOGGER.info(
+            f"Starting {self.base_str}. Local ID {self.dest_handler.cfg.local_entity_id}"
+        )
         first_packet = True
         no_packet_received = False
         while True:

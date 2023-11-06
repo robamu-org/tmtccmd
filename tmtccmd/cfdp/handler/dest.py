@@ -32,6 +32,7 @@ from spacepackets.cfdp.pdu.ack import TransactionStatus
 from spacepackets.cfdp.pdu.finished import DeliveryCode, FileStatus, FinishedParams
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
+from spacepackets.util import UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.exceptions import (
@@ -344,6 +345,10 @@ class DestHandler:
             ChecksumType.NULL_CHECKSUM, user.vfs
         )
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
+
+    @property
+    def entity_id(self) -> UnsignedByteField:
+        return self.cfg.local_entity_id
 
     @property
     def closure_requested(self) -> bool:

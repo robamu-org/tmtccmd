@@ -153,7 +153,7 @@ class TestCfdpSourceHandler(TestCase):
         self.source_id = ByteFieldU32(1)
         self.dest_id = ByteFieldU32(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
-        self.source_handler.source_id = self.source_id
+        self.source_handler.entity_id = self.source_id
         put_req = PutRequest(
             destination_id=self.dest_id,
             source_file=self.file_path,
@@ -172,7 +172,7 @@ class TestCfdpSourceHandler(TestCase):
         metadata_pdu, transaction_id = self._start_source_transaction(
             self.dest_id, put_req
         )
-        self.assertEqual(transaction_id.source_id, self.source_handler.source_id)
+        self.assertEqual(transaction_id.source_id, self.source_handler.entity_id)
         self.assertEqual(transaction_id.seq_num.value, 2)
         self.assertEqual(self.source_handler.transaction_seq_num.value, 2)
         fsm_res = self.source_handler.state_machine()

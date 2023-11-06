@@ -255,21 +255,21 @@ class SourceHandler:
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
 
     @property
+    def entity_id(self) -> UnsignedByteField:
+        return self.cfg.local_entity_id
+
+    @entity_id.setter
+    def entity_id(self, entity_id: UnsignedByteField):
+        self.cfg.local_entity_id = entity_id
+        self._params.source_id = entity_id
+
+    @property
     def transaction_seq_num(self) -> UnsignedByteField:
         return self.pdu_conf.transaction_seq_num
 
     @property
     def pdu_conf(self) -> PduConfig:
         return self._params.pdu_conf
-
-    @property
-    def source_id(self) -> UnsignedByteField:
-        return self.cfg.local_entity_id
-
-    @source_id.setter
-    def source_id(self, source_id: UnsignedByteField):
-        self.cfg.local_entity_id = source_id
-        self._params.source_id = source_id
 
     @property
     def positive_ack_counter(self) -> int:
@@ -383,8 +383,8 @@ class SourceHandler:
             raise InvalidPduDirection(
                 Direction.TOWARDS_SENDER, packet.pdu_header.direction
             )
-        if packet.source_entity_id.value != self.source_id.value:
-            raise InvalidSourceId(self.source_id, packet.source_entity_id)
+        if packet.source_entity_id.value != self.entity_id.value:
+            raise InvalidSourceId(self.entity_id, packet.source_entity_id)
         # TODO: This can happen if a packet is received for which no transaction was started..
         #       A better exception might be worth a thought..
         if self._params.remote_cfg is None:
