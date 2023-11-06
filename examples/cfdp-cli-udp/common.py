@@ -24,6 +24,7 @@ from tmtccmd.cfdp.user import (
     MetadataRecvParams,
     TransactionFinishedParams,
 )
+from tmtccmd.cfdp.exceptions import InvalidDestinationId
 
 from tmtccmd.cfdp import get_packet_destination, PacketDestination
 from tmtccmd.util.countdown import Countdown
@@ -230,7 +231,13 @@ class UdpServer(Thread):
         while True:
             try:
                 next_tm = self.tm_queue.get(False)
-                assert isinstance(next_tm, bytes) or isinstance(next_tm, bytearray)
+                if not isinstance(next_tm, bytes) and not isinstance(
+                    next_tm, bytearray
+                ):
+                    _LOGGER.error(
+                        f"UDP server can only sent bytearray, received {next_tm}"
+                    )
+                    continue
                 self.udp_socket.sendto(next_tm, self.remote)
             except Empty:
                 break
@@ -263,7 +270,7 @@ class SourceEntityHandler(Thread):
                     f"can only handle put requests target towards {REMOTE_ENTITY_ID}"
                 )
             else:
-                self.source_handler.put_request(put_req, REMOTE_CFG_OF_LOCAL_ENTITY)
+                self.source_handler.put_request(put_req)
         except Empty:
             return False
 
@@ -275,7 +282,13 @@ class SourceEntityHandler(Thread):
             # We are getting the packets from a Queue here, they could for example also be polled
             # from a network.
             packet: AbstractFileDirectiveBase = self.source_entity_queue.get(False)
-            self.source_handler.insert_packet(packet)
+            try:
+                self.source_handler.insert_packet(packet)
+            except InvalidDestinationId as e:
+                _LOGGER.warning(
+                    f"invalid destination ID {e.found_dest_id} on packet {packet}, expected "
+                    f"{e.expected_dest_id}"
+                )
             no_packet_received = False
         except Empty:
             no_packet_received = True
@@ -351,7 +364,7 @@ class DestEntityHandler(Thread):
                         _LOGGER.debug(
                             f"REMOTE DEST ENTITY: Sending packet {next_pdu_wrapper.pdu}"
                         )
-                    self.tm_queue.put(next_pdu_wrapper.pdu)
+                    self.tm_queue.put(next_pdu_wrapper.pack())
             else:
                 no_packet_sent = True
             # If there is no work to do, put the thread to sleep.

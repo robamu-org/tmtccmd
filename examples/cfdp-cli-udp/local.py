@@ -73,6 +73,9 @@ def main():
 
     basicConfig(level=logging_level)
 
+    remote_cfg_table = RemoteEntityCfgTable()
+    remote_cfg_table.add_config(REMOTE_CFG_OF_REMOTE_ENTITY)
+
     src_fault_handler = CfdpFaultHandler(BASE_STR_SRC)
     # 16 bit sequence count for transactions.
     src_seq_count_provider = SeqCountProvider(16)
@@ -81,6 +84,7 @@ def main():
     source_handler = SourceHandler(
         cfg=LocalEntityCfg(LOCAL_ENTITY_ID, INDICATION_CFG, src_fault_handler),
         seq_num_provider=src_seq_count_provider,
+        remote_cfg_table=remote_cfg_table,
         user=src_user,
         check_timer_provider=check_timer_provider,
     )
@@ -96,8 +100,6 @@ def main():
     # Enable all indications.
     dest_fault_handler = CfdpFaultHandler(BASE_STR_DEST)
     dest_user = CfdpUser(BASE_STR_DEST)
-    remote_cfg_table = RemoteEntityCfgTable()
-    remote_cfg_table.add_config(REMOTE_CFG_OF_REMOTE_ENTITY)
     dest_handler = DestHandler(
         cfg=LocalEntityCfg(LOCAL_ENTITY_ID, INDICATION_CFG, dest_fault_handler),
         user=dest_user,

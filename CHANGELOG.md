@@ -17,6 +17,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 ## Changed
 
+- Both CFDP source destination handler now expect a `RemoteEntityCfgTable` for remote configuration
+  setup.
 - CFDP source and dest handler now both have the `entity_id` property to retrieve the local ID.
 - CFDP handler transmission mode and CFDP state are separate from each other now. The
   transmission mode can be retrieved using a new `transmission_mode` property for both handlers,

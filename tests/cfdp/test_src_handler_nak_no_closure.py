@@ -39,7 +39,9 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_empty_file_explicit_nacked(self):
-        self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
+        self.default_remote_cfg.default_transmission_mode = (
+            TransmissionMode.ACKNOWLEDGED
+        )
         self._common_empty_file_test(
             transmission_mode=TransmissionMode.UNACKNOWLEDGED,
         )
@@ -127,7 +129,7 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
             closure_requested=None,
             msgs_to_user=[generic_tlv],
         )
-        self.source_handler.put_request(put_req, self.remote_cfg)
+        self.source_handler.put_request(put_req)
         fsm_res = self.source_handler.state_machine()
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None

@@ -1,3 +1,4 @@
+import copy
 import os
 from dataclasses import dataclass
 import tempfile
@@ -19,7 +20,13 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import DirectiveType, EofPdu, FileDataPdu, MetadataPdu
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
-from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg, CfdpState
+from tmtccmd.cfdp import (
+    IndicationCfg,
+    LocalEntityCfg,
+    RemoteEntityCfg,
+    CfdpState,
+    RemoteEntityCfgTable,
+)
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.exceptions import UnretrievedPdusToBeSent
 from tmtccmd.cfdp.handler.source import TransactionStep
@@ -65,6 +72,7 @@ class TestCfdpSourceHandler(TestCase):
         self.expected_mode = default_transmission_mode
         self.source_id = ByteFieldU16(1)
         self.dest_id = ByteFieldU16(2)
+        self.alternative_dest_id = ByteFieldU16(3)
         self.file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
         if self.file_path.exists():
             os.remove(self.file_path)
@@ -73,7 +81,7 @@ class TestCfdpSourceHandler(TestCase):
         self.file_segment_len = 64
         self.max_packet_len = 256
         self.positive_ack_intvl_seconds = 0.02
-        self.remote_cfg = RemoteEntityCfg(
+        self.default_remote_cfg = RemoteEntityCfg(
             entity_id=self.dest_id,
             max_packet_len=self.max_packet_len,
             max_file_segment_len=self.file_segment_len,
@@ -85,29 +93,36 @@ class TestCfdpSourceHandler(TestCase):
             crc_type=ChecksumType.CRC_32,
             check_limit=2,
         )
+        self.alternative_remote_cfg = copy.copy(self.default_remote_cfg)
+        self.alternative_remote_cfg.entity_id = self.alternative_dest_id
+        self.remote_cfg_table = RemoteEntityCfgTable()
+        self.remote_cfg_table.add_config(self.default_remote_cfg)
+        self.remote_cfg_table.add_config(self.alternative_remote_cfg)
         # Create an empty file and send it via CFDP
         self.source_handler = SourceHandler(
-            self.local_cfg,
-            self.seq_num_provider,
-            self.cfdp_user,
-            CheckTimerProviderForTest(),
+            cfg=self.local_cfg,
+            user=self.cfdp_user,
+            remote_cfg_table=self.remote_cfg_table,
+            seq_num_provider=self.seq_num_provider,
+            check_timer_provider=CheckTimerProviderForTest(),
         )
 
     def _common_empty_file_test(
         self, transmission_mode: Optional[TransmissionMode]
     ) -> Tuple[TransactionId, MetadataPdu, EofPdu]:
         dest_path = Path("/tmp/hello_copy.txt")
-        dest_id = ByteFieldU16(2)
         self.seq_num_provider.get_and_increment = MagicMock(return_value=3)
         put_req = PutRequest(
-            destination_id=dest_id,
+            destination_id=self.dest_id,
             source_file=self.file_path,
             dest_file=dest_path,
             # Let the transmission mode be auto-determined by the remote MIB
             trans_mode=transmission_mode,
             closure_requested=None,
         )
-        metadata_pdu, transaction_id = self._start_source_transaction(dest_id, put_req)
+        metadata_pdu, transaction_id = self._start_source_transaction(
+            self.dest_id, put_req
+        )
         eof_pdu = self._handle_eof_pdu(transaction_id, NULL_CHECKSUM_U32, 0)
         return transaction_id, metadata_pdu, eof_pdu
 
@@ -238,8 +253,7 @@ class TestCfdpSourceHandler(TestCase):
         dest_id: UnsignedByteField,
         put_request: PutRequest,
     ) -> Tuple[MetadataPdu, TransactionId]:
-        self.remote_cfg.entity_id = dest_id
-        self.source_handler.put_request(put_request, self.remote_cfg)
+        self.source_handler.put_request(put_request)
         fsm_res = self.source_handler.state_machine()
         self._state_checker(
             fsm_res,

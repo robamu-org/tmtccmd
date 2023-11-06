@@ -65,23 +65,6 @@ class InvalidSourceId(Exception):
         )
 
 
-class InvalidDestId(Exception):
-    """Invalid destination entity ID. This is not necessarily the sender of a packet but actually
-    the entity that is the recipient of a file copy operaiton, or the entity which is receiving a
-    file"""
-
-    def __init__(
-        self,
-        expected_dest_id: UnsignedByteField,
-        found_dest_id: UnsignedByteField,
-    ):
-        self.expected_dest_id = expected_dest_id
-        self.found_dest_id = found_dest_id
-        super().__init__(
-            f"expected destination {self.expected_dest_id}, got {self.found_dest_id}"
-        )
-
-
 class InvalidDestinationId(Exception):
     """Invalid destination entity ID. This is not necessarily the receiver of a packet but actually
     the recipient of a file, or the entity receiving file data and metadata PDUs"""

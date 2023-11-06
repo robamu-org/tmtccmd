@@ -66,7 +66,7 @@ from tmtccmd.cfdp.handler.crc import CrcHelper
 from tmtccmd.cfdp.handler.defs import (
     _FileParamsBase,
 )
-from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
+from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType, RemoteEntityCfgTable
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams
 from tmtccmd.util import ProvidesSeqCount
@@ -239,13 +239,15 @@ class SourceHandler:
     def __init__(
         self,
         cfg: LocalEntityCfg,
-        seq_num_provider: ProvidesSeqCount,
         user: CfdpUserBase,
+        remote_cfg_table: RemoteEntityCfgTable,
         check_timer_provider: CheckTimerProvider,
+        seq_num_provider: ProvidesSeqCount,
     ):
         self.states = SourceStateWrapper()
         self.cfg = cfg
         self.user = user
+        self.remote_cfg_table = remote_cfg_table
         self.seq_num_provider = seq_num_provider
         self.check_timer_provider = check_timer_provider
         self._params = _TransferFieldWrapper(cfg.local_entity_id)
@@ -297,7 +299,7 @@ class SourceHandler:
     def num_packets_ready(self) -> int:
         return self.states.num_packets_ready
 
-    def put_request(self, request: PutRequest, remote_cfg: RemoteEntityCfg):
+    def put_request(self, request: PutRequest):
         """You can call this function to pass a put request to the source handler, which is
         also used to start a file copy operation. As such, this function models the Put.request
         CFDP primtiive.
@@ -307,13 +309,23 @@ class SourceHandler:
         one file copy request at a time.
 
         :return: False if the handler is busy. True if the handling of the request was successfull.
-        :raise ValueError: Invalid transmission mode detected."""
+        Raises
+        --------
+
+        ValueError
+            Invalid transmission mode detected.
+        NoRemoteEntityCfgFound
+            No remote configuration found for destination ID specified in the Put Request.
+
+        """
         if self.states.state != CfdpState.IDLE:
             _LOGGER.debug("CFDP source handler is busy, can't process put request")
             return False
         self._put_req = request
-        self._params.remote_cfg = remote_cfg
-        self._params.dest_id = remote_cfg.entity_id
+        self._params.remote_cfg = self.remote_cfg_table.get_cfg(request.destination_id)
+        if self._params.remote_cfg is None:
+            raise NoRemoteEntityCfgFound(entity_id=request.destination_id)
+        self._params.dest_id = request.destination_id
         self.states._num_packets_ready = 0
         self.states.state = CfdpState.BUSY
         self._setup_transmission_mode()

@@ -38,7 +38,9 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_empty_file_pdu_generation_nacked_explicitely(self):
-        self.remote_cfg.default_transmission_mode = TransmissionMode.ACKNOWLEDGED
+        self.default_remote_cfg.default_transmission_mode = (
+            TransmissionMode.ACKNOWLEDGED
+        )
         self._common_empty_file_test(TransmissionMode.UNACKNOWLEDGED)
         self._pass_simple_finish_pdu_to_source_handler()
         # Transaction should be finished
@@ -108,8 +110,7 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(exception.expected_src_id, ByteFieldU16(1))
 
     def test_invalid_dest_id_pdu_passed(self):
-        dest_id = ByteFieldU16(3)
-        finish_pdu = self._regular_transaction_start(dest_id)
+        finish_pdu = self._regular_transaction_start(self.alternative_dest_id)
         finish_pdu.pdu_file_directive.pdu_conf.dest_entity_id = ByteFieldEmpty()
         with self.assertRaises(InvalidDestinationId) as cm:
             self.source_handler.insert_packet(finish_pdu)
