@@ -29,7 +29,7 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
 )
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler import NoRemoteEntityCfgFound
+from tmtccmd.cfdp.exceptions import NoRemoteEntityCfgFound
 from tmtccmd.cfdp.handler.dest import (
     DestHandler,
     PduIgnoredForDest,

@@ -33,13 +33,12 @@ from spacepackets.cfdp.pdu.finished import FinishedParams, DeliveryCode, FileSta
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
 
-from tmtccmd.cfdp import (
-    CfdpUserBase,
-    LocalEntityCfg,
-    RemoteEntityCfgTable,
-    RemoteEntityCfg,
-)
 from tmtccmd.cfdp.defs import CfdpState
+from tmtccmd.cfdp.handler.exceptions import (
+    InvalidPduForDestHandler,
+    PduIgnoredForDest,
+    PduIgnoredForDestReason,
+)
 from tmtccmd.cfdp.handler.common import (
     PacketDestination,
     get_packet_destination,
@@ -47,15 +46,24 @@ from tmtccmd.cfdp.handler.common import (
 )
 from tmtccmd.cfdp.handler.crc import CrcHelper
 from tmtccmd.cfdp.handler.defs import (
-    FileParamsBase,
+    _FileParamsBase,
+)
+from tmtccmd.cfdp.exceptions import (
     FsmNotCalledAfterPacketInsertion,
     InvalidDestinationId,
     InvalidPduDirection,
     UnretrievedPdusToBeSent,
     NoRemoteEntityCfgFound,
 )
-from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
+from tmtccmd.cfdp.mib import (
+    CheckTimerProvider,
+    EntityType,
+    RemoteEntityCfgTable,
+    RemoteEntityCfg,
+    LocalEntityCfg,
+)
 from tmtccmd.cfdp.user import (
+    CfdpUserBase,
     MetadataRecvParams,
     FileSegmentRecvdParams,
     TransactionFinishedParams,
@@ -67,36 +75,13 @@ from tmtccmd.version import get_version
 _LOGGER = logging.getLogger(__name__)
 
 
-class InvalidPduForDestHandler(Exception):
-    def __init__(self, packet: GenericPduPacket):
-        self.packet = packet
-        super().__init__(f"Invalid packet {self.packet} for source handler")
-
-
-class PduIgnoredReason(enum.IntEnum):
-    FIRST_PACKET_NOT_METADATA_PDU = 0
-    """First packet received was not a metadata PDU for the unacknowledged mode."""
-    INVALID_MODE_FOR_ACKED_MODE_PACKET = 1
-    """The received PDU can only be handled in acknowledged mode."""
-    FIRST_PACKET_IN_ACKED_MODE_NOT_METADATA_NOT_EOF_NOT_FD = 2
-    """For the acknowledged mode, the first packet that was received with
-    no metadata received previously was not a File Data PDU or EOF PDU."""
-
-
-class PduIgnoredForDest(Exception):
-    def __init__(self, reason: PduIgnoredReason, ignored_packet: GenericPduPacket):
-        self.ignored_packet = ignored_packet
-        self.reason = reason
-        super().__init__(f"ignored PDU packet at destination handler: {reason!r}")
-
-
 class CompletionDisposition(enum.Enum):
     COMPLETED = 0
     CANCELED = 1
 
 
 @dataclass
-class _DestFileParams(FileParamsBase):
+class _DestFileParams(_FileParamsBase):
     file_name: Path
     file_size_eof: Optional[int]
     condition_code_eof: Optional[ConditionCode]
@@ -468,7 +453,7 @@ class DestHandler:
             and self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
         ):
             raise PduIgnoredForDest(
-                PduIgnoredReason.INVALID_MODE_FOR_ACKED_MODE_PACKET, packet
+                PduIgnoredForDestReason.INVALID_MODE_FOR_ACKED_MODE_PACKET, packet
             )
         self._params.last_inserted_packet.pdu = packet
 
@@ -613,7 +598,7 @@ class DestHandler:
     def _handle_first_packet_not_metadata_pdu(self, packet: GenericPduPacket):
         if packet.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             raise PduIgnoredForDest(
-                PduIgnoredReason.FIRST_PACKET_NOT_METADATA_PDU, packet
+                PduIgnoredForDestReason.FIRST_PACKET_NOT_METADATA_PDU, packet
             )
         elif packet.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             if (
@@ -621,7 +606,7 @@ class DestHandler:
                 and packet.directive_type != DirectiveType.EOF_PDU  # type: ignore
             ):
                 raise PduIgnoredForDest(
-                    PduIgnoredReason.FIRST_PACKET_IN_ACKED_MODE_NOT_METADATA_NOT_EOF_NOT_FD,
+                    PduIgnoredForDestReason.FIRST_PACKET_IN_ACKED_MODE_NOT_METADATA_NOT_EOF_NOT_FD,
                     packet,
                 )
 

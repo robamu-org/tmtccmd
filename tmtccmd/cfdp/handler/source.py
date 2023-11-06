@@ -48,7 +48,9 @@ from tmtccmd.cfdp import (
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.crc import CrcHelper
 from tmtccmd.cfdp.handler.defs import (
-    FileParamsBase,
+    _FileParamsBase,
+)
+from tmtccmd.cfdp.exceptions import (
     InvalidNakPdu,
     InvalidTransactionSeqNum,
     UnretrievedPdusToBeSent,
@@ -58,6 +60,11 @@ from tmtccmd.cfdp.handler.defs import (
     InvalidDestinationId,
     NoRemoteEntityCfgFound,
     FsmNotCalledAfterPacketInsertion,
+)
+from tmtccmd.cfdp.handler.exceptions import (
+    PduIgnoredForSource,
+    PduIgnoredAtSourceReason,
+    InvalidPduForSourceHandler,
 )
 from tmtccmd.cfdp.handler.common import _PositiveAckProcedureParams
 from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
@@ -86,7 +93,7 @@ class TransactionStep(enum.Enum):
 
 
 @dataclass
-class _SourceFileParams(FileParamsBase):
+class _SourceFileParams(_FileParamsBase):
     no_eof: bool = False
 
     @classmethod
@@ -193,30 +200,6 @@ class _TransferFieldWrapper:
 class FsmResult:
     def __init__(self, states: SourceStateWrapper):
         self.states = states
-
-
-class InvalidPduForSourceHandler(Exception):
-    def __init__(self, packet: AbstractFileDirectiveBase):
-        self.packet = packet
-        super().__init__(f"Invalid packet {self.packet} for source handler")
-
-
-class PduIgnoredReason(enum.IntEnum):
-    # The received PDU can only be used for acknowledged mode.
-    ACK_MODE_PACKET_INVALID_MODE = 0
-    # Received a Finished PDU, but source handler is currently not expecting one.
-    NOT_WAITING_FOR_FINISHED_PDU = 1
-    # Received a ACK PDU, but source handler is currently not expecting one.
-    NOT_WAITING_FOR_ACK = 2
-
-
-class PduIgnoredAtSource(Exception):
-    def __init__(
-        self, reason: PduIgnoredReason, ignored_packet: AbstractFileDirectiveBase
-    ):
-        self.ignored_packet = ignored_packet
-        self.reason = reason
-        super().__init__(f"ignored PDU packet at source handler: {reason!r}")
 
 
 class SourceHandler:
@@ -425,8 +408,8 @@ class SourceHandler:
             packet.directive_type == DirectiveType.KEEP_ALIVE_PDU
             or packet.directive_type == DirectiveType.NAK_PDU
         ):
-            raise PduIgnoredAtSource(
-                reason=PduIgnoredReason.ACK_MODE_PACKET_INVALID_MODE,
+            raise PduIgnoredForSource(
+                reason=PduIgnoredAtSourceReason.ACK_MODE_PACKET_INVALID_MODE,
                 ignored_packet=packet,
             )
         if packet.directive_type != DirectiveType.NAK_PDU:
@@ -434,15 +417,16 @@ class SourceHandler:
                 self.states.step == TransactionStep.WAITING_FOR_EOF_ACK
                 and packet.directive_type != DirectiveType.ACK_PDU
             ):
-                raise PduIgnoredAtSource(
-                    reason=PduIgnoredReason.NOT_WAITING_FOR_ACK, ignored_packet=packet
+                raise PduIgnoredForSource(
+                    reason=PduIgnoredAtSourceReason.NOT_WAITING_FOR_ACK,
+                    ignored_packet=packet,
                 )
             if (
                 self.states.step == TransactionStep.WAITING_FOR_FINISHED
                 and packet.directive_type != DirectiveType.FINISHED_PDU
             ):
-                raise PduIgnoredAtSource(
-                    reason=PduIgnoredReason.NOT_WAITING_FOR_FINISHED_PDU,
+                raise PduIgnoredForSource(
+                    reason=PduIgnoredAtSourceReason.NOT_WAITING_FOR_FINISHED_PDU,
                     ignored_packet=packet,
                 )
         self._inserted_pdu.pdu = packet

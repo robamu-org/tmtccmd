@@ -14,7 +14,7 @@ from spacepackets.util import (
     ByteFieldEmpty,
 )
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler.defs import (
+from tmtccmd.cfdp.exceptions import (
     InvalidPduDirection,
     InvalidSourceId,
     InvalidDestinationId,

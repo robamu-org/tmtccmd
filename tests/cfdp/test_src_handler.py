@@ -21,7 +21,7 @@ from spacepackets.cfdp.pdu import DirectiveType, EofPdu, FileDataPdu, MetadataPd
 from spacepackets.util import ByteFieldU16, UnsignedByteField, ByteFieldU32
 from tmtccmd.cfdp import IndicationCfg, LocalEntityCfg, RemoteEntityCfg, CfdpState
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
-from tmtccmd.cfdp.handler.defs import UnretrievedPdusToBeSent
+from tmtccmd.cfdp.exceptions import UnretrievedPdusToBeSent
 from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.util import SeqCountProvider

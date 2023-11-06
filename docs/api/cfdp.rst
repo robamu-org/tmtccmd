@@ -42,6 +42,14 @@ User Module
    :undoc-members:
    :show-inheritance:
 
+Exceptions Module
+-------------------------------------------
+
+.. automodule:: tmtccmd.cfdp.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Definitions Module
 --------------------------
 
@@ -49,5 +57,4 @@ Definitions Module
    :members:
    :undoc-members:
    :show-inheritance:
-
 

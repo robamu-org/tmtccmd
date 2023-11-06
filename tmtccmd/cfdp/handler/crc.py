@@ -6,7 +6,7 @@ from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import ChecksumType, NULL_CHECKSUM_U32
 from tmtccmd.cfdp.filestore import VirtualFilestore
-from tmtccmd.cfdp.handler.defs import ChecksumNotImplemented, SourceFileDoesNotExist
+from tmtccmd.cfdp.exceptions import ChecksumNotImplemented, SourceFileDoesNotExist
 
 
 def calc_modular_checksum(file_path: Path) -> bytes:

@@ -39,7 +39,7 @@ from tmtccmd.cfdp.user import (
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.util.seqcnt import SeqCountProvider
 from spacepackets.cfdp.pdu.helper import PduFactory
-from common import SOURCE_ENTITY_ID as SOURCE_ENTITY_ID_RAW
+from common import LOCAL_ENTITY_ID as SOURCE_ENTITY_ID_RAW
 from common import REMOTE_ENTITY_ID as REMOTE_ENTITY_ID_RAW
 from common import UDP_SERVER_PORT, UDP_TM_SERVER_PORT
 

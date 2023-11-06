@@ -1,8 +1,22 @@
-from typing import Any
+from typing import Any, Tuple, Optional
+from multiprocessing import Queue
+from queue import Empty
+from threading import Thread
+import time
+import select
+import socket
 import logging
+import copy
 
 from time import timedelta
-from spacepackets.cfdp import TransactionId, ConditionCode
+from spacepackets.cfdp import GenericPduPacket
+from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
+from spacepackets.cfdp import (
+    TransactionId,
+    ConditionCode,
+    TransmissionMode,
+    ChecksumType,
+)
 from spacepackets.util import UnsignedByteField, ByteFieldU16
 from tmtccmd.cfdp.user import (
     CfdpUserBase,
@@ -11,50 +25,81 @@ from tmtccmd.cfdp.user import (
     TransactionFinishedParams,
 )
 
+from tmtccmd.cfdp import get_packet_destination, PacketDestination
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.cfdp.mib import (
     CheckTimerProvider,
     DefaultFaultHandlerBase,
     EntityType,
+    IndicationCfg,
+    RemoteEntityCfg,
 )
+from tmtccmd.cfdp.handler import SourceHandler, DestHandler, CfdpState
+from tmtccmd.cfdp import PutRequest
+from spacepackets.cfdp.pdu import PduFactory, PduHolder
 
 _LOGGER = logging.getLogger()
 
-SOURCE_ENTITY_ID = ByteFieldU16(1)
-DEST_ENTITY_ID = ByteFieldU16(2)
+LOCAL_ENTITY_ID = ByteFieldU16(1)
+REMOTE_ENTITY_ID = ByteFieldU16(2)
+# Enable all indications for both local and remote entity.
+INDICATION_CFG = IndicationCfg()
+
+FILE_CONTENT = "Hello World!\n"
+FILE_SEGMENT_SIZE = 256
+MAX_PACKET_LEN = 512
+
+REMOTE_CFG_OF_LOCAL_ENTITY = RemoteEntityCfg(
+    entity_id=LOCAL_ENTITY_ID,
+    max_packet_len=MAX_PACKET_LEN,
+    max_file_segment_len=FILE_SEGMENT_SIZE,
+    closure_requested=True,
+    crc_on_transmission=False,
+    default_transmission_mode=TransmissionMode.ACKNOWLEDGED,
+    crc_type=ChecksumType.CRC_32,
+)
+
+REMOTE_CFG_OF_REMOTE_ENTITY = copy.copy(REMOTE_CFG_OF_LOCAL_ENTITY)
+REMOTE_CFG_OF_REMOTE_ENTITY.entity_id = REMOTE_ENTITY_ID
+
+LOCAL_PORT = 5111
+REMOTE_PORT = 5222
 
 
 class CfdpFaultHandler(DefaultFaultHandlerBase):
+    def __init__(self, base_str: str):
+        self.base_str = base_str
+
     def notice_of_suspension_cb(
         self, transaction_id: TransactionId, cond: ConditionCode, progress: int
     ):
         _LOGGER.warning(
-            f"Received Notice of Suspension for transaction {transaction_id!r} with condition "
-            f"code {cond!r}. Progress: {progress}"
+            f"{self.base_str}: Received Notice of Suspension for transaction {transaction_id!r} "
+            f"with condition code {cond!r}. Progress: {progress}"
         )
 
     def notice_of_cancellation_cb(
         self, transaction_id: TransactionId, cond: ConditionCode, progress: int
     ):
         _LOGGER.warning(
-            f"Received Notice of Cancellation for transaction {transaction_id!r} with condition "
-            f"code {cond!r}. Progress: {progress}"
+            f"{self.base_str}: Received Notice of Cancellation for transaction {transaction_id!r} "
+            f"with condition code {cond!r}. Progress: {progress}"
         )
 
     def abandoned_cb(
         self, transaction_id: TransactionId, cond: ConditionCode, progress: int
     ):
         _LOGGER.warning(
-            f"Received Abanadoned Fault for transaction {transaction_id!r} with condition "
-            f"code {cond!r}. Progress: {progress}"
+            f"{self.base_str}: Abandoned fault for transaction {transaction_id!r} "
+            f"with condition code {cond!r}. Progress: {progress}"
         )
 
     def ignore_cb(
         self, transaction_id: TransactionId, cond: ConditionCode, progress: int
     ):
         _LOGGER.warning(
-            f"Ignored Fault for transaction {transaction_id!r} with condition "
-            f"code {cond!r}. Progress: {progress}"
+            f"{self.base_str}: Ignored fault for transaction {transaction_id!r} "
+            f"with condition code {cond!r}. Progress: {progress}"
         )
 
 
@@ -133,3 +178,172 @@ class CustomCheckTimerProvider(CheckTimerProvider):
         entity_type: EntityType,
     ) -> Countdown:
         return Countdown(timedelta(seconds=5.0))
+
+
+class UdpServer(Thread):
+    def __init__(
+        self,
+        sleep_time: float,
+        addr: Tuple[str, int],
+        tm_queue: Queue,
+        source_entity_queue: Queue,
+        dest_entity_queue: Queue,
+    ):
+        self.sleep_time = sleep_time
+        self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.udp_socket.bind(addr)
+        self.last_sender: Optional[Tuple[str, int]] = None
+        self.tm_queue = tm_queue
+        self.source_entity_queue = source_entity_queue
+        self.dest_entity_queue = dest_entity_queue
+
+    def run(self):
+        self.periodic_operation()
+        time.sleep(self.sleep_time)
+
+    def periodic_operation(self) -> bool:
+        while True:
+            next_packet = self.poll_next_udp_packet()
+            if next_packet is None:
+                break
+            # Perform PDU routing.
+            packet_dest = get_packet_destination(next_packet.pdu)
+            if packet_dest == PacketDestination.DEST_HANDLER:
+                self.dest_entity_queue.put(next_packet.pdu)
+            elif packet_dest == PacketDestination.SOURCE_HANDLER:
+                self.source_entity_queue.put(next_packet.pdu)
+        if self.last_sender is not None:
+            self.send_telemetry()
+
+    def poll_next_udp_packet(self) -> Optional[PduHolder]:
+        ready = select.select([self.udp_socket], [], [], 0)
+        if ready[0]:
+            data, self.last_sender = self.udp_socket.recvfrom(4096)
+            return PduFactory.from_raw_to_holder(data)
+        return None
+
+    def send_telemetry(self) -> bool:
+        assert self.last_sender is not None
+        while True:
+            try:
+                next_tm = self.tm_queue.get(False)
+                assert isinstance(next_tm, bytes) or isinstance(next_tm, bytearray)
+                self.udp_socket.sendto(next_tm, self.last_sender)
+            except Empty:
+                break
+
+
+class SourceEntityHandler(Thread):
+    def __init__(
+        self,
+        base_str: str,
+        verbose_level: int,
+        source_handler: SourceHandler,
+        put_req_queue: Queue,
+        source_entity_queue: Queue,
+        tm_queue: Queue,
+    ):
+        self.base_str = base_str
+        self.verbose_level = verbose_level
+        self.source_handler = source_handler
+        self.put_req_queue = put_req_queue
+        self.source_entity_queue = source_entity_queue
+        self.tm_queue = tm_queue
+
+    def _idle_handling(self) -> bool:
+        if self.source_handler.state == CfdpState.IDLE:
+            try:
+                put_req: PutRequest = self.put_req_queue.get(False)
+                _LOGGER.info(f"{self.base_str}: Handling Put Request: {put_req}")
+                if put_req.destination_id != REMOTE_CFG_OF_LOCAL_ENTITY.entity_id:
+                    _LOGGER.warning(
+                        f"can only handle put requests target towards {REMOTE_CFG_OF_LOCAL_ENTITY.entity_id}"
+                    )
+                else:
+                    self.source_handler.put_request(put_req, REMOTE_CFG_OF_LOCAL_ENTITY)
+            except Empty:
+                return False
+
+    def _busy_handling(self):
+        # We are getting the packets from a Queue here, they could for example also be polled
+        # from a network.
+        no_packet_received = True
+        try:
+            # We are getting the packets from a Queue here, they could for example also be polled
+            # from a network.
+            packet: AbstractFileDirectiveBase = self.source_entity_queue.get(False)
+            self.source_handler.insert_packet(packet)
+            no_packet_received = False
+        except Empty:
+            no_packet_received = True
+        fsm_result = self.source_handler.state_machine()
+        no_packet_sent = False
+        if fsm_result.states.num_packets_ready > 0:
+            while fsm_result.states.num_packets_ready > 0:
+                next_pdu_wrapper = self.source_handler.get_next_packet()
+                assert next_pdu_wrapper is not None
+                if self.verbose_level >= 1:
+                    _LOGGER.debug(
+                        f"{self.base_str}: Sending packet {next_pdu_wrapper.pdu}"
+                    )
+                # Send all packets which need to be sent.
+                self.tm_queue.put(next_pdu_wrapper.pack())
+            no_packet_sent = False
+        else:
+            no_packet_sent = True
+        # If there is no work to do, put the thread to sleep.
+        if no_packet_received and no_packet_sent:
+            return False
+
+    def run(self):
+        while True:
+            if not self._idle_handling():
+                time.sleep(0.2)
+                continue
+            if not self._busy_handling():
+                time.sleep(0.2)
+
+
+class DestEntityHandler(Thread):
+    def __init__(
+        self,
+        base_str: str,
+        verbose_level: int,
+        source_handler: DestHandler,
+        dest_entity_queue: Queue,
+        tm_queue: Queue,
+    ):
+        self.base_str = base_str
+        self.verbose_level = verbose_level
+        self.source_handler = source_handler
+        self.dest_entity_queue = dest_entity_queue
+        self.tm_queue = tm_queue
+
+    def run(self):
+        first_packet = True
+        no_packet_received = False
+        while True:
+            try:
+                packet: GenericPduPacket = self.dest_entity_queue.get(False)
+                self.dest_handler.insert_packet(packet)
+                no_packet_received = False
+                if first_packet:
+                    first_packet = False
+            except Empty:
+                no_packet_received = True
+            fsm_result = self.dest_handler.state_machine()
+            if fsm_result.states.num_packets_ready > 0:
+                no_packet_sent = False
+                while fsm_result.states.num_packets_ready > 0:
+                    next_pdu_wrapper = self.dest_handler.get_next_packet()
+                    assert next_pdu_wrapper is not None
+                    if self.verbose_level >= 1:
+                        _LOGGER.debug(
+                            f"REMOTE DEST ENTITY: Sending packet {next_pdu_wrapper.pdu}"
+                        )
+                    self.tm_queue.put(next_pdu_wrapper.pdu)
+            else:
+                no_packet_sent = True
+            # If there is no work to do, put the thread to sleep.
+            if no_packet_received and no_packet_sent:
+                time.sleep(0.5)
