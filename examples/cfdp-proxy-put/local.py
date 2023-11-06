@@ -77,10 +77,6 @@ def main():
         SOURCE_ENTITY_QUEUE,
         TM_QUEUE,
     )
-    # Spawn a new thread and move the source handler there. This is scalable: If multiple number
-    # of concurrent file operations are required, a new thread with a new source handler can
-    # be spawned for each one.
-    source_thread = threading.Thread(target=source_entity_task)
 
     # Enable all indications.
     dest_fault_handler = CfdpFaultHandler(BASE_STR_DEST)
@@ -93,18 +89,13 @@ def main():
         remote_cfg_table=remote_cfg_table,
         check_timer_provider=check_timer_provider,
     )
-    dest_entity_handler = DestEntityHandler(
+    dest_entity_task = DestEntityHandler(
         BASE_STR_DEST,
         logging_level,
         dest_handler,
         DEST_ENTITY_QUEUE,
         TM_QUEUE,
     )
-    # Spawn a new thread and move the destination handler there. This is scalable. One example
-    # approach could be to keep a dictionary of active file copy operations, where the transaction
-    # ID is the key. If a new Metadata PDU with a new transaction ID is detected, a new
-    # destination handler in a new thread could be spawned to handle the file copy operation.
-    dest_thread = threading.Thread(target=dest_entity_handler)
 
     udp_server = UdpServer(
         0.1,
@@ -113,14 +104,14 @@ def main():
         SOURCE_ENTITY_QUEUE,
         DEST_ENTITY_QUEUE,
     )
-    udp_thread = threading.Thread(udp_server)
 
-    source_thread.start()
-    dest_thread.start()
-    source_thread.join()
-    dest_thread.join()
-    udp_thread.start()
-    udp_thread.join()
+    source_entity_task.start()
+    dest_entity_task.start()
+    udp_server.start()
+
+    source_entity_task.join()
+    dest_entity_task.join()
+    udp_server.join()
 
 
 if __name__ == "__main__":
