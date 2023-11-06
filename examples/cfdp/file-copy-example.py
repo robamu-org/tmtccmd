@@ -225,6 +225,10 @@ def main():
     with open(SOURCE_FILE, "w") as file:
         file.write(FILE_CONTENT)
 
+    remote_cfg_table = RemoteEntityCfgTable()
+    remote_cfg_table.add_config(REMOTE_CFG_FOR_SOURCE_ENTITY)
+    remote_cfg_table.add_config(REMOTE_CFG_FOR_DEST_ENTITY)
+
     # Enable all indications.
     src_indication_cfg = IndicationCfg()
     src_fault_handler = CfdpFaultHandler()
@@ -238,6 +242,7 @@ def main():
     source_handler = SourceHandler(
         cfg=src_entity_cfg,
         seq_num_provider=src_seq_count_provider,
+        remote_cfg_table=remote_cfg_table,
         user=src_user,
         check_timer_provider=check_timer_provider,
     )
@@ -255,8 +260,6 @@ def main():
         DEST_ENTITY_ID, dest_indication_cfg, dest_fault_handler
     )
     dest_user = CfdpUser("DEST ENTITY")
-    remote_cfg_table = RemoteEntityCfgTable()
-    remote_cfg_table.add_config(REMOTE_CFG_FOR_SOURCE_ENTITY)
     dest_handler = DestHandler(
         cfg=dest_entity_cfg,
         user=dest_user,
@@ -307,7 +310,7 @@ def source_entity_handler(
     with open(SOURCE_FILE) as file:
         file_content = file.read()
         print(f"File content of source file {SOURCE_FILE}: {file_content}")
-    assert source_handler.put_request(put_request, REMOTE_CFG_FOR_DEST_ENTITY)
+    assert source_handler.put_request(put_request)
     while True:
         try:
             # We are getting the packets from a Queue here, they could for example also be polled

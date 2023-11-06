@@ -2,7 +2,6 @@
 """This example shows a end-to-end transfer of a small file using the CFDP high level
 components provided by the tmtccmd package."""
 import argparse
-import copy
 import logging
 import os
 import select
@@ -16,11 +15,10 @@ from pathlib import Path
 from queue import Empty
 from typing import Any
 
-from common import SOURCE_ENTITY_ID as SOURCE_ENTITY_ID_RAW
 from common import REMOTE_ENTITY_ID as REMOTE_ENTITY_ID_RAW
-from common import UDP_SERVER_PORT, UDP_TM_SERVER_PORT
+from common import SOURCE_ENTITY_ID as SOURCE_ENTITY_ID_RAW
+from common import UDP_SERVER_PORT, UDP_TM_SERVER_PORT, REMOTE_CFG_FOR_DEST_ENTITY
 from spacepackets.cfdp import (
-    ChecksumType,
     ConditionCode,
     TransactionId,
     TransmissionMode,
@@ -29,15 +27,15 @@ from spacepackets.cfdp.pdu.helper import PduFactory
 from spacepackets.util import ByteFieldU16, UnsignedByteField
 
 from tmtccmd.cfdp import CfdpState
-from tmtccmd.cfdp.handler import SourceHandler
 from tmtccmd.cfdp.exceptions import InvalidSourceId
+from tmtccmd.cfdp.handler import SourceHandler
 from tmtccmd.cfdp.mib import (
     CheckTimerProvider,
     DefaultFaultHandlerBase,
     EntityType,
     IndicationCfg,
     LocalEntityCfg,
-    RemoteEntityCfg,
+    RemoteEntityCfgTable,
 )
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import (
@@ -53,8 +51,6 @@ SOURCE_ENTITY_ID = ByteFieldU16(SOURCE_ENTITY_ID_RAW)
 DEST_ENTITY_ID = ByteFieldU16(REMOTE_ENTITY_ID_RAW)
 
 FILE_CONTENT = "Hello World!"
-FILE_SEGMENT_SIZE = len(FILE_CONTENT)
-MAX_PACKET_LEN = 512
 SOURCE_FILE = Path("files/local.txt")
 DEST_FILE = Path("files/remote.txt")
 
@@ -67,19 +63,6 @@ class TransferParams:
 
 
 _LOGGER = logging.getLogger()
-
-
-REMOTE_CFG_FOR_SOURCE_ENTITY = RemoteEntityCfg(
-    entity_id=SOURCE_ENTITY_ID,
-    max_packet_len=MAX_PACKET_LEN,
-    max_file_segment_len=FILE_SEGMENT_SIZE,
-    closure_requested=True,
-    crc_on_transmission=False,
-    default_transmission_mode=TransmissionMode.ACKNOWLEDGED,
-    crc_type=ChecksumType.MODULAR,
-)
-REMOTE_CFG_FOR_DEST_ENTITY = copy.copy(REMOTE_CFG_FOR_SOURCE_ENTITY)
-REMOTE_CFG_FOR_DEST_ENTITY.entity_id = DEST_ENTITY_ID
 
 
 class CfdpFaultHandler(DefaultFaultHandlerBase):
@@ -224,6 +207,8 @@ def main():
     with open(SOURCE_FILE, "w") as file:
         file.write(FILE_CONTENT)
 
+    remote_cfg_table = RemoteEntityCfgTable([REMOTE_CFG_FOR_DEST_ENTITY])
+
     # Enable all indications.
     src_indication_cfg = IndicationCfg()
     src_fault_handler = CfdpFaultHandler()
@@ -237,6 +222,7 @@ def main():
     source_handler = SourceHandler(
         cfg=src_entity_cfg,
         seq_num_provider=src_seq_count_provider,
+        remote_cfg_table=remote_cfg_table,
         user=src_user,
         check_timer_provider=check_timer_provider,
     )
@@ -293,7 +279,7 @@ def source_entity_handler(
     with open(SOURCE_FILE) as file:
         file_content = file.read()
         print(f"File content of source file {SOURCE_FILE}: {file_content}")
-    assert source_handler.put_request(put_request, REMOTE_CFG_FOR_DEST_ENTITY)
+    source_handler.put_request(put_request)
     while True:
         try:
             ready = select.select([tm_client], [], [], 0)

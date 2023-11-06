@@ -264,8 +264,10 @@ class RemoteEntityCfgTable:
     """Thin abstraction for a dictionary containing remote configurations with the remote entity ID
     being used as a key."""
 
-    def __init__(self):
+    def __init__(self, init_cfgs: Optional[Sequence[RemoteEntityCfg]] = None):
         self._remote_entity_dict = dict()
+        if init_cfgs is not None:
+            self.add_configs(init_cfgs)
 
     def add_config(self, cfg: RemoteEntityCfg) -> bool:
         if cfg.entity_id in self._remote_entity_dict:
