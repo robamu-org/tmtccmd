@@ -23,6 +23,7 @@ from spacepackets.cfdp.tlv import (
     ProxyPutResponseParams,
     MessageToUserTlv,
     OriginatingTransactionId,
+    ReservedCfdpMessage,
 )
 from spacepackets.util import UnsignedByteField, ByteFieldU16
 from tmtccmd.cfdp.user import (
@@ -179,29 +180,52 @@ class CfdpUser(CfdpUserBase):
     ):
         for msg_to_user in msgs_to_user:
             if msg_to_user.is_reserved_cfdp_message():
-                # TODO: Add support for all other reserved message types.
-                reserved_cfdp_msg = msg_to_user.to_reserved_msg_tlv()
-                if (
-                    reserved_cfdp_msg.is_cfdp_proxy_operation()
-                    and reserved_cfdp_msg.get_cfdp_proxy_message_type()
-                    == ProxyMessageType.PUT_REQUEST
-                ):
-                    put_req_params = reserved_cfdp_msg.get_proxy_put_request_params()
-                    _LOGGER.info(f"Received Proxy Put Request: {put_req_params}")
-                    assert put_req_params is not None
-                    put_req = PutRequest(
-                        destination_id=put_req_params.dest_entity_id,
-                        source_file=put_req_params.source_file_as_path,
-                        dest_file=put_req_params.dest_file_as_path,
-                        trans_mode=None,
-                        closure_requested=None,
-                        msgs_to_user=[
-                            OriginatingTransactionId(
-                                transaction_id
-                            ).to_generic_msg_to_user_tlv()
-                        ],
-                    )
-                    self.put_req_queue.put(put_req)
+                self._handle_reserved_cfdp_message(
+                    transaction_id, msg_to_user.to_reserved_msg_tlv()
+                )
+            else:
+                _LOGGER.info(f"Received custom message to user: {msg_to_user}")
+
+    def _handle_reserved_cfdp_message(
+        self, transaction_id: TransactionId, reserved_cfdp_msg: ReservedCfdpMessage
+    ):
+        self._handle_reserved_cfdp_message(reserved_cfdp_msg)
+        if reserved_cfdp_msg.is_cfdp_proxy_operation(reserved_cfdp_msg):
+            self._handle_cfdp_proxy_operation(transaction_id, reserved_cfdp_msg)
+        elif reserved_cfdp_msg.is_originating_transaction_id():
+            _LOGGER.info(
+                f"Received originating transaction ID {reserved_cfdp_msg.get_originating_transaction_id()}"
+            )
+
+    def _handle_cfdp_proxy_operation(
+        self, transaction_id: TransactionId, reserved_cfdp_msg: ReservedCfdpMessage
+    ):
+        if (
+            reserved_cfdp_msg.get_cfdp_proxy_message_type()
+            == ProxyMessageType.PUT_REQUEST
+        ):
+            put_req_params = reserved_cfdp_msg.get_proxy_put_request_params()
+            _LOGGER.info(f"Received Proxy Put Request: {put_req_params}")
+            assert put_req_params is not None
+            put_req = PutRequest(
+                destination_id=put_req_params.dest_entity_id,
+                source_file=put_req_params.source_file_as_path,
+                dest_file=put_req_params.dest_file_as_path,
+                trans_mode=None,
+                closure_requested=None,
+                msgs_to_user=[
+                    OriginatingTransactionId(
+                        transaction_id
+                    ).to_generic_msg_to_user_tlv()
+                ],
+            )
+            self.put_req_queue.put(put_req)
+        elif (
+            reserved_cfdp_msg.get_cfdp_proxy_message_type()
+            == ProxyMessageType.PUT_RESPONSE
+        ):
+            put_response_params = reserved_cfdp_msg.get_proxy_put_response_params()
+            _LOGGER.info(f"Received Proxy Put Response: {put_response_params}")
 
     def file_segment_recv_indication(self, params: FileSegmentRecvdParams):
         _LOGGER.info(
