@@ -3,8 +3,8 @@ import sys
 import os
 import random
 import time
+import tempfile
 from unittest.mock import MagicMock
-from crcmod.predefined import PredefinedCrc
 from spacepackets.cfdp import (
     NULL_CHECKSUM_U32,
     ConditionCode,
@@ -181,21 +181,20 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
             rand_data = random.randbytes(self.file_segment_len * 3)
         else:
             rand_data = os.urandom(self.file_segment_len * 3)
-        crc32 = PredefinedCrc("crc32")
-        crc32.update(rand_data)
-        crc32 = crc32.digest()
-        dest_path = Path("/tmp/hello_three_segments_copy.txt")
+        crc32 = self._gen_crc32(rand_data)
+        source_path = Path(f"{tempfile.gettempdir()}/rand-three-segs.bin")
+        self._generate_file(source_path, rand_data)
+        dest_path = Path(f"{tempfile.gettempdir()}/rand-three-segs-copy.bin")
         transaction_params = self._transaction_with_file_data_wrapper(
-            dest_path, rand_data
+            self._generate_generic_put_req(source_path, dest_path), rand_data
         )
         current_idx = 0
         fd_pdu_list = []
         while current_idx < len(rand_data):
             fd_pdu_list.append(
-                self._handle_next_file_data_pdu(
+                self._generic_file_segment_handling(
                     current_idx,
                     rand_data[current_idx : current_idx + self.file_segment_len],
-                    0,
                 )
             )
             current_idx += self.file_segment_len

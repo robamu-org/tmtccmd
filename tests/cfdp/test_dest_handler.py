@@ -1,10 +1,9 @@
 import dataclasses
 import os
 import tempfile
+from pyfakefs.fake_filesystem_unittest import TestCase
 from pathlib import Path
-from threading import Lock
-from typing import Optional, Tuple, cast
-from unittest import TestCase
+from typing import Optional, cast
 from unittest.mock import MagicMock
 
 from spacepackets.cfdp import (
@@ -58,23 +57,9 @@ class FileInfo:
     crc32: bytes
 
 
-_FILE_COUNT = 0
-_COUNTER_LOCK = Lock()
-
-
 class TestDestHandlerBase(TestCase):
-    def _generate_unique_filenames(self) -> Tuple[Path, Path]:
-        global _FILE_COUNT
-        global _COUNTER_LOCK
-        with _COUNTER_LOCK:
-            src_path = Path(f"{tempfile.gettempdir()}/__cfdp_test{_FILE_COUNT}.txt")
-            dest_path = Path(
-                f"{tempfile.gettempdir()}/__cfdp_test{_FILE_COUNT}_dest.txt"
-            )
-            _FILE_COUNT += 1
-        return src_path, dest_path
-
     def common_setup(self, trans_mode: TransmissionMode):
+        self.setUpPyfakefs()
         self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
         self.fault_handler.notice_of_cancellation_cb = MagicMock()
@@ -125,7 +110,9 @@ class TestDestHandlerBase(TestCase):
                 timeout_dest_entity_ms=self.timeout_check_limit_handling_ms
             ),
         )
-        self.src_file_path, self.dest_file_path = self._generate_unique_filenames()
+        self.src_file_path, self.dest_file_path = Path(
+            f"{tempfile.gettempdir()}/source"
+        ), Path(f"{tempfile.gettempdir()}/dest")
 
     def _state_checker(
         self,

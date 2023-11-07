@@ -1,10 +1,17 @@
 import os
 from pathlib import Path
+import tempfile
 import random
 import sys
 from unittest.mock import MagicMock
 
-from spacepackets.cfdp import ConditionCode, Direction, DirectiveType, TransmissionMode
+from spacepackets.cfdp import (
+    ConditionCode,
+    Direction,
+    DirectiveType,
+    TransmissionMode,
+    PduConfig,
+)
 from spacepackets.cfdp.pdu import FinishedPdu, DeliveryCode, FileStatus
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import (
@@ -14,13 +21,13 @@ from spacepackets.util import (
     ByteFieldEmpty,
 )
 from tmtccmd.cfdp.defs import CfdpState
+from tmtccmd.cfdp import PutRequest
 from tmtccmd.cfdp.exceptions import (
     InvalidPduDirection,
     InvalidSourceId,
     InvalidDestinationId,
 )
 from tmtccmd.cfdp.handler.source import TransactionStep
-from tmtccmd.cfdp.request import PutRequest
 from .test_src_handler import TestCfdpSourceHandler
 
 
@@ -30,8 +37,8 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
 
     def test_empty_file_pdu_generation_nacked_by_remote_cfg(self):
-        self._common_empty_file_test(None)
-        self._pass_simple_finish_pdu_to_source_handler()
+        _, metadata_pdu, _ = self._common_empty_file_test(None)
+        self._pass_simple_finish_pdu_to_source_handler(metadata_pdu.pdu_header.pdu_conf)
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
@@ -41,8 +48,10 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.default_remote_cfg.default_transmission_mode = (
             TransmissionMode.ACKNOWLEDGED
         )
-        self._common_empty_file_test(TransmissionMode.UNACKNOWLEDGED)
-        self._pass_simple_finish_pdu_to_source_handler()
+        _, metadata_pdu, _ = self._common_empty_file_test(
+            TransmissionMode.UNACKNOWLEDGED
+        )
+        self._pass_simple_finish_pdu_to_source_handler(metadata_pdu.pdu_header.pdu_conf)
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
@@ -50,21 +59,25 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
 
     def test_small_file_pdu_generation(self):
         file_content = "Hello World\n".encode()
-        transaction_id, _, _, _ = self._common_small_file_test(
+        transaction_id, metadata_pdu, _, _ = self._common_small_file_test(
             TransmissionMode.UNACKNOWLEDGED, True, file_content
         )
         self._verify_eof_indication(transaction_id)
         self.source_handler.state_machine()
-        self._pass_simple_finish_pdu_to_source_handler()
+        self._pass_simple_finish_pdu_to_source_handler(metadata_pdu.pdu_header.pdu_conf)
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_invalid_dir_pdu_passed(self):
-        dest_id = ByteFieldU16(2)
-        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
-        finish_pdu = self._prepare_finish_pdu()
+        self.dest_id = ByteFieldU16(2)
+        source_path = Path(f"{tempfile.gettempdir()}/dummy.txt")
+        self._generate_file(source_path, bytes())
+        metadata_pdu, _ = self._start_source_transaction(
+            self._generate_generic_put_req(source_path, Path("dummy.txt"))
+        )
+        finish_pdu = self._prepare_finish_pdu(metadata_pdu.pdu_header.pdu_conf)
         finish_pdu.pdu_file_directive.pdu_header.direction = Direction.TOWARDS_RECEIVER
         with self.assertRaises(InvalidPduDirection):
             self.source_handler.insert_packet(finish_pdu)
@@ -77,14 +90,16 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
             rand_data = os.urandom(self.file_segment_len * 2)
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
+        self._update_seq_num_to_use(3)
         self.source_handler.source_id = self.source_id
-        dest_path = Path("/tmp/hello_two_segments_copy.txt")
+        source_path = Path(f"{tempfile.gettempdir()}/two-segments.bin")
+        dest_path = Path(f"{tempfile.gettempdir()}/two-segments-copy.bin")
         # The calculated CRC in the EOF (Cancel) PDU will only be calculated for the first segment
         tparams = self._transaction_with_file_data_wrapper(
-            dest_path,
+            self._generate_generic_put_req(source_path, dest_path),
             rand_data[0 : self.file_segment_len],
         )
-        self._handle_next_file_data_pdu(0, rand_data[0 : self.file_segment_len], 2)
+        self._generic_file_segment_handling(0, rand_data[0 : self.file_segment_len])
         self.assertTrue(self.source_handler.cancel_request(tparams.id))
         self.assertEqual(self.source_handler.step, TransactionStep.SENDING_EOF)
         next_packet = self.source_handler.get_next_packet()
@@ -100,8 +115,11 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_invalid_source_id_pdu_passed(self):
-        dest_id = ByteFieldU16(2)
-        finish_pdu = self._regular_transaction_start(dest_id)
+        source_path = Path(f"{tempfile.gettempdir()}/test.txt")
+        self._update_seq_num_to_use(2)
+        self._generate_file(source_path, bytes())
+        put_req = self._generate_dest_dummy_put_req(source_path)
+        finish_pdu = self._regular_transaction_start(put_req)
         finish_pdu.pdu_file_directive.pdu_conf.source_entity_id = ByteFieldEmpty()
         with self.assertRaises(InvalidSourceId) as cm:
             self.source_handler.insert_packet(finish_pdu)
@@ -110,7 +128,12 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(exception.expected_src_id, ByteFieldU16(1))
 
     def test_invalid_dest_id_pdu_passed(self):
-        finish_pdu = self._regular_transaction_start(self.alternative_dest_id)
+        source_path = Path(f"{tempfile.gettempdir()}/test.txt")
+        self._update_seq_num_to_use(2)
+        self.dest_id = ByteFieldU16(3)
+        self._generate_file(source_path, bytes())
+        put_req = self._generate_dest_dummy_put_req(source_path)
+        finish_pdu = self._regular_transaction_start(put_req)
         finish_pdu.pdu_file_directive.pdu_conf.dest_entity_id = ByteFieldEmpty()
         with self.assertRaises(InvalidDestinationId) as cm:
             self.source_handler.insert_packet(finish_pdu)
@@ -118,35 +141,28 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.assertEqual(exception.found_dest_id, ByteFieldEmpty())
         self.assertEqual(exception.expected_dest_id, ByteFieldU16(3))
 
-    def _regular_transaction_start(self, dest_id: UnsignedByteField) -> FinishedPdu:
-        self._start_source_transaction(dest_id, self._prepare_dummy_put_req(dest_id))
-        finish_pdu = self._prepare_finish_pdu()
-        self.assertEqual(finish_pdu.transaction_seq_num.value, 2)
-        return finish_pdu
-
-    def _prepare_dummy_put_req(self, dest_id: UnsignedByteField) -> PutRequest:
-        return PutRequest(
-            destination_id=dest_id,
-            source_file=self.file_path,
-            dest_file=Path("dummy.txt"),
-            # Let the transmission mode be auto-determined by the remote MIB
-            trans_mode=None,
-            closure_requested=None,
+    def _update_seq_num_to_use(self, seq_num: int):
+        self.expected_seq_num = seq_num
+        self.seq_num_provider.get_and_increment = MagicMock(
+            return_value=self.expected_seq_num
         )
 
-    def _pass_simple_finish_pdu_to_source_handler(self):
+    def _regular_transaction_start(self, put_req: PutRequest) -> FinishedPdu:
+        metadata_pdu, _ = self._start_source_transaction(put_req)
+        finish_pdu = self._prepare_finish_pdu(metadata_pdu.pdu_header.pdu_conf)
+        self.assertEqual(finish_pdu.transaction_seq_num.value, self.expected_seq_num)
+        return finish_pdu
+
+    def _pass_simple_finish_pdu_to_source_handler(self, base_conf: PduConfig):
         self._state_checker(
             None,
             False,
             CfdpState.BUSY,
             TransactionStep.WAITING_FOR_FINISHED,
         )
-        self.source_handler.insert_packet(self._prepare_finish_pdu())
+        self.source_handler.insert_packet(self._prepare_finish_pdu(base_conf))
 
-    def _prepare_finish_pdu(self):
-        reply_conf = self.source_handler.pdu_conf
-        reply_conf.direction = Direction.TOWARDS_SENDER
-        # reply_conf.dest_entity_id = dest_id
+    def _prepare_finish_pdu(self, base_conf: PduConfig):
         params = FinishedParams(
             delivery_code=DeliveryCode.DATA_COMPLETE,
             condition_code=ConditionCode.NO_ERROR,
@@ -154,5 +170,5 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         )
         return FinishedPdu(
             params=params,
-            pdu_conf=reply_conf,
+            pdu_conf=base_conf,
         )

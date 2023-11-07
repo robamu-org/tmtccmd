@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import tempfile
 from pathlib import Path
 
 from spacepackets.cfdp import (
@@ -11,9 +12,13 @@ from spacepackets.cfdp import (
     TransmissionMode,
     TransactionId,
 )
-from spacepackets.cfdp.pdu import FileDataPdu, FileStatus, DeliveryCode
+from spacepackets.cfdp.pdu import FileStatus, DeliveryCode
 from spacepackets.cfdp.pdu.finished import FinishedParams
-from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
+from spacepackets.cfdp.tlv import (
+    ProxyPutRequest,
+    ProxyPutRequestParams,
+    OriginatingTransactionId,
+)
 from spacepackets.util import ByteFieldU16, ByteFieldU8
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler import FsmResult
@@ -28,13 +33,12 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.common_setup(False, TransmissionMode.UNACKNOWLEDGED)
 
     def test_empty_file_nacked_by_def_config(self):
-        self._common_empty_file_test(
+        transaction_id, _, _ = self._common_empty_file_test(
             transmission_mode=None,
         )
         fsm_res = self.source_handler.state_machine()
-        self.cfdp_user.transaction_finished_indication.assert_called_once()
-        self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
         self.source_handler.state_machine()
+        self._verify_transaction_finished_indication(transaction_id)
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
@@ -42,13 +46,12 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.default_remote_cfg.default_transmission_mode = (
             TransmissionMode.ACKNOWLEDGED
         )
-        self._common_empty_file_test(
+        transaction_id, _, _ = self._common_empty_file_test(
             transmission_mode=TransmissionMode.UNACKNOWLEDGED,
         )
         fsm_res = self.source_handler.state_machine()
-        self.cfdp_user.transaction_finished_indication.assert_called_once()
-        self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
         self.source_handler.state_machine()
+        self._verify_transaction_finished_indication(transaction_id)
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
@@ -69,18 +72,15 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
         self.source_handler.source_id = self.source_id
-        dest_path = Path("/tmp/hello_two_segments_copy.txt")
-        tparams = self._transaction_with_file_data_wrapper(dest_path, rand_data)
-        self.assertEqual(tparams.id.source_id, self.source_id)
-        self.assertEqual(tparams.id.seq_num.value, 0)
-        self._handle_next_file_data_pdu(0, rand_data[0 : self.file_segment_len], 0)
-        file_data_pdu = self._second_file_segment_handling()
-        self.assertEqual(len(file_data_pdu.file_data), self.file_segment_len)
-        self.assertEqual(
-            file_data_pdu.file_data[0 : self.file_segment_len],
-            rand_data[self.file_segment_len :],
+        source_path = Path(f"{tempfile.gettempdir()}/two-segments.bin")
+        dest_path = Path(f"{tempfile.gettempdir()}/two-segments-copy.bin")
+        tparams = self._transaction_with_file_data_wrapper(
+            self._generate_generic_put_req(source_path, dest_path), rand_data
         )
-        self.assertEqual(file_data_pdu.offset, self.file_segment_len)
+        self._generic_file_segment_handling(0, rand_data[0 : self.file_segment_len])
+        self._generic_file_segment_handling(
+            self.file_segment_len, rand_data[self.file_segment_len :]
+        )
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, tparams.file_size, tparams.crc_32)
         self._test_transaction_completion()
@@ -92,22 +92,18 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
             rand_data = random.randbytes(round(self.file_segment_len * 1.3))
         else:
             rand_data = os.urandom(round(self.file_segment_len * 1.3))
-        remainder_len = len(rand_data) - self.file_segment_len
         self.source_id = ByteFieldU16(2)
         self.dest_id = ByteFieldU16(3)
         self.source_handler.source_id = self.source_id
-        dest_path = Path("/tmp/hello_two_segments_imperfect_copy.txt")
-        tparams = self._transaction_with_file_data_wrapper(dest_path, rand_data)
-        self.assertEqual(tparams.id.source_id, self.source_id)
-        self.assertEqual(tparams.id.seq_num.value, 0)
-        self._handle_next_file_data_pdu(0, rand_data[0 : self.file_segment_len], 0)
-        file_data_pdu = self._second_file_segment_handling()
-        self.assertEqual(len(file_data_pdu.file_data), remainder_len)
-        self.assertEqual(
-            file_data_pdu.file_data,
-            rand_data[self.file_segment_len :],
+        source_path = Path(f"{tempfile.gettempdir()}/hello-source.txt")
+        dest_path = Path(f"{tempfile.gettempdir()}/hello-dest.txt")
+        tparams = self._transaction_with_file_data_wrapper(
+            self._generate_generic_put_req(source_path, dest_path), rand_data
         )
-        self.assertEqual(file_data_pdu.offset, self.file_segment_len)
+        self._generic_file_segment_handling(0, rand_data[0 : self.file_segment_len])
+        self._generic_file_segment_handling(
+            self.file_segment_len, rand_data[self.file_segment_len :]
+        )
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, tparams.file_size, tparams.crc_32)
         self._test_transaction_completion()
@@ -137,8 +133,8 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self.assertEqual(next_packet.pdu_directive_type, DirectiveType.METADATA_PDU)
         metadata_pdu = next_packet.to_metadata_pdu()
         self.assertIsNotNone(metadata_pdu.options)
-        self.assertEqual(len(metadata_pdu.options), 1)  # type: ignore
-        self.assertEqual(metadata_pdu.options[0], generic_tlv)  # type: ignore
+        self.assertEqual(len(metadata_pdu.options), 1)
+        self.assertEqual(metadata_pdu.options[0], generic_tlv)
         self.assertIsNone(metadata_pdu.source_file_name)
         self.assertIsNone(metadata_pdu.dest_file_name)
         self.assertEqual(fsm_res.states.state, CfdpState.BUSY)
@@ -168,19 +164,32 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_put_req_by_proxy_op(self):
-        pass
-
-    def _second_file_segment_handling(self) -> FileDataPdu:
-        fsm_res = self.source_handler.state_machine()
-        self.assertEqual(fsm_res.states.state, CfdpState.BUSY)
-        self.assertEqual(
-            self.source_handler.transmission_mode, TransmissionMode.UNACKNOWLEDGED
+        file_content = "Hello World\n".encode()
+        dest_path = Path("/tmp/dest.txt")
+        originating_id = TransactionId(
+            ByteFieldU16(5), ByteFieldU16(self.expected_seq_num)
         )
-        self.assertEqual(fsm_res.states.step, TransactionStep.SENDING_FILE_DATA)
-        next_packet = self.source_handler.get_next_packet()
-        assert next_packet is not None
-        self.assertFalse(next_packet.is_file_directive)
-        return next_packet.to_file_data_pdu()
+        originating_id_msg = OriginatingTransactionId(originating_id)
+        put_req = PutRequest(
+            destination_id=self.dest_id,
+            source_file=Path("/tmp/source.txt"),
+            dest_file=dest_path,
+            # Let the transmission mode be auto-determined by the remote MIB.
+            trans_mode=None,
+            closure_requested=None,
+            msgs_to_user=[originating_id_msg.to_generic_msg_to_user_tlv()],
+        )
+
+        self.source_id = ByteFieldU8(1)
+        self.dest_id = ByteFieldU8(2)
+        self.source_handler.source_id = self.source_id
+        tparams = self._transaction_with_file_data_wrapper(
+            put_req, file_content, originating_id
+        )
+        self._generic_file_segment_handling(0, file_content)
+        fsm_res = self.source_handler.state_machine()
+        self._test_eof_file_pdu(fsm_res, tparams.file_size, tparams.crc_32)
+        self._test_transaction_completion()
 
     def _test_eof_file_pdu(self, fsm_res: FsmResult, file_size: int, crc32: bytes):
         self._state_checker(fsm_res, 1, CfdpState.BUSY, TransactionStep.SENDING_EOF)
