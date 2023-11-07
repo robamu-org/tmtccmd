@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Optional, List
+from typing import Any, Tuple, Optional, List, Dict
 from multiprocessing import Queue
 from queue import Empty
 from threading import Thread
@@ -19,6 +19,8 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.tlv import (
     ProxyMessageType,
+    ProxyPutResponse,
+    ProxyPutResponseParams,
     MessageToUserTlv,
     OriginatingTransactionId,
 )
@@ -26,6 +28,7 @@ from spacepackets.util import UnsignedByteField, ByteFieldU16
 from tmtccmd.cfdp.user import (
     CfdpUserBase,
     FileSegmentRecvdParams,
+    TransactionParams,
     MetadataRecvParams,
     TransactionFinishedParams,
 )
@@ -113,12 +116,28 @@ class CfdpUser(CfdpUserBase):
     def __init__(self, base_str: str, put_req_queue: Queue):
         self.base_str = base_str
         self.put_req_queue = put_req_queue
-        self.active_proxy_put_reqs = []
+        # This is a dictionary where the key is the current transaction ID for a transaction which
+        # was triggered by a proxy request with a originating ID.
+        self.active_proxy_put_reqs: Dict[TransactionId, TransactionId] = {}
         super().__init__()
 
-    def transaction_indication(self, transaction_id: TransactionId):
+    def transaction_indication(
+        self,
+        transaction_params: TransactionParams,
+    ):
         """This indication is used to report the transaction ID to the CFDP user"""
-        _LOGGER.info(f"{self.base_str}: Transaction.indication for {transaction_id}")
+        _LOGGER.info(
+            f"{self.base_str}: Transaction.indication for {transaction_params.transaction_id}"
+        )
+        if transaction_params.originating_transaction_id is not None:
+            _LOGGER.info(
+                f"Originating Transaction ID: {transaction_params.transaction_id}"
+            )
+            self.active_proxy_put_reqs.update(
+                {
+                    transaction_params.transaction_id: transaction_params.originating_transaction_id
+                }
+            )
 
     def eof_sent_indication(self, transaction_id: TransactionId):
         _LOGGER.info(f"{self.base_str}: EOF-Sent.indication for {transaction_id}")
@@ -127,6 +146,27 @@ class CfdpUser(CfdpUserBase):
         _LOGGER.info(
             f"{self.base_str}: Transaction-Finished.indication for {params.transaction_id}."
         )
+        if params.transaction_id in self.active_proxy_put_reqs:
+            proxy_put_response = ProxyPutResponse(
+                ProxyPutResponseParams(
+                    params.finished_params.condition_code,
+                    params.finished_params.delivery_code,
+                    params.finished_params.file_status,
+                )
+            )
+            originating_id = self.active_proxy_put_reqs.get(params.transaction_id)
+            put_req = PutRequest(
+                destination_id=originating_id.source_id,
+                source_file=None,
+                dest_file=None,
+                trans_mode=None,
+                closure_requested=None,
+                msgs_to_user=[
+                    proxy_put_response,
+                    OriginatingTransactionId(originating_id),
+                ],
+            )
+            self.put_req_queue.put(put_req)
 
     def metadata_recv_indication(self, params: MetadataRecvParams):
         _LOGGER.info(
