@@ -32,6 +32,7 @@ from spacepackets.cfdp.pdu.ack import TransactionStatus
 from spacepackets.cfdp.pdu.finished import DeliveryCode, FileStatus, FinishedParams
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
+from spacepackets.cfdp.tlv import MessageToUserTlv
 from spacepackets.util import UnsignedByteField
 
 from tmtccmd.cfdp.defs import CfdpState
@@ -719,13 +720,14 @@ class DestHandler:
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         self.states.step = TransactionStep.RECEIVING_FILE_DATA
-        self._init_vfs_handling()
+        if not self._params.fp.no_file_data:
+            self._init_vfs_handling()
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
             for tlv in metadata_pdu.options:
                 if tlv.tlv_type == TlvType.MESSAGE_TO_USER:
-                    msgs_to_user_list.append(tlv)
+                    msgs_to_user_list.append(MessageToUserTlv.from_tlv(tlv))
         params = MetadataRecvParams(
             transaction_id=self._params.transaction_id,  # type: ignore
             file_size=metadata_pdu.file_size,

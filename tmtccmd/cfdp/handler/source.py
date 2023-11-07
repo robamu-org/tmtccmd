@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import logging
+from pathlib import Path
 from collections import deque
 from dataclasses import dataclass
 from typing import Deque, Optional, Tuple
@@ -322,6 +323,10 @@ class SourceHandler:
             _LOGGER.debug("CFDP source handler is busy, can't process put request")
             return False
         self._put_req = request
+        if self._put_req.source_file is not None:
+            assert isinstance(self._put_req.source_file, Path)
+        if self._put_req.dest_file is not None:
+            assert isinstance(self._put_req.dest_file, Path)
         self._params.remote_cfg = self.remote_cfg_table.get_cfg(request.destination_id)
         if self._params.remote_cfg is None:
             raise NoRemoteEntityCfgFound(entity_id=request.destination_id)

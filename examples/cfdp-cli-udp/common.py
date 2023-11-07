@@ -17,6 +17,7 @@ from spacepackets.cfdp import (
     TransmissionMode,
     ChecksumType,
 )
+from spacepackets.cfdp.tlv import ProxyMessageType
 from spacepackets.util import UnsignedByteField, ByteFieldU16
 from tmtccmd.cfdp.user import (
     CfdpUserBase,
@@ -105,8 +106,10 @@ class CfdpFaultHandler(DefaultFaultHandlerBase):
 
 
 class CfdpUser(CfdpUserBase):
-    def __init__(self, base_str: str):
+    def __init__(self, base_str: str, put_req_queue: Queue):
         self.base_str = base_str
+        self.put_req_queue = put_req_queue
+        self.active_proxy_put_reqs = {}
         super().__init__()
 
     def transaction_indication(self, transaction_id: TransactionId):
@@ -125,6 +128,25 @@ class CfdpUser(CfdpUserBase):
         _LOGGER.info(
             f"{self.base_str}: Metadata-Recv.indication for {params.transaction_id}."
         )
+        for msg_to_user in params.msgs_to_user:
+            if msg_to_user.is_reserved_cfdp_message():
+                # TODO: Add support for all other reserved message types.
+                reserved_cfdp_msg = msg_to_user.to_reserved_msg_tlv()
+                if (
+                    reserved_cfdp_msg.is_cfdp_proxy_operation()
+                    and reserved_cfdp_msg.get_cfdp_proxy_message_type()
+                    == ProxyMessageType.PUT_REQUEST
+                ):
+                    put_req_params = reserved_cfdp_msg.get_proxy_put_request_params()
+                    assert put_req_params is not None
+                    put_req = PutRequest(
+                        destination_id=put_req_params.dest_entity_id,
+                        source_file=put_req_params.source_file_as_path,
+                        dest_file=put_req_params.dest_file_as_path,
+                        trans_mode=None,
+                        closure_requested=None,
+                    )
+                    self.put_req_queue.put(put_req)
 
     def file_segment_recv_indication(self, params: FileSegmentRecvdParams):
         _LOGGER.info(
@@ -265,9 +287,10 @@ class SourceEntityHandler(Thread):
         try:
             put_req: PutRequest = self.put_req_queue.get(False)
             _LOGGER.info(f"{self.base_str}: Handling Put Request: {put_req}")
-            if put_req.destination_id != REMOTE_ENTITY_ID:
+            if put_req.destination_id not in [LOCAL_ENTITY_ID, REMOTE_ENTITY_ID]:
                 _LOGGER.warning(
-                    f"can only handle put requests target towards {REMOTE_ENTITY_ID}"
+                    f"can only handle put requests target towards {REMOTE_ENTITY_ID} or "
+                    f"{LOCAL_ENTITY_ID}"
                 )
             else:
                 self.source_handler.put_request(put_req)

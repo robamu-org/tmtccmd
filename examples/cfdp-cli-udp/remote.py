@@ -59,7 +59,7 @@ def main():
     src_fault_handler = CfdpFaultHandler(BASE_STR_SRC)
     # 16 bit sequence count for transactions.
     src_seq_count_provider = SeqCountProvider(16)
-    src_user = CfdpUser(BASE_STR_SRC)
+    src_user = CfdpUser(BASE_STR_SRC, PUT_REQ_QUEUE)
     remote_cfg_table = RemoteEntityCfgTable()
     remote_cfg_table.add_config(REMOTE_CFG_OF_LOCAL_ENTITY)
     check_timer_provider = CustomCheckTimerProvider()
@@ -81,7 +81,7 @@ def main():
 
     # Enable all indications.
     dest_fault_handler = CfdpFaultHandler(BASE_STR_DEST)
-    dest_user = CfdpUser(BASE_STR_DEST)
+    dest_user = CfdpUser(BASE_STR_DEST, PUT_REQ_QUEUE)
     dest_handler = DestHandler(
         cfg=LocalEntityCfg(REMOTE_ENTITY_ID, INDICATION_CFG, dest_fault_handler),
         user=dest_user,
