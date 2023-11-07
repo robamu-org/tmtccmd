@@ -148,11 +148,7 @@ class CfdpUser(CfdpUserBase):
         )
         if params.transaction_id in self.active_proxy_put_reqs:
             proxy_put_response = ProxyPutResponse(
-                ProxyPutResponseParams(
-                    params.finished_params.condition_code,
-                    params.finished_params.delivery_code,
-                    params.finished_params.file_status,
-                )
+                ProxyPutResponseParams.from_finished_params(params.finished_params)
             )
             originating_id = self.active_proxy_put_reqs.get(params.transaction_id)
             put_req = PutRequest(
@@ -167,13 +163,14 @@ class CfdpUser(CfdpUserBase):
                 ],
             )
             self.put_req_queue.put(put_req)
+            self.active_proxy_put_reqs.pop(params.transaction_id)
 
     def metadata_recv_indication(self, params: MetadataRecvParams):
         _LOGGER.info(
             f"{self.base_str}: Metadata-Recv.indication for {params.transaction_id}."
         )
         if params.msgs_to_user is not None:
-            self._handle_msgs_to_user(params.msgs_to_user)
+            self._handle_msgs_to_user(params.transaction_id, params.msgs_to_user)
 
     def _handle_msgs_to_user(
         self, transaction_id: TransactionId, msgs_to_user: List[MessageToUserTlv]

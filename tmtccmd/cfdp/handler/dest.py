@@ -721,7 +721,7 @@ class DestHandler:
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         self.states.step = TransactionStep.RECEIVING_FILE_DATA
         if not self._params.fp.no_file_data:
-            self._init_vfs_handling()
+            self._init_vfs_handling(Path(metadata_pdu.source_file_name).name)
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
@@ -738,8 +738,13 @@ class DestHandler:
         )
         self.user.metadata_recv_indication(params)
 
-    def _init_vfs_handling(self):
+    def _init_vfs_handling(self, source_base_name: str):
         try:
+            # If the destination is a directory, append the base name to the directory
+            # Example: For source path /tmp/hello.txt and dest path /tmp, build /tmp/hello.txt for
+            # the destination.
+            if self.user.vfs.is_directory(self._params.fp.file_name):
+                self._params.fp.file_name = self._params.fp.file_name.joinpath(source_base_name)
             if self.user.vfs.file_exists(self._params.fp.file_name):
                 self.user.vfs.truncate_file(self._params.fp.file_name)
             else:
