@@ -16,7 +16,6 @@ from spacepackets.cfdp.pdu import FinishedPdu, DeliveryCode, FileStatus
 from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import (
     ByteFieldU8,
-    UnsignedByteField,
     ByteFieldU16,
     ByteFieldEmpty,
 )
