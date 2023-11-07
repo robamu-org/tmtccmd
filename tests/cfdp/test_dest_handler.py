@@ -1,8 +1,8 @@
-from threading import Lock
 import dataclasses
 import os
 import tempfile
 from pathlib import Path
+from threading import Lock
 from typing import Optional, Tuple, cast
 from unittest import TestCase
 from unittest.mock import MagicMock
@@ -14,8 +14,8 @@ from spacepackets.cfdp import (
     DirectiveType,
     PduConfig,
     PduType,
-    TransmissionMode,
     TransactionId,
+    TransmissionMode,
 )
 from spacepackets.cfdp.pdu import (
     DeliveryCode,
@@ -27,12 +27,13 @@ from spacepackets.cfdp.pdu import (
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
 from spacepackets.cfdp.pdu.metadata import MetadataParams
-from spacepackets.util import ByteFieldU16, ByteFieldU8
+from spacepackets.util import ByteFieldU8, ByteFieldU16
+
 from tmtccmd.cfdp import (
     IndicationCfg,
     LocalEntityCfg,
-    RemoteEntityCfgTable,
     RemoteEntityCfg,
+    RemoteEntityCfgTable,
 )
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.dest import (
@@ -40,7 +41,10 @@ from tmtccmd.cfdp.handler.dest import (
     FsmResult,
     TransactionStep,
 )
-from tmtccmd.cfdp.user import FileSegmentRecvdParams, TransactionFinishedParams
+from tmtccmd.cfdp.user import (
+    FileSegmentRecvdParams,
+    TransactionFinishedParams,
+)
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
@@ -89,10 +93,11 @@ class TestDestHandlerBase(TestCase):
         self.expected_mode = trans_mode
         self.closure_requested = False
         self.cfdp_user = CfdpUser()
-        self.file_segment_len = 128
+        self.cfdp_user.transaction_indication = MagicMock()
         self.cfdp_user.eof_recv_indication = MagicMock()
         self.cfdp_user.file_segment_recv_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
+        self.file_segment_len = 128
         self.remote_cfg_table = RemoteEntityCfgTable()
         self.timeout_nak_procedure_seconds = 0.05
         self.timeout_positive_ack_procedure_seconds = 0.05
@@ -160,6 +165,7 @@ class TestDestHandlerBase(TestCase):
         expected_init_packets: int,
         expected_init_state: CfdpState,
         expected_init_step: TransactionStep,
+        expected_originating_id: Optional[TransactionId] = None,
     ) -> FsmResult:
         checksum_type = ChecksumType.NULL_CHECKSUM
         if file_size > 0:
@@ -178,7 +184,8 @@ class TestDestHandlerBase(TestCase):
             None, expected_init_packets, expected_init_state, expected_init_step
         )
         self.dest_handler.insert_packet(file_transfer_init)
-        return self.dest_handler.state_machine()
+        fsm_res = self.dest_handler.state_machine()
+        return fsm_res
 
     def _insert_file_segment(
         self,

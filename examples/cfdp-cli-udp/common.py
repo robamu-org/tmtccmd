@@ -17,7 +17,11 @@ from spacepackets.cfdp import (
     TransmissionMode,
     ChecksumType,
 )
-from spacepackets.cfdp.tlv import ProxyMessageType, MessageToUserTlv
+from spacepackets.cfdp.tlv import (
+    ProxyMessageType,
+    MessageToUserTlv,
+    OriginatingTransactionId,
+)
 from spacepackets.util import UnsignedByteField, ByteFieldU16
 from tmtccmd.cfdp.user import (
     CfdpUserBase,
@@ -109,7 +113,7 @@ class CfdpUser(CfdpUserBase):
     def __init__(self, base_str: str, put_req_queue: Queue):
         self.base_str = base_str
         self.put_req_queue = put_req_queue
-        self.active_proxy_put_reqs = {}
+        self.active_proxy_put_reqs = []
         super().__init__()
 
     def transaction_indication(self, transaction_id: TransactionId):
@@ -131,7 +135,9 @@ class CfdpUser(CfdpUserBase):
         if params.msgs_to_user is not None:
             self._handle_msgs_to_user(params.msgs_to_user)
 
-    def _handle_msgs_to_user(self, msgs_to_user: List[MessageToUserTlv]):
+    def _handle_msgs_to_user(
+        self, transaction_id: TransactionId, msgs_to_user: List[MessageToUserTlv]
+    ):
         for msg_to_user in msgs_to_user:
             if msg_to_user.is_reserved_cfdp_message():
                 # TODO: Add support for all other reserved message types.
@@ -142,6 +148,7 @@ class CfdpUser(CfdpUserBase):
                     == ProxyMessageType.PUT_REQUEST
                 ):
                     put_req_params = reserved_cfdp_msg.get_proxy_put_request_params()
+                    _LOGGER.info(f"Received Proxy Put Request: {put_req_params}")
                     assert put_req_params is not None
                     put_req = PutRequest(
                         destination_id=put_req_params.dest_entity_id,
@@ -149,7 +156,9 @@ class CfdpUser(CfdpUserBase):
                         dest_file=put_req_params.dest_file_as_path,
                         trans_mode=None,
                         closure_requested=None,
+                        msgs_to_user=[OriginatingTransactionId(transaction_id)],
                     )
+                    self.active_proxy_put_reqs.append(put_req)
                     self.put_req_queue.put(put_req)
 
     def file_segment_recv_indication(self, params: FileSegmentRecvdParams):

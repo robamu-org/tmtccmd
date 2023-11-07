@@ -14,6 +14,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
+class TransactionParams:
+    """Not wholly standard conformant here, but supplying the originating transaction ID
+    makes the implementation of handling with proxy put requests easier."""
+
+    transaction_id: TransactionId
+    originating_transaction_id: Optional[TransactionId] = None
+
+
+@dataclass
 class MetadataRecvParams:
     transaction_id: TransactionId
     source_id: UnsignedByteField
@@ -59,9 +68,14 @@ class CfdpUserBase(ABC):
         self.vfs = vfs
 
     @abstractmethod
-    def transaction_indication(self, transaction_id: TransactionId):
+    def transaction_indication(
+        self,
+        transaction_indication_params: TransactionParams,
+    ):
         """This indication is used to report the transaction ID to the CFDP user"""
-        _LOGGER.info(f"Transaction.indication for {transaction_id}")
+        _LOGGER.info(
+            f"Transaction.indication for {transaction_indication_params.transaction_id}"
+        )
 
     @abstractmethod
     def eof_sent_indication(self, transaction_id: TransactionId):

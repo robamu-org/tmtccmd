@@ -69,7 +69,7 @@ from tmtccmd.cfdp.handler.defs import (
 )
 from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType, RemoteEntityCfgTable
 from tmtccmd.cfdp.request import PutRequest
-from tmtccmd.cfdp.user import TransactionFinishedParams
+from tmtccmd.cfdp.user import TransactionFinishedParams, TransactionParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.version import get_version
@@ -522,6 +522,7 @@ class SourceHandler:
 
     def _transaction_start(self):
         file_size = 0
+        originating_transaction_id = self._check_for_originating_id()
         self._prepare_file_params()
         self._prepare_pdu_conf(file_size)
         self._get_next_transfer_seq_num()
@@ -530,7 +531,19 @@ class SourceHandler:
             source_entity_id=self.cfg.local_entity_id,
             transaction_seq_num=self.transaction_seq_num,
         )
-        self.user.transaction_indication(self._params.transaction_id)
+        self.user.transaction_indication(
+            TransactionParams(self._params.transaction_id, originating_transaction_id)
+        )
+
+    def _check_for_originating_id(self) -> Optional[TransactionId]:
+        if self._put_req.msgs_to_user is None:
+            return None
+        for msgs_to_user in self._put_req.msgs_to_user:
+            if msgs_to_user.is_reserved_cfdp_message():
+                reserved_cfdp_msg = msgs_to_user.to_reserved_msg_tlv()
+                if reserved_cfdp_msg.is_originating_transaction_id():
+                    return reserved_cfdp_msg.get_originating_transaction_id()
+        return None
 
     def _prepare_file_params(self):
         assert self._put_req is not None

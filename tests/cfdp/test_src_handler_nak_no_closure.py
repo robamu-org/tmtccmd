@@ -19,7 +19,7 @@ from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler import FsmResult
 from tmtccmd.cfdp.handler.source import TransactionStep
 from tmtccmd.cfdp.request import PutRequest
-from tmtccmd.cfdp.user import TransactionFinishedParams
+from tmtccmd.cfdp.user import TransactionFinishedParams, TransactionParams
 from .test_src_handler import TestCfdpSourceHandler
 
 
@@ -149,7 +149,9 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         expected_id = TransactionId(
             metadata_pdu.source_entity_id, metadata_pdu.transaction_seq_num
         )
-        self.cfdp_user.transaction_indication.assert_called_once_with(expected_id)
+        self.cfdp_user.transaction_indication.assert_called_once_with(
+            TransactionParams(expected_id)
+        )
         # Now the state machine should be finished.
         fsm_res = self.source_handler.state_machine()
         finished_params = TransactionFinishedParams(
@@ -164,6 +166,9 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
             finished_params
         )
         self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+
+    def test_put_req_by_proxy_op(self):
+        pass
 
     def _second_file_segment_handling(self) -> FileDataPdu:
         fsm_res = self.source_handler.state_machine()

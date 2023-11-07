@@ -3,7 +3,7 @@ import os
 from dataclasses import dataclass
 import tempfile
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -30,6 +30,7 @@ from tmtccmd.cfdp import (
 from tmtccmd.cfdp.handler import SourceHandler, FsmResult
 from tmtccmd.cfdp.exceptions import UnretrievedPdusToBeSent
 from tmtccmd.cfdp.handler.source import TransactionStep
+from tmtccmd.cfdp.user import TransactionParams
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.util import SeqCountProvider
 from .cfdp_fault_handler_mock import FaultHandler
@@ -252,6 +253,7 @@ class TestCfdpSourceHandler(TestCase):
         self,
         dest_id: UnsignedByteField,
         put_request: PutRequest,
+        expected_originating_id: Optional[TransactionId] = None,
     ) -> Tuple[MetadataPdu, TransactionId]:
         self.source_handler.put_request(put_request)
         fsm_res = self.source_handler.state_machine()
@@ -263,11 +265,7 @@ class TestCfdpSourceHandler(TestCase):
         )
         transaction_id = self.source_handler.transaction_id
         assert transaction_id is not None
-        self.cfdp_user.transaction_indication.assert_called_once()
-        self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
-        self.assertEqual(len(self.cfdp_user.transaction_indication.call_args[0]), 1)
-        call_args = self.cfdp_user.transaction_indication.call_args[0]
-        self.assertEqual(call_args[0], transaction_id)
+        self._verify_transaction_indication(expected_originating_id)
         next_packet = self.source_handler.get_next_packet()
         assert next_packet is not None
         self.assertEqual(next_packet.pdu_type, PduType.FILE_DIRECTIVE)
@@ -283,6 +281,22 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(metadata_pdu.dest_file_name, put_request.dest_file.as_posix())
         self.assertEqual(metadata_pdu.dest_entity_id, dest_id)
         return metadata_pdu, transaction_id
+
+    def _verify_transaction_indication(
+        self, expected_originating_id: Optional[TransactionId]
+    ):
+        self.cfdp_user.transaction_indication.assert_called_once()
+        self.assertEqual(self.cfdp_user.transaction_indication.call_count, 1)
+        transaction_params = cast(
+            TransactionParams,
+            self.cfdp_user.transaction_indication.call_args.args[0],
+        )
+        self.assertEqual(
+            transaction_params.transaction_id, self.source_handler.transaction_id
+        )
+        self.assertEqual(
+            transaction_params.originating_transaction_id, expected_originating_id
+        )
 
     def _verify_eof_indication(self, expected_transaction_id: TransactionId):
         self.source_handler.state_machine()
