@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, List
 from multiprocessing import Queue
 from queue import Empty
 from threading import Thread
@@ -17,7 +17,7 @@ from spacepackets.cfdp import (
     TransmissionMode,
     ChecksumType,
 )
-from spacepackets.cfdp.tlv import ProxyMessageType
+from spacepackets.cfdp.tlv import ProxyMessageType, MessageToUserTlv
 from spacepackets.util import UnsignedByteField, ByteFieldU16
 from tmtccmd.cfdp.user import (
     CfdpUserBase,
@@ -128,7 +128,11 @@ class CfdpUser(CfdpUserBase):
         _LOGGER.info(
             f"{self.base_str}: Metadata-Recv.indication for {params.transaction_id}."
         )
-        for msg_to_user in params.msgs_to_user:
+        if params.msgs_to_user is not None:
+            self._handle_msgs_to_user(params.msgs_to_user)
+
+    def _handle_msgs_to_user(self, msgs_to_user: List[MessageToUserTlv]):
+        for msg_to_user in msgs_to_user:
             if msg_to_user.is_reserved_cfdp_message():
                 # TODO: Add support for all other reserved message types.
                 reserved_cfdp_msg = msg_to_user.to_reserved_msg_tlv()
