@@ -149,7 +149,7 @@ class CfdpUser(CfdpUserBase):
         if params.transaction_id in self.active_proxy_put_reqs:
             proxy_put_response = ProxyPutResponse(
                 ProxyPutResponseParams.from_finished_params(params.finished_params)
-            )
+            ).to_generic_msg_to_user_tlv()
             originating_id = self.active_proxy_put_reqs.get(params.transaction_id)
             put_req = PutRequest(
                 destination_id=originating_id.source_id,
@@ -159,7 +159,9 @@ class CfdpUser(CfdpUserBase):
                 closure_requested=None,
                 msgs_to_user=[
                     proxy_put_response,
-                    OriginatingTransactionId(originating_id),
+                    OriginatingTransactionId(
+                        originating_id
+                    ).to_generic_msg_to_user_tlv(),
                 ],
             )
             self.put_req_queue.put(put_req)
@@ -193,9 +195,12 @@ class CfdpUser(CfdpUserBase):
                         dest_file=put_req_params.dest_file_as_path,
                         trans_mode=None,
                         closure_requested=None,
-                        msgs_to_user=[OriginatingTransactionId(transaction_id)],
+                        msgs_to_user=[
+                            OriginatingTransactionId(
+                                transaction_id
+                            ).to_generic_msg_to_user_tlv()
+                        ],
                     )
-                    self.active_proxy_put_reqs.append(put_req)
                     self.put_req_queue.put(put_req)
 
     def file_segment_recv_indication(self, params: FileSegmentRecvdParams):
