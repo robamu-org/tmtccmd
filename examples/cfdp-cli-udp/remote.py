@@ -30,8 +30,8 @@ from tmtccmd.util.seqcnt import SeqCountProvider
 _LOGGER = logging.getLogger()
 
 
-BASE_STR_SRC = "REMOTE SRC ENTITY"
-BASE_STR_DEST = "REMOTE DEST ENTITY"
+BASE_STR_SRC = "REMOTE SRC"
+BASE_STR_DEST = "REMOTE DEST"
 
 # This queue is used to send put requests.
 PUT_REQ_QUEUE = Queue()

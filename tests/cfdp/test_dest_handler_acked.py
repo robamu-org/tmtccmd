@@ -15,12 +15,14 @@ from spacepackets.cfdp.pdu import (
     TransactionStatus,
     DeliveryCode,
     FileStatus,
+    FinishedParams,
 )
 from spacepackets.crc import mkPredefinedCrcFun
 
 from .test_dest_handler import TestDestHandlerBase
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.dest import FsmResult, TransactionStep
+from tmtccmd.cfdp.user import MetadataRecvParams, TransactionFinishedParams
 
 
 class TestDestHandlerAcked(TestDestHandlerBase):
@@ -356,9 +358,9 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         fsm_res = self.dest_handler.state_machine()
         self._generic_finished_pdu_with_error_check(
             fsm_res,
-            ConditionCode.NAK_LIMIT_REACHED,
-            DeliveryCode.DATA_INCOMPLETE,
-            FileStatus.FILE_RETAINED,
+            cond_code=ConditionCode.NAK_LIMIT_REACHED,
+            delivery_code=DeliveryCode.DATA_INCOMPLETE,
+            file_status=FileStatus.FILE_RETAINED,
         )
 
     def test_deferred_lost_segment_handling_after_timeout_activity_reset(self):
@@ -422,6 +424,44 @@ class TestDestHandlerAcked(TestDestHandlerBase):
             DeliveryCode.DATA_COMPLETE,
             FileStatus.FILE_RETAINED,
         )
+
+    def test_metadata_only_transfer(self):
+        options = self._generate_put_response_opts()
+        metadata_pdu = self._generate_metadata_only_metadata(options)
+        self.dest_handler.insert_packet(metadata_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        # Done immediately. The only thing we need to do is check the two user indications.
+        self.cfdp_user.metadata_recv_indication.assert_called_once()
+        self.cfdp_user.metadata_recv_indication.assert_called_with(
+            MetadataRecvParams(
+                self.transaction_id,
+                self.src_pdu_conf.source_entity_id,
+                None,
+                None,
+                None,
+                options,
+            )
+        )
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.cfdp_user.transaction_finished_indication.assert_called_with(
+            TransactionFinishedParams(
+                self.transaction_id,
+                FinishedParams(
+                    delivery_code=DeliveryCode.DATA_COMPLETE,
+                    condition_code=ConditionCode.NO_ERROR,
+                    file_status=FileStatus.FILE_STATUS_UNREPORTED,
+                ),
+            )
+        )
+        finished_pdu = self._generic_no_error_finished_pdu_check(
+            fsm_res, expected_file_status=FileStatus.FILE_STATUS_UNREPORTED
+        )
+        self._generic_verify_transfer_completion(
+            fsm_res,
+            expected_file_data=None,
+            expected_file_status=FileStatus.FILE_STATUS_UNREPORTED,
+        )
+        self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def _generic_finished_pdu_with_error_check(
         self,

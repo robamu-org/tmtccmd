@@ -22,6 +22,7 @@ from spacepackets.cfdp import (
     FaultHandlerCode,
     TransactionId,
 )
+from spacepackets.cfdp.tlv import ProxyMessageType
 from spacepackets.cfdp.pdu import (
     DeliveryCode,
     FileStatus,
@@ -105,7 +106,7 @@ class _SourceFileParams(_FileParamsBase):
             crc32=bytes(),
             file_size=0,
             no_eof=False,
-            metadata_only=False
+            metadata_only=False,
         )
 
     def reset(self):
@@ -536,13 +537,29 @@ class SourceHandler:
         )
 
     def _check_for_originating_id(self) -> Optional[TransactionId]:
+        """This function only returns an originating ID for if not proxy put response is
+        contained in the message to user list. This special logic is in place to avoid permanent
+        loop which would occur when the user uses the orignating ID to register active proxy put
+        request, and this ID would also be generated for proxy put responses."""
+        contains_proxy_put_response = False
+        contains_originating_id = False
+        originating_id = None
         if self._put_req.msgs_to_user is None:
             return None
         for msgs_to_user in self._put_req.msgs_to_user:
             if msgs_to_user.is_reserved_cfdp_message():
                 reserved_cfdp_msg = msgs_to_user.to_reserved_msg_tlv()
                 if reserved_cfdp_msg.is_originating_transaction_id():
-                    return reserved_cfdp_msg.get_originating_transaction_id()
+                    contains_originating_id = True
+                    originating_id = reserved_cfdp_msg.get_originating_transaction_id()
+                if (
+                    reserved_cfdp_msg.is_cfdp_proxy_operation()
+                    and reserved_cfdp_msg.get_cfdp_proxy_message_type()
+                    == ProxyMessageType.PUT_RESPONSE
+                ):
+                    contains_proxy_put_response = True
+        if not contains_proxy_put_response and contains_originating_id:
+            return originating_id
         return None
 
     def _prepare_file_params(self):
@@ -779,9 +796,9 @@ class SourceHandler:
             # This happens for unacknowledged file copy operation with no closure.
             if self._params.finished_params is None:
                 self._params.finished_params = FinishedParams(
-                    DeliveryCode.DATA_COMPLETE,
-                    FileStatus.FILE_STATUS_UNREPORTED,
-                    ConditionCode.NO_ERROR,
+                    condition_code=ConditionCode.NO_ERROR,
+                    delivery_code=DeliveryCode.DATA_COMPLETE,
+                    file_status=FileStatus.FILE_STATUS_UNREPORTED,
                 )
             indication_params = TransactionFinishedParams(
                 transaction_id=self._params.transaction_id,

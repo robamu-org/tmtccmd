@@ -132,8 +132,9 @@ class CfdpUser(CfdpUserBase):
         )
         if transaction_params.originating_transaction_id is not None:
             _LOGGER.info(
-                f"Originating Transaction ID: {transaction_params.transaction_id}"
+                f"Originating Transaction ID: {transaction_params.originating_transaction_id}"
             )
+            _LOGGER.warning("updating active proxy put reqs")
             self.active_proxy_put_reqs.update(
                 {
                     transaction_params.transaction_id: transaction_params.originating_transaction_id

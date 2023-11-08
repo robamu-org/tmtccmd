@@ -244,9 +244,9 @@ class _DestFieldWrapper:
         self.current_check_count: int = 0
         self.closure_requested: bool = False
         self.finished_params: FinishedParams = FinishedParams(
-            DeliveryCode.DATA_INCOMPLETE,
-            FileStatus.FILE_STATUS_UNREPORTED,
-            ConditionCode.NO_ERROR,
+            delivery_code=DeliveryCode.DATA_INCOMPLETE,
+            file_status=FileStatus.FILE_STATUS_UNREPORTED,
+            condition_code=ConditionCode.NO_ERROR,
         )
         self.completion_disposition: CompletionDisposition = (
             CompletionDisposition.COMPLETED
@@ -263,9 +263,9 @@ class _DestFieldWrapper:
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
         self.finished_params = FinishedParams(
-            DeliveryCode.DATA_INCOMPLETE,
-            FileStatus.FILE_STATUS_UNREPORTED,
-            ConditionCode.NO_ERROR,
+            condition_code=ConditionCode.NO_ERROR,
+            delivery_code=DeliveryCode.DATA_INCOMPLETE,
+            file_status=FileStatus.FILE_STATUS_UNREPORTED,
         )
         self.finished_params.file_status = FileStatus.FILE_STATUS_UNREPORTED
         self.completion_disposition = CompletionDisposition.COMPLETED
@@ -409,7 +409,11 @@ class DestHandler:
         """
         if self.states.state == CfdpState.IDLE:
             self.__idle_fsm()
-        else:
+            # Calling the FSM immediately would lead to an exception, user must send any PDUs which
+            # might have been generated (e.g. NAK PDUs to re-request metadata) first.
+            if self.packets_ready:
+                return FsmResult(self.states)
+        if self.states.state == CfdpState.BUSY:
             self.__non_idle_fsm()
         return FsmResult(self.states)
 
@@ -707,6 +711,7 @@ class DestHandler:
         self._params.acked_params.metadata_missing = False
         if metadata_pdu.dest_file_name is None:
             self._params.fp.metadata_only = True
+            self._params.finished_params.delivery_code = DeliveryCode.DATA_COMPLETE
         else:
             self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
         self._params.fp.file_size = metadata_pdu.file_size
@@ -723,16 +728,19 @@ class DestHandler:
             self.states.step = TransactionStep.RECEIVING_FILE_DATA
             self._init_vfs_handling(Path(metadata_pdu.source_file_name).name)
         else:
-                self.states.step = TransactionStep.TRANSFER_COMPLETION
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
             for tlv in metadata_pdu.options:
                 if tlv.tlv_type == TlvType.MESSAGE_TO_USER:
                     msgs_to_user_list.append(MessageToUserTlv.from_tlv(tlv))
+        file_size_for_indication = (
+            None if metadata_pdu.source_file_name is None else metadata_pdu.file_size
+        )
         params = MetadataRecvParams(
             transaction_id=self._params.transaction_id,  # type: ignore
-            file_size=metadata_pdu.file_size,
+            file_size=file_size_for_indication,
             source_id=metadata_pdu.source_entity_id,
             dest_file_name=metadata_pdu.dest_file_name,
             source_file_name=metadata_pdu.source_file_name,
@@ -746,7 +754,9 @@ class DestHandler:
             # Example: For source path /tmp/hello.txt and dest path /tmp, build /tmp/hello.txt for
             # the destination.
             if self.user.vfs.is_directory(self._params.fp.file_name):
-                self._params.fp.file_name = self._params.fp.file_name.joinpath(source_base_name)
+                self._params.fp.file_name = self._params.fp.file_name.joinpath(
+                    source_base_name
+                )
             if self.user.vfs.file_exists(self._params.fp.file_name):
                 self.user.vfs.truncate_file(self._params.fp.file_name)
             else:

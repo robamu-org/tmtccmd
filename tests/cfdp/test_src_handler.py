@@ -41,8 +41,8 @@ from .common import CheckTimerProviderForTest
 class TransactionStartParams:
     id: TransactionId
     metadata_pdu: MetadataPdu
-    file_size: int
-    crc_32: bytes
+    file_size: Optional[int]
+    crc_32: Optional[bytes]
 
 
 class TestCfdpSourceHandler(TestCase):
@@ -233,12 +233,15 @@ class TestCfdpSourceHandler(TestCase):
     def _transaction_with_file_data_wrapper(
         self,
         put_req: PutRequest,
-        data: bytes,
+        data: Optional[bytes],
         originating_transaction_id: Optional[TransactionId] = None,
     ) -> TransactionStartParams:
-        crc32 = self._gen_crc32(data)
-        self._generate_file(put_req.source_file, data)
-        file_size = put_req.source_file.stat().st_size
+        file_size = None
+        crc32 = None
+        if data is not None:
+            crc32 = self._gen_crc32(data)
+            self._generate_file(put_req.source_file, data)
+            file_size = put_req.source_file.stat().st_size
         self.local_cfg.local_entity_id = self.source_id
         metadata_pdu, transaction_id = self._start_source_transaction(
             put_req, originating_transaction_id
@@ -302,11 +305,14 @@ class TestCfdpSourceHandler(TestCase):
                 metadata_pdu.params.closure_requested, put_request.closure_requested
             )
         self.assertEqual(metadata_pdu.checksum_type, ChecksumType.CRC_32)
-        self.assertEqual(
-            metadata_pdu.source_file_name, put_request.source_file.as_posix()
-        )
-        assert put_request.dest_file is not None
-        self.assertEqual(metadata_pdu.dest_file_name, put_request.dest_file.as_posix())
+        source_file_as_posix = None
+        if put_request.source_file is not None:
+            source_file_as_posix = put_request.source_file.as_posix()
+        self.assertEqual(metadata_pdu.source_file_name, source_file_as_posix)
+        dest_file_as_posix = None
+        if put_request.dest_file is not None:
+            dest_file_as_posix = put_request.dest_file.as_posix()
+        self.assertEqual(metadata_pdu.dest_file_name, dest_file_as_posix)
         self.assertEqual(metadata_pdu.dest_entity_id.value, self.dest_id.value)
         return metadata_pdu, transaction_id
 

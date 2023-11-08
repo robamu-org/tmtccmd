@@ -17,6 +17,8 @@ from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.cfdp.tlv import (
     ProxyPutRequest,
     ProxyPutRequestParams,
+    ProxyPutResponse,
+    ProxyPutResponseParams,
     OriginatingTransactionId,
 )
 from spacepackets.util import ByteFieldU16, ByteFieldU8
@@ -189,6 +191,43 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         self._generic_file_segment_handling(0, file_content)
         fsm_res = self.source_handler.state_machine()
         self._test_eof_file_pdu(fsm_res, tparams.file_size, tparams.crc_32)
+        self._test_transaction_completion()
+
+    def test_proxy_put_response_no_originating_id(self):
+        """Proxy put responses should not pass the originating ID to the CFDP user to avoid
+        permanent loops of trying to finish a proxy put request."""
+        originating_id = TransactionId(
+            ByteFieldU16(5), ByteFieldU16(self.expected_seq_num)
+        )
+        originating_id_msg = OriginatingTransactionId(originating_id)
+        put_req = PutRequest(
+            destination_id=self.dest_id,
+            source_file=None,
+            dest_file=None,
+            # Let the transmission mode be auto-determined by the remote MIB.
+            trans_mode=None,
+            closure_requested=None,
+            msgs_to_user=[
+                ProxyPutResponse(
+                    ProxyPutResponseParams.from_finished_params(
+                        FinishedParams(
+                            DeliveryCode.DATA_COMPLETE,
+                            ConditionCode.NO_ERROR,
+                            FileStatus.FILE_RETAINED,
+                        )
+                    )
+                ).to_generic_msg_to_user_tlv(),
+                originating_id_msg.to_generic_msg_to_user_tlv(),
+            ],
+        )
+
+        self.source_id = ByteFieldU8(1)
+        self.dest_id = ByteFieldU8(2)
+        self.source_handler.source_id = self.source_id
+        self._transaction_with_file_data_wrapper(
+            put_req, data=None, originating_transaction_id=None
+        )
+        self.source_handler.state_machine()
         self._test_transaction_completion()
 
     def _test_eof_file_pdu(self, fsm_res: FsmResult, file_size: int, crc32: bytes):
