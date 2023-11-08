@@ -111,8 +111,8 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
     def test_proxy_get_request(self):
         proxy_op_params = ProxyPutRequestParams(
             self.local_cfg.local_entity_id,
-            CfdpLv.from_str("/tmp/source.txt"),
-            CfdpLv.from_str("/tmp/dest.txt"),
+            CfdpLv.from_str(f"{tempfile.gettempdir()}/source.txt"),
+            CfdpLv.from_str(f"{tempfile.gettempdir()}/dest.txt"),
         )
         proxy_op = ProxyPutRequest(proxy_op_params)
         generic_tlv = proxy_op.to_generic_msg_to_user_tlv()
@@ -165,14 +165,14 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
 
     def test_put_req_by_proxy_op(self):
         file_content = "Hello World\n".encode()
-        dest_path = Path("/tmp/dest.txt")
+        dest_path = Path(f"{tempfile.gettempdir()}/dest.txt")
         originating_id = TransactionId(
             ByteFieldU16(5), ByteFieldU16(self.expected_seq_num)
         )
         originating_id_msg = OriginatingTransactionId(originating_id)
         put_req = PutRequest(
             destination_id=self.dest_id,
-            source_file=Path("/tmp/source.txt"),
+            source_file=Path(f"{tempfile.gettempdir()}/source.txt"),
             dest_file=dest_path,
             # Let the transmission mode be auto-determined by the remote MIB.
             trans_mode=None,
