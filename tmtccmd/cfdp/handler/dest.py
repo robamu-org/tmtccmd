@@ -94,7 +94,7 @@ class _DestFileParams(_FileParamsBase):
             file_size=0,
             file_name=Path(),
             file_size_eof=None,
-            no_file_data=False,
+            metadata_only=False,
             condition_code_eof=None,
         )
 
@@ -706,7 +706,7 @@ class DestHandler:
         self._params.closure_requested = metadata_pdu.closure_requested
         self._params.acked_params.metadata_missing = False
         if metadata_pdu.dest_file_name is None:
-            self._params.fp.no_file_data = True
+            self._params.fp.metadata_only = True
         else:
             self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
         self._params.fp.file_size = metadata_pdu.file_size
@@ -719,9 +719,11 @@ class DestHandler:
                 f" {metadata_pdu.dest_entity_id}"
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
-        self.states.step = TransactionStep.RECEIVING_FILE_DATA
-        if not self._params.fp.no_file_data:
+        if not self._params.fp.metadata_only:
+            self.states.step = TransactionStep.RECEIVING_FILE_DATA
             self._init_vfs_handling(Path(metadata_pdu.source_file_name).name)
+        else:
+                self.states.step = TransactionStep.TRANSFER_COMPLETION
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
@@ -1078,7 +1080,7 @@ class DestHandler:
         file_delivery_complete = False
         if (
             self._cksum_verif_helper.checksum_type == ChecksumType.NULL_CHECKSUM
-            or self._params.fp.no_file_data
+            or self._params.fp.metadata_only
         ):
             file_delivery_complete = True
         else:

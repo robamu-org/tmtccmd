@@ -105,7 +105,7 @@ class _SourceFileParams(_FileParamsBase):
             crc32=bytes(),
             file_size=0,
             no_eof=False,
-            no_file_data=False,
+            metadata_only=False
         )
 
     def reset(self):
@@ -548,7 +548,7 @@ class SourceHandler:
     def _prepare_file_params(self):
         assert self._put_req is not None
         if self._put_req.metadata_only:
-            self._params.fp.no_file_data = True
+            self._params.fp.metadata_only = True
             self._params.fp.no_eof = True
         else:
             assert self._put_req.source_file is not None
@@ -557,7 +557,7 @@ class SourceHandler:
                 raise SourceFileDoesNotExist(self._put_req.source_file)
             file_size = self._put_req.source_file.stat().st_size
             if file_size == 0:
-                self._params.fp.no_file_data = True
+                self._params.fp.metadata_only = True
             else:
                 self._params.fp.file_size = file_size
 
@@ -878,7 +878,7 @@ class SourceHandler:
             in the Copy File procedure can be performed
         """
         # No need to send a file data PDU for an empty file
-        if self._params.fp.no_file_data:
+        if self._params.fp.metadata_only:
             return False
         if self._params.fp.progress == self._params.fp.file_size:
             return False

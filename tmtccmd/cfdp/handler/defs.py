@@ -7,7 +7,7 @@ class _FileParamsBase:
     progress: int
     segment_len: int
     crc32: Optional[bytes]
-    no_file_data: bool
+    metadata_only: bool
     file_size: int
 
     @classmethod
@@ -17,11 +17,12 @@ class _FileParamsBase:
             segment_len=0,
             crc32=None,
             file_size=0,
-            no_file_data=False,
+            metadata_only=False
         )
 
     def reset(self):
         self.progress = 0
         self.segment_len = 0
-        self.crc32 = bytes()
+        self.crc32 = None
         self.file_size = 0
+        self.metadata_only = False
