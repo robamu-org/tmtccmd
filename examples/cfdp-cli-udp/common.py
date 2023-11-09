@@ -134,7 +134,6 @@ class CfdpUser(CfdpUserBase):
             _LOGGER.info(
                 f"Originating Transaction ID: {transaction_params.originating_transaction_id}"
             )
-            _LOGGER.warning("updating active proxy put reqs")
             self.active_proxy_put_reqs.update(
                 {
                     transaction_params.transaction_id: transaction_params.originating_transaction_id
@@ -148,6 +147,9 @@ class CfdpUser(CfdpUserBase):
         _LOGGER.info(
             f"{self.base_str}: Transaction-Finished.indication for {params.transaction_id}."
         )
+        _LOGGER.info(f"Condition Code: {params.finished_params.condition_code!r}")
+        _LOGGER.info(f"Delivery Code: {params.finished_params.delivery_code!r}")
+        _LOGGER.info(f"File Status: {params.finished_params.file_status!r}")
         if params.transaction_id in self.active_proxy_put_reqs:
             proxy_put_response = ProxyPutResponse(
                 ProxyPutResponseParams.from_finished_params(params.finished_params)
@@ -165,6 +167,10 @@ class CfdpUser(CfdpUserBase):
                         originating_id
                     ).to_generic_msg_to_user_tlv(),
                 ],
+            )
+            _LOGGER.info(
+                f"Requesting Proxy Put Response concluding Proxy Put originating from "
+                f"{originating_id}"
             )
             self.put_req_queue.put(put_req)
             self.active_proxy_put_reqs.pop(params.transaction_id)

@@ -880,7 +880,6 @@ class SourceHandler:
             closure_req_to_set = self._params.remote_cfg.closure_requested
         # This also sets the field of the PDU configuration struct.
         self._params.transmission_mode = trans_mode_to_set
-        # This also sets the field of the PDU configuration struct.
         self._params.closure_requested = closure_req_to_set
         self._crc_helper.checksum_type = self._params.remote_cfg.crc_type
 
