@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """This component simulates the local component."""
-import socket
 import argparse
 import logging
 import ipaddress
