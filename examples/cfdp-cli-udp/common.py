@@ -33,7 +33,7 @@ from tmtccmd.cfdp.user import (
     MetadataRecvParams,
     TransactionFinishedParams,
 )
-from tmtccmd.cfdp.exceptions import InvalidDestinationId
+from tmtccmd.cfdp.exceptions import InvalidDestinationId, SourceFileDoesNotExist
 
 from tmtccmd.cfdp import get_packet_destination, PacketDestination
 from tmtccmd.util.countdown import Countdown
@@ -79,6 +79,7 @@ REMOTE_PORT = 5222
 class CfdpFaultHandler(DefaultFaultHandlerBase):
     def __init__(self, base_str: str):
         self.base_str = base_str
+        super().__init__()
 
     def notice_of_suspension_cb(
         self, transaction_id: TransactionId, cond: ConditionCode, progress: int
@@ -295,7 +296,7 @@ class UdpServer(Thread):
         self,
         sleep_time: float,
         addr: Tuple[str, int],
-        remote: Tuple[str, int],
+        explicit_remote_addr: Optional[Tuple[str, int]],
         tx_queue: Queue,
         source_entity_rx_queue: Queue,
         dest_entity_rx_queue: Queue,
@@ -304,8 +305,8 @@ class UdpServer(Thread):
         self.sleep_time = sleep_time
         self.udp_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.addr = addr
+        self.explicit_remote_addr = explicit_remote_addr
         self.udp_socket.bind(addr)
-        self.remote = remote
         self.tm_queue = tx_queue
         self.source_entity_queue = source_entity_rx_queue
         self.dest_entity_queue = dest_entity_rx_queue
@@ -347,7 +348,14 @@ class UdpServer(Thread):
                         f"UDP server can only sent bytearray, received {next_tm}"
                     )
                     continue
-                self.udp_socket.sendto(next_tm, self.remote)
+                if self.explicit_remote_addr is not None:
+                    self.udp_socket.sendto(next_tm, self.explicit_remote_addr)
+                elif self.last_sender is not None:
+                    self.udp_socket.sendto(next_tm, self.last_sender)
+                else:
+                    _LOGGER.warning(
+                        "UDP Server: No packet destination found, dropping TM"
+                    )
             except Empty:
                 break
 
@@ -380,7 +388,12 @@ class SourceEntityHandler(Thread):
                     f"{LOCAL_ENTITY_ID}"
                 )
             else:
-                self.source_handler.put_request(put_req)
+                try:
+                    self.source_handler.put_request(put_req)
+                except SourceFileDoesNotExist as e:
+                    _LOGGER.warning(
+                        f"can not handle put request, source file {e.file} does not exist"
+                    )
             return True
         except Empty:
             return False
@@ -403,8 +416,18 @@ class SourceEntityHandler(Thread):
             no_packet_received = False
         except Empty:
             no_packet_received = True
+        try:
+            no_packet_sent = self._call_source_state_machine()
+            # If there is no work to do, put the thread to sleep.
+            if no_packet_received and no_packet_sent:
+                return False
+        except SourceFileDoesNotExist:
+            _LOGGER.warning("Source file does not exist")
+            self.source_handler.reset()
+
+    def _call_source_state_machine(self) -> bool:
+        """Returns whether a packet was sent."""
         fsm_result = self.source_handler.state_machine()
-        no_packet_sent = False
         if fsm_result.states.num_packets_ready > 0:
             while fsm_result.states.num_packets_ready > 0:
                 next_pdu_wrapper = self.source_handler.get_next_packet()
@@ -415,12 +438,9 @@ class SourceEntityHandler(Thread):
                     )
                 # Send all packets which need to be sent.
                 self.tm_queue.put(next_pdu_wrapper.pack())
-            no_packet_sent = False
-        else:
-            no_packet_sent = True
-        # If there is no work to do, put the thread to sleep.
-        if no_packet_received and no_packet_sent:
             return False
+        else:
+            return True
 
     def run(self):
         _LOGGER.info(f"Starting {self.base_str}")

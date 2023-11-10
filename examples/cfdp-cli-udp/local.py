@@ -116,14 +116,14 @@ def main():
     # Address Any to accept CFDP packets from other address than localhost.
     local_addr = "0.0.0.0"
     # Localhost default address
-    remote_addr = "127.0.0.1"
+    remote_addr = "192.168.178.1"
     udp_server = UdpServer(
-        0.1,
-        (local_addr, LOCAL_PORT),
-        (remote_addr, REMOTE_PORT),
-        TM_QUEUE,
-        SOURCE_ENTITY_QUEUE,
-        DEST_ENTITY_QUEUE,
+        sleep_time=0.1,
+        addr=(local_addr, LOCAL_PORT),
+        explicit_remote_addr=(remote_addr, REMOTE_PORT),
+        tx_queue=TM_QUEUE,
+        source_entity_rx_queue=SOURCE_ENTITY_QUEUE,
+        dest_entity_rx_queue=DEST_ENTITY_QUEUE,
     )
 
     source_entity_task.start()

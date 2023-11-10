@@ -8,7 +8,6 @@ from multiprocessing import Queue
 from common import (
     INDICATION_CFG,
     REMOTE_ENTITY_ID,
-    REMOTE_PORT,
     LOCAL_PORT,
     REMOTE_CFG_OF_LOCAL_ENTITY,
     CfdpFaultHandler,
@@ -97,15 +96,14 @@ def main():
 
     # Address Any to accept CFDP packets from other address than localhost.
     local_addr = "0.0.0.0"
-    # Localhost default address
-    remote_addr = "127.0.0.1"
     udp_server = UdpServer(
-        0.1,
-        (local_addr, REMOTE_PORT),
-        (remote_addr, LOCAL_PORT),
-        TM_QUEUE,
-        SOURCE_ENTITY_QUEUE,
-        DEST_ENTITY_QUEUE,
+        sleep_time=0.1,
+        addr=(local_addr, LOCAL_PORT),
+        # No explicit remote address, remote server only responds to requests.
+        explicit_remote_addr=None,
+        tx_queue=TM_QUEUE,
+        source_entity_rx_queue=SOURCE_ENTITY_QUEUE,
+        dest_entity_rx_queue=DEST_ENTITY_QUEUE,
     )
 
     source_entity_task.start()

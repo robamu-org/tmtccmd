@@ -303,21 +303,23 @@ class SourceHandler:
 
     def put_request(self, request: PutRequest):
         """You can call this function to pass a put request to the source handler, which is
-        also used to start a file copy operation. As such, this function models the Put.request
-        CFDP primtiive.
+         also used to start a file copy operation. As such, this function models the Put.request
+         CFDP primtiive.
 
-        Please note that the source handler can also process one put request at a time.
-        The caller is responsible of creating a new source handler, one handler can only handle
-        one file copy request at a time.
+         Please note that the source handler can also process one put request at a time.
+         The caller is responsible of creating a new source handler, one handler can only handle
+         one file copy request at a time.
 
-        :return: False if the handler is busy. True if the handling of the request was successfull.
-        Raises
-        --------
+         :return: False if the handler is busy. True if the handling of the request was successfull.
+         Raises
+         --------
 
-        ValueError
-            Invalid transmission mode detected.
-        NoRemoteEntityCfgFound
-            No remote configuration found for destination ID specified in the Put Request.
+         ValueError
+             Invalid transmission mode detected.
+         NoRemoteEntityCfgFound
+             No remote configuration found for destination ID specified in the Put Request.
+        SourceFileDoesNotExist
+             File specified for Put Request does not exist.
 
         """
         if self.states.state != CfdpState.IDLE:
@@ -326,6 +328,8 @@ class SourceHandler:
         self._put_req = request
         if self._put_req.source_file is not None:
             assert isinstance(self._put_req.source_file, Path)
+            if not self.user.vfs.file_exists(self._put_req.source_file):
+                raise SourceFileDoesNotExist(self._put_req.source_file)
         if self._put_req.dest_file is not None:
             assert isinstance(self._put_req.dest_file, Path)
         self._params.remote_cfg = self.remote_cfg_table.get_cfg(request.destination_id)
@@ -474,7 +478,8 @@ class SourceHandler:
         ChecksumNotImplemented
             Right now, only a subset of the checksums specified for the CFDP standard are implemented.
         SourceFileDoesNotExist
-            The source file for which a transaction was requested does not exist.
+            The source file for which a transaction was requested does not exist. This can happen
+            if the file is deleted during a transaction.
         """
         if self.states.state == CfdpState.IDLE:
             return FsmResult(self.states)
