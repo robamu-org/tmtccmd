@@ -116,7 +116,7 @@ def main():
     # Address Any to accept CFDP packets from other address than localhost.
     local_addr = "0.0.0.0"
     # Localhost default address
-    remote_addr = "192.168.178.1"
+    remote_addr = "192.168.178.53"
     udp_server = UdpServer(
         sleep_time=0.1,
         addr=(local_addr, LOCAL_PORT),
