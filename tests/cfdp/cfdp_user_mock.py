@@ -4,6 +4,7 @@ from tmtccmd.cfdp.user import (
     FileSegmentRecvdParams,
     MetadataRecvParams,
     TransactionFinishedParams,
+    TransactionParams,
 )
 
 
@@ -11,7 +12,7 @@ class CfdpUser(CfdpUserBase):
     def __init__(self):
         super().__init__()
 
-    def transaction_indication(self, transaction_id: TransactionId):
+    def transaction_indication(self, transaction_params: TransactionParams):
         pass
 
     def transaction_finished_indication(self, params: TransactionFinishedParams):

@@ -17,10 +17,8 @@ from tmtccmd.cfdp import (
 from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.version import get_version
-from .defs import NoRemoteEntityCfgFound, BusyError
 
-from .dest import DestStateWrapper
-from .dest import DestHandler
+from .dest import DestStateWrapper, DestHandler
 from .dest import TransactionStep as DestTransactionStep
 from .source import SourceHandler, SourceStateWrapper, FsmResult
 from .source import TransactionStep as SourceTransactionStep

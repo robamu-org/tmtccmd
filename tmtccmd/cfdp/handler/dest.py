@@ -9,85 +9,69 @@ from typing import Deque, List, Optional, Tuple
 
 import deprecation
 from spacepackets.cfdp import (
-    PduType,
     ChecksumType,
-    TransmissionMode,
     ConditionCode,
-    TlvType,
-    PduConfig,
     Direction,
     FaultHandlerCode,
+    PduConfig,
+    PduType,
+    TlvType,
     TransactionId,
+    TransmissionMode,
 )
 from spacepackets.cfdp.pdu import (
     AckPdu,
     DirectiveType,
-    MetadataPdu,
-    FileDataPdu,
     EofPdu,
+    FileDataPdu,
     FinishedPdu,
+    MetadataPdu,
     NakPdu,
 )
 from spacepackets.cfdp.pdu.ack import TransactionStatus
-from spacepackets.cfdp.pdu.finished import FinishedParams, DeliveryCode, FileStatus
+from spacepackets.cfdp.pdu.finished import DeliveryCode, FileStatus, FinishedParams
 from spacepackets.cfdp.pdu.helper import GenericPduPacket, PduHolder
 from spacepackets.cfdp.pdu.nak import get_max_seg_reqs_for_max_packet_size_and_pdu_cfg
+from spacepackets.cfdp.tlv import MessageToUserTlv
+from spacepackets.util import UnsignedByteField
 
-from tmtccmd.cfdp import (
-    CfdpUserBase,
-    LocalEntityCfg,
-    RemoteEntityCfgTable,
-    RemoteEntityCfg,
-)
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler.common import (
-    PacketDestination,
-    get_packet_destination,
-    _PositiveAckProcedureParams,
-)
-from tmtccmd.cfdp.handler.crc import CrcHelper
-from tmtccmd.cfdp.handler.defs import (
-    FileParamsBase,
+from tmtccmd.cfdp.exceptions import (
     FsmNotCalledAfterPacketInsertion,
     InvalidDestinationId,
     InvalidPduDirection,
-    UnretrievedPdusToBeSent,
+    InvalidPduForDestHandler,
     NoRemoteEntityCfgFound,
+    PduIgnoredForDest,
+    PduIgnoredForDestReason,
+    UnretrievedPdusToBeSent,
 )
-from tmtccmd.cfdp.mib import CheckTimerProvider, EntityType
+from tmtccmd.cfdp.handler.common import (
+    PacketDestination,
+    _PositiveAckProcedureParams,
+    get_packet_destination,
+)
+from tmtccmd.cfdp.handler.crc import CrcHelper
+from tmtccmd.cfdp.handler.defs import (
+    _FileParamsBase,
+)
+from tmtccmd.cfdp.mib import (
+    CheckTimerProvider,
+    EntityType,
+    LocalEntityCfg,
+    RemoteEntityCfg,
+    RemoteEntityCfgTable,
+)
 from tmtccmd.cfdp.user import (
-    MetadataRecvParams,
+    CfdpUserBase,
     FileSegmentRecvdParams,
+    MetadataRecvParams,
     TransactionFinishedParams,
 )
 from tmtccmd.util.countdown import Countdown
 from tmtccmd.version import get_version
 
-
 _LOGGER = logging.getLogger(__name__)
-
-
-class InvalidPduForDestHandler(Exception):
-    def __init__(self, packet: GenericPduPacket):
-        self.packet = packet
-        super().__init__(f"Invalid packet {self.packet} for source handler")
-
-
-class PduIgnoredReason(enum.IntEnum):
-    FIRST_PACKET_NOT_METADATA_PDU = 0
-    """First packet received was not a metadata PDU for the unacknowledged mode."""
-    INVALID_MODE_FOR_ACKED_MODE_PACKET = 1
-    """The received PDU can only be handled in acknowledged mode."""
-    FIRST_PACKET_IN_ACKED_MODE_NOT_METADATA_NOT_EOF_NOT_FD = 2
-    """For the acknowledged mode, the first packet that was received with
-    no metadata received previously was not a File Data PDU or EOF PDU."""
-
-
-class PduIgnoredForDest(Exception):
-    def __init__(self, reason: PduIgnoredReason, ignored_packet: GenericPduPacket):
-        self.ignored_packet = ignored_packet
-        self.reason = reason
-        super().__init__(f"ignored PDU packet at destination handler: {reason!r}")
 
 
 class CompletionDisposition(enum.Enum):
@@ -96,7 +80,7 @@ class CompletionDisposition(enum.Enum):
 
 
 @dataclass
-class _DestFileParams(FileParamsBase):
+class _DestFileParams(_FileParamsBase):
     file_name: Path
     file_size_eof: Optional[int]
     condition_code_eof: Optional[ConditionCode]
@@ -110,7 +94,7 @@ class _DestFileParams(FileParamsBase):
             file_size=0,
             file_name=Path(),
             file_size_eof=None,
-            no_file_data=False,
+            metadata_only=False,
             condition_code_eof=None,
         )
 
@@ -260,9 +244,9 @@ class _DestFieldWrapper:
         self.current_check_count: int = 0
         self.closure_requested: bool = False
         self.finished_params: FinishedParams = FinishedParams(
-            DeliveryCode.DATA_INCOMPLETE,
-            FileStatus.FILE_STATUS_UNREPORTED,
-            ConditionCode.NO_ERROR,
+            delivery_code=DeliveryCode.DATA_INCOMPLETE,
+            file_status=FileStatus.FILE_STATUS_UNREPORTED,
+            condition_code=ConditionCode.NO_ERROR,
         )
         self.completion_disposition: CompletionDisposition = (
             CompletionDisposition.COMPLETED
@@ -279,9 +263,9 @@ class _DestFieldWrapper:
         self.closure_requested = False
         self.pdu_conf = PduConfig.empty()
         self.finished_params = FinishedParams(
-            DeliveryCode.DATA_INCOMPLETE,
-            FileStatus.FILE_STATUS_UNREPORTED,
-            ConditionCode.NO_ERROR,
+            condition_code=ConditionCode.NO_ERROR,
+            delivery_code=DeliveryCode.DATA_INCOMPLETE,
+            file_status=FileStatus.FILE_STATUS_UNREPORTED,
         )
         self.finished_params.file_status = FileStatus.FILE_STATUS_UNREPORTED
         self.completion_disposition = CompletionDisposition.COMPLETED
@@ -364,6 +348,10 @@ class DestHandler:
         self._pdus_to_be_sent: Deque[PduHolder] = deque()
 
     @property
+    def entity_id(self) -> UnsignedByteField:
+        return self.cfg.local_entity_id
+
+    @property
     def closure_requested(self) -> bool:
         """Returns whether a closure was requested for the current transaction. Please note that
         this variable is only valid as long as the state is not IDLE"""
@@ -421,7 +409,11 @@ class DestHandler:
         """
         if self.states.state == CfdpState.IDLE:
             self.__idle_fsm()
-        else:
+            # Calling the FSM immediately would lead to an exception, user must send any PDUs which
+            # might have been generated (e.g. NAK PDUs to re-request metadata) first.
+            if self.packets_ready:
+                return FsmResult(self.states)
+        if self.states.state == CfdpState.BUSY:
             self.__non_idle_fsm()
         return FsmResult(self.states)
 
@@ -468,7 +460,7 @@ class DestHandler:
             and self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
         ):
             raise PduIgnoredForDest(
-                PduIgnoredReason.INVALID_MODE_FOR_ACKED_MODE_PACKET, packet
+                PduIgnoredForDestReason.INVALID_MODE_FOR_ACKED_MODE_PACKET, packet
             )
         self._params.last_inserted_packet.pdu = packet
 
@@ -613,7 +605,7 @@ class DestHandler:
     def _handle_first_packet_not_metadata_pdu(self, packet: GenericPduPacket):
         if packet.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             raise PduIgnoredForDest(
-                PduIgnoredReason.FIRST_PACKET_NOT_METADATA_PDU, packet
+                PduIgnoredForDestReason.FIRST_PACKET_NOT_METADATA_PDU, packet
             )
         elif packet.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             if (
@@ -621,7 +613,7 @@ class DestHandler:
                 and packet.directive_type != DirectiveType.EOF_PDU  # type: ignore
             ):
                 raise PduIgnoredForDest(
-                    PduIgnoredReason.FIRST_PACKET_IN_ACKED_MODE_NOT_METADATA_NOT_EOF_NOT_FD,
+                    PduIgnoredForDestReason.FIRST_PACKET_IN_ACKED_MODE_NOT_METADATA_NOT_EOF_NOT_FD,
                     packet,
                 )
 
@@ -718,7 +710,8 @@ class DestHandler:
         self._params.closure_requested = metadata_pdu.closure_requested
         self._params.acked_params.metadata_missing = False
         if metadata_pdu.dest_file_name is None:
-            self._params.fp.no_file_data = True
+            self._params.fp.metadata_only = True
+            self._params.finished_params.delivery_code = DeliveryCode.DATA_COMPLETE
         else:
             self._params.fp.file_name = Path(metadata_pdu.dest_file_name)
         self._params.fp.file_size = metadata_pdu.file_size
@@ -731,17 +724,23 @@ class DestHandler:
                 f" {metadata_pdu.dest_entity_id}"
             )
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
-        self.states.step = TransactionStep.RECEIVING_FILE_DATA
-        self._init_vfs_handling()
+        if not self._params.fp.metadata_only:
+            self.states.step = TransactionStep.RECEIVING_FILE_DATA
+            self._init_vfs_handling(Path(metadata_pdu.source_file_name).name)
+        else:
+            self.states.step = TransactionStep.TRANSFER_COMPLETION
         msgs_to_user_list = None
         if metadata_pdu.options is not None:
             msgs_to_user_list = []
             for tlv in metadata_pdu.options:
                 if tlv.tlv_type == TlvType.MESSAGE_TO_USER:
-                    msgs_to_user_list.append(tlv)
+                    msgs_to_user_list.append(MessageToUserTlv.from_tlv(tlv))
+        file_size_for_indication = (
+            None if metadata_pdu.source_file_name is None else metadata_pdu.file_size
+        )
         params = MetadataRecvParams(
             transaction_id=self._params.transaction_id,  # type: ignore
-            file_size=metadata_pdu.file_size,
+            file_size=file_size_for_indication,
             source_id=metadata_pdu.source_entity_id,
             dest_file_name=metadata_pdu.dest_file_name,
             source_file_name=metadata_pdu.source_file_name,
@@ -749,8 +748,15 @@ class DestHandler:
         )
         self.user.metadata_recv_indication(params)
 
-    def _init_vfs_handling(self):
+    def _init_vfs_handling(self, source_base_name: str):
         try:
+            # If the destination is a directory, append the base name to the directory
+            # Example: For source path /tmp/hello.txt and dest path /tmp, build /tmp/hello.txt for
+            # the destination.
+            if self.user.vfs.is_directory(self._params.fp.file_name):
+                self._params.fp.file_name = self._params.fp.file_name.joinpath(
+                    source_base_name
+                )
             if self.user.vfs.file_exists(self._params.fp.file_name):
                 self.user.vfs.truncate_file(self._params.fp.file_name)
             else:
@@ -1084,7 +1090,7 @@ class DestHandler:
         file_delivery_complete = False
         if (
             self._cksum_verif_helper.checksum_type == ChecksumType.NULL_CHECKSUM
-            or self._params.fp.no_file_data
+            or self._params.fp.metadata_only
         ):
             file_delivery_complete = True
         else:
@@ -1137,7 +1143,7 @@ class DestHandler:
                 == DeliveryCode.DATA_INCOMPLETE
             ):
                 self.user.vfs.delete_file(self._params.fp.file_name)
-                self._params.finished_params.delivery_status = (
+                self._params.finished_params.file_status = (
                     FileStatus.DISCARDED_DELIBERATELY
                 )
         if self.cfg.indication_cfg.transaction_finished_indication_required:

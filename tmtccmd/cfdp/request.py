@@ -9,7 +9,7 @@ from spacepackets.cfdp import (
     MessageToUserTlv,
     FileStoreRequestTlv,
 )
-from spacepackets.cfdp.tlv import ProxyMessageType
+from spacepackets.cfdp.tlv import ProxyMessageType, ReservedCfdpMessage
 from spacepackets.util import UnsignedByteField
 from tmtccmd.cfdp.defs import CfdpRequestType
 import dataclasses
@@ -69,35 +69,73 @@ class PutRequest:
             else:
                 closure_str = "No closure requested"
         else:
-            closure_str = "Closure information from MIB"
+            closure_str = "Closure Requested from MIB"
         if not self.metadata_only:
             print_str = (
-                f"Destination ID: {self.destination_id}\n"
-                f"{src_file_str}\n{dest_file_str}\n{trans_mode_str}\n{closure_str}"
+                f"Destination ID {self.destination_id.value}\n\t"
+                f"{src_file_str}\n\t{dest_file_str}\n\t{trans_mode_str}\n\t{closure_str}"
             )
         else:
-            return self.__str_for_metadata_only()
+            print_str = self.__str_for_metadata_only()
         return print_str
 
     def __str_for_metadata_only(self) -> str:
         print_str = (
-            f"Metadata Only Put Request with Destination ID: {self.destination_id}\n"
+            f"Metadata Only Put Request with Destination ID {self.destination_id.value}"
         )
         if self.msgs_to_user is not None:
             for idx, msg_to_user in enumerate(self.msgs_to_user):
                 msg_to_user = cast(MessageToUserTlv, msg_to_user)
                 if msg_to_user.is_reserved_cfdp_message():
                     reserved_msg = msg_to_user.to_reserved_msg_tlv()
-                    if reserved_msg.is_cfdp_proxy_operation():
-                        proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
-                        print_str += (
-                            f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
-                        )
-                        if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
-                            put_request_params = (
-                                reserved_msg.get_proxy_put_request_params()
-                            )
-                            print_str += f"\n{put_request_params}"
+                    assert reserved_msg is not None
+                    print_str = PutRequest.__str_for_reserved_cfdp_msg(
+                        idx, reserved_msg, print_str
+                    )
+        return print_str
+
+    @staticmethod
+    def __str_for_reserved_cfdp_msg(
+        idx: int, reserved_msg: ReservedCfdpMessage, print_str: str
+    ) -> str:
+        if reserved_msg.is_cfdp_proxy_operation():
+            proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
+            print_str += f"\nMessage to User {idx}: Proxy operation {proxy_msg_type!r}"
+            if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
+                print_str = PutRequest.__str_for_put_req(reserved_msg, print_str)
+            elif proxy_msg_type == ProxyMessageType.PUT_RESPONSE:
+                print_str = PutRequest.__str_for_put_response(reserved_msg, print_str)
+        elif reserved_msg.is_originating_transaction_id():
+            print_str += (
+                f"\nMessage to User {idx}: Originating Transaction ID "
+                f"{reserved_msg.get_originating_transaction_id()}"
+            )
+        return print_str
+
+    @staticmethod
+    def __str_for_put_req(reserved_msg: ReservedCfdpMessage, print_str: str) -> str:
+        put_request_params = reserved_msg.get_proxy_put_request_params()
+        assert put_request_params is not None
+        print_str += (
+            f"\n\tProxy Put Dest Entity ID: {put_request_params.dest_entity_id.value}"
+        )
+        print_str += (
+            f"\n\tSource file: {put_request_params.source_file_name.value.decode()}"
+        )
+        print_str += (
+            f"\n\tDest file: {put_request_params.dest_file_name.value.decode()}"
+        )
+        return print_str
+
+    @staticmethod
+    def __str_for_put_response(
+        reserved_msg: ReservedCfdpMessage, print_str: str
+    ) -> str:
+        put_response_params = reserved_msg.get_proxy_put_response_params()
+        assert put_response_params is not None
+        print_str += f"\n\tCondition Code: {put_response_params.condition_code!r}"
+        print_str += f"\n\tDelivery Code: {put_response_params.delivery_code!r}"
+        print_str += f"\n\tFile Status: {put_response_params.file_status!r}"
         return print_str
 
 

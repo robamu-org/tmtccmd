@@ -10,18 +10,18 @@ from spacepackets.cfdp import (
     NULL_CHECKSUM_U32,
     ChecksumType,
     ConditionCode,
+    DeliveryCode,
+    FileStatus,
     TransmissionMode,
 )
 from spacepackets.cfdp.pdu import (
-    DeliveryCode,
     EofPdu,
     FileDataPdu,
-    FileStatus,
     MetadataParams,
     MetadataPdu,
+    FinishedParams,
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
-from spacepackets.cfdp.pdu.finished import FinishedParams
 
 from tests.cfdp.common import CheckTimerProviderForTest
 from tests.cfdp.test_dest_handler import FileInfo, TestDestHandlerBase
@@ -29,13 +29,13 @@ from tmtccmd.cfdp import (
     RemoteEntityCfgTable,
 )
 from tmtccmd.cfdp.defs import CfdpState
-from tmtccmd.cfdp.handler import NoRemoteEntityCfgFound
+from tmtccmd.cfdp.exceptions import NoRemoteEntityCfgFound
 from tmtccmd.cfdp.handler.dest import (
     DestHandler,
     PduIgnoredForDest,
     TransactionStep,
 )
-from tmtccmd.cfdp.user import TransactionFinishedParams
+from tmtccmd.cfdp.user import MetadataRecvParams, TransactionFinishedParams
 
 
 class TestCfdpDestHandler(TestDestHandlerBase):
@@ -190,9 +190,9 @@ class TestCfdpDestHandler(TestDestHandlerBase):
             TransactionFinishedParams(
                 transaction_id,
                 FinishedParams(
-                    DeliveryCode.DATA_INCOMPLETE,
-                    FileStatus.FILE_RETAINED,
-                    ConditionCode.CHECK_LIMIT_REACHED,
+                    condition_code=ConditionCode.CHECK_LIMIT_REACHED,
+                    delivery_code=DeliveryCode.DATA_INCOMPLETE,
+                    file_status=FileStatus.FILE_RETAINED,
                 ),
             )
         )
@@ -243,6 +243,36 @@ class TestCfdpDestHandler(TestDestHandlerBase):
             ConditionCode.NO_ERROR,
         )
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
+
+    def test_metadata_only_transfer(self):
+        options = self._generate_put_response_opts()
+        metadata_pdu = self._generate_metadata_only_metadata(options)
+        self.dest_handler.insert_packet(metadata_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        # Done immediately. The only thing we need to do is check the two user indications.
+        self.cfdp_user.metadata_recv_indication.assert_called_once()
+        self.cfdp_user.metadata_recv_indication.assert_called_with(
+            MetadataRecvParams(
+                self.transaction_id,
+                self.src_pdu_conf.source_entity_id,
+                None,
+                None,
+                None,
+                options,
+            )
+        )
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
+        self.cfdp_user.transaction_finished_indication.assert_called_with(
+            TransactionFinishedParams(
+                self.transaction_id,
+                FinishedParams(
+                    condition_code=ConditionCode.NO_ERROR,
+                    file_status=FileStatus.FILE_STATUS_UNREPORTED,
+                    delivery_code=DeliveryCode.DATA_COMPLETE,
+                ),
+            )
+        )
+        self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_permission_error(self):
         with open(self.src_file_path, "w") as of:

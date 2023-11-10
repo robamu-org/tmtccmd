@@ -27,6 +27,14 @@ class VirtualFilestore(abc.ABC):
         )
 
     @abc.abstractmethod
+    def is_directory(self, path: Path) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def filename_from_full_path(self, path: Path) -> Optional[str]:
+        pass
+
+    @abc.abstractmethod
     def file_exists(self, path: Path) -> bool:
         pass
 
@@ -114,6 +122,12 @@ class HostFilestore(VirtualFilestore):
 
     def file_exists(self, path: Path) -> bool:
         return path.exists()
+
+    def is_directory(self, path: Path) -> bool:
+        return path.is_dir()
+
+    def filename_from_full_path(self, path: Path) -> Optional[str]:
+        return path.name
 
     def truncate_file(self, file: Path):
         if not file.exists():
