@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v7.0.0] 2023-11-10
+
 ## Added
 
 - The CFDP source and destination handler can now also handle cancel requests.

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "tmtccmd"
 description = "TMTC Commander Core"
 readme = "README.md"
-version = "6.0.0"
+version = "7.0.0"
 requires-python = ">=3.8"
 license = {text = "Apache-2.0 or MIT" }
 authors = [
@@ -36,8 +36,8 @@ dependencies = [
     "deprecation~=2.1",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    # "spacepackets~=0.21.0",
-    "spacepackets @ git+https://github.com/us-irs/spacepackets-py@main"
+    "spacepackets~=0.21.0",
+    # "spacepackets @ git+https://github.com/us-irs/spacepackets-py@main"
 ]
 
 [project.optional-dependencies]
