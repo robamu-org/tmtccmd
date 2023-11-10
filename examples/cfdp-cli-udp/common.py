@@ -7,9 +7,11 @@ import select
 import socket
 import logging
 import copy
+import json
 
 from datetime import timedelta
 from spacepackets.cfdp import GenericPduPacket
+from pathlib import Path
 from spacepackets.cfdp.pdu import AbstractFileDirectiveBase
 from spacepackets.cfdp import (
     TransactionId,
@@ -48,7 +50,7 @@ from tmtccmd.cfdp.handler import SourceHandler, DestHandler, CfdpState
 from tmtccmd.cfdp import PutRequest
 from spacepackets.cfdp.pdu import PduFactory, PduHolder
 
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger(__name__)
 
 LOCAL_ENTITY_ID = ByteFieldU16(1)
 REMOTE_ENTITY_ID = ByteFieldU16(2)
@@ -308,6 +310,7 @@ class UdpServer(Thread):
         self.explicit_remote_addr = explicit_remote_addr
         self.udp_socket.bind(addr)
         self.tm_queue = tx_queue
+        self.last_sender = None
         self.source_entity_queue = source_entity_rx_queue
         self.dest_entity_queue = dest_entity_rx_queue
 
@@ -501,3 +504,19 @@ class DestEntityHandler(Thread):
             # If there is no work to do, put the thread to sleep.
             if no_packet_received and no_packet_sent:
                 time.sleep(0.5)
+
+
+def parse_remote_addr_from_json(file_path: Path) -> Optional[str]:
+    try:
+        with open(file_path, "r") as file:
+            data = json.load(file)
+            remote_addr = data.get("remote_addr")
+            return remote_addr
+    except FileNotFoundError:
+        return None
+    except json.JSONDecodeError:
+        _LOGGER.warning(f"Error decoding JSON in {file_path}. Check the file format.")
+        return None
+    except KeyError:
+        print("The 'remote_addr' key is missing in the JSON file.")
+        return None

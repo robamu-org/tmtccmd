@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """This component simulates the local component."""
+import socket
 import argparse
 import logging
+import ipaddress
 from logging import basicConfig
 from multiprocessing import Queue
+from pathlib import Path
 
 
 from common import (
@@ -19,6 +22,7 @@ from common import (
     DestEntityHandler,
     SourceEntityHandler,
     UdpServer,
+    parse_remote_addr_from_json,
 )
 
 from tmtccmd.cfdp.handler.dest import DestHandler
@@ -35,10 +39,11 @@ from tmtccmd.config.args import (
 from tmtccmd.config.cfdp import generic_cfdp_params_to_put_request
 from tmtccmd.util.seqcnt import SeqCountProvider
 
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger(__name__)
 
 BASE_STR_SRC = "LOCAL SRC"
 BASE_STR_DEST = "LOCAL DEST"
+LOCAL_CFG_JSON_PATH = "local_cfg.json"
 
 # This queue is used to send put requests.
 PUT_REQ_QUEUE = Queue()
@@ -114,13 +119,21 @@ def main():
     )
 
     # Address Any to accept CFDP packets from other address than localhost.
-    local_addr = "0.0.0.0"
-    # Localhost default address
-    remote_addr = "192.168.178.53"
+    local_addr = ipaddress.ip_address("0.0.0.0")
+    # Localhost as default.
+    remote_addr = ipaddress.ip_address("127.0.0.1")
+    if Path(LOCAL_CFG_JSON_PATH).exists():
+        addr_from_cfg = parse_remote_addr_from_json(Path(LOCAL_CFG_JSON_PATH))
+        if addr_from_cfg is not None:
+            try:
+                remote_addr = ipaddress.ip_address(addr_from_cfg)
+            except ValueError:
+                _LOGGER.warning(f"invalid remote address {remote_addr} from JSON file")
+    _LOGGER.info(f"Put request will be sent to remote destination {remote_addr}")
     udp_server = UdpServer(
         sleep_time=0.1,
-        addr=(local_addr, LOCAL_PORT),
-        explicit_remote_addr=(remote_addr, REMOTE_PORT),
+        addr=(str(local_addr), LOCAL_PORT),
+        explicit_remote_addr=(str(remote_addr), REMOTE_PORT),
         tx_queue=TM_QUEUE,
         source_entity_rx_queue=SOURCE_ENTITY_QUEUE,
         dest_entity_rx_queue=DEST_ENTITY_QUEUE,

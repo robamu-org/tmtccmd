@@ -26,7 +26,7 @@ from tmtccmd.cfdp.mib import (
 )
 from tmtccmd.util.seqcnt import SeqCountProvider
 
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger(__name__)
 
 
 BASE_STR_SRC = "REMOTE SRC"
