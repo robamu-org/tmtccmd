@@ -769,11 +769,7 @@ class SourceHandler:
         ):
             return
         if (
-            (
-                self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
-                and not self._params.closure_requested
-            )
-            or self._inserted_pdu.pdu is None
+            self._inserted_pdu.pdu is None
             or self._inserted_pdu.pdu_directive_type is None
             or self._inserted_pdu.pdu_directive_type != DirectiveType.FINISHED_PDU
         ):
@@ -783,12 +779,12 @@ class SourceHandler:
             return
         finished_pdu = self._inserted_pdu.to_finished_pdu()
         self._inserted_pdu.pdu = None
+        self._params.finished_params = finished_pdu.finished_params
         if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
             self._prepare_finished_ack_packet(finished_pdu.condition_code)
             self.states.step = TransactionStep.SENDING_ACK_OF_FINISHED
         else:
             self.states.step = TransactionStep.NOTICE_OF_COMPLETION
-            self._params.finished_params = finished_pdu.finished_params
 
     def _notice_of_completion(self):
         if self.cfg.indication_cfg.transaction_finished_indication_required:

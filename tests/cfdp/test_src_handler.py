@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import (
+    FinishedParams,
     PduHolder,
     PduType,
     TransmissionMode,
@@ -358,7 +359,11 @@ class TestCfdpSourceHandler(TestCase):
             elif num_packets_ready == 0 and fsm_res.states.num_packets_ready > 0:
                 packets = []
                 while True:
-                    packets.append(self.source_handler.get_next_packet().pdu)
+                    pdu_holder = self.source_handler.get_next_packet()
+                    if pdu_holder is None:
+                        break
+                    else:
+                        packets.append(pdu_holder.pdu)
                 raise AssertionError(f"Expected no packets, found: {packets}")
         if num_packets_ready > 0:
             self.assertTrue(self.source_handler.packets_ready)
@@ -373,7 +378,9 @@ class TestCfdpSourceHandler(TestCase):
         self.assertEqual(self.source_handler.step, expected_step)
         self.assertEqual(self.source_handler.num_packets_ready, num_packets_ready)
 
-    def _verify_transaction_finished_indication(self, expected_id: TransactionId):
+    def _verify_transaction_finished_indication(
+        self, expected_id: TransactionId, expected_finish_params: FinishedParams
+    ):
         self.cfdp_user.transaction_finished_indication.assert_called_once()
         self.assertEqual(self.cfdp_user.transaction_finished_indication.call_count, 1)
         transaction_finished_params = cast(
@@ -381,11 +388,13 @@ class TestCfdpSourceHandler(TestCase):
             self.cfdp_user.transaction_finished_indication.call_args.args[0],
         )
         self.assertEqual(transaction_finished_params.transaction_id, expected_id)
+        self.assertEqual(
+            transaction_finished_params.finished_params, expected_finish_params
+        )
 
     def _generate_test_file(self) -> Path:
         source_path = Path(f"{tempfile.gettempdir()}/hello.txt")
         return source_path
-        pass
 
     def tearDown(self) -> None:
         pass

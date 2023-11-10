@@ -40,7 +40,14 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         )
         fsm_res = self.source_handler.state_machine()
         self.source_handler.state_machine()
-        self._verify_transaction_finished_indication(transaction_id)
+        self._verify_transaction_finished_indication(
+            transaction_id,
+            FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileStatus.FILE_STATUS_UNREPORTED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
+        )
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
@@ -53,7 +60,14 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
         )
         fsm_res = self.source_handler.state_machine()
         self.source_handler.state_machine()
-        self._verify_transaction_finished_indication(transaction_id)
+        self._verify_transaction_finished_indication(
+            transaction_id,
+            FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileStatus.FILE_STATUS_UNREPORTED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
+        )
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
@@ -73,7 +87,6 @@ class TestCfdpSourceHandlerNackedNoClosure(TestCfdpSourceHandler):
             rand_data = os.urandom(self.file_segment_len * 2)
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
-        self.source_handler.source_id = self.source_id
         source_path = Path(f"{tempfile.gettempdir()}/two-segments.bin")
         dest_path = Path(f"{tempfile.gettempdir()}/two-segments-copy.bin")
         tparams = self._transaction_with_file_data_wrapper(

@@ -1143,7 +1143,7 @@ class DestHandler:
                 == DeliveryCode.DATA_INCOMPLETE
             ):
                 self.user.vfs.delete_file(self._params.fp.file_name)
-                self._params.finished_params.delivery_status = (
+                self._params.finished_params.file_status = (
                     FileStatus.DISCARDED_DELIBERATELY
                 )
         if self.cfg.indication_cfg.transaction_finished_indication_required:

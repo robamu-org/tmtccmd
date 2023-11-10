@@ -12,6 +12,7 @@ from spacepackets.cfdp import (
     DirectiveType,
     PduConfig,
     PduType,
+    TransactionId,
     TransmissionMode,
     FinishedParams,
 )
@@ -35,19 +36,19 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self.common_setup(True, TransmissionMode.ACKNOWLEDGED)
 
     def test_empty_file_transfer(self):
-        _, _, eof_pdu = self._common_empty_file_test(None)
-        self._generic_acked_transfer_completion(eof_pdu)
+        transaction_id, _, eof_pdu = self._common_empty_file_test(None)
+        self._generic_acked_transfer_completion_full_success(transaction_id, eof_pdu)
 
     def test_small_file_transfer(self):
-        _, _, _, eof_pdu = self._common_small_file_test(
+        transaction_id, _, _, eof_pdu = self._common_small_file_test(
             TransmissionMode.ACKNOWLEDGED,
             True,
             "Hello World!".encode(),
         )
-        self._generic_acked_transfer_completion(eof_pdu)
+        self._generic_acked_transfer_completion_full_success(transaction_id, eof_pdu)
 
     def test_missing_metadata_pdu_retransmission(self):
-        _, first_metadata_pdu, eof_pdu = self._common_empty_file_test(None)
+        transaction_id, first_metadata_pdu, eof_pdu = self._common_empty_file_test(None)
         # Generate appropriate NAK PDU and insert it.
         nak_missing_metadata = NakPdu(eof_pdu.pdu_header.pdu_conf, 0, 0, [(0, 0)])
         self.source_handler.insert_packet(nak_missing_metadata)
@@ -65,11 +66,11 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         metadata_pdu = next_pdu.to_metadata_pdu()
         self.assertEqual(metadata_pdu, first_metadata_pdu)
         self.source_handler.state_machine()
-        self._generic_acked_transfer_completion(eof_pdu)
+        self._generic_acked_transfer_completion_full_success(transaction_id, eof_pdu)
 
     def test_missing_filedata_pdu_retransmission(self):
         file_content = "Hello World!".encode()
-        _, _, first_fd_pdu, eof_pdu = self._common_small_file_test(
+        transaction_id, _, first_fd_pdu, eof_pdu = self._common_small_file_test(
             TransmissionMode.ACKNOWLEDGED, True, file_content
         )
         end_of_scope = len(file_content)
@@ -91,7 +92,7 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         fd_pdu = next_pdu.to_file_data_pdu()
         self.assertEqual(fd_pdu, first_fd_pdu)
         self.source_handler.state_machine()
-        self._generic_acked_transfer_completion(eof_pdu)
+        self._generic_acked_transfer_completion_full_success(transaction_id, eof_pdu)
 
     def test_positive_ack_procedure(self):
         # 1. Send EOF PDU.
@@ -173,7 +174,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         transaction_id, _, initial_eof_pdu = self._common_empty_file_test(None)
         time.sleep(self.positive_ack_intvl_seconds * 1.2)
         self._verify_eof_pdu_for_positive_ack(initial_eof_pdu, 1)
-        self._generic_acked_transfer_completion(initial_eof_pdu)
+        self._generic_acked_transfer_completion_full_success(
+            transaction_id, initial_eof_pdu
+        )
 
     def test_large_missing_chunk_retransmission(self):
         # This tests generates three file data PDUs
@@ -216,9 +219,29 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         next_pdu = self.source_handler.get_next_packet()
         assert next_pdu is None
         self.source_handler.state_machine()
-        self._generic_acked_transfer_completion(eof_pdu)
+        self._generic_acked_transfer_completion_full_success(
+            transaction_params.id, eof_pdu
+        )
 
-    def _generic_acked_transfer_completion(self, eof_pdu: EofPdu):
+    def _generic_acked_transfer_completion_full_success(
+        self, transaction_id: TransactionId, eof_pdu: EofPdu
+    ):
+        self._generic_acked_transfer_completion(
+            transaction_id,
+            eof_pdu,
+            FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileStatus.FILE_RETAINED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
+        )
+
+    def _generic_acked_transfer_completion(
+        self,
+        transaction_id: TransactionId,
+        eof_pdu: EofPdu,
+        expected_finished_params: FinishedParams,
+    ):
         self._state_checker(
             None,
             0,
@@ -230,6 +253,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         self._insert_finished_pdu(pdu_conf)
         self._acknowledge_finished_pdu(pdu_conf)
         self.source_handler.state_machine()
+        self._verify_transaction_finished_indication(
+            transaction_id, expected_finished_params
+        )
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(
             None,
@@ -242,9 +268,9 @@ class TestSourceHandlerAcked(TestCfdpSourceHandler):
         finished_pdu = FinishedPdu(
             pdu_conf,
             FinishedParams(
-                DeliveryCode.DATA_COMPLETE,
-                FileStatus.FILE_RETAINED,
-                ConditionCode.NO_ERROR,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+                file_status=FileStatus.FILE_RETAINED,
+                condition_code=ConditionCode.NO_ERROR,
             ),
         )
         self.source_handler.insert_packet(finished_pdu)

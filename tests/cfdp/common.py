@@ -6,7 +6,7 @@ from tmtccmd.util.countdown import Countdown
 
 class CheckTimerProviderForTest(CheckTimerProvider):
     def __init__(
-        self, timeout_dest_entity_ms: int = 5, timeout_source_entity_ms: int = 5
+        self, timeout_dest_entity_ms: int = 50, timeout_source_entity_ms: int = 50
     ) -> None:
         self.timeout_dest_entity_ms = timeout_dest_entity_ms
         self.timeout_src_entity_ms = timeout_source_entity_ms

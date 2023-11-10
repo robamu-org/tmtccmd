@@ -36,23 +36,38 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.seq_num_provider.get_and_increment = MagicMock(return_value=2)
 
     def test_empty_file_pdu_generation_nacked_by_remote_cfg(self):
-        _, metadata_pdu, _ = self._common_empty_file_test(None)
+        transaction_id, metadata_pdu, _ = self._common_empty_file_test(None)
         self._pass_simple_finish_pdu_to_source_handler(metadata_pdu.pdu_header.pdu_conf)
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
-        self.expected_cfdp_state = CfdpState.IDLE
+        self._verify_transaction_finished_indication(
+            transaction_id,
+            FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileStatus.FILE_RETAINED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
+        )
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
     def test_empty_file_pdu_generation_nacked_explicitely(self):
         self.default_remote_cfg.default_transmission_mode = (
             TransmissionMode.ACKNOWLEDGED
         )
-        _, metadata_pdu, _ = self._common_empty_file_test(
+        transaction_id, metadata_pdu, _ = self._common_empty_file_test(
             TransmissionMode.UNACKNOWLEDGED
         )
         self._pass_simple_finish_pdu_to_source_handler(metadata_pdu.pdu_header.pdu_conf)
         # Transaction should be finished
         fsm_res = self.source_handler.state_machine()
+        self._verify_transaction_finished_indication(
+            transaction_id,
+            FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileStatus.FILE_RETAINED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
+        )
         self.expected_cfdp_state = CfdpState.IDLE
         self._state_checker(fsm_res, False, CfdpState.IDLE, TransactionStep.IDLE)
 
@@ -90,7 +105,6 @@ class TestCfdpSourceHandlerWithClosure(TestCfdpSourceHandler):
         self.source_id = ByteFieldU8(1)
         self.dest_id = ByteFieldU8(2)
         self._update_seq_num_to_use(3)
-        self.source_handler.source_id = self.source_id
         source_path = Path(f"{tempfile.gettempdir()}/two-segments.bin")
         dest_path = Path(f"{tempfile.gettempdir()}/two-segments-copy.bin")
         # The calculated CRC in the EOF (Cancel) PDU will only be calculated for the first segment
