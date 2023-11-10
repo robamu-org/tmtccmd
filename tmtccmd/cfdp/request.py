@@ -133,9 +133,9 @@ class PutRequest:
     ) -> str:
         put_response_params = reserved_msg.get_proxy_put_response_params()
         assert put_response_params is not None
-        print_str += f"\n\tCondition Code: {put_response_params.condition_code}"
-        print_str += f"\n\tDelivery Code: {put_response_params.delivery_code}"
-        print_str += f"\n\tFile Status: {put_response_params.file_status}"
+        print_str += f"\n\tCondition Code: {put_response_params.condition_code!r}"
+        print_str += f"\n\tDelivery Code: {put_response_params.delivery_code!r}"
+        print_str += f"\n\tFile Status: {put_response_params.file_status!r}"
         return print_str
 
 
