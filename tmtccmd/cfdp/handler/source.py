@@ -303,24 +303,28 @@ class SourceHandler:
 
     def put_request(self, request: PutRequest):
         """You can call this function to pass a put request to the source handler, which is
-         also used to start a file copy operation. As such, this function models the Put.request
-         CFDP primtiive.
+        also used to start a file copy operation. As such, this function models the Put.request
+        CFDP primtiive.
 
-         Please note that the source handler can also process one put request at a time.
-         The caller is responsible of creating a new source handler, one handler can only handle
-         one file copy request at a time.
+        Please note that the source handler can also process one put request at a time.
+        The caller is responsible of creating a new source handler, one handler can only handle
+        one file copy request at a time.
 
-         :return: False if the handler is busy. True if the handling of the request was successfull.
-         Raises
-         --------
 
-         ValueError
-             Invalid transmission mode detected.
-         NoRemoteEntityCfgFound
-             No remote configuration found for destination ID specified in the Put Request.
+        Raises
+        --------
+
+        ValueError
+            Invalid transmission mode detected.
+        NoRemoteEntityCfgFound
+            No remote configuration found for destination ID specified in the Put Request.
         SourceFileDoesNotExist
-             File specified for Put Request does not exist.
+            File specified for Put Request does not exist.
 
+        Returns
+        --------
+
+        False if the handler is busy. True if the handling of the request was successfull.
         """
         if self.states.state != CfdpState.IDLE:
             _LOGGER.debug("CFDP source handler is busy, can't process put request")
