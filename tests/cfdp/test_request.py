@@ -38,8 +38,8 @@ class TestRequest(TestCase):
         )
         print_str = str(put_req)
         self.assertTrue("Destination ID 5" in print_str)
-        self.assertTrue("/tmp/test.txt" in print_str)
-        self.assertTrue("/tmp/test2.txt" in print_str)
+        self.assertTrue(str(Path("/tmp/test.txt")) in print_str)
+        self.assertTrue(str(Path("/tmp/test2.txt")) in print_str)
         self.assertTrue("Transmission Mode from MIB" in print_str)
         self.assertTrue("Closure Requested from MIB" in print_str)
 

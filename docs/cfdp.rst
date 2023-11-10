@@ -91,25 +91,16 @@ Example application
 
 You can find an example application inside the `example directory <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp>`_
 which shows an end-to-end file transfer on a host computer. This should give you a general idea of
-how the source and destination handler work in practice. Simply running the script with
-
-.. code-block:: console
-
-   ./file-copy-example.py
-
-will perform an acknowledged transfer of a file on the same host system.
-You can also perform an unacknowledged transfer using
-
-.. code-block:: console
-
-   ./file-copy-example.py -t nak
-
-It is also possible to supply the ``-v`` verbosity argument to the application to print all
-packets being exchanged between the source and destination handler.
+how the source and destination handler work in practice.
 
 There is also a `test application <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp-libre-cube-crosstest>`_
 which cross-tests the `tmtccmd` CFDP implementation with the
 `Libre Cube CFDP <https://gitlab.com/librecube/lib/python-cfdp>`_ implementation.
+
+Finally, you can see a more complex example also featuing more features of the CFDP state machines
+`here <https://github.com/robamu-org/tmtccmd/tree/main/examples/cfdp-cli-udp>`_. This example
+uses UDP servers for communication and explicitely separates the local and remote entity
+application.
 
 .. _`CCSDS Blue Book 727.0-B-5`: https://public.ccsds.org/Pubs/727x0b5.pdf
 .. _`spacepackets`: https://github.com/us-irs/spacepackets-py
