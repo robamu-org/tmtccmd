@@ -69,10 +69,10 @@ class PutRequest:
             else:
                 closure_str = "No closure requested"
         else:
-            closure_str = "Closure information from MIB"
+            closure_str = "Closure Requested from MIB"
         if not self.metadata_only:
             print_str = (
-                f"Destination ID: {self.destination_id.value}\n\t"
+                f"Destination ID {self.destination_id.value}\n\t"
                 f"{src_file_str}\n\t{dest_file_str}\n\t{trans_mode_str}\n\t{closure_str}"
             )
         else:
@@ -80,12 +80,15 @@ class PutRequest:
         return print_str
 
     def __str_for_metadata_only(self) -> str:
-        print_str = f"Metadata Only Put Request with Destination ID: {self.destination_id.value}\n"
+        print_str = (
+            f"Metadata Only Put Request with Destination ID {self.destination_id.value}"
+        )
         if self.msgs_to_user is not None:
             for idx, msg_to_user in enumerate(self.msgs_to_user):
                 msg_to_user = cast(MessageToUserTlv, msg_to_user)
                 if msg_to_user.is_reserved_cfdp_message():
                     reserved_msg = msg_to_user.to_reserved_msg_tlv()
+                    assert reserved_msg is not None
                     print_str = PutRequest.__str_for_reserved_cfdp_msg(
                         idx, reserved_msg, print_str
                     )
@@ -97,12 +100,12 @@ class PutRequest:
     ) -> str:
         if reserved_msg.is_cfdp_proxy_operation():
             proxy_msg_type = reserved_msg.get_cfdp_proxy_message_type()
-            print_str += f"Message to user {idx}: Proxy operation {proxy_msg_type!r}"
+            print_str += f"\nMessage to User {idx}: Proxy operation {proxy_msg_type!r}"
             if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
                 print_str = PutRequest.__str_for_put_req(reserved_msg, print_str)
         elif reserved_msg.is_originating_transaction_id():
             print_str += (
-                f"Message to user {idx}: Originating Transaction ID "
+                f"\nMessage to User {idx}: Originating Transaction ID "
                 f"{reserved_msg.get_originating_transaction_id()}"
             )
         return print_str
@@ -110,6 +113,7 @@ class PutRequest:
     @staticmethod
     def __str_for_put_req(reserved_msg: ReservedCfdpMessage, print_str: str) -> str:
         put_request_params = reserved_msg.get_proxy_put_request_params()
+        assert put_request_params is not None
         print_str += (
             f"\n\tProxy Put Dest Entity ID: {put_request_params.dest_entity_id.value}"
         )
