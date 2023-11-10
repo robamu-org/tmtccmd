@@ -103,6 +103,8 @@ class PutRequest:
             print_str += f"\nMessage to User {idx}: Proxy operation {proxy_msg_type!r}"
             if proxy_msg_type == ProxyMessageType.PUT_REQUEST:
                 print_str = PutRequest.__str_for_put_req(reserved_msg, print_str)
+            elif proxy_msg_type == ProxyMessageType.PUT_RESPONSE:
+                print_str = PutRequest.__str_for_put_response(reserved_msg, print_str)
         elif reserved_msg.is_originating_transaction_id():
             print_str += (
                 f"\nMessage to User {idx}: Originating Transaction ID "
@@ -123,6 +125,17 @@ class PutRequest:
         print_str += (
             f"\n\tDest file: {put_request_params.dest_file_name.value.decode()}"
         )
+        return print_str
+
+    @staticmethod
+    def __str_for_put_response(
+        reserved_msg: ReservedCfdpMessage, print_str: str
+    ) -> str:
+        put_response_params = reserved_msg.get_proxy_put_response_params()
+        assert put_response_params is not None
+        print_str += f"\n\tCondition Code: {put_response_params.condition_code}"
+        print_str += f"\n\tDelivery Code: {put_response_params.delivery_code}"
+        print_str += f"\n\tFile Status: {put_response_params.file_status}"
         return print_str
 
 
