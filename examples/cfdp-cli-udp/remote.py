@@ -8,7 +8,7 @@ from multiprocessing import Queue
 from common import (
     INDICATION_CFG,
     REMOTE_ENTITY_ID,
-    LOCAL_PORT,
+    REMOTE_PORT,
     REMOTE_CFG_OF_LOCAL_ENTITY,
     CfdpFaultHandler,
     CfdpUser,
@@ -98,7 +98,7 @@ def main():
     local_addr = "0.0.0.0"
     udp_server = UdpServer(
         sleep_time=0.1,
-        addr=(local_addr, LOCAL_PORT),
+        addr=(local_addr, REMOTE_PORT),
         # No explicit remote address, remote server only responds to requests.
         explicit_remote_addr=None,
         tx_queue=TM_QUEUE,
