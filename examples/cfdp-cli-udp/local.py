@@ -58,9 +58,8 @@ def main():
     parser.add_argument("-v", "--verbose", action="count", default=0)
     add_cfdp_procedure_arguments(parser)
     args = parser.parse_args()
-    if args.verbose == 0:
-        logging_level = logging.INFO
-    elif args.verbose >= 1:
+    logging_level = logging.INFO
+    if args.verbose >= 1:
         logging_level = logging.DEBUG
     if args.source is not None and args.target is not None:
         # Generate a put request from the CLI arguments.
@@ -114,10 +113,14 @@ def main():
         TM_QUEUE,
     )
 
+    # Address Any to accept CFDP packets from other address than localhost.
+    local_addr = "0.0.0.0"
+    # Localhost default address
+    remote_addr = "127.0.0.1"
     udp_server = UdpServer(
         0.1,
-        ("127.0.0.1", LOCAL_PORT),
-        ("127.0.0.1", REMOTE_PORT),
+        (local_addr, LOCAL_PORT),
+        (remote_addr, REMOTE_PORT),
         TM_QUEUE,
         SOURCE_ENTITY_QUEUE,
         DEST_ENTITY_QUEUE,

@@ -155,6 +155,7 @@ class CfdpUser(CfdpUserBase):
                 ProxyPutResponseParams.from_finished_params(params.finished_params)
             ).to_generic_msg_to_user_tlv()
             originating_id = self.active_proxy_put_reqs.get(params.transaction_id)
+            assert originating_id is not None
             put_req = PutRequest(
                 destination_id=originating_id.source_id,
                 source_file=None,
@@ -187,9 +188,9 @@ class CfdpUser(CfdpUserBase):
     ):
         for msg_to_user in msgs_to_user:
             if msg_to_user.is_reserved_cfdp_message():
-                self._handle_reserved_cfdp_message(
-                    transaction_id, msg_to_user.to_reserved_msg_tlv()
-                )
+                reserved_msg_tlv = msg_to_user.to_reserved_msg_tlv()
+                assert reserved_msg_tlv is not None
+                self._handle_reserved_cfdp_message(transaction_id, reserved_msg_tlv)
             else:
                 _LOGGER.info(f"Received custom message to user: {msg_to_user}")
 
@@ -315,10 +316,10 @@ class UdpServer(Thread):
             self.periodic_operation()
             time.sleep(self.sleep_time)
 
-    def periodic_operation(self) -> bool:
+    def periodic_operation(self):
         while True:
             next_packet = self.poll_next_udp_packet()
-            if next_packet is None:
+            if next_packet is None or next_packet.pdu is None:
                 break
             # Perform PDU routing.
             packet_dest = get_packet_destination(next_packet.pdu)
@@ -335,7 +336,7 @@ class UdpServer(Thread):
             return PduFactory.from_raw_to_holder(data)
         return None
 
-    def send_packets(self) -> bool:
+    def send_packets(self):
         while True:
             try:
                 next_tm = self.tm_queue.get(False)
@@ -380,6 +381,7 @@ class SourceEntityHandler(Thread):
                 )
             else:
                 self.source_handler.put_request(put_req)
+            return True
         except Empty:
             return False
 

@@ -50,9 +50,8 @@ def main():
     parser = argparse.ArgumentParser(prog="CFDP Remote Entity Application")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     args = parser.parse_args()
-    if args.verbose == 0:
-        logging_level = logging.INFO
-    elif args.verbose >= 1:
+    logging_level = logging.INFO
+    if args.verbose >= 1:
         logging_level = logging.DEBUG
     basicConfig(level=logging_level)
 
@@ -96,10 +95,14 @@ def main():
         TM_QUEUE,
     )
 
+    # Address Any to accept CFDP packets from other address than localhost.
+    local_addr = "0.0.0.0"
+    # Localhost default address
+    remote_addr = "127.0.0.1"
     udp_server = UdpServer(
         0.1,
-        ("127.0.0.1", REMOTE_PORT),
-        ("127.0.0.1", LOCAL_PORT),
+        (local_addr, REMOTE_PORT),
+        (remote_addr, LOCAL_PORT),
         TM_QUEUE,
         SOURCE_ENTITY_QUEUE,
         DEST_ENTITY_QUEUE,
