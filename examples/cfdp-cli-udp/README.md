@@ -48,3 +48,9 @@ content:
 ```
 
 The local entity application will use this address instead of the localhost address.
+
+## Notes on example structure
+
+This application also shows a possible modular approach with re-usability in mind. Both the
+source, destination entity and the UDP server are based on the same classes. The configuration
+of the CFDP is also in large parts re-used and provided inside the `common` module.
