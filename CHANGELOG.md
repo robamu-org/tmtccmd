@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Removed
+
+- Removed high level CFDP handler and CFDP in CCSDS handler which are not generic enough
+  and do not work in their current form. These handlers might be re-added with a proper
+  implementation which also allow building a CFDP daemon / full CFDP entity more easily.
+
 # [v7.0.0] 2023-11-10
 
 ## Added
