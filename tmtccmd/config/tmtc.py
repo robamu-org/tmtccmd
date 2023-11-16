@@ -1,4 +1,96 @@
-from typing import Union, List, Optional, Dict, Tuple
+from __future__ import annotations
+
+import enum
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from spacepackets.cfdp.pdu.helper import deprecation
+
+from tmtccmd.version import get_version
+
+
+class TreePart(enum.Enum):
+    EDGE = "├──"
+    LINE = "│  "
+    CORNER = "└──"
+    BLANK = "   "
+
+
+class CmdTreeNode:
+    def __init__(
+        self, name: str, description: str, parent: Optional[CmdTreeNode] = None
+    ) -> None:
+        self.name = name
+        self.desc = description
+        self.parent: Optional[CmdTreeNode] = parent
+        self.children: List[CmdTreeNode] = []
+
+    @classmethod
+    def root_node(cls) -> CmdTreeNode:
+        return cls(name="/", description="Root Node", parent=None)
+
+    def add_child(self, child: CmdTreeNode):
+        child.parent = self
+        self.children.append(child)
+
+    @property
+    def name_dict(self) -> Dict[str, Optional[Dict[str, Any]]]:
+        """Returns a nested dictionary where the key is always the name of the node, and the
+        value is one nested name dictionary for each child node."""
+        children_dict = {}
+        if self.children:
+            for child in self.children:
+                children_dict.update(child.name_dict)
+            return {self.name: children_dict}
+        return {self.name: None}
+
+    def str_for_tree(self, with_description: bool) -> str:
+        return self.__str_for_depth(with_description, False, 0)
+
+    def __str_for_depth(
+        self, with_description: bool, last_child: bool, depth: int
+    ) -> str:
+        string = ""
+
+        def core_string_handler(string: str) -> str:
+            string += self.name + " "
+            if with_description:
+                string += "[ " + self.desc + " ] "
+            string += os.linesep
+            for idx, child in enumerate(self.children):
+                # Use recursion here to get the string for the subtree.
+                if idx == len(self.children) - 1:
+                    string += child.__str_for_depth(with_description, True, depth + 1)
+                else:
+                    string += child.__str_for_depth(with_description, False, depth + 1)
+            return string
+
+        if depth == 0:
+            return core_string_handler(string)
+        # If we are at a larger depth than 0, we want to prepend the name using a special
+        # format. Example:
+        # /
+        # |
+        # /
+        # ├── ACS
+        # │  └── ACS_CTRL
+        # └── TCS
+        for i in range(depth):
+            if i == depth - 1:
+                if last_child:
+                    string += TreePart.CORNER.value
+                else:
+                    string += TreePart.EDGE.value
+            elif i == 0:
+                string += TreePart.LINE.value
+            else:
+                string += TreePart.BLANK.value
+        string += " "
+        return core_string_handler(string)
+
+    def __str__(self) -> str:
+        return self.str_for_tree(False)
+
 
 ServiceNameT = str
 ServiceInfoT = str
@@ -6,6 +98,11 @@ OpCodeNameT = Union[str, List[str]]
 OpCodeInfoT = str
 
 
+@deprecation.deprecated(
+    deprecated_in="8.0.0",
+    details="use the new command definition tree instead",
+    current_version=get_version(),
+)
 class OpCodeOptionBase:
     def __init__(self):
         pass
@@ -14,6 +111,11 @@ class OpCodeOptionBase:
 OpCodeDict = Dict[str, Tuple[OpCodeInfoT, OpCodeOptionBase]]
 
 
+@deprecation.deprecated(
+    deprecated_in="8.0.0",
+    details="use the new command definition tree instead",
+    current_version=get_version(),
+)
 class OpCodeEntry:
     def __init__(self):
         self._op_code_dict_num_keys: OpCodeDict = dict()
@@ -74,6 +176,11 @@ ServiceDictValueT = Optional[Tuple[ServiceInfoT, OpCodeEntry]]
 ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 
 
+@deprecation.deprecated(
+    deprecated_in="8.0.0",
+    details="use the new command definition tree instead",
+    current_version=get_version(),
+)
 class TmtcDefinitionWrapper:
     def __init__(self, init_defs: Optional[ServiceOpCodeDictT] = None):
         if init_defs is None:
@@ -105,6 +212,11 @@ class TmtcDefinitionWrapper:
 REGISTER_CBS = set()
 
 
+@deprecation.deprecated(
+    deprecated_in="8.0.0",
+    details="use the new command definition tree instead",
+    current_version=get_version(),
+)
 def tmtc_definitions_provider(adder_func):
     """Function decorator which registers the decorated function to be a TMTC definition provider.
     The :py:func:`execute_tmtc_def_functions` function can be used to call all functions.
@@ -125,6 +237,11 @@ def tmtc_definitions_provider(adder_func):
     return call_explicitely
 
 
+@deprecation.deprecated(
+    deprecated_in="8.0.0",
+    details="use the new command definition tree instead",
+    current_version=get_version(),
+)
 def call_all_definitions_providers(defs: TmtcDefinitionWrapper, *args, **kwargs):
     global REGISTER_CBS
     if REGISTER_CBS:

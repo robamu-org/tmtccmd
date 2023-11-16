@@ -1,9 +1,10 @@
 """Argument parser module."""
 from __future__ import annotations
+import deprecation
 import argparse
 import logging
 import sys
-from typing import Optional, List, Sequence, Union
+from typing import Optional, List, Sequence, Union, Tuple
 from dataclasses import dataclass
 
 from prompt_toolkit.shortcuts import CompleteStyle
@@ -11,8 +12,9 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from spacepackets.cfdp import TransmissionMode
 from tmtccmd.com.utils import determine_com_if
 from tmtccmd.tmtc.procedure import TcProcedureType
-from tmtccmd.config.prompt import prompt_op_code, prompt_service
+from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
 from tmtccmd.com import ComInterface
+from tmtccmd.version import get_version
 
 from .defs import (
     CoreModeList,
@@ -162,7 +164,7 @@ def parse_default_tmtccmd_input_arguments(
     parser: argparse.ArgumentParser,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
-) -> (argparse.Namespace, List[str]):
+) -> Tuple[argparse.Namespace, List[str]]:
     """Parses all input arguments by calling :py:meth:`argparse.ArgumentParser.parse_known_args`.
     It is recommended to use the :py:class:`PreArgsParsingWrapper` instead of using this function
     directly.
@@ -195,15 +197,10 @@ def parse_default_tmtccmd_input_arguments(
 
 def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
     parser_or_subparser.add_argument(
-        "-s",
-        "--service",
-        help="Procedure service code, used for the default procedure mode",
-        default=None,
-    )
-    parser_or_subparser.add_argument(
-        "-o",
-        "--op_code",
-        help="Procedure operation code, used for the default procedure mode",
+        "-p",
+        "--path",
+        dest="cmd_path",
+        help="Command tree path, used to uniquely identify command or command stack to be sent.",
         default=None,
     )
     add_tmtc_mode_arguments(parser_or_subparser)
@@ -323,7 +320,7 @@ def add_tmtc_listener_arg(arg_parser: argparse.ArgumentParser):
         "--prompt-proc",
         help=(
             "If this is specified in addition to the listener mode flag -l, the"
-            " commander will\ntry to determine a service and operation code"
+            " commander will\nprompt for the next command or procedure to be sent."
         ),
         dest="prompt_proc",
         action="store_true",
@@ -357,6 +354,11 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     )
 
 
+@deprecation.deprecated(
+    deprecated_in="8.0.0",
+    details="use determine_cmd_path instead",
+    current_version=get_version(),
+)
 def find_service_and_op_code(
     params: SetupParams,
     def_params: DefaultProcedureParams,
@@ -385,6 +387,26 @@ def find_service_and_op_code(
         def_params.op_code = pargs.op_code
 
 
+def determine_cmd_path(
+    params: SetupParams,
+    def_params: DefaultProcedureParams,
+    hook_obj: HookBase,
+    pargs: argparse.Namespace,
+    use_prompts: bool,
+):
+    cmd_defs = hook_obj.get_cmd_definitions()
+    if pargs.cmd_path is None:
+        if use_prompts:
+            print("No command path (-p) argument specified, prompting from user")
+            # Try to get the service list from the hook base and prompt service
+            # from user
+            def_params.cmd_path = prompt_cmd_path(
+                cmd_defs, params.app_params.compl_style
+            )
+    else:
+        def_params.cmd_path = pargs.cmd_path
+
+
 def args_to_params_generic(
     pargs: argparse.Namespace,
     params: SetupParams,
@@ -397,6 +419,7 @@ def args_to_params_generic(
     else:
         params.app_params.use_gui = pargs.gui
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
+        assert hook_obj.cfg_path is not None
         params.com_if_id = determine_com_if(
             hook_obj.get_com_if_dict(), hook_obj.cfg_path, use_prompts
         )
@@ -496,7 +519,7 @@ def args_to_all_params_tmtc(
         params.mode = pargs.mode
     if (
         params.backend_params.listener
-        and (not pargs.service and not pargs.op_code)
+        and (not pargs.cmd_path)
         and not mode_set_explicitely
         and (not pargs.prompt_proc)
     ):
@@ -510,18 +533,14 @@ def args_to_all_params_tmtc(
             params.tc_params.delay = 0.0
     else:
         params.tc_params.delay = float(pargs.delay)
-    tmtc_defs = hook_obj.get_tmtc_definitions()
-    if tmtc_defs is None:
-        _LOGGER.warning("Invalid Service to Op-Code dictionary detected")
-    else:
-        if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
-            find_service_and_op_code(
-                params=params,
-                hook_obj=hook_obj,
-                use_prompts=use_prompts,
-                pargs=pargs,
-                def_params=def_tmtc_params,
-            )
+    if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
+        determine_cmd_path(
+            params=params,
+            hook_obj=hook_obj,
+            use_prompts=use_prompts,
+            pargs=pargs,
+            def_params=def_tmtc_params,
+        )
 
 
 class PreArgsParsingWrapper:

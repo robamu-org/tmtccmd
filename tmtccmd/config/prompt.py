@@ -1,13 +1,20 @@
 import logging
+import deprecation
 
-from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.completion import NestedCompleter, WordCompleter
 from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
-from tmtccmd.config.tmtc import OpCodeEntry, TmtcDefinitionWrapper
+from tmtccmd.config.tmtc import OpCodeEntry, TmtcDefinitionWrapper, CmdTreeNode
+from tmtccmd.version import get_version
 
 _LOGGER = logging.getLogger(__name__)
 
 
+@deprecation.deprecated(
+    details="use prompt_cmd_path instead",
+    deprecated_in="8.0.0",
+    current_version=get_version(),
+)
 def prompt_service(
     tmtc_defs: TmtcDefinitionWrapper,
     compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE,
@@ -44,6 +51,32 @@ def prompt_service(
             return service_string
         else:
             _LOGGER.warning("Invalid key, try again")
+
+
+def prompt_cmd_path(
+    cmd_def_tree: CmdTreeNode, compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
+) -> str:
+    base_compl_dict = cmd_def_tree.name_dict
+    base_compl_dict.update({":p": None})
+    base_compl_dict.update({":fp": None})
+    nested_completer = NestedCompleter.from_nested_dict(base_compl_dict)
+    while True:
+        path_or_cmd = prompt_toolkit.prompt(
+            "Please specify one of the following:\n"
+            " - A full command path\n"
+            " - :p to print the tree without descriptions\n"
+            " - :fp to print the tree with descriptions\n",
+            completer=nested_completer,
+            complete_style=compl_style,
+        )
+        if path_or_cmd == ":p":
+            print(cmd_def_tree.str_for_tree(False))
+            continue
+        elif path_or_cmd == ":fp":
+            print(cmd_def_tree.str_for_tree(True))
+            continue
+        break
+    return path_or_cmd
 
 
 def build_service_word_completer(

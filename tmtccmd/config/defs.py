@@ -11,8 +11,7 @@ ComIfDictT = Dict[str, ComIfValueT]
 
 @dataclass
 class DefaultProcedureParams:
-    service: Optional[str] = None
-    op_code: Optional[str] = None
+    cmd_path: Optional[str]
 
 
 @dataclass
@@ -43,7 +42,7 @@ class CoreComInterfaces(str, enum.Enum):
     UNSPECIFIED = "unspec"
 
 
-CORE_COM_IF_DICT = {
+CORE_COM_IF_DICT: ComIfDictT = {
     CoreComInterfaces.DUMMY: ("Dummy Interface", None),
     CoreComInterfaces.UDP: ("TCP/IP with UDP datagrams", None),
     CoreComInterfaces.TCP: ("TCP/IP with TCP", None),

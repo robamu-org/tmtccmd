@@ -27,14 +27,12 @@ class TestArgs(TestCase):
         self.pargs.com_if = "dummy"
         self.pargs.listener = True
         self.pargs.prompt_proc = False
-        self.pargs.service = None
-        self.pargs.op_code = None
+        self.pargs.cmd_path = None
 
     def simple_pargs_cli_set(self):
         self.base_cli_set()
         self.pargs.listener = False
-        self.pargs.service = "17"
-        self.pargs.op_code = "ping"
+        self.pargs.cmd_path = "/PING"
 
     def auto_listener_cli_set(self):
         self.base_cli_set()
@@ -48,7 +46,7 @@ class TestArgs(TestCase):
         self.assertEqual(self.params.tc_params.delay, 0)
         self.assertEqual(self.params.backend_params.mode, "")
         self.assertEqual(self.params.backend_params.com_if_id, "")
-        def_params = DefaultProcedureParams()
+        def_params = DefaultProcedureParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -63,8 +61,7 @@ class TestArgs(TestCase):
         self.assertEqual(self.params.tc_params.apid, 0)
         self.assertEqual(self.params.app_params.use_gui, False)
         self.assertEqual(self.params.app_params.use_ansi_colors, True)
-        self.assertEqual(def_params.service, "17")
-        self.assertEqual(def_params.op_code, "ping")
+        self.assertEqual(def_params.cmd_path, "/PING")
         self.assertEqual(
             self.params.backend_params.mode,
             CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE),
@@ -75,7 +72,7 @@ class TestArgs(TestCase):
     def test_delay_set(self):
         self.simple_pargs_cli_set()
         self.pargs.delay = 2.0
-        def_params = DefaultProcedureParams()
+        def_params = DefaultProcedureParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -84,8 +81,7 @@ class TestArgs(TestCase):
             def_tmtc_params=def_params,
             assign_com_if=False,
         )
-        self.assertEqual(def_params.service, "17")
-        self.assertEqual(def_params.op_code, "ping")
+        self.assertEqual(def_params.cmd_path, "/PING")
         self.assertEqual(self.params.tc_params.delay, 2.0)
 
     def test_cfdp_conversion_basic(self):
@@ -113,7 +109,7 @@ class TestArgs(TestCase):
 
     def test_auto_listener_mode(self):
         self.auto_listener_cli_set()
-        def_params = DefaultProcedureParams()
+        def_params = DefaultProcedureParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -123,8 +119,7 @@ class TestArgs(TestCase):
             assign_com_if=False,
         )
         self.assertEqual(self.params.backend_params.listener, True)
-        self.assertIsNone(def_params.service)
-        self.assertIsNone(def_params.op_code)
+        self.assertIsNone(def_params.cmd_path)
         self.assertEqual(
             self.params.backend_params.mode,
             CoreModeConverter.get_str(CoreModeList.LISTENER_MODE),
