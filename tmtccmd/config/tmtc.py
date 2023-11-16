@@ -21,9 +21,9 @@ class CmdTreeNode:
         self, name: str, description: str, parent: Optional[CmdTreeNode] = None
     ) -> None:
         self.name = name
-        self.desc = description
+        self.description = description
         self.parent: Optional[CmdTreeNode] = parent
-        self.children: List[CmdTreeNode] = []
+        self.children: Dict[str, CmdTreeNode] = {}
 
     @classmethod
     def root_node(cls) -> CmdTreeNode:
@@ -31,7 +31,7 @@ class CmdTreeNode:
 
     def add_child(self, child: CmdTreeNode):
         child.parent = self
-        self.children.append(child)
+        self.children.update({child.name: child})
 
     @property
     def name_dict(self) -> Dict[str, Optional[Dict[str, Any]]]:
@@ -39,7 +39,7 @@ class CmdTreeNode:
         value is one nested name dictionary for each child node."""
         children_dict = {}
         if self.children:
-            for child in self.children:
+            for child in self.children.values():
                 children_dict.update(child.name_dict)
             return {self.name: children_dict}
         return {self.name: None}
@@ -55,9 +55,9 @@ class CmdTreeNode:
         def core_string_handler(string: str) -> str:
             string += self.name + " "
             if with_description:
-                string += "[ " + self.desc + " ] "
+                string += "[ " + self.description + " ] "
             string += os.linesep
-            for idx, child in enumerate(self.children):
+            for idx, child in enumerate(self.children.values()):
                 # Use recursion here to get the string for the subtree.
                 if idx == len(self.children) - 1:
                     string += child.__str_for_depth(with_description, True, depth + 1)
