@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 from tmtccmd.config.tmtc import CmdTreeNode
 
@@ -59,14 +60,20 @@ class TestCmdDefTree(TestCase):
         assert acs_dict.get("acs_ctrl") is None
 
     def test_printout_empty(self):
-        self.assertEqual(str(self.cmd_tree), "/\n")
+        self.assertEqual(str(self.cmd_tree), f"/{os.linesep}")
 
     def test_prinout_one_sublevel(self):
         self.base_tree()
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
         print(str(self.cmd_tree))
         self.assertEqual(
-            str(self.cmd_tree), ("/\n" "├── acs\n" "├── tcs\n" "└── ping\n")
+            str(self.cmd_tree),
+            (
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"└── ping{os.linesep}"
+            ),
         )
 
     def test_prinout_two_sublevels(self):
@@ -78,7 +85,13 @@ class TestCmdDefTree(TestCase):
         print(self.cmd_tree)
         self.assertEqual(
             str(self.cmd_tree),
-            ("/\n" "├── acs\n" "│  └── acs_ctrl\n" "├── tcs\n" "└── ping\n"),
+            (
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  └── acs_ctrl{os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"└── ping{os.linesep}"
+            ),
         )
 
     def test_printout_two_sublevels_one_cutoff(self):
@@ -92,11 +105,11 @@ class TestCmdDefTree(TestCase):
         self.assertEqual(
             printout,
             (
-                "/\n"
-                "├── acs\n"
-                "│  └── ... (cut-off, maximum depth 1)\n"
-                "├── tcs\n"
-                "└── ping\n"
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  └── ... (cut-off, maximum depth 1){os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"└── ping{os.linesep}"
             ),
         )
 
@@ -112,7 +125,13 @@ class TestCmdDefTree(TestCase):
         print(self.cmd_tree)
         self.assertEqual(
             str(self.cmd_tree),
-            ("/\n" "├── acs\n" "│  └── acs_ctrl\n" "└── tcs\n" "   └── tcs_ctrl\n"),
+            (
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  └── acs_ctrl{os.linesep}"
+                f"└── tcs{os.linesep}"
+                f"   └── tcs_ctrl{os.linesep}"
+            ),
         )
 
     def test_printout_4(self):
@@ -134,14 +153,14 @@ class TestCmdDefTree(TestCase):
         self.assertEqual(
             str(self.cmd_tree),
             (
-                "/\n"
-                "├── acs\n"
-                "│  ├── acs_ctrl\n"
-                "│  └── mgm_0\n"
-                "│     └── update_cfg\n"
-                "├── tcs\n"
-                "│  ├── tcs_ctrl\n"
-                "│  └── pt1000_0\n"
-                "└── ping\n"
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  ├── acs_ctrl{os.linesep}"
+                f"│  └── mgm_0{os.linesep}"
+                f"│     └── update_cfg{os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"│  ├── tcs_ctrl{os.linesep}"
+                f"│  └── pt1000_0{os.linesep}"
+                f"└── ping{os.linesep}"
             ),
         )
