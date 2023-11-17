@@ -198,7 +198,7 @@ def create_default_tmtc_backend(
             tm_handler = cast(CcsdsTmHandler, tm_handler)
     com_if = setup_wrapper.params.com_if
     if com_if is None:
-        com_if = setup_wrapper.hook_obj.assign_communication_interface(
+        com_if = setup_wrapper.hook_obj.get_communication_interface(
             setup_wrapper.params.com_if_id
         )
     tm_listener = CcsdsTmListener(tm_handler)
@@ -216,6 +216,7 @@ def create_default_tmtc_backend(
         CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE
     ):
         print("-- Multi Queue Mode --")
+    assert com_if is not None
     # The global variables are set by the argument parser.
     tmtc_backend = CcsdsTmtcBackend(
         com_if=com_if,
@@ -237,6 +238,5 @@ def create_default_tmtc_backend(
 def setup_backend_def_procedure(
     backend: CcsdsTmtcBackend, tmtc_params: DefaultProcedureParams
 ):
-    backend.current_procedure = DefaultProcedureInfo(
-        tmtc_params.service, tmtc_params.op_code
-    )
+    assert tmtc_params.cmd_path is not None
+    backend.current_procedure = DefaultProcedureInfo(tmtc_params.cmd_path)

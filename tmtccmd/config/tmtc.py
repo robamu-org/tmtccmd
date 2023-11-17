@@ -65,6 +65,12 @@ class CmdTreeNode:
         """Check whether the given list of nodes are contained within the command tree."""
         if len(node_name_list) == 0:
             return False
+        # Only root node.
+        if len(node_name_list) == 2 and node_name_list == ["", ""]:
+            return True
+        if node_name_list[0] == "":
+            # Cut off empty string left of root node /
+            node_name_list = node_name_list[1:]
         for child in self.children.values():
             if node_name_list[0] == child.name:
                 # This is the last node.

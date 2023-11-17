@@ -49,7 +49,7 @@ class HookBase(ABC):
 
         :param com_if_key:      String key of the communication interface to be created.
         """
-        self.get_communication_interface(com_if_key)
+        return self.get_communication_interface(com_if_key)
 
     @abstractmethod
     def get_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:

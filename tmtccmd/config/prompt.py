@@ -80,8 +80,14 @@ def prompt_cmd_path(
             continue
         elif ":r" in path_or_cmd:
             continue
+        if not cmd_def_tree.contains_path(f"/{path_or_cmd}"):
+            yes_or_no = input(
+                "Command definitions tree does not contain the path. Try again? [y/n]: "
+            )
+            if yes_or_no in ["y", "yes", "1"]:
+                continue
         break
-    return path_or_cmd
+    return f"/{path_or_cmd}"
 
 
 def build_service_word_completer(

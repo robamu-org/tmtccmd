@@ -403,6 +403,7 @@ def determine_cmd_path(
             def_params.cmd_path = prompt_cmd_path(
                 cmd_defs, params.app_params.compl_style
             )
+            print(f"Using command path: {def_params.cmd_path}")
     else:
         def_params.cmd_path = pargs.cmd_path
 
@@ -648,7 +649,7 @@ class PreArgsParsingWrapper:
 
     def add_def_proc_and_cfdp_as_subparsers(
         self,
-    ) -> (argparse.ArgumentParser, argparse.ArgumentParser):
+    ) -> Tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
         """Add the default tmtc and cfdp procedure as subparsers."""
         self._monkey_patch_missing_subparser = True
         subparser = self.args_parser.add_subparsers(dest="proc_type")
@@ -735,7 +736,7 @@ class PostArgsParsingWrapper:
     def _set_params(self, proc_base: ProcedureParamsWrapper, with_prompts: bool):
         param_type = self.request_type_from_args()
         if param_type == TcProcedureType.DEFAULT:
-            def_proc_params = DefaultProcedureParams()
+            def_proc_params = DefaultProcedureParams(None)
             if with_prompts:
                 self.set_tmtc_params_with_prompts(def_proc_params)
             else:

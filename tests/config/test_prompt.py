@@ -31,7 +31,7 @@ class TestPromptFunc(TestCase):
         ) as prompt:
             cmd_path = prompt_cmd_path(self.cmd_tree)
             self.assertEqual(len(prompt.call_args_list), 2)
-            self.assertEqual(cmd_path, "acs")
+            self.assertEqual(cmd_path, "/acs")
             mocked_print.assert_called_once()
             printout = mocked_print.call_args[0][0]
             self.assertTrue("acs" in printout)
@@ -39,12 +39,27 @@ class TestPromptFunc(TestCase):
             self.assertTrue("tcs" in printout)
             self.assertTrue("TCS Subsystem" in printout)
 
-    def test_prompt_cmd_path_retry(self):
+    def test_prompt_cmd_path_retry_explicit(self):
         self.base_tree()
         with patch(
             "tmtccmd.config.prompt.prompt_toolkit.prompt",
             side_effect=["acs/:r", "ping"],
         ) as prompt:
             cmd_path = prompt_cmd_path(self.cmd_tree)
-            self.assertEqual(cmd_path, "ping")
+            self.assertEqual(cmd_path, "/ping")
             self.assertEqual(len(prompt.call_args_list), 2)
+
+    def test_prompt_cmd_path_retry_prompted(self):
+        self.base_tree()
+        with patch(
+            "tmtccmd.config.prompt.prompt_toolkit.prompt",
+            side_effect=["acss", "acs"],
+        ) as prompt_mock:
+            with patch(
+                "tmtccmd.config.prompt.input",
+                return_value="yes",
+            ) as input_mock:
+                cmd_path = prompt_cmd_path(self.cmd_tree)
+                self.assertEqual(cmd_path, "/acs")
+                self.assertEqual(len(prompt_mock.call_args_list), 2)
+                self.assertEqual(len(input_mock.call_args_list), 1)

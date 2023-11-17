@@ -51,7 +51,7 @@ from tmtccmd.core.base import ModeWrapper
 _LOGGER = logging.getLogger(__name__)
 
 
-def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
+def backend_mode_conversion(mode: str, mode_wrapper: ModeWrapper):
     if mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.IDLE
@@ -115,7 +115,8 @@ class SetupWrapper:
 
 
 def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedureInfo:
-    return DefaultProcedureInfo(service=params.service, op_code=params.op_code)
+    assert params.cmd_path is not None
+    return DefaultProcedureInfo(cmd_path=params.cmd_path)
 
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:

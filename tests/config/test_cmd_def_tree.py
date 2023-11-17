@@ -43,6 +43,25 @@ class TestCmdDefTree(TestCase):
         assert acs_ctrl_child.parent is not None
         self.assertEqual(acs_ctrl_child.parent.name, "acs")
 
+    def test_path_contained(self):
+        self.base_tree()
+        self.assertTrue(self.cmd_tree.contains_path("/"))
+
+    def test_path_contained_acs(self):
+        self.base_tree()
+        self.assertTrue(self.cmd_tree.contains_path("/acs"))
+
+    def test_path_contained_tcs(self):
+        self.base_tree()
+        self.assertTrue(self.cmd_tree.contains_path("/tcs"))
+
+    def test_path_contained_acs_ctrl(self):
+        self.base_tree()
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
+        self.assertTrue(self.cmd_tree.contains_path("/acs/acs_ctrl"))
+
     def test_named_dict(self):
         self.base_tree()
         self.cmd_tree.children["acs"].add_child(
