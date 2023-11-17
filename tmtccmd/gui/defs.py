@@ -19,7 +19,7 @@ DISCONNECT_BTTN_STYLE = (
     "background-color: orange;"
     "border-style: inset;"
     "font: bold;"
-    "color: black;",
+    "color: black;"
     "padding: 6px;"
     "border-width: 2px;"
     "border-radius: 6px;"
