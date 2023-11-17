@@ -58,10 +58,10 @@ class TestCmdDefTree(TestCase):
         assert "acs_ctrl" in acs_dict
         assert acs_dict.get("acs_ctrl") is None
 
-    def test_printout_0(self):
+    def test_printout_empty(self):
         self.assertEqual(str(self.cmd_tree), "/\n")
 
-    def test_prinout_1(self):
+    def test_prinout_one_sublevel(self):
         self.base_tree()
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
         print(str(self.cmd_tree))
@@ -69,7 +69,7 @@ class TestCmdDefTree(TestCase):
             str(self.cmd_tree), ("/\n" "├── acs\n" "├── tcs\n" "└── ping\n")
         )
 
-    def test_prinout_2(self):
+    def test_prinout_two_sublevels(self):
         self.base_tree()
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
         self.cmd_tree.children["acs"].add_child(
@@ -79,6 +79,25 @@ class TestCmdDefTree(TestCase):
         self.assertEqual(
             str(self.cmd_tree),
             ("/\n" "├── acs\n" "│  └── acs_ctrl\n" "├── tcs\n" "└── ping\n"),
+        )
+
+    def test_printout_two_sublevels_one_cutoff(self):
+        self.base_tree()
+        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
+        printout = self.cmd_tree.str_for_tree(False, 1)
+        print(printout)
+        self.assertEqual(
+            printout,
+            (
+                "/\n"
+                "├── acs\n"
+                "│  └── ... (cut-off, maximum depth 1)\n"
+                "├── tcs\n"
+                "└── ping\n"
+            ),
         )
 
     def test_printout_3(self):

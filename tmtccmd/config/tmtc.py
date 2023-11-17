@@ -18,7 +18,11 @@ class TreePart(enum.Enum):
 
 class DepthInfo:
     def __init__(
-        self, depth: int, last_child: bool, layer_is_last_set: Optional[Set[int]] = None
+        self,
+        depth: int,
+        last_child: bool,
+        max_depth: Optional[int] = None,
+        layer_is_last_set: Optional[Set[int]] = None,
     ) -> None:
         self.depth = depth
         self.last_child = last_child
@@ -26,6 +30,7 @@ class DepthInfo:
             self.layer_is_last_set = set()
         else:
             self.layer_is_last_set = layer_is_last_set
+        self.max_depth = max_depth
 
     def is_layer_for_last_child(self, depth: int) -> bool:
         return depth in self.layer_is_last_set
@@ -79,14 +84,14 @@ class CmdTreeNode:
             return {self.name: children_dict}
         return {self.name: None}
 
-    def str_for_tree(self, with_description: bool) -> str:
-        return self.__str_for_depth(with_description, DepthInfo(0, False))
-
-    def __str_for_depth(
-        self,
-        with_description: bool,
-        depth_info: DepthInfo,
+    def str_for_tree(
+        self, with_description: bool, max_depth: Optional[int] = None
     ) -> str:
+        return self.__str_for_depth(
+            with_description, DepthInfo(depth=0, last_child=False, max_depth=max_depth)
+        )
+
+    def __str_for_depth(self, with_description: bool, depth_info: DepthInfo) -> str:
         string = ""
         # If we are at a larger depth than 0, we want to prepend the name using a special
         # format. Example:
@@ -125,15 +130,20 @@ class CmdTreeNode:
                     string += TreePart.BLANK.value
                 else:
                     string += TreePart.LINE.value
-        string += self.name
-        if with_description:
-            string += " [ " + self.description + " ]"
+        if depth_info.max_depth is not None and depth_info.depth > depth_info.max_depth:
+            string += f"... (cut-off, maximum depth {depth_info.max_depth}){os.linesep}"
+            return string
+        else:
+            string += self.name
+            if with_description:
+                string += " [ " + self.description + " ]"
         string += os.linesep
         for idx, child in enumerate(self.children.values()):
             last_child = True if (idx == (len(self.children) - 1)) else False
             child_depth_info = DepthInfo(
                 depth=depth_info.depth + 1,
                 last_child=last_child,
+                max_depth=depth_info.max_depth,
                 layer_is_last_set=depth_info.layer_is_last_set,
             )
             if last_child:
