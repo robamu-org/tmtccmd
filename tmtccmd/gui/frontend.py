@@ -8,7 +8,7 @@ from multiprocessing import Process
 from pathlib import Path
 from typing import Any, Optional, Tuple
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QMainWindow,
     QGridLayout,
     QTableWidget,
@@ -21,10 +21,9 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QTableWidgetItem,
     QMenu,
-    QAction,
 )
-from PyQt5.QtGui import QPixmap, QIcon, QFont
-from PyQt5.QtCore import (
+from PyQt6.QtGui import QPixmap, QIcon, QFont, QAction
+from PyQt6.QtCore import (
     Qt,
     QThreadPool,
 )
@@ -317,7 +316,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         pixmap_scaled = pixmap.scaled(
-            int(pixmap_width * 0.3), int(pixmap_height * 0.3), Qt.KeepAspectRatio
+            int(pixmap_width * 0.3),
+            int(pixmap_height * 0.3),
+            Qt.AspectRatioMode.KeepAspectRatio,
         )
         label.setPixmap(pixmap_scaled)
         label.setScaledContents(True)
@@ -329,7 +330,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
     @staticmethod
     def __add_vertical_separator(grid: QGridLayout, row: int):
         separator = QFrame()
-        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShape(QFrame.Shape.HLine)
         grid.addWidget(separator, row, 0, 1, 2)
         row += 1
         return row
