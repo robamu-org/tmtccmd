@@ -28,6 +28,7 @@ class TestArgs(TestCase):
         self.pargs.listener = True
         self.pargs.prompt_proc = False
         self.pargs.cmd_path = None
+        self.pargs.print_tree = None
 
     def simple_pargs_cli_set(self):
         self.base_cli_set()

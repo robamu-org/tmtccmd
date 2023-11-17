@@ -1,5 +1,6 @@
 """Argument parser module."""
 from __future__ import annotations
+import os
 import deprecation
 import argparse
 import logging
@@ -11,6 +12,7 @@ from prompt_toolkit.shortcuts import CompleteStyle
 
 from spacepackets.cfdp import TransmissionMode
 from tmtccmd.com.utils import determine_com_if
+from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.tmtc.procedure import TcProcedureType
 from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
 from tmtccmd.com import ComInterface
@@ -99,6 +101,9 @@ class AppParams:
     use_gui: bool = False
     reduced_printout: bool = False
     use_ansi_colors: bool = True
+    print_tree: bool = False
+    tree_print_with_description: bool = True
+    tree_print_max_depth: Optional[int] = None
     compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
 
 
@@ -203,6 +208,17 @@ def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser
         help="Command tree path, used to uniquely identify command or command stack to be sent.",
         default=None,
     )
+    parser_or_subparser.add_argument(
+        "-T",
+        "--pt",
+        "--print-tree",
+        dest="print_tree",
+        nargs="*",
+        help=(
+            f"Optional arguments [b] [<numMaxDepth>]. Print the command definition tree. You can"
+            f"{os.linesep}optionally add b to omit descriptions, and a maximum print depth."
+        ),
+    )
     add_tmtc_mode_arguments(parser_or_subparser)
     add_tmtc_listener_arg(parser_or_subparser)
 
@@ -221,18 +237,18 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
         "--proxy",
         action="store_true",
         help=(
-            "Used to trigger a proxy operation at the remote CFDP entity.\nMost"
-            " commonly used to request a file from the remote entity.\nPlease note that"
-            " this inverses the meaning of the destination and file parameter."
+            f"Used to trigger a proxy operation at the remote CFDP entity.{os.linesep}Most"
+            f" commonly used to request a file from the remote entity.{os.linesep}Please note that"
+            f" this inverses the meaning of the destination and file parameter."
         ),
     )
     parser_or_subparser.add_argument(
         "-t",
         "--type",
         help=(
-            "Specify the transfer type\n"
-            ' - "0" or "ack" for unacknowledged (Class 0) transfers\n'
-            ' - "1" or "nak" for acknowledged (Class 1) transfers. Default value'
+            f"Specify the transfer type{os.linesep}"
+            f' - "0" or "ack" for unacknowledged (Class 0) transfers{os.linesep}'
+            f' - "1" or "nak" for acknowledged (Class 1) transfers. Default value'
         ),
         default="nak",
     )
@@ -419,6 +435,15 @@ def args_to_params_generic(
         params.app_params.use_gui = False
     else:
         params.app_params.use_gui = pargs.gui
+    if pargs.print_tree is not None:
+        params.app_params.print_tree = True
+        for arg in pargs.print_tree:
+            if "b" in arg:
+                params.app_params.tree_print_with_description = False
+            if arg.isdigit():
+                params.app_params.tree_print_max_depth = int(arg)
+    else:
+        params.app_params.print_tree = False
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
         assert hook_obj.cfg_path is not None
         params.com_if_id = determine_com_if(
@@ -485,7 +510,8 @@ def args_to_all_params_tmtc(
     def_tmtc_params: DefaultProcedureParams,
     hook_obj: HookBase,
     use_prompts: bool,
-    assign_com_if: bool,
+    print_tree: bool = True,
+    assign_com_if: bool = True,
 ):
     """This function converts command line arguments to the internalized setup parameters.
 
@@ -494,8 +520,8 @@ def args_to_all_params_tmtc(
 
     If some arguments are unspecified, they are set here with (variable) default values.
 
-    :param pargs: Parsed arguments from calling parse method
-    :param params: Setup parameter object which will be set by this function
+    :param pargs: Parsed arguments from calling parse method.
+    :param params: Setup parameter object which will be set by this function.
     :param hook_obj:
     :param def_tmtc_params:
     :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
@@ -512,6 +538,8 @@ def args_to_all_params_tmtc(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
+    if params.app_params.print_tree and print_tree:
+        perform_tree_printout(params.app_params, hook_obj.get_command_definitions())
     mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
@@ -534,7 +562,10 @@ def args_to_all_params_tmtc(
             params.tc_params.delay = 0.0
     else:
         params.tc_params.delay = float(pargs.delay)
-    if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
+    if (
+        params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
+        and not params.app_params.print_tree
+    ):
         determine_cmd_path(
             params=params,
             hook_obj=hook_obj,
@@ -542,6 +573,22 @@ def args_to_all_params_tmtc(
             pargs=pargs,
             def_params=def_tmtc_params,
         )
+
+
+def perform_tree_printout(app_params: AppParams, cmd_def_tree: CmdTreeNode):
+    if app_params.tree_print_with_description:
+        info_str = "with full descriptions"
+    else:
+        info_str = "without descriptions"
+    if app_params.tree_print_max_depth is not None:
+        info_str += f" and maximum depth {app_params.tree_print_max_depth}"
+    print(f"Printing command tree {info_str}:")
+    print(
+        cmd_def_tree.str_for_tree(
+            app_params.tree_print_with_description,
+            app_params.tree_print_max_depth,
+        )
+    )
 
 
 class PreArgsParsingWrapper:
@@ -616,6 +663,7 @@ class PreArgsParsingWrapper:
                 patched_args.extend(sys.argv[1:])
         if patched_args is None:
             patched_args = sys.argv[1:]
+        assert self.args_parser is not None
         args_raw, unknown_args = parse_default_tmtccmd_input_arguments(
             args=patched_args,
             parser=self.args_parser,
@@ -633,11 +681,13 @@ class PreArgsParsingWrapper:
         """Add the default tmtc procedure parameters to the default parser. This includes
         the service and operation code flags."""
         self._check_arg_parser()
+        assert self.args_parser is not None
         add_default_procedure_arguments(self.args_parser)
 
     def add_cfdp_args(self):
         """Add the default CFDP procedure parameters to the default parser."""
         self._check_arg_parser()
+        assert self.args_parser is not None
         add_cfdp_procedure_arguments(self.args_parser)
 
     def _check_arg_parser(self):
@@ -706,7 +756,8 @@ class PostArgsParsingWrapper:
         self.params = params
         self.unknown_args = unknown_args
         self.hook_obj = hook_obj
-        self.assign_com_if = True
+        self.assign_com_if_on_conversion_if_applicable = True
+        self.print_tree_on_conversion_if_applicable = True
 
     @property
     def use_gui(self):
@@ -779,7 +830,8 @@ class PostArgsParsingWrapper:
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
                 def_tmtc_params=def_tmtc_params,
-                assign_com_if=self.assign_com_if,
+                assign_com_if=self.assign_com_if_on_conversion_if_applicable,
+                print_tree=self.print_tree_on_conversion_if_applicable,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
@@ -794,7 +846,7 @@ class PostArgsParsingWrapper:
                 params=self.params,
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
-                assign_com_if=self.assign_com_if,
+                assign_com_if=self.assign_com_if_on_conversion_if_applicable,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
