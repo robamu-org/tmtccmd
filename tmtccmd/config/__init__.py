@@ -129,9 +129,9 @@ def params_to_procedure_conversion(
 ) -> ProcedureWrapper:
     proc_wrapper = ProcedureWrapper(None)
     if param_wrapper.ptype == TcProcedureType.DEFAULT:
-        proc_wrapper.base = tmtc_params_to_procedure(param_wrapper.def_params())
+        proc_wrapper.procedure = tmtc_params_to_procedure(param_wrapper.def_params())
     elif param_wrapper.ptype == TcProcedureType.CFDP:
-        proc_wrapper.base = cfdp_put_req_params_to_procedure(
+        proc_wrapper.procedure = cfdp_put_req_params_to_procedure(
             param_wrapper.cfdp_params()
         )
     return proc_wrapper

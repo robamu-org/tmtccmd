@@ -230,7 +230,7 @@ def create_default_tmtc_backend(
         seconds=setup_wrapper.params.tc_params.delay
     )
     if init_procedure is not None:
-        tmtc_backend.current_procedure = init_procedure.base
+        tmtc_backend.current_procedure = init_procedure.procedure
     return tmtc_backend
 
 

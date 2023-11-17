@@ -131,7 +131,6 @@ class CmdTreeNode:
         string += os.linesep
         for idx, child in enumerate(self.children.values()):
             last_child = True if (idx == (len(self.children) - 1)) else False
-            print(last_child)
             child_depth_info = DepthInfo(
                 depth=depth_info.depth + 1,
                 last_child=last_child,
@@ -139,7 +138,6 @@ class CmdTreeNode:
             )
             if last_child:
                 child_depth_info.set_layer_is_last_child(depth_info.depth)
-            print(f"current depth info set: {child_depth_info.layer_is_last_set}")
             # Use recursion here to get the string for the subtree.
             string += child.__str_for_depth(with_description, child_depth_info)
         return string

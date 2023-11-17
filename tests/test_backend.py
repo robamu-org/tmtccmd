@@ -33,8 +33,7 @@ class TcHandlerMock(TcHandlerBase):
             seq_cnt_provider=None,
         )
         self.send_cb_call_args: Optional[SendCbParams] = None
-        self.send_cb_service_arg: Optional[str] = None
-        self.send_cb_op_code_arg: Optional[str] = None
+        self.send_cb_cmd_path_arg: Optional[str] = None
 
     def send_cb(self, send_params: SendCbParams):
         self.send_cb_call_count += 1
@@ -46,36 +45,26 @@ class TcHandlerMock(TcHandlerBase):
     def feed_cb(self, info: ProcedureWrapper, wrapper: FeedWrapper):
         self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         self.feed_cb_call_count += 1
-        self.send_cb_service_arg = None
+        self.send_cb_cmd_path_arg = None
         self.send_cb_op_code_arg = None
         if info is not None:
             if info.proc_type == TcProcedureType.DEFAULT:
                 self.feed_cb_def_proc_count += 1
                 def_info = info.to_def_procedure()
-                if def_info.service != "17":
+                if def_info.cmd_path != "/ping":
                     self.is_feed_cb_valid = False
-                self.send_cb_service_arg = def_info.service
-                self.send_cb_op_code_arg = def_info.op_code
-                if def_info.service == "17":
-                    if def_info.op_code == "0":
-                        self.queue_helper.add_pus_tc(
-                            PusTelecommand(service=17, subservice=1)
-                        )
-                    elif def_info.op_code == "1":
-                        self.queue_helper.add_pus_tc(
-                            PusTelecommand(service=17, subservice=1)
-                        )
-                        self.queue_helper.add_pus_tc(
-                            PusTelecommand(service=5, subservice=1)
-                        )
-                    elif def_info.op_code == "2":
-                        self.queue_helper.add_pus_tc(
-                            PusTelecommand(service=17, subservice=1)
-                        )
-                        self.queue_helper.add_wait(timedelta(milliseconds=20))
-                        self.queue_helper.add_pus_tc(
-                            PusTelecommand(service=5, subservice=1)
-                        )
+                self.send_cb_cmd_path_arg = def_info.cmd_path
+                if def_info.cmd_path == "/ping":
+                    self.queue_helper.add_pus_tc(
+                        PusTelecommand(service=17, subservice=1)
+                    )
+                elif def_info.cmd_path == "/event":
+                    self.queue_helper.add_pus_tc(
+                        PusTelecommand(service=17, subservice=1)
+                    )
+                    self.queue_helper.add_pus_tc(
+                        PusTelecommand(service=5, subservice=1)
+                    )
 
 
 class TestBackend(TestCase):
@@ -127,7 +116,7 @@ class TestBackend(TestCase):
         self.backend.tc_mode = TcMode.ONE_QUEUE
         with self.assertRaises(NoValidProcedureSet):
             self.backend.periodic_op()
-        self.backend.current_procedure = DefaultProcedureInfo(service="17", op_code="0")
+        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/ping")
 
         res = self.backend.periodic_op()
         # Only one queue entry which is handled immediately
@@ -135,7 +124,7 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.feed_cb_def_proc_count, 1)
         self.assertEqual(self.tc_handler.feed_cb_call_count, 1)
         self.assertEqual(self.tc_handler.send_cb_call_count, 1)
-        self.assertIsNotNone(self.tc_handler.send_cb_call_args)
+        assert self.tc_handler.send_cb_call_args is not None
         self.assertIsNotNone(self.tc_handler.send_cb_call_args.info)
         self.assertIsNotNone(self.tc_handler.send_cb_call_args.entry)
         self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
@@ -148,7 +137,7 @@ class TestBackend(TestCase):
     def test_one_queue_multi_entry_ops(self):
         self.backend.tm_mode = TmMode.IDLE
         self.backend.tc_mode = TcMode.ONE_QUEUE
-        self.backend.current_procedure = DefaultProcedureInfo(service="17", op_code="1")
+        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/event")
         res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.CALL_NEXT)
         self.assertEqual(self.tc_handler.feed_cb_def_proc_count, 1)
@@ -165,7 +154,7 @@ class TestBackend(TestCase):
     def test_multi_queue_ops(self):
         self.backend.tm_mode = TmMode.IDLE
         self.backend.tc_mode = TcMode.MULTI_QUEUE
-        self.backend.current_procedure = DefaultProcedureInfo(service="17", op_code="0")
+        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/ping")
         res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.CALL_NEXT)
         self.assertEqual(self.backend.request, BackendRequest.CALL_NEXT)
@@ -178,7 +167,7 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.feed_cb_call_count, 1)
         self.assertEqual(res.request, BackendRequest.DELAY_IDLE)
         self.backend.tc_mode = TcMode.MULTI_QUEUE
-        self.backend.current_procedure = DefaultProcedureInfo(service="17", op_code="0")
+        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/ping")
         res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.CALL_NEXT)
         self.assertEqual(self.backend.request, BackendRequest.CALL_NEXT)
@@ -186,7 +175,7 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.feed_cb_call_count, 2)
 
     def test_procedure_handling(self):
-        def_proc = DefaultProcedureInfo(service="17", op_code="0")
+        def_proc = DefaultProcedureInfo(cmd_path="/ping")
         self.backend.current_procedure = def_proc
         self.assertEqual(
             self.backend.current_procedure.proc_type, TcProcedureType.DEFAULT
@@ -194,8 +183,7 @@ class TestBackend(TestCase):
         proc_helper = self.backend.current_procedure
         def_proc = proc_helper.to_def_procedure()
         self.assertIsNotNone(def_proc)
-        self.assertEqual(def_proc.service, "17")
-        self.assertEqual(def_proc.op_code, "0")
+        self.assertEqual(def_proc.cmd_path, "/ping")
 
     def _check_tc_req_recvd(self, service: int, subservice: int):
         self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
