@@ -42,8 +42,8 @@ dependencies = [
 
 [project.optional-dependencies]
 gui = [
-    "PyQt5~=5.15",
-    "PyQt5-stubs~=5.15",
+    "PyQt6~=6.6",
+    # "PyQt5-stubs~=5.15",
 ]
 test = [
     "pyfakefs~=4.5",
