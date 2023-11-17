@@ -394,7 +394,7 @@ def determine_cmd_path(
     pargs: argparse.Namespace,
     use_prompts: bool,
 ):
-    cmd_defs = hook_obj.get_cmd_definitions()
+    cmd_defs = hook_obj.get_command_definitions()
     if pargs.cmd_path is None:
         if use_prompts:
             print("No command path (-p) argument specified, prompting from user")

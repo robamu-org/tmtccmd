@@ -41,19 +41,18 @@ class HookBase(ABC):
     @deprecation.deprecated(
         deprecated_in="8.0.0",
         current_version=get_version(),
-        details="use get_com_interface instead",
+        details="implement and use get_com_interface instead",
     )
-    @abstractmethod
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
         TMTC with.
 
         :param com_if_key:      String key of the communication interface to be created.
         """
-        self.get_com_interface(com_if_key)
+        self.get_communication_interface(com_if_key)
 
     @abstractmethod
-    def get_com_interface(self, com_if_key: str) -> Optional[ComInterface]:
+    def get_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         from tmtccmd.config.com import create_com_interface_default
 
         assert self.cfg_path is not None
@@ -66,9 +65,8 @@ class HookBase(ABC):
     @deprecation.deprecated(
         deprecated_in="8.0.0",
         current_version=get_version(),
-        details="use get_cmd_definitions instead",
+        details="implement and use get_command_definitions instead",
     )
-    @abstractmethod
     def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         """This is a dicitonary mapping services represented by strings to an operation code
         dictionary.
@@ -80,7 +78,7 @@ class HookBase(ABC):
         return get_default_tmtc_defs()
 
     @abstractmethod
-    def get_cmd_definitions(self) -> CmdTreeNode:
+    def get_command_definitions(self) -> CmdTreeNode:
         """This function should return the root node of the command definition tree."""
         pass
 
