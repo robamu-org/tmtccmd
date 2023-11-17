@@ -9,10 +9,10 @@ class TestCmdDefTree(TestCase):
     def base_tree(self):
         self.cmd_tree.add_child(CmdTreeNode("acs", "ACS Subsystem"))
         self.cmd_tree.add_child(CmdTreeNode("tcs", "TCS Subsystem"))
-        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
 
     def test_state(self):
         self.base_tree()
+        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
         self.assertEqual(self.cmd_tree.name, "/")
         self.assertEqual(self.cmd_tree.children["acs"].name, "acs")
         self.assertEqual(self.cmd_tree.children["acs"].description, "ACS Subsystem")
@@ -44,8 +44,85 @@ class TestCmdDefTree(TestCase):
 
     def test_named_dict(self):
         self.base_tree()
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
         name_dict = self.cmd_tree.name_dict
         root_dict = name_dict.get("/")
         assert root_dict is not None
+        assert "tcs" in root_dict
+        assert root_dict.get("tcs") is None
         assert "acs" in root_dict
-        assert root_dict.get("acs") is None
+        acs_dict = root_dict.get("acs")
+        assert acs_dict is not None
+        assert "acs_ctrl" in acs_dict
+        assert acs_dict.get("acs_ctrl") is None
+
+    def test_printout_0(self):
+        self.assertEqual(str(self.cmd_tree), "/\n")
+
+    def test_prinout_1(self):
+        self.base_tree()
+        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
+        print(str(self.cmd_tree))
+        self.assertEqual(
+            str(self.cmd_tree), ("/\n" "├── acs\n" "├── tcs\n" "└── ping\n")
+        )
+
+    def test_prinout_2(self):
+        self.base_tree()
+        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
+        print(self.cmd_tree)
+        self.assertEqual(
+            str(self.cmd_tree),
+            ("/\n" "├── acs\n" "│  └── acs_ctrl\n" "├── tcs\n" "└── ping\n"),
+        )
+
+    def test_printout_3(self):
+        self.base_tree()
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
+        self.cmd_tree.children["tcs"].add_child(
+            CmdTreeNode("tcs_ctrl", "TCS Controller")
+        )
+
+        print(self.cmd_tree)
+        self.assertEqual(
+            str(self.cmd_tree),
+            ("/\n" "├── acs\n" "│  └── acs_ctrl\n" "└── tcs\n" "   └── tcs_ctrl\n"),
+        )
+
+    def test_printout_4(self):
+        self.base_tree()
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("mgm_0", "MGM 0"))
+        self.cmd_tree.children["acs"].children["mgm_0"].add_child(
+            CmdTreeNode("update_cfg", "Update Configuration")
+        )
+        self.cmd_tree.children["tcs"].add_child(
+            CmdTreeNode("tcs_ctrl", "TCS Controller")
+        )
+        self.cmd_tree.children["tcs"].add_child(CmdTreeNode("pt1000_0", "PT1000 0"))
+        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
+
+        print(self.cmd_tree)
+        self.assertEqual(
+            str(self.cmd_tree),
+            (
+                "/\n"
+                "├── acs\n"
+                "│  ├── acs_ctrl\n"
+                "│  └── mgm_0\n"
+                "│     └── update_cfg\n"
+                "├── tcs\n"
+                "│  ├── tcs_ctrl\n"
+                "│  └── pt1000_0\n"
+                "└── ping\n"
+            ),
+        )

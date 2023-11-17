@@ -56,24 +56,29 @@ def prompt_service(
 def prompt_cmd_path(
     cmd_def_tree: CmdTreeNode, compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
 ) -> str:
-    base_compl_dict = cmd_def_tree.name_dict
-    base_compl_dict.update({":p": None})
-    base_compl_dict.update({":fp": None})
-    nested_completer = NestedCompleter.from_nested_dict(base_compl_dict)
+    compl_dict = cmd_def_tree.name_dict
+    compl_dict = compl_dict.get("/")
+    if compl_dict is None:
+        return "/"
+    compl_dict.update({":p": None})
+    compl_dict.update({":fp": None})
+    nested_completer = NestedCompleter.from_nested_dict(compl_dict, separator="/")
     while True:
         path_or_cmd = prompt_toolkit.prompt(
-            "Please specify one of the following:\n"
-            " - A full command path\n"
-            " - :p to print the tree without descriptions\n"
-            " - :fp to print the tree with descriptions\n",
+            (
+                "Please enter a slash separated command path.\n"
+                "Additional commands: :p Tree Print | :pf Full Print | :r Retry.\n"
+            ),
             completer=nested_completer,
             complete_style=compl_style,
         )
         if path_or_cmd == ":p":
             print(cmd_def_tree.str_for_tree(False))
             continue
-        elif path_or_cmd == ":fp":
+        elif path_or_cmd == ":pf":
             print(cmd_def_tree.str_for_tree(True))
+            continue
+        elif ":r" in path_or_cmd:
             continue
         break
     return path_or_cmd

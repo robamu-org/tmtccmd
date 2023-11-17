@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from spacepackets.cfdp.pdu.helper import deprecation
 
@@ -14,6 +14,24 @@ class TreePart(enum.Enum):
     LINE = "│  "
     CORNER = "└──"
     BLANK = "   "
+
+
+class DepthInfo:
+    def __init__(
+        self, depth: int, last_child: bool, layer_is_last_set: Optional[Set[int]] = None
+    ) -> None:
+        self.depth = depth
+        self.last_child = last_child
+        if layer_is_last_set is None:
+            self.layer_is_last_set = set()
+        else:
+            self.layer_is_last_set = layer_is_last_set
+
+    def is_layer_for_last_child(self, depth: int) -> bool:
+        return depth in self.layer_is_last_set
+
+    def set_layer_is_last_child(self, depth: int):
+        self.layer_is_last_set.add(depth)
 
 
 class CmdTreeNode:
@@ -33,6 +51,23 @@ class CmdTreeNode:
         child.parent = self
         self.children.update({child.name: child})
 
+    def contains_path(self, path: str) -> bool:
+        """Check whether a full slash separated command path is contained within
+        the command tree."""
+        return self.contains_path_from_node_list(path.split("/"))
+
+    def contains_path_from_node_list(self, node_name_list: List[str]) -> bool:
+        """Check whether the given list of nodes are contained within the command tree."""
+        if len(node_name_list) == 0:
+            return False
+        for child in self.children.values():
+            if node_name_list[0] == child.name:
+                # This is the last node.
+                if len(node_name_list) == 1:
+                    return True
+                return child.contains_path_from_node_list(node_name_list[1:])
+        return False
+
     @property
     def name_dict(self) -> Dict[str, Optional[Dict[str, Any]]]:
         """Returns a nested dictionary where the key is always the name of the node, and the
@@ -45,48 +80,69 @@ class CmdTreeNode:
         return {self.name: None}
 
     def str_for_tree(self, with_description: bool) -> str:
-        return self.__str_for_depth(with_description, False, 0)
+        return self.__str_for_depth(with_description, DepthInfo(0, False))
 
     def __str_for_depth(
-        self, with_description: bool, last_child: bool, depth: int
+        self,
+        with_description: bool,
+        depth_info: DepthInfo,
     ) -> str:
         string = ""
-
-        def core_string_handler(string: str) -> str:
-            string += self.name + " "
-            if with_description:
-                string += "[ " + self.description + " ] "
-            string += os.linesep
-            for idx, child in enumerate(self.children.values()):
-                # Use recursion here to get the string for the subtree.
-                if idx == len(self.children) - 1:
-                    string += child.__str_for_depth(with_description, True, depth + 1)
-                else:
-                    string += child.__str_for_depth(with_description, False, depth + 1)
-            return string
-
-        if depth == 0:
-            return core_string_handler(string)
         # If we are at a larger depth than 0, we want to prepend the name using a special
         # format. Example:
-        # /
-        # |
+        #
+        # Example 1:
         # /
         # ├── ACS
         # │  └── ACS_CTRL
         # └── TCS
-        for i in range(depth):
-            if i == depth - 1:
-                if last_child:
-                    string += TreePart.CORNER.value
+        #
+        # Example 2:
+        # /
+        # ├── ACS
+        # │  └── ACS_CTRL
+        # └── TCS
+        #    └── TCS_CTRL
+        #
+        # Example 3:
+        # /
+        # ├── ACS
+        # │  ├── ACS_CTRL
+        # │  └── MGM_0
+        # │     └── UPDATE_CFG
+        # ├── TCS
+        # │  ├── TCS_CTRL
+        # │  └── PT1000_0
+        # └── PING
+        for i in range(depth_info.depth):
+            if i == depth_info.depth - 1:
+                if depth_info.last_child:
+                    string += TreePart.CORNER.value + " "
                 else:
-                    string += TreePart.EDGE.value
-            elif i == 0:
-                string += TreePart.LINE.value
+                    string += TreePart.EDGE.value + " "
             else:
-                string += TreePart.BLANK.value
-        string += " "
-        return core_string_handler(string)
+                if depth_info.is_layer_for_last_child(i):
+                    string += TreePart.BLANK.value
+                else:
+                    string += TreePart.LINE.value
+        string += self.name
+        if with_description:
+            string += " [ " + self.description + " ]"
+        string += os.linesep
+        for idx, child in enumerate(self.children.values()):
+            last_child = True if (idx == (len(self.children) - 1)) else False
+            print(last_child)
+            child_depth_info = DepthInfo(
+                depth=depth_info.depth + 1,
+                last_child=last_child,
+                layer_is_last_set=depth_info.layer_is_last_set,
+            )
+            if last_child:
+                child_depth_info.set_layer_is_last_child(depth_info.depth)
+            print(f"current depth info set: {child_depth_info.layer_is_last_set}")
+            # Use recursion here to get the string for the subtree.
+            string += child.__str_for_depth(with_description, child_depth_info)
+        return string
 
     def __str__(self) -> str:
         return self.str_for_tree(False)
