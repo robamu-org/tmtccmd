@@ -11,10 +11,10 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 - [Documentation](https://tmtccmd.readthedocs.io/en/latest/)
 - [Project Homepage](https://github.com/robamu-org/tmtccmd)
 
-This is a small Python framework targeted towards remote system software developers to
-perform TMTC (Telemetry and Telecommand) handling and testing via different communication
-interfaces. Examples for such systems are CubeSats or Rovers. This tool can be used either as a
-command line tool or as a GUI tool which requires a PyQt6 installation. 
+This is a small Python framework targeted towards the testing of remote systems like satellites
+and rovers. It simplifies sending and receiving TMTCs (Telemetry and Telecommands)
+and testing via different communication interfaces. This tool can be
+used either as a command line tool or as a GUI tool which requires a PyQt6 installation.
 
 ## Features
 
@@ -46,7 +46,7 @@ The framework currently supports the following communication interfaces:
 
 It is also possible to supply custom interfaces.
 
-## Examples 
+## Examples
 
 The [`examples`](https://github.com/robamu-org/tmtccmd/tree/main/examples) folder contains a simple
 example using a  dummy communication interface. It sends a PUS ping telecommand and then reads the
