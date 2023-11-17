@@ -1,7 +1,7 @@
-<p align="center"> <img src="misc/logo.png" width="50%"> </p>
+<p align="center"> <img src="misc/logo.png" width="40%"> </p>
 
 TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd/badge/?version=latest)](https://tmtccmd.readthedocs.io/en/latest/?badge=latest)
-[![package](https://github.com/robamu-org/tmtccmd/actions/workflows/package.yml/badge.svg)](https://github.com/robamu-org/tmtccmd/actions/workflows/package.yml)
+[![ci](https://github.com/robamu-org/tmtccmd/actions/workflows/ci.yml/badge.svg)](https://github.com/robamu-org/tmtccmd/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/robamu-org/tmtccmd/branch/main/graph/badge.svg?token=BVOE3A4WE4)](https://codecov.io/gh/robamu-org/tmtccmd)
 [![PyPI version](https://badge.fury.io/py/tmtccmd.svg)](https://badge.fury.io/py/tmtccmd)
 ====
@@ -14,31 +14,29 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 This is a small Python framework targeted towards remote system software developers to
 perform TMTC (Telemetry and Telecommand) handling and testing via different communication
 interfaces. Examples for such systems are CubeSats or Rovers. This tool can be used either as a
-command line tool or as a GUI tool which requires a PyQt6 installation. This package
-also has dedicated support to send and receive ECSS PUS packets or other generic CCSDS packets.
-
-The TMTC commander also includes some telemetry handling components and telecommand packaging
-helpers. Some of those components are tailored towards usage with the
-[Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/).
+command line tool or as a GUI tool which requires a PyQt6 installation. 
 
 ## Features
 
+- Generic communication interface abstraction which can also be used without the other components
+  of the library if the goal is to separate the packet logic from the communication interface.
+  The dedicated documentation chapter contains a more information and examples.
 - Special support for [Packet Utilisation Standard (PUS)](https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/)
   packets and [CCSDS Space Packets](https://public.ccsds.org/Pubs/133x0b2e1.pdf).
   This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
   packet implementations.
+- High level CFDP components which allow to build
+  [CFDP standard conformant](https://public.ccsds.org/Pubs/727x0b5.pdf) CFDP handlers.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
 - One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences
 - Listener mode to only listen to incoming telemetry
-- Basic logger components which can be used to store sent Telecommands and incoming Telemetry
-  in files
 - Some components are tailored towards usage with the
-  [Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/)
+  [Flight Software Framework (FSFW)](https://absatsw.irs.uni-stuttgart.de/index.html) and the
+  [sat-rs framework](https://absatsw.irs.uni-stuttgart.de/sat-rs.html)
 
-This has a communication interface abstraction which allows to exchange TMTC through different
-channels. The framework currently supports the following communication interfaces:
+The framework currently supports the following communication interfaces:
 
 1. TCP/IP with UDP and TCP. The TCP interface currently only supports sending CCSDS space packets
    and is able to parse those packets from the received data stream.
@@ -124,6 +122,13 @@ Then the documentation can be built with
 ```sh
 cd docs
 make html
+```
+
+The doctests can be run with the following command
+
+```sh
+cd docs
+make doctest
 ```
 
 ## Using PyCharm

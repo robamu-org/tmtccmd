@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 import threading
 from collections import deque
 from typing import Optional
@@ -6,12 +7,9 @@ from typing import Optional
 import serial
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
-from tmtccmd.tm import TelemetryListT
-
-LOGGER = get_console_logger()
+from tmtccmd.tmtc import TelemetryListT
 
 
 @dataclasses.dataclass
@@ -32,7 +30,9 @@ class SerialDleComIF(SerialComBase, ComInterface):
 
     def __init__(self, ser_cfg: SerialCfg, dle_cfg: Optional[DleCfg]):
         super().__init__(
-            LOGGER, ser_cfg=ser_cfg, ser_com_type=SerialCommunicationType.DLE_ENCODING
+            logging.getLogger(__name__),
+            ser_cfg=ser_cfg,
+            ser_com_type=SerialCommunicationType.DLE_ENCODING,
         )
         self.dle_cfg = dle_cfg
         self.__encoder = DleEncoder()
@@ -104,7 +104,7 @@ class SerialDleComIF(SerialComBase, ComInterface):
             if dle_retval == DleErrorCodes.OK:
                 packet_list.append(decoded_packet)
             else:
-                LOGGER.warning("DLE decoder error!")
+                self.logger.warning("DLE decoder error!")
         return packet_list
 
     def data_available(self, timeout: float, parameters: any = 0) -> int:

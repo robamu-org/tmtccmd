@@ -10,7 +10,6 @@ import serial
 
 
 class SerialConfigIds(enum.Enum):
-
     SERIAL_PORT = auto()
     SERIAL_BAUD_RATE = auto()
     SERIAL_TIMEOUT = auto()
@@ -29,7 +28,6 @@ class SerialCommunicationType(enum.Enum):
     """
 
     COBS = 0
-    FIXED_FRAME_BASED = 1
     DLE_ENCODING = 2
 
 

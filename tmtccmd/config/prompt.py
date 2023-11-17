@@ -1,10 +1,11 @@
+import logging
+
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
 from tmtccmd.config.tmtc import OpCodeEntry, TmtcDefinitionWrapper
-from tmtccmd.logging import get_console_logger
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 def prompt_service(
@@ -29,7 +30,7 @@ def prompt_service(
                 adjusted_service_info = service_entry[1][0].ljust(info_adjustment)
                 print(f"|{adjusted_service_entry} | {adjusted_service_info}|")
             except AttributeError:
-                LOGGER.warning(
+                _LOGGER.warning(
                     f"Error handling service entry {service_entry[0]}. Skipping.."
                 )
         print(f" {horiz_line}")
@@ -42,7 +43,7 @@ def prompt_service(
             print(f"Selected service: {service_string}")
             return service_string
         else:
-            LOGGER.warning("Invalid key, try again")
+            _LOGGER.warning("Invalid key, try again")
 
 
 def build_service_word_completer(
@@ -71,7 +72,7 @@ def prompt_op_code(
         op_code_entry = tmtc_defs.op_code_entry(service)
         completer = build_op_code_word_completer(op_code_entry=op_code_entry)
     else:
-        LOGGER.warning("Service not in dictionary. Setting default operation code 0")
+        _LOGGER.warning("Service not in dictionary. Setting default operation code 0")
         return "0"
     while True:
 
@@ -101,7 +102,7 @@ def prompt_op_code(
             print(f"Selected op code: {op_code_string}")
             return op_code_string
         else:
-            LOGGER.warning("Invalid key, try again")
+            _LOGGER.warning("Invalid key, try again")
 
 
 def build_op_code_word_completer(op_code_entry: OpCodeEntry) -> WordCompleter:

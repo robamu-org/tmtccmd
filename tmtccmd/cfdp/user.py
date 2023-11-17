@@ -1,16 +1,25 @@
+import logging
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Any
 
-from spacepackets.cfdp import ConditionCode, FileStoreResponseTlv, MessageToUserTlv
-from spacepackets.cfdp.pdu.file_data import RecordContinuationState
-from spacepackets.cfdp.pdu.finished import DeliveryCode, FileDeliveryStatus
+from spacepackets.cfdp.defs import ConditionCode, TransactionId
+from spacepackets.cfdp.tlv import MessageToUserTlv
+from spacepackets.cfdp.pdu.file_data import SegmentMetadata
+from spacepackets.cfdp.pdu.finished import FinishedParams
 from spacepackets.util import UnsignedByteField
-from tmtccmd.logging import get_console_logger
-from tmtccmd.cfdp.defs import TransactionId
 from tmtccmd.cfdp.filestore import VirtualFilestore, HostFilestore
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class TransactionParams:
+    """Not wholly standard conformant here, but supplying the originating transaction ID
+    makes the implementation of handling with proxy put requests easier."""
+
+    transaction_id: TransactionId
+    originating_transaction_id: Optional[TransactionId] = None
 
 
 @dataclass
@@ -26,11 +35,8 @@ class MetadataRecvParams:
 @dataclass
 class TransactionFinishedParams:
     transaction_id: TransactionId
-    condition_code: ConditionCode
-    file_status: FileDeliveryStatus
-    delivery_code: DeliveryCode
-    fs_responses: Optional[List[FileStoreResponseTlv]] = None
-    status_report: Optional[any] = None
+    finished_params: FinishedParams
+    status_report: Optional[Any] = None
 
 
 @dataclass
@@ -42,8 +48,7 @@ class FileSegmentRecvdParams:
     transaction_id: TransactionId
     offset: int
     length: int
-    record_cont_state: Optional[RecordContinuationState]
-    segment_metadata: Optional[bytes]
+    segment_metadata: Optional[SegmentMetadata]
 
 
 class CfdpUserBase(ABC):
@@ -63,37 +68,48 @@ class CfdpUserBase(ABC):
         self.vfs = vfs
 
     @abstractmethod
-    def transaction_indication(self, transaction_id: TransactionId):
+    def transaction_indication(
+        self,
+        transaction_indication_params: TransactionParams,
+    ):
         """This indication is used to report the transaction ID to the CFDP user"""
-        LOGGER.info(f"Transaction.indication for {transaction_id}")
+        _LOGGER.info(
+            f"Transaction.indication for {transaction_indication_params.transaction_id}"
+        )
 
     @abstractmethod
     def eof_sent_indication(self, transaction_id: TransactionId):
-        LOGGER.info(f"EOF-Sent.indication for {transaction_id}")
+        _LOGGER.info(f"EOF-Sent.indication for {transaction_id}")
 
     @abstractmethod
     def transaction_finished_indication(self, params: TransactionFinishedParams):
-        LOGGER.info(
+        """This is the ``Transaction-Finished.Indication`` as specified in chapter 3.4.8 of the
+        standard.
+
+        The user implementation of this function could be used to keep a (failed) transaction
+        history, which might be useful for the positive ACK procedures expected from a receiving
+        CFDP entity."""
+        _LOGGER.info(
             f"Transaction-Finished.indication for {params.transaction_id}. Parameters:"
         )
         print(params)
 
     @abstractmethod
     def metadata_recv_indication(self, params: MetadataRecvParams):
-        LOGGER.info(
+        _LOGGER.info(
             f"Metadata-Recv.indication for {params.transaction_id}. Parameters:"
         )
         print(params)
 
     @abstractmethod
     def file_segment_recv_indication(self, params: FileSegmentRecvdParams):
-        LOGGER.info(
+        _LOGGER.info(
             f"File-Segment-Recv.indication for {params.transaction_id}. Parameters:"
         )
         print(params)
 
     @abstractmethod
-    def report_indication(self, transaction_id: TransactionId, status_report: any):
+    def report_indication(self, transaction_id: TransactionId, status_report: Any):
         # TODO: p.28 of the CFDP standard specifies what information the status report parameter
         #       could contain. I think it would be better to not hardcode the type of the status
         #       report here, but something like Union[any, CfdpStatusReport] with CfdpStatusReport
@@ -105,13 +121,13 @@ class CfdpUserBase(ABC):
     def suspended_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode
     ):
-        LOGGER.info(
+        _LOGGER.info(
             f"Suspended.indication for {transaction_id} | Condition Code: {cond_code}"
         )
 
     @abstractmethod
     def resumed_indication(self, transaction_id: TransactionId, progress: int):
-        LOGGER.info(
+        _LOGGER.info(
             f"Resumed.indication for {transaction_id} | Progress: {progress} bytes"
         )
 
@@ -119,7 +135,13 @@ class CfdpUserBase(ABC):
     def fault_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
-        LOGGER.warning(
+        """This is the ``Fault.Indication`` as specified in chapter 3.4.14 of the
+        standard.
+
+        The user implementation of this function could be used to keep a (failed) transaction
+        history, which might be useful for the positive ACK procedures expected from a receiving
+        CFDP entity."""
+        _LOGGER.warning(
             f"Fault.indication for {transaction_id} | Condition Code: {cond_code} | "
             f"Progress: {progress} bytes"
         )
@@ -128,11 +150,17 @@ class CfdpUserBase(ABC):
     def abandoned_indication(
         self, transaction_id: TransactionId, cond_code: ConditionCode, progress: int
     ):
-        LOGGER.warning(
-            f"Abandoned.indication for {transaction_id} | Condition Code: {cond_code} | "
-            f"Progress: {progress} bytes"
+        """This is the ``Fault.Indication`` as specified in chapter 3.4.15 of the
+        standard.
+
+        The user implementation of this function could be used to keep a (failed) transaction
+        history, which might be useful for the positive ACK procedures expected from a receiving
+        CFDP entity."""
+        _LOGGER.warning(
+            f"Abandoned.indication for {transaction_id} | Condition Code: {cond_code} |"
+            f" Progress: {progress} bytes"
         )
 
     @abstractmethod
     def eof_recv_indication(self, transaction_id: TransactionId):
-        LOGGER.info(f"EOF-Recv.indication for {transaction_id}")
+        _LOGGER.info(f"EOF-Recv.indication for {transaction_id}")

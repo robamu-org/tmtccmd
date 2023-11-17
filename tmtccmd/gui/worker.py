@@ -1,14 +1,14 @@
+import logging
 import time
 from typing import Optional
 
 from PyQt6.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
 
-from tmtccmd import get_console_logger
 from tmtccmd.core import TmMode, TcMode, BackendRequest
 from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCodes
 
 
-LOGGER = get_console_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 class WorkerSignalWrapper(QObject):
@@ -129,9 +129,7 @@ class FrontendWorker(QRunnable):
             return False
         else:
             # This must be a programming error
-            get_console_logger().error(
-                f"Unknown worker operation code {self._locals.op_code}"
-            )
+            LOGGER.error(f"Unknown worker operation code {self._locals.op_code}")
         return True
 
     @pyqtSlot()

@@ -1,3 +1,62 @@
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "tmtccmd"
+description = "TMTC Commander Core"
+readme = "README.md"
+version = "7.0.0"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0 or MIT" }
+authors = [
+    {name = "Robin Mueller", email = "robin.mueller.m@gmail.com"}
+]
+keywords = ["ccsds", "ecss", "space", "communication", "packet"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: POSIX",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Communications",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering"
+]
+dependencies = [
+    "crcmod~=1.7",
+    "colorama~=0.4.0",
+    "colorlog~=6.6",
+    "cobs~=1.2",
+    "prompt-toolkit~=3.0",
+    "deprecation~=2.1",
+    "pyserial~=3.5",
+    "dle-encoder~=0.2.3",
+    "spacepackets~=0.21.0",
+    # "spacepackets @ git+https://github.com/us-irs/spacepackets-py@main"
+]
+
+[project.optional-dependencies]
+gui = [
+    "PyQt5~=5.15",
+    "PyQt5-stubs~=5.15",
+]
+test = [
+    "pyfakefs~=4.5",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/robamu-org/tmtccmd"
+
+# Auto-Discovery is problematic for some reason, so use custom-discovery
+[tool.setuptools.packages]
+find = {}
+
+[tool.ruff]
+ignore = ["E501"]
+[tool.ruff.extend-per-file-ignores]
+"__init__.py" = ["F401"]

@@ -1,9 +1,19 @@
-"""Definitions for the TMTC commander core
-"""
+"""Configuration helpers and definitions.
+
+Submodules:
+
+* :py:mod:`tmtccmd.config.hook` - Base hook class which should be implemented by user and is used
+  by the framework to retrieve certain configuration from the user.
+* :py:mod:`tmtccmd.config.args` - Various helper methods and classes to create the argument parsers
+  and arguments converts to create the data structures expected by this library from passed CLI
+  arguments."""
+import logging
 from pathlib import Path
 from typing import Optional
 
-from spacepackets.util import ByteFieldEmpty
+from spacepackets.cfdp import CfdpLv
+from spacepackets.util import UnsignedByteField
+from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from tmtccmd.core import TmMode, TcMode
 
 from .args import (
@@ -14,7 +24,6 @@ from .args import (
     DefaultProcedureParams,
     PreArgsParsingWrapper,
     ProcedureParamsWrapper,
-    CfdpParams,
 )
 from .defs import (
     CoreModeList,
@@ -24,18 +33,22 @@ from .defs import (
     default_json_path,
     CoreServiceList,
     ComIfDictT,
+    CfdpParams,
 )
 from .prompt import prompt_op_code, prompt_service
 from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase
-from .hook import TmTcCfgHookBase
-from tmtccmd.tc.procedure import (
+from .hook import HookBase
+from tmtccmd.tmtc.procedure import (
     DefaultProcedureInfo,
     CfdpProcedureInfo,
     TcProcedureType,
     ProcedureWrapper,
 )
-from tmtccmd.cfdp.request import PutRequestCfg, PutRequest
+from tmtccmd.cfdp.request import PutRequest, PutRequestCfgWrapper
 from tmtccmd.core.base import ModeWrapper
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
@@ -50,13 +63,11 @@ def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
         mode_wrapper.tm_mode = TmMode.LISTENER
 
 
-def get_global_hook_obj() -> Optional[TmTcCfgHookBase]:
+def get_global_hook_obj() -> Optional[HookBase]:
     """This function can be used to get the handle to the global hook object.
     :return:
     """
-    from tmtccmd import get_console_logger
 
-    logger = get_console_logger()
     try:
         from tmtccmd.core.globals_manager import get_global
         from tmtccmd.config.definitions import CoreGlobalIds
@@ -65,14 +76,14 @@ def get_global_hook_obj() -> Optional[TmTcCfgHookBase]:
 
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
         if hook_obj_raw is None:
-            logger.error("Hook object is invalid!")
+            _LOGGER.error("Hook object is invalid!")
             return None
-        return cast(TmTcCfgHookBase, hook_obj_raw)
+        return cast(HookBase, hook_obj_raw)
     except ImportError:
-        logger.exception("Issues importing modules to get global hook handle!")
+        _LOGGER.exception("Issues importing modules to get global hook handle!")
         return None
     except AttributeError:
-        logger.exception("Attribute error when trying to get global hook handle!")
+        _LOGGER.exception("Attribute error when trying to get global hook handle!")
         return None
 
 
@@ -81,7 +92,7 @@ class SetupWrapper:
 
     def __init__(
         self,
-        hook_obj: TmTcCfgHookBase,
+        hook_obj: HookBase,
         setup_params: SetupParams,
         proc_param_wrapper: ProcedureParamsWrapper,
         json_cfg_path: Optional[str] = None,
@@ -109,14 +120,7 @@ def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedure
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
     proc_info = CfdpProcedureInfo()
-    put_req_cfg = PutRequestCfg(
-        destination_id=ByteFieldEmpty(),
-        source_file=Path(params.source),
-        dest_file=params.target,
-        closure_requested=params.closure_requested,
-        trans_mode=params.transmission_mode,
-    )
-    proc_info.request_wrapper.base = PutRequest(put_req_cfg)
+    proc_info.request_wrapper.base = PutRequestCfgWrapper(params)
     return proc_info
 
 

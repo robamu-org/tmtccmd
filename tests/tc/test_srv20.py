@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand, PusService
-from tmtccmd.pus.s20_fsfw_params_defs import Parameter, CustomSubservice
-from tmtccmd.tc.pus_20_fsfw_params import (
+from tmtccmd.pus.s20_fsfw_param_defs import Parameter, CustomSubservice
+from tmtccmd.pus.s20_fsfw_param import (
     create_load_param_cmd,
     create_scalar_boolean_parameter,
 )
@@ -14,7 +14,7 @@ class TestSrv20Tc(TestCase):
         self.boolean_param = create_scalar_boolean_parameter(
             object_id=self.obj_id, domain_id=1, unique_id=5, parameter=True
         )
-        self.tc = create_load_param_cmd(app_data=self.boolean_param.pack())
+        self.tc = create_load_param_cmd(self.boolean_param)
 
     def test_basic(self):
         # 12 bytes of generic parameter header + 1 byte parameter itself

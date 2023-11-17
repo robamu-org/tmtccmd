@@ -1,9 +1,9 @@
 import json
+import logging
 import os
 import enum
-from tmtccmd.logging import get_console_logger
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class JsonKeyNames(enum.Enum):
@@ -44,7 +44,7 @@ def check_json_file(json_cfg_path: str) -> bool:
             try:
                 json.load(file)
             except json.decoder.JSONDecodeError:
-                LOGGER.warning(
+                _LOGGER.warning(
                     "JSON decode error, file format might be invalid. Replacing JSON"
                 )
                 file.flush()
@@ -59,13 +59,12 @@ def check_json_file(json_cfg_path: str) -> bool:
 def save_to_json_with_prompt(
     key: str, value: any, name: str, json_cfg_path: str, json_obj: any
 ) -> bool:
-    logger = get_console_logger()
     save_to_json = input(
         f"Do you want to store the {name} to the configuration file? (y/n): "
     )
     if save_to_json.lower() in ["y", "yes"]:
         json_obj[key] = value
-        logger.info(f"The {name} was stored to the JSON file {json_cfg_path}")
-        logger.info("Delete this file or edit it manually to change it")
+        _LOGGER.info(f"The {name} was stored to the JSON file {json_cfg_path}")
+        _LOGGER.info("Delete this file or edit it manually to change it")
         return True
     return False

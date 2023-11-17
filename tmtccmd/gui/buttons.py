@@ -1,9 +1,10 @@
+import logging
 from typing import Callable, Optional
 
 from PyQt6.QtCore import QThreadPool, QRunnable
 from PyQt6.QtWidgets import QPushButton
 
-from tmtccmd import TmTcCfgHookBase, get_console_logger, DefaultProcedureInfo
+from tmtccmd import HookBase, DefaultProcedureInfo
 from tmtccmd.gui.defs import (
     SharedArgs,
     LocalArgs,
@@ -15,7 +16,7 @@ from tmtccmd.gui.defs import (
 from tmtccmd.gui.defs import FrontendState
 from tmtccmd.gui.worker import FrontendWorker
 
-LOGGER = get_console_logger()
+LOGGER = logging.getLogger(__name__)
 
 
 class ButtonArgs:
@@ -33,7 +34,7 @@ class ButtonArgs:
 class ConnectButtonParams:
     def __init__(
         self,
-        hook_obj: TmTcCfgHookBase,
+        hook_obj: HookBase,
         connect_cb: Callable[[], None],
         disconnect_cb: Callable[[], None],
         tm_listener_bttn: Optional[QPushButton],

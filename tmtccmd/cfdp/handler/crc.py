@@ -1,3 +1,4 @@
+import struct
 from pathlib import Path
 from typing import Optional
 
@@ -5,10 +6,27 @@ from crcmod.predefined import PredefinedCrc
 
 from spacepackets.cfdp import ChecksumType, NULL_CHECKSUM_U32
 from tmtccmd.cfdp.filestore import VirtualFilestore
-from tmtccmd.cfdp.handler.defs import ChecksumNotImplemented, SourceFileDoesNotExist
+from tmtccmd.cfdp.exceptions import ChecksumNotImplemented, SourceFileDoesNotExist
 
 
-class Crc32Helper:
+def calc_modular_checksum(file_path: Path) -> bytes:
+    """Calculates the modular checksum for a file in one go."""
+    checksum = 0
+
+    with open(file_path, "rb") as file:
+        while True:
+            data = file.read(4)
+            if not data:
+                break
+            checksum += int.from_bytes(
+                data.ljust(4, b"\0"), byteorder="big", signed=False
+            )
+
+    checksum %= 2**32
+    return struct.pack("!I", checksum)
+
+
+class CrcHelper:
     def __init__(self, init_type: ChecksumType, vfs: VirtualFilestore):
         self.checksum_type = init_type
         self.vfs = vfs
@@ -33,17 +51,21 @@ class Crc32Helper:
         self._verify_checksum()
         return PredefinedCrc(self.checksum_type_to_crcmod_str())
 
-    def calc_for_file(self, file: Path, file_sz: int, segment_len: int) -> bytes:
+    def calc_for_file(
+        self, file_path: Path, file_sz: int, segment_len: int = 4096
+    ) -> bytes:
         if self.checksum_type == ChecksumType.NULL_CHECKSUM:
             return NULL_CHECKSUM_U32
+        elif self.checksum_type == ChecksumType.MODULAR:
+            return calc_modular_checksum(file_path)
         crc_obj = self.generate_crc_calculator()
         if segment_len == 0:
             raise ValueError("Segment length can not be 0")
-        if not file.exists():
-            raise SourceFileDoesNotExist(file)
+        if not file_path.exists():
+            raise SourceFileDoesNotExist(file_path)
         current_offset = 0
         # Calculate the file CRC
-        with open(file, "rb") as of:
+        with open(file_path, "rb") as file:
             while current_offset < file_sz:
                 if current_offset + segment_len > file_sz:
                     read_len = file_sz - current_offset
@@ -51,7 +73,7 @@ class Crc32Helper:
                     read_len = segment_len
                 if read_len > 0:
                     crc_obj.update(
-                        self.vfs.read_from_opened_file(of, current_offset, read_len)
+                        self.vfs.read_from_opened_file(file, current_offset, read_len)
                     )
                 current_offset += read_len
             return crc_obj.digest()

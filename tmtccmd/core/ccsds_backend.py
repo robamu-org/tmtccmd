@@ -1,4 +1,5 @@
 import atexit
+import logging
 import sys
 from collections import deque
 from datetime import timedelta
@@ -7,19 +8,16 @@ from typing import Optional
 from tmtccmd.core.backend_base import BackendBase
 from tmtccmd.core.backend_state import BackendState
 from tmtccmd.core.base import TcMode, TmMode, BackendRequest
-from tmtccmd.tc import TcProcedureBase, ProcedureWrapper
-from tmtccmd.tc.handler import TcHandlerBase, FeedWrapper
+from tmtccmd.tmtc import TcProcedureBase, ProcedureWrapper
+from tmtccmd.tmtc.handler import TcHandlerBase, FeedWrapper
 from tmtccmd.util.exit import keyboard_interrupt_handler
-from tmtccmd.tc.queue import QueueWrapper
-from tmtccmd.logging import get_console_logger
-from tmtccmd.tc.ccsds_seq_sender import (
+from tmtccmd.tmtc.queue import QueueWrapper
+from tmtccmd.tmtc.ccsds_seq_sender import (
     SequentialCcsdsSender,
     SenderMode,
 )
-from tmtccmd.tm.ccsds_tm_listener import CcsdsTmListener
+from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.com import ComInterface
-
-LOGGER = get_console_logger()
 
 
 class NoValidProcedureSet(Exception):
@@ -128,10 +126,11 @@ class CcsdsTmtcBackend(BackendBase):
         self.open_com_if()
 
     def __listener_io_error_handler(self, ctx: str):
-        LOGGER.error(f"Communication Interface could not be {ctx}")
-        LOGGER.info("TM listener will not be started")
+        logger = logging.getLogger(__name__)
+        logger.error(f"Communication Interface could not be {ctx}")
+        logger.info("TM listener will not be started")
         if self.exit_on_com_if_init_failure:
-            LOGGER.error("Closing TMTC commander..")
+            logger.error("Closing TMTC commander..")
             self._com_if.close()
             sys.exit(1)
 
@@ -244,7 +243,7 @@ class CcsdsTmtcBackend(BackendBase):
             queue = self.__prepare_tc_queue()
             if queue is None:
                 return
-            LOGGER.info("Loading TC queue")
+            logging.getLogger(__name__).info("Loading TC queue")
             self._seq_handler.queue_wrapper = queue
             self._seq_handler.resume()
         self._state._sender_res = self._seq_handler.operation(self._com_if)

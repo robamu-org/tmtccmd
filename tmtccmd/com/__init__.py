@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
-"""Generic Communication Interface. Defines the syntax of the communication functions.
-Abstract methods must be implemented by child class (e.g. Ethernet Com IF)
-:author:     R. Mueller
-"""
+"""Communication module. Provides generic abstraction for communication and commonly used
+concrete implementations."""
 from abc import abstractmethod, ABC
-from typing import Optional
+from typing import Any, Optional
 
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc.common import TelemetryListT
 
 
 class ReceptionDecodeError(Exception):
+    """Generic decode error which can also wrap the exception thrown by other libraries."""
+
     def __init__(self, msg: str, custom_exception: Optional[Exception]):
-        """Generic decode error which can also wrap the exception thrown by other libraries."""
         super().__init__(msg)
         self.custom_exception = custom_exception
 
 
 class SendError(Exception):
+    """Generic send error which can also wrap the exception thrown by other libraries."""
+
     def __init__(self, msg: str, custom_exception: Optional[Exception]):
         super().__init__(msg)
         self.custom_exception = custom_exception
@@ -33,13 +34,13 @@ class ComInterface(ABC):
         pass
 
     @abstractmethod
-    def initialize(self, args: any = 0) -> any:
+    def initialize(self, args: Any = 0) -> Any:
         """Perform initializations step which can not be done in constructor or which require
         returnvalues.
         """
 
     @abstractmethod
-    def open(self, args: any = 0):
+    def open(self, args: Any = 0):
         """Opens the communication interface to allow communication.
 
         :return:
@@ -52,7 +53,7 @@ class ComInterface(ABC):
         """
 
     @abstractmethod
-    def close(self, args: any = 0):
+    def close(self, args: Any = 0):
         """Closes the ComIF and releases any held resources (for example a Communication Port).
 
         :return:
@@ -62,17 +63,17 @@ class ComInterface(ABC):
     def send(self, data: bytes):
         """Send raw data.
 
-        raises :py:class:`SendError`: Sending failed for some reason.
+        :raises SendError: Sending failed for some reason.
         """
 
     @abstractmethod
-    def receive(self, parameters: any = 0) -> TelemetryListT:
+    def receive(self, parameters: Any = 0) -> TelemetryListT:
         """Returns a list of received packets. The child class can use a separate thread to poll for
         the packets or use some other mechanism and container like a deque to store packets
         to be returned here.
 
         :param parameters:
-        :raises :py:class:`ReceptionDecodeError`: If the underlying COM interface uses encoding and
+        :raises ReceptionDecodeError: If the underlying COM interface uses encoding and
             decoding and the decoding fails, this exception will be returned.
         :return:
         """
@@ -80,13 +81,13 @@ class ComInterface(ABC):
         return packet_list
 
     @abstractmethod
-    def data_available(self, timeout: float, parameters: any = 0) -> int:
+    def data_available(self, timeout: float, parameters: Any = 0) -> int:
         """Check whether TM packets are available.
 
         :param timeout: Can be used to block on available data if supported by the specific
             communication interface.
         :param parameters: Can be an arbitrary parameter.
-        :raises :py:class:`ReceptionDecodeError`: If the underlying COM interface uses encoding and
+        :raises ReceptionDecodeError: If the underlying COM interface uses encoding and
             decoding when determining the number of available packets, this exception can be
             thrown on decoding errors.
         :return: 0 if no data is available, number of packets otherwise.

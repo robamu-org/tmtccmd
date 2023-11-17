@@ -1,47 +1,62 @@
 import dataclasses
 import os
-import random
-import struct
-import sys
-from crcmod.predefined import mkPredefinedCrcFun
 import tempfile
-from typing import cast, Optional
+from pyfakefs.fake_filesystem_unittest import TestCase
 from pathlib import Path
-from unittest import TestCase
+from typing import Optional, cast, List
 from unittest.mock import MagicMock
 
 from spacepackets.cfdp import (
     ChecksumType,
+    ConditionCode,
+    Direction,
+    DirectiveType,
     PduConfig,
+    PduType,
+    TransactionId,
     TransmissionMode,
     NULL_CHECKSUM_U32,
-    ConditionCode,
+)
+from spacepackets.cfdp.tlv import (
+    MessageToUserTlv,
+    TlvList,
+    OriginatingTransactionId,
+    ProxyPutResponse,
+    ProxyPutResponseParams,
 )
 from spacepackets.cfdp.pdu import (
-    MetadataPdu,
-    MetadataParams,
+    DeliveryCode,
     EofPdu,
     FileDataPdu,
-    FileDeliveryStatus,
+    FileStatus,
+    FinishedPdu,
+    MetadataPdu,
 )
 from spacepackets.cfdp.pdu.file_data import FileDataParams
-from spacepackets.util import ByteFieldU16, ByteFieldU8
+from spacepackets.cfdp.pdu.metadata import MetadataParams
+from spacepackets.util import ByteFieldU8, ByteFieldU16
+
 from tmtccmd.cfdp import (
     IndicationCfg,
     LocalEntityCfg,
-    RemoteEntityCfgTable,
     RemoteEntityCfg,
+    RemoteEntityCfgTable,
 )
-from tmtccmd.cfdp.defs import CfdpStates, TransactionId
+from tmtccmd.cfdp.defs import CfdpState
 from tmtccmd.cfdp.handler.dest import (
     DestHandler,
-    TransactionStep,
     FsmResult,
+    TransactionStep,
 )
-from tmtccmd.cfdp.user import TransactionFinishedParams, FileSegmentRecvdParams
+from tmtccmd.cfdp.user import (
+    FileSegmentRecvdParams,
+    TransactionFinishedParams,
+    MetadataRecvParams,
+)
 
 from .cfdp_fault_handler_mock import FaultHandler
 from .cfdp_user_mock import CfdpUser
+from .common import CheckTimerProviderForTest
 
 
 @dataclasses.dataclass
@@ -51,10 +66,12 @@ class FileInfo:
     crc32: bytes
 
 
-class TestCfdpDestHandler(TestCase):
-    def setUp(self) -> None:
+class TestDestHandlerBase(TestCase):
+    def common_setup(self, trans_mode: TransmissionMode):
+        self.setUpPyfakefs()
         self.indication_cfg = IndicationCfg(True, True, True, True, True, True)
         self.fault_handler = FaultHandler()
+        self.fault_handler.notice_of_cancellation_cb = MagicMock()
         self.entity_id = ByteFieldU16(2)
         self.local_cfg = LocalEntityCfg(
             self.entity_id, self.indication_cfg, self.fault_handler
@@ -64,275 +81,275 @@ class TestCfdpDestHandler(TestCase):
             source_entity_id=self.src_entity_id,
             dest_entity_id=self.entity_id,
             transaction_seq_num=ByteFieldU8(1),
-            trans_mode=TransmissionMode.UNACKNOWLEDGED,
+            trans_mode=trans_mode,
         )
         self.transaction_id = TransactionId(self.src_entity_id, ByteFieldU8(1))
+        self.expected_mode = trans_mode
         self.closure_requested = False
         self.cfdp_user = CfdpUser()
-        self.file_segment_len = 128
+        self.cfdp_user.transaction_indication = MagicMock()
         self.cfdp_user.eof_recv_indication = MagicMock()
         self.cfdp_user.file_segment_recv_indication = MagicMock()
+        self.cfdp_user.metadata_recv_indication = MagicMock()
         self.cfdp_user.transaction_finished_indication = MagicMock()
-        self.src_file_path = Path(f"{tempfile.gettempdir()}/hello.txt")
-        if self.src_file_path.exists():
-            os.remove(self.src_file_path)
-        self.dest_file_path = Path(f"{tempfile.gettempdir()}/hello_dest.txt")
-        if self.dest_file_path.exists():
-            os.remove(self.dest_file_path)
+        self.file_segment_len = 128
         self.remote_cfg_table = RemoteEntityCfgTable()
+        self.timeout_nak_procedure_seconds = 0.05
+        self.timeout_positive_ack_procedure_seconds = 0.05
         self.remote_cfg = RemoteEntityCfg(
             entity_id=self.src_entity_id,
-            check_limit=None,
+            check_limit=2,
             crc_type=ChecksumType.CRC_32,
             closure_requested=False,
             crc_on_transmission=False,
             default_transmission_mode=TransmissionMode.UNACKNOWLEDGED,
             max_file_segment_len=self.file_segment_len,
+            max_packet_len=self.file_segment_len,
+            nak_timer_expiration_limit=2,
+            nak_timer_interval_seconds=self.timeout_nak_procedure_seconds,
+            positive_ack_timer_interval_seconds=self.timeout_positive_ack_procedure_seconds,
+            positive_ack_timer_expiration_limit=2,
         )
         self.remote_cfg_table.add_config(self.remote_cfg)
+        self.timeout_check_limit_handling_ms = 50
         self.dest_handler = DestHandler(
-            self.local_cfg, self.cfdp_user, self.remote_cfg_table
+            self.local_cfg,
+            self.cfdp_user,
+            self.remote_cfg_table,
+            CheckTimerProviderForTest(
+                timeout_dest_entity_ms=self.timeout_check_limit_handling_ms
+            ),
+        )
+        self.src_file_path, self.dest_file_path = Path(
+            f"{tempfile.gettempdir()}/source"
+        ), Path(f"{tempfile.gettempdir()}/dest")
+
+    def _state_checker(
+        self,
+        fsm_res: Optional[FsmResult],
+        num_packets_ready: int,
+        expected_state: CfdpState,
+        expected_transaction: TransactionStep,
+    ):
+        if fsm_res is not None:
+            self.assertEqual(fsm_res.states.state, expected_state)
+            self.assertEqual(fsm_res.states.step, expected_transaction)
+            self.assertEqual(fsm_res.states.num_packets_ready, num_packets_ready)
+            if num_packets_ready > 0:
+                self.assertTrue(fsm_res.states.packets_ready)
+        if expected_state != CfdpState.IDLE:
+            self.assertEqual(self.dest_handler.transmission_mode, self.expected_mode)
+        self.assertEqual(self.dest_handler.states.state, expected_state)
+        self.assertEqual(self.dest_handler.states.step, expected_transaction)
+        self.assertEqual(self.dest_handler.state, expected_state)
+        self.assertEqual(self.dest_handler.step, expected_transaction)
+        self.assertEqual(self.dest_handler.num_packets_ready, num_packets_ready)
+
+    def _generic_regular_transfer_init(
+        self,
+        file_size: int,
+        expected_msgs_to_user: Optional[List[MessageToUserTlv]] = None,
+    ):
+        fsm_res = self._generic_transfer_init(
+            file_size, 0, CfdpState.IDLE, TransactionStep.IDLE
+        )
+        self._state_checker(
+            fsm_res, 0, CfdpState.BUSY, TransactionStep.RECEIVING_FILE_DATA
+        )
+        self.cfdp_user.metadata_recv_indication.assert_called_once()
+        self.cfdp_user.metadata_recv_indication.assert_called_with(
+            MetadataRecvParams(
+                self.transaction_id,
+                self.src_pdu_conf.source_entity_id,
+                file_size,
+                self.src_file_path.as_posix(),
+                self.dest_file_path.as_posix(),
+                expected_msgs_to_user,
+            ),
         )
 
-    def test_empty_file_reception(self):
+    def _generic_transfer_init(
+        self,
+        file_size: int,
+        expected_init_packets: int,
+        expected_init_state: CfdpState,
+        expected_init_step: TransactionStep,
+        expected_originating_id: Optional[TransactionId] = None,
+    ) -> FsmResult:
+        checksum_type = ChecksumType.NULL_CHECKSUM
+        if file_size > 0:
+            checksum_type = ChecksumType.CRC_32
         metadata_params = MetadataParams(
-            checksum_type=ChecksumType.NULL_CHECKSUM,
-            closure_requested=False,
+            checksum_type=checksum_type,
+            closure_requested=self.closure_requested,
             source_file_name=self.src_file_path.as_posix(),
             dest_file_name=self.dest_file_path.as_posix(),
-            file_size=0,
+            file_size=file_size,
         )
         file_transfer_init = MetadataPdu(
             params=metadata_params, pdu_conf=self.src_pdu_conf
         )
-        self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
-        self.dest_handler.pass_packet(file_transfer_init)
-        fsm_res = self.dest_handler.state_machine()
-        self.assertFalse(fsm_res.states.packet_ready)
-        self.assertEqual(
-            self.dest_handler.states.transaction, TransactionStep.RECEIVING_FILE_DATA
+        self._state_checker(
+            None, expected_init_packets, expected_init_state, expected_init_step
         )
-        eof_pdu = EofPdu(
-            file_size=0, file_checksum=NULL_CHECKSUM_U32, pdu_conf=self.src_pdu_conf
-        )
-        self.dest_handler.pass_packet(eof_pdu)
+        self.dest_handler.insert_packet(file_transfer_init)
         fsm_res = self.dest_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
-        self._check_eof_recv_indication(fsm_res)
-        self._check_finished_recv_indication_success(fsm_res)
-        self.assertTrue(self.dest_file_path.exists())
-        self.assertEqual(self.dest_file_path.stat().st_size, 0)
+        return fsm_res
 
-    def test_small_file_reception(self):
-        data = "Hello World\n".encode()
-        with open(self.src_file_path, "wb") as of:
-            of.write(data)
-        crc32_func = mkPredefinedCrcFun("crc32")
-        crc32 = struct.pack("!I", crc32_func(data))
-        file_size = self.src_file_path.stat().st_size
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumType.CRC_32,
-            file_size=file_size,
-            file_path=self.src_file_path.as_posix(),
-        )
-        with open(self.src_file_path, "rb") as rf:
-            read_data = rf.read()
-        fd_params = FileDataParams(file_data=read_data, offset=0)
+    def _insert_file_segment(
+        self,
+        segment: bytes,
+        offset: int,
+        expected_packets: int = 0,
+        expected_step: TransactionStep = TransactionStep.RECEIVING_FILE_DATA,
+        check_indication: bool = True,
+    ) -> FsmResult:
+        fd_params = FileDataParams(file_data=segment, offset=offset)
         file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
+        self.dest_handler.insert_packet(file_data_pdu)
         fsm_res = self.dest_handler.state_machine()
+        if (
+            self.indication_cfg.file_segment_recvd_indication_required
+            and check_indication
+        ):
+            self.cfdp_user.file_segment_recv_indication.assert_called_once()
+            self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 1)
+            seg_recv_params = cast(
+                FileSegmentRecvdParams,
+                self.cfdp_user.file_segment_recv_indication.call_args.args[0],
+            )
+            self.assertEqual(seg_recv_params.transaction_id, self.transaction_id)
+            self.cfdp_user.file_segment_recv_indication.reset_mock()
         self._state_checker(
-            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
+            fsm_res,
+            expected_packets,
+            CfdpState.BUSY,
+            expected_step,
         )
+        return fsm_res
+
+    def _generic_insert_eof_pdu(self, file_size: int, checksum: bytes) -> FsmResult:
         eof_pdu = EofPdu(
-            file_size=file_size,
-            file_checksum=crc32,
-            pdu_conf=self.src_pdu_conf,
+            file_size=file_size, file_checksum=checksum, pdu_conf=self.src_pdu_conf
         )
-        self.dest_handler.pass_packet(eof_pdu)
+        self.dest_handler.insert_packet(eof_pdu)
         fsm_res = self.dest_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
-        self._check_eof_recv_indication(fsm_res)
-        self._check_finished_recv_indication_success(fsm_res)
+        if self.expected_mode == TransmissionMode.UNACKNOWLEDGED:
+            if self.closure_requested:
+                self._state_checker(
+                    fsm_res,
+                    1,
+                    CfdpState.BUSY,
+                    TransactionStep.SENDING_FINISHED_PDU,
+                )
+            else:
+                self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+        return fsm_res
 
-    def test_larger_file_reception(self):
-        # This tests generates two file data PDUs, but the second one does not have a
-        # full segment length
-        file_info = self.random_data_two_file_segments()
-        self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumType.CRC_32,
-            file_size=file_info.file_size,
-            file_path=self.src_file_path.as_posix(),
-        )
-        fsm_res = self.pass_file_segment(
-            file_info.rand_data[0 : self.file_segment_len], 0
-        )
-        self._state_checker(
-            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
-        )
-        self.cfdp_user.file_segment_recv_indication.assert_called()
-        self.assertEqual(self.cfdp_user.file_segment_recv_indication.call_count, 1)
-        seg_recv_params = cast(
-            FileSegmentRecvdParams,
-            self.cfdp_user.file_segment_recv_indication.call_args.args[0],
-        )
-        self.assertEqual(seg_recv_params.transaction_id, self.transaction_id)
-        fd_params = FileDataParams(
-            file_data=file_info.rand_data[self.file_segment_len :],
-            offset=self.file_segment_len,
-        )
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
-        )
-        eof_pdu = EofPdu(
-            file_size=file_info.file_size,
-            file_checksum=file_info.crc32,
-            pdu_conf=self.src_pdu_conf,
-        )
-        self.dest_handler.pass_packet(eof_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
-        self._check_eof_recv_indication(fsm_res)
-        self._check_finished_recv_indication_success(fsm_res)
-
-    def random_data_two_file_segments(self):
-        if sys.version_info >= (3, 9):
-            rand_data = random.randbytes(round(self.file_segment_len * 1.3))
-        else:
-            rand_data = os.urandom(round(self.file_segment_len * 1.3))
-        file_size = len(rand_data)
-        crc32_func = mkPredefinedCrcFun("crc32")
-        crc32 = struct.pack("!I", crc32_func(rand_data))
-        return FileInfo(file_size=file_size, crc32=crc32, rand_data=rand_data)
-
-    def test_file_is_overwritten(self):
-        with open(self.dest_file_path, "w") as of:
-            of.write("This file will be truncated")
-        self.test_small_file_reception()
-
-    def test_file_data_pdu_before_metadata_is_discarded(self):
-        file_info = self.random_data_two_file_segments()
-        # Pass file data PDU first. Will be discarded
-        fsm_res = self.pass_file_segment(
-            file_info.rand_data[0 : self.file_segment_len], 0
-        )
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumType.CRC_32,
-            file_size=file_info.file_size,
-            file_path=self.src_file_path.as_posix(),
-        )
-        fsm_res = self.pass_file_segment(
-            segment=file_info.rand_data[self.file_segment_len :],
-            offset=self.file_segment_len,
-        )
-        self._state_checker(
-            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
-        )
-        eof_pdu = EofPdu(
-            file_size=file_info.file_size,
-            file_checksum=file_info.crc32,
-            pdu_conf=self.src_pdu_conf,
-        )
-        self.dest_handler.pass_packet(eof_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self.cfdp_user.transaction_finished_indication.assert_called_once()
-        finished_args = cast(
-            TransactionFinishedParams,
-            self.cfdp_user.transaction_finished_indication.call_args.args[0],
-        )
-        # At least one segment was stored
-        self.assertEqual(finished_args.file_status, FileDeliveryStatus.FILE_RETAINED)
-        self.assertEqual(
-            finished_args.condition_code, ConditionCode.FILE_CHECKSUM_FAILURE
-        )
-        self._state_checker(fsm_res, CfdpStates.IDLE, TransactionStep.IDLE)
-
-    def test_permission_error(self):
-        with open(self.src_file_path, "w") as of:
-            of.write("Hello World\n")
-        self.src_file_path.chmod(0o444)
-        # TODO: This will cause permission errors, but the error handling for this has not been
-        #       implemented properly
-        """
-        file_size = src_file.stat().st_size
-        self._source_simulator_transfer_init_with_metadata(
-            checksum=ChecksumTypes.CRC_32,
-            file_size=file_size,
-            file_path=src_file.as_posix(),
-        )
-        with open(src_file, "rb") as rf:
-            read_data = rf.read()
-        fd_params = FileDataParams(file_data=read_data, offset=0)
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
-        fsm_res = self.dest_handler.state_machine()
-        self._state_checker(
-            fsm_res, CfdpStates.BUSY_CLASS_1_NACKED, TransactionStep.RECEIVING_FILE_DATA
-        )
-        """
-        self.src_file_path.chmod(0o777)
-
-    def _check_eof_recv_indication(self, fsm_res: FsmResult):
+    def _generic_eof_recv_indication_check(self, fsm_res: FsmResult):
         self.cfdp_user.eof_recv_indication.assert_called_once()
         self.assertEqual(
             self.cfdp_user.eof_recv_indication.call_args.args[0], self.transaction_id
         )
         self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
 
-    def _check_finished_recv_indication_success(self, fsm_res: FsmResult):
+    def _generic_no_error_finished_pdu_check(
+        self,
+        fsm_res: FsmResult,
+        expected_step: TransactionStep = TransactionStep.SENDING_FINISHED_PDU,
+        expected_file_status: FileStatus = FileStatus.FILE_RETAINED,
+    ) -> FinishedPdu:
+        self._state_checker(fsm_res, 1, CfdpState.BUSY, expected_step)
+        self.assertTrue(fsm_res.states.packets_ready)
+        next_pdu = self.dest_handler.get_next_packet()
+        assert next_pdu is not None
+        self.assertEqual(next_pdu.pdu_type, PduType.FILE_DIRECTIVE)
+        self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.FINISHED_PDU)
+
+        finished_pdu = next_pdu.to_finished_pdu()
+        self.assertEqual(finished_pdu.condition_code, ConditionCode.NO_ERROR)
+        self.assertEqual(finished_pdu.file_status, expected_file_status)
+        self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
+        self.assertEqual(finished_pdu.direction, Direction.TOWARDS_SENDER)
+        self.assertIsNone(finished_pdu.fault_location)
+        self.assertEqual(len(finished_pdu.file_store_responses), 0)
+        return finished_pdu
+
+    def _generic_verify_transfer_completion(
+        self,
+        fsm_res: FsmResult,
+        expected_file_data: Optional[bytes],
+        expected_file_status: FileStatus = FileStatus.FILE_RETAINED,
+    ):
+        self._generic_transfer_finished_indication_success_check(
+            fsm_res, expected_file_status
+        )
+        if expected_file_data is not None:
+            self.assertTrue(self.dest_file_path.exists())
+            self.assertEqual(
+                self.dest_file_path.stat().st_size, len(expected_file_data)
+            )
+            with open(self.dest_file_path, "rb") as file:
+                self.assertEqual(expected_file_data, file.read())
+        fsm_res = self.dest_handler.state_machine()
+        if self.expected_mode == TransmissionMode.UNACKNOWLEDGED:
+            self._state_checker(fsm_res, 0, CfdpState.IDLE, TransactionStep.IDLE)
+        else:
+            self._state_checker(
+                fsm_res, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_FINISHED_ACK
+            )
+
+    def _generic_transfer_finished_indication_success_check(
+        self,
+        fsm_res: FsmResult,
+        expected_file_status: FileStatus = FileStatus.FILE_RETAINED,
+    ):
+        self.cfdp_user.transaction_finished_indication.assert_called_once()
         finished_params = cast(
             TransactionFinishedParams,
             self.cfdp_user.transaction_finished_indication.call_args.args[0],
         )
         self.assertEqual(finished_params.transaction_id, self.transaction_id)
         self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
-        self.assertEqual(finished_params.condition_code, ConditionCode.NO_ERROR)
+        self.assertEqual(
+            finished_params.finished_params.condition_code, ConditionCode.NO_ERROR
+        )
+        self.assertEqual(
+            finished_params.finished_params.delivery_code, DeliveryCode.DATA_COMPLETE
+        )
+        self.assertEqual(
+            finished_params.finished_params.file_status, expected_file_status
+        )
 
-    def pass_file_segment(self, segment: bytes, offset) -> FsmResult:
-        fd_params = FileDataParams(file_data=segment, offset=offset)
-        file_data_pdu = FileDataPdu(params=fd_params, pdu_conf=self.src_pdu_conf)
-        self.dest_handler.pass_packet(file_data_pdu)
-        return self.dest_handler.state_machine()
+    def _generate_put_response_opts(self) -> TlvList:
+        return [
+            OriginatingTransactionId(
+                TransactionId(ByteFieldU16(1), ByteFieldU16(2))
+            ).to_generic_msg_to_user_tlv(),
+            ProxyPutResponse(
+                ProxyPutResponseParams(
+                    ConditionCode.NO_ERROR,
+                    DeliveryCode.DATA_COMPLETE,
+                    FileStatus.FILE_RETAINED,
+                )
+            ).to_generic_msg_to_user_tlv(),
+        ]
 
-    def _state_checker(
-        self,
-        fsm_res: Optional[FsmResult],
-        expected_state: CfdpStates,
-        expected_transaction: TransactionStep,
-    ):
-        if fsm_res is not None:
-            self.assertEqual(fsm_res.states.state, expected_state)
-            self.assertEqual(fsm_res.states.transaction, expected_transaction)
-        self.assertEqual(self.dest_handler.states.state, expected_state)
-        self.assertEqual(self.dest_handler.states.transaction, expected_transaction)
-
-    def _source_simulator_transfer_init_with_metadata(
-        self, checksum: ChecksumType, file_path: str, file_size: int
-    ):
-        """A file transfer on the receiving side is always initiated by sending a metadata PDU.
-        This function simulates a CFDP source entity which initiates a file transfer by sending
-        this PDU.
-        """
+    def _generate_metadata_only_metadata(
+        self, options: Optional[TlvList]
+    ) -> MetadataPdu:
         metadata_params = MetadataParams(
-            checksum_type=checksum,
+            checksum_type=NULL_CHECKSUM_U32,
             closure_requested=self.closure_requested,
-            source_file_name=file_path,
-            dest_file_name=self.dest_file_path.as_posix(),
-            file_size=file_size,
+            source_file_name=None,
+            dest_file_name=None,
+            file_size=0,
         )
-        file_transfer_init = MetadataPdu(
-            params=metadata_params, pdu_conf=self.src_pdu_conf
+        return MetadataPdu(
+            params=metadata_params, pdu_conf=self.src_pdu_conf, options=options
         )
-        self._state_checker(None, CfdpStates.IDLE, TransactionStep.IDLE)
-        self.dest_handler.pass_packet(file_transfer_init)
 
     def tearDown(self) -> None:
-        # self.dest_handler.finish()
         if self.dest_file_path.exists():
             os.remove(self.dest_file_path)
         if self.src_file_path.exists():

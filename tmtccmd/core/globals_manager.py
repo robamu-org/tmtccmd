@@ -1,5 +1,10 @@
 from threading import Lock
 from typing import Optional
+import warnings
+
+warnings.warn(
+    "the globals_manager module is deprecated", DeprecationWarning, stacklevel=2
+)
 
 __GLOBALS_DICT = dict()
 __LOCK_TIMEOUT = 50

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import logging
 import socket
 import struct
 import enum
@@ -7,11 +8,8 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from tmtccmd.util.json import check_json_file, JsonKeyNames
-from tmtccmd.logging import get_console_logger
 
-LOGGER = get_console_logger()
-
-
+_LOGGER = logging.getLogger(__name__)
 DEFAULT_MAX_RECV_SIZE = 1500
 
 
@@ -107,14 +105,14 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAdd
                 json_dict[json_key_port] = addr.port
                 file.seek(0)
                 json.dump(json_dict, file, indent=4)
-            LOGGER.info(
+            _LOGGER.info(
                 f"{info_string} was stored to the JSON file config/tmtcc_config.json."
             )
-            LOGGER.info(
+            _LOGGER.info(
                 "Delete this file or edit it manually to change the used addresses."
             )
         else:
-            LOGGER.info(f"{info_string} configuration was not stored")
+            _LOGGER.info(f"{info_string} configuration was not stored")
     return addr
 
 
@@ -138,17 +136,17 @@ def prompt_ip_address(type_str: str) -> EthAddr:
             try:
                 socket.inet_aton(str(ip_address))
             except socket.error:
-                LOGGER.warning("Invalid IP address format!")
+                _LOGGER.warning("Invalid IP address format!")
                 continue
 
         port = input(f"Please enter {type_str} port: ")
         addr = EthAddr(ip_address, int(port))
 
-        LOGGER.info(f"Specified {type_str} IP address: {ip_address}")
-        LOGGER.info(f"Specified {type_str} port: {port}")
+        _LOGGER.info(f"Specified {type_str} IP address: {ip_address}")
+        _LOGGER.info(f"Specified {type_str} port: {port}")
 
         confirm = input("Please confirm selection ([Y]/n): ")
-        if not confirm.lower() in ["y", "yes", 1, ""]:
+        if confirm.lower() not in ["y", "yes", 1, ""]:
             continue
         break
     return addr
@@ -198,13 +196,13 @@ def prompt_recv_buffer_len(tcpip_type: TcpIpType) -> int:
         if not recv_max_size:
             return DEFAULT_MAX_RECV_SIZE
         if not recv_max_size.isdigit():
-            LOGGER.warning("Specified size is not a number.")
+            _LOGGER.warning("Specified size is not a number.")
             continue
         else:
             try:
                 recv_max_size = int(recv_max_size)
             except ValueError:
-                LOGGER.warning("Specified input invalid")
+                _LOGGER.warning("Specified input invalid")
                 continue
             break
     return recv_max_size

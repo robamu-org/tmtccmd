@@ -10,27 +10,37 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath(".."))
-from tmtccmd import __version__
+from tmtccmd.version import get_version
 
 # -- Project information -----------------------------------------------------
 
 project = "tmtccmd"
-copyright = "2021, Robin Mueller"
+copyright = "2021-2023, Robin Mueller"
 author = "Robin Mueller"
 
 # The full version, including alpha/beta/rc tags
-version = release = __version__
+version = release = get_version()
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx", "sphinx_rtd_theme"]
+extensions = [
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
+    "sphinx_rtd_theme",
+]
+
+# Disable the doctests of the full package because those would require the explicit specification
+# of imports. The doctests inside the source code are covered by pytest, using the --doctest-modules
+# configuration option.
+doctest_test_doctest_blocks = ""
+doctest_global_setup = """
+import sys
+"""
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -47,7 +57,11 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # for source files.
 exclude_trees = ["_build"]
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "serial": ("https://pyserial.readthedocs.io/en/latest/", None),
+    "spacepackets": ("https://spacepackets.readthedocs.io/en/latest/", None),
+}
 
 # -- Options for HTML output -------------------------------------------------
 

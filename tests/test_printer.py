@@ -11,7 +11,7 @@ from spacepackets.ecss.pus_1_verification import (
 )
 
 from tmtccmd.pus.s17_test import create_service_17_ping_command
-from tmtccmd.logging import get_console_logger, LOG_DIR
+from tmtccmd.logging import LOG_DIR
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
     RawTmtcRotatingLogWrapper,
@@ -27,7 +27,6 @@ class TestPrintersLoggers(TestCase):
         self.regular_file_name = Path(
             RegularTmtcLogWrapper.get_current_tmtc_file_name()
         )
-        self.logger = get_console_logger()
 
     def test_pus_loggers(self):
         regular_tmtc_logger = RegularTmtcLogWrapper(self.regular_file_name)

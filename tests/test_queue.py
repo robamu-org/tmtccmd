@@ -6,12 +6,12 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd import DefaultProcedureInfo
-from tmtccmd.tc import WaitEntry, QueueEntryHelper
+from tmtccmd.tmtc import WaitEntry, QueueEntryHelper
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
-from tmtccmd.tc import LogQueueEntry, RawTcEntry  # noqa: F401
-from tmtccmd.tc.queue import QueueWrapper, DefaultPusQueueHelper
+from tmtccmd.tmtc import LogQueueEntry, RawTcEntry  # noqa: F401
+from tmtccmd.tmtc.queue import QueueWrapper, DefaultPusQueueHelper
 from tmtccmd.util import ProvidesSeqCount
 
 

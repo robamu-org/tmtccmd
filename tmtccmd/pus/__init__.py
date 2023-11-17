@@ -1,7 +1,13 @@
+"""This module contains PUS data structures and helpers common for both PUS telemetry and
+telecommands.
+
+Content:
+
+* :py:class:`tmtccmd.pus.VerificationWrapper` helper class
+"""
 from enum import IntEnum
 from typing import Optional
 
-from .s11_tc_sched import Subservice as Pus11Subservices
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import RequestId
 import spacepackets.ecss.pus_1_verification as pus_1
@@ -16,7 +22,7 @@ import logging
 from tmtccmd.util.conf_util import AnsiColors
 
 
-class CustomPusService(IntEnum):
+class CustomFsfwPusService(IntEnum):
     SERVICE_200_MODE = 200
 
 
@@ -49,7 +55,9 @@ class VerificationWrapper:
         return self.pus_verificator.add_tm(srv_1_tm)
 
     def log_to_console(self, srv_1_tm: pus_1.Service1Tm, res: TmCheckResult):
-        self.log_to_console_from_req_id(srv_1_tm.tc_req_id, res, srv_1_tm.subservice)
+        self.log_to_console_from_req_id(
+            srv_1_tm.tc_req_id, res, pus_1.Subservice(srv_1_tm.subservice)
+        )
 
     def log_to_console_from_req_id(
         self,
@@ -60,7 +68,9 @@ class VerificationWrapper:
         return self.log_progress_to_console_from_status(res.status, req_id, subservice)
 
     def log_to_file(self, srv_1_tm: pus_1.Service1Tm, res: TmCheckResult):
-        self.log_to_file_from_req_id(srv_1_tm.tc_req_id, res, srv_1_tm.subservice)
+        self.log_to_file_from_req_id(
+            srv_1_tm.tc_req_id, res, pus_1.Subservice(srv_1_tm.subservice)
+        )
 
     def log_to_file_from_req_id(
         self,

@@ -1,4 +1,6 @@
 """TCP communication interface"""
+import logging
+import queue
 import socket
 import time
 import enum
@@ -9,12 +11,11 @@ from typing import Optional, Sequence
 
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.com import ComInterface, SendError
-from tmtccmd.tm import TelemetryListT
+from tmtccmd.tmtc import TelemetryListT
 from tmtccmd.com.tcpip_utils import EthAddr
 
-LOGGER = get_console_logger()
+_LOGGER = logging.getLogger(__name__)
 
 TCP_RECV_WIRETAPPING_ENABLED = False
 TCP_SEND_WIRETAPPING_ENABLED = False
@@ -37,7 +38,7 @@ class TcpSpacePacketsComIF(ComInterface):
         space_packet_ids: Sequence[PacketId],
         tm_polling_freqency: float,
         target_address: EthAddr,
-        max_packets_stored: int = 50,
+        max_packets_stored: Optional[int] = None,
     ):
         """Initialize a communication interface to send and receive TMTC via TCP.
 
@@ -61,7 +62,7 @@ class TcpSpacePacketsComIF(ComInterface):
         self.__tcp_conn_thread: Optional[threading.Thread] = threading.Thread(
             target=self.__tcp_tm_client, daemon=True
         )
-        self.__tm_queue = deque()
+        self.__tm_queue = queue.Queue()
         self.__analysis_queue = deque()
         self.tm_packet_list = []
 
@@ -73,7 +74,7 @@ class TcpSpacePacketsComIF(ComInterface):
         try:
             self.close()
         except IOError:
-            LOGGER.warning("Could not close TCP communication interface!")
+            _LOGGER.warning("Could not close TCP communication interface!")
 
     def initialize(self, args: any = None) -> any:
         pass
@@ -83,7 +84,7 @@ class TcpSpacePacketsComIF(ComInterface):
         try:
             self.set_up_socket()
         except IOError as e:
-            LOGGER.exception("Issues setting up the TCP socket")
+            _LOGGER.exception("Issues setting up the TCP socket")
             raise e
         self.set_up_tcp_thread()
         self.__tcp_conn_thread.start()
@@ -99,8 +100,9 @@ class TcpSpacePacketsComIF(ComInterface):
                 self.__tcp_socket.connect(self.target_address.to_tuple)
                 self.connected = True
             except socket.timeout as e:
-                LOGGER.warning(
-                    f"Could not connect to socket with address {self.target_address}: {e}"
+                _LOGGER.warning(
+                    "Could not connect to socket with address"
+                    f" {self.target_address}: {e}"
                 )
             finally:
                 self.__tcp_socket.settimeout(None)
@@ -121,7 +123,7 @@ class TcpSpacePacketsComIF(ComInterface):
                 try:
                     self.__tcp_socket.shutdown(socket.SHUT_RDWR)
                 except OSError:
-                    LOGGER.warning(
+                    _LOGGER.warning(
                         "TCP socket endpoint was already closed or not connected"
                     )
                 self.__tcp_socket.close()
@@ -151,8 +153,8 @@ class TcpSpacePacketsComIF(ComInterface):
         return tm_packet_list
 
     def __tm_queue_to_packet_list(self):
-        while self.__tm_queue:
-            self.__analysis_queue.appendleft(self.__tm_queue.pop())
+        while self.__tm_queue.qsize() > 0:
+            self.__analysis_queue.append(self.__tm_queue.get())
         # TCP is stream based, so there might be broken packets or multiple packets in one recv
         # call. We parse the space packets contained in the stream here
         if self.com_type == TcpCommunicationType.SPACE_PACKETS:
@@ -164,7 +166,7 @@ class TcpSpacePacketsComIF(ComInterface):
             )
         else:
             while self.__analysis_queue:
-                self.tm_packet_list.append(self.__analysis_queue.pop())
+                self.tm_packet_list.append(self.__analysis_queue.popleft())
 
     def __tcp_tm_client(self):
         while True and not self.__tm_thread_kill_signal.is_set():
@@ -172,33 +174,38 @@ class TcpSpacePacketsComIF(ComInterface):
                 try:
                     self.__receive_tm_packets()
                 except ConnectionRefusedError:
-                    LOGGER.warning("TCP connection attempt failed..")
+                    _LOGGER.warning("TCP connection attempt failed..")
             time.sleep(self.tm_polling_frequency)
 
     def __receive_tm_packets(self):
         try:
-            ready = select.select([self.__tcp_socket], [], [], 0)
-            if ready[0]:
+            while True:
+                ready = select.select([self.__tcp_socket], [], [], 0)
+                if not ready[0]:
+                    break
                 bytes_recvd = self.__tcp_socket.recv(4096)
                 if bytes_recvd == b"":
                     self.__close_tcp_socket()
-                    LOGGER.info("TCP server has been closed")
+                    _LOGGER.info("TCP server has been closed")
                     return
                 else:
                     self.connected = True
-                if self.__tm_queue.__len__() >= self.max_packets_stored:
-                    LOGGER.warning(
+                if (
+                    self.max_packets_stored is not None
+                    and self.__tm_queue.qsize() >= self.max_packets_stored
+                ):
+                    _LOGGER.warning(
                         "Number of packets in TCP queue too large. "
                         "Overwriting old packets.."
                     )
-                    self.__tm_queue.pop()
+                    self.__tm_queue.get()
                     # TODO: If segments are received but the receiver is unable to parse packets
                     #       properly, it might make sense to have a timeout which then also
                     #       logs that there might be an issue reading packets
-                self.__tm_queue.appendleft(bytes(bytes_recvd))
+                self.__tm_queue.put(bytes(bytes_recvd))
         except ConnectionResetError:
             self.__close_tcp_socket()
-            LOGGER.exception("ConnectionResetError. TCP server might not be up")
+            _LOGGER.exception("ConnectionResetError. TCP server might not be up")
 
     def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
         self.__tm_queue_to_packet_list()

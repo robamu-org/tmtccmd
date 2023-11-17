@@ -27,8 +27,15 @@ via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 Features
 =========
 
+- Generic communication interface abstraction in form of the :py:class:`tmtccmd.com.ComInterface`.
+  This abstraction could also be used without the other components of the library if the goal is
+  to separate the packet logic from the communication interface. The :ref:`com` chapter contains a
+  more information and examples.
 - Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
   This library uses the `spacepackets`_ library for most packet implementations.
+- High level CFDP components which allow to build `CFDP standard conformant`_ CFDP handlers.
+  Currently only supports unacknowledged mode. The :ref:`cfdp` chapter contains more information
+  and a link to an example application.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
@@ -42,13 +49,16 @@ Features
 This framework also has a communication interface abstraction which allows to exchange TMTC through
 different channels. The framework currently supports the following communication interfaces:
 
-1. TCP/IP with the :py:class:`tmtccmd.com_if.udp.UdpComIF` and :py:class:`tmtccmd.com_if.tcp.TcpComIF`.
-2. Serial Communication with the :py:class:`tmtccmd.com_if.serial.SerialComIF` using fixed frames
-   or a simple ASCII based transport layer
-3. QEMU, using a virtual serial interface
+1. TCP/IP with the :py:class:`tmtccmd.com.udp.UdpComIF` and :py:class:`tmtccmd.com.tcp.TcpSpacePacketsComIF`.
+2. Serial Communication with `COBS <https://pypi.org/project/cobs/>`_ encoded packets by using the
+   :py:class:`tmtccmd.com.serial_cobs.SerialCobsComIF`.
+3. The `DLE ASCII based transport layer <https://pypi.org/project/dle-encoder/>`_ by using the
+   :py:class:`tmtccmd.com.serial_dle.SerialDleComIF`.
+4. QEMU, using a virtual serial interface.
 
 It is also possible to supply custom interfaces.
 
 .. _`Packet Utilisation Standard (PUS)`: https://ecss.nl/standard/ecss-e-st-70-41c-space-engineering-telemetry-and-telecommand-packet-utilization-15-april-2016/
 .. _`CCSDS Space Packets`: https://public.ccsds.org/Pubs/133x0b2e1.pdf
 .. _`spacepackets`: https://github.com/us-irs/py-spacepackets
+.. _`CFDP standard conformant`: https://public.ccsds.org/Pubs/727x0b5.pdf

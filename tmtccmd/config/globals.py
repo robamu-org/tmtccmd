@@ -1,13 +1,14 @@
 import collections.abc
 import enum
+import logging
 import pprint
 
+import deprecation
 from spacepackets.ecss.conf import (
     set_default_tc_apid,
     set_default_tm_apid,
 )
 
-from tmtccmd.logging import get_console_logger
 from tmtccmd.core.globals_manager import update_global, get_global
 from tmtccmd.config.defs import (
     CoreModeList,
@@ -17,9 +18,8 @@ from tmtccmd.config.defs import (
     ComIfDictT,
 )
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
+from tmtccmd.version import get_version
 
-
-LOGGER = get_console_logger()
 DEF_WRAPPER = None
 
 
@@ -64,23 +64,28 @@ class CoreGlobalIds(enum.IntEnum):
     END = 300
 
 
+@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
 def set_json_cfg_path(json_cfg_path: str):
     update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
 
 
+@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
 def get_json_cfg_path() -> str:
     return get_global(CoreGlobalIds.JSON_CFG_PATH)
 
 
+@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
 def set_glob_com_if_dict(custom_com_if_dict: ComIfDictT):
     CORE_COM_IF_DICT.update(custom_com_if_dict)
     update_global(CoreGlobalIds.COM_IF_DICT, CORE_COM_IF_DICT)
 
 
+@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
 def get_glob_com_if_dict() -> ComIfDictT:
     return get_global(CoreGlobalIds.COM_IF_DICT)
 
 
+@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
 def set_default_globals_pre_args_parsing(
     apid: int,
     com_if_id: str = CoreComInterfaces.DUMMY.value,
@@ -115,6 +120,7 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
+@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
 def check_and_set_other_args(args):
     if args.listener is not None:
         update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)
@@ -161,8 +167,8 @@ def check_and_set_core_service_arg(
         service_arg_invalid = True
 
     if service_arg_invalid:
-        LOGGER.warning(
-            f"Passed service argument might be invalid, "
+        logging.getLogger(__name__).warning(
+            "Passed service argument might be invalid, "
             f"setting to {CoreServiceList.SERVICE_17}"
         )
         service_value = CoreServiceList.SERVICE_17

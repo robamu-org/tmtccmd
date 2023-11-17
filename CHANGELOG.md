@@ -5,7 +5,265 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semver.org/).
+
 # [unreleased]
+
+## Removed
+
+- Removed high level CFDP handler and CFDP in CCSDS handler which are not generic enough
+  and do not work in their current form. These handlers might be re-added with a proper
+  implementation which also allow building a CFDP daemon / full CFDP entity more easily.
+
+# [v7.0.0] 2023-11-10
+
+## Added
+
+- The CFDP source and destination handler can now also handle cancel requests.
+- The CFDP source handler can handle acknowleded mode transfers now.
+- New `from_seconds` classmethod for `Countdown` class.
+
+## Changed
+
+- All CFDP exceptions are now exposed via the `tmtccmd.cfdp.exceptions` module.
+- Both CFDP source destination handler now expect a `RemoteEntityCfgTable` for remote configuration
+  setup.
+- CFDP source and dest handler now both have the `entity_id` property to retrieve the local ID.
+- CFDP handler transmission mode and CFDP state are separate from each other now. The
+  transmission mode can be retrieved using a new `transmission_mode` property for both handlers,
+  and the `CfdpState` `BUSY_CLASS_2_ACKED` and `BUSY_CLASS_1_NACKED` variants were merged into a
+  `BUSY` variant.
+- Setting a sequnce of space packet IDs for TCP space packet parsing is now mandatory
+  for the TCP communication interface. This avoids confusing errors during run-time.
+- Removed some global usage for the TCP communication interface
+- The CFDP source and destination handlers can now only handle one packet at a time. This makes
+  reasoning about the logic of those handlers, and subsequently extending and adapting them
+  a lot easier. Multiple packets can still be inserted by calling the `insert_packet` and
+  `state_machine` function consecutively.
+- Moved all `pus_*` modules located inside the `tm` and `tc` module to the new`pus/tm` `pus/tc`
+  submodule.
+- Renamed all `pus_*` modules to `s_*` modules (service)
+- Renamed `funccmd` PUS modules to `action`.
+- Unified `tc` and `tm` module into `tmtc` module. All `tmtccmd.tm` and `tmtccmd.tc` imports
+  needs to be replaced with `tmtccmd.tmtc`.
+- The `CheckLimitProvider` abstraction must now be explicitely passed to the CFDP entity instead
+  of being passed via the remote configuration.
+- `Countdown` class `timeout` property now returns a `timedelta` object to avoid inconsistency
+  of getter and setter property. There is a new `timeout_ms` property to returns the timeout
+  as milliseconds.
+
+## Removed
+
+- Removed `serial_fixed_frame` module and `SerialFixedFrameComIF` class which has been
+  deprecated since v4.0.0a0.
+- `SerialCommunicationType`: Removed `FIXED_FRAME_BASED` variant.
+- Hardcoded AT91 paths in `QEMUComIF`.
+- Removed deprecated TM modules.
+
+## Fixed
+
+- Various fixes for the `QEMUComIF`.
+- Fixed the check timer and check limit mechanism for CFDP. The `RemoteEntityCfg` not only
+  expects a `check_limit` integer field which defaults to 2.
+
+# [v6.0.0] 2023-09-14
+
+- Changed package license from Apache-2.0 to dual Apache-2.0 or MIT.
+- spacepackets version v18.0.0
+
+## Fixed
+
+- Bugfix for destination handler: Clear out file data queue when handling it.
+
+## Changed
+
+- TCP communication interface:
+  - Frame limit is optional now.
+  - Small change to allow handling more than 4096 bytes in one polling cycle.
+- Renamed `args_to_params_tmtc` to `args_to_all_params_tmtc` and `args_to_params_cfdp` to
+  `args_to_all_params_cfdp`
+- `PutRequest` model now stores both destination and source file path as a Python `Path`.
+
+## Added
+
+- Added new `cfdp_args_to_cfdp_params` function which only performs the conversion of CFDP
+  argparse arguments to the internalized `CfdpParams` type.
+- Explicit functions to convert internalized CFDP parameters to a put request:
+  1. `cfdp_req_to_put_req_get_req`
+  2. `cfdp_req_to_put_req_proxy_put_req`
+  3. `cfdp_req_to_put_req_regular`
+- Generic `generic_cfdp_params_to_put_request` conversion function which converts the
+  internalized CFDP parameters to a put request based on heuristics.
+
+# [v6.0.0rc0] 2023-09-04
+
+- Bumped `spacepackets` to v0.18.0rc1
+
+## Added
+
+- The `CfdpParams` config wrapper now has an additional `proxy_op` field.
+- New `cfdp_req_to_put_req_regular` and `cfdp_req_to_put_req_proxy_get_req` API to convert standard
+  `CfdpParams` instances to `PutRequest`s
+- The CFPD source handler is now able to convert PutRequest metadata fields to options. It is also
+  able to request metadata only PDUs now, allowing it to perform proxy operations.
+
+## Changed
+
+- Adapted the FSFW specific Housekeeping service API to make HK requests diagnostic agnostic.
+  The PUS interface has proven to be cumbersome and problematic, so the split between diagnostic
+  and regular HK packets has been removed in newer version of the FSFW. The new API reflects that.
+  The old API is still available by using the `*_with_diag` suffix.
+- The former `PutRequestCfg` dataclass is now named `PutRequest`. The former `PutRequest` class
+  is now named `PutRequestCfgWrapper` and simply wraps a `CfdpParams` dataclass.
+- The CFDP source handler expects the `PutRequest` dataclass instead of a CFDP request wrapper now
+  for the `put_request` API.
+
+## Removed
+
+- The CFDP source handler `start_cfdp_transaction` API was removed. It was only able to process
+  put requests in its current form anyway. The `put_request` method is sufficient for now.
+- Package version is single-sourced using the `importlib.metadata` variant: The `pyproject.toml`
+  now contains the version information, but the informatio can be retrieved at runtime
+  by using the new `version.get_version` API or `importlib.metadata.version("spacepackets")`.
+- `setup.py` which is not required anymore.
+
+# [v5.0.0] 2023-07-13
+
+## Changed
+
+- `add_def_proc_and_cfdp_as_subparsers` returns the subparsers now.
+
+# [v5.0.0rc0] 2023-06-09
+
+`spacepackets` version: v0.17.0
+
+## Changed
+
+- Moved `tmtccmd.util.tmtc_printer` module to `tmtccmd.fsfw.tmtc_printer`. Old module references
+  new module, old module marked deprecated.
+- The `FsfwTmtcPrinter` `get_validity_buffer` function is a `staticmethod` now.
+
+## Fixed
+
+- Bump of `spacepackets`: Bugfix in spacepacket parser which lead to broken packets in the TCP
+  communication interface.
+
+# [v5.0.0a0] 2023-05-14
+
+`spacepackets` version: v0.16.0
+
+## Fixed
+
+- Bumped `spacepackets` to v0.16.0 for important bugfix in PDU header format.
+
+## Added
+
+- Added FSFW parameter service API to dump parameters.
+- Added FSFW parameter service `FsfwParamId` class to uniquely identify a parameter in a
+  FSFW context.
+
+## Changed
+
+- The FSFW parameter service helper class `Parameter` is now a composition of the raw parameter data
+  and the new `FsfwParamId` class.
+- The `create_load_param_cmd` API now expects a `Paramter` instead of raw data.
+
+# [v4.1.3] 2023-06-19
+
+## Fixed
+
+- Dependency specifier for `spacepackets`, dependency specifier for pre v1.0 versions in general.
+
+# [v4.1.2] 2023-03-18
+
+## Fixed
+
+- `logging` usage for GUI.
+
+# [v4.1.1] 2023-02-23
+
+## Changed
+
+- Improvements for documentation: Added `spacepackets` cross-references.
+
+# [v4.1.0] 2023-02-23
+
+## Added
+
+- Added various parameter helpers in the `pus.s20_fsfw_param` module. This includes
+  helper methods to pack signed values (i8, i16 and i32), float/double vectors and matrices
+  parameters.
+
+# [v4.0.0] 2023-02-17
+
+Starting from this version, the project will adhere to [Semantic Versioning](https:://semver.org/).
+spacepackets version: v0.15.0
+
+## Changed
+
+- Renamed `pus.s5_event` and `pus.s5_event_defs` to `pus.s5_fsfw_event` and
+  `pus.s5_fsfw_event_defs` to better reflect this module is FSFW specific.
+
+## Added
+
+- First sat-rs support modules: `pus.s5_satrs_event` and `pus.s5_satrs_event_defs`
+
+## Removed
+
+- `pack_generic_service_5_test_into` removed, not generic enough.
+
+# [v4.0.0rc2] 2023-02-12
+
+## Fixed
+
+- Use custom package discovery in `pyproject.toml` similarly how to discovery
+  was handled in `setup.cfg`. Auto-Discovery was problematic, package is not discovered
+  correctly.
+
+# [v4.0.0rc1] 2023-02-10
+
+`spacepackets` version 0.14.0
+
+## Fixed
+
+- `config.args`: Assigning of the COM interface in the args to setup converters is now done in
+  the `args_to_params_generic` function. Otherwise, this feature does not work for the conversion
+  of CFDP arguments. 
+
+## Changed
+
+- Remove `setup.cfg` and move to `pyproject.toml`. Create new `.flake8` file accordingly.
+
+## Added
+
+- `tc.pus_200_fsfw_mode.create_announce_mode_command` added.
+
+# [v4.0.0rc0] 2023-02-03
+
+- `spacepackets` version 0.14.0rc3
+
+## Changed
+
+### Logging
+
+The usage of the `logging` library now is a lot more pythonic and more
+aligned to the recommended way to use the logger. The `get_console_logger` has become deprecated.
+Users are encouraged to create custom application loggers using `logging.getLogger(__name__)`.
+It is also possible to apply the library log format to an application logger using
+`tmtccmd.logging.add_colorlog_console_logger`. 
+
+- Mark `get_console_logger` as deprecated.
+- New `tmtccmd.init_logger` method to set up library logger.
+- The logging default init function does not set up an error file logger anymore.
+- (breaking) Rename `set_up_colorlog_logger` to `add_colorlog_console_logger`.
+
+## Added
+
+- New `add_error_file_logger` function.
+
+# [v4.0.0a3] 2023-01-31
+
+- `spacepackets` version 0.14.0rc2
 
 ## Added
 
@@ -17,8 +275,44 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
   to help with the deserialization of parameters. The helper classes can be used both
   for TC and TM handling. Create new API set to create the `Parameter` classes for common
   parameter types.
+- `SetupParams` can now already include a COM interface instance.
+- CLI arguments: Added the `--pp` or `--prompt-proc` argument which only has meaning when used
+  together with the listener flag (`-l`). It should cause the main application to prompt for
+  a procedure (but still go to listener mode after the procedure).
 
 ## Changed
+
+### Argument parsing and Core modules
+
+- (breaking): `tmtccmd.config.hook.TmTcCfgHookBase` renamed to `tmtccmd.config.hook.HookBase`.
+- (breaking): The `PostArgsParsingWrapper` constructor now expects a `SetupParams` parameter and
+  caches it.
+  All `set_*` methods now do not expect the `SetupParams` to be passed explicitely anymore.
+- (breaking): The `PreArgsParsingWrapper` now expects a `setup_params` parameter to be passed to the
+  `parse` method. The parameter helper will be cached in the created `PostArgsParsingWrapper`. 
+- `args_to_params_tmtc` now expects an `assign_com_if` method and can assign a COM interface
+  when it is passed. It oftentimes makes sense to determine a valid COM interface
+  (and prompt applicable parameters from the user) before prompting procedure parameters.
+  The new behaviour is the default when using the `PostArgsParsingWrapper`.
+
+### PUS modules
+
+- (breaking): Renamed `tmtccmd.*.*20_params.py` to
+  `tmtccmd.*.*20_fsfw_param.py` to reflect these modules are tailored
+  towards usage with the FSFW.
+- (breaking): Reworked `tmtccmd.tm.pus_20_fsfw_params` by simplifying `Service20FsfwTm`
+  significantly. It only implements `AbstractPusTm` now and is a simple wrapper
+  around `PusTelemetry`, which is exposed as a `pus_tm` member.
+- (breaking): Renamed `tm.pus_5_event` to `tm.pus_5_fsfw_event` to better reflect these modules
+  are tailored towards usage with the FSFW
+- (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
+  is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
+- (breaking): Renamed `tmtccmd.*.*200_fsfw_modes` to `tmtccmd.*.*200_fsfw_mode` and
+  `tmtccmd.*.*20_fsfw_params` to `tmtccmd.*.*20_fsfw_param` for consistency.
+- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
+  deprecate the former `pack_fsfw_load_param_cmd` function.
+
+### Other
 
 - (breaking): `DefaultPusQueueHelper`: `seq_cnt_provider`, `pus_verificator`
   and `default_pus_apid` (formerly `pus_apid`) do not have default values anymore
@@ -32,18 +326,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - (breaking) TCP: The TCP communication interface now expects a generic `Sequence[PacketId]`
   instead of a tuple of raw packet IDs. This makes usage more ergonomic.
 - (possibly breaking): Rename `com_if` module to `com`.
-- `tmtccmd.tc.pus_20_params.py`: Create new `crate_fsfw_load_param_cmd` and
-  deprecate the former `pack_fsfw_load_param_cmd` function.
-- (breaking): Renamed `tmtccmd.tc.pus_20_params.py` to
-  `tmtccmd.tc.pus_20_fsfw_params.py` to reflect these modules are tailored
-  towards usage with the FSFW.
-- (breaking): Reworked `tmtccmd.tm.pus_20_fsfw_params` by simplifying `Service20FsfwTm`
-  significantly. It only implements `AbstractPusTm` now and is a simple wrapper
-  around `PusTelemetry`, which is exposed as a `pus_tm` member.
-- (breaking): Renamed `tm.pus_5_event` to `tm.pus_5_fsfw_event` to better reflect these modules
-  are tailored towards usage with the FSFW
-- (breaking): Simplified `Service5Tm` significantly. It only implements `AbstractPusTm` now and
-  is a more simple wrapper around `PusTelemetry` exposing some FSFW specific functionality.
 - (breaking): `tmtccmd.tc.queue.DefaultPusQueueHelper`: The timestamp length of time tagged
   telecommands needs to be specified explicitely now (no default value of 4).
 
@@ -71,7 +353,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/).
 - TC creation API: Replace `generate_...` API with `create_...` API for consistency
 - (breaking) Renamed `Subservices` to `Subservice`, use singular enum because they are not
   flag enums.
-- (breaking) `pus_200_fsfw_modes`: Rename `Modes` to `Mode`.
+- (breaking) `pus_200_fsfw_mode`: Rename `Modes` to `Mode`.
 - Subservice enumerations: Add missing `TM_...` and `TC_...` prefixes where applicable
 - Use concrete `spacepackets` version 0.14.0rc1
 

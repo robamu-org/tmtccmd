@@ -2,56 +2,114 @@
 API
 ====
 
-Core Submodules
-===============
+Communication Package 
+========================
 
-tmtccmd module
----------------------
-
-.. automodule:: tmtccmd
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. automodule:: tmtccmd.com
+   :noindex:
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
-   api/tmtccmd.core
+   api/com
 
-Configuration Submodules
-=========================
-
-.. toctree::
-   :maxdepth: 4
-
-   api/tmtccmd.config
-   api/tmtccmd.com_if
-
-CCSDS Submodules
+CCSDS Package 
 ===================
 
+This currently also contains the CFDP support.
+
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
-   api/tmtccmd.cfdp
-   api/tmtccmd.cfdp.handler
+   api/cfdp
+   api/cfdp.handler
 
-ECSS Submodules
+ECSS Package 
 =========================
 
+.. automodule:: tmtccmd.pus
+   :noindex:
+
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
-   api/tmtccmd.pus
-   api/tmtccmd.tc
-   api/tmtccmd.tm
+   api/pus
 
-Other Submodules
+Application Package 
 =========================
 
-.. toctree::
-   :maxdepth: 4
+Module
+---------
 
-   api/tmtccmd.util
-   api/tmtccmd.logging
-   api/tmtccmd.fsfw
+.. automodule:: tmtccmd
+   :noindex:
+
+Configuration Package 
+--------------------------
+
+.. automodule:: tmtccmd.config
+   :noindex:
+
+.. toctree::
+   :maxdepth: 3
+
+   api/config
+
+Core Package 
+-----------------
+
+.. automodule:: tmtccmd.core
+   :noindex:
+
+.. toctree::
+   :maxdepth: 3
+
+   api/core
+
+.. automodule:: tmtccmd.tmtc
+   :noindex:
+
+Telemetry Handling Package 
+------------------------------
+
+.. toctree::
+   :maxdepth: 3
+
+   api/tm
+
+
+Telecommand Handling Package 
+--------------------------------
+
+.. toctree::
+   :maxdepth: 3
+
+   api/tc
+
+Miscellaneous Modules 
+=========================
+
+Logging Module 
+-------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/logging
+
+Version Module 
+-------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/version
+
+Other Modules 
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/util
+   api/fsfw

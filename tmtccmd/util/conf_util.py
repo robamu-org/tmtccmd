@@ -1,11 +1,7 @@
 import collections.abc
+import logging
 from typing import Tuple, Union
 from contextlib import contextmanager
-
-from tmtccmd.logging import get_console_logger
-
-
-LOGGER = get_console_logger()
 
 
 def wrapped_prompt(text: str):
@@ -44,10 +40,10 @@ def check_args_in_dict(
         elif isinstance(param, int):
             pass
         else:
-            LOGGER.warning(f"Passed {warning_hint} type invalid.")
+            logging.getLogger(__name__).warning(f"Passed {warning_hint} type invalid.")
             return False, 0
     else:
-        LOGGER.warning(f"No {warning_hint} argument passed.")
+        logging.getLogger(__name__).warning(f"No {warning_hint} argument passed.")
         return False, 0
 
     res_tuple = False, 0

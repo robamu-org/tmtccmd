@@ -22,3 +22,6 @@ venv
 
 # CodeCov
 .coverage
+
+# Rope
+/.ropeproject

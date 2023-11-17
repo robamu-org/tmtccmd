@@ -55,7 +55,11 @@ class TestTcpIf(TestCase):
         while True:
             (data_recv, sender_addr) = conn_sock.recvfrom(4096)
             if len(data_recv) == 0:
-                conn_sock.shutdown(socket.SHUT_RDWR)
+                try:
+                    conn_sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    # Endpoint might already be closed, or no connection to it.
+                    pass
                 conn_sock.close()
                 break
             else:
