@@ -1,8 +1,8 @@
 import logging
 from typing import Callable, Optional
 
-from PyQt5.QtCore import QThreadPool, QRunnable
-from PyQt5.QtWidgets import QPushButton
+from PyQt6.QtCore import QThreadPool, QRunnable
+from PyQt6.QtWidgets import QPushButton
 
 from tmtccmd import HookBase, DefaultProcedureInfo
 from tmtccmd.gui.defs import (

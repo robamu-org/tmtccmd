@@ -14,9 +14,7 @@ TMTC Commander [![Documentation Status](https://readthedocs.org/projects/tmtccmd
 This is a small Python framework targeted towards the testing of remote systems like satellites
 and rovers. It simplifies sending and receiving TMTCs (Telemetry and Telecommands)
 and testing via different communication interfaces. This tool can be
-used either as a command line tool or as a GUI tool. The GUI features require a PyQt5 installation.
-This package also has dedicated support to send and receive ECSS PUS packets or other generic
-CCSDS packets.
+used either as a command line tool or as a GUI tool which requires a PyQt6 installation.
 
 ## Features
 
@@ -34,11 +32,9 @@ CCSDS packets.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
 - One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences
 - Listener mode to only listen to incoming telemetry
-- Basic logger components which can be used to store sent Telecommands and incoming Telemetry
-  in files
-
 - Some components are tailored towards usage with the
-  [Flight Software Framework (FSFW)](https://egit.irs.uni-stuttgart.de/fsfw/fsfw/)
+  [Flight Software Framework (FSFW)](https://absatsw.irs.uni-stuttgart.de/index.html) and the
+  [sat-rs framework](https://absatsw.irs.uni-stuttgart.de/sat-rs.html)
 
 The framework currently supports the following communication interfaces:
 
@@ -50,7 +46,7 @@ The framework currently supports the following communication interfaces:
 
 It is also possible to supply custom interfaces.
 
-## Examples 
+## Examples
 
 The [`examples`](https://github.com/robamu-org/tmtccmd/tree/main/examples) folder contains a simple
 example using a  dummy communication interface. It sends a PUS ping telecommand and then reads the
@@ -80,7 +76,7 @@ To run the tests, install the test requirements first with the following command
 a virtual environment:
 
 ```sh
-pip install .[gui,test]
+pip install .[test]
 ```
 
 All tests are provided in the `src/test` folder and can be run with coverage information
@@ -109,7 +105,7 @@ pip install .[gui]
 ```
 
 You can omit `[gui]` for a CLI only installation. Alternatively you can also install the package
-from PyPI with `pip install -e tmtccmd[gui]`.
+from PyPI with `pip install tmtccmd[gui]`.
 
 ## Documentation
 

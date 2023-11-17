@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Optional
 
-from PyQt5.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
+from PyQt6.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
 
 from tmtccmd.core import TmMode, TcMode, BackendRequest
 from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCodes
