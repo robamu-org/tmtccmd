@@ -161,8 +161,9 @@ class TmButtonWrapper:
     def stop_listener(self):
         LOGGER.info("Stopping TM listener")
         self._next_listener_state = False
-        self.worker.signals.finished.connect(self.button_op_done)
-        self.worker.signals.stop.emit(None)
+        if self.worker is not None:
+            self.worker.signals.finished.connect(self.button_op_done)
+            self.worker.signals.stop.emit(None)
         self.button.setEnabled(False)
 
     def button_op(self):
@@ -202,7 +203,7 @@ class SendButtonWrapper:
             LOGGER.info("Send command button pressed.")
         self.button.setDisabled(True)
         self._args.shared.backend.current_procedure = DefaultProcedureInfo(
-            self._args.state.current_service, self._args.state.current_op_code
+            self._args.state.current_cmd_path
         )
         worker = FrontendWorker(
             LocalArgs(WorkerOperationsCodes.ONE_QUEUE_MODE, None), self._args.shared

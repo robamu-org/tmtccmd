@@ -30,13 +30,13 @@ class DefaultProcedureInfo(TcProcedureBase):
     of commands. Generally, one procedure is mapped to a specific TC queue which is packed
     during run-time"""
 
-    def __init__(self, cmd_path: str):
+    def __init__(self, cmd_path: Optional[str]):
         super().__init__(TcProcedureType.DEFAULT)
         self.cmd_path = cmd_path
 
     @classmethod
     def empty(cls):
-        return cls("/")
+        return cls(None)
 
     def __repr__(self):
         return f"CmdInfo(cmd_path={self.cmd_path!r})"

@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 import enum
 import threading
+from typing import Any
 
 from tmtccmd import CcsdsTmtcBackend
 from tmtccmd.config import CoreComInterfaces
@@ -66,7 +68,7 @@ class ComIfRefCount:
 
 
 class LocalArgs:
-    def __init__(self, op_code: WorkerOperationsCodes, op_code_args: any = None):
+    def __init__(self, op_code: WorkerOperationsCodes, op_code_args: Any = None):
         self.op_code = op_code
         self.op_args = op_code_args
 
@@ -79,11 +81,12 @@ class SharedArgs:
         self.backend = backend
 
 
+@dataclass
 class FrontendState:
-    def __init__(self):
-        self.current_com_if = CoreComInterfaces.UNSPECIFIED.value
-        self.current_service = ""
-        self.current_op_code = ""
-        self.auto_connect_tm_listener = True
-        self.last_com_if = CoreComInterfaces.UNSPECIFIED.value
-        self.current_com_if_key = CoreComInterfaces.UNSPECIFIED.value
+    current_com_if = CoreComInterfaces.UNSPECIFIED.value
+    current_cmd_path = ""
+    auto_connect_tm_listener = True
+    last_com_if = CoreComInterfaces.UNSPECIFIED.value
+    current_com_if_key = CoreComInterfaces.UNSPECIFIED.value
+    print_tm = False
+    print_raw_tm = False

@@ -6,7 +6,7 @@ import sys
 import webbrowser
 from multiprocessing import Process
 from pathlib import Path
-from typing import Union
+from typing import Any, Optional, Tuple
 
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -30,7 +30,6 @@ from PyQt5.QtCore import (
 )
 
 from tmtccmd.core.base import FrontendBase
-from tmtccmd.config.globals import CoreGlobalIds
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
 from tmtccmd.config import HookBase
 from tmtccmd.gui.buttons import (
@@ -42,8 +41,6 @@ from tmtccmd.gui.buttons import (
 )
 from tmtccmd.gui.defs import SharedArgs, CONNECT_BTTN_STYLE, FrontendState
 from tmtccmd.logging import get_console_logger
-from tmtccmd.core.globals_manager import get_global, update_global
-from tmtccmd.com.tcpip_utils import TcpIpConfigIds
 import tmtccmd as mod_root
 
 LOGGER = get_console_logger()
@@ -66,16 +63,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._state = FrontendState()
         self._thread_pool = QThreadPool()
         self.__connected = False
-
-        self.__combo_box_op_codes: Union[None, QComboBox] = None
+        self.__combo_box_op_codes: Optional[QComboBox] = None
         self.logo_path = Path(
             f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png"
         )
 
-    def prepare_start(self, args: any) -> Process:
+    def prepare_start(self, _: Any) -> Process:
         return Process(target=self.start)
 
-    def start(self, qt_app: any):
+    def start(self, qt_app: Any):
         self.__start_ui()
         sys.exit(qt_app.exec())
 
@@ -94,7 +90,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         win.setLayout(grid)
         row = 0
         self.setWindowTitle(self._app_name)
-        self.setWindowIcon(QIcon(self.logo_path.as_posix()))
+        if isinstance(self.logo_path, Path):
+            self.setWindowIcon(QIcon(str(self.logo_path)))
+        else:
+            self.setWindowIcon(QIcon(self.logo_path))
 
         add_pixmap = False
 
@@ -201,7 +200,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         spin_timeout.setMaximum(500.0)
         # https://youtrack.jetbrains.com/issue/PY-22908
         # Ignore those warnings for now.
-        spin_timeout.valueChanged.connect(number_timeout)
+        spin_timeout.valueChanged.connect(self.__number_timeout_changed)
         grid.addWidget(spin_timeout, row, 0, 1, 1)
         row += 1
         return row
@@ -214,7 +213,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __set_up_com_if_section(
         self, conn_bttn_params: ConnectButtonParams, grid: QGridLayout, row: int
-    ) -> (int, ConnectButtonWrapper):
+    ) -> Tuple[int, ConnectButtonWrapper]:
         font = QFont()
         font.setBold(True)
         label = QLabel("Communication Interface")
@@ -267,6 +266,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__tm_button_wrapper.button.setDisabled(True)
 
     def __set_up_service_op_code_section(self, grid: QGridLayout, row: int):
+        """
         grid.addWidget(QLabel("Service: "), row, 0, 1, 2)
         grid.addWidget(QLabel("Operation Code: "), row, 1, 1, 2)
         row += 1
@@ -303,6 +303,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         # TODO: Combo box also needs to be updated if another service is selected
         grid.addWidget(self.__combo_box_op_codes, row, 1, 1, 1)
         row += 1
+        """
         return row
 
     def __set_up_pixmap(self, grid: QGridLayout, row: int) -> int:
@@ -316,7 +317,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
 
         pixmap_scaled = pixmap.scaled(
-            pixmap_width * 0.3, pixmap_height * 0.3, Qt.KeepAspectRatio
+            int(pixmap_width * 0.3), int(pixmap_height * 0.3), Qt.KeepAspectRatio
         )
         label.setPixmap(pixmap_scaled)
         label.setScaledContents(True)
@@ -333,16 +334,9 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         row += 1
         return row
 
-    def __service_index_changed(self, index: int):
-        self._state.current_service = self._service_list[index]
-        self.__update_op_code_combo_box()
-        LOGGER.debug("Service changed")
-
-    def __op_code_index_changed(self, index: int):
-        self._state.current_op_code = self._op_code_list[index]
-        LOGGER.debug("Op Code changed")
-
     def __update_op_code_combo_box(self):
+        assert self.__combo_box_op_codes is not None
+        """
         self.__combo_box_op_codes.clear()
         self._op_code_list = []
         op_code_entry = self._service_op_code_dict.op_code_entry(
@@ -369,21 +363,27 @@ class TmTcFrontend(QMainWindow, FrontendBase):
                     LOGGER.warning(f"Invalid op code entry {op_code_value}, skipping..")
             self._state.current_op_code = self._op_code_list[0]
 
+        """
+
     def __checkbox_log_update(self, state: int):
-        update_global(CoreGlobalIds.PRINT_TO_FILE, state)
+        # TODO: Set up proper database support..
+        # self.print_to_file = state
         LOGGER.debug(["Enabled", "Disabled"][state == 0] + " print to log.")
 
     def __checkbox_console_update(self, state: bool):
-        update_global(CoreGlobalIds.PRINT_TM, state)
+        self._state.print_tm = state
         LOGGER.debug(["enabled", "disabled"][state == 0] + " console print")
 
-    def __checkbox_print_raw_data_update(self, state: int):
-        update_global(CoreGlobalIds.PRINT_RAW_TM, state)
+    def __checkbox_print_raw_data_update(self, state: bool):
+        self._state.print_raw_tm = bool(state)
         LOGGER.debug(["enabled", "disabled"][state == 0] + " printing of raw data")
 
     def __com_if_sel_index_changed(self, index: int):
         self._state.current_com_if = self._com_if_list[index][0]
         LOGGER.debug(f"Communication IF updated: {self._com_if_list[index][1]}")
+
+    def __number_timeout_changed(self, value: float):
+        LOGGER.info("PUS TM timeout changed to: " + str(value))
 
 
 class SingleCommandTable(QTableWidget):
@@ -399,37 +399,3 @@ class SingleCommandTable(QTableWidget):
         self.setItem(0, 0, QTableWidgetItem("17"))
         self.setItem(0, 1, QTableWidgetItem("1"))
         self.setItem(0, 2, QTableWidgetItem("20"))
-
-
-def checkbox_print_hk_data(state: int):
-    update_global(CoreGlobalIds.PRINT_HK, state)
-    LOGGER.info(["enabled", "disabled"][state == 0] + " printing of hk data")
-
-
-def checkbox_short_display_mode(state: int):
-    update_global(CoreGlobalIds.DISPLAY_MODE, state)
-    LOGGER.info(["enabled", "disabled"][state == 0] + " short display mode")
-
-
-def number_timeout(value: float):
-    update_global(CoreGlobalIds.TM_TIMEOUT, value)
-    LOGGER.info("PUS TM timeout changed to: " + str(value))
-
-
-def number_timeout_factor(value: float):
-    update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, value)
-    LOGGER.info("PUS TM timeout factor changed to: " + str(value))
-
-
-def ip_change_client(value):
-    ethernet_config = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_config[TcpIpConfigIds.RECV_ADDRESS] = value
-    update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
-    LOGGER.info("Client IP changed: " + value)
-
-
-def ip_change_board(value):
-    ethernet_config = get_global(CoreGlobalIds.ETHERNET_CONFIG)
-    ethernet_config[TcpIpConfigIds.SEND_ADDRESS] = value
-    update_global(CoreGlobalIds.ETHERNET_CONFIG, ethernet_config)
-    LOGGER.info("Board IP changed: " + value)
