@@ -6,8 +6,7 @@ from pathlib import Path
 from collections import deque
 from dataclasses import dataclass
 from typing import Deque, Optional, Tuple
-
-import deprecation
+from deprecated.sphinx import deprecated
 from spacepackets.cfdp import (
     CrcFlag,
     GenericPduPacket,
@@ -1020,10 +1019,9 @@ class SourceHandler:
             )
         return crc
 
-    @deprecation.deprecated(
-        deprecated_in="6.0.0rc1",
-        current_version=get_version(),
-        details="Use insert_packet instead",
+    @deprecated(
+        version="6.0.0rc1",
+        reason="use insert_packet instead",
     )
     def pass_packet(self, packet: AbstractFileDirectiveBase):
         self.insert_packet(packet)

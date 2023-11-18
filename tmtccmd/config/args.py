@@ -1,32 +1,32 @@
 """Argument parser module."""
 from __future__ import annotations
-import os
-import deprecation
+
 import argparse
 import logging
+import os
 import sys
-from typing import Optional, List, Sequence, Union, Tuple
 from dataclasses import dataclass
+from typing import List, Optional, Sequence, Tuple, Union
 
+from deprecated.sphinx import deprecated
 from prompt_toolkit.shortcuts import CompleteStyle
-
 from spacepackets.cfdp import TransmissionMode
+
+from tmtccmd.com import ComInterface
 from tmtccmd.com.utils import determine_com_if
+from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.tmtc.procedure import TcProcedureType
-from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
-from tmtccmd.com import ComInterface
 from tmtccmd.version import get_version
 
 from .defs import (
-    CoreModeList,
+    CfdpParams,
     CoreComInterfaces,
     CoreModeConverter,
+    CoreModeList,
     DefaultProcedureParams,
-    CfdpParams,
 )
 from .hook import HookBase
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -288,7 +288,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config import CoreModeList, CoreModeConverter
+    from tmtccmd.config import CoreModeConverter, CoreModeList
 
     help_text = (
         "Core Modes. Default:"
@@ -370,10 +370,9 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     )
 
 
-@deprecation.deprecated(
-    deprecated_in="8.0.0",
-    details="use determine_cmd_path instead",
-    current_version=get_version(),
+@deprecated(
+    version="8.0.0",
+    reason="use determine_cmd_path instead",
 )
 def find_service_and_op_code(
     params: SetupParams,

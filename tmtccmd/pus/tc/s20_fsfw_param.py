@@ -1,33 +1,34 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
 from __future__ import annotations
-import struct
 
-from spacepackets.ecss import PusService
-from tmtccmd.version import get_version
-from deprecation import deprecated
+import struct
 from typing import Optional
 
-from spacepackets.ecss.fields import Ptc, PfcUnsigned, PfcReal
+from deprecated.sphinx import deprecated
+from spacepackets.ecss import PusService
+from spacepackets.ecss.fields import PfcReal, PfcUnsigned, Ptc
+from spacepackets.ecss.tc import PusTelecommand
+
 from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
     CustomSubservice,
+    FsfwParamId,
+    Parameter,
+    create_matrix_double_parameter,
+    create_matrix_float_parameter,
     create_scalar_boolean_parameter,
-    create_scalar_u8_parameter,
-    create_scalar_u16_parameter,
-    create_scalar_u32_parameter,
+    create_scalar_double_parameter,
+    create_scalar_float_parameter,
     create_scalar_i8_parameter,
     create_scalar_i16_parameter,
     create_scalar_i32_parameter,
-    create_scalar_float_parameter,
-    create_scalar_double_parameter,
+    create_scalar_u8_parameter,
+    create_scalar_u16_parameter,
+    create_scalar_u32_parameter,
     create_vector_double_parameter,
     create_vector_float_parameter,
-    create_matrix_float_parameter,
-    create_matrix_double_parameter,
-    Parameter,
-    FsfwParamId,
 )
-from spacepackets.ecss.tc import PusTelecommand
+from tmtccmd.version import get_version
 
 
 def create_load_param_cmd(parameter: Parameter) -> PusTelecommand:
@@ -55,18 +56,16 @@ def create_load_param_cmd_from_raw(parameter_raw: bytes) -> PusTelecommand:
 
 
 @deprecated(
-    deprecated_in="4.0.0a3",
-    current_version=get_version(),
-    details="Please use crate_fsfw_load_param_cmd instead",
+    version="4.0.0a3",
+    reason="use crate_fsfw_load_param_cmd instead",
 )
 def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
     return create_load_param_cmd(app_data)
 
 
 @deprecated(
-    deprecated_in="3.1.0",
-    current_version=get_version(),
-    details="Please use create_scalar_boolean_parameter instead",
+    version="3.1.0",
+    reason="use create_scalar_boolean_parameter instead",
 )
 def pack_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
@@ -77,9 +76,8 @@ def pack_boolean_parameter_app_data(
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use create_scalar_boolean_parameter instead",
+    version="4.0.0a2",
+    reason="Please use create_scalar_boolean_parameter instead",
 )
 def pack_scalar_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
@@ -98,9 +96,8 @@ def pack_scalar_boolean_parameter_app_data(
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use create_scalar_u8_parameter instead",
+    version="4.0.0a2",
+    reason="Please use create_scalar_u8_parameter instead",
 )
 def pack_scalar_u8_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: int
@@ -128,9 +125,8 @@ def pack_scalar_u8_parameter_app_data(
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use create_scalar_double_parameter instead",
+    version="4.0.0a2",
+    reason="Please use create_scalar_double_parameter instead",
 )
 def pack_scalar_double_param_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
@@ -150,9 +146,8 @@ def pack_scalar_double_param_app_data(
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use create_scalar_float_parameter instead",
+    version="4.0.0a2",
+    reason="use create_scalar_float_parameter instead",
 )
 def pack_scalar_float_param_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
@@ -172,9 +167,8 @@ def pack_scalar_float_param_app_data(
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use ParamWrapper helper class with pack() instead",
+    version="4.0.0a2",
+    reason="use ParamWrapper helper class with pack() instead",
 )
 def prepare_param_packet_header(
     object_id: bytes,
@@ -202,9 +196,8 @@ def prepare_param_packet_header(
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use ParamWrapper helper class with pack() instead",
+    version="4.0.0a2",
+    reason="use ParamWrapper helper class with pack() instead",
 )
 def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> bytearray:
     data = bytearray(4)
@@ -216,9 +209,8 @@ def pack_type_and_matrix_data(ptc: int, pfc: int, rows: int, columns: int) -> by
 
 
 @deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="Please use ParameterId helper class with pack() instead",
+    version="4.0.0a2",
+    reason="use ParameterId helper class with pack() instead",
 )
 def pack_parameter_id(domain_id: int, unique_id: int, linear_index: int) -> bytearray:
     """Packs the Parameter ID (bytearray with 4 bytes) which is part of the service 20 packets.

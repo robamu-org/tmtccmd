@@ -1,19 +1,18 @@
 import logging
-import deprecation
 
+import prompt_toolkit
+from deprecated.sphinx import deprecated
 from prompt_toolkit.completion import NestedCompleter, WordCompleter
 from prompt_toolkit.shortcuts import CompleteStyle
-import prompt_toolkit
-from tmtccmd.config.tmtc import OpCodeEntry, TmtcDefinitionWrapper, CmdTreeNode
-from tmtccmd.version import get_version
+
+from tmtccmd.config.tmtc import CmdTreeNode, OpCodeEntry, TmtcDefinitionWrapper
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@deprecation.deprecated(
-    details="use prompt_cmd_path instead",
-    deprecated_in="8.0.0",
-    current_version=get_version(),
+@deprecated(
+    reason="use prompt_cmd_path instead",
+    version="8.0.0",
 )
 def prompt_service(
     tmtc_defs: TmtcDefinitionWrapper,

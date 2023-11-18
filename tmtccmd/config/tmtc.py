@@ -4,7 +4,7 @@ import enum
 import os
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from spacepackets.cfdp.pdu.helper import deprecation
+from deprecated.sphinx import deprecated
 
 from tmtccmd.version import get_version
 
@@ -168,10 +168,9 @@ OpCodeNameT = Union[str, List[str]]
 OpCodeInfoT = str
 
 
-@deprecation.deprecated(
-    deprecated_in="8.0.0",
-    details="use the new command definition tree instead",
-    current_version=get_version(),
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
 )
 class OpCodeOptionBase:
     def __init__(self):
@@ -181,10 +180,9 @@ class OpCodeOptionBase:
 OpCodeDict = Dict[str, Tuple[OpCodeInfoT, OpCodeOptionBase]]
 
 
-@deprecation.deprecated(
-    deprecated_in="8.0.0",
-    details="use the new command definition tree instead",
-    current_version=get_version(),
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
 )
 class OpCodeEntry:
     def __init__(self):
@@ -246,10 +244,9 @@ ServiceDictValueT = Optional[Tuple[ServiceInfoT, OpCodeEntry]]
 ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 
 
-@deprecation.deprecated(
-    deprecated_in="8.0.0",
-    details="use the new command definition tree instead",
-    current_version=get_version(),
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
 )
 class TmtcDefinitionWrapper:
     def __init__(self, init_defs: Optional[ServiceOpCodeDictT] = None):
@@ -282,10 +279,9 @@ class TmtcDefinitionWrapper:
 REGISTER_CBS = set()
 
 
-@deprecation.deprecated(
-    deprecated_in="8.0.0",
-    details="use the new command definition tree instead",
-    current_version=get_version(),
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
 )
 def tmtc_definitions_provider(adder_func):
     """Function decorator which registers the decorated function to be a TMTC definition provider.
@@ -307,10 +303,9 @@ def tmtc_definitions_provider(adder_func):
     return call_explicitely
 
 
-@deprecation.deprecated(
-    deprecated_in="8.0.0",
-    details="use the new command definition tree instead",
-    current_version=get_version(),
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
 )
 def call_all_definitions_providers(defs: TmtcDefinitionWrapper, *args, **kwargs):
     global REGISTER_CBS

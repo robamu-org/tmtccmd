@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Deque, List, Optional, Tuple
 
-import deprecation
+from deprecated.sphinx import deprecated
 from spacepackets.cfdp import (
     ChecksumType,
     ConditionCode,
@@ -1221,10 +1221,9 @@ class DestHandler:
         # for this is quite easy.
         self.reset()
 
-    @deprecation.deprecated(
-        deprecated_in="6.0.0rc1",
-        current_version=get_version(),
-        details="Use insert_packet instead",
+    @deprecated(
+        version="6.0.0rc1",
+        reason="Use insert_packet instead",
     )
     def pass_packet(self, packet: GenericPduPacket):
         self.insert_packet(packet)

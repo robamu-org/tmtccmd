@@ -35,7 +35,7 @@ dependencies = [
     # TODO: Use upstream again when the nested completer PR has been merged.
     # "prompt-toolkit~=3.0",
     "prompt-toolkit @ git+https://github.com/robamu/python-prompt-toolkit.git@nested-completer-custom-separator-based-on-latest",
-    "deprecation~=2.1",
+    "Deprecated~=1.2",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
     "spacepackets~=0.21.0",

@@ -4,20 +4,17 @@ from __future__ import annotations
 
 from typing import Optional
 
-import deprecation
-
+from deprecated.sphinx import deprecated
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
-from tmtccmd.version import get_version
-from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmBase, PusTmInfoBase
 
 
 class Service2Tm(PusTmInfoBase, PusTmBase):
-    @deprecation.deprecated(
-        deprecated_in="v4.0.0a1",
-        current_version=get_version(),
-        details="use a custom wrapper type instead",
+    @deprecated(
+        version="v4.0.0a1",
+        reason="use a custom wrapper type instead",
     )
     def __init__(
         self,

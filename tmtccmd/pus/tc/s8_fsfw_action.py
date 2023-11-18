@@ -1,16 +1,14 @@
 import struct
 
-import deprecation
-
+from deprecated.sphinx import deprecated
 from spacepackets.ecss import PusTelecommand
+
 from tmtccmd.pus.s8_fsfw_action_defs import CustomSubservice
-from tmtccmd.version import get_version
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def make_fsfw_action_cmd(
     object_id: bytes,

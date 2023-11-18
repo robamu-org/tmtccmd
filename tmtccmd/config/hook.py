@@ -1,4 +1,4 @@
-from deprecation import deprecated
+from deprecated.sphinx import deprecated
 import logging
 from typing import Optional
 from abc import abstractmethod, ABC
@@ -39,9 +39,8 @@ class HookBase(ABC):
         return get_core_object_ids()
 
     @deprecated(
-        deprecated_in="8.0.0rc0",
-        current_version=get_version(),
-        details="implement and use get_com_interface instead",
+        version="8.0.0rc0",
+        reason="implement and use get_communication_interface instead",
     )
     def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         """Assign the communication interface used by the TMTC commander to send and receive
@@ -63,9 +62,8 @@ class HookBase(ABC):
         return CORE_COM_IF_DICT
 
     @deprecated(
-        deprecated_in="8.0.0rc0",
-        current_version=get_version(),
-        details="implement and use get_command_definitions instead",
+        version="8.0.0rc0",
+        reason="implement and use get_command_definitions instead",
     )
     def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
         """This is a dicitonary mapping services represented by strings to an operation code
