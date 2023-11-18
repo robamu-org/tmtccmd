@@ -17,11 +17,12 @@ ______________________
 The class `ExampleHookClass` is the example configuration class implementing
 the :py:class:`tmtccmd.config.hook.HookBase`.
 
-1. The :py:meth:`tmtccmd.config.hook.HookBase.assign_communication_interface` method
+1. The :py:meth:`tmtccmd.config.hook.HookBase.get_communication_interface` method
    is used to return a communication interface given a string identifier. You can read more
    about the communication abstraction in the :ref:`com` chapter.
-2. The :py:meth:`tmtccmd.config.hook.HookBase.get_tmtc_definitions` returns a configuration
-   wrapper which determines the commands displayed when using the interactive CLI mode or the GUI.
+2. The :py:meth:`tmtccmd.config.hook.HookBase.get_command_definitions` returns a tree of
+   command definition which can be used by both users and developers to specify the available
+   commands and procedures.
 
 The TC handler
 ---------------
