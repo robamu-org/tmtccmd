@@ -17,7 +17,6 @@ from tmtccmd.com.utils import determine_com_if
 from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.tmtc.procedure import TcProcedureType
-from tmtccmd.version import get_version
 
 from .defs import (
     CfdpParams,

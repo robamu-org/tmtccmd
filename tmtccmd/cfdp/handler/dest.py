@@ -69,7 +69,6 @@ from tmtccmd.cfdp.user import (
     TransactionFinishedParams,
 )
 from tmtccmd.util.countdown import Countdown
-from tmtccmd.version import get_version
 
 _LOGGER = logging.getLogger(__name__)
 

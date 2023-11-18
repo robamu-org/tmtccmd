@@ -18,7 +18,6 @@ from tmtccmd.config import CoreComInterfaces
 from tmtccmd.pus.s1_verification import Subservice as Pus1Subservice
 from tmtccmd.pus.s17_test import Subservice as Pus17Subservice
 from tmtccmd.tmtc import TelemetryListT
-from tmtccmd.version import get_version
 
 
 class DummyHandler:

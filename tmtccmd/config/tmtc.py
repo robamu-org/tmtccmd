@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from deprecated.sphinx import deprecated
 
-from tmtccmd.version import get_version
 
 
 class TreePart(enum.Enum):

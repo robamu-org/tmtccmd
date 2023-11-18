@@ -7,7 +7,6 @@ from tmtccmd.util.obj_id import ObjectIdDictT
 
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.core import BackendBase
-from tmtccmd.version import get_version
 
 from .com import ComCfgBase, ComInterface
 from .tmtc import TmtcDefinitionWrapper

@@ -72,7 +72,6 @@ from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams, TransactionParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
-from tmtccmd.version import get_version
 
 
 _LOGGER = logging.getLogger(__name__)

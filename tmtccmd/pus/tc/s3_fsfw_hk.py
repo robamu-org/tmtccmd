@@ -4,7 +4,6 @@ import struct
 from typing import Tuple
 
 from deprecated.sphinx import deprecated
-from tmtccmd.version import get_version
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ecss.pus_3_hk import Subservice
 

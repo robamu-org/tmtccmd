@@ -4,7 +4,6 @@ import time
 from typing import Optional
 from deprecated.sphinx import deprecated
 from datetime import timedelta
-from tmtccmd.version import get_version
 
 
 def time_ms() -> int:

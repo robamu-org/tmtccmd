@@ -18,7 +18,6 @@ from tmtccmd.config.defs import (
     ComIfDictT,
 )
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
-from tmtccmd.version import get_version
 
 DEF_WRAPPER = None
 

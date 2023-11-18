@@ -28,7 +28,6 @@ from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
     create_vector_double_parameter,
     create_vector_float_parameter,
 )
-from tmtccmd.version import get_version
 
 
 def create_load_param_cmd(parameter: Parameter) -> PusTelecommand:
