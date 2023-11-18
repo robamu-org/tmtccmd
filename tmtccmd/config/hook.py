@@ -1,4 +1,4 @@
-import deprecation
+from deprecation import deprecated
 import logging
 from typing import Optional
 from abc import abstractmethod, ABC
@@ -38,8 +38,8 @@ class HookBase(ABC):
         """
         return get_core_object_ids()
 
-    @deprecation.deprecated(
-        deprecated_in="8.0.0",
+    @deprecated(
+        deprecated_in="8.0.0rc0",
         current_version=get_version(),
         details="implement and use get_com_interface instead",
     )
@@ -62,8 +62,8 @@ class HookBase(ABC):
     def get_com_if_dict(self) -> ComIfDictT:
         return CORE_COM_IF_DICT
 
-    @deprecation.deprecated(
-        deprecated_in="8.0.0",
+    @deprecated(
+        deprecated_in="8.0.0rc0",
         current_version=get_version(),
         details="implement and use get_command_definitions instead",
     )
