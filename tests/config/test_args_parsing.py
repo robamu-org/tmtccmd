@@ -59,3 +59,17 @@ class TestArgsParsing(TestCase):
         add_default_com_if_arguments(self.arg_parser)
         args = self.arg_parser.parse_args(["-c", "udp"])
         self.assertEqual(args.com_if, "udp")
+
+    def test_tree_print_args_0(self):
+        add_default_procedure_arguments(self.arg_parser)
+        args = self.arg_parser.parse_args(["-T"])
+        self.assertEqual(args.print_tree, [])
+        args = self.arg_parser.parse_args(["--print-tree"])
+        self.assertEqual(args.print_tree, [])
+        args = self.arg_parser.parse_args(["--pt"])
+        self.assertEqual(args.print_tree, [])
+
+    def test_tree_print_args_1(self):
+        add_default_procedure_arguments(self.arg_parser)
+        args = self.arg_parser.parse_args(["-T", "b", "2"])
+        self.assertEqual(args.print_tree, ["b", "2"])

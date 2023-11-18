@@ -510,7 +510,6 @@ def args_to_all_params_tmtc(
     def_tmtc_params: DefaultProcedureParams,
     hook_obj: HookBase,
     use_prompts: bool,
-    print_tree: bool = True,
     assign_com_if: bool = True,
 ):
     """This function converts command line arguments to the internalized setup parameters.
@@ -538,8 +537,6 @@ def args_to_all_params_tmtc(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
-    if params.app_params.print_tree and print_tree:
-        perform_tree_printout(params.app_params, hook_obj.get_command_definitions())
     mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
@@ -757,7 +754,6 @@ class PostArgsParsingWrapper:
         self.unknown_args = unknown_args
         self.hook_obj = hook_obj
         self.assign_com_if_on_conversion_if_applicable = True
-        self.print_tree_on_conversion_if_applicable = True
 
     @property
     def use_gui(self):
@@ -831,7 +827,6 @@ class PostArgsParsingWrapper:
                 use_prompts=use_prompts,
                 def_tmtc_params=def_tmtc_params,
                 assign_com_if=self.assign_com_if_on_conversion_if_applicable,
-                print_tree=self.print_tree_on_conversion_if_applicable,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(

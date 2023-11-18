@@ -1,17 +1,22 @@
 import argparse
+import os
 from unittest import TestCase
-
-from tests.hook_obj_mock import create_hook_mock
+from unittest.mock import MagicMock, call, patch
 
 from spacepackets.cfdp import TransmissionMode
-from tmtccmd import CoreModeList, CoreModeConverter
+
+from tests.hook_obj_mock import create_hook_mock
+from tmtccmd import CoreModeConverter, CoreModeList
 from tmtccmd.config import CfdpParams
 from tmtccmd.config.args import (
+    AppParams,
+    DefaultProcedureParams,
+    SetupParams,
     args_to_all_params_tmtc,
     cfdp_args_to_cfdp_params,
-    SetupParams,
-    DefaultProcedureParams,
+    perform_tree_printout,
 )
+from tmtccmd.config.tmtc import CmdTreeNode, TreePart
 
 
 class TestArgs(TestCase):
@@ -129,3 +134,85 @@ class TestArgs(TestCase):
             self.params.mode, CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
         )
         self.params = SetupParams()
+
+    def test_tree_printout_conversion_default(self):
+        self.base_cli_set()
+        self.pargs.print_tree = []
+        def_params = DefaultProcedureParams(None)
+        args_to_all_params_tmtc(
+            pargs=self.pargs,
+            params=self.params,
+            hook_obj=self.hook_mock,
+            use_prompts=False,
+            def_tmtc_params=def_params,
+            assign_com_if=False,
+        )
+        self.assertTrue(self.params.app_params.print_tree)
+        self.assertTrue(self.params.app_params.tree_print_with_description)
+        self.assertIsNone(self.params.app_params.tree_print_max_depth)
+
+    def test_tree_printout_conversion_with_custom_args(self):
+        self.base_cli_set()
+        self.pargs.print_tree = ["b", "2"]
+        def_params = DefaultProcedureParams(None)
+        args_to_all_params_tmtc(
+            pargs=self.pargs,
+            params=self.params,
+            hook_obj=self.hook_mock,
+            use_prompts=False,
+            def_tmtc_params=def_params,
+            assign_com_if=False,
+        )
+        self.assertTrue(self.params.app_params.print_tree)
+        self.assertFalse(self.params.app_params.tree_print_with_description)
+        self.assertEqual(self.params.app_params.tree_print_max_depth, 2)
+
+    @patch("builtins.print")
+    def test_tree_printout_0(self, print_mock: MagicMock):
+        root_node_only = CmdTreeNode.root_node()
+        app_params = AppParams()
+        app_params.print_tree = True
+        perform_tree_printout(app_params, root_node_only)
+        self.assertEqual(len(print_mock.call_args_list), 2)
+        self.assertEqual(
+            print_mock.call_args_list[0],
+            call("Printing command tree with full descriptions:"),
+        )
+        self.assertEqual(
+            print_mock.call_args_list[1], call(f"/ [ Root Node ]{os.linesep}")
+        )
+
+    @patch("builtins.print")
+    def test_tree_printout_1(self, print_mock: MagicMock):
+        root_node_only = CmdTreeNode.root_node()
+        app_params = AppParams()
+        app_params.print_tree = True
+        app_params.tree_print_with_description = False
+        perform_tree_printout(app_params, root_node_only)
+        self.assertEqual(len(print_mock.call_args_list), 2)
+        self.assertEqual(
+            print_mock.call_args_list[0],
+            call("Printing command tree without descriptions:"),
+        )
+        self.assertEqual(print_mock.call_args_list[1], call(f"/{os.linesep}"))
+
+    @patch("builtins.print")
+    def test_tree_printout_2(self, print_mock: MagicMock):
+        root_node_only = CmdTreeNode.root_node()
+        root_node_only.add_child(CmdTreeNode("acs", "ACS Subsystem"))
+        app_params = AppParams()
+        app_params.print_tree = True
+        app_params.tree_print_with_description = False
+        app_params.tree_print_max_depth = 0
+        perform_tree_printout(app_params, root_node_only)
+        self.assertEqual(len(print_mock.call_args_list), 2)
+        self.assertEqual(
+            print_mock.call_args_list[0],
+            call("Printing command tree without descriptions and maximum depth 0:"),
+        )
+        self.assertEqual(
+            print_mock.call_args_list[1],
+            call(
+                f"/{os.linesep}{TreePart.CORNER.value} ... (cut-off, maximum depth 0){os.linesep}"
+            ),
+        )
