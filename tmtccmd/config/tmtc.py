@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 from deprecated.sphinx import deprecated
 
 
-
 class TreePart(enum.Enum):
     EDGE = "├──"
     LINE = "│  "
