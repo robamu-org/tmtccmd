@@ -99,7 +99,7 @@ class CmdTreeNode:
         )
 
     def __str_for_depth(self, with_description: bool, depth_info: DepthInfo) -> str:
-        string = ""
+        line = ""
         # If we are at a larger depth than 0, we want to prepend the name using a special
         # format. Example:
         #
@@ -129,22 +129,22 @@ class CmdTreeNode:
         for i in range(depth_info.depth):
             if i == depth_info.depth - 1:
                 if depth_info.last_child:
-                    string += TreePart.CORNER.value + " "
+                    line += TreePart.CORNER.value + " "
                 else:
-                    string += TreePart.EDGE.value + " "
+                    line += TreePart.EDGE.value + " "
             else:
                 if depth_info.is_layer_for_last_child(i):
-                    string += TreePart.BLANK.value
+                    line += TreePart.BLANK.value
                 else:
-                    string += TreePart.LINE.value
+                    line += TreePart.LINE.value
         if depth_info.max_depth is not None and depth_info.depth > depth_info.max_depth:
-            string += f"... (cut-off, maximum depth {depth_info.max_depth}){os.linesep}"
-            return string
+            line += f"... (cut-off, maximum depth {depth_info.max_depth}){os.linesep}"
+            return line
         else:
-            string += self.name
+            line += self.name
             if with_description:
-                string += " [ " + self.description + " ]"
-        string += os.linesep
+                line = f"{line.ljust(35)} [ " + self.description + " ]"
+        string = line + os.linesep
         for idx, child in enumerate(self.children.values()):
             last_child = True if (idx == (len(self.children) - 1)) else False
             child_depth_info = DepthInfo(

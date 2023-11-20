@@ -81,10 +81,19 @@ class ExampleHookClass(HookBase):
         root_node.children["test"].add_child(
             CmdTreeNode("event", "Send PUS event test command")
         )
+        return self.build_more_complex_tree(root_node)
+
+    def build_more_complex_tree(self, root_node: CmdTreeNode) -> CmdTreeNode:
+        root_node.add_child(CmdTreeNode("system", "System Commands"))
         root_node.add_child(CmdTreeNode("acs", "ACS Subsystem"))
         root_node["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         root_node["acs"].add_child(CmdTreeNode("mgt", "Magnetorquer"))
-        root_node["acs"]["mgt"].add_child(CmdTreeNode("set_dipole", "Set MGT Dipole"))
+        root_node["acs"]["mgt"].add_child(CmdTreeNode("set_dipoles", "Set MGT Dipoles"))
+        root_node["acs"].add_child(CmdTreeNode("mgm0", "Magnetometer 0"))
+        root_node["acs"].add_child(CmdTreeNode("mgm1", "Magnetometer 1"))
+        mgm_node = CmdTreeNode("other cmds", "Other MGM commands")
+        root_node["acs"]["mgm0"].add_child(mgm_node)
+        root_node["acs"]["mgm1"].add_child(mgm_node)
         root_node.add_child(CmdTreeNode("tcs", "TCS Subsystem"))
         root_node["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
         root_node["tcs"].add_child(CmdTreeNode("pt1000", "Temperature Sensor"))

@@ -1,42 +1,15 @@
 Configuration Package
 ======================
 
-Module contents
----------------
+Module
+----------
 
 .. automodule:: tmtccmd.config
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
-tmtccmd.config.defs module
---------------------------
-
-.. automodule:: tmtccmd.config.defs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.config.args module
---------------------------
-
-.. automodule:: tmtccmd.config.args
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.config.cfdp module
---------------------------
-
-.. automodule:: tmtccmd.config.cfdp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tmtccmd.config.hook module
+Configuration Hook Submodule
 -----------------------------
 
 .. automodule:: tmtccmd.config.hook
@@ -44,26 +17,60 @@ tmtccmd.config.hook module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.config.com module
+Argument Parsing Submodule
 -----------------------------
+
+.. automodule:: tmtccmd.config.args
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+TMTC Configuration Submodule
+-----------------------------
+
+.. automodule:: tmtccmd.config.tmtc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+CFDP Configuration Submodule
+-----------------------------
+
+.. automodule:: tmtccmd.config.cfdp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Communication Configuration Submodule
+---------------------------------------
 
 .. automodule:: tmtccmd.config.com
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.config.globals module
------------------------------
+Configuration Definitions Submodule
+------------------------------------
 
-.. automodule:: tmtccmd.config.globals
+.. automodule:: tmtccmd.config.defs
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.config.objects module
+Objects Submodule
 -----------------------------
 
 .. automodule:: tmtccmd.config.objects
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Global Module [deprecated]
+-----------------------------
+
+This module is deprecated, and usage is discouraged.
+
+.. automodule:: tmtccmd.config.globals
    :members:
    :undoc-members:
    :show-inheritance:
