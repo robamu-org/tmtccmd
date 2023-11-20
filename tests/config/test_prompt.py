@@ -32,8 +32,14 @@ class TestPromptFunc(TestCase):
             cmd_path = prompt_cmd_path(self.cmd_tree)
             self.assertEqual(len(prompt.call_args_list), 2)
             self.assertEqual(cmd_path, "/acs")
-            mocked_print.assert_called_once()
-            printout = mocked_print.call_args[0][0]
+            call_list = mocked_print.call_args_list
+            self.assertEqual(len(call_list), 2)
+            help_txt = mocked_print.call_args_list[0].args[0]
+            self.assertTrue("Additional commands for prompt:" in help_txt)
+            self.assertTrue(":p Tree Print" in help_txt)
+            self.assertTrue(":r Retry" in help_txt)
+            self.assertTrue(":h Help Text" in help_txt)
+            printout = mocked_print.call_args_list[1].args[0]
             self.assertTrue("acs" in printout)
             self.assertTrue("ACS Subsystem" in printout)
             self.assertTrue("tcs" in printout)
@@ -63,3 +69,22 @@ class TestPromptFunc(TestCase):
                 self.assertEqual(cmd_path, "/acs")
                 self.assertEqual(len(prompt_mock.call_args_list), 2)
                 self.assertEqual(len(input_mock.call_args_list), 1)
+
+    @patch("builtins.print")
+    def test_prompt_help_reprint(self, mocked_print: MagicMock):
+        self.base_tree()
+        with patch(
+            "tmtccmd.config.prompt.prompt_toolkit.prompt", side_effect=[":h", "acs"]
+        ) as prompt:
+            cmd_path = prompt_cmd_path(self.cmd_tree)
+            self.assertEqual(len(prompt.call_args_list), 2)
+            self.assertEqual(cmd_path, "/acs")
+            call_list = mocked_print.call_args_list
+            self.assertEqual(len(call_list), 2)
+            help_txt = mocked_print.call_args_list[0].args[0]
+            self.assertTrue("Additional commands for prompt:" in help_txt)
+            self.assertTrue(":p Tree Print" in help_txt)
+            self.assertTrue(":r Retry" in help_txt)
+            self.assertTrue(":h Help Text" in help_txt)
+            help_txt_2 = mocked_print.call_args_list[1].args[0]
+            self.assertEqual(help_txt, help_txt_2)

@@ -64,7 +64,7 @@ def prompt_cmd_path(
     compl_dict.update({":fp": None})
     nested_completer = NestedCompleter.from_nested_dict(compl_dict, separator="/")
     help_txt = (
-        f"Additional commands for prompt: Additional commands:{os.linesep}"
+        f"Additional commands for prompt:{os.linesep}"
         f":p Tree Print | :pf Full Print | :r Retry | :h Help Text {os.linesep}"
         f"Auto complete is available using Tab after typing the slash character."
     )
