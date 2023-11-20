@@ -81,6 +81,26 @@ class ExampleHookClass(HookBase):
         root_node.children["test"].add_child(
             CmdTreeNode("event", "Send PUS event test command")
         )
+        root_node.add_child(CmdTreeNode("acs", "ACS Subsystem"))
+        root_node["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
+        root_node["acs"].add_child(CmdTreeNode("mgt", "Magnetorquer"))
+        root_node["acs"]["mgt"].add_child(CmdTreeNode("set_dipole", "Set MGT Dipole"))
+        root_node.add_child(CmdTreeNode("tcs", "TCS Subsystem"))
+        root_node["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
+        root_node["tcs"].add_child(CmdTreeNode("pt1000", "Temperature Sensor"))
+        root_node["tcs"].add_child(CmdTreeNode("heater", "Heater"))
+        root_node.add_child(CmdTreeNode("com", "COM Subsystem"))
+        root_node["com"].add_child(CmdTreeNode("uhf_transceiver", "UHF Transceiver"))
+        root_node.add_child(CmdTreeNode("eps", "EPS Subsystem"))
+        root_node["eps"].add_child(CmdTreeNode("pcdu", "PCDU"))
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_0_on", "Channel 0 on"))
+        root_node["eps"]["pcdu"].add_child(
+            CmdTreeNode("channel_0_off", "Channel 0 off")
+        )
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_on", "Channel 1 on"))
+        root_node["eps"]["pcdu"].add_child(
+            CmdTreeNode("channel_1_off", "Channel 1 off")
+        )
         return root_node
 
     def perform_mode_operation(self, _tmtc_backend: CcsdsTmtcBackend, _mode: int):

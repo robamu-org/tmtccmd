@@ -1,3 +1,4 @@
+import os
 import logging
 
 import prompt_toolkit
@@ -62,12 +63,15 @@ def prompt_cmd_path(
     compl_dict.update({":p": None})
     compl_dict.update({":fp": None})
     nested_completer = NestedCompleter.from_nested_dict(compl_dict, separator="/")
+    help_txt = (
+        f"Additional commands for prompt: Additional commands:{os.linesep}"
+        f":p Tree Print | :pf Full Print | :r Retry | :h Help Text {os.linesep}"
+        f"Auto complete is available using Tab after typing the slash character."
+    )
+    print(help_txt)
     while True:
         path_or_cmd = prompt_toolkit.prompt(
-            (
-                "Please enter a slash separated command path.\n"
-                "Additional commands: :p Tree Print | :pf Full Print | :r Retry.\n"
-            ),
+            message="> ",
             completer=nested_completer,
             complete_style=compl_style,
         )
@@ -76,6 +80,9 @@ def prompt_cmd_path(
             continue
         elif path_or_cmd == ":pf":
             print(cmd_def_tree.str_for_tree(True))
+            continue
+        elif ":h" in path_or_cmd:
+            print(help_txt)
             continue
         elif ":r" in path_or_cmd:
             continue

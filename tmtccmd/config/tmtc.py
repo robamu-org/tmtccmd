@@ -50,6 +50,9 @@ class CmdTreeNode:
     def root_node(cls) -> CmdTreeNode:
         return cls(name="/", description="Root Node", parent=None)
 
+    def __getitem__(self, arg):
+        return self.children[arg]
+
     def add_child(self, child: CmdTreeNode):
         child.parent = self
         self.children.update({child.name: child})

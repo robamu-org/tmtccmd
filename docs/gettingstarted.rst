@@ -11,8 +11,8 @@ classes for TC and TM handling and then ties together all components.
 
 Some explanation of classes and modules inside the example are given here.
 
-The example hook class
-______________________
+The Configuration Hook Class
+==============================
 
 The class `ExampleHookClass` is the example configuration class implementing
 the :py:class:`tmtccmd.config.hook.HookBase`.
@@ -24,8 +24,21 @@ the :py:class:`tmtccmd.config.hook.HookBase`.
    command definition which can be used by both users and developers to specify the available
    commands and procedures.
 
+TC Command Definition Specification
+--------------------------------------
+
+The command tree mechanism provides a flexible mechanism to also model the command definitions
+for more complex systems. These systems are oftentimes structured into dedicated modules.
+For exampe, the command tree for a satellite system might look like this:
+
+
+.. image:: images/example_system.png
+    :align: center
+
+For a system like this, it makes a lot of sense to also model the command definitions similarly
+to the system. An example tree modelling the system shown in the example above 
 The TC handler
----------------
+==============================
 
 This object is responsible for the telecommand handling. Therefore this object implements
 the :py:class:`tmtccmd.tmtc.handler.TcHandlerBase`.
@@ -41,7 +54,7 @@ the queue can also contain something like log requests or delay requests, or eve
 custom requests. These requests can then be handled by the user.
 
 The PUS TM handler
---------------------
+==============================
 
 This object is responsible for the handling of PUS telemetry. In the example case, the
 handler object is responsible space packets with a certain application process identifier (APID).
