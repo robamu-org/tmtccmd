@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import datetime
 
-import deprecation
+from deprecated.sphinx import deprecated
 from colorlog import ColoredFormatter
 
 
@@ -61,10 +61,9 @@ def add_error_file_logger(logger: logging.Logger):
     logger.addHandler(error_file_handler)
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a4",
-    current_version=get_version(),
-    details="Use a custom application logger or tmtccmd.get_lib_logger instead.",
+@deprecated(
+    version="v4.0.0a4",
+    reason="use a custom application logger or tmtccmd.get_lib_logger instead.",
 )
 def get_console_logger() -> logging.Logger:
     return logging.getLogger(__name__)

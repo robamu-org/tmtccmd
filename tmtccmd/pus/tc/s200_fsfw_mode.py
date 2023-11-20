@@ -1,11 +1,10 @@
 """Core components for mode commanding (custom PUS service)."""
 import enum
 import struct
-import deprecation
 from typing import Union
 
+from deprecated.sphinx import deprecated
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.version import get_version
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 
@@ -27,10 +26,9 @@ def pack_mode_data(object_id: bytes, mode: Union[Mode, int], submode: int) -> by
     return mode_data
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def pack_mode_command(
     object_id: bytes, mode: Union[int, Mode], submode: int

@@ -3,7 +3,7 @@ import enum
 import logging
 import pprint
 
-import deprecation
+from deprecated.sphinx import deprecated
 from spacepackets.ecss.conf import (
     set_default_tc_apid,
     set_default_tm_apid,
@@ -18,7 +18,6 @@ from tmtccmd.config.defs import (
     ComIfDictT,
 )
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
-from tmtccmd.version import get_version
 
 DEF_WRAPPER = None
 
@@ -64,28 +63,28 @@ class CoreGlobalIds(enum.IntEnum):
     END = 300
 
 
-@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
+@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def set_json_cfg_path(json_cfg_path: str):
     update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
 
 
-@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
+@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def get_json_cfg_path() -> str:
     return get_global(CoreGlobalIds.JSON_CFG_PATH)
 
 
-@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
+@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def set_glob_com_if_dict(custom_com_if_dict: ComIfDictT):
     CORE_COM_IF_DICT.update(custom_com_if_dict)
     update_global(CoreGlobalIds.COM_IF_DICT, CORE_COM_IF_DICT)
 
 
-@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
+@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def get_glob_com_if_dict() -> ComIfDictT:
     return get_global(CoreGlobalIds.COM_IF_DICT)
 
 
-@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
+@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def set_default_globals_pre_args_parsing(
     apid: int,
     com_if_id: str = CoreComInterfaces.DUMMY.value,
@@ -120,7 +119,7 @@ def set_default_globals_pre_args_parsing(
     update_global(CoreGlobalIds.MODE, CoreModeList.LISTENER_MODE)
 
 
-@deprecation.deprecated(deprecated_in="6.0.0rc0", current_version=get_version())
+@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def check_and_set_other_args(args):
     if args.listener is not None:
         update_global(CoreGlobalIds.USE_LISTENER_AFTER_OP, args.listener)
@@ -139,6 +138,7 @@ def check_and_set_other_args(args):
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 3)
 
 
+@deprecated(version="8.0.0", reason="globals module deprecated")
 def check_and_set_core_service_arg(
     service_arg: any, custom_service_list: collections.abc.Iterable = None
 ):
@@ -175,6 +175,7 @@ def check_and_set_core_service_arg(
     update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
 
 
+@deprecated(version="8.0.0", reason="use command tree API instead")
 def get_default_tmtc_defs() -> TmtcDefinitionWrapper:
     global DEF_WRAPPER
     if DEF_WRAPPER is None:

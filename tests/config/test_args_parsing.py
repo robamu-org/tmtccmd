@@ -31,14 +31,12 @@ class TestArgsParsing(TestCase):
     def test_def_proc_argument_empty(self):
         add_default_procedure_arguments(self.arg_parser)
         args = self.arg_parser.parse_args([])
-        self.assertIsNone(args.service)
-        self.assertIsNone(args.op_code)
+        self.assertIsNone(args.cmd_path)
 
     def test_def_proc_argument_valid(self):
         add_default_procedure_arguments(self.arg_parser)
-        args = self.arg_parser.parse_args(["-s", "17", "-o", "ping"])
-        self.assertEqual(args.service, "17")
-        self.assertEqual(args.op_code, "ping")
+        args = self.arg_parser.parse_args(["-p", "/PING"])
+        self.assertEqual(args.cmd_path, "/PING")
 
     def test_generic_arguments_empty(self):
         add_generic_arguments(self.arg_parser)
@@ -61,3 +59,17 @@ class TestArgsParsing(TestCase):
         add_default_com_if_arguments(self.arg_parser)
         args = self.arg_parser.parse_args(["-c", "udp"])
         self.assertEqual(args.com_if, "udp")
+
+    def test_tree_print_args_0(self):
+        add_default_procedure_arguments(self.arg_parser)
+        args = self.arg_parser.parse_args(["-T"])
+        self.assertEqual(args.print_tree, [])
+        args = self.arg_parser.parse_args(["--print-tree"])
+        self.assertEqual(args.print_tree, [])
+        args = self.arg_parser.parse_args(["--pt"])
+        self.assertEqual(args.print_tree, [])
+
+    def test_tree_print_args_1(self):
+        add_default_procedure_arguments(self.arg_parser)
+        args = self.arg_parser.parse_args(["-T", "b", "2"])
+        self.assertEqual(args.print_tree, ["b", "2"])

@@ -68,13 +68,13 @@ class SequentialCcsdsSender:
         # only
         self._send_cd.timeout = timedelta()
         self._current_res.longest_rem_delay = queue_wrapper.inter_cmd_delay
-        self._proc_wrapper.base = self._queue_wrapper.info
+        self._proc_wrapper.procedure = self._queue_wrapper.info
         self._queue_wrapper = queue_wrapper
 
     def handle_new_queue_forced(self, queue_wrapper: QueueWrapper):
         self._mode = SenderMode.DONE
         self.queue_wrapper = queue_wrapper
-        self._proc_wrapper.base = self._queue_wrapper.info
+        self._proc_wrapper.procedure = self._queue_wrapper.info
 
     def resume(self):
         """Can be used to resume a finished sequential sender it the provided queue is
@@ -104,7 +104,7 @@ class SequentialCcsdsSender:
         if not self.queue_wrapper.queue:
             self._current_res.queue_empty = True
             if self.no_delay_remaining():
-                self._proc_wrapper.base = self._queue_wrapper.info
+                self._proc_wrapper.procedure = self._queue_wrapper.info
                 # cache this for last wait time
                 self._tc_handler.queue_finished_cb(self._proc_wrapper)
                 self._mode = SenderMode.DONE

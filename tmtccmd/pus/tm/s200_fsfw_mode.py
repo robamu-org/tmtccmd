@@ -1,16 +1,17 @@
 """Base class for Service 200 mode commanding reply handling.
 """
 from __future__ import annotations
+
 import struct
 from typing import Optional
-from deprecation import deprecated
 
+from deprecated.sphinx import deprecated
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
-from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.base import PusTmBase, PusTmInfoBase
 
 
 class Service200FsfwReader:
@@ -41,7 +42,7 @@ class Service200FsfwReader:
 
 
 class Service200FsfwTm(PusTmBase, PusTmInfoBase):
-    @deprecated(deprecated_in="7.0.0", details="use Service200FsfwReader instead")
+    @deprecated(version="7.0.0", reason="use Service200FsfwReader instead")
     def __init__(
         self,
         subservice_id: int,

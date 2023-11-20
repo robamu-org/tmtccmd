@@ -44,17 +44,6 @@ Module
 .. automodule:: tmtccmd
    :noindex:
 
-Configuration Package 
---------------------------
-
-.. automodule:: tmtccmd.config
-   :noindex:
-
-.. toctree::
-   :maxdepth: 3
-
-   api/config
-
 Core Package 
 -----------------
 
@@ -85,6 +74,17 @@ Telecommand Handling Package
    :maxdepth: 3
 
    api/tc
+
+Application Configuration Package 
+===================================
+
+.. automodule:: tmtccmd.config
+   :noindex:
+
+.. toctree::
+   :maxdepth: 3
+
+   api/config
 
 Miscellaneous Modules 
 =========================

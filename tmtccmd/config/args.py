@@ -1,28 +1,31 @@
 """Argument parser module."""
 from __future__ import annotations
+
 import argparse
 import logging
+import os
 import sys
-from typing import Optional, List, Sequence, Union
 from dataclasses import dataclass
+from typing import List, Optional, Sequence, Tuple, Union
 
+from deprecated.sphinx import deprecated
 from prompt_toolkit.shortcuts import CompleteStyle
-
 from spacepackets.cfdp import TransmissionMode
-from tmtccmd.com.utils import determine_com_if
-from tmtccmd.tmtc.procedure import TcProcedureType
-from tmtccmd.config.prompt import prompt_op_code, prompt_service
+
 from tmtccmd.com import ComInterface
+from tmtccmd.com.utils import determine_com_if
+from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
+from tmtccmd.config.tmtc import CmdTreeNode
+from tmtccmd.tmtc.procedure import TcProcedureType
 
 from .defs import (
-    CoreModeList,
+    CfdpParams,
     CoreComInterfaces,
     CoreModeConverter,
+    CoreModeList,
     DefaultProcedureParams,
-    CfdpParams,
 )
 from .hook import HookBase
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -97,6 +100,9 @@ class AppParams:
     use_gui: bool = False
     reduced_printout: bool = False
     use_ansi_colors: bool = True
+    print_tree: bool = False
+    tree_print_with_description: bool = True
+    tree_print_max_depth: Optional[int] = None
     compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
 
 
@@ -162,7 +168,7 @@ def parse_default_tmtccmd_input_arguments(
     parser: argparse.ArgumentParser,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
-) -> (argparse.Namespace, List[str]):
+) -> Tuple[argparse.Namespace, List[str]]:
     """Parses all input arguments by calling :py:meth:`argparse.ArgumentParser.parse_known_args`.
     It is recommended to use the :py:class:`PreArgsParsingWrapper` instead of using this function
     directly.
@@ -195,16 +201,22 @@ def parse_default_tmtccmd_input_arguments(
 
 def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
     parser_or_subparser.add_argument(
-        "-s",
-        "--service",
-        help="Procedure service code, used for the default procedure mode",
+        "-p",
+        "--path",
+        dest="cmd_path",
+        help="Command tree path, used to uniquely identify command or command stack to be sent.",
         default=None,
     )
     parser_or_subparser.add_argument(
-        "-o",
-        "--op_code",
-        help="Procedure operation code, used for the default procedure mode",
-        default=None,
+        "-T",
+        "--pt",
+        "--print-tree",
+        dest="print_tree",
+        nargs="*",
+        help=(
+            f"Optional arguments [b] [<numMaxDepth>]. Print the command definition tree. You can"
+            f"{os.linesep}optionally add b to omit descriptions, and a maximum print depth."
+        ),
     )
     add_tmtc_mode_arguments(parser_or_subparser)
     add_tmtc_listener_arg(parser_or_subparser)
@@ -224,18 +236,18 @@ def add_cfdp_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
         "--proxy",
         action="store_true",
         help=(
-            "Used to trigger a proxy operation at the remote CFDP entity.\nMost"
-            " commonly used to request a file from the remote entity.\nPlease note that"
-            " this inverses the meaning of the destination and file parameter."
+            f"Used to trigger a proxy operation at the remote CFDP entity.{os.linesep}Most"
+            f" commonly used to request a file from the remote entity.{os.linesep}Please note that"
+            f" this inverses the meaning of the destination and file parameter."
         ),
     )
     parser_or_subparser.add_argument(
         "-t",
         "--type",
         help=(
-            "Specify the transfer type\n"
-            ' - "0" or "ack" for unacknowledged (Class 0) transfers\n'
-            ' - "1" or "nak" for acknowledged (Class 1) transfers. Default value'
+            f"Specify the transfer type{os.linesep}"
+            f' - "0" or "ack" for unacknowledged (Class 0) transfers{os.linesep}'
+            f' - "1" or "nak" for acknowledged (Class 1) transfers. Default value'
         ),
         default="nak",
     )
@@ -275,7 +287,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config import CoreModeList, CoreModeConverter
+    from tmtccmd.config import CoreModeConverter, CoreModeList
 
     help_text = (
         "Core Modes. Default:"
@@ -323,7 +335,7 @@ def add_tmtc_listener_arg(arg_parser: argparse.ArgumentParser):
         "--prompt-proc",
         help=(
             "If this is specified in addition to the listener mode flag -l, the"
-            " commander will\ntry to determine a service and operation code"
+            " commander will\nprompt for the next command or procedure to be sent."
         ),
         dest="prompt_proc",
         action="store_true",
@@ -357,6 +369,10 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     )
 
 
+@deprecated(
+    version="8.0.0",
+    reason="use determine_cmd_path instead",
+)
 def find_service_and_op_code(
     params: SetupParams,
     def_params: DefaultProcedureParams,
@@ -385,6 +401,27 @@ def find_service_and_op_code(
         def_params.op_code = pargs.op_code
 
 
+def determine_cmd_path(
+    params: SetupParams,
+    def_params: DefaultProcedureParams,
+    hook_obj: HookBase,
+    pargs: argparse.Namespace,
+    use_prompts: bool,
+):
+    cmd_defs = hook_obj.get_command_definitions()
+    if pargs.cmd_path is None:
+        if use_prompts:
+            print("No command path (-p) argument specified, prompting from user")
+            # Try to get the service list from the hook base and prompt service
+            # from user
+            def_params.cmd_path = prompt_cmd_path(
+                cmd_defs, params.app_params.compl_style
+            )
+            print(f"Using command path: {def_params.cmd_path}")
+    else:
+        def_params.cmd_path = pargs.cmd_path
+
+
 def args_to_params_generic(
     pargs: argparse.Namespace,
     params: SetupParams,
@@ -396,7 +433,17 @@ def args_to_params_generic(
         params.app_params.use_gui = False
     else:
         params.app_params.use_gui = pargs.gui
+    if pargs.print_tree is not None:
+        params.app_params.print_tree = True
+        for arg in pargs.print_tree:
+            if "b" in arg:
+                params.app_params.tree_print_with_description = False
+            if arg.isdigit():
+                params.app_params.tree_print_max_depth = int(arg)
+    else:
+        params.app_params.print_tree = False
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
+        assert hook_obj.cfg_path is not None
         params.com_if_id = determine_com_if(
             hook_obj.get_com_if_dict(), hook_obj.cfg_path, use_prompts
         )
@@ -461,7 +508,7 @@ def args_to_all_params_tmtc(
     def_tmtc_params: DefaultProcedureParams,
     hook_obj: HookBase,
     use_prompts: bool,
-    assign_com_if: bool,
+    assign_com_if: bool = True,
 ):
     """This function converts command line arguments to the internalized setup parameters.
 
@@ -470,8 +517,8 @@ def args_to_all_params_tmtc(
 
     If some arguments are unspecified, they are set here with (variable) default values.
 
-    :param pargs: Parsed arguments from calling parse method
-    :param params: Setup parameter object which will be set by this function
+    :param pargs: Parsed arguments from calling parse method.
+    :param params: Setup parameter object which will be set by this function.
     :param hook_obj:
     :param def_tmtc_params:
     :param use_prompts: Specify whether terminal prompts are allowed to retrieve unspecified
@@ -496,7 +543,7 @@ def args_to_all_params_tmtc(
         params.mode = pargs.mode
     if (
         params.backend_params.listener
-        and (not pargs.service and not pargs.op_code)
+        and (not pargs.cmd_path)
         and not mode_set_explicitely
         and (not pargs.prompt_proc)
     ):
@@ -510,18 +557,33 @@ def args_to_all_params_tmtc(
             params.tc_params.delay = 0.0
     else:
         params.tc_params.delay = float(pargs.delay)
-    tmtc_defs = hook_obj.get_tmtc_definitions()
-    if tmtc_defs is None:
-        _LOGGER.warning("Invalid Service to Op-Code dictionary detected")
+    if (
+        params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
+        and not params.app_params.print_tree
+    ):
+        determine_cmd_path(
+            params=params,
+            hook_obj=hook_obj,
+            use_prompts=use_prompts,
+            pargs=pargs,
+            def_params=def_tmtc_params,
+        )
+
+
+def perform_tree_printout(app_params: AppParams, cmd_def_tree: CmdTreeNode):
+    if app_params.tree_print_with_description:
+        info_str = "with full descriptions"
     else:
-        if params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
-            find_service_and_op_code(
-                params=params,
-                hook_obj=hook_obj,
-                use_prompts=use_prompts,
-                pargs=pargs,
-                def_params=def_tmtc_params,
-            )
+        info_str = "without descriptions"
+    if app_params.tree_print_max_depth is not None:
+        info_str += f" and maximum depth {app_params.tree_print_max_depth}"
+    print(f"Printing command tree {info_str}:")
+    print(
+        cmd_def_tree.str_for_tree(
+            app_params.tree_print_with_description,
+            app_params.tree_print_max_depth,
+        )
+    )
 
 
 class PreArgsParsingWrapper:
@@ -596,6 +658,7 @@ class PreArgsParsingWrapper:
                 patched_args.extend(sys.argv[1:])
         if patched_args is None:
             patched_args = sys.argv[1:]
+        assert self.args_parser is not None
         args_raw, unknown_args = parse_default_tmtccmd_input_arguments(
             args=patched_args,
             parser=self.args_parser,
@@ -613,11 +676,13 @@ class PreArgsParsingWrapper:
         """Add the default tmtc procedure parameters to the default parser. This includes
         the service and operation code flags."""
         self._check_arg_parser()
+        assert self.args_parser is not None
         add_default_procedure_arguments(self.args_parser)
 
     def add_cfdp_args(self):
         """Add the default CFDP procedure parameters to the default parser."""
         self._check_arg_parser()
+        assert self.args_parser is not None
         add_cfdp_procedure_arguments(self.args_parser)
 
     def _check_arg_parser(self):
@@ -629,7 +694,7 @@ class PreArgsParsingWrapper:
 
     def add_def_proc_and_cfdp_as_subparsers(
         self,
-    ) -> (argparse.ArgumentParser, argparse.ArgumentParser):
+    ) -> Tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
         """Add the default tmtc and cfdp procedure as subparsers."""
         self._monkey_patch_missing_subparser = True
         subparser = self.args_parser.add_subparsers(dest="proc_type")
@@ -686,7 +751,7 @@ class PostArgsParsingWrapper:
         self.params = params
         self.unknown_args = unknown_args
         self.hook_obj = hook_obj
-        self.assign_com_if = True
+        self.assign_com_if_on_conversion_if_applicable = True
 
     @property
     def use_gui(self):
@@ -716,7 +781,7 @@ class PostArgsParsingWrapper:
     def _set_params(self, proc_base: ProcedureParamsWrapper, with_prompts: bool):
         param_type = self.request_type_from_args()
         if param_type == TcProcedureType.DEFAULT:
-            def_proc_params = DefaultProcedureParams()
+            def_proc_params = DefaultProcedureParams(None)
             if with_prompts:
                 self.set_tmtc_params_with_prompts(def_proc_params)
             else:
@@ -759,7 +824,7 @@ class PostArgsParsingWrapper:
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
                 def_tmtc_params=def_tmtc_params,
-                assign_com_if=self.assign_com_if,
+                assign_com_if=self.assign_com_if_on_conversion_if_applicable,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(
@@ -774,7 +839,7 @@ class PostArgsParsingWrapper:
                 params=self.params,
                 hook_obj=self.hook_obj,
                 use_prompts=use_prompts,
-                assign_com_if=self.assign_com_if,
+                assign_com_if=self.assign_com_if_on_conversion_if_applicable,
             )
         except KeyboardInterrupt:
             raise KeyboardInterrupt(

@@ -1,14 +1,11 @@
-import deprecation
-
-from tmtccmd.version import get_version
-from spacepackets.ecss import PusTelecommand, PusService
+from deprecated.sphinx import deprecated
+from spacepackets.ecss import PusService, PusTelecommand
 from spacepackets.ecss.pus_17_test import Subservice
 
 
-@deprecation.deprecated(
-    deprecated_in="4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="4.0.0a2",
+    reason="use create... API instead",
 )
 def pack_service_17_ping_command(apid: int = 0, seq_count: int = 0) -> PusTelecommand:
     return create_service_17_ping_command(apid, seq_count)

@@ -6,8 +6,7 @@ from pathlib import Path
 from collections import deque
 from dataclasses import dataclass
 from typing import Deque, Optional, Tuple
-
-import deprecation
+from deprecated.sphinx import deprecated
 from spacepackets.cfdp import (
     CrcFlag,
     GenericPduPacket,
@@ -73,7 +72,6 @@ from tmtccmd.cfdp.request import PutRequest
 from tmtccmd.cfdp.user import TransactionFinishedParams, TransactionParams
 from tmtccmd.util import ProvidesSeqCount
 from tmtccmd.util.countdown import Countdown
-from tmtccmd.version import get_version
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -1020,10 +1018,9 @@ class SourceHandler:
             )
         return crc
 
-    @deprecation.deprecated(
-        deprecated_in="6.0.0rc1",
-        current_version=get_version(),
-        details="Use insert_packet instead",
+    @deprecated(
+        version="6.0.0rc1",
+        reason="use insert_packet instead",
     )
     def pass_packet(self, packet: AbstractFileDirectiveBase):
         self.insert_packet(packet)

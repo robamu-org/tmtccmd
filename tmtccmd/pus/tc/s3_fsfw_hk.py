@@ -1,10 +1,9 @@
 """Contains definitions and functions related to PUS Service 3 Telecommands.
 """
 import struct
-import deprecation
 from typing import Tuple
 
-from tmtccmd.version import get_version
+from deprecated.sphinx import deprecated
 from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ecss.pus_3_hk import Subservice
 
@@ -19,10 +18,9 @@ def make_interval(interval_seconds: float) -> bytearray:
     return bytearray(struct.pack("!f", interval_seconds))
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def enable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return create_enable_periodic_hk_command_with_diag(diag, sid)
@@ -32,10 +30,9 @@ def create_enable_periodic_hk_command(sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(enable=True, sid=sid)
 
 
-@deprecation.deprecated(
-    deprecated_in="v6.0.0rc0",
-    current_version=get_version(),
-    details="use diagnostic agnostic API if possible",
+@deprecated(
+    version="v6.0.0rc0",
+    reason="use diagnostic agnostic API if possible",
 )
 def create_enable_periodic_hk_command_with_diag(
     diag: bool, sid: bytes
@@ -43,10 +40,9 @@ def create_enable_periodic_hk_command_with_diag(
     return __generate_periodic_hk_command_legacy(diag=diag, enable=True, sid=sid)
 
 
-@deprecation.deprecated(
-    deprecated_in="v6.0.0rc0",
-    current_version=get_version(),
-    details="use diagnostic agnostic API if possible",
+@deprecated(
+    version="v6.0.0rc0",
+    reason="use diagnostic agnostic API if possible",
 )
 def create_enable_periodic_hk_command_with_interval_with_diag(
     diag: bool, sid: bytes, interval_seconds: float
@@ -64,10 +60,9 @@ def create_enable_periodic_hk_command_with_interval(
     return cmd0, cmd1
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
@@ -81,10 +76,9 @@ def create_disable_periodic_hk_command(sid: bytes) -> PusTelecommand:
     return __generate_periodic_hk_command(enable=False, sid=sid)
 
 
-@deprecation.deprecated(
-    deprecated_in="v6.0.0rc0",
-    current_version=get_version(),
-    details="use diagnostic agnostic API if possible",
+@deprecated(
+    version="v6.0.0rc0",
+    reason="use diagnostic agnostic API if possible",
 )
 def create_disable_periodic_hk_command_with_diag(
     diag: bool, sid: bytes
@@ -92,10 +86,9 @@ def create_disable_periodic_hk_command_with_diag(
     return __generate_periodic_hk_command_legacy(diag=diag, enable=False, sid=sid)
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def disable_periodic_hk_command(diag: bool, sid: bytes) -> PusTelecommand:
     return create_disable_periodic_hk_command_with_diag(diag, sid)
@@ -127,10 +120,9 @@ def __generate_periodic_hk_command_legacy(
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def modify_collection_interval(
     diag: bool, sid: bytes, interval_seconds: float
@@ -147,10 +139,9 @@ def create_modify_collection_interval_cmd(
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
-@deprecation.deprecated(
-    deprecated_in="v6.0.0rc0",
-    current_version=get_version(),
-    details="use diagnostic agnostic API if possible",
+@deprecated(
+    version="v6.0.0rc0",
+    reason="use diagnostic agnostic API if possible",
 )
 def create_modify_collection_interval_cmd_with_diag(
     diag: bool, sid: bytes, interval_seconds: float
@@ -164,10 +155,9 @@ def create_modify_collection_interval_cmd_with_diag(
     return PusTelecommand(service=3, subservice=subservice, app_data=app_data)
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def generate_one_hk_command(sid: bytes) -> PusTelecommand:
     return create_request_one_hk_command(sid)
@@ -181,10 +171,9 @@ def create_request_one_hk_command(sid: bytes) -> PusTelecommand:
     )
 
 
-@deprecation.deprecated(
-    deprecated_in="v4.0.0a2",
-    current_version=get_version(),
-    details="use create... API instead",
+@deprecated(
+    version="v4.0.0a2",
+    reason="use create... API instead",
 )
 def generate_one_diag_command(sid: bytes) -> PusTelecommand:
     return create_request_one_diag_command(sid)

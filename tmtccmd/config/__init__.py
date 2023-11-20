@@ -36,7 +36,7 @@ from .defs import (
     CfdpParams,
 )
 from .prompt import prompt_op_code, prompt_service
-from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase
+from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase, CmdTreeNode
 from .hook import HookBase
 from tmtccmd.tmtc.procedure import (
     DefaultProcedureInfo,
@@ -51,7 +51,7 @@ from tmtccmd.core.base import ModeWrapper
 _LOGGER = logging.getLogger(__name__)
 
 
-def backend_mode_conversion(mode: CoreModeList, mode_wrapper: ModeWrapper):
+def backend_mode_conversion(mode: str, mode_wrapper: ModeWrapper):
     if mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.IDLE
@@ -115,7 +115,7 @@ class SetupWrapper:
 
 
 def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedureInfo:
-    return DefaultProcedureInfo(service=params.service, op_code=params.op_code)
+    return DefaultProcedureInfo(cmd_path=params.cmd_path)
 
 
 def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
@@ -129,9 +129,9 @@ def params_to_procedure_conversion(
 ) -> ProcedureWrapper:
     proc_wrapper = ProcedureWrapper(None)
     if param_wrapper.ptype == TcProcedureType.DEFAULT:
-        proc_wrapper.base = tmtc_params_to_procedure(param_wrapper.def_params())
+        proc_wrapper.procedure = tmtc_params_to_procedure(param_wrapper.def_params())  # type: ignore
     elif param_wrapper.ptype == TcProcedureType.CFDP:
-        proc_wrapper.base = cfdp_put_req_params_to_procedure(
-            param_wrapper.cfdp_params()
+        proc_wrapper.procedure = cfdp_put_req_params_to_procedure(
+            param_wrapper.cfdp_params()  # type: ignore
         )
     return proc_wrapper

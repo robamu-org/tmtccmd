@@ -1,13 +1,20 @@
+import os
 import logging
 
-from prompt_toolkit.completion import WordCompleter
-from prompt_toolkit.shortcuts import CompleteStyle
 import prompt_toolkit
-from tmtccmd.config.tmtc import OpCodeEntry, TmtcDefinitionWrapper
+from deprecated.sphinx import deprecated
+from prompt_toolkit.completion import NestedCompleter, WordCompleter
+from prompt_toolkit.shortcuts import CompleteStyle
+
+from tmtccmd.config.tmtc import CmdTreeNode, OpCodeEntry, TmtcDefinitionWrapper
 
 _LOGGER = logging.getLogger(__name__)
 
 
+@deprecated(
+    reason="use prompt_cmd_path instead",
+    version="8.0.0",
+)
 def prompt_service(
     tmtc_defs: TmtcDefinitionWrapper,
     compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE,
@@ -44,6 +51,49 @@ def prompt_service(
             return service_string
         else:
             _LOGGER.warning("Invalid key, try again")
+
+
+def prompt_cmd_path(
+    cmd_def_tree: CmdTreeNode, compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
+) -> str:
+    compl_dict = cmd_def_tree.name_dict
+    compl_dict = compl_dict.get("/")
+    if compl_dict is None:
+        return "/"
+    compl_dict.update({":p": None})
+    compl_dict.update({":fp": None})
+    nested_completer = NestedCompleter.from_nested_dict(compl_dict, separator="/")
+    help_txt = (
+        f"Additional commands for prompt:{os.linesep}"
+        f":p Tree Print | :pf Full Print | :r Retry | :h Help Text {os.linesep}"
+        f"Auto complete is available using Tab after typing the slash character."
+    )
+    print(help_txt)
+    while True:
+        path_or_cmd = prompt_toolkit.prompt(
+            message="> ",
+            completer=nested_completer,
+            complete_style=compl_style,
+        )
+        if path_or_cmd == ":p":
+            print(cmd_def_tree.str_for_tree(False))
+            continue
+        elif path_or_cmd == ":pf":
+            print(cmd_def_tree.str_for_tree(True))
+            continue
+        elif ":h" in path_or_cmd:
+            print(help_txt)
+            continue
+        elif ":r" in path_or_cmd:
+            continue
+        if not cmd_def_tree.contains_path(f"/{path_or_cmd}"):
+            yes_or_no = input(
+                "Command definitions tree does not contain the path. Try again? [y/n]: "
+            )
+            if yes_or_no in ["y", "yes", "1"]:
+                continue
+        break
+    return f"/{path_or_cmd}"
 
 
 def build_service_word_completer(

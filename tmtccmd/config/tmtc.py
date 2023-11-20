@@ -1,4 +1,167 @@
-from typing import Union, List, Optional, Dict, Tuple
+from __future__ import annotations
+
+import enum
+import os
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+from deprecated.sphinx import deprecated
+
+
+class TreePart(enum.Enum):
+    EDGE = "├──"
+    LINE = "│  "
+    CORNER = "└──"
+    BLANK = "   "
+
+
+class DepthInfo:
+    def __init__(
+        self,
+        depth: int,
+        last_child: bool,
+        max_depth: Optional[int] = None,
+        layer_is_last_set: Optional[Set[int]] = None,
+    ) -> None:
+        self.depth = depth
+        self.last_child = last_child
+        if layer_is_last_set is None:
+            self.layer_is_last_set = set()
+        else:
+            self.layer_is_last_set = layer_is_last_set
+        self.max_depth = max_depth
+
+    def is_layer_for_last_child(self, depth: int) -> bool:
+        return depth in self.layer_is_last_set
+
+    def set_layer_is_last_child(self, depth: int):
+        self.layer_is_last_set.add(depth)
+
+
+class CmdTreeNode:
+    def __init__(
+        self, name: str, description: str, parent: Optional[CmdTreeNode] = None
+    ) -> None:
+        self.name = name
+        self.description = description
+        self.parent: Optional[CmdTreeNode] = parent
+        self.children: Dict[str, CmdTreeNode] = {}
+
+    @classmethod
+    def root_node(cls) -> CmdTreeNode:
+        return cls(name="/", description="Root Node", parent=None)
+
+    def __getitem__(self, arg):
+        return self.children[arg]
+
+    def add_child(self, child: CmdTreeNode):
+        child.parent = self
+        self.children.update({child.name: child})
+
+    def contains_path(self, path: str) -> bool:
+        """Check whether a full slash separated command path is contained within
+        the command tree."""
+        return self.contains_path_from_node_list(path.split("/"))
+
+    def contains_path_from_node_list(self, node_name_list: List[str]) -> bool:
+        """Check whether the given list of nodes are contained within the command tree."""
+        if len(node_name_list) == 0:
+            return False
+        # Only root node.
+        if len(node_name_list) == 2 and node_name_list == ["", ""]:
+            return True
+        if node_name_list[0] == "":
+            # Cut off empty string left of root node /
+            node_name_list = node_name_list[1:]
+        for child in self.children.values():
+            if node_name_list[0] == child.name:
+                # This is the last node.
+                if len(node_name_list) == 1:
+                    return True
+                return child.contains_path_from_node_list(node_name_list[1:])
+        return False
+
+    @property
+    def name_dict(self) -> Dict[str, Optional[Dict[str, Any]]]:
+        """Returns a nested dictionary where the key is always the name of the node, and the
+        value is one nested name dictionary for each child node."""
+        children_dict = {}
+        if self.children:
+            for child in self.children.values():
+                children_dict.update(child.name_dict)
+            return {self.name: children_dict}
+        return {self.name: None}
+
+    def str_for_tree(
+        self, with_description: bool, max_depth: Optional[int] = None
+    ) -> str:
+        return self.__str_for_depth(
+            with_description, DepthInfo(depth=0, last_child=False, max_depth=max_depth)
+        )
+
+    def __str_for_depth(self, with_description: bool, depth_info: DepthInfo) -> str:
+        line = ""
+        # If we are at a larger depth than 0, we want to prepend the name using a special
+        # format. Example:
+        #
+        # Example 1:
+        # /
+        # ├── ACS
+        # │  └── ACS_CTRL
+        # └── TCS
+        #
+        # Example 2:
+        # /
+        # ├── ACS
+        # │  └── ACS_CTRL
+        # └── TCS
+        #    └── TCS_CTRL
+        #
+        # Example 3:
+        # /
+        # ├── ACS
+        # │  ├── ACS_CTRL
+        # │  └── MGM_0
+        # │     └── UPDATE_CFG
+        # ├── TCS
+        # │  ├── TCS_CTRL
+        # │  └── PT1000_0
+        # └── PING
+        for i in range(depth_info.depth):
+            if i == depth_info.depth - 1:
+                if depth_info.last_child:
+                    line += TreePart.CORNER.value + " "
+                else:
+                    line += TreePart.EDGE.value + " "
+            else:
+                if depth_info.is_layer_for_last_child(i):
+                    line += TreePart.BLANK.value
+                else:
+                    line += TreePart.LINE.value
+        if depth_info.max_depth is not None and depth_info.depth > depth_info.max_depth:
+            line += f"... (cut-off, maximum depth {depth_info.max_depth}){os.linesep}"
+            return line
+        else:
+            line += self.name
+            if with_description:
+                line = f"{line.ljust(35)} [ " + self.description + " ]"
+        string = line + os.linesep
+        for idx, child in enumerate(self.children.values()):
+            last_child = True if (idx == (len(self.children) - 1)) else False
+            child_depth_info = DepthInfo(
+                depth=depth_info.depth + 1,
+                last_child=last_child,
+                max_depth=depth_info.max_depth,
+                layer_is_last_set=depth_info.layer_is_last_set,
+            )
+            if last_child:
+                child_depth_info.set_layer_is_last_child(depth_info.depth)
+            # Use recursion here to get the string for the subtree.
+            string += child.__str_for_depth(with_description, child_depth_info)
+        return string
+
+    def __str__(self) -> str:
+        return self.str_for_tree(False)
+
 
 ServiceNameT = str
 ServiceInfoT = str
@@ -6,6 +169,10 @@ OpCodeNameT = Union[str, List[str]]
 OpCodeInfoT = str
 
 
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
+)
 class OpCodeOptionBase:
     def __init__(self):
         pass
@@ -14,6 +181,10 @@ class OpCodeOptionBase:
 OpCodeDict = Dict[str, Tuple[OpCodeInfoT, OpCodeOptionBase]]
 
 
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
+)
 class OpCodeEntry:
     def __init__(self):
         self._op_code_dict_num_keys: OpCodeDict = dict()
@@ -74,6 +245,10 @@ ServiceDictValueT = Optional[Tuple[ServiceInfoT, OpCodeEntry]]
 ServiceOpCodeDictT = Dict[ServiceNameT, ServiceDictValueT]
 
 
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
+)
 class TmtcDefinitionWrapper:
     def __init__(self, init_defs: Optional[ServiceOpCodeDictT] = None):
         if init_defs is None:
@@ -105,6 +280,10 @@ class TmtcDefinitionWrapper:
 REGISTER_CBS = set()
 
 
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
+)
 def tmtc_definitions_provider(adder_func):
     """Function decorator which registers the decorated function to be a TMTC definition provider.
     The :py:func:`execute_tmtc_def_functions` function can be used to call all functions.
@@ -125,6 +304,10 @@ def tmtc_definitions_provider(adder_func):
     return call_explicitely
 
 
+@deprecated(
+    version="8.0.0",
+    reason="use the new command definition tree instead",
+)
 def call_all_definitions_providers(defs: TmtcDefinitionWrapper, *args, **kwargs):
     global REGISTER_CBS
     if REGISTER_CBS:

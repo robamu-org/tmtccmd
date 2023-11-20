@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import time
 from typing import Optional
-from deprecation import deprecated
+from deprecated.sphinx import deprecated
 from datetime import timedelta
-from tmtccmd.version import get_version
 
 
 def time_ms() -> int:
@@ -63,9 +62,8 @@ class Countdown:
         self._start_time_ms = 0
 
     @deprecated(
-        deprecated_in="7.0.0",
-        details="use remaining_time method instead",
-        current_version=get_version(),
+        version="7.0.0",
+        reason="use remaining_time method instead",
     )
     def rem_time(self):
         return self.remaining_time()

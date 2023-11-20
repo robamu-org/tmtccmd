@@ -17,11 +17,9 @@ from tmtccmd.com import ComInterface
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.config import (
     default_json_path,
+    CmdTreeNode,
     SetupParams,
     HookBase,
-    TmtcDefinitionWrapper,
-    CoreServiceList,
-    OpCodeEntry,
     params_to_procedure_conversion,
     PreArgsParsingWrapper,
     SetupWrapper,
@@ -29,8 +27,6 @@ from tmtccmd.config import (
 from tmtccmd.logging import add_colorlog_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
-    RawTmtcTimedLogWrapper,
-    TimedLogWhen,
 )
 from tmtccmd.tmtc import (
     CcsdsTmHandler,
@@ -61,7 +57,7 @@ class ExampleHookClass(HookBase):
     def __init__(self, json_cfg_path: str):
         super().__init__(json_cfg_path=json_cfg_path)
 
-    def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
+    def get_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         assert self.cfg_path is not None
         print("Communication interface assignment function was called")
         from tmtccmd.config.com import (
@@ -78,27 +74,45 @@ class ExampleHookClass(HookBase):
         assert cfg is not None
         return create_com_interface_default(cfg)
 
-    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
-        from tmtccmd.config.globals import get_default_tmtc_defs
-
-        defs = get_default_tmtc_defs()
-        srv_5 = OpCodeEntry()
-        srv_5.add("0", "Event Test")
-        defs.add_service(
-            name=CoreServiceList.SERVICE_5.value,
-            info="PUS Service 5 Event",
-            op_code_entry=srv_5,
+    def get_command_definitions(self) -> CmdTreeNode:
+        root_node = CmdTreeNode.root_node()
+        root_node.add_child(CmdTreeNode("ping", "Send PUS ping command"))
+        root_node.add_child(CmdTreeNode("test", "Test Node"))
+        root_node.children["test"].add_child(
+            CmdTreeNode("event", "Send PUS event test command")
         )
-        srv_17 = OpCodeEntry()
-        srv_17.add("0", "Ping Test")
-        defs.add_service(
-            name=CoreServiceList.SERVICE_17_ALT,
-            info="PUS Service 17 Test",
-            op_code_entry=srv_17,
-        )
-        return defs
+        return self.build_more_complex_tree(root_node)
 
-    def perform_mode_operation(self, tmtc_backend: CcsdsTmtcBackend, mode: int):
+    def build_more_complex_tree(self, root_node: CmdTreeNode) -> CmdTreeNode:
+        root_node.add_child(CmdTreeNode("system", "System Commands"))
+        root_node.add_child(CmdTreeNode("acs", "ACS Subsystem"))
+        root_node["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
+        root_node["acs"].add_child(CmdTreeNode("mgt", "Magnetorquer"))
+        root_node["acs"]["mgt"].add_child(CmdTreeNode("set_dipoles", "Set MGT Dipoles"))
+        root_node["acs"].add_child(CmdTreeNode("mgm0", "Magnetometer 0"))
+        root_node["acs"].add_child(CmdTreeNode("mgm1", "Magnetometer 1"))
+        mgm_node = CmdTreeNode("other cmds", "Other MGM commands")
+        root_node["acs"]["mgm0"].add_child(mgm_node)
+        root_node["acs"]["mgm1"].add_child(mgm_node)
+        root_node.add_child(CmdTreeNode("tcs", "TCS Subsystem"))
+        root_node["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
+        root_node["tcs"].add_child(CmdTreeNode("pt1000", "Temperature Sensor"))
+        root_node["tcs"].add_child(CmdTreeNode("heater", "Heater"))
+        root_node.add_child(CmdTreeNode("com", "COM Subsystem"))
+        root_node["com"].add_child(CmdTreeNode("uhf_transceiver", "UHF Transceiver"))
+        root_node.add_child(CmdTreeNode("eps", "EPS Subsystem"))
+        root_node["eps"].add_child(CmdTreeNode("pcdu", "PCDU"))
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_0_on", "Channel 0 on"))
+        root_node["eps"]["pcdu"].add_child(
+            CmdTreeNode("channel_0_off", "Channel 0 off")
+        )
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_on", "Channel 1 on"))
+        root_node["eps"]["pcdu"].add_child(
+            CmdTreeNode("channel_1_off", "Channel 1 off")
+        )
+        return root_node
+
+    def perform_mode_operation(self, _tmtc_backend: CcsdsTmtcBackend, _mode: int):
         _LOGGER.info("Mode operation hook was called")
         pass
 
@@ -108,33 +122,16 @@ class ExampleHookClass(HookBase):
         return get_core_object_ids()
 
 
-class DualLogger:
-    def __init__(self, file_logger: logging.Logger, console_logger: logging.Logger):
-        self.file_logger = file_logger
-        self.console_logger = console_logger
-
-    def info(self, string: str):
-        self.console_logger.info(string)
-        self.file_logger.info(string)
-
-    def print(self, string: str):
-        print(string)
-        self.file_logger.info(string)
-
-
 class PusTmHandler(SpecificApidHandlerBase):
     def __init__(
         self,
         verif_wrapper: VerificationWrapper,
         printer: FsfwTmTcPrinter,
-        raw_logger: RawTmtcTimedLogWrapper,
     ):
         super().__init__(EXAMPLE_PUS_APID, None)
         self.printer = printer
-        self.raw_logger = raw_logger
         self.verif_wrapper = verif_wrapper
         assert self.printer.file_logger is not None
-        self.dlogger = DualLogger(self.printer.file_logger, _LOGGER)
 
     def handle_tm(self, packet: bytes, _user_args: Any):
         try:
@@ -167,17 +164,16 @@ class PusTmHandler(SpecificApidHandlerBase):
             dedicated_handler = True
         if service == 5:
             event_tm = Service5Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
-            self.dlogger.info(
+            _LOGGER.info(
                 f"Received event packet TM [{event_tm.service}, {event_tm.subservice}]"
             )
-            dedicated_handler = True
         if service == 17:
             ping_tm = Service17Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
             dedicated_handler = True
             if ping_tm.subservice == 2:
-                self.dlogger.info("Received Ping Reply TM[17,2]")
+                _LOGGER.info("Received Ping Reply TM[17,2]")
             else:
-                self.dlogger.info(
+                _LOGGER.info(
                     "Received Test Packet with unknown subservice"
                     f" {tm_packet.subservice}"
                 )
@@ -188,11 +184,13 @@ class PusTmHandler(SpecificApidHandlerBase):
             tm_packet = PusTelemetry.unpack(
                 packet, time_reader=CdsShortTimestamp.empty()
             )
-        self.raw_logger.log_tm(tm_packet)
-        if not dedicated_handler and tm_packet is not None:
-            pass
-            # TODO: Create more generic print method..
-            # self.printer.handle_long_tm_print(packet_if=tm_packet, info_if=tm_packet)
+        # TODO: Insert this into a DB instead. Maybe use sqlite for first variant.
+        # self.raw_logger.log_tm(tm_packet)
+        if not dedicated_handler:
+            _LOGGER.info(
+                f"Received PUS TM [{tm_packet.service}, {tm_packet.subservice}] with not dedicated "
+                f"handler"
+            )
 
 
 class TcHandler(TcHandlerBase):
@@ -231,23 +229,26 @@ class TcHandler(TcHandlerBase):
     def queue_finished_cb(self, helper: ProcedureWrapper):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
-            _LOGGER.info(
-                f"Queue handling finished for service {def_proc.service} and "
-                f"op code {def_proc.op_code}"
-            )
+            _LOGGER.info(f"Queue handling finished for command {def_proc.cmd_path}")
 
     def feed_cb(self, helper: ProcedureWrapper, wrapper: FeedWrapper):
         self.queue_helper.queue_wrapper = wrapper.queue_wrapper
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
-            service = def_proc.service
-            if (
-                service == CoreServiceList.SERVICE_17
-                or service == CoreServiceList.SERVICE_17_ALT
-            ):
+            cmd_path = def_proc.cmd_path
+            assert cmd_path is not None
+            # Path starts with / so the first entry of the list will be an empty string. We cut
+            # off that string.
+            cmd_path_list = cmd_path.split("/")[1:]
+            if cmd_path_list[0] == "ping":
                 return self.queue_helper.add_pus_tc(
                     PusTelecommand(service=17, subservice=1)
                 )
+            elif cmd_path_list[0] == "test":
+                if cmd_path_list[1] == "event":
+                    return self.queue_helper.add_pus_tc(
+                        PusTelecommand(service=17, subservice=128)
+                    )
 
 
 # Note about lint disable: I could split up the function but I prefer to have the whole
@@ -276,13 +277,12 @@ def main():  # noqa: C901
     # Create console logger helper and file loggers
     tmtc_logger = RegularTmtcLogWrapper()
     printer = FsfwTmTcPrinter(tmtc_logger.logger)
-    raw_logger = RawTmtcTimedLogWrapper(when=TimedLogWhen.PER_HOUR, interval=1)
     verificator = PusVerificator()
     verification_wrapper = VerificationWrapper(
         verificator, _LOGGER, printer.file_logger
     )
     # Create primary TM handler and add it to the CCSDS Packet Handler
-    tm_handler = PusTmHandler(verification_wrapper, printer, raw_logger)
+    tm_handler = PusTmHandler(verification_wrapper, printer)
     ccsds_handler = CcsdsTmHandler(generic_handler=None)
     ccsds_handler.add_apid_handler(tm_handler)
 

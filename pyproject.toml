@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "tmtccmd"
 description = "TMTC Commander Core"
 readme = "README.md"
-version = "7.0.0"
+version = "8.0.0rc0"
 requires-python = ">=3.8"
 license = {text = "Apache-2.0 or MIT" }
 authors = [
@@ -32,8 +32,10 @@ dependencies = [
     "colorama~=0.4.0",
     "colorlog~=6.6",
     "cobs~=1.2",
-    "prompt-toolkit~=3.0",
-    "deprecation~=2.1",
+    # TODO: Use upstream again when the nested completer PR has been merged.
+    # "prompt-toolkit~=3.0",
+    "prompt-toolkit @ git+https://github.com/robamu/python-prompt-toolkit.git@nested-completer-custom-separator-based-on-latest",
+    "Deprecated~=1.2",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
     "spacepackets~=0.21.0",

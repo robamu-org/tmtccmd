@@ -2,23 +2,22 @@
 external hardware or an extra socket
 """
 from typing import Optional
-from tmtccmd.version import get_version
-import deprecation
 
-from spacepackets.ecss.pus_17_test import Service17Tm
+from deprecated.sphinx import deprecated
+from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_1_verification import (
     RequestId,
-    VerificationParams,
     Service1Tm,
+    VerificationParams,
 )
+from spacepackets.ecss.pus_17_test import Service17Tm
 from spacepackets.ecss.tc import PusTelecommand
-from spacepackets.ccsds.time import CdsShortTimestamp
 
 from tmtccmd.com import ComInterface
 from tmtccmd.config import CoreComInterfaces
-from tmtccmd.tmtc import TelemetryListT
 from tmtccmd.pus.s1_verification import Subservice as Pus1Subservice
 from tmtccmd.pus.s17_test import Subservice as Pus17Subservice
+from tmtccmd.tmtc import TelemetryListT
 
 
 class DummyHandler:
@@ -28,10 +27,9 @@ class DummyHandler:
         self.current_ssc = 0
         self.reply_pending = False
 
-    @deprecation.deprecated(
-        deprecated_in="6.0.0",
-        current_version=get_version(),
-        details="Use insert_telecommand instead",
+    @deprecated(
+        version="6.0.0",
+        reason="Use insert_telecommand instead",
     )
     def pass_telecommand(self, data: bytearray):
         self.insert_telecommand(data)
