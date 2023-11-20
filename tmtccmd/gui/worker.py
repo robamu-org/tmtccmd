@@ -19,10 +19,6 @@ class WorkerSignalWrapper(QObject):
 
 
 class FrontendWorker(QRunnable):
-    """Runnable thread which can be used with QThreadPool. Not used for now, might be needed
-    in the future.
-    """
-
     def __init__(self, local_args: LocalArgs, shared_args: SharedArgs):
         super(QRunnable, self).__init__()
         self._locals = local_args
@@ -44,7 +40,7 @@ class FrontendWorker(QRunnable):
         if op_code == WorkerOperationsCodes.OPEN_COM_IF:
             LOGGER.info("Switching COM Interface")
             # TODO: We should really pass a proper object here instead of using magic tuples..
-            new_com_if = self._locals.op_args[2].assign_communication_interface(
+            new_com_if = self._locals.op_args[2].get_communication_interface(
                 com_if_key=self._locals.op_args[1]
             )
             # self._args.state.last_com_if = self._args.state.current_com_if

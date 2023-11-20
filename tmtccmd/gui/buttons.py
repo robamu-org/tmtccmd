@@ -202,6 +202,10 @@ class SendButtonWrapper:
         if self.debug_mode:
             LOGGER.info("Send command button pressed.")
         self.button.setDisabled(True)
+        if self._args.state.current_cmd_path is None:
+            return
+        # TODO: We should pass this path to the worker instead of doing this.. It does not belong
+        # in the GUI component.
         self._args.shared.backend.current_procedure = DefaultProcedureInfo(
             self._args.state.current_cmd_path
         )

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import enum
 import threading
-from typing import Any
+from typing import Any, Optional
 
 from tmtccmd import CcsdsTmtcBackend
 from tmtccmd.config import CoreComInterfaces
@@ -87,7 +87,7 @@ class SharedArgs:
 @dataclass
 class FrontendState:
     current_com_if = CoreComInterfaces.UNSPECIFIED.value
-    current_cmd_path = ""
+    current_cmd_path: Optional[str] = None
     auto_connect_tm_listener = True
     last_com_if = CoreComInterfaces.UNSPECIFIED.value
     current_com_if_key = CoreComInterfaces.UNSPECIFIED.value

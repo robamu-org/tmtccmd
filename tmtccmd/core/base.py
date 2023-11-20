@@ -1,10 +1,11 @@
+from typing import Any
 import enum
 from abc import abstractmethod
 
 
 class FrontendBase:
     @abstractmethod
-    def start(self, args: any):
+    def start(self, args: Any):
         """
         Start the frontend.
         :return:

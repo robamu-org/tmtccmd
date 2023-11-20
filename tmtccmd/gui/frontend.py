@@ -6,9 +6,10 @@ import sys
 import webbrowser
 from multiprocessing import Process
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 from PyQt6.QtWidgets import (
+    QLineEdit,
     QMainWindow,
     QGridLayout,
     QTableWidget,
@@ -38,6 +39,7 @@ from tmtccmd.gui.buttons import (
     TmButtonWrapper,
     ConnectButtonWrapper,
 )
+from tmtccmd.gui.cmd_select import CommandPathSelectWidget
 from tmtccmd.gui.defs import SharedArgs, CONNECT_BTTN_STYLE, FrontendState
 from tmtccmd.logging import get_console_logger
 import tmtccmd as mod_root
@@ -55,14 +57,10 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._shared_args = SharedArgs(tmtc_backend)
         tmtc_backend.exit_on_com_if_init_failure = False
         self._hook_obj = hook_obj
-        self._service_list = []
-        self._op_code_list = []
         self._com_if_list = []
-        self._service_op_code_dict = hook_obj.get_tmtc_definitions()
         self._state = FrontendState()
         self._thread_pool = QThreadPool()
         self.__connected = False
-        self.__combo_box_op_codes: Optional[QComboBox] = None
         self.logo_path = Path(
             f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png"
         )
@@ -71,17 +69,11 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         return Process(target=self.start)
 
     def start(self, qt_app: Any):
-        self.__start_ui()
+        self._start_ui()
         sys.exit(qt_app.exec())
 
-    def set_gui_logo(self, logo_total_path: str):
-        if os.path.isfile(logo_total_path):
-            self.logo_path = logo_total_path
-        else:
-            LOGGER.warning("Could not set logo, path invalid!")
-
-    def __start_ui(self):
-        self.__create_menu_bar()
+    def _start_ui(self):
+        self._create_menu_bar()
         win = QWidget(self)
         self.setCentralWidget(win)
 
@@ -121,7 +113,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         tmtc_ctrl_label.setFont(font)
         grid.addWidget(tmtc_ctrl_label, row, 0, 1, 2)
         row += 1
-        row = self.__set_up_service_op_code_section(grid=grid, row=row)
+        row = self._set_up_cmd_path_ui(grid=grid, row=row)
 
         button_args = ButtonArgs(
             state=self._state, pool=self._thread_pool, shared=self._shared_args
@@ -144,6 +136,12 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.show()
         # self.destroyed.connect(self.__tm_button_wrapper.stop_thread)
 
+    def set_gui_logo(self, logo_total_path: str):
+        if os.path.isfile(logo_total_path):
+            self.logo_path = logo_total_path
+        else:
+            LOGGER.warning("Could not set logo, path invalid!")
+
     def closeEvent(self, event):
         try:
             pass
@@ -156,13 +154,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         except KeyboardInterrupt:
             self.__tm_button_wrapper.abort_thread()
 
-    def __create_menu_bar(self):
+    def _create_menu_bar(self):
         menu_bar = self.menuBar()
         # Creating menus using a QMenu object
         file_menu = QMenu("&File", self)
+        assert menu_bar is not None
         menu_bar.addMenu(file_menu)
         # Creating menus using a title
         help_menu = menu_bar.addMenu("&Help")
+        assert help_menu is not None
 
         help_action = QAction("Help", self)
         help_action.triggered.connect(self.__help_url)
@@ -264,46 +264,54 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self.__send_bttn_wrapper.button.setDisabled(True)
         self.__tm_button_wrapper.button.setDisabled(True)
 
-    def __set_up_service_op_code_section(self, grid: QGridLayout, row: int):
-        """
-        grid.addWidget(QLabel("Service: "), row, 0, 1, 2)
-        grid.addWidget(QLabel("Operation Code: "), row, 1, 1, 2)
+    def _set_up_cmd_path_ui(self, grid: QGridLayout, row: int):
+        font = QFont()
+        font.setBold(True)
+        label = QLabel("Communication Select")
+        label.setFont(font)
+        grid.addWidget(label, row, 0, 1, 1)
         row += 1
-
-        combo_box_services = QComboBox()
-        default_service = get_global(CoreGlobalIds.CURRENT_SERVICE)
-        self._service_op_code_dict = self._hook_obj.get_tmtc_definitions()
-        if self._service_op_code_dict is None:
-            LOGGER.warning("Invalid service to operation code dictionary")
-            LOGGER.warning("Setting default dictionary")
-            from tmtccmd.config.globals import get_default_tmtc_defs
-
-            self._service_op_code_dict = get_default_tmtc_defs()
-        index = 0
-        default_index = 0
-        for service_key, service_value in self._service_op_code_dict.defs.items():
-            combo_box_services.addItem(service_value[0])
-            if service_key == default_service:
-                default_index = index
-            self._service_list.append(service_key)
-            index += 1
-        combo_box_services.setCurrentIndex(default_index)
-        self._state.current_service = self._service_list[default_index]
-
-        combo_box_services.currentIndexChanged.connect(self.__service_index_changed)
-        grid.addWidget(combo_box_services, row, 0, 1, 1)
-
-        self.__combo_box_op_codes = QComboBox()
-        self._state.current_service = self._service_list[default_index]
-        self.__update_op_code_combo_box()
-        self.__combo_box_op_codes.currentIndexChanged.connect(
-            self.__op_code_index_changed
+        self._open_command_path_select_button = QPushButton("Command Path Select")
+        self._open_command_path_select_button.clicked.connect(
+            self._open_command_select_widget
         )
-        # TODO: Combo box also needs to be updated if another service is selected
-        grid.addWidget(self.__combo_box_op_codes, row, 1, 1, 1)
+        grid.addWidget(self._open_command_path_select_button, row, 0, 1, 2)
         row += 1
-        """
+        self._cmd_path_text_input = QLineEdit()
+        grid.addWidget(self._cmd_path_text_input, row, 0, 1, 2)
+        row += 1
+        self._confirm_selected_cmd_path_button = QPushButton("Confirm selected path")
+        grid.addWidget(self._confirm_selected_cmd_path_button, row, 0, 1, 2)
+        row += 1
+        self._cmd_path_text = QLabel("Selected command path: ")
+        grid.addWidget(self._cmd_path_text, row, 0, 1, 2)
+        row += 1
         return row
+
+    def _open_command_select_widget(self):
+        self.cmd_select_window = CommandPathSelectWidget(
+            self._hook_obj.get_command_definitions()
+        )
+        self.cmd_select_window.path_selected_sig.connect(self._receive_selected_path)
+        self.cmd_select_window.closed.connect(self._on_treeview_closed)
+        self.cmd_select_window.show()
+        self._open_command_path_select_button.setEnabled(False)
+
+    def _set_cmd_path_label(self, text: str):
+        self._cmd_path_text.setText(f"Selected command path: {text}")
+
+    def _confirm_selected_cmd_path(self):
+        self._set_cmd_path_label(self._cmd_path_text.text())
+        self._state.current_cmd_path = self._cmd_path_text.text()
+
+    def _on_treeview_closed(self):
+        if self.cmd_select_window is not None:
+            self._open_command_path_select_button.setEnabled(True)
+
+    def _receive_selected_path(self, path: str):
+        self._cmd_path_text_input.setText(path)
+        self._set_cmd_path_label(path)
+        self._confirm_selected_cmd_path()
 
     def __set_up_pixmap(self, grid: QGridLayout, row: int) -> int:
         label = QLabel(self)
@@ -334,50 +342,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(separator, row, 0, 1, 2)
         row += 1
         return row
-
-    def __update_op_code_combo_box(self):
-        assert self.__combo_box_op_codes is not None
-        """
-        self.__combo_box_op_codes.clear()
-        self._op_code_list = []
-        op_code_entry = self._service_op_code_dict.op_code_entry(
-            self._state.current_service
-        )
-        if op_code_entry is not None:
-            for (
-                op_code_key,
-                op_code_value,
-            ) in op_code_entry.op_code_dict_num_keys.items():
-                try:
-                    self._op_code_list.append(op_code_key)
-                    self.__combo_box_op_codes.addItem(op_code_value[0])
-                except TypeError:
-                    LOGGER.warning(f"Invalid op code entry {op_code_value}, skipping..")
-            for (
-                op_code_key,
-                op_code_value,
-            ) in op_code_entry.op_code_dict_str_keys.items():
-                try:
-                    self._op_code_list.append(op_code_key)
-                    self.__combo_box_op_codes.addItem(op_code_value[0])
-                except TypeError:
-                    LOGGER.warning(f"Invalid op code entry {op_code_value}, skipping..")
-            self._state.current_op_code = self._op_code_list[0]
-
-        """
-
-    def __checkbox_log_update(self, state: int):
-        # TODO: Set up proper database support..
-        # self.print_to_file = state
-        LOGGER.debug(["Enabled", "Disabled"][state == 0] + " print to log.")
-
-    def __checkbox_console_update(self, state: bool):
-        self._state.print_tm = state
-        LOGGER.debug(["enabled", "disabled"][state == 0] + " console print")
-
-    def __checkbox_print_raw_data_update(self, state: bool):
-        self._state.print_raw_tm = bool(state)
-        LOGGER.debug(["enabled", "disabled"][state == 0] + " printing of raw data")
 
     def __com_if_sel_index_changed(self, index: int):
         self._state.current_com_if = self._com_if_list[index][0]
