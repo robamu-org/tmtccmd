@@ -60,7 +60,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._com_if_list = []
         self._state = FrontendState()
         self._thread_pool = QThreadPool()
-        self.__connected = False
         self.logo_path = Path(
             f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png"
         )

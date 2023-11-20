@@ -39,7 +39,7 @@ COMMAND_BUTTON_STYLE = (
 )
 
 
-class WorkerOperationsCodes(enum.IntEnum):
+class WorkerOperationsCode(enum.IntEnum):
     OPEN_COM_IF = 0
     CLOSE_COM_IF = 1
     ONE_QUEUE_MODE = 2
@@ -71,7 +71,7 @@ class ComIfRefCount:
 
 
 class LocalArgs:
-    def __init__(self, op_code: WorkerOperationsCodes, op_code_args: Any = None):
+    def __init__(self, op_code: WorkerOperationsCode, op_code_args: Any = None):
         self.op_code = op_code
         self.op_args = op_code_args
 

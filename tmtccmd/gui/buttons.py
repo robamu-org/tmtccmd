@@ -4,11 +4,11 @@ from typing import Callable, Optional
 from PyQt6.QtCore import QThreadPool, QRunnable
 from PyQt6.QtWidgets import QPushButton
 
-from tmtccmd import HookBase, DefaultProcedureInfo
+from tmtccmd import HookBase
 from tmtccmd.gui.defs import (
     SharedArgs,
     LocalArgs,
-    WorkerOperationsCodes,
+    WorkerOperationsCode,
     DISCONNECT_BTTN_STYLE,
     CONNECT_BTTN_STYLE,
     COMMAND_BUTTON_STYLE,
@@ -70,15 +70,10 @@ class ConnectButtonWrapper:
         if self._args.state.current_com_if != self._args.state.last_com_if:
             self._com_if_needs_switch = True
         self.button.setEnabled(False)
-        worker = FrontendWorker(
-            LocalArgs(
-                WorkerOperationsCodes.OPEN_COM_IF,
-                (
-                    self._com_if_needs_switch,
-                    self._args.state.current_com_if,
-                    self._bttn_params.hook_obj,
-                ),
-            ),
+        worker = FrontendWorker.spawn_for_opening_com_if(
+            self._com_if_needs_switch,
+            self._args.state.current_com_if,
+            self._bttn_params.hook_obj,
             self._args.shared,
         )
         self._next_con_state = True
@@ -111,7 +106,7 @@ class ConnectButtonWrapper:
         self.button.setEnabled(False)
         self._next_con_state = False
         worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.CLOSE_COM_IF, None), self._args.shared
+            LocalArgs(WorkerOperationsCode.CLOSE_COM_IF, None), self._args.shared
         )
         worker.signals.finished.connect(self._button_op_done)
         self._args.pool.start(worker)
@@ -151,7 +146,7 @@ class TmButtonWrapper:
     def start_listener(self):
         LOGGER.info("Starting TM listener")
         self.worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.LISTEN_FOR_TM, 0.4), self.args.shared
+            LocalArgs(WorkerOperationsCode.LISTEN_FOR_TM, 0.4), self.args.shared
         )
         self._next_listener_state = True
         self._conn_button.setDisabled(True)
@@ -204,13 +199,8 @@ class SendButtonWrapper:
         self.button.setDisabled(True)
         if self._args.state.current_cmd_path is None:
             return
-        # TODO: We should pass this path to the worker instead of doing this.. It does not belong
-        # in the GUI component.
-        self._args.shared.backend.current_procedure = DefaultProcedureInfo(
-            self._args.state.current_cmd_path
-        )
-        worker = FrontendWorker(
-            LocalArgs(WorkerOperationsCodes.ONE_QUEUE_MODE, None), self._args.shared
+        worker = FrontendWorker.spawn_for_cmd_path(
+            self._args.state.current_cmd_path, self._args.shared
         )
         worker.signals.finished.connect(self._finish_op)
         self._args.pool.start(worker)

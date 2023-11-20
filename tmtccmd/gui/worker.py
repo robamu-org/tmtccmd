@@ -1,11 +1,14 @@
+from __future__ import annotations
 import logging
 import time
 from typing import Optional, Any
 
 from PyQt6.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
+from tmtccmd.config.hook import HookBase
 
 from tmtccmd.core import TmMode, TcMode, BackendRequest
-from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCodes
+from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCode
+from tmtccmd.tmtc.procedure import DefaultProcedureInfo
 
 
 LOGGER = logging.getLogger(__name__)
@@ -29,15 +32,45 @@ class FrontendWorker(QRunnable):
         self.signals.stop.connect(self._stop_com_if)
         self.signals.abort.connect(self._abort)
 
-    def __setup(self, op_code: WorkerOperationsCodes) -> bool:
-        if op_code == WorkerOperationsCodes.OPEN_COM_IF:
+    @classmethod
+    def spawn_for_opening_com_if(
+        cls,
+        com_if_is_switched: bool,
+        com_if_key: str,
+        hook: HookBase,
+        shared_args: SharedArgs,
+    ):
+        return cls(
+            LocalArgs(
+                WorkerOperationsCode.OPEN_COM_IF, (com_if_is_switched, com_if_key, hook)
+            ),
+            shared_args,
+        )
+
+    @classmethod
+    def spawn_for_cmd_path(
+        cls, cmd_path: str, shared_args: SharedArgs
+    ) -> FrontendWorker:
+        return cls(
+            LocalArgs(WorkerOperationsCode.ONE_QUEUE_MODE, cmd_path), shared_args
+        )
+
+    def __setup(self, op_code: WorkerOperationsCode) -> bool:
+        if op_code == WorkerOperationsCode.OPEN_COM_IF:
             LOGGER.info("Switching COM Interface")
+
+            assert isinstance(self._locals.op_args, tuple)
+            assert isinstance(self._locals.op_args[0], bool)
+            assert isinstance(self._locals.op_args[1], str)
+            assert isinstance(self._locals.op_args[2], HookBase)
             # TODO: We should really pass a proper object here instead of using magic tuples..
             new_com_if = self._locals.op_args[2].get_communication_interface(
                 com_if_key=self._locals.op_args[1]
             )
             # self._args.state.last_com_if = self._args.state.current_com_if
-            set_success = self._shared.backend.try_set_com_if(new_com_if)
+            set_success = False
+            if new_com_if is not None and self._locals.op_args[0]:
+                set_success = self._shared.backend.try_set_com_if(new_com_if)
             if not set_success:
                 LOGGER.warning(
                     f"Could not set new communication interface {new_com_if}"
@@ -48,7 +81,7 @@ class FrontendWorker(QRunnable):
                 self._shared.backend.open_com_if()
                 self._finish_success()
             return False
-        if op_code == WorkerOperationsCodes.CLOSE_COM_IF:
+        if op_code == WorkerOperationsCode.CLOSE_COM_IF:
             if not self._shared.backend.com_if_active():
                 self._finish_with_info("COM Interface is not active")
             elif self._shared.com_if_ref_tracker.is_used():
@@ -57,11 +90,15 @@ class FrontendWorker(QRunnable):
                 self._shared.backend.close_com_if()
                 self._finish_success()
             return False
-        if op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
+        if op_code == WorkerOperationsCode.ONE_QUEUE_MODE:
             self._shared.com_if_ref_tracker.add_user()
+            assert isinstance(self._locals.op_args, str)
             with self._shared.tc_lock:
+                self._shared.backend.current_procedure = DefaultProcedureInfo(
+                    self._locals.op_args
+                )
                 self._shared.backend.tc_mode = TcMode.ONE_QUEUE
-        elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+        elif op_code == WorkerOperationsCode.LISTEN_FOR_TM:
             self._shared.com_if_ref_tracker.add_user()
             self._shared.backend.tm_mode = TmMode.LISTENER
         return True
@@ -105,16 +142,16 @@ class FrontendWorker(QRunnable):
             # Poll TM every 400 ms for now
             time.sleep(self._locals.op_args)
 
-    def __loop(self, op_code: WorkerOperationsCodes) -> bool:
-        if op_code == WorkerOperationsCodes.ONE_QUEUE_MODE:
+    def __loop(self, op_code: WorkerOperationsCode) -> bool:
+        if op_code == WorkerOperationsCode.ONE_QUEUE_MODE:
             should_return = self.__one_queue_mode_cycle()
             if should_return is not None:
                 return should_return
-        elif op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
+        elif op_code == WorkerOperationsCode.LISTEN_FOR_TM:
             should_return = self.__listener_cycle()
             if should_return is not None:
                 return should_return
-        elif op_code == WorkerOperationsCodes.IDLE:
+        elif op_code == WorkerOperationsCode.IDLE:
             return False
         else:
             # This must be a programming error
