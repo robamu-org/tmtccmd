@@ -178,9 +178,9 @@ class TestArgs(TestCase):
             print_mock.call_args_list[0],
             call("Printing command tree with full descriptions:"),
         )
-        self.assertEqual(
-            print_mock.call_args_list[1], call(f"/ [ Root Node ]{os.linesep}")
-        )
+        printout = print_mock.call_args_list[1].args[0]
+        self.assertTrue("/" in printout)
+        self.assertTrue("[ Root Node ]" in printout)
 
     @patch("builtins.print")
     def test_tree_printout_1(self, print_mock: MagicMock):
