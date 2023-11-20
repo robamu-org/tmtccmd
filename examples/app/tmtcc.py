@@ -207,10 +207,19 @@ class TcHandler(TcHandlerBase):
         if helper.proc_type == TcProcedureType.DEFAULT:
             def_proc = helper.to_def_procedure()
             cmd_path = def_proc.cmd_path
-            if cmd_path == "/ping":
+            assert cmd_path is not None
+            # Path starts with / so the first entry of the list will be an empty string. We cut
+            # off that string.
+            cmd_path_list = cmd_path.split("/")[1:]
+            if cmd_path_list[0] == "ping":
                 return self.queue_helper.add_pus_tc(
                     PusTelecommand(service=17, subservice=1)
                 )
+            elif cmd_path_list[0] == "test":
+                if cmd_path_list[1] == "event":
+                    return self.queue_helper.add_pus_tc(
+                        PusTelecommand(service=17, subservice=128)
+                    )
 
 
 # Note about lint disable: I could split up the function but I prefer to have the whole
