@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Optional
+from typing import Optional, Any
 
 from PyQt6.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
 
@@ -28,13 +28,6 @@ class FrontendWorker(QRunnable):
         self._abort_signal = False
         self.signals.stop.connect(self._stop_com_if)
         self.signals.abort.connect(self._abort)
-
-    def __sanitize_locals(self):
-        if self._locals.op_code == WorkerOperationsCodes.LISTEN_FOR_TM:
-            if self._locals.op_args is None or not isinstance(
-                float, self._locals.op_args
-            ):
-                self._locals.op_args = 0.2
 
     def __setup(self, op_code: WorkerOperationsCodes) -> bool:
         if op_code == WorkerOperationsCodes.OPEN_COM_IF:
@@ -150,8 +143,8 @@ class FrontendWorker(QRunnable):
         with self._shared.state_lock:
             self._shared.backend.mode_to_req()
 
-    def _stop_com_if(self, _args: any):
+    def _stop_com_if(self, _args: Any):
         self._stop_signal = True
 
-    def _abort(self, _args: any):
+    def _abort(self, _args: Any):
         self._abort_signal = True
