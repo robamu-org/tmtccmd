@@ -111,12 +111,6 @@ class FrontendWorker(QRunnable):
         if state.request == BackendRequest.TERMINATION_NO_ERROR:
             self._shared.tc_lock.release()
             self._shared.com_if_ref_tracker.remove_user()
-            with self._shared.state_lock:
-                if (
-                    not self._shared.com_if_ref_tracker.is_used()
-                    and self._locals.op_args is not None
-                ):
-                    self._locals.op_args()
             self._finish_success()
             return False
         elif state.request == BackendRequest.DELAY_IDLE:
