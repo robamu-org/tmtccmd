@@ -301,8 +301,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._cmd_path_text.setText(f"Selected command path: {text}")
 
     def _confirm_selected_cmd_path(self):
-        self._set_cmd_path_label(self._cmd_path_text.text())
-        self._state.current_cmd_path = self._cmd_path_text.text()
+        self._set_cmd_path_label(self._cmd_path_text_input.text())
+        self._state.current_cmd_path = self._cmd_path_text_input.text()
 
     def _on_treeview_closed(self):
         if self.cmd_select_window is not None:
@@ -310,7 +310,6 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def _receive_selected_path(self, path: str):
         self._cmd_path_text_input.setText(path)
-        self._set_cmd_path_label(path)
         self._confirm_selected_cmd_path()
 
     def __set_up_pixmap(self, grid: QGridLayout, row: int) -> int:
