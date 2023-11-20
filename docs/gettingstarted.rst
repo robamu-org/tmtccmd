@@ -7,7 +7,8 @@ Example Project
 
 The `example application <https://github.com/robamu-org/tmtccmd/tree/main/examples/app>`_ is the
 best way to learn how this framework works and to get started. It shows how to set up handler
-classes for TC and TM handling and then ties together all components.
+classes for TC and TM handling and then ties together all components. You can also run this
+application in GUI mode by passing the ``-g`` GUI flag to the example application.
 
 Some explanation of classes and modules inside the example are given here.
 
@@ -111,6 +112,11 @@ You can now specify your commands as command paths, which will then serve as ide
 command or command stacks and procedures. The command path will be passed on as the `cmd_path`
 parameter of the :py:class:`tmtccmd.tmtc.procedure.DefaultProcedureInfo` which is passed to
 the :py:class:`tmtccmd.tmtc.handler.TcHandlerBase` implementation of the user.
+
+It is also possible to pass the command path as a CLI argument. For example, you can use
+``./tmtcc.py -p /test`` to send a ping command with the example application. Passing the
+command tree definition to the framework also allows it to provide a GUI command path selector
+for the GUI mode.
 
 The TC handler
 ==============================
