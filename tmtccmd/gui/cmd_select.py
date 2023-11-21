@@ -5,9 +5,11 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QTreeView,
     QVBoxLayout,
     QWidget,
+    QLayout,
 )
 
 from tmtccmd.config.tmtc import CmdTreeNode
@@ -40,6 +42,11 @@ class CommandPathSelectWidget(QWidget):
         self.tree_view = QTreeView()
         self.tree_view.setModel(self.tree_model)
         self.tree_view.expanded.connect(self.on_item_expanded)
+        print(f"tree view size policy: {self.tree_view.sizePolicy().horizontalPolicy()!r}")
+        print(f"tree view size policy: {self.tree_view.sizePolicy().verticalPolicy()!r}")
+        self.tree_view.setSizePolicy(
+            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding
+        )
 
         self.expand_full_button = QPushButton("Expand All")
         self.expand_full_button.clicked.connect(self.expand_all_items)
@@ -68,6 +75,11 @@ class CommandPathSelectWidget(QWidget):
         layout.addWidget(self.path_label)
         layout.addWidget(self.path_confirmed_button)
         self.setLayout(layout)
+        print(f"wdiget size policy: {self.sizePolicy().horizontalPolicy()!r}")
+        print(f"wdiget size policy: {self.sizePolicy().verticalPolicy()!r}")
+        self.setSizePolicy(
+            QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding
+        )
 
     def expand_all_items(self):
         self.tree_view.expandAll()
@@ -97,6 +109,10 @@ class CommandPathSelectWidget(QWidget):
         self.tree_view.resizeColumnToContents(CommandPathSelectWidget.NODE_NAME_COLUMN)
         self.tree_view.resizeColumnToContents(
             CommandPathSelectWidget.DESCRIPTION_COLUMN
+        )
+        self.resize(
+            self.tree_view.sizeHintForColumn(0) + self.tree_view.sizeHintForColumn(1),
+            self.size().height(),
         )
 
     def select_path_clicked(self):
