@@ -98,6 +98,14 @@ class CommandPathSelectWidget(QWidget):
         self.tree_view.resizeColumnToContents(
             CommandPathSelectWidget.DESCRIPTION_COLUMN
         )
+        self.resize(
+            self.tree_view.sizeHintForColumn(CommandPathSelectWidget.NODE_NAME_COLUMN)
+            + self.tree_view.sizeHintForColumn(
+                CommandPathSelectWidget.DESCRIPTION_COLUMN
+            )
+            + 40,
+            self.size().height(),
+        )
 
     def select_path_clicked(self):
         selected_indexes = self.tree_view.selectedIndexes()
