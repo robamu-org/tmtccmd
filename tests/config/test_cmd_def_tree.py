@@ -55,6 +55,12 @@ class TestCmdDefTree(TestCase):
         self.base_tree()
         self.assertTrue(self.cmd_tree.contains_path("/"))
 
+    def test_path_contained_invalid_input(self):
+        self.assertIsNone(self.cmd_tree.contains_path(""))
+
+    def test_extract_node_invalid_input(self):
+        self.assertIsNone(self.cmd_tree.extract_subnode(""))
+
     def test_extract_node_not_contained(self):
         self.tree_with_two_layers()
         self.assertIsNone(self.cmd_tree.extract_subnode("aocs"))

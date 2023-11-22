@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 
 import prompt_toolkit
 from deprecated.sphinx import deprecated
@@ -60,13 +61,13 @@ def prompt_cmd_path(
     compl_dict = compl_dict.get("/")
     if compl_dict is None:
         return "/"
-    compl_dict.update({":p": None})
-    compl_dict.update({":fp": None})
     nested_completer = NestedCompleter.from_nested_dict(compl_dict, separator="/")
     help_txt = (
         f"Additional commands for prompt:{os.linesep}"
-        f":p Tree Print | :pf Full Print | :r Retry | :h Help Text {os.linesep}"
-        f"Auto complete is available using Tab after typing the slash character."
+        f":p[b][<depth>] Tree Print | :r Retry | :h Help Text | :c Cancel {os.linesep}"
+        f"Auto complete is available using Tab after typing the slash character.{os.linesep}"
+        f"You can also print a subtree by typing the path and appending :p[b][<depth>].{os.linesep}"
+        f"The b option for printouts enables brief printouts without descriptions.{os.linesep}"
     )
     print(help_txt)
     while True:
@@ -75,17 +76,31 @@ def prompt_cmd_path(
             completer=nested_completer,
             complete_style=compl_style,
         )
-        if path_or_cmd == ":p":
-            print(cmd_def_tree.str_for_tree(False))
-            continue
-        elif path_or_cmd == ":pf":
-            print(cmd_def_tree.str_for_tree(True))
+        if ":p" in path_or_cmd:
+            list_of_patterns = path_or_cmd.split(":")
+            tree_to_print = cmd_def_tree
+            if cmd_def_tree.contains_path(list_of_patterns[0]):
+                tree_to_print = cmd_def_tree.extract_subnode(list_of_patterns[0])
+                # Should never happen.
+                assert tree_to_print is not None
+            with_descriptions = True
+            depth = None
+            pattern = r"p([a-zA-Z]*)(\d*)"
+            matches = re.search(pattern, list_of_patterns[1])
+            if matches:
+                if "b" in matches.group(1):
+                    with_descriptions = False
+                if matches.group(2).isdigit():
+                    depth = int(matches.group(2))
+            print(tree_to_print.str_for_tree(with_descriptions, depth))
             continue
         elif ":h" in path_or_cmd:
             print(help_txt)
             continue
         elif ":r" in path_or_cmd:
             continue
+        elif ":c" in path_or_cmd:
+            break
         if not cmd_def_tree.contains_path(f"/{path_or_cmd}"):
             yes_or_no = input(
                 "Command definitions tree does not contain the path. Try again? [y/n]: "

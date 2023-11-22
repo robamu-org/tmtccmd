@@ -75,6 +75,8 @@ class CmdTreeNode:
     def contains_path(self, path: str) -> bool:
         """Check whether a full slash separated command path is contained within
         the command tree."""
+        if path == "":
+            return False
         return self.contains_path_from_node_list(path.split("/"))
 
     def contains_path_from_node_list(self, node_name_list: List[str]) -> bool:
@@ -96,6 +98,8 @@ class CmdTreeNode:
         return False
 
     def extract_subnode(self, path: str) -> Optional[CmdTreeNode]:
+        if path == "":
+            return None
         return self.extract_subnode_by_node_list(path.split("/"))
 
     def extract_subnode_by_node_list(
