@@ -14,6 +14,7 @@ from spacepackets.util import UnsignedByteField
 
 from tmtccmd import CcsdsTmtcBackend, ProcedureParamsWrapper, BackendRequest
 from tmtccmd.com import ComInterface
+from tmtccmd.config.args import perform_tree_printout
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.config import (
     default_json_path,
@@ -271,6 +272,9 @@ def main():  # noqa: C901
     else:
         post_args_wrapper.set_params_with_prompts(proc_wrapper)
     params.apid = EXAMPLE_PUS_APID
+    if params.app_params.print_tree:
+        perform_tree_printout(params.app_params, hook_obj.get_command_definitions())
+        sys.exit(0)
     setup_args = SetupWrapper(
         hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper
     )

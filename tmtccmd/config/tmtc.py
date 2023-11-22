@@ -189,8 +189,7 @@ class CmdTreeNode:
             layer_is_last_set=copy.copy(depth_info.set_of_layers_where_child_is_last),
         )
         if self.hide_children_for_print and len(self.children) > 0:
-            if len(self.children) == 1:
-                CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+            CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
             string += CmdTreeNode._create_supressed_children_line(
                 child_depth_info, "children are hidden"
             )
