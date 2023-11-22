@@ -182,7 +182,6 @@ class CmdTreeNode:
             layer_is_last_set=depth_info.set_of_layers_where_child_is_last,
         )
         if self.hide_children_for_print and len(self.children) > 0:
-            print(f"node {self.name} hides its children")
             if len(self.children) == 1:
                 child_depth_info.last_child = True
                 child_depth_info.set_layer_is_last_child(depth_info.depth)
