@@ -9,6 +9,13 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Added
+
+- Added new command tree mechanism which allows to specify the telecommand structure in a more
+  flexible way. This mechanism deprecated the old service/op code combination. The user can now
+  specify the whole command structure as a tree, and specify commands as a slash separated path
+  through that tree.
+
 ## Removed
 
 - Removed high level CFDP handler and CFDP in CCSDS handler which are not generic enough
