@@ -262,7 +262,6 @@ class TestCmdDefTree(TestCase):
         self.cmd_tree.children["acs"].add_child(mgm_0_node)
         update_cfg = CmdTreeNode("update_cfg", "Update Configuration")
         self.cmd_tree.children["acs"]["mgm_0"].add_child(update_cfg)
-        print(self.cmd_tree["acs"]["mgm_0"]["update_cfg"].hide_children_for_print)
         tcs_ctrl = CmdTreeNode(
             "tcs_ctrl", "TCS Controller", hide_children_for_print=True
         )
@@ -287,6 +286,44 @@ class TestCmdDefTree(TestCase):
                 f"│  │  └── ... (cut-off, children are hidden){os.linesep}"
                 f"│  └── pt1000_0{os.linesep}"
                 f"│     └── ... (cut-off, children are hidden){os.linesep}"
+                f"└── ping{os.linesep}"
+            ),
+        )
+
+    def test_printout_suppressed_leaves(self):
+        self.base_tree()
+        self.cmd_tree.children["acs"].hide_children_which_are_leaves = True
+        self.cmd_tree.children["tcs"].hide_children_which_are_leaves = True
+        self.cmd_tree.children["acs"].add_child(
+            CmdTreeNode("acs_ctrl", "ACS Controller")
+        )
+        mgm_0_node = CmdTreeNode("mgm_0", "MGM 0")
+        self.cmd_tree.children["acs"].add_child(mgm_0_node)
+        update_cfg = CmdTreeNode("update_cfg", "Update Configuration")
+        self.cmd_tree.children["acs"]["mgm_0"].add_child(update_cfg)
+        tcs_ctrl = CmdTreeNode("tcs_ctrl", "TCS Controller")
+        tcs_ctrl.add_child(CmdTreeNode("set_param", "Set Parameter"))
+        self.cmd_tree.children["tcs"].add_child(tcs_ctrl)
+        pt1000_node = CmdTreeNode("pt1000_0", "PT1000 0")
+        pt1000_node.add_child(CmdTreeNode("set_mode", "Set Mode"))
+        self.cmd_tree.children["tcs"].add_child(pt1000_node)
+        self.cmd_tree.children["tcs"].add_child(CmdTreeNode("heaters", "Heaters"))
+        self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
+        print(self.cmd_tree)
+        self.assertEqual(
+            str(self.cmd_tree),
+            (
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  ├── mgm_0{os.linesep}"
+                f"│  │  └── update_cfg{os.linesep}"
+                f"│  └── ... (cut-off, leaves are hidden){os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"│  ├── tcs_ctrl{os.linesep}"
+                f"│  │  └── ... (cut-off, children are hidden){os.linesep}"
+                f"│  ├── pt1000_0{os.linesep}"
+                f"│  │  └── ... (cut-off, children are hidden){os.linesep}"
+                f"│  └── ... (cut-off, leaves are hidden){os.linesep}"
                 f"└── ping{os.linesep}"
             ),
         )

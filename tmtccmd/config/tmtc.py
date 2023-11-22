@@ -47,12 +47,14 @@ class CmdTreeNode:
         description: str,
         parent: Optional[CmdTreeNode] = None,
         hide_children_for_print: bool = False,
+        hide_children_which_are_leaves: bool = False,
     ) -> None:
         self.name = name
         self.description = description
         self.parent: Optional[CmdTreeNode] = parent
         self.children: Dict[str, CmdTreeNode] = {}
         self.hide_children_for_print = hide_children_for_print
+        self.hide_children_which_are_leaves = hide_children_which_are_leaves
 
     @classmethod
     def root_node(cls) -> CmdTreeNode:
@@ -64,6 +66,10 @@ class CmdTreeNode:
     def add_child(self, child: CmdTreeNode):
         child.parent = self
         self.children.update({child.name: child})
+
+    def is_leaf(self) -> bool:
+        """A leaf is a node which has no children."""
+        return len(self.children) == 0
 
     def contains_path(self, path: str) -> bool:
         """Check whether a full slash separated command path is contained within
@@ -181,20 +187,27 @@ class CmdTreeNode:
             max_depth=depth_info.max_depth,
             layer_is_last_set=depth_info.set_of_layers_where_child_is_last,
         )
+        print(f"set of layers where child is last for node {self.name} :{depth_info.set_of_layers_where_child_is_last}")
+
         if self.hide_children_for_print and len(self.children) > 0:
             if len(self.children) == 1:
-                child_depth_info.last_child = True
-                child_depth_info.set_layer_is_last_child(depth_info.depth)
-            line = CmdTreeNode._create_leading_tree_part(child_depth_info)
-            line += f"... (cut-off, children are hidden){os.linesep}"
-            string += line
+                CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+            string = CmdTreeNode._create_supressed_children_line(
+                child_depth_info, "children are hidden"
+            )
         else:
-            for idx, child in enumerate(self.children.values()):
-                if idx == len(self.children) - 1:
-                    child_depth_info.last_child = True
-                    child_depth_info.set_layer_is_last_child(depth_info.depth)
-                # Use recursion here to get the string for the subtree.
-                string += child.__str_for_depth(with_description, child_depth_info)
+            if self.hide_children_which_are_leaves:
+                string += self._handle_children_output_suppressed_leaves(
+                    string, with_description, depth_info, child_depth_info
+                )
+            else:
+                for idx, child in enumerate(self.children.values()):
+                    if idx == len(self.children) - 1:
+                        CmdTreeNode._this_is_the_last_child(
+                            child_depth_info, depth_info
+                        )
+                    # Use recursion here to get the string for the subtree.
+                    string += child.__str_for_depth(with_description, child_depth_info)
         # The layer set is reused during the whole recursion, when we're going up the recursion
         # again, we need to clear the set.
         if depth_info.last_child and depth_info.is_layer_for_last_child(
@@ -202,6 +215,52 @@ class CmdTreeNode:
         ):
             depth_info.clear_layer_is_last_child(depth_info.depth - 1)
         return string
+
+    def _handle_children_output_suppressed_leaves(
+        self,
+        string: str,
+        with_description: bool,
+        depth_info: DepthInfo,
+        child_depth_info: DepthInfo,
+    ) -> str:
+        children_which_are_not_leaves = set()
+        some_children_which_are_leaves = False
+        # The children need to be sorted first: Children which are not leaves come first.
+        for idx, child in enumerate(self.children.values()):
+            if child.is_leaf():
+                some_children_which_are_leaves = True
+                continue
+            children_which_are_not_leaves.add(child.name)
+        for idx, child in enumerate(children_which_are_not_leaves):
+            if (
+                not some_children_which_are_leaves
+                and idx == len(children_which_are_not_leaves) - 1
+            ):
+                print("marking last child for suppressed without leaves")
+                CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+            string += self.children[child].__str_for_depth(
+                with_description, child_depth_info
+            )
+        if some_children_which_are_leaves:
+            print("marking last child for suppressed leaf node")
+            CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+            string += CmdTreeNode._create_supressed_children_line(
+                child_depth_info, "leaves are hidden"
+            )
+        return string
+
+    @staticmethod
+    def _this_is_the_last_child(child_depth_info: DepthInfo, depth_info: DepthInfo):
+        child_depth_info.last_child = True
+        child_depth_info.set_layer_is_last_child(depth_info.depth)
+
+    @staticmethod
+    def _create_supressed_children_line(
+        child_depth_info: DepthInfo, reason: str
+    ) -> str:
+        line = CmdTreeNode._create_leading_tree_part(child_depth_info)
+        line += f"... (cut-off, {reason}){os.linesep}"
+        return line
 
     def __str__(self) -> str:
         return self.str_for_tree(False)
