@@ -96,6 +96,8 @@ class CmdTreeNode:
     ) -> Optional[CmdTreeNode]:
         if not self.contains_path_from_node_list(node_list):
             return None
+        if len(node_list) == 1 and self.children[node_list[0]] is not None:
+            return self.children[node_list[0]]
         return self.children[node_list[0]].extract_subnode_by_node_list(node_list[1:])
 
     @property
