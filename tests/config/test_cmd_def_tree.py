@@ -269,6 +269,7 @@ class TestCmdDefTree(TestCase):
         self.cmd_tree.children["tcs"].add_child(tcs_ctrl)
         pt1000_node = CmdTreeNode("pt1000_0", "PT1000 0", hide_children_for_print=True)
         pt1000_node.add_child(CmdTreeNode("set_mode", "Set Mode"))
+        pt1000_node.add_child(CmdTreeNode("set_cfg", "Set Config"))
         self.cmd_tree.children["tcs"].add_child(pt1000_node)
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
 
