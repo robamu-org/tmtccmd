@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QTreeView,
     QVBoxLayout,
     QWidget,
-    QLayout,
 )
 
 from tmtccmd.config.tmtc import CmdTreeNode
@@ -42,8 +41,12 @@ class CommandPathSelectWidget(QWidget):
         self.tree_view = QTreeView()
         self.tree_view.setModel(self.tree_model)
         self.tree_view.expanded.connect(self.on_item_expanded)
-        print(f"tree view size policy: {self.tree_view.sizePolicy().horizontalPolicy()!r}")
-        print(f"tree view size policy: {self.tree_view.sizePolicy().verticalPolicy()!r}")
+        print(
+            f"tree view size policy: {self.tree_view.sizePolicy().horizontalPolicy()!r}"
+        )
+        print(
+            f"tree view size policy: {self.tree_view.sizePolicy().verticalPolicy()!r}"
+        )
         self.tree_view.setSizePolicy(
             QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding
         )

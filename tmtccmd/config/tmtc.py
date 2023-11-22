@@ -25,26 +25,34 @@ class DepthInfo:
         self.depth = depth
         self.last_child = last_child
         if layer_is_last_set is None:
-            self.layer_is_last_set = set()
+            self.set_of_layers_where_child_is_last = set()
         else:
-            self.layer_is_last_set = layer_is_last_set
+            self.set_of_layers_where_child_is_last = layer_is_last_set
         self.max_depth = max_depth
 
     def is_layer_for_last_child(self, depth: int) -> bool:
-        return depth in self.layer_is_last_set
+        return depth in self.set_of_layers_where_child_is_last
 
     def set_layer_is_last_child(self, depth: int):
-        self.layer_is_last_set.add(depth)
+        self.set_of_layers_where_child_is_last.add(depth)
+
+    def clear_layer_is_last_child(self, depth: int):
+        self.set_of_layers_where_child_is_last.remove(depth)
 
 
 class CmdTreeNode:
     def __init__(
-        self, name: str, description: str, parent: Optional[CmdTreeNode] = None
+        self,
+        name: str,
+        description: str,
+        parent: Optional[CmdTreeNode] = None,
+        hide_children_for_print: bool = False,
     ) -> None:
         self.name = name
         self.description = description
         self.parent: Optional[CmdTreeNode] = parent
         self.children: Dict[str, CmdTreeNode] = {}
+        self.hide_children_for_print = hide_children_for_print
 
     @classmethod
     def root_node(cls) -> CmdTreeNode:
@@ -80,6 +88,16 @@ class CmdTreeNode:
                 return child.contains_path_from_node_list(node_name_list[1:])
         return False
 
+    def extract_subnode(self, path: str) -> Optional[CmdTreeNode]:
+        return self.extract_subnode_by_node_list(path.split("/"))
+
+    def extract_subnode_by_node_list(
+        self, node_list: List[str]
+    ) -> Optional[CmdTreeNode]:
+        if not self.contains_path_from_node_list(node_list):
+            return None
+        return self.children[node_list[0]].extract_subnode_by_node_list(node_list[1:])
+
     @property
     def name_dict(self) -> Dict[str, Optional[Dict[str, Any]]]:
         """Returns a nested dictionary where the key is always the name of the node, and the
@@ -99,7 +117,6 @@ class CmdTreeNode:
         )
 
     def __str_for_depth(self, with_description: bool, depth_info: DepthInfo) -> str:
-        line = ""
         # If we are at a larger depth than 0, we want to prepend the name using a special
         # format. Example:
         #
@@ -126,6 +143,20 @@ class CmdTreeNode:
         # │  ├── TCS_CTRL
         # │  └── PT1000_0
         # └── PING
+        line = CmdTreeNode._create_leading_tree_part(depth_info)
+        if depth_info.max_depth is not None and depth_info.depth > depth_info.max_depth:
+            line += f"... (cut-off, maximum depth {depth_info.max_depth}){os.linesep}"
+            return line
+        else:
+            line += self.name
+            if with_description:
+                line = f"{line.ljust(35)} [ " + self.description + " ]"
+        string = line + os.linesep
+        return self._handle_children_printout(string, with_description, depth_info)
+
+    @staticmethod
+    def _create_leading_tree_part(depth_info: DepthInfo) -> str:
+        line = ""
         for i in range(depth_info.depth):
             if i == depth_info.depth - 1:
                 if depth_info.last_child:
@@ -137,26 +168,38 @@ class CmdTreeNode:
                     line += TreePart.BLANK.value
                 else:
                     line += TreePart.LINE.value
-        if depth_info.max_depth is not None and depth_info.depth > depth_info.max_depth:
-            line += f"... (cut-off, maximum depth {depth_info.max_depth}){os.linesep}"
-            return line
-        else:
-            line += self.name
-            if with_description:
-                line = f"{line.ljust(35)} [ " + self.description + " ]"
-        string = line + os.linesep
-        for idx, child in enumerate(self.children.values()):
-            last_child = True if (idx == (len(self.children) - 1)) else False
-            child_depth_info = DepthInfo(
-                depth=depth_info.depth + 1,
-                last_child=last_child,
-                max_depth=depth_info.max_depth,
-                layer_is_last_set=depth_info.layer_is_last_set,
-            )
-            if last_child:
+        return line
+
+    def _handle_children_printout(
+        self, string: str, with_description: bool, depth_info: DepthInfo
+    ) -> str:
+        child_depth_info = DepthInfo(
+            depth=depth_info.depth + 1,
+            last_child=False,
+            max_depth=depth_info.max_depth,
+            layer_is_last_set=depth_info.set_of_layers_where_child_is_last,
+        )
+        if self.hide_children_for_print and len(self.children) > 0:
+            print(f"node {self.name} hides its children")
+            if len(self.children) == 1:
+                child_depth_info.last_child = True
                 child_depth_info.set_layer_is_last_child(depth_info.depth)
-            # Use recursion here to get the string for the subtree.
-            string += child.__str_for_depth(with_description, child_depth_info)
+            line = CmdTreeNode._create_leading_tree_part(child_depth_info)
+            line += f"... (cut-off, children are hidden){os.linesep}"
+            string += line
+        else:
+            for idx, child in enumerate(self.children.values()):
+                if idx == len(self.children) - 1:
+                    child_depth_info.last_child = True
+                    child_depth_info.set_layer_is_last_child(depth_info.depth)
+                # Use recursion here to get the string for the subtree.
+                string += child.__str_for_depth(with_description, child_depth_info)
+        # The layer set is reused during the whole recursion, when we're going up the recursion
+        # again, we need to clear the set.
+        if depth_info.last_child and depth_info.is_layer_for_last_child(
+            depth_info.depth - 1
+        ):
+            depth_info.clear_layer_is_last_child(depth_info.depth - 1)
         return string
 
     def __str__(self) -> str:
