@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import copy
 import os
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -185,68 +186,55 @@ class CmdTreeNode:
             depth=depth_info.depth + 1,
             last_child=False,
             max_depth=depth_info.max_depth,
-            layer_is_last_set=depth_info.set_of_layers_where_child_is_last,
+            layer_is_last_set=copy.copy(depth_info.set_of_layers_where_child_is_last),
         )
-        print(f"set of layers where child is last for node {self.name} :{depth_info.set_of_layers_where_child_is_last}")
-
         if self.hide_children_for_print and len(self.children) > 0:
             if len(self.children) == 1:
                 CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
-            string = CmdTreeNode._create_supressed_children_line(
+            string += CmdTreeNode._create_supressed_children_line(
                 child_depth_info, "children are hidden"
             )
         else:
             if self.hide_children_which_are_leaves:
-                string += self._handle_children_output_suppressed_leaves(
-                    string, with_description, depth_info, child_depth_info
+                str_if_there_are_leaves = (
+                    self._handle_children_output_suppressed_leaves(
+                        with_description, depth_info, child_depth_info
+                    )
                 )
-            else:
-                for idx, child in enumerate(self.children.values()):
-                    if idx == len(self.children) - 1:
-                        CmdTreeNode._this_is_the_last_child(
-                            child_depth_info, depth_info
-                        )
-                    # Use recursion here to get the string for the subtree.
-                    string += child.__str_for_depth(with_description, child_depth_info)
-        # The layer set is reused during the whole recursion, when we're going up the recursion
-        # again, we need to clear the set.
-        if depth_info.last_child and depth_info.is_layer_for_last_child(
-            depth_info.depth - 1
-        ):
-            depth_info.clear_layer_is_last_child(depth_info.depth - 1)
+                if str_if_there_are_leaves is not None:
+                    return string + str_if_there_are_leaves
+            for idx, child in enumerate(self.children.values()):
+                if idx == len(self.children) - 1:
+                    CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+                # Use recursion here to get the string for the subtree.
+                string += child.__str_for_depth(with_description, child_depth_info)
         return string
 
     def _handle_children_output_suppressed_leaves(
         self,
-        string: str,
         with_description: bool,
         depth_info: DepthInfo,
         child_depth_info: DepthInfo,
-    ) -> str:
-        children_which_are_not_leaves = set()
+    ) -> Optional[str]:
+        string = ""
+        children_which_are_not_leaves = []
         some_children_which_are_leaves = False
         # The children need to be sorted first: Children which are not leaves come first.
-        for idx, child in enumerate(self.children.values()):
+        for child in self.children.values():
             if child.is_leaf():
                 some_children_which_are_leaves = True
                 continue
-            children_which_are_not_leaves.add(child.name)
-        for idx, child in enumerate(children_which_are_not_leaves):
-            if (
-                not some_children_which_are_leaves
-                and idx == len(children_which_are_not_leaves) - 1
-            ):
-                print("marking last child for suppressed without leaves")
-                CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+            children_which_are_not_leaves.append(child.name)
+        if not some_children_which_are_leaves:
+            return None
+        for child in children_which_are_not_leaves:
             string += self.children[child].__str_for_depth(
                 with_description, child_depth_info
             )
-        if some_children_which_are_leaves:
-            print("marking last child for suppressed leaf node")
-            CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
-            string += CmdTreeNode._create_supressed_children_line(
-                child_depth_info, "leaves are hidden"
-            )
+        CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
+        string += CmdTreeNode._create_supressed_children_line(
+            child_depth_info, "leaves are hidden"
+        )
         return string
 
     @staticmethod
