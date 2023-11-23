@@ -64,10 +64,11 @@ def prompt_cmd_path(
     nested_completer = NestedCompleter.from_nested_dict(compl_dict, separator="/")
     help_txt = (
         f"Additional commands for prompt:{os.linesep}"
-        f":p[b][<depth>] Tree Print | :r Retry | :h Help Text | :c Cancel {os.linesep}"
+        f":p[b][f][<depth>] Tree Print | :r Retry | :h Help Text | :c Cancel {os.linesep}"
         f"Auto complete is available using Tab after typing the slash character.{os.linesep}"
         f"You can also print a subtree by typing the path and appending :p[b][<depth>].{os.linesep}"
         f"The b option for printouts enables brief printouts without descriptions.{os.linesep}"
+        f"The p option for printouts overrides hide flags to display all hidden nodes.{os.linesep}"
     )
     print(help_txt)
     while True:
@@ -85,14 +86,23 @@ def prompt_cmd_path(
                 assert tree_to_print is not None
             with_descriptions = True
             depth = None
+            show_hidden_elements = False
             pattern = r"p([a-zA-Z]*)(\d*)"
             matches = re.search(pattern, list_of_patterns[1])
             if matches:
                 if "b" in matches.group(1):
                     with_descriptions = False
+                if "f" in matches.group(1):
+                    show_hidden_elements = True
                 if matches.group(2).isdigit():
                     depth = int(matches.group(2))
-            print(tree_to_print.str_for_tree(with_descriptions, depth))
+            print(
+                tree_to_print.str_for_tree(
+                    with_description=with_descriptions,
+                    max_depth=depth,
+                    show_hidden_elements=show_hidden_elements,
+                )
+            )
             continue
         elif ":h" in path_or_cmd:
             print(help_txt)
