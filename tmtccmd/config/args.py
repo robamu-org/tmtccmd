@@ -412,10 +412,10 @@ def determine_cmd_path(
     if pargs.cmd_path is None:
         if use_prompts:
             print("No command path (-p) argument specified, prompting from user")
-            # Try to get the service list from the hook base and prompt service
-            # from user
             def_params.cmd_path = prompt_cmd_path(
-                cmd_defs, params.app_params.compl_style
+                cmd_defs,
+                history=hook_obj.get_cmd_history(),
+                compl_style=params.app_params.compl_style,
             )
             print(f"Using command path: {def_params.cmd_path}")
     else:

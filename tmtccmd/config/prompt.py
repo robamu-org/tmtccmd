@@ -1,10 +1,12 @@
-import os
 import logging
+import os
 import re
+from typing import Optional
 
 import prompt_toolkit
 from deprecated.sphinx import deprecated
 from prompt_toolkit.completion import NestedCompleter, WordCompleter
+from prompt_toolkit.history import History
 from prompt_toolkit.shortcuts import CompleteStyle
 
 from tmtccmd.config.tmtc import CmdTreeNode, OpCodeEntry, TmtcDefinitionWrapper
@@ -55,7 +57,9 @@ def prompt_service(
 
 
 def prompt_cmd_path(
-    cmd_def_tree: CmdTreeNode, compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
+    cmd_def_tree: CmdTreeNode,
+    history: Optional[History] = None,
+    compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE,
 ) -> str:
     compl_dict = cmd_def_tree.name_dict
     compl_dict = compl_dict.get("/")
@@ -74,6 +78,7 @@ def prompt_cmd_path(
     while True:
         path_or_cmd = prompt_toolkit.prompt(
             message="> ",
+            history=history,
             completer=nested_completer,
             complete_style=compl_style,
         )
