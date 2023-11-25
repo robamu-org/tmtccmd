@@ -214,8 +214,9 @@ def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser
         dest="print_tree",
         nargs="*",
         help=(
-            f"Optional arguments [b] [<numMaxDepth>]. Print the command definition tree. You can"
-            f"{os.linesep}optionally add b to omit descriptions, and a maximum print depth."
+            f"Optional arguments [b] [p] [<numMaxDepth>]. Print the command definition tree. You "
+            f"can{os.linesep}optionally add b to omit descriptions, p to display hidden nodes, "
+            f"and a maximum print depth."
         ),
     )
     add_tmtc_mode_arguments(parser_or_subparser)

@@ -70,9 +70,11 @@ def prompt_cmd_path(
         f"Additional commands for prompt:{os.linesep}"
         f":p[b][f][<depth>] Tree Print | :r Retry | :h Help Text | :c Cancel {os.linesep}"
         f"Auto complete is available using Tab after typing the slash character.{os.linesep}"
-        f"You can also print a subtree by typing the path and appending :p[b][<depth>].{os.linesep}"
-        f"The b option for printouts enables brief printouts without descriptions.{os.linesep}"
-        f"The p option for printouts overrides hide flags to display all hidden nodes.{os.linesep}"
+        f"If a command history was passed, use arrow up to access it.{os.linesep}"
+        f"You can also print a subtree by typing the path and appending :p[b][p][<depth>]."
+        f"{os.linesep}The b option for printouts enables brief printouts without descriptions."
+        f"{os.linesep}The p option for printouts overrides hide flags to display all hidden nodes."
+        f"{os.linesep}"
     )
     print(help_txt)
     while True:
