@@ -42,6 +42,22 @@ class DepthInfo:
 
 
 class CmdTreeNode:
+    """The command tree node is the primary data structure used to specify the command
+    structure in a way it can be used by framework components.
+
+    The node class provides an API which allows to build a tree of command nodes. Generally, a full
+    path from the root node to a leaf will be the command identifier or command path for executing
+    a certain command or procedure.
+
+    You can create the root node using the :py:meth:`CmdTreeNode.root_node` class method. After
+    that children can be appended to the nodes using the :py:meth:`CmdTreeNode.add_child` method.
+
+    You can use square bracket operator to access the children of a node directly. For example,
+    if a node with the name ``test_node`` has the child ``event``, you could use
+    ``test_node["event"]`` to access the child node.
+
+    """
+
     def __init__(
         self,
         name: str,
@@ -50,6 +66,27 @@ class CmdTreeNode:
         hide_children_for_print: bool = False,
         hide_children_which_are_leaves: bool = False,
     ) -> None:
+        """
+        Parameters
+        ------------
+
+        name
+            Name of the node, which will be also part of the command path when picking a path
+            through the tree.
+        description
+            Additional description for the node.
+        parent
+            Parent of the node. Generally, this does not need to be set, as it will be set
+            correctly when using the :py:meth:`CmdTreeNode.add_child` method.
+        hide_children_for_print
+            For large tree, it can make sense to hide the children for a regular printout of the
+            tree. This field allows to do this.
+        hide_children_which_are_leaves
+            For large tree, it can make sense to hide the children which are leaves for a regular
+            printout of the tree. This field allows to do this. This field is overriden by the
+            strong ``hide_children_for_print`` field.
+
+        """
         self.name = name
         self.description = description
         self.parent: Optional[CmdTreeNode] = parent
@@ -65,6 +102,8 @@ class CmdTreeNode:
         return self.children[arg]
 
     def add_child(self, child: CmdTreeNode):
+        """Add a child to the node. This will also assign the parent class of the child to
+        the current node."""
         child.parent = self
         self.children.update({child.name: child})
 
@@ -75,6 +114,8 @@ class CmdTreeNode:
     def contains_path(self, path: str) -> bool:
         """Check whether a full slash separated command path is contained within
         the command tree."""
+        if path == "":
+            return False
         return self.contains_path_from_node_list(path.split("/"))
 
     def contains_path_from_node_list(self, node_name_list: List[str]) -> bool:
@@ -96,11 +137,16 @@ class CmdTreeNode:
         return False
 
     def extract_subnode(self, path: str) -> Optional[CmdTreeNode]:
+        """Extract a subnode given a relative path."""
+        if path == "":
+            return None
         return self.extract_subnode_by_node_list(path.split("/"))
 
     def extract_subnode_by_node_list(
         self, node_list: List[str]
     ) -> Optional[CmdTreeNode]:
+        """Extract a subnode given a list which would form a relative path if it were joined
+        using slashes."""
         if not self.contains_path_from_node_list(node_list):
             return None
         if len(node_list) == 1 and self.children[node_list[0]] is not None:
@@ -119,13 +165,36 @@ class CmdTreeNode:
         return {self.name: None}
 
     def str_for_tree(
-        self, with_description: bool, max_depth: Optional[int] = None
+        self,
+        with_description: bool,
+        max_depth: Optional[int] = None,
+        show_hidden_elements: bool = False,
     ) -> str:
+        """Retrieve the a human readable printout of the tree.
+
+        Parameters
+        ------------
+
+        with_description
+            Display descriptions right to the tree.
+        max_depth
+            Entries will be cut-off at the specified depth. None can be specified to print all
+            depths.
+        show_hidden_elements
+            Overrides the hide argument of command tree nodes.
+        """
         return self.__str_for_depth(
-            with_description, DepthInfo(depth=0, last_child=False, max_depth=max_depth)
+            with_description,
+            DepthInfo(depth=0, last_child=False, max_depth=max_depth),
+            show_hidden_elements=show_hidden_elements,
         )
 
-    def __str_for_depth(self, with_description: bool, depth_info: DepthInfo) -> str:
+    def __str_for_depth(
+        self,
+        with_description: bool,
+        depth_info: DepthInfo,
+        show_hidden_elements: bool = False,
+    ) -> str:
         # If we are at a larger depth than 0, we want to prepend the name using a special
         # format. Example:
         #
@@ -161,7 +230,9 @@ class CmdTreeNode:
             if with_description:
                 line = f"{line.ljust(35)} [ " + self.description + " ]"
         string = line + os.linesep
-        return self._handle_children_printout(string, with_description, depth_info)
+        return self._handle_children_printout(
+            string, with_description, depth_info, show_hidden_elements
+        )
 
     @staticmethod
     def _create_leading_tree_part(depth_info: DepthInfo) -> str:
@@ -180,7 +251,11 @@ class CmdTreeNode:
         return line
 
     def _handle_children_printout(
-        self, string: str, with_description: bool, depth_info: DepthInfo
+        self,
+        string: str,
+        with_description: bool,
+        depth_info: DepthInfo,
+        show_hidden_elements: bool,
     ) -> str:
         child_depth_info = DepthInfo(
             depth=depth_info.depth + 1,
@@ -188,13 +263,17 @@ class CmdTreeNode:
             max_depth=depth_info.max_depth,
             layer_is_last_set=copy.copy(depth_info.set_of_layers_where_child_is_last),
         )
-        if self.hide_children_for_print and len(self.children) > 0:
+        if (
+            not show_hidden_elements
+            and self.hide_children_for_print
+            and len(self.children) > 0
+        ):
             CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
             string += CmdTreeNode._create_supressed_children_line(
                 child_depth_info, "children are hidden"
             )
         else:
-            if self.hide_children_which_are_leaves:
+            if not show_hidden_elements and self.hide_children_which_are_leaves:
                 str_if_there_are_leaves = (
                     self._handle_children_output_suppressed_leaves(
                         with_description, depth_info, child_depth_info
@@ -206,7 +285,11 @@ class CmdTreeNode:
                 if idx == len(self.children) - 1:
                     CmdTreeNode._this_is_the_last_child(child_depth_info, depth_info)
                 # Use recursion here to get the string for the subtree.
-                string += child.__str_for_depth(with_description, child_depth_info)
+                string += child.__str_for_depth(
+                    with_description=with_description,
+                    depth_info=child_depth_info,
+                    show_hidden_elements=show_hidden_elements,
+                )
         return string
 
     def _handle_children_output_suppressed_leaves(

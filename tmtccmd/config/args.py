@@ -214,8 +214,9 @@ def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser
         dest="print_tree",
         nargs="*",
         help=(
-            f"Optional arguments [b] [<numMaxDepth>]. Print the command definition tree. You can"
-            f"{os.linesep}optionally add b to omit descriptions, and a maximum print depth."
+            f"Optional arguments [b] [p] [<numMaxDepth>]. Print the command definition tree. You "
+            f"can{os.linesep}optionally add b to omit descriptions, p to display hidden nodes, "
+            f"and a maximum print depth."
         ),
     )
     add_tmtc_mode_arguments(parser_or_subparser)
@@ -412,10 +413,10 @@ def determine_cmd_path(
     if pargs.cmd_path is None:
         if use_prompts:
             print("No command path (-p) argument specified, prompting from user")
-            # Try to get the service list from the hook base and prompt service
-            # from user
             def_params.cmd_path = prompt_cmd_path(
-                cmd_defs, params.app_params.compl_style
+                cmd_defs,
+                history=hook_obj.get_cmd_history(),
+                compl_style=params.app_params.compl_style,
             )
             print(f"Using command path: {def_params.cmd_path}")
     else:

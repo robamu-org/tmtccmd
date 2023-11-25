@@ -55,6 +55,12 @@ class TestCmdDefTree(TestCase):
         self.base_tree()
         self.assertTrue(self.cmd_tree.contains_path("/"))
 
+    def test_path_contained_invalid_input(self):
+        self.assertFalse(self.cmd_tree.contains_path(""))
+
+    def test_extract_node_invalid_input(self):
+        self.assertIsNone(self.cmd_tree.extract_subnode(""))
+
     def test_extract_node_not_contained(self):
         self.tree_with_two_layers()
         self.assertIsNone(self.cmd_tree.extract_subnode("aocs"))
@@ -253,7 +259,7 @@ class TestCmdDefTree(TestCase):
             ),
         )
 
-    def test_printout_6(self):
+    def _build_tree_with_hidden_children(self):
         self.base_tree()
         self.cmd_tree.children["acs"].add_child(
             CmdTreeNode("acs_ctrl", "ACS Controller")
@@ -273,6 +279,8 @@ class TestCmdDefTree(TestCase):
         self.cmd_tree.children["tcs"].add_child(pt1000_node)
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
 
+    def test_printout_hidden_children(self):
+        self._build_tree_with_hidden_children()
         print(self.cmd_tree)
         self.assertEqual(
             str(self.cmd_tree),
@@ -291,8 +299,32 @@ class TestCmdDefTree(TestCase):
             ),
         )
 
-    def test_printout_suppressed_leaves(self):
-        self.base_tree()
+    def test_printout_hidden_override(self):
+        self._build_tree_with_hidden_children()
+        print(self.cmd_tree)
+        printout = self.cmd_tree.str_for_tree(
+            with_description=False, max_depth=None, show_hidden_elements=True
+        )
+        print(printout)
+        self.assertEqual(
+            printout,
+            (
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  ├── acs_ctrl{os.linesep}"
+                f"│  └── mgm_0{os.linesep}"
+                f"│     └── update_cfg{os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"│  ├── tcs_ctrl{os.linesep}"
+                f"│  │  └── set_param{os.linesep}"
+                f"│  └── pt1000_0{os.linesep}"
+                f"│     ├── set_mode{os.linesep}"
+                f"│     └── set_cfg{os.linesep}"
+                f"└── ping{os.linesep}"
+            ),
+        )
+
+    def _build_tree_with_suppressed_leaves(self):
         self.cmd_tree.children["acs"].add_child(
             CmdTreeNode("acs_ctrl", "ACS Controller")
         )
@@ -316,6 +348,9 @@ class TestCmdDefTree(TestCase):
         self.cmd_tree["ping"].add_child(CmdTreeNode("event", "Event Test"))
         self.cmd_tree["ping"]["event"].add_child(CmdTreeNode("0", "Event 0"))
 
+    def test_printout_suppressed_leaves(self):
+        self.base_tree()
+        self._build_tree_with_suppressed_leaves()
         print(self.cmd_tree)
         self.assertEqual(
             str(self.cmd_tree),
@@ -331,6 +366,33 @@ class TestCmdDefTree(TestCase):
                 f"│  ├── pt1000_0{os.linesep}"
                 f"│  │  └── ... (cut-off, children are hidden){os.linesep}"
                 f"│  └── ... (cut-off, leaves are hidden){os.linesep}"
+                f"└── ping{os.linesep}"
+                f"   └── event{os.linesep}"
+                f"      └── 0{os.linesep}"
+            ),
+        )
+
+    def test_printout_suppressed_leaves_print_override(self):
+        self.base_tree()
+        self._build_tree_with_suppressed_leaves()
+        printout = self.cmd_tree.str_for_tree(
+            False, max_depth=None, show_hidden_elements=True
+        )
+        print(printout)
+        self.assertEqual(
+            printout,
+            (
+                f"/{os.linesep}"
+                f"├── acs{os.linesep}"
+                f"│  ├── acs_ctrl{os.linesep}"
+                f"│  └── mgm_0{os.linesep}"
+                f"│     └── update_cfg{os.linesep}"
+                f"├── tcs{os.linesep}"
+                f"│  ├── tcs_ctrl{os.linesep}"
+                f"│  │  └── set_param{os.linesep}"
+                f"│  ├── pt1000_0{os.linesep}"
+                f"│  │  └── set_mode{os.linesep}"
+                f"│  └── heaters{os.linesep}"
                 f"└── ping{os.linesep}"
                 f"   └── event{os.linesep}"
                 f"      └── 0{os.linesep}"
