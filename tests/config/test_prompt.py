@@ -1,4 +1,6 @@
 from unittest import TestCase
+
+from prompt_toolkit.history import InMemoryHistory
 from tmtccmd.config.prompt import prompt_cmd_path
 from tmtccmd.config.tmtc import CmdTreeNode
 from unittest.mock import MagicMock, patch
@@ -36,7 +38,7 @@ class TestPromptFunc(TestCase):
             self.assertEqual(len(call_list), 2)
             help_txt = mocked_print.call_args_list[0].args[0]
             self.assertTrue("Additional commands for prompt:" in help_txt)
-            self.assertTrue(":p[b][<depth>] Tree Print" in help_txt)
+            self.assertTrue(":p[b][f][<depth>] Tree Print" in help_txt)
             self.assertTrue(":r Retry" in help_txt)
             self.assertTrue(":h Help Text" in help_txt)
             printout = mocked_print.call_args_list[1].args[0]
@@ -83,8 +85,19 @@ class TestPromptFunc(TestCase):
             self.assertEqual(len(call_list), 2)
             help_txt = mocked_print.call_args_list[0].args[0]
             self.assertTrue("Additional commands for prompt:" in help_txt)
-            self.assertTrue(":p[b][<depth>] Tree Print" in help_txt)
+            self.assertTrue(":p[b][f][<depth>] Tree Print" in help_txt)
             self.assertTrue(":r Retry" in help_txt)
             self.assertTrue(":h Help Text" in help_txt)
             help_txt_2 = mocked_print.call_args_list[1].args[0]
             self.assertEqual(help_txt, help_txt_2)
+
+    def test_cmd_history(self):
+        self.base_tree()
+        history = InMemoryHistory()
+        history.append_string("test")
+        with patch(
+            "tmtccmd.config.prompt.prompt_toolkit.prompt", side_effect=["ping"]
+        ) as prompt:
+            cmd_path = prompt_cmd_path(self.cmd_tree, history=history)
+            self.assertEqual(len(prompt.call_args_list), 1)
+            self.assertEqual(cmd_path, "/ping")
