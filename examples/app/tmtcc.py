@@ -5,45 +5,46 @@ import sys
 import time
 from typing import Any, Optional
 
-import tmtccmd
+from prompt_toolkit.history import FileHistory, History
 from spacepackets.ccsds import CdsShortTimestamp
-from spacepackets.ecss import PusTelemetry, PusTelecommand, PusVerificator
+from spacepackets.ecss import PusTelecommand, PusTelemetry, PusVerificator
+from spacepackets.ecss.pus_1_verification import Service1Tm, UnpackParams
 from spacepackets.ecss.pus_17_test import Service17Tm
-from spacepackets.ecss.pus_1_verification import UnpackParams, Service1Tm
 from spacepackets.util import UnsignedByteField
 
-from tmtccmd import CcsdsTmtcBackend, ProcedureParamsWrapper, BackendRequest
+import tmtccmd
+from tmtccmd import BackendRequest, CcsdsTmtcBackend, ProcedureParamsWrapper
 from tmtccmd.com import ComInterface
-from tmtccmd.config.args import perform_tree_printout
-from tmtccmd.pus import VerificationWrapper
 from tmtccmd.config import (
-    default_json_path,
     CmdTreeNode,
-    SetupParams,
     HookBase,
-    params_to_procedure_conversion,
     PreArgsParsingWrapper,
+    SetupParams,
     SetupWrapper,
+    default_json_path,
+    params_to_procedure_conversion,
 )
+from tmtccmd.config.args import perform_tree_printout
+from tmtccmd.fsfw.tmtc_printer import FsfwTmTcPrinter
 from tmtccmd.logging import add_colorlog_console_logger
 from tmtccmd.logging.pus import (
     RegularTmtcLogWrapper,
 )
+from tmtccmd.pus import VerificationWrapper
+from tmtccmd.pus.s5_fsfw_event import Service5Tm
 from tmtccmd.tmtc import (
     CcsdsTmHandler,
-    SpecificApidHandlerBase,
-    TcQueueEntryType,
-    ProcedureWrapper,
-    TcProcedureType,
-    FeedWrapper,
-    SendCbParams,
     DefaultPusQueueHelper,
-    TcHandlerBase,
+    FeedWrapper,
+    ProcedureWrapper,
     QueueWrapper,
+    SendCbParams,
+    SpecificApidHandlerBase,
+    TcHandlerBase,
+    TcProcedureType,
+    TcQueueEntryType,
 )
-from tmtccmd.pus.s5_fsfw_event import Service5Tm
-from tmtccmd.util import FileSeqCountProvider, PusFileSeqCountProvider, ObjectIdDictT
-from tmtccmd.fsfw.tmtc_printer import FsfwTmTcPrinter
+from tmtccmd.util import FileSeqCountProvider, ObjectIdDictT, PusFileSeqCountProvider
 
 _LOGGER = logging.getLogger()
 
@@ -62,8 +63,8 @@ class ExampleHookClass(HookBase):
         assert self.cfg_path is not None
         print("Communication interface assignment function was called")
         from tmtccmd.config.com import (
-            create_com_interface_default,
             create_com_interface_cfg_default,
+            create_com_interface_default,
         )
 
         assert self.cfg_path is not None
@@ -112,6 +113,11 @@ class ExampleHookClass(HookBase):
             CmdTreeNode("channel_1_off", "Channel 1 off")
         )
         return root_node
+
+    def get_cmd_history(self) -> Optional[History]:
+        """Optionlly return a history class for the past command paths which will be used
+        when prompting a commad path from the user in CLI mode."""
+        return FileHistory(".tmtc-cli-history.txt")
 
     def perform_mode_operation(self, _tmtc_backend: CcsdsTmtcBackend, _mode: int):
         _LOGGER.info("Mode operation hook was called")
