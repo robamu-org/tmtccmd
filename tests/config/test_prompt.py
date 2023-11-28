@@ -36,7 +36,7 @@ class TestPromptFunc(TestCase):
             self.assertEqual(len(call_list), 2)
             help_txt = mocked_print.call_args_list[0].args[0]
             self.assertTrue("Additional commands for prompt:" in help_txt)
-            self.assertTrue(":p[b][<depth>] Tree Print" in help_txt)
+            self.assertTrue(":p[b][f][<depth>] Tree Print" in help_txt)
             self.assertTrue(":r Retry" in help_txt)
             self.assertTrue(":h Help Text" in help_txt)
             printout = mocked_print.call_args_list[1].args[0]
@@ -83,7 +83,7 @@ class TestPromptFunc(TestCase):
             self.assertEqual(len(call_list), 2)
             help_txt = mocked_print.call_args_list[0].args[0]
             self.assertTrue("Additional commands for prompt:" in help_txt)
-            self.assertTrue(":p[b][<depth>] Tree Print" in help_txt)
+            self.assertTrue(":p[b][f][<depth>] Tree Print" in help_txt)
             self.assertTrue(":r Retry" in help_txt)
             self.assertTrue(":h Help Text" in help_txt)
             help_txt_2 = mocked_print.call_args_list[1].args[0]
