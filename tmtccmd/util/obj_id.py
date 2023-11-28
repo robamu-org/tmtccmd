@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, Dict, Optional
+from typing import Mapping, Union, Optional
 
 from spacepackets.util import UnsignedByteField
 
@@ -28,6 +28,7 @@ class ObjectIdBase(UnsignedByteField):
             return f"{self.obj_id:#010x}"
         elif self.byte_len == 8:
             return f"{self.obj_id:#018x}"
+        return f"{self.obj_id:#x}"
 
     @property
     def obj_id(self) -> int:
@@ -113,4 +114,4 @@ class ObjectIdU8(ObjectIdBase):
         return obj_id
 
 
-ObjectIdDictT = Dict[bytes, ObjectIdBase]
+ObjectIdDictT = Mapping[bytes, ObjectIdBase]
