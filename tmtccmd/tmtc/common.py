@@ -1,9 +1,8 @@
 import enum
 import abc
 import logging
-from typing import Deque, List, Union, Any, Dict, Optional
+from typing import Deque, List, Any, Dict, Optional
 from spacepackets.ecss.tm import PusTelemetry
-from .tm_base import PusTmInfoInterface, PusTmInterface
 
 
 TelemetryListT = List[bytes]
@@ -13,8 +12,6 @@ PusTmQueue = Deque[PusTelemetry]
 PusTmListT = List[PusTelemetry]
 
 PusTmQueueT = Deque[PusTmListT]
-PusIFListT = List[Union[PusTmInfoInterface, PusTmInterface]]
-PusIFQueueT = Deque[PusIFListT]
 
 
 class SpecificApidHandlerBase(abc.ABC):

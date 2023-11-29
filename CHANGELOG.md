@@ -24,6 +24,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
   and do not work in their current form. These handlers might be re-added with a proper
   implementation which also allow building a CFDP daemon / full CFDP entity more easily.
 
+## Changed
+
+- Move `tmtccmd.tmtc.base` to `tmtccmd.tmtc.tm_base` and deprecate it.
+
 # [v7.0.0] 2023-11-10
 
 ## Added

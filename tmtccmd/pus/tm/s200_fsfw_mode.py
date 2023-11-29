@@ -41,6 +41,7 @@ class Service200FsfwReader:
         return self.tm.subservice == Subservice.TM_CANT_REACH_MODE
 
 
+@deprecated(version="7.0.0", reason="use Service200FsfwReader instead")
 class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     @deprecated(version="7.0.0", reason="use Service200FsfwReader instead")
     def __init__(
