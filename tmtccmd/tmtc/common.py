@@ -3,7 +3,7 @@ import abc
 import logging
 from typing import Deque, List, Union, Any, Dict, Optional
 from spacepackets.ecss.tm import PusTelemetry
-from .base import PusTmInfoInterface, PusTmInterface
+from .tm_base import PusTmInfoInterface, PusTmInterface
 
 
 TelemetryListT = List[bytes]

@@ -120,9 +120,8 @@ command tree definition to the framework also allows it to provide a GUI command
 for the GUI mode.
 
 It is optionally possible to pass a command history to the framework by implementing the
-:py:meth:`tmtccmd.tmtc.config.HookBase.get_cmd_history` function. An example implementation
-using the :py:class:`prompt_toolkit.history.FileHistory` class would look like this
-
+:py:meth:`tmtccmd.config.hook.HookBase.get_cmd_history` function. An example implementation
+using the :py:class:`prompt_toolkit.history.FileHistory` class would look like this:
 
 .. code-block:: python
 
@@ -152,7 +151,7 @@ The PUS TM handler
 
 This object is responsible for the handling of PUS telemetry. In the example case, the
 handler object is responsible space packets with a certain application process identifier (APID).
-Therefore, this object implements the :py:class:`tmtccmd.tmtc.SpecificApidHandlerBase`.
+Therefore, this object implements the :py:class:`tmtccmd.tmtc.common.SpecificApidHandlerBase`.
 
 The `handle_tm` method implementation is the primary functions where incoming PUS packets
 are handled. This can something like prinouts or logging, either to a file or to a database.

@@ -4,7 +4,7 @@ from abc import abstractmethod, ABC
 from typing import Any, Deque, List, Union, Dict, Optional
 
 from spacepackets.ecss import PusTelemetry
-from tmtccmd.tmtc.base import PusTmInfoInterface, PusTmInterface
+from tmtccmd.tmtc.tm_base import PusTmInfoInterface, PusTmInterface
 
 from .queue import (
     QueueHelperBase,
