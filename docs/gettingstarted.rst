@@ -16,7 +16,8 @@ The Configuration Hook Class
 ==============================
 
 The class `ExampleHookClass` is the example configuration class implementing
-the :py:class:`tmtccmd.config.hook.HookBase`.
+the :py:class:`tmtccmd.config.hook.HookBase`. There are two functions which must be impelemented
+by a user:
 
 1. The :py:meth:`tmtccmd.config.hook.HookBase.get_communication_interface` method
    is used to return a communication interface given a string identifier. You can read more
@@ -73,41 +74,41 @@ and the code to create this tree would look like this:
 
 .. code-block:: python
 
-    root_node = CmdTreeNode.root_node()
-    root_node.add_child(CmdTreeNode("ping", "Send PUS ping command"))
-    root_node.add_child(CmdTreeNode("test", "Test Node"))
-    root_node.children["test"].add_child(
-        CmdTreeNode("event", "Send PUS event test command")
-    )
-    root_node.add_child(CmdTreeNode("system", "System Commands"))
-    root_node.add_child(CmdTreeNode("acs", "ACS Subsystem"))
-    root_node["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
-    root_node["acs"].add_child(CmdTreeNode("mgt", "Magnetorquer"))
-    root_node["acs"]["mgt"].add_child(CmdTreeNode("set_dipoles", "Set MGT Dipoles"))
-    root_node["acs"].add_child(CmdTreeNode("mgm0", "Magnetometer 0"))
-    root_node["acs"].add_child(CmdTreeNode("mgm1", "Magnetometer 1"))
-    mgm_node = CmdTreeNode("other cmds", "Other MGM commands")
-    root_node["acs"]["mgm0"].add_child(mgm_node)
-    root_node["acs"]["mgm1"].add_child(mgm_node)
-    root_node.add_child(CmdTreeNode("tcs", "TCS Subsystem"))
-    root_node["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
-    root_node["tcs"].add_child(CmdTreeNode("pt1000", "Temperature Sensor"))
-    root_node["tcs"].add_child(CmdTreeNode("heater", "Heater"))
-    root_node.add_child(CmdTreeNode("com", "COM Subsystem"))
-    root_node["com"].add_child(CmdTreeNode("uhf_transceiver", "UHF Transceiver"))
-    root_node.add_child(CmdTreeNode("eps", "EPS Subsystem"))
-    root_node["eps"].add_child(CmdTreeNode("pcdu", "PCDU"))
-    root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_0_on", "Channel 0 on"))
-    root_node["eps"]["pcdu"].add_child(
-        CmdTreeNode("channel_0_off", "Channel 0 off")
-    )
-    root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_on", "Channel 1 on"))
-    root_node["eps"]["pcdu"].add_child(
-        CmdTreeNode("channel_1_off", "Channel 1 off")
-    )
+    def get_command_definitions(self) -> CmdTreeNode:
+        root_node = CmdTreeNode.root_node()
+        root_node.add_child(CmdTreeNode("ping", "Send PUS ping command"))
+        root_node.add_child(CmdTreeNode("test", "Test Node"))
+        root_node.children["test"].add_child(
+            CmdTreeNode("event", "Send PUS event test command")
+        )
+        root_node.add_child(CmdTreeNode("system", "System Commands"))
+        root_node.add_child(CmdTreeNode("acs", "ACS Subsystem"))
+        root_node["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
+        root_node["acs"].add_child(CmdTreeNode("mgt", "Magnetorquer"))
+        root_node["acs"]["mgt"].add_child(CmdTreeNode("set_dipoles", "Set MGT Dipoles"))
+        root_node["acs"].add_child(CmdTreeNode("mgm0", "Magnetometer 0"))
+        root_node["acs"].add_child(CmdTreeNode("mgm1", "Magnetometer 1"))
+        mgm_node = CmdTreeNode("other cmds", "Other MGM commands")
+        root_node["acs"]["mgm0"].add_child(mgm_node)
+        root_node["acs"]["mgm1"].add_child(mgm_node)
+        root_node.add_child(CmdTreeNode("tcs", "TCS Subsystem"))
+        root_node["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
+        root_node["tcs"].add_child(CmdTreeNode("pt1000", "Temperature Sensor"))
+        root_node["tcs"].add_child(CmdTreeNode("heater", "Heater"))
+        root_node.add_child(CmdTreeNode("com", "COM Subsystem"))
+        root_node["com"].add_child(CmdTreeNode("uhf_transceiver", "UHF Transceiver"))
+        root_node.add_child(CmdTreeNode("eps", "EPS Subsystem"))
+        root_node["eps"].add_child(CmdTreeNode("pcdu", "PCDU"))
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_0_on", "Channel 0 on"))
+        root_node["eps"]["pcdu"].add_child(
+            CmdTreeNode("channel_0_off", "Channel 0 off")
+        )
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_on", "Channel 1 on"))
+        root_node["eps"]["pcdu"].add_child(
+            CmdTreeNode("channel_1_off", "Channel 1 off")
+        )
+        return root_node
 
-You could return this root node in your
-:py:meth:`tmtccmd.config.hook.HookBase.get_command_definitions` implementation.
 You can now specify your commands as command paths, which will then serve as identifier for single
 command or command stacks and procedures. The command path will be passed on as the `cmd_path`
 parameter of the :py:class:`tmtccmd.tmtc.procedure.DefaultProcedureInfo` which is passed to
@@ -117,6 +118,18 @@ It is also possible to pass the command path as a CLI argument. For example, you
 ``./tmtcc.py -p /test`` to send a ping command with the example application. Passing the
 command tree definition to the framework also allows it to provide a GUI command path selector
 for the GUI mode.
+
+It is optionally possible to pass a command history to the framework by implementing the
+:py:meth:`tmtccmd.tmtc.config.HookBase.get_cmd_history` function. An example implementation
+using the :py:class:`prompt_toolkit.history.FileHistory` class would look like this
+
+
+.. code-block:: python
+
+    def get_cmd_history(self) -> Optional[History]:
+        """Optionlly return a history class for the past command paths which will be used
+        when prompting a commad path from the user in CLI mode."""
+        return FileHistory(".tmtc-cli-history.txt")
 
 The TC handler
 ==============================

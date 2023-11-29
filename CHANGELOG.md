@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.0rc0] 2023-11-29
+
 ## Added
 
 - Added new command tree mechanism which allows to specify the telecommand structure in a more

@@ -83,7 +83,7 @@ class HookBase(ABC):
 
     def get_cmd_history(self) -> Optional[History]:
         """Optionlly return a history class for the past command paths which will be used
-        when prompting a commad path from the user in CLI mode."""
+        when prompting a command path from the user in CLI mode."""
         return None
 
     def perform_mode_operation(self, tmtc_backend: BackendBase, mode: int):
