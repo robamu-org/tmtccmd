@@ -32,9 +32,7 @@ dependencies = [
     "colorama~=0.4.0",
     "colorlog~=6.6",
     "cobs~=1.2",
-    # TODO: Use upstream again when the nested completer PR has been merged.
-    # "prompt-toolkit~=3.0",
-    "prompt-toolkit @ git+https://github.com/robamu/python-prompt-toolkit.git@nested-completer-custom-separator-based-on-latest",
+    "prompt-toolkit~=3.0",
     "Deprecated~=1.2",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
