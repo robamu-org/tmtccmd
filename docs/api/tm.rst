@@ -17,8 +17,8 @@ TM Common Module
    :undoc-members:
    :show-inheritance:
 
-TM Base Module
--------------------------
+TM Base Module (deprecated)
+----------------------------
 
 .. automodule:: tmtccmd.tmtc.tm_base
    :members:

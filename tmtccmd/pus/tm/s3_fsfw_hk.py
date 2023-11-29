@@ -4,17 +4,18 @@
 from __future__ import annotations
 from abc import abstractmethod
 import struct
+from deprecated.sphinx import deprecated
 
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
-from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.tm_base import PusTmInfoBase, PusTmBase
 from .s3_hk_base import (  # noqa: F401
     Service3Base,
     ObjectIdU32,
-    HkContentType,
 )
 from typing import Tuple, List
 
 
+# TODO: Implement custom reader class, unittest it.
 class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     """This class encapsulates the format of Service 3 telemetry
     This class was written to handle Service 3 telemetry coming from the on-board software
@@ -28,6 +29,7 @@ class Service3FsfwTm(Service3Base, PusTmBase, PusTmInfoBase):
     # collection interval as float (4) and number of parameters(1)
     STRUCTURE_REPORT_FIXED_HEADER_SIZE = DEFAULT_MINIMAL_PACKET_SIZE + 7
 
+    @deprecated(version="8.0.0", reason="deprecated TM API")
     def __init__(
         self,
         subservice_id: int,

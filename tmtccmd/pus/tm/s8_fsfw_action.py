@@ -3,20 +3,23 @@
 from __future__ import annotations
 import struct
 from typing import Optional
+from deprecated.sphinx import deprecated
 
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss import PusService
 from spacepackets.ecss.tm import PusTelemetry
 from spacepackets.util import UnsignedByteField
-from tmtccmd.tmtc.base import PusTmInfoBase, PusTmBase
+from tmtccmd.tmtc.tm_base import PusTmInfoBase, PusTmBase
 from tmtccmd.util.obj_id import ObjectIdU32
 
 
+# TODO: Implement custom reader class, unittest it.
 class Service8FsfwTm(PusTmBase, PusTmInfoBase):
     """Custom Action Service Telemetry handler tailored towards Flight Software Framework (FSFW)
     TM service 8 packets
     """
 
+    @deprecated(version="8.0.0", reason="deprecated TM API")
     def __init__(
         self,
         subservice: int,
