@@ -1,7 +1,11 @@
+import warnings
+
 from abc import abstractmethod
 
 from spacepackets.ecss.tm import PusTelemetry
 from spacepackets.util import PrintFormats
+
+warnings.warn("the tm_base module is deprecated", DeprecationWarning, stacklevel=2)
 
 
 class PusTmInterface:

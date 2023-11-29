@@ -11,7 +11,7 @@ from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
-from tmtccmd.tmtc.base import PusTmBase, PusTmInfoBase
+from tmtccmd.tmtc.tm_base import PusTmBase, PusTmInfoBase
 
 
 class Service200FsfwReader:
@@ -41,6 +41,7 @@ class Service200FsfwReader:
         return self.tm.subservice == Subservice.TM_CANT_REACH_MODE
 
 
+@deprecated(version="7.0.0", reason="use Service200FsfwReader instead")
 class Service200FsfwTm(PusTmBase, PusTmInfoBase):
     @deprecated(version="7.0.0", reason="use Service200FsfwReader instead")
     def __init__(

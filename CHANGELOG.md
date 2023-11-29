@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.0rc0] 2023-11-29
+
 ## Added
 
 - Added new command tree mechanism which allows to specify the telecommand structure in a more
@@ -21,6 +23,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Removed high level CFDP handler and CFDP in CCSDS handler which are not generic enough
   and do not work in their current form. These handlers might be re-added with a proper
   implementation which also allow building a CFDP daemon / full CFDP entity more easily.
+
+## Changed
+
+- Move `tmtccmd.tmtc.base` to `tmtccmd.tmtc.tm_base` and deprecate it.
 
 # [v7.0.0] 2023-11-10
 

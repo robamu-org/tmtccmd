@@ -8,7 +8,7 @@ from deprecated.sphinx import deprecated
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.tm import CdsShortTimestamp, PusTelemetry
 
-from tmtccmd.tmtc.base import PusTmBase, PusTmInfoBase
+from tmtccmd.tmtc.tm_base import PusTmBase, PusTmInfoBase
 
 
 class Service2Tm(PusTmInfoBase, PusTmBase):

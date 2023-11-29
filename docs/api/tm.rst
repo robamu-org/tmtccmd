@@ -9,10 +9,18 @@ CCSDS TM Listener Module
    :undoc-members:
    :show-inheritance:
 
-TM Base Class Module
+TM Common Module
 -------------------------
 
-.. automodule:: tmtccmd.tmtc.base
+.. automodule:: tmtccmd.tmtc.common
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+TM Base Module (deprecated)
+----------------------------
+
+.. automodule:: tmtccmd.tmtc.tm_base
    :members:
    :undoc-members:
    :show-inheritance:
