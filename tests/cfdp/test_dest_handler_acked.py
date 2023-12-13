@@ -11,6 +11,7 @@ from spacepackets.cfdp import (
 )
 from spacepackets.cfdp.pdu import (
     AckPdu,
+    EofPdu,
     FinishedPdu,
     TransactionStatus,
     DeliveryCode,
@@ -55,6 +56,40 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         fsm_res = self.dest_handler.state_machine()
         finished_pdu = self._generic_no_error_finished_pdu_check(fsm_res)
         self._generic_verify_transfer_completion(fsm_res, file_content)
+        self._generic_insert_finished_pdu_ack(finished_pdu)
+
+    def test_cancelled_file_transfer(self):
+        file_content = "Hello World!".encode()
+        with open(self.src_file_path, "wb") as of:
+            of.write(file_content)
+        # Basic acknowledged empty file transfer.
+        self._generic_regular_transfer_init(len(file_content))
+        # Cancel the transfer by sending an EOF PDU with the appropriate parameters.
+        eof_pdu = EofPdu(
+            file_size=0,
+            file_checksum=NULL_CHECKSUM_U32,
+            pdu_conf=self.src_pdu_conf,
+            condition_code=ConditionCode.CANCEL_REQUEST_RECEIVED,
+        )
+        self.dest_handler.insert_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        # Should contain an ACK PDU now.
+        self._generic_verify_eof_ack_packet(
+            fsm_res, condition_code_of_acked_pdu=ConditionCode.CANCEL_REQUEST_RECEIVED
+        )
+        fsm_res = self.dest_handler.state_machine()
+        finished_pdu = self._generic_no_error_finished_pdu_check(
+            fsm_res, expected_condition_code=ConditionCode.CANCEL_REQUEST_RECEIVED
+        )
+        self._generic_verify_transfer_completion(
+            fsm_res,
+            expected_file_data=None,
+            expected_finished_params=FinishedParams(
+                condition_code=ConditionCode.CANCEL_REQUEST_RECEIVED,
+                delivery_code=DeliveryCode.DATA_INCOMPLETE,
+                file_status=FileStatus.FILE_RETAINED,
+            ),
+        )
         self._generic_insert_finished_pdu_ack(finished_pdu)
 
     def test_deferred_missing_file_segment_handling(self):
@@ -459,7 +494,11 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self._generic_verify_transfer_completion(
             fsm_res,
             expected_file_data=None,
-            expected_file_status=FileStatus.FILE_STATUS_UNREPORTED,
+            expected_finished_params=FinishedParams(
+                condition_code=ConditionCode.NO_ERROR,
+                file_status=FileStatus.FILE_STATUS_UNREPORTED,
+                delivery_code=DeliveryCode.DATA_COMPLETE,
+            ),
         )
         self._generic_insert_finished_pdu_ack(finished_pdu)
 
@@ -497,7 +536,11 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self.assertEqual(nak_pdu.end_of_scope, end_of_scope)
         self.assertEqual(nak_pdu.segment_requests, segment_reqs)
 
-    def _generic_verify_eof_ack_packet(self, fsm_res: FsmResult):
+    def _generic_verify_eof_ack_packet(
+        self,
+        fsm_res: FsmResult,
+        condition_code_of_acked_pdu: ConditionCode = ConditionCode.NO_ERROR,
+    ):
         self._state_checker(
             fsm_res,
             1,
@@ -510,7 +553,9 @@ class TestDestHandlerAcked(TestDestHandlerBase):
         self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.ACK_PDU)
         ack_pdu = next_pdu.to_ack_pdu()
         self.assertEqual(ack_pdu.directive_code_of_acked_pdu, DirectiveType.EOF_PDU)
-        self.assertEqual(ack_pdu.condition_code_of_acked_pdu, ConditionCode.NO_ERROR)
+        self.assertEqual(
+            ack_pdu.condition_code_of_acked_pdu, condition_code_of_acked_pdu
+        )
         self.assertEqual(ack_pdu.transaction_status, TransactionStatus.ACTIVE)
 
     def _generic_insert_finished_pdu_ack(self, finished_pdu: FinishedPdu):

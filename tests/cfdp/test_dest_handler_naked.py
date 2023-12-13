@@ -235,7 +235,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         )
         # At least one segment was stored
         self.assertEqual(
-            finished_args.finished_params.delivery_status,
+            finished_args.finished_params.file_status,
             FileStatus.FILE_RETAINED,
         )
         self.assertEqual(

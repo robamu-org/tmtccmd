@@ -11,6 +11,7 @@ from spacepackets.cfdp import (
     ConditionCode,
     Direction,
     DirectiveType,
+    FinishedParams,
     PduConfig,
     PduType,
     TransactionId,
@@ -258,6 +259,7 @@ class TestDestHandlerBase(TestCase):
         fsm_res: FsmResult,
         expected_step: TransactionStep = TransactionStep.SENDING_FINISHED_PDU,
         expected_file_status: FileStatus = FileStatus.FILE_RETAINED,
+        expected_condition_code: ConditionCode = ConditionCode.NO_ERROR,
     ) -> FinishedPdu:
         self._state_checker(fsm_res, 1, CfdpState.BUSY, expected_step)
         self.assertTrue(fsm_res.states.packets_ready)
@@ -267,9 +269,12 @@ class TestDestHandlerBase(TestCase):
         self.assertEqual(next_pdu.pdu_directive_type, DirectiveType.FINISHED_PDU)
 
         finished_pdu = next_pdu.to_finished_pdu()
-        self.assertEqual(finished_pdu.condition_code, ConditionCode.NO_ERROR)
+        self.assertEqual(finished_pdu.condition_code, expected_condition_code)
         self.assertEqual(finished_pdu.file_status, expected_file_status)
-        self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
+        if expected_condition_code == ConditionCode.NO_ERROR:
+            self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_COMPLETE)
+        else:
+            self.assertEqual(finished_pdu.delivery_code, DeliveryCode.DATA_INCOMPLETE)
         self.assertEqual(finished_pdu.direction, Direction.TOWARDS_SENDER)
         self.assertIsNone(finished_pdu.fault_location)
         self.assertEqual(len(finished_pdu.file_store_responses), 0)
@@ -279,10 +284,14 @@ class TestDestHandlerBase(TestCase):
         self,
         fsm_res: FsmResult,
         expected_file_data: Optional[bytes],
-        expected_file_status: FileStatus = FileStatus.FILE_RETAINED,
+        expected_finished_params: FinishedParams = FinishedParams(
+            condition_code=ConditionCode.NO_ERROR,
+            file_status=FileStatus.FILE_RETAINED,
+            delivery_code=DeliveryCode.DATA_COMPLETE,
+        ),
     ):
-        self._generic_transfer_finished_indication_success_check(
-            fsm_res, expected_file_status
+        self._generic_transfer_finished_indication_check(
+            fsm_res, expected_finished_params
         )
         if expected_file_data is not None:
             self.assertTrue(self.dest_file_path.exists())
@@ -299,26 +308,20 @@ class TestDestHandlerBase(TestCase):
                 fsm_res, 0, CfdpState.BUSY, TransactionStep.WAITING_FOR_FINISHED_ACK
             )
 
-    def _generic_transfer_finished_indication_success_check(
-        self,
-        fsm_res: FsmResult,
-        expected_file_status: FileStatus = FileStatus.FILE_RETAINED,
+    def _generic_transfer_finished_indication_check(
+        self, fsm_res: FsmResult, expected_finished_params: FinishedParams
     ):
         self.cfdp_user.transaction_finished_indication.assert_called_once()
-        finished_params = cast(
+        finished_params_from_callback = cast(
             TransactionFinishedParams,
             self.cfdp_user.transaction_finished_indication.call_args.args[0],
         )
-        self.assertEqual(finished_params.transaction_id, self.transaction_id)
+        self.assertEqual(
+            finished_params_from_callback.transaction_id, self.transaction_id
+        )
         self.assertEqual(fsm_res.states.transaction_id, self.transaction_id)
         self.assertEqual(
-            finished_params.finished_params.condition_code, ConditionCode.NO_ERROR
-        )
-        self.assertEqual(
-            finished_params.finished_params.delivery_code, DeliveryCode.DATA_COMPLETE
-        )
-        self.assertEqual(
-            finished_params.finished_params.file_status, expected_file_status
+            finished_params_from_callback.finished_params, expected_finished_params
         )
 
     def _generate_put_response_opts(self) -> TlvList:

@@ -9,6 +9,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Changed
+
+- Simplified CFDP destination handler internals and added unittests for acknowledged transfer
+  cancellation which was previously buggy.
+
 # [v8.0.0rc0] 2023-11-29
 
 ## Added

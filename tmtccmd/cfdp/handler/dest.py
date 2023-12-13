@@ -521,7 +521,7 @@ class DestHandler:
                 eof_pdu = self._params.last_inserted_packet.to_eof_pdu()
                 self._start_transaction_missing_metadata_recv_eof(eof_pdu)
             elif (
-                self._params.last_inserted_packet.pdu.directive_type
+                self._params.last_inserted_packet.pdu_directive_type
                 == DirectiveType.METADATA_PDU
             ):
                 metadata_pdu = self._params.last_inserted_packet.to_metadata_pdu()
@@ -540,10 +540,8 @@ class DestHandler:
             TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING,
         ]:
             if self._params.last_inserted_packet.pdu is not None:
-                exit_fsm = self._handle_fd_or_eof_pdu()
+                self._handle_fd_or_eof_pdu()
                 self._params.last_inserted_packet.pdu = None
-                if exit_fsm:
-                    return
         if self.states.step == TransactionStep.WAITING_FOR_METADATA:
             self._handle_waiting_for_missing_metadata()
             self._deferred_lost_segment_handling()
@@ -590,7 +588,11 @@ class DestHandler:
             ):
                 self._start_deferred_lost_segment_handling()
             else:
-                self._checksum_verify()
+                if (
+                    self._params.completion_disposition
+                    != CompletionDisposition.CANCELED
+                ):
+                    self._checksum_verify()
                 self.states.step = TransactionStep.TRANSFER_COMPLETION
 
     def _start_transaction(self, metadata_pdu: MetadataPdu) -> bool:
@@ -708,7 +710,7 @@ class DestHandler:
         self._cksum_verif_helper.checksum_type = metadata_pdu.checksum_type
         self._params.closure_requested = metadata_pdu.closure_requested
         self._params.acked_params.metadata_missing = False
-        if metadata_pdu.dest_file_name is None:
+        if metadata_pdu.dest_file_name is None or metadata_pdu.source_file_name is None:
             self._params.fp.metadata_only = True
             self._params.finished_params.delivery_code = DeliveryCode.DATA_COMPLETE
         else:
@@ -725,7 +727,7 @@ class DestHandler:
             raise NoRemoteEntityCfgFound(metadata_pdu.dest_entity_id)
         if not self._params.fp.metadata_only:
             self.states.step = TransactionStep.RECEIVING_FILE_DATA
-            self._init_vfs_handling(Path(metadata_pdu.source_file_name).name)
+            self._init_vfs_handling(Path(metadata_pdu.source_file_name).name)  # type: ignore
         else:
             self.states.step = TransactionStep.TRANSFER_COMPLETION
         msgs_to_user_list = None
@@ -767,15 +769,15 @@ class DestHandler:
             )
             self._declare_fault(ConditionCode.FILESTORE_REJECTION)
 
-    def _handle_fd_or_eof_pdu(self) -> bool:
+    def _handle_fd_or_eof_pdu(self):
         """Returns whether to exit the FSM prematurely."""
-        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:
+        if self._params.last_inserted_packet.pdu.pdu_type == PduType.FILE_DATA:  # type: ignore
             self._handle_fd_pdu(self._params.last_inserted_packet.to_file_data_pdu())
         elif (
-            self._params.last_inserted_packet.pdu.directive_type
+            self._params.last_inserted_packet.pdu.directive_type  # type: ignore
             == DirectiveType.EOF_PDU
         ):
-            return self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
+            self._handle_eof_pdu(self._params.last_inserted_packet.to_eof_pdu())
 
     def _handle_waiting_for_missing_metadata(self):
         if self._params.last_inserted_packet.pdu is None:
@@ -805,6 +807,7 @@ class DestHandler:
         self._params.last_inserted_packet.pdu = None
 
     def _reset_nak_activity_parameters(self):
+        assert self._params.acked_params.procedure_timer is not None
         self._params.acked_params.nak_activity_counter = 0
         self._params.acked_params.procedure_timer.reset()
 
@@ -872,7 +875,7 @@ class DestHandler:
             if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
                 self._lost_segment_handling(offset, len(data))
             self.user.vfs.write_data(self._params.fp.file_name, data, offset)
-            self._params.finished_params.delivery_status = FileStatus.FILE_RETAINED
+            self._params.finished_params.file_status = FileStatus.FILE_RETAINED
 
             if self._params.fp.file_size_eof is not None and (
                 offset + len(file_data_pdu.file_data) > self._params.fp.file_size_eof
@@ -889,8 +892,8 @@ class DestHandler:
             if next_expected_progress > self._params.fp.progress:
                 self._params.fp.progress = next_expected_progress
         except FileNotFoundError:
-            if self._params.finished_params.delivery_status != FileStatus.FILE_RETAINED:
-                self._params.finished_params.delivery_status = (
+            if self._params.finished_params.file_status != FileStatus.FILE_RETAINED:
+                self._params.finished_params.file_status = (
                     FileStatus.DISCARDED_FILESTORE_REJECTION
                 )
                 self._declare_fault(ConditionCode.FILESTORE_REJECTION)
@@ -1006,15 +1009,18 @@ class DestHandler:
             self._params.acked_params.nak_activity_counter += 1
             self._params.acked_params.procedure_timer.reset()
 
-    def _handle_eof_pdu(self, eof_pdu: EofPdu) -> bool:
+    def _handle_eof_pdu(self, eof_pdu: EofPdu):
         """Returns whether to exit the FSM prematurely."""
         self._params.fp.crc32 = eof_pdu.file_checksum
         self._params.fp.file_size_eof = eof_pdu.file_size
         self._params.fp.condition_code_eof = eof_pdu.condition_code
+        if self.cfg.indication_cfg.eof_recv_indication_required:
+            assert self._params.transaction_id is not None
+            self.user.eof_recv_indication(self._params.transaction_id)
         if eof_pdu.condition_code == ConditionCode.NO_ERROR:
-            return_now, exit_fsm = self._handle_no_error_eof()
-            if return_now:
-                return exit_fsm
+            regular_completion = self._handle_no_error_eof()
+            if not regular_completion:
+                return
         else:
             # This is an EOF (Cancel), perform Cancel Response Procedures according to chapter
             # 4.6.6 of the standard.
@@ -1022,18 +1028,18 @@ class DestHandler:
             # Store this as progress for the checksum calculation.
             self._params.fp.progress = self._params.fp.file_size_eof
             self._params.finished_params.delivery_code = DeliveryCode.DATA_INCOMPLETE
-            self._checksum_verify()
         self._file_transfer_complete_transition()
         return False
 
-    def _handle_no_error_eof(self) -> Tuple[bool, bool]:
+    def _handle_no_error_eof(self) -> bool:
+        """Returns whether the transfer can be completed regularly."""
         # CFDP 4.6.1.2.9: Declare file size error if progress exceeds file size
         if self._params.fp.progress > self._params.fp.file_size_eof:  # type: ignore
             if (
                 self._declare_fault(ConditionCode.FILE_SIZE_ERROR)
                 != FaultHandlerCode.IGNORE_ERROR
             ):
-                return True, False
+                return False
         elif (
             self._params.fp.progress < self._params.fp.file_size_eof  # type: ignore
         ) and self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
@@ -1049,20 +1055,18 @@ class DestHandler:
             _LOGGER.warning(
                 "missmatch of EOF file size and Metadata File Size for success EOF"
             )
-        if self.cfg.indication_cfg.eof_recv_indication_required:
-            assert self._params.transaction_id is not None
-            self.user.eof_recv_indication(self._params.transaction_id)
-        if self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
-            self._prepare_eof_ack_packet()
-            self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
-            return True, True
         if (
             self.transmission_mode == TransmissionMode.UNACKNOWLEDGED
             and not self._checksum_verify()
         ):
+            if (
+                self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
+                != FaultHandlerCode.IGNORE_ERROR
+            ):
+                return False
             self._start_check_limit_handling()
-            return True, True
-        return False, False
+            return False
+        return True
 
     def _start_deferred_lost_segment_handling(self):
         if self._params.acked_params.metadata_missing:
@@ -1071,8 +1075,8 @@ class DestHandler:
             self.states.step = TransactionStep.WAITING_FOR_MISSING_DATA
         self._params.acked_params.deferred_lost_segment_detection_active = True
         self._params.acked_params.lost_seg_tracker.coalesce_lost_segments()
-        self._params.acked_params.last_start_offset = self._params.fp.file_size_eof
-        self._params.acked_params.last_end_offset = self._params.fp.file_size_eof
+        self._params.acked_params.last_start_offset = self._params.fp.file_size_eof  # type: ignore
+        self._params.acked_params.last_end_offset = self._params.fp.file_size_eof  # type: ignore
         self._deferred_lost_segment_handling()
 
     def _prepare_eof_ack_packet(self):
@@ -1109,6 +1113,7 @@ class DestHandler:
         if self.transmission_mode == TransmissionMode.UNACKNOWLEDGED:
             self.states.step = TransactionStep.TRANSFER_COMPLETION
         elif self.transmission_mode == TransmissionMode.ACKNOWLEDGED:
+            self._prepare_eof_ack_packet()
             self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
 
     def _trigger_notice_of_completion_canceled(self, condition_code: ConditionCode):
@@ -1117,11 +1122,6 @@ class DestHandler:
 
     def _start_check_limit_handling(self):
         self.states.step = TransactionStep.RECV_FILE_DATA_WITH_CHECK_LIMIT_HANDLING
-        if (
-            self._declare_fault(ConditionCode.FILE_CHECKSUM_FAILURE)
-            != FaultHandlerCode.IGNORE_ERROR
-        ):
-            return
         assert self._params.remote_cfg is not None
         self._params.check_timer = self.check_timer_provider.provide_check_timer(
             self.cfg.local_entity_id,
