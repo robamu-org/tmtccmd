@@ -9,6 +9,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Fixed
+
+- Fixed bug for acknowledged file transfer cancellation in the destination handler.
+
 # [v8.0.0rc0] 2023-11-29
 
 ## Added

@@ -155,6 +155,37 @@ class TestCfdpDestHandler(TestDestHandlerBase):
             TransactionStep.IDLE,
         )
 
+    def test_cancelled_transfer(self):
+        data = "Hello World\n".encode()
+        with open(self.src_file_path, "wb") as of:
+            of.write(data)
+        file_size = self.src_file_path.stat().st_size
+        self._generic_regular_transfer_init(
+            file_size=file_size,
+        )
+        self._insert_file_segment(segment=data, offset=0)
+        # Cancel the transfer by sending an EOF PDU with the appropriate parameters.
+        eof_pdu = EofPdu(
+            file_size=0,
+            file_checksum=NULL_CHECKSUM_U32,
+            pdu_conf=self.src_pdu_conf,
+            condition_code=ConditionCode.CANCEL_REQUEST_RECEIVED,
+        )
+        self.dest_handler.insert_packet(eof_pdu)
+        fsm_res = self.dest_handler.state_machine()
+        self._generic_eof_recv_indication_check(fsm_res)
+        if self.closure_requested:
+            self._generic_no_error_finished_pdu_check(fsm_res)
+        self._generic_verify_transfer_completion(
+            fsm_res,
+            expected_file_data=None,
+            expected_finished_params=FinishedParams(
+                condition_code=ConditionCode.CANCEL_REQUEST_RECEIVED,
+                delivery_code=DeliveryCode.DATA_INCOMPLETE,
+                file_status=FileStatus.FILE_RETAINED,
+            ),
+        )
+
     def test_check_limit_reached(self):
         data = "Hello World\n".encode()
         self._generic_check_limit_test(data)
@@ -235,7 +266,7 @@ class TestCfdpDestHandler(TestDestHandlerBase):
         )
         # At least one segment was stored
         self.assertEqual(
-            finished_args.finished_params.delivery_status,
+            finished_args.finished_params.file_status,
             FileStatus.FILE_RETAINED,
         )
         self.assertEqual(
