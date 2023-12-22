@@ -75,7 +75,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class CompletionDisposition(enum.Enum):
     COMPLETED = 0
-    CANCELED = 1
+    CANCELLED = 1
 
 
 @dataclass
@@ -305,8 +305,8 @@ def acknowledge_inactive_eof_pdu(eof_pdu: EofPdu, status: TransactionStatus) -> 
 
 
 class DestHandler:
-    """This is the primary CFDP destination handler. It models the CFDP source entity, which is
-    primarily responsible for receiving files sent from another CFDP entity. It performs the
+    """This is the primary CFDP destination handler. It models the CFDP destination entity, which
+    is primarily responsible for receiving files sent from another CFDP entity. It performs the
     reception side of File Copy Operations.
 
     This handler supports both acknowledged and unacknowledged CFDP file transfers.
@@ -590,7 +590,7 @@ class DestHandler:
             else:
                 if (
                     self._params.completion_disposition
-                    != CompletionDisposition.CANCELED
+                    != CompletionDisposition.CANCELLED
                 ):
                     self._checksum_verify()
                 self.states.step = TransactionStep.TRANSFER_COMPLETION
@@ -852,7 +852,7 @@ class DestHandler:
                 # again manually.
                 if (
                     self._params.completion_disposition
-                    == CompletionDisposition.CANCELED
+                    == CompletionDisposition.CANCELLED
                 ):
                     return self.state_machine()
             self._params.positive_ack_params.ack_timer.reset()
@@ -1117,7 +1117,7 @@ class DestHandler:
             self.states.step = TransactionStep.SENDING_EOF_ACK_PDU
 
     def _trigger_notice_of_completion_canceled(self, condition_code: ConditionCode):
-        self._params.completion_disposition = CompletionDisposition.CANCELED
+        self._params.completion_disposition = CompletionDisposition.CANCELLED
         self._params.finished_params.condition_code = condition_code
 
     def _start_check_limit_handling(self):
@@ -1134,7 +1134,7 @@ class DestHandler:
         if self._params.completion_disposition == CompletionDisposition.COMPLETED:
             # TODO: Execute any filestore requests
             pass
-        elif self._params.completion_disposition == CompletionDisposition.CANCELED:
+        elif self._params.completion_disposition == CompletionDisposition.CANCELLED:
             assert self._params.remote_cfg is not None
             if (
                 self._params.remote_cfg.disposition_on_cancellation
@@ -1209,7 +1209,7 @@ class DestHandler:
     def _notice_of_cancellation(self, condition_code: ConditionCode):
         self.states.step = TransactionStep.TRANSFER_COMPLETION
         self._params.finished_params.condition_code = condition_code
-        self._params.completion_disposition = CompletionDisposition.CANCELED
+        self._params.completion_disposition = CompletionDisposition.CANCELLED
 
     def _notice_of_suspension(self):
         # TODO: Implement
