@@ -12,22 +12,6 @@ JSON Module
    :undoc-members:
    :show-inheritance:
 
-Countdown Module
-------------------
-
-.. automodule:: tmtccmd.util.countdown
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Sequence Count Module
---------------------------
-
-.. automodule:: tmtccmd.util.seqcnt
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Object ID Module
 ----------------------
 
@@ -44,7 +28,7 @@ Exit Module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.hammingcode module
+Hamming-Code Module
 ----------------------------------
 
 .. automodule:: tmtccmd.util.hammingcode
@@ -52,15 +36,15 @@ tmtccmd.utility.hammingcode module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.tmtc\_printer module
+TMTC Printer (FSFW) Module
 ------------------------------------
 
-.. automodule:: tmtccmd.util.tmtc_printer
+.. automodule:: tmtccmd.fsfw.tmtc_printer
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.conf\_util module
+Configuration Utility Module
 ---------------------------------
 
 .. automodule:: tmtccmd.util.conf_util
@@ -75,3 +59,17 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+
+Countdown Module
+------------------
+
+The countdown module was moved to the `spacepackets` library. Use the
+:py:mod:`spacepackets.countdown` module.
+
+Sequence Count Module
+--------------------------
+
+The sequence count module was moved to the `spacepackets` library. Use the
+:py:mod:`spacepackets.seqcount` module.
+
+.. _`spacepackets`: https://github.com/us-irs/spacepackets-py

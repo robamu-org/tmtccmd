@@ -52,7 +52,7 @@ class DummyHandler:
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
-                            self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                            self.last_tc.packet_id, self.last_tc.packet_seq_control
                         )
                     ),
                     time_provider=current_time_stamp,
@@ -67,7 +67,7 @@ class DummyHandler:
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
-                            self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                            self.last_tc.packet_id, self.last_tc.packet_seq_control
                         )
                     ),
                     time_provider=current_time_stamp,
@@ -91,7 +91,7 @@ class DummyHandler:
                     seq_count=self.current_ssc,
                     verif_params=VerificationParams(
                         req_id=RequestId(
-                            self.last_tc.packet_id, self.last_tc.packet_seq_ctrl
+                            self.last_tc.packet_id, self.last_tc.packet_seq_control
                         )
                     ),
                     time_provider=current_time_stamp,

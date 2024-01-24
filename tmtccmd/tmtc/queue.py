@@ -5,15 +5,15 @@ from abc import ABC
 from collections import deque
 from datetime import timedelta
 from enum import Enum
-from typing import Optional, Deque, cast, Any, Type
-
+from typing import Any, Deque, Optional, Type, cast
 
 from spacepackets.ccsds import SpacePacket
+from spacepackets.ecss import PusService, PusVerificator, check_pus_crc
 from spacepackets.ecss.tc import PusTelecommand
-from spacepackets.ecss import PusVerificator, PusService, check_pus_crc
-from tmtccmd.tmtc.procedure import TcProcedureBase, DefaultProcedureInfo
-from tmtccmd.util import ProvidesSeqCount
+from spacepackets.seqcount import ProvidesSeqCount
+
 from tmtccmd.pus.s11_tc_sched import Subservice as Pus11Subservice
+from tmtccmd.tmtc.procedure import DefaultProcedureInfo, TcProcedureBase
 
 
 class TcQueueEntryType(Enum):

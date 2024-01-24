@@ -13,18 +13,7 @@ Communication Package
 
    api/com
 
-CCSDS Package 
-===================
-
-This currently also contains the CFDP support.
-
-.. toctree::
-   :maxdepth: 2
-
-   api/cfdp
-   api/cfdp.handler
-
-ECSS Package 
+ECSS & CCSDS Package 
 =========================
 
 .. automodule:: tmtccmd.pus
@@ -34,6 +23,11 @@ ECSS Package
    :maxdepth: 2
 
    api/pus
+
+.. toctree::
+   :maxdepth: 2
+
+   api/cfdp
 
 Application Package 
 =========================

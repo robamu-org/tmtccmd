@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from spacepackets import SpacePacketHeader
+from spacepackets.ccsds.spacepacket import PacketId, PacketSeqCtrl
 from spacepackets.ccsds.time import CdsShortTimestamp, CcsdsTimeProvider
 from spacepackets.ecss import (
     Ptc,
@@ -99,11 +100,8 @@ class Service20FsfwTm(AbstractPusTm):
         Service20FsfwTm.__common_checks(instance.pus_tm)
         return instance
 
-    def pack(self) -> bytes:
+    def pack(self) -> bytearray:
         return self.pus_tm.pack()
-
-    def sp_header(self) -> SpacePacketHeader:
-        return self.pus_tm.space_packet_header
 
     @property
     def time_provider(self) -> Optional[CcsdsTimeProvider]:
@@ -134,5 +132,23 @@ class Service20FsfwTm(AbstractPusTm):
             source_data=bytes([0, 0, 0, 0]),
         )
 
-    def __eq__(self, other: Service20FsfwTm):
+    @property
+    def sp_header(self) -> SpacePacketHeader:
+        return self.pus_tm.space_packet_header
+
+    @property
+    def ccsds_version(self) -> int:
+        return self.pus_tm.ccsds_version
+
+    @property
+    def packet_id(self) -> PacketId:
+        return self.pus_tm.packet_id
+
+    @property
+    def packet_seq_control(self) -> PacketSeqCtrl:
+        return self.pus_tm.packet_seq_control
+
+    def __eq__(self, other: object):
+        if not isinstance(other, Service20FsfwTm):
+            return False
         return self.pus_tm == other.pus_tm

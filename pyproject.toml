@@ -36,14 +36,14 @@ dependencies = [
     "Deprecated~=1.2",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets~=0.21.0",
+    "spacepackets~=0.23.0",
+    "cfdp-py~=0.1.0"
     # "spacepackets @ git+https://github.com/us-irs/spacepackets-py@main"
 ]
 
 [project.optional-dependencies]
 gui = [
     "PyQt6~=6.6",
-    # "PyQt5-stubs~=5.15",
 ]
 test = [
     "pyfakefs~=4.5",
