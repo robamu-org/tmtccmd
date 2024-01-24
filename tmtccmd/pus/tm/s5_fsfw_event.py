@@ -8,6 +8,7 @@ import struct
 from typing import Optional
 
 from spacepackets import SpacePacketHeader
+from spacepackets.ccsds.spacepacket import PacketId, PacketSeqCtrl
 from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.pus_5_event import Subservice
@@ -84,7 +85,7 @@ class Service5Tm(AbstractPusTm):
     def time_provider(self) -> Optional[CcsdsTimeProvider]:
         return self.pus_tm.time_provider
 
-    def pack(self) -> bytes:
+    def pack(self) -> bytearray:
         return self.pus_tm.pack()
 
     @property
@@ -94,6 +95,18 @@ class Service5Tm(AbstractPusTm):
     @property
     def subservice(self) -> int:
         return self.pus_tm.subservice
+
+    @property
+    def ccsds_version(self) -> int:
+        return self.pus_tm.ccsds_version
+
+    @property
+    def packet_id(self) -> PacketId:
+        return self.pus_tm.packet_id
+
+    @property
+    def packet_seq_control(self) -> PacketSeqCtrl:
+        return self.pus_tm.packet_seq_control
 
     @property
     def source_data(self) -> bytes:
@@ -131,10 +144,13 @@ class Service5Tm(AbstractPusTm):
             return Severity.MEDIUM
         elif self.subservice == Subservice.TM_HIGH_SEVERITY_EVENT:
             return Severity.HIGH
+        raise ValueError(f"invalid severity for subservice {self.subservice}")
 
     @property
     def event_definition(self) -> EventDefinition:
         return EventDefinition.from_bytes(self.pus_tm.source_data)
 
-    def __eq__(self, other: Service5Tm):
+    def __eq__(self, other: object):
+        if not isinstance(other, Service5Tm):
+            return False
         return self.pus_tm == other.pus_tm
