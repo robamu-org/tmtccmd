@@ -9,9 +9,18 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.0rc1] 2024-01-24
+
 ## Fixed
 
 - Fixed bug for acknowledged file transfer cancellation in the destination handler.
+
+## Removed
+
+- The `tmtccmd.util.countdown` and `tmtccmd.util.seqcnt` module were moved to the `spacepackets`
+  library.
+- Most of the `tmtccmd.cfdp` module was moved to the
+  [`cfdp-py` library](https://github.com/us-irs/cfdp-py).
 
 # [v8.0.0rc0] 2023-11-29
 
