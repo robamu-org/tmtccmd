@@ -12,22 +12,6 @@ JSON Module
    :undoc-members:
    :show-inheritance:
 
-Countdown Module
-------------------
-
-.. automodule:: tmtccmd.util.countdown
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Sequence Count Module
---------------------------
-
-.. automodule:: tmtccmd.util.seqcnt
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Object ID Module
 ----------------------
 
@@ -75,3 +59,17 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+
+Countdown Module
+------------------
+
+The countdown module was moved to the `spacepackets` library. Use the
+:py:mod:`spacepackets.countdown` module.
+
+Sequence Count Module
+--------------------------
+
+The sequence count module was moved to the `spacepackets` library. Use the
+:py:mod:`spacepackets.seqcount` module.
+
+.. _`spacepackets`: https://github.com/us-irs/spacepackets-py
