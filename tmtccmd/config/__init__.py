@@ -11,42 +11,43 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from cfdppy.request import PutRequest
 from spacepackets.cfdp import CfdpLv
-from spacepackets.util import UnsignedByteField
 from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
-from tmtccmd.core import TmMode, TcMode
+from spacepackets.util import UnsignedByteField
+
+from tmtccmd.cfdp.request import PutRequestCfgWrapper
+from tmtccmd.core import TcMode, TmMode
+from tmtccmd.core.base import ModeWrapper
+from tmtccmd.tmtc.procedure import (
+    CfdpProcedureInfo,
+    DefaultProcedureInfo,
+    ProcedureWrapper,
+    TcProcedureType,
+)
 
 from .args import (
-    SetupParams,
-    create_default_args_parser,
-    add_default_tmtccmd_args,
-    parse_default_tmtccmd_input_arguments,
     DefaultProcedureParams,
     PreArgsParsingWrapper,
     ProcedureParamsWrapper,
+    SetupParams,
+    add_default_tmtccmd_args,
+    create_default_args_parser,
+    parse_default_tmtccmd_input_arguments,
 )
 from .defs import (
-    CoreModeList,
-    CoreModeConverter,
-    CoreComInterfaces,
     CORE_COM_IF_DICT,
-    default_json_path,
-    CoreServiceList,
-    ComIfDictT,
     CfdpParams,
+    ComIfDictT,
+    CoreComInterfaces,
+    CoreModeConverter,
+    CoreModeList,
+    CoreServiceList,
+    default_json_path,
 )
-from .prompt import prompt_op_code, prompt_service
-from .tmtc import TmtcDefinitionWrapper, OpCodeEntry, OpCodeOptionBase, CmdTreeNode
 from .hook import HookBase
-from tmtccmd.tmtc.procedure import (
-    DefaultProcedureInfo,
-    CfdpProcedureInfo,
-    TcProcedureType,
-    ProcedureWrapper,
-)
-from tmtccmd.cfdp.request import PutRequest, PutRequestCfgWrapper
-from tmtccmd.core.base import ModeWrapper
-
+from .prompt import prompt_op_code, prompt_service
+from .tmtc import CmdTreeNode, OpCodeEntry, OpCodeOptionBase, TmtcDefinitionWrapper
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,10 +70,10 @@ def get_global_hook_obj() -> Optional[HookBase]:
     """
 
     try:
-        from tmtccmd.core.globals_manager import get_global
-        from tmtccmd.config.definitions import CoreGlobalIds
-
         from typing import cast
+
+        from tmtccmd.config.definitions import CoreGlobalIds
+        from tmtccmd.core.globals_manager import get_global
 
         hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
         if hook_obj_raw is None:

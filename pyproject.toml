@@ -37,6 +37,7 @@ dependencies = [
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
     "spacepackets~=0.23.0",
+    "cfdp-py~=0.1.0"
     # "spacepackets @ git+https://github.com/us-irs/spacepackets-py@main"
 ]
 

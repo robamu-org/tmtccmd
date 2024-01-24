@@ -1,6 +1,6 @@
 from typing import Optional, cast
 
-from tmtccmd.cfdp.defs import CfdpRequestType
+from cfdppy.defs import CfdpRequestType
 from tmtccmd.config.defs import CfdpParams
 
 

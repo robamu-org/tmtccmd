@@ -33,9 +33,6 @@ Features
   more information and examples.
 - Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
   This library uses the `spacepackets`_ library for most packet implementations.
-- High level CFDP components which allow to build `CFDP standard conformant`_ CFDP handlers.
-  Currently only supports unacknowledged mode. The :ref:`cfdp` chapter contains more information
-  and a link to an example application.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.

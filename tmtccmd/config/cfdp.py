@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import Optional
 
+from cfdppy.request import PutRequest
 from spacepackets.cfdp import CfdpLv
-from spacepackets.cfdp.tlv import ProxyPutRequestParams, ProxyPutRequest
+from spacepackets.cfdp.tlv import ProxyPutRequest, ProxyPutRequestParams
 from spacepackets.util import UnsignedByteField
-from tmtccmd.cfdp.request import PutRequest
+
 from tmtccmd.config.defs import CfdpParams
 
 

@@ -1,1 +1,0 @@
-cfdp @ git+https://gitlab.com/librecube/lib/python-cfdp.git

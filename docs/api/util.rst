@@ -28,7 +28,7 @@ Exit Module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.hammingcode module
+Hamming-Code Module
 ----------------------------------
 
 .. automodule:: tmtccmd.util.hammingcode
@@ -36,15 +36,15 @@ tmtccmd.utility.hammingcode module
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.tmtc\_printer module
+TMTC Printer (FSFW) Module
 ------------------------------------
 
-.. automodule:: tmtccmd.util.tmtc_printer
+.. automodule:: tmtccmd.fsfw.tmtc_printer
    :members:
    :undoc-members:
    :show-inheritance:
 
-tmtccmd.utility.conf\_util module
+Configuration Utility Module
 ---------------------------------
 
 .. automodule:: tmtccmd.util.conf_util

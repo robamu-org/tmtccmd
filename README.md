@@ -25,8 +25,6 @@ used either as a command line tool or as a GUI tool which requires a PyQt6 insta
   packets and [CCSDS Space Packets](https://public.ccsds.org/Pubs/133x0b2e1.pdf).
   This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
   packet implementations.
-- High level CFDP components which allow to build
-  [CFDP standard conformant](https://public.ccsds.org/Pubs/727x0b5.pdf) CFDP handlers.
 - Support for both CLI and GUI usage
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.

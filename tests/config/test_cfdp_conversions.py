@@ -4,7 +4,7 @@ from unittest import TestCase
 from spacepackets.cfdp import CfdpLv
 from spacepackets.cfdp.tlv import ProxyMessageType
 from spacepackets.util import ByteFieldU8
-from tmtccmd.cfdp.request import PutRequest
+from cfdppy.request import PutRequest
 from tmtccmd.config.cfdp import (
     cfdp_req_to_put_req_regular,
     cfdp_req_to_put_req_get_req,
