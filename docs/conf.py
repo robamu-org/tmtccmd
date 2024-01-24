@@ -60,6 +60,7 @@ exclude_trees = ["_build"]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "serial": ("https://pyserial.readthedocs.io/en/latest/", None),
+    "cfdp-py": ("https://cfdp-py.readthedocs.io/en/latest/", None),
     "spacepackets": ("https://spacepackets.readthedocs.io/en/latest/", None),
     "prompt-toolkit": ("https://python-prompt-toolkit.readthedocs.io/en/latest/", None),
 }

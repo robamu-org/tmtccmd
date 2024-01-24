@@ -13,7 +13,7 @@ Communication Package
 
    api/com
 
-ECSS Package 
+ECSS & CCSDS Package 
 =========================
 
 .. automodule:: tmtccmd.pus
@@ -23,6 +23,11 @@ ECSS Package
    :maxdepth: 2
 
    api/pus
+
+.. toctree::
+   :maxdepth: 2
+
+   api/cfdp
 
 Application Package 
 =========================
