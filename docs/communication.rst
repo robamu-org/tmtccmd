@@ -18,7 +18,7 @@ an on-board software both for a remote MCU and for a hosted system. The MCU migh
 same command data to be exchanged via a specific transport layer, while the hosted version
 might just use a UDP socket.
 
-The following example shows how to use the :py:class:`tmtccmd.com.udp.UdpComIF` to send
+The following example shows how to use the :py:class:`tmtccmd.com.udp.UdpClient` to send
 PUS packets (a subtype of CCSDS space packets) to a UDP server
 
 .. testcode:: udp_com
