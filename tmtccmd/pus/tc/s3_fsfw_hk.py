@@ -1,5 +1,6 @@
 """Contains definitions and functions related to PUS Service 3 Telecommands.
 """
+
 import struct
 from typing import Tuple
 

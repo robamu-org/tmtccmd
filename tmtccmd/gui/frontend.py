@@ -1,6 +1,7 @@
 """PyQt front end components for the tmtccmd framework.
 @author         R. Mueller, P. Scheurenbrand, D. Nguyen
 """
+
 import os
 import sys
 import webbrowser

@@ -15,8 +15,8 @@ from tmtccmd.com.serial_cobs import SerialCobsComIF
 
 from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com.tcpip_utils import TcpIpType, EthAddr
-from tmtccmd.com.udp import UdpComIF
-from tmtccmd.com.tcp import TcpSpacePacketsComIF
+from tmtccmd.com.udp import UdpClient
+from tmtccmd.com.tcp import TcpSpacePacketsClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -212,17 +212,17 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
     """
     communication_interface = None
     if tcpip_cfg.com_if_key == CoreComInterfaces.UDP.value:
-        communication_interface = UdpComIF(
+        communication_interface = UdpClient(
             com_if_id=tcpip_cfg.com_if_key,
             send_address=tcpip_cfg.send_addr,
             recv_addr=tcpip_cfg.recv_addr,
         )
     elif tcpip_cfg.com_if_key == CoreComInterfaces.TCP.value:
         assert tcpip_cfg.space_packet_ids is not None
-        communication_interface = TcpSpacePacketsComIF(
+        communication_interface = TcpSpacePacketsClient(
             com_if_id=tcpip_cfg.com_if_key,
             space_packet_ids=tcpip_cfg.space_packet_ids,
-            tm_polling_freqency=0.5,
+            inner_thread_delay=0.5,
             target_address=tcpip_cfg.send_addr,
         )
     return communication_interface

@@ -1,4 +1,5 @@
 """Core components for mode commanding (custom PUS service)."""
+
 import enum
 import struct
 from typing import Union

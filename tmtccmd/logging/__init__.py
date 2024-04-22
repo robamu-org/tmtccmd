@@ -1,6 +1,7 @@
 """
 @brief      This module is used to set up the global loggers
 """
+
 from tmtccmd.version import get_version
 import logging
 import os

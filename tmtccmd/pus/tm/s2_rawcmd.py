@@ -1,5 +1,6 @@
 """Base class for implementation of PUS Service 2 handling.
 """
+
 from __future__ import annotations
 
 from typing import Optional

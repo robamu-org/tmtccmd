@@ -5,7 +5,7 @@ from typing import Any
 from unittest import TestCase
 
 from tmtccmd.com.tcpip_utils import EthAddr
-from tmtccmd.com.udp import UdpComIF
+from tmtccmd.com.udp import UdpClient
 
 LOCALHOST = "127.0.0.1"
 
@@ -15,7 +15,7 @@ class TestUdpIf(TestCase):
         self.udp_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.addr = (LOCALHOST, 7777)
         self.udp_server.bind(self.addr)
-        self.udp_client = UdpComIF("udp", send_address=EthAddr.from_tuple(self.addr))
+        self.udp_client = UdpClient("udp", send_address=EthAddr.from_tuple(self.addr))
         self.udp_client.initialize()
 
     def test_basic(self):
