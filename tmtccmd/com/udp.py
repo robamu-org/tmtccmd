@@ -6,7 +6,6 @@ import socket
 from typing import List, Optional
 
 from tmtccmd.com import ComInterface
-from tmtccmd.tmtc import TelemetryListT
 from tmtccmd.com.tcpip_utils import EthAddr
 
 
