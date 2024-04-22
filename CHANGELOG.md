@@ -9,7 +9,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
-# [v8.0.0] 2024-02-22
+# [v8.0.0rc2] 2024-04-22
 
 ## Fixed
 
