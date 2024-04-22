@@ -180,7 +180,10 @@ class TcpSpacePacketsComIF(ComInterface):
     def __receive_tm_packets(self):
         try:
             while True:
-                ready = select.select([self.__tcp_socket], [], [], 0)
+                ready = select.select([self.__tcp_socket], [], [], 0.4)
+                if self.__tm_thread_kill_signal.is_set():
+                    self.__close_tcp_socket()
+                    break
                 if not ready[0]:
                     break
                 bytes_recvd = self.__tcp_socket.recv(4096)
