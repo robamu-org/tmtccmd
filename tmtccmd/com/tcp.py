@@ -8,7 +8,7 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import Optional, Sequence
+from typing import List, Optional, Sequence
 
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
@@ -28,7 +28,7 @@ class TcpCommunicationType(enum.Enum):
     SPACE_PACKETS = 0
 
 
-class TcpSpacePacketsComIF(ComInterface):
+class TcpSpacePacketsClient(ComInterface):
     """Communication interface for TCP communication. This particular interface expects
     raw space packets to be sent via TCP and uses a list of passed packet IDs to parse for them.
     """
@@ -57,10 +57,9 @@ class TcpSpacePacketsComIF(ComInterface):
         self.__conn_lock = threading.Lock()
         self.__connected = False
         self.__tcp_socket = None
-        self.__last_connection_time = 0
         self.__thread_kill_signal = threading.Event()
         # Separate thread to request TM packets periodically if no TCs are being sent
-        self.__tcp_thread = threading.Thread(target=self.__tcp_task, daemon=True)
+        self.__tcp_thread = None
         self.__tm_queue = queue.Queue()
         self.__tc_queue = queue.Queue()
         self.__analysis_queue = deque()
@@ -89,9 +88,11 @@ class TcpSpacePacketsComIF(ComInterface):
         except IOError as e:
             _LOGGER.exception("Issues setting up the TCP socket")
             raise e
-        self.__tcp_thread = threading.Thread(target=self.__tcp_task)
-        self.__tcp_thread.start()
-        self.__connected = True
+        if self.__tcp_thread is None:
+            self.__tcp_thread = threading.Thread(target=self.__tcp_task)
+            self.__tcp_thread.start()
+            with self.__conn_lock:
+                self.__connected = True
 
     def is_open(self) -> bool:
         with self.__conn_lock:
@@ -103,6 +104,7 @@ class TcpSpacePacketsComIF(ComInterface):
             self.__tcp_socket.settimeout(2.0)
 
     def __connect_socket(self):
+        assert self.__tcp_socket is not None
         try:
             self.__tcp_socket.connect(self.target_address.to_tuple)
         except socket.timeout as e:
@@ -126,7 +128,7 @@ class TcpSpacePacketsComIF(ComInterface):
     def send(self, data: bytes):
         self.__tc_queue.put(data)
 
-    def receive(self, poll_timeout: float = 0) -> TelemetryListT:
+    def receive(self, poll_timeout: float = 0) -> List[bytes]:
         self.__tm_queue_to_packet_list()
         tm_packet_list = self.tm_packet_list
         self.tm_packet_list = []
@@ -157,6 +159,7 @@ class TcpSpacePacketsComIF(ComInterface):
             time.sleep(self.__inner_thread_delay)
 
     def __tmtc_event_loop(self):
+        assert self.__tcp_socket is not None
         try:
             while True:
                 outputs = []
@@ -216,6 +219,7 @@ class TcpSpacePacketsComIF(ComInterface):
         return len(self.tm_packet_list)
 
     def __force_shutdown(self):
+        assert self.__tcp_socket is not None
         self.__tcp_socket.close()
         with self.__conn_lock:
             self.__connected = False

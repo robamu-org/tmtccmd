@@ -3,7 +3,7 @@
 import logging
 import select
 import socket
-from typing import Optional
+from typing import List, Optional
 
 from tmtccmd.com import ComInterface
 from tmtccmd.tmtc import TelemetryListT
@@ -13,7 +13,7 @@ from tmtccmd.com.tcpip_utils import EthAddr
 _LOGGER = logging.getLogger(__name__)
 
 
-class UdpComIF(ComInterface):
+class UdpClient(ComInterface):
     """Communication interface for UDP communication"""
 
     def __init__(
@@ -81,7 +81,7 @@ class UdpComIF(ComInterface):
             return True
         return False
 
-    def receive(self, poll_timeout: float = 0) -> TelemetryListT:
+    def receive(self, poll_timeout: float = 0) -> List[bytes]:
         packet_list = []
         if self.udp_socket is None:
             return packet_list

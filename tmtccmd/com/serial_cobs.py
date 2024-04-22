@@ -1,7 +1,7 @@
 import collections
 import logging
 import threading
-from typing import Optional
+from typing import List, Optional
 
 from tmtccmd.com import ComInterface, ReceptionDecodeError
 from tmtccmd.com.serial_base import SerialComBase, SerialCfg, SerialCommunicationType
@@ -58,7 +58,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         encoded.append(0)
         self.serial.write(encoded)
 
-    def receive(self, parameters: any = 0) -> TelemetryListT:
+    def receive(self, parameters: any = 0) -> List[bytes]:
         packet_list = []
         while self.__reception_buffer:
             data = self.__reception_buffer.pop()

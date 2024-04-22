@@ -5,7 +5,9 @@ from typing import Deque, List, Any, Dict, Optional
 from spacepackets.ecss.tm import PusTelemetry
 
 
-TelemetryListT = List[bytes]
+TelemetryList = List[bytes]
+# Deprecated type alias.
+TelemetryListT = TelemetryList
 TelemetryQueueT = Deque[bytes]
 
 PusTmQueue = Deque[PusTelemetry]

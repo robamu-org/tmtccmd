@@ -2,7 +2,7 @@ import dataclasses
 import logging
 import threading
 from collections import deque
-from typing import Optional
+from typing import List, Optional
 
 import serial
 from dle_encoder import DleEncoder, STX_CHAR, ETX_CHAR, DleErrorCodes
@@ -94,7 +94,7 @@ class SerialDleComIF(SerialComBase, ComInterface):
         encoded_data = self.__encoder.encode(source_packet=data, add_stx_etx=True)
         self.serial.write(encoded_data)
 
-    def receive(self, parameters: any = 0) -> TelemetryListT:
+    def receive(self, parameters: any = 0) -> List[bytes]:
         packet_list = []
         while self.__reception_buffer:
             data = self.__reception_buffer.pop()

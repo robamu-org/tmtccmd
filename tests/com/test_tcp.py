@@ -8,7 +8,7 @@ from unittest import TestCase
 from spacepackets import PacketType
 from spacepackets.ccsds import PacketId
 from spacepackets.ecss import PusTelecommand, PusTelemetry
-from tmtccmd.com.tcp import TcpSpacePacketsComIF
+from tmtccmd.com.tcp import TcpSpacePacketsClient
 from tmtccmd.com.tcpip_utils import EthAddr
 
 
@@ -33,7 +33,7 @@ class TestTcpIf(TestCase):
         self.ping_reply = PusTelemetry(
             service=17, subservice=2, apid=0x22, time_provider=None
         )
-        self.tcp_client = TcpSpacePacketsComIF(
+        self.tcp_client = TcpSpacePacketsClient(
             "tcp",
             space_packet_ids=[self.expected_packet_id],
             target_address=EthAddr.from_tuple(self.addr),
