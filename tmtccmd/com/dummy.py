@@ -1,6 +1,7 @@
 """Dummy Virtual Communication Interface. Currently serves to use the TMTC program without needing
 external hardware or an extra socket
 """
+
 from typing import Optional
 
 from deprecated.sphinx import deprecated

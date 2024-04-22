@@ -3,6 +3,7 @@ Hamming codes belong to the family of linear error correcting codes.
 Documentation: https://en.wikipedia.org/wiki/Hamming_code
 They can be used to identify up to two bit errors and correct one bit error per 256 byte block.
 """
+
 import logging
 from enum import Enum
 

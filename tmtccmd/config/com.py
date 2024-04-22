@@ -222,7 +222,7 @@ def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> Optional[ComInterface
         communication_interface = TcpSpacePacketsComIF(
             com_if_id=tcpip_cfg.com_if_key,
             space_packet_ids=tcpip_cfg.space_packet_ids,
-            tm_polling_freqency=0.5,
+            inner_thread_delay=0.5,
             target_address=tcpip_cfg.send_addr,
         )
     return communication_interface

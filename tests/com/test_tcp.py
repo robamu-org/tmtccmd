@@ -35,7 +35,7 @@ class TestTcpIf(TestCase):
             "tcp",
             space_packet_ids=[self.expected_packet_id],
             target_address=EthAddr.from_tuple(self.addr),
-            tm_polling_freqency=0.05,
+            inner_thread_delay=0.05,
         )
         self.conn_socket: Optional[socket.socket] = None
         self.server_received_packets = deque()
