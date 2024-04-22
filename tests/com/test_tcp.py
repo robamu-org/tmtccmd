@@ -8,20 +8,22 @@ from unittest import TestCase
 from spacepackets import PacketType
 from spacepackets.ccsds import PacketId
 from spacepackets.ecss import PusTelecommand, PusTelemetry
-from tmtccmd.com.tcp import TcpSpacePacketsComIF
+from tmtccmd.com.tcp import TcpSpacePacketsClient
 from tmtccmd.com.tcpip_utils import EthAddr
 
 
 LOCALHOST = "127.0.0.1"
-START_ADDR = 7777
 
 
 class TestTcpIf(TestCase):
     def setUp(self) -> None:
         self.tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.addr = (LOCALHOST, 7777)
+        # Let the OS assign a port.
+        self.addr = (LOCALHOST, 0)
         self.tcp_server.bind(self.addr)
+        # Update the address for the client.
+        self.addr = self.addr[0], self.tcp_server.getsockname()[1]
         self.tcp_server.listen()
         self.expected_packet_id = PacketId(
             apid=0x22, sec_header_flag=True, ptype=PacketType.TM
@@ -31,11 +33,11 @@ class TestTcpIf(TestCase):
         self.ping_reply = PusTelemetry(
             service=17, subservice=2, apid=0x22, time_provider=None
         )
-        self.tcp_client = TcpSpacePacketsComIF(
+        self.tcp_client = TcpSpacePacketsClient(
             "tcp",
             space_packet_ids=[self.expected_packet_id],
             target_address=EthAddr.from_tuple(self.addr),
-            tm_polling_freqency=0.05,
+            inner_thread_delay=0.05,
         )
         self.conn_socket: Optional[socket.socket] = None
         self.server_received_packets = deque()

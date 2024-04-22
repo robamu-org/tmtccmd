@@ -1,5 +1,6 @@
 """Base class for Service 200 mode commanding reply handling.
 """
+
 from __future__ import annotations
 
 import struct

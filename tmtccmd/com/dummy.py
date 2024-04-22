@@ -1,7 +1,8 @@
 """Dummy Virtual Communication Interface. Currently serves to use the TMTC program without needing
 external hardware or an extra socket
 """
-from typing import Optional
+
+from typing import List, Optional
 
 from deprecated.sphinx import deprecated
 from spacepackets.ccsds.time import CdsShortTimestamp
@@ -138,9 +139,9 @@ class DummyComIF(ComInterface):
             return True
         return False
 
-    def receive(self, parameters: any = 0) -> TelemetryListT:
+    def receive(self, parameters: any = 0) -> List[bytes]:
         return self.dummy_handler.receive_reply_package()
 
-    def send(self, data: bytearray):
+    def send(self, data: bytes):
         if data is not None:
             self.dummy_handler.insert_telecommand(data)
