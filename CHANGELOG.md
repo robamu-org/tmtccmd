@@ -9,6 +9,13 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.0] 2024-02-22
+
+## Fixed
+
+- TCP client implementation re-worked to be thread-safe. Also added more graceful shut-down
+  handling. Consequently, the thread spawned by the TCP client is not daemonic anymore.
+
 # [v8.0.0rc1] 2024-01-24
 
 ## Fixed

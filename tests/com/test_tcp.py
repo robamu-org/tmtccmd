@@ -13,15 +13,17 @@ from tmtccmd.com.tcpip_utils import EthAddr
 
 
 LOCALHOST = "127.0.0.1"
-START_ADDR = 7777
 
 
 class TestTcpIf(TestCase):
     def setUp(self) -> None:
         self.tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.addr = (LOCALHOST, 7777)
+        # Let the OS assign a port.
+        self.addr = (LOCALHOST, 0)
         self.tcp_server.bind(self.addr)
+        # Update the address for the client.
+        self.addr = self.addr[0], self.tcp_server.getsockname()[1]
         self.tcp_server.listen()
         self.expected_packet_id = PacketId(
             apid=0x22, sec_header_flag=True, ptype=PacketType.TM
