@@ -1,5 +1,6 @@
 """Contains classes and functions that perform all printing functionalities.
 """
+
 import logging
 import enum
 from typing import List, Optional

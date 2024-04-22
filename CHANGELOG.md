@@ -18,11 +18,19 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Renamed `DefaultProcedureInfo` to `TreeCommandingProcedure`.
 - Renamed `add_default_procedure_arguments` to `add_tree_commanding_arguments`.
 - Renamed `TcProcedureType.DEFAULT` to `TcProcedureType.TREE_COMMANDING`.
+- Replaced `TelemetryListT` by `List[bytes]`.
+- Renamed `TcpSpacePacketsComIF` to `TcpSpacePacketsClient`.
+- Renamed `UdpComIF` to `UdpClient`.
 
 ## Removed
 
 - `CoreServiceList` enumeration.
 - `DEFAULT_APID` and `DEBUG_MODE` globals.
+
+## Fixed
+
+- TCP client implementation re-worked to be thread-safe. Also added more graceful shut-down
+  handling. Consequently, the thread spawned by the TCP client is not daemonic anymore.
 
 # [v8.0.0rc1] 2024-01-24
 

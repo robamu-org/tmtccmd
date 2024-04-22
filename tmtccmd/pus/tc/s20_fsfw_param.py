@@ -1,5 +1,6 @@
 """Contains definitions and functions related to PUS Service 20 Telecommands.
 """
+
 from __future__ import annotations
 
 import struct
