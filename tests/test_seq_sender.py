@@ -8,7 +8,7 @@ from spacepackets.ecss import PusTelecommand
 from tmtccmd.com import ComInterface
 from tmtccmd.tmtc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
 from tmtccmd.tmtc.handler import TcHandlerBase, SendCbParams
-from tmtccmd.tmtc.procedure import DefaultProcedureInfo
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 from tmtccmd.tmtc.queue import QueueWrapper, DefaultPusQueueHelper
 
 
@@ -45,7 +45,7 @@ class TestSendReceive(TestCase):
         self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
         send_cb_params = cast(SendCbParams, call_args.args[0])
-        self.assertEqual(send_cb_params.info.procedure, DefaultProcedureInfo.empty())
+        self.assertEqual(send_cb_params.info.procedure, TreeCommandingProcedure.empty())
         raw_tc_entry = send_cb_params.entry.to_raw_tc_entry()
         self.assertEqual(raw_tc_entry.tc, bytes([0, 1, 2]))
         # Queue should be empty now

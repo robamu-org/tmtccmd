@@ -10,7 +10,7 @@ ComIfDictT = Dict[str, ComIfValueT]
 
 
 @dataclass
-class DefaultProcedureParams:
+class TreeCommandingParams:
     cmd_path: Optional[str]
 
 
@@ -31,8 +31,6 @@ def default_json_path() -> str:
 
 
 class CoreComInterfaces(str, enum.Enum):
-    value: str
-
     DUMMY = "dummy"
     UDP = "udp"
     TCP = "tcp"
@@ -89,22 +87,3 @@ class CoreModeConverter:
             return "idle"
         else:
             return ""
-
-
-class CoreServiceList(str, enum.Enum):
-    value: str
-    SERVICE_2 = "2"
-    SERVICE_3 = "3"
-    SERVICE_5 = "5"
-    SERVICE_8 = "8"
-    SERVICE_9 = "9"
-    SERVICE_11 = "11"
-    SERVICE_17 = "17"
-    SERVICE_17_ALT = "test"
-    SERVICE_20 = "20"
-    SERVICE_23 = "23"
-    SERVICE_200 = "200"
-
-
-DEFAULT_APID = 0xEF
-DEBUG_MODE = False

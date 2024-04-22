@@ -9,6 +9,21 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.0rc2] 2024-04-22
+
+## Changed
+
+- Renamed `DefaultProcedureParams` to `TreeCommandingParams`.
+- Renamed `TcParams` to `CommandingParams`.
+- Renamed `DefaultProcedureInfo` to `TreeCommandingProcedure`.
+- Renamed `add_default_procedure_arguments` to `add_tree_commanding_arguments`.
+- Renamed `TcProcedureType.DEFAULT` to `TcProcedureType.TREE_COMMANDING`.
+
+## Removed
+
+- `CoreServiceList` enumeration.
+- `DEFAULT_APID` and `DEBUG_MODE` globals.
+
 # [v8.0.0rc1] 2024-01-24
 
 ## Fixed
@@ -254,7 +269,7 @@ spacepackets version: v0.15.0
 
 - `config.args`: Assigning of the COM interface in the args to setup converters is now done in
   the `args_to_params_generic` function. Otherwise, this feature does not work for the conversion
-  of CFDP arguments. 
+  of CFDP arguments.
 
 ## Changed
 
@@ -276,7 +291,7 @@ The usage of the `logging` library now is a lot more pythonic and more
 aligned to the recommended way to use the logger. The `get_console_logger` has become deprecated.
 Users are encouraged to create custom application loggers using `logging.getLogger(__name__)`.
 It is also possible to apply the library log format to an application logger using
-`tmtccmd.logging.add_colorlog_console_logger`. 
+`tmtccmd.logging.add_colorlog_console_logger`.
 
 - Mark `get_console_logger` as deprecated.
 - New `tmtccmd.init_logger` method to set up library logger.
@@ -315,7 +330,7 @@ It is also possible to apply the library log format to an application logger usi
   caches it.
   All `set_*` methods now do not expect the `SetupParams` to be passed explicitely anymore.
 - (breaking): The `PreArgsParsingWrapper` now expects a `setup_params` parameter to be passed to the
-  `parse` method. The parameter helper will be cached in the created `PostArgsParsingWrapper`. 
+  `parse` method. The parameter helper will be cached in the created `PostArgsParsingWrapper`.
 - `args_to_params_tmtc` now expects an `assign_com_if` method and can assign a COM interface
   when it is passed. It oftentimes makes sense to determine a valid COM interface
   (and prompt applicable parameters from the user) before prompting procedure parameters.
@@ -342,7 +357,7 @@ It is also possible to apply the library log format to an application logger usi
 
 - (breaking): `DefaultPusQueueHelper`: `seq_cnt_provider`, `pus_verificator`
   and `default_pus_apid` (formerly `pus_apid`) do not have default values anymore
-  and need to be specified explicitely. 
+  and need to be specified explicitely.
 - (breaking): Renamed `tmtccmd.config.com.ComIfCfgBase` to `ComCfgBase`
 - (breaking): `tmtccmd.com.ComInterface`: Change `get_id` to `id` property.
 - (breaking): TCP (`tmtccmd.com.TcpSpacePacketsComIF`) and `tmtccmd.com.UdpComIF`:
@@ -472,7 +487,7 @@ It is also possible to apply the library log format to an application logger usi
 ## TmTcHandler
 
 - Added a cached `SequentialCommandSenderReceiver`
-- Added `CONTINUOUS` mode which will start the receiver thread in the 
+- Added `CONTINUOUS` mode which will start the receiver thread in the
   `SequentialCommandSenderReceiver` instance and only send one TC
 
 ## Runner module

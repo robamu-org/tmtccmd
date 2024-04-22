@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 from spacepackets.ecss import PusTelecommand
 from spacepackets.seqcount import ProvidesSeqCount
 
-from tmtccmd import DefaultProcedureInfo
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
@@ -17,13 +16,14 @@ from tmtccmd.tmtc import (  # noqa: F401
     RawTcEntry,
     WaitEntry,
 )
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 
 
 class TestTcQueue(TestCase):
     def setUp(self) -> None:
         self.queue_wrapper = QueueWrapper(
-            info=DefaultProcedureInfo.empty(), queue=deque()
+            info=TreeCommandingProcedure.empty(), queue=deque()
         )
         self.assertEqual(self.queue_wrapper.queue, deque())
         self.queue_helper = DefaultPusQueueHelper(
@@ -86,7 +86,7 @@ class TestTcQueue(TestCase):
         self.assertTrue(pus_entry)
         log_entry = self.queue_wrapper.queue.popleft()
         self.assertFalse(log_entry.is_tc())
-        cast_wrapper.base = log_entry
+        cast_wrapper.entry = log_entry
         log_entry = cast_wrapper.to_log_entry()
         self.assertTrue(log_entry)
         with self.assertRaises(TypeError):
@@ -97,7 +97,7 @@ class TestTcQueue(TestCase):
 
         raw_entry = self.queue_wrapper.queue.popleft()
         self.assertTrue(raw_entry.is_tc())
-        cast_wrapper.base = raw_entry
+        cast_wrapper.entry = raw_entry
         raw_entry = cast_wrapper.to_raw_tc_entry()
         self.assertTrue(raw_entry)
         self.assertEqual(raw_entry.tc, bytes([0, 1, 2]))
@@ -106,13 +106,13 @@ class TestTcQueue(TestCase):
 
         space_packet_entry = self.queue_wrapper.queue.popleft()
         self.assertTrue(space_packet_entry.is_tc())
-        cast_wrapper.base = space_packet_entry
+        cast_wrapper.entry = space_packet_entry
         space_packet_entry = cast_wrapper.to_space_packet_entry()
         self.assertTrue(space_packet_entry)
         self.assertTrue(space_packet_entry.space_packet, pus_cmd.to_space_packet())
 
         packet_delay = self.queue_wrapper.queue.pop()
         self.assertFalse(packet_delay.is_tc())
-        cast_wrapper.base = packet_delay
+        cast_wrapper.entry = packet_delay
         packet_delay = cast_wrapper.to_packet_delay_entry()
         self.assertEqual(packet_delay.delay_time.total_seconds(), 3.0)

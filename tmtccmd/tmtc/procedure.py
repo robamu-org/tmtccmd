@@ -6,7 +6,7 @@ from tmtccmd.cfdp import CfdpRequestWrapper
 
 
 class TcProcedureType(enum.Enum):
-    DEFAULT = 0
+    TREE_COMMANDING = 0
     CFDP = 1
     CUSTOM = 2
 
@@ -25,13 +25,13 @@ class CustomProcedureInfo(TcProcedureBase):
         return f"{self.__class__.__name__}(info={self.procedure!r}"
 
 
-class DefaultProcedureInfo(TcProcedureBase):
+class TreeCommandingProcedure(TcProcedureBase):
     """Generic abstraction for procedures. A procedure can be a single command or a sequence
     of commands. Generally, one procedure is mapped to a specific TC queue which is packed
     during run-time"""
 
     def __init__(self, cmd_path: Optional[str]):
-        super().__init__(TcProcedureType.DEFAULT)
+        super().__init__(TcProcedureType.TREE_COMMANDING)
         self.cmd_path = cmd_path
 
     @classmethod
@@ -41,11 +41,13 @@ class DefaultProcedureInfo(TcProcedureBase):
     def __repr__(self):
         return f"CmdInfo(cmd_path={self.cmd_path!r})"
 
-    def __eq__(self, other: DefaultProcedureInfo) -> bool:
-        return self.cmd_path == other.cmd_path
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, TreeCommandingProcedure):
+            return self.cmd_path == other.cmd_path
+        return False
 
 
-class CfdpProcedureInfo(TcProcedureBase):
+class CfdpProcedure(TcProcedureBase):
     def __init__(self):
         super().__init__(TcProcedureType.CFDP)
         self.request_wrapper = CfdpRequestWrapper(None)
@@ -81,16 +83,16 @@ class ProcedureWrapper:
             raise TypeError(f"Invalid object {obj} for type {self.procedure.ptype}")
         return cast(obj_type, obj)
 
-    def to_def_procedure(self) -> DefaultProcedureInfo:
+    def to_tree_commanding_procedure(self) -> TreeCommandingProcedure:
         assert self.procedure is not None
         return self.__cast_internally(
-            DefaultProcedureInfo, self.procedure, TcProcedureType.DEFAULT
+            TreeCommandingProcedure, self.procedure, TcProcedureType.TREE_COMMANDING
         )
 
-    def to_cfdp_procedure(self) -> CfdpProcedureInfo:
+    def to_cfdp_procedure(self) -> CfdpProcedure:
         assert self.procedure is not None
         return self.__cast_internally(
-            CfdpProcedureInfo, self.procedure, TcProcedureType.CFDP
+            CfdpProcedure, self.procedure, TcProcedureType.CFDP
         )
 
     def to_custom_procedure(self) -> CustomProcedureInfo:

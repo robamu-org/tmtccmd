@@ -13,7 +13,7 @@ from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.seqcount import ProvidesSeqCount
 
 from tmtccmd.pus.s11_tc_sched import Subservice as Pus11Subservice
-from tmtccmd.tmtc.procedure import DefaultProcedureInfo, TcProcedureBase
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure, TcProcedureBase
 
 
 class TcQueueEntryType(Enum):
@@ -110,24 +110,27 @@ class PacketDelayEntry(TcQueueEntryBase):
 
 class QueueEntryHelper:
     def __init__(self, base: Optional[TcQueueEntryBase]):
-        self.base = base
+        self.entry = base
 
     @property
     def is_tc(self) -> bool:
-        return self.base.is_tc()
+        assert self.entry is not None
+        return self.entry.is_tc()
 
     @property
     def entry_type(self) -> TcQueueEntryType:
-        return self.base.etype
+        assert self.entry is not None
+        return self.entry.etype
 
     def __cast_internally(
         self,
         obj_type: Type[TcQueueEntryBase],
         expected_type: TcQueueEntryType,
     ) -> Any:
-        if self.base.etype != expected_type:
-            raise TypeError(f"Invalid object {self.base} for type {expected_type}")
-        return cast(obj_type, self.base)
+        assert self.entry is not None
+        if self.entry.etype != expected_type:
+            raise TypeError(f"Invalid object {self.entry} for type {expected_type}")
+        return cast(obj_type, self.entry)
 
     def to_log_entry(self) -> LogQueueEntry:
         return self.__cast_internally(LogQueueEntry, TcQueueEntryType.LOG)
@@ -161,7 +164,7 @@ class QueueWrapper:
 
     @classmethod
     def empty(cls):
-        return cls(DefaultProcedureInfo.empty(), deque())
+        return cls(TreeCommandingProcedure.empty(), deque())
 
     def __repr__(self):
         return (
@@ -251,14 +254,17 @@ class DefaultPusQueueHelper(QueueHelperBase):
             self._pus_packet_handler(pus_entry.pus_tc)
 
     def _handle_time_tagged_tc(self, pus_tc: PusTelecommand):
-        pus_tc_raw = pus_tc.app_data[self.tc_sched_timestamp_len :]
+        new_pus_tc_app_data = bytearray()
+        new_pus_tc_app_data.extend(pus_tc.app_data[: self.tc_sched_timestamp_len])
+        pus_tc_raw = new_pus_tc_app_data[self.tc_sched_timestamp_len :]
         if not check_pus_crc(pus_tc_raw):
             raise ValueError(
                 f"crc check on contained PUS TC with length {len(pus_tc_raw)} failed"
             )
         time_tagged_tc = PusTelecommand.unpack(pus_tc_raw)
         self._pus_packet_handler(time_tagged_tc)
-        pus_tc.app_data[self.tc_sched_timestamp_len :] = time_tagged_tc.pack()
+        new_pus_tc_app_data.extend(time_tagged_tc.pack())
+        pus_tc._app_data = new_pus_tc_app_data
 
     def _pus_packet_handler(self, pus_tc: PusTelecommand):
         recalc_crc = False

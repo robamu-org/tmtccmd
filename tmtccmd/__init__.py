@@ -19,13 +19,13 @@ from tmtccmd.config import (
     PreArgsParsingWrapper,
     CoreModeConverter,
     CoreModeList,
-    DefaultProcedureParams,
+    TreeCommandingParams,
 )
 from tmtccmd.core.ccsds_backend import BackendBase
 from tmtccmd.tmtc import TmTypes, TmHandlerBase, CcsdsTmHandler
 from tmtccmd.core import ModeWrapper
 from tmtccmd.tmtc import (
-    DefaultProcedureInfo,
+    TreeCommandingProcedure,
     TcProcedureBase,
     ProcedureWrapper,
     TcHandlerBase,
@@ -236,7 +236,7 @@ def create_default_tmtc_backend(
 
 
 def setup_backend_def_procedure(
-    backend: CcsdsTmtcBackend, tmtc_params: DefaultProcedureParams
+    backend: CcsdsTmtcBackend, tmtc_params: TreeCommandingProcedure
 ):
     assert tmtc_params.cmd_path is not None
-    backend.current_procedure = DefaultProcedureInfo(tmtc_params.cmd_path)
+    backend.current_procedure = TreeCommandingProcedure(tmtc_params.cmd_path)

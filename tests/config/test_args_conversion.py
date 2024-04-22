@@ -9,8 +9,8 @@ from tests.hook_obj_mock import create_hook_mock
 from tmtccmd import CoreModeConverter, CoreModeList
 from tmtccmd.config import CfdpParams
 from tmtccmd.config.args import (
-    AppParams,
-    DefaultProcedureParams,
+    CommandingParams,
+    TreeCommandingParams,
     SetupParams,
     args_to_all_params_tmtc,
     cfdp_args_to_cfdp_params,
@@ -52,7 +52,7 @@ class TestArgs(TestCase):
         self.assertEqual(self.params.tc_params.delay, 0)
         self.assertEqual(self.params.backend_params.mode, "")
         self.assertEqual(self.params.backend_params.com_if_id, "")
-        def_params = DefaultProcedureParams(None)
+        def_params = TreeCommandingParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -78,7 +78,7 @@ class TestArgs(TestCase):
     def test_delay_set(self):
         self.simple_pargs_cli_set()
         self.pargs.delay = 2.0
-        def_params = DefaultProcedureParams(None)
+        def_params = TreeCommandingParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -115,7 +115,7 @@ class TestArgs(TestCase):
 
     def test_auto_listener_mode(self):
         self.auto_listener_cli_set()
-        def_params = DefaultProcedureParams(None)
+        def_params = TreeCommandingParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -138,7 +138,7 @@ class TestArgs(TestCase):
     def test_tree_printout_conversion_default(self):
         self.base_cli_set()
         self.pargs.print_tree = []
-        def_params = DefaultProcedureParams(None)
+        def_params = TreeCommandingParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -147,14 +147,14 @@ class TestArgs(TestCase):
             def_tmtc_params=def_params,
             assign_com_if=False,
         )
-        self.assertTrue(self.params.app_params.print_tree)
-        self.assertTrue(self.params.app_params.tree_print_with_description)
-        self.assertIsNone(self.params.app_params.tree_print_max_depth)
+        self.assertTrue(self.params.tc_params.print_tree)
+        self.assertTrue(self.params.tc_params.tree_print_with_description)
+        self.assertIsNone(self.params.tc_params.tree_print_max_depth)
 
     def test_tree_printout_conversion_with_custom_args(self):
         self.base_cli_set()
         self.pargs.print_tree = ["b", "2"]
-        def_params = DefaultProcedureParams(None)
+        def_params = TreeCommandingParams(None)
         args_to_all_params_tmtc(
             pargs=self.pargs,
             params=self.params,
@@ -163,16 +163,16 @@ class TestArgs(TestCase):
             def_tmtc_params=def_params,
             assign_com_if=False,
         )
-        self.assertTrue(self.params.app_params.print_tree)
-        self.assertFalse(self.params.app_params.tree_print_with_description)
-        self.assertEqual(self.params.app_params.tree_print_max_depth, 2)
+        self.assertTrue(self.params.tc_params.print_tree)
+        self.assertFalse(self.params.tc_params.tree_print_with_description)
+        self.assertEqual(self.params.tc_params.tree_print_max_depth, 2)
 
     @patch("builtins.print")
     def test_tree_printout_0(self, print_mock: MagicMock):
         root_node_only = CmdTreeNode.root_node()
-        app_params = AppParams()
-        app_params.print_tree = True
-        perform_tree_printout(app_params, root_node_only)
+        tc_params = CommandingParams()
+        tc_params.print_tree = True
+        perform_tree_printout(tc_params, root_node_only)
         self.assertEqual(len(print_mock.call_args_list), 2)
         self.assertEqual(
             print_mock.call_args_list[0],
@@ -185,10 +185,10 @@ class TestArgs(TestCase):
     @patch("builtins.print")
     def test_tree_printout_1(self, print_mock: MagicMock):
         root_node_only = CmdTreeNode.root_node()
-        app_params = AppParams()
-        app_params.print_tree = True
-        app_params.tree_print_with_description = False
-        perform_tree_printout(app_params, root_node_only)
+        tc_params = CommandingParams()
+        tc_params.print_tree = True
+        tc_params.tree_print_with_description = False
+        perform_tree_printout(tc_params, root_node_only)
         self.assertEqual(len(print_mock.call_args_list), 2)
         self.assertEqual(
             print_mock.call_args_list[0],
@@ -200,11 +200,11 @@ class TestArgs(TestCase):
     def test_tree_printout_2(self, print_mock: MagicMock):
         root_node_only = CmdTreeNode.root_node()
         root_node_only.add_child(CmdTreeNode("acs", "ACS Subsystem"))
-        app_params = AppParams()
-        app_params.print_tree = True
-        app_params.tree_print_with_description = False
-        app_params.tree_print_max_depth = 0
-        perform_tree_printout(app_params, root_node_only)
+        tc_params = CommandingParams()
+        tc_params.print_tree = True
+        tc_params.tree_print_with_description = False
+        tc_params.tree_print_max_depth = 0
+        perform_tree_printout(tc_params, root_node_only)
         self.assertEqual(len(print_mock.call_args_list), 2)
         self.assertEqual(
             print_mock.call_args_list[0],

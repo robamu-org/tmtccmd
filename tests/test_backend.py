@@ -10,11 +10,11 @@ from tmtccmd.core import TcMode, TmMode, BackendRequest
 from tmtccmd.core.ccsds_backend import NoValidProcedureSet
 from tmtccmd.tmtc import (
     TcProcedureBase,
-    DefaultProcedureInfo,
     TcProcedureType,
     ProcedureWrapper,
 )
 from tmtccmd.tmtc.handler import FeedWrapper, SendCbParams
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 
 
@@ -48,9 +48,9 @@ class TcHandlerMock(TcHandlerBase):
         self.send_cb_cmd_path_arg = None
         self.send_cb_op_code_arg = None
         if info is not None:
-            if info.proc_type == TcProcedureType.DEFAULT:
+            if info.proc_type == TcProcedureType.TREE_COMMANDING:
                 self.feed_cb_def_proc_count += 1
-                def_info = info.to_def_procedure()
+                def_info = info.to_tree_commanding_procedure()
                 if def_info.cmd_path != "/ping":
                     self.is_feed_cb_valid = False
                 self.send_cb_cmd_path_arg = def_info.cmd_path
@@ -116,7 +116,7 @@ class TestBackend(TestCase):
         self.backend.tc_mode = TcMode.ONE_QUEUE
         with self.assertRaises(NoValidProcedureSet):
             self.backend.periodic_op()
-        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/ping")
+        self.backend.current_procedure = TreeCommandingProcedure(cmd_path="/ping")
 
         res = self.backend.periodic_op()
         # Only one queue entry which is handled immediately
@@ -137,7 +137,7 @@ class TestBackend(TestCase):
     def test_one_queue_multi_entry_ops(self):
         self.backend.tm_mode = TmMode.IDLE
         self.backend.tc_mode = TcMode.ONE_QUEUE
-        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/event")
+        self.backend.current_procedure = TreeCommandingProcedure(cmd_path="/event")
         res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.CALL_NEXT)
         self.assertEqual(self.tc_handler.feed_cb_def_proc_count, 1)
@@ -154,7 +154,7 @@ class TestBackend(TestCase):
     def test_multi_queue_ops(self):
         self.backend.tm_mode = TmMode.IDLE
         self.backend.tc_mode = TcMode.MULTI_QUEUE
-        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/ping")
+        self.backend.current_procedure = TreeCommandingProcedure(cmd_path="/ping")
         res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.CALL_NEXT)
         self.assertEqual(self.backend.request, BackendRequest.CALL_NEXT)
@@ -167,7 +167,7 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.feed_cb_call_count, 1)
         self.assertEqual(res.request, BackendRequest.DELAY_IDLE)
         self.backend.tc_mode = TcMode.MULTI_QUEUE
-        self.backend.current_procedure = DefaultProcedureInfo(cmd_path="/ping")
+        self.backend.current_procedure = TreeCommandingProcedure(cmd_path="/ping")
         res = self.backend.periodic_op()
         self.assertEqual(res.request, BackendRequest.CALL_NEXT)
         self.assertEqual(self.backend.request, BackendRequest.CALL_NEXT)
@@ -175,13 +175,13 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.feed_cb_call_count, 2)
 
     def test_procedure_handling(self):
-        def_proc = DefaultProcedureInfo(cmd_path="/ping")
+        def_proc = TreeCommandingProcedure(cmd_path="/ping")
         self.backend.current_procedure = def_proc
         self.assertEqual(
-            self.backend.current_procedure.proc_type, TcProcedureType.DEFAULT
+            self.backend.current_procedure.proc_type, TcProcedureType.TREE_COMMANDING
         )
         proc_helper = self.backend.current_procedure
-        def_proc = proc_helper.to_def_procedure()
+        def_proc = proc_helper.to_tree_commanding_procedure()
         self.assertIsNotNone(def_proc)
         self.assertEqual(def_proc.cmd_path, "/ping")
 
