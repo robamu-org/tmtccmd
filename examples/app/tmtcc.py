@@ -144,7 +144,7 @@ class PusTmHandler(SpecificApidHandlerBase):
     def handle_tm(self, packet: bytes, _user_args: Any):
         try:
             tm_packet = PusTelemetry.unpack(
-                packet, time_reader=CdsShortTimestamp.empty()
+                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
             )
         except ValueError as e:
             _LOGGER.warning("Could not generate PUS TM object from raw data")
@@ -154,7 +154,7 @@ class PusTmHandler(SpecificApidHandlerBase):
         dedicated_handler = False
         if service == 1:
             verif_tm = Service1Tm.unpack(
-                data=packet, params=UnpackParams(CdsShortTimestamp.empty(), 1, 2)
+                data=packet, params=UnpackParams(CdsShortTimestamp.TIMESTAMP_SIZE, 1, 2)
             )
             res = self.verif_wrapper.add_tm(verif_tm)
             if res is None:
@@ -171,12 +171,16 @@ class PusTmHandler(SpecificApidHandlerBase):
                 self.verif_wrapper.log_to_file(verif_tm, res)
             dedicated_handler = True
         if service == 5:
-            event_tm = Service5Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
+            event_tm = Service5Tm.unpack(
+                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
+            )
             _LOGGER.info(
                 f"Received event packet TM [{event_tm.service}, {event_tm.subservice}]"
             )
         if service == 17:
-            ping_tm = Service17Tm.unpack(packet, time_reader=CdsShortTimestamp.empty())
+            ping_tm = Service17Tm.unpack(
+                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
+            )
             dedicated_handler = True
             if ping_tm.subservice == 2:
                 _LOGGER.info("Received Ping Reply TM[17,2]")
@@ -190,7 +194,7 @@ class PusTmHandler(SpecificApidHandlerBase):
                 f"The service {service} is not implemented in Telemetry Factory"
             )
             tm_packet = PusTelemetry.unpack(
-                packet, time_reader=CdsShortTimestamp.empty()
+                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
             )
         # TODO: Insert this into a DB instead. Maybe use sqlite for first variant.
         # self.raw_logger.log_tm(tm_packet)
@@ -250,12 +254,14 @@ class TcHandler(TcHandlerBase):
             cmd_path_list = cmd_path.split("/")[1:]
             if cmd_path_list[0] == "ping":
                 return self.queue_helper.add_pus_tc(
-                    PusTelecommand(service=17, subservice=1)
+                    PusTelecommand(apid=EXAMPLE_PUS_APID, service=17, subservice=1)
                 )
             elif cmd_path_list[0] == "test":
                 if cmd_path_list[1] == "event":
                     return self.queue_helper.add_pus_tc(
-                        PusTelecommand(service=17, subservice=128)
+                        PusTelecommand(
+                            apid=EXAMPLE_PUS_APID, service=17, subservice=128
+                        )
                     )
 
 
