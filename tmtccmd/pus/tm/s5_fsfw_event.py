@@ -5,11 +5,9 @@ from __future__ import annotations
 
 import dataclasses
 import struct
-from typing import Optional
 
 from spacepackets import SpacePacketHeader
 from spacepackets.ccsds.spacepacket import PacketId, PacketSeqCtrl
-from spacepackets.ccsds.time import CcsdsTimeProvider
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.pus_5_event import Subservice
 from spacepackets.ecss.tm import CdsShortTimestamp, AbstractPusTm, PusTelemetry
@@ -52,11 +50,11 @@ class EventDefinition:
 class Service5Tm(AbstractPusTm):
     def __init__(
         self,
+        apid: int,
         subservice: Subservice,
         event: EventDefinition,
-        time_provider: Optional[CdsShortTimestamp],
+        timestamp: bytes,
         ssc: int = 0,
-        apid: int = -1,
         packet_version: int = 0b000,
         space_time_ref: int = 0b0000,
         destination_id: int = 0,
@@ -68,7 +66,7 @@ class Service5Tm(AbstractPusTm):
         self.pus_tm = PusTelemetry(
             service=PusService.S5_EVENT,
             subservice=subservice,
-            time_provider=time_provider,
+            timestamp=timestamp,
             seq_count=ssc,
             source_data=event.pack(),
             apid=apid,
@@ -82,8 +80,8 @@ class Service5Tm(AbstractPusTm):
         return self.pus_tm.space_packet_header
 
     @property
-    def time_provider(self) -> Optional[CcsdsTimeProvider]:
-        return self.pus_tm.time_provider
+    def timestamp(self) -> bytes:
+        return self.pus_tm.timestamp
 
     def pack(self) -> bytearray:
         return self.pus_tm.pack()
@@ -115,9 +113,10 @@ class Service5Tm(AbstractPusTm):
     @classmethod
     def __empty(cls) -> Service5Tm:
         return cls(
+            apid=0x0,
             subservice=Subservice.TM_INFO_EVENT,
             event=EventDefinition.empty(),
-            time_provider=CdsShortTimestamp.empty(),
+            timestamp=CdsShortTimestamp.empty().pack(),
         )
 
     @classmethod
@@ -127,11 +126,9 @@ class Service5Tm(AbstractPusTm):
         return instance
 
     @classmethod
-    def unpack(
-        cls, data: bytes, time_reader: Optional[CcsdsTimeProvider]
-    ) -> Service5Tm:
+    def unpack(cls, data: bytes, timestamp_len: int) -> Service5Tm:
         instance = cls.__empty()
-        instance.pus_tm = PusTelemetry.unpack(data=data, time_reader=time_reader)
+        instance.pus_tm = PusTelemetry.unpack(data=data, timestamp_len=timestamp_len)
         return instance
 
     @property

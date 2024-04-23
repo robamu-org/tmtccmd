@@ -8,12 +8,13 @@ from spacepackets.ecss import PusTelecommand
 from tmtccmd.com import ComInterface
 from tmtccmd.tmtc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
 from tmtccmd.tmtc.handler import TcHandlerBase, SendCbParams
-from tmtccmd.tmtc.procedure import DefaultProcedureInfo
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 from tmtccmd.tmtc.queue import QueueWrapper, DefaultPusQueueHelper
 
 
 class TestSendReceive(TestCase):
     def setUp(self) -> None:
+        self.apid = 0x22
         self.queue_wrapper = QueueWrapper.empty()
         self.queue_helper = DefaultPusQueueHelper(
             self.queue_wrapper,
@@ -45,7 +46,7 @@ class TestSendReceive(TestCase):
         self.tc_handler_mock.send_cb.assert_called_with(ANY)
         call_args = self.tc_handler_mock.send_cb.call_args
         send_cb_params = cast(SendCbParams, call_args.args[0])
-        self.assertEqual(send_cb_params.info.procedure, DefaultProcedureInfo.empty())
+        self.assertEqual(send_cb_params.info.procedure, TreeCommandingProcedure.empty())
         raw_tc_entry = send_cb_params.entry.to_raw_tc_entry()
         self.assertEqual(raw_tc_entry.tc, bytes([0, 1, 2]))
         # Queue should be empty now
@@ -110,7 +111,7 @@ class TestSendReceive(TestCase):
     def test_interpacket_delay(self):
         delay_ms = 20
         inter_packet_delay = timedelta(milliseconds=delay_ms)
-        ping_cmd = PusTelecommand(service=17, subservice=1)
+        ping_cmd = PusTelecommand(apid=self.apid, service=17, subservice=1)
         self.queue_helper.add_pus_tc(ping_cmd)
         self.queue_helper.add_packet_delay_ms(delay_ms)
         self.queue_helper.add_ccsds_tc(ping_cmd.to_space_packet())

@@ -2,7 +2,7 @@ import dataclasses
 import functools
 
 from tmtccmd.tmtc import TcHandlerBase
-from tmtccmd.tmtc.procedure import DefaultProcedureInfo
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 from tmtccmd.tmtc.queue import DefaultPusQueueHelper
 
 SERVICE_HANDLER_DICT = dict()
@@ -11,7 +11,7 @@ SERVICE_HANDLER_DICT = dict()
 @dataclasses.dataclass
 class ServiceProviderParams:
     handler_base: TcHandlerBase
-    info: DefaultProcedureInfo
+    info: TreeCommandingProcedure
     queue_helper: DefaultPusQueueHelper
     op_code: str
 

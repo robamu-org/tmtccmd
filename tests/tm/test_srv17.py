@@ -7,27 +7,24 @@ from spacepackets.ecss.pus_17_test import Service17Tm
 
 class TestTelemetry(TestCase):
     def setUp(self) -> None:
+        self.apid = 0xEF
         self.pus_17_telemetry = Service17Tm(
+            apid=self.apid,
             subservice=1,
             ssc=36,
-            time_provider=CdsShortTimestamp.from_now(),
-            apid=0xEF,
+            timestamp=CdsShortTimestamp.now().pack(),
         )
 
         self.pus_17_raw = self.pus_17_telemetry.pack()
 
     def test_generic_pus_c(self):
         def tm_func(raw_telemetry: bytearray):
-            return Service17Tm.unpack(
-                data=raw_telemetry, time_reader=CdsShortTimestamp.empty()
-            )
+            return Service17Tm.unpack(data=raw_telemetry, timestamp_len=7)
 
         self.assertRaises(ValueError, tm_func, bytearray())
         self.assertRaises(ValueError, tm_func, None)
 
-        pus_17_telemetry = Service17Tm.unpack(
-            data=self.pus_17_raw, time_reader=CdsShortTimestamp.empty()
-        )
+        pus_17_telemetry = Service17Tm.unpack(data=self.pus_17_raw, timestamp_len=7)
         self.assertTrue(pus_17_telemetry.service == 17)
         self.assertTrue(pus_17_telemetry.apid == 0xEF)
         self.assertTrue(pus_17_telemetry.subservice == 1)

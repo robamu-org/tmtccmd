@@ -21,14 +21,14 @@ from tmtccmd.cfdp.request import PutRequestCfgWrapper
 from tmtccmd.core import TcMode, TmMode
 from tmtccmd.core.base import ModeWrapper
 from tmtccmd.tmtc.procedure import (
-    CfdpProcedureInfo,
-    DefaultProcedureInfo,
+    CfdpProcedure,
+    TreeCommandingProcedure,
     ProcedureWrapper,
     TcProcedureType,
 )
 
 from .args import (
-    DefaultProcedureParams,
+    TreeCommandingParams,
     PreArgsParsingWrapper,
     ProcedureParamsWrapper,
     SetupParams,
@@ -43,14 +43,11 @@ from .defs import (
     CoreComInterfaces,
     CoreModeConverter,
     CoreModeList,
-    CoreServiceList,
     default_json_path,
 )
 from .hook import HookBase
 from .prompt import prompt_op_code, prompt_service
 from .tmtc import CmdTreeNode, OpCodeEntry, OpCodeOptionBase, TmtcDefinitionWrapper
-
-_LOGGER = logging.getLogger(__name__)
 
 
 def backend_mode_conversion(mode: str, mode_wrapper: ModeWrapper):
@@ -63,30 +60,6 @@ def backend_mode_conversion(mode: str, mode_wrapper: ModeWrapper):
     elif mode == CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE):
         mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
         mode_wrapper.tm_mode = TmMode.LISTENER
-
-
-def get_global_hook_obj() -> Optional[HookBase]:
-    """This function can be used to get the handle to the global hook object.
-    :return:
-    """
-
-    try:
-        from typing import cast
-
-        from tmtccmd.config.definitions import CoreGlobalIds
-        from tmtccmd.core.globals_manager import get_global
-
-        hook_obj_raw = get_global(CoreGlobalIds.TMTC_HOOK)
-        if hook_obj_raw is None:
-            _LOGGER.error("Hook object is invalid!")
-            return None
-        return cast(HookBase, hook_obj_raw)
-    except ImportError:
-        _LOGGER.exception("Issues importing modules to get global hook handle!")
-        return None
-    except AttributeError:
-        _LOGGER.exception("Attribute error when trying to get global hook handle!")
-        return None
 
 
 class SetupWrapper:
@@ -116,12 +89,12 @@ class SetupWrapper:
         return self._params
 
 
-def tmtc_params_to_procedure(params: DefaultProcedureParams) -> DefaultProcedureInfo:
-    return DefaultProcedureInfo(cmd_path=params.cmd_path)
+def tmtc_params_to_procedure(params: TreeCommandingParams) -> TreeCommandingProcedure:
+    return TreeCommandingProcedure(cmd_path=params.cmd_path)
 
 
-def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedureInfo:
-    proc_info = CfdpProcedureInfo()
+def cfdp_put_req_params_to_procedure(params: CfdpParams) -> CfdpProcedure:
+    proc_info = CfdpProcedure()
     proc_info.request_wrapper.base = PutRequestCfgWrapper(params)
     return proc_info
 
@@ -130,8 +103,10 @@ def params_to_procedure_conversion(
     param_wrapper: ProcedureParamsWrapper,
 ) -> ProcedureWrapper:
     proc_wrapper = ProcedureWrapper(None)
-    if param_wrapper.ptype == TcProcedureType.DEFAULT:
-        proc_wrapper.procedure = tmtc_params_to_procedure(param_wrapper.def_params())  # type: ignore
+    if param_wrapper.ptype == TcProcedureType.TREE_COMMANDING:
+        tree_cmd_params = param_wrapper.tree_commanding_params()
+        assert tree_cmd_params is not None
+        proc_wrapper.procedure = tmtc_params_to_procedure(tree_cmd_params)
     elif param_wrapper.ptype == TcProcedureType.CFDP:
         proc_wrapper.procedure = cfdp_put_req_params_to_procedure(
             param_wrapper.cfdp_params()  # type: ignore

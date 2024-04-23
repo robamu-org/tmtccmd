@@ -31,36 +31,31 @@ from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
 )
 
 
-def create_load_param_cmd(parameter: Parameter) -> PusTelecommand:
+def create_load_param_cmd(apid: int, parameter: Parameter) -> PusTelecommand:
     return PusTelecommand(
+        apid=apid,
         service=PusService.S20_PARAMETER,
         subservice=CustomSubservice.TC_LOAD,
         app_data=parameter.pack(),
     )
 
 
-def create_dump_param_cmd(param_fsfw_id: FsfwParamId) -> PusTelecommand:
+def create_dump_param_cmd(apid: int, param_fsfw_id: FsfwParamId) -> PusTelecommand:
     return PusTelecommand(
+        apid=apid,
         service=PusService.S20_PARAMETER,
         subservice=CustomSubservice.TC_LOAD,
         app_data=param_fsfw_id.pack(),
     )
 
 
-def create_load_param_cmd_from_raw(parameter_raw: bytes) -> PusTelecommand:
+def create_load_param_cmd_from_raw(apid: int, parameter_raw: bytes) -> PusTelecommand:
     return PusTelecommand(
+        apid=apid,
         service=PusService.S20_PARAMETER,
         subservice=CustomSubservice.TC_LOAD,
         app_data=parameter_raw,
     )
-
-
-@deprecated(
-    version="4.0.0a3",
-    reason="use crate_fsfw_load_param_cmd instead",
-)
-def pack_fsfw_load_param_cmd(app_data: bytes) -> PusTelecommand:
-    return create_load_param_cmd(app_data)
 
 
 @deprecated(

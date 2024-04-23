@@ -9,13 +9,12 @@ import sys
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple, Union
 
-from deprecated.sphinx import deprecated
 from prompt_toolkit.shortcuts import CompleteStyle
 from spacepackets.cfdp import TransmissionMode
 
 from tmtccmd.com import ComInterface
 from tmtccmd.com.utils import determine_com_if
-from tmtccmd.config.prompt import prompt_cmd_path, prompt_op_code, prompt_service
+from tmtccmd.config.prompt import prompt_cmd_path
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.tmtc.procedure import TcProcedureType
 
@@ -24,7 +23,7 @@ from .defs import (
     CoreComInterfaces,
     CoreModeConverter,
     CoreModeList,
-    DefaultProcedureParams,
+    TreeCommandingParams,
 )
 from .hook import HookBase
 
@@ -63,16 +62,16 @@ class ProcedureParamsWrapper:
     def ptype(self):
         return self._ptype
 
-    def set_params(self, params: Union[DefaultProcedureParams, CfdpParams]):
-        if isinstance(params, DefaultProcedureParams):
+    def set_params(self, params: Union[TreeCommandingParams, CfdpParams]):
+        if isinstance(params, TreeCommandingParams):
             self._params = params
-            self._ptype = TcProcedureType.DEFAULT
+            self._ptype = TcProcedureType.TREE_COMMANDING
         elif isinstance(params, CfdpParams):
             self._params = params
             self._ptype = TcProcedureType.CFDP
 
-    def def_params(self) -> Optional[DefaultProcedureParams]:
-        if self._ptype == TcProcedureType.DEFAULT:
+    def tree_commanding_params(self) -> Optional[TreeCommandingParams]:
+        if self._ptype == TcProcedureType.TREE_COMMANDING:
             return self._params
         return None
 
@@ -83,9 +82,12 @@ class ProcedureParamsWrapper:
 
 
 @dataclass
-class TcParams:
+class CommandingParams:
     delay: float = 0.0
     apid: int = 0
+    print_tree: bool = False
+    tree_print_with_description: bool = True
+    tree_print_max_depth: Optional[int] = None
 
 
 @dataclass
@@ -101,9 +103,6 @@ class AppParams:
     use_gui: bool = False
     reduced_printout: bool = False
     use_ansi_colors: bool = True
-    print_tree: bool = False
-    tree_print_with_description: bool = True
-    tree_print_max_depth: Optional[int] = None
     compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE
 
 
@@ -111,13 +110,13 @@ class SetupParams:
     def __init__(
         self,
         com_if: Optional[ComInterface] = None,
-        tc_params: Optional[TcParams] = None,
+        tc_params: Optional[CommandingParams] = None,
         backend_params: Optional[BackendParams] = None,
         app_params: Optional[AppParams] = None,
     ):
         self.com_if = com_if
         if tc_params is None:
-            self.tc_params = TcParams()
+            self.tc_params = CommandingParams()
         if backend_params is None:
             self.backend_params = BackendParams()
         if app_params is None:
@@ -160,7 +159,7 @@ def add_default_tmtccmd_args(parser: argparse.ArgumentParser):
     add_tmtc_mode_arguments(parser)
     add_default_com_if_arguments(parser)
     add_generic_arguments(parser)
-    add_default_procedure_arguments(parser)
+    add_tree_commanding_arguments(parser)
     add_ethernet_arguments(parser)
 
 
@@ -200,7 +199,7 @@ def parse_default_tmtccmd_input_arguments(
     return args, unknown
 
 
-def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser):
+def add_tree_commanding_arguments(parser_or_subparser: argparse.ArgumentParser):
     parser_or_subparser.add_argument(
         "-p",
         "--path",
@@ -214,6 +213,7 @@ def add_default_procedure_arguments(parser_or_subparser: argparse.ArgumentParser
         "--print-tree",
         dest="print_tree",
         nargs="*",
+        default=None,
         help=(
             f"Optional arguments [b] [p] [<numMaxDepth>]. Print the command definition tree. You "
             f"can{os.linesep}optionally add b to omit descriptions, p to display hidden nodes, "
@@ -371,41 +371,9 @@ def add_ethernet_arguments(arg_parser: argparse.ArgumentParser):
     )
 
 
-@deprecated(
-    version="8.0.0",
-    reason="use determine_cmd_path instead",
-)
-def find_service_and_op_code(
-    params: SetupParams,
-    def_params: DefaultProcedureParams,
-    hook_obj: HookBase,
-    pargs: argparse.Namespace,
-    use_prompts: bool,
-):
-    tmtc_defs = hook_obj.get_tmtc_definitions()
-    if pargs.service is None:
-        if use_prompts:
-            print("No service argument (-s) specified, prompting from user")
-            # Try to get the service list from the hook base and prompt service
-            # from user
-            def_params.service = prompt_service(
-                tmtc_defs, params.app_params.compl_style
-            )
-    else:
-        def_params.service = pargs.service
-    if pargs.op_code is None:
-        current_service = def_params.service
-        if use_prompts:
-            def_params.op_code = prompt_op_code(
-                tmtc_defs, current_service, params.app_params.compl_style
-            )
-    else:
-        def_params.op_code = pargs.op_code
-
-
 def determine_cmd_path(
     params: SetupParams,
-    def_params: DefaultProcedureParams,
+    def_params: TreeCommandingParams,
     hook_obj: HookBase,
     pargs: argparse.Namespace,
     use_prompts: bool,
@@ -435,15 +403,6 @@ def args_to_params_generic(
         params.app_params.use_gui = False
     else:
         params.app_params.use_gui = pargs.gui
-    if pargs.print_tree is not None:
-        params.app_params.print_tree = True
-        for arg in pargs.print_tree:
-            if "b" in arg:
-                params.app_params.tree_print_with_description = False
-            if arg.isdigit():
-                params.app_params.tree_print_max_depth = int(arg)
-    else:
-        params.app_params.print_tree = False
     if pargs.com_if is None or pargs.com_if == CoreComInterfaces.UNSPECIFIED.value:
         assert hook_obj.cfg_path is not None
         params.com_if_id = determine_com_if(
@@ -507,7 +466,7 @@ def args_to_all_params_for_cfdp(
 def args_to_all_params_tmtc(
     pargs: argparse.Namespace,
     params: SetupParams,
-    def_tmtc_params: DefaultProcedureParams,
+    def_tmtc_params: TreeCommandingParams,
     hook_obj: HookBase,
     use_prompts: bool,
     assign_com_if: bool = True,
@@ -537,6 +496,14 @@ def args_to_all_params_tmtc(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
+    params.tc_params.print_tree = False
+    if pargs.print_tree is not None:
+        params.tc_params.print_tree = True
+        for arg in pargs.print_tree:
+            if "b" in arg:
+                params.tc_params.tree_print_with_description = False
+            if arg.isdigit():
+                params.tc_params.tree_print_max_depth = int(arg)
     mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
@@ -561,7 +528,7 @@ def args_to_all_params_tmtc(
         params.tc_params.delay = float(pargs.delay)
     if (
         params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
-        and not params.app_params.print_tree
+        and not params.tc_params.print_tree
     ):
         determine_cmd_path(
             params=params,
@@ -572,18 +539,18 @@ def args_to_all_params_tmtc(
         )
 
 
-def perform_tree_printout(app_params: AppParams, cmd_def_tree: CmdTreeNode):
-    if app_params.tree_print_with_description:
+def perform_tree_printout(tc_params: CommandingParams, cmd_def_tree: CmdTreeNode):
+    if tc_params.tree_print_with_description:
         info_str = "with full descriptions"
     else:
         info_str = "without descriptions"
-    if app_params.tree_print_max_depth is not None:
-        info_str += f" and maximum depth {app_params.tree_print_max_depth}"
+    if tc_params.tree_print_max_depth is not None:
+        info_str += f" and maximum depth {tc_params.tree_print_max_depth}"
     print(f"Printing command tree {info_str}:")
     print(
         cmd_def_tree.str_for_tree(
-            app_params.tree_print_with_description,
-            app_params.tree_print_max_depth,
+            tc_params.tree_print_with_description,
+            tc_params.tree_print_max_depth,
         )
     )
 
@@ -679,7 +646,7 @@ class PreArgsParsingWrapper:
         the service and operation code flags."""
         self._check_arg_parser()
         assert self.args_parser is not None
-        add_default_procedure_arguments(self.args_parser)
+        add_tree_commanding_arguments(self.args_parser)
 
     def add_cfdp_args(self):
         """Add the default CFDP procedure parameters to the default parser."""
@@ -713,7 +680,7 @@ class PreArgsParsingWrapper:
             formatter_class=argparse.RawTextHelpFormatter,
             parents=[self.parent_parser],
         )
-        add_default_procedure_arguments(tmtc_parser)
+        add_tree_commanding_arguments(tmtc_parser)
         cfdp_descrip = "CCSDS CFDP File Transfer"
         cfdp_parser = subparser.add_parser(
             "cfdp",
@@ -763,7 +730,7 @@ class PostArgsParsingWrapper:
     def request_type_from_args(self) -> TcProcedureType:
         if hasattr(self.args_raw, "proc_type"):
             if self.args_raw.proc_type == "tmtc":
-                return TcProcedureType.DEFAULT
+                return TcProcedureType.TREE_COMMANDING
             elif self.args_raw.proc_type == "cfdp":
                 return TcProcedureType.CFDP
             else:
@@ -772,7 +739,7 @@ class PostArgsParsingWrapper:
                     ' "cfdp"'
                 )
         else:
-            return TcProcedureType.DEFAULT
+            return TcProcedureType.TREE_COMMANDING
 
     def set_params_with_prompts(self, proc_base: ProcedureParamsWrapper):
         self._set_params(proc_base, True)
@@ -782,8 +749,8 @@ class PostArgsParsingWrapper:
 
     def _set_params(self, proc_base: ProcedureParamsWrapper, with_prompts: bool):
         param_type = self.request_type_from_args()
-        if param_type == TcProcedureType.DEFAULT:
-            def_proc_params = DefaultProcedureParams(None)
+        if param_type == TcProcedureType.TREE_COMMANDING:
+            def_proc_params = TreeCommandingParams(None)
             if with_prompts:
                 self.set_tmtc_params_with_prompts(def_proc_params)
             else:
@@ -803,10 +770,10 @@ class PostArgsParsingWrapper:
     def set_cfdp_params_without_prompts(self, cfdp_params: CfdpParams):
         self._set_cfdp_params(cfdp_params, False)
 
-    def set_tmtc_params_with_prompts(self, tmtc_params: DefaultProcedureParams):
+    def set_tmtc_params_with_prompts(self, tmtc_params: TreeCommandingParams):
         self._set_tmtc_params(tmtc_params, True)
 
-    def set_tmtc_params_without_prompts(self, tmtc_params: DefaultProcedureParams):
+    def set_tmtc_params_without_prompts(self, tmtc_params: TreeCommandingParams):
         """Set up the parameter object from the parsed arguments. This call auto-determines whether
         prompts should be used depending on whether the GUI flag was passed or not.
 
@@ -816,7 +783,7 @@ class PostArgsParsingWrapper:
 
     def _set_tmtc_params(
         self,
-        def_tmtc_params: DefaultProcedureParams,
+        def_tmtc_params: TreeCommandingParams,
         use_prompts: bool,
     ):
         try:

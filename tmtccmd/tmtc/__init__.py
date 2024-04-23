@@ -22,7 +22,7 @@ from .queue import (
 from .procedure import (
     TcProcedureBase,
     TcProcedureType,
-    DefaultProcedureInfo,
+    TreeCommandingProcedure,
     CustomProcedureInfo,
     ProcedureWrapper,
 )

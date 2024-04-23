@@ -9,18 +9,31 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
-# [v8.0.0rc2] 2024-04-22
+# [v8.0.0rc2] 2024-04-23
+
+- Bumped `spacepackets` to release range >=0.24, <0.25.
+- Bumped `cfdp-py` to v0.1.1.
+
+## Changed
+
+- Renamed `DefaultProcedureParams` to `TreeCommandingParams`.
+- Renamed `TcParams` to `CommandingParams`.
+- Renamed `DefaultProcedureInfo` to `TreeCommandingProcedure`.
+- Renamed `add_default_procedure_arguments` to `add_tree_commanding_arguments`.
+- Renamed `TcProcedureType.DEFAULT` to `TcProcedureType.TREE_COMMANDING`.
+- Replaced `TelemetryListT` by `List[bytes]`.
+- Renamed `TcpSpacePacketsComIF` to `TcpSpacePacketsClient`.
+- Renamed `UdpComIF` to `UdpClient`.
+
+## Removed
+
+- `CoreServiceList` enumeration.
+- `DEFAULT_APID` and `DEBUG_MODE` globals.
 
 ## Fixed
 
 - TCP client implementation re-worked to be thread-safe. Also added more graceful shut-down
   handling. Consequently, the thread spawned by the TCP client is not daemonic anymore.
-
-## Changed
-
-- Replaced `TelemetryListT` by `List[bytes]`.
-- Renamed `TcpSpacePacketsComIF` to `TcpSpacePacketsClient`.
-- Renamed `UdpComIF` to `UdpClient`.
 
 # [v8.0.0rc1] 2024-01-24
 

@@ -44,7 +44,8 @@ from tmtccmd.tmtc import (
     TcProcedureType,
     TcQueueEntryType,
 )
-from tmtccmd.util import FileSeqCountProvider, ObjectIdDictT, PusFileSeqCountProvider
+from tmtccmd.util import ObjectIdDictT
+from spacepackets.seqcount import FileSeqCountProvider, PusFileSeqCountProvider
 
 _LOGGER = logging.getLogger()
 
@@ -234,14 +235,14 @@ class TcHandler(TcHandlerBase):
             _LOGGER.info(log_entry.log_str)
 
     def queue_finished_cb(self, helper: ProcedureWrapper):
-        if helper.proc_type == TcProcedureType.DEFAULT:
-            def_proc = helper.to_def_procedure()
+        if helper.proc_type == TcProcedureType.TREE_COMMANDING:
+            def_proc = helper.to_tree_commanding_procedure()
             _LOGGER.info(f"Queue handling finished for command {def_proc.cmd_path}")
 
     def feed_cb(self, helper: ProcedureWrapper, wrapper: FeedWrapper):
         self.queue_helper.queue_wrapper = wrapper.queue_wrapper
-        if helper.proc_type == TcProcedureType.DEFAULT:
-            def_proc = helper.to_def_procedure()
+        if helper.proc_type == TcProcedureType.TREE_COMMANDING:
+            def_proc = helper.to_tree_commanding_procedure()
             cmd_path = def_proc.cmd_path
             assert cmd_path is not None
             # Path starts with / so the first entry of the list will be an empty string. We cut
@@ -278,8 +279,8 @@ def main():  # noqa: C901
     else:
         post_args_wrapper.set_params_with_prompts(proc_wrapper)
     params.apid = EXAMPLE_PUS_APID
-    if params.app_params.print_tree:
-        perform_tree_printout(params.app_params, hook_obj.get_command_definitions())
+    if params.tc_params.print_tree:
+        perform_tree_printout(params.tc_params, hook_obj.get_command_definitions())
         sys.exit(0)
     setup_args = SetupWrapper(
         hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper
@@ -327,6 +328,7 @@ def main():  # noqa: C901
             elif state.request == BackendRequest.CALL_NEXT:
                 pass
     except KeyboardInterrupt:
+        tmtc_backend.close_com_if()
         sys.exit(0)
 
 

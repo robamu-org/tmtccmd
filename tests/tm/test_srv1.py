@@ -1,7 +1,7 @@
 import struct
 from unittest import TestCase
 
-from spacepackets.ecss import RequestId, PusTelecommand, PacketFieldU8
+from spacepackets.ecss import RequestId, PusTc, PacketFieldU8
 from spacepackets.ecss.pus_1_verification import (
     Service1Tm,
     Subservice,
@@ -13,7 +13,8 @@ from tmtccmd.pus.tm.s1_verification import Service1FsfwWrapper
 
 class TestVerif1TmWrapper(TestCase):
     def setUp(self) -> None:
-        self.ping_tc = PusTelecommand(service=17, subservice=1)
+        self.apid = 0x01
+        self.ping_tc = PusTc(apid=self.apid, service=17, subservice=1)
         pass
 
     def test_basic(self):
@@ -25,8 +26,9 @@ class TestVerif1TmWrapper(TestCase):
             code=PacketFieldU8(1), data=context_param_1 + context_param_2
         )
         service_1_tm = Service1Tm(
+            apid=self.apid,
             subservice=Subservice.TM_START_FAILURE,
-            time_provider=None,
+            timestamp=bytes(),
             verif_params=VerificationParams(
                 step_id=None,
                 req_id=RequestId.from_pus_tc(self.ping_tc),

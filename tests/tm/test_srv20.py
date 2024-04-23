@@ -17,12 +17,12 @@ class TestSrv20Tm(TestCase):
         )
         self.tm = Service20FsfwTm(
             subservice=CustomSubservice.TM_DUMP_REPLY,
-            time_provider=None,
+            timestamp=bytes(),
             source_data=self.boolean_param.pack(),
         )
 
     def test_state(self):
-        self.assertEqual(self.tm.time_provider, None)
+        self.assertEqual(self.tm.timestamp, bytes())
         self.assertEqual(self.tm.service, PusService.S20_PARAMETER)
         self.assertEqual(self.tm.subservice, CustomSubservice.TM_DUMP_REPLY)
         self.assertEqual(self.tm.source_data, self.boolean_param.pack())
@@ -30,7 +30,7 @@ class TestSrv20Tm(TestCase):
 
     def test_unpack(self):
         tm_raw = self.tm.pack()
-        tm_unpacked = Service20FsfwTm.unpack(raw_telemetry=tm_raw, time_reader=None)
+        tm_unpacked = Service20FsfwTm.unpack(raw_telemetry=tm_raw, timestamp_len=0)
         self.assertEqual(self.tm, tm_unpacked)
         param_unpacked = Parameter.unpack(tm_unpacked.source_data)
         self.assertEqual(param_unpacked, self.boolean_param)

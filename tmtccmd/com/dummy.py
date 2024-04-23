@@ -46,7 +46,7 @@ class DummyHandler:
         assert self.last_tc is not None
         if self.last_tc.service == 17:
             if self.last_tc.subservice == 1:
-                current_time_stamp = CdsShortTimestamp.from_now()
+                current_time_stamp = CdsShortTimestamp.now()
                 tm_packer = Service1Tm(
                     subservice=Pus1Subservice.TM_ACCEPTANCE_SUCCESS,
                     apid=self.last_tc.apid,
@@ -56,7 +56,7 @@ class DummyHandler:
                             self.last_tc.packet_id, self.last_tc.packet_seq_control
                         )
                     ),
-                    time_provider=current_time_stamp,
+                    timestamp=current_time_stamp.pack(),
                 )
 
                 self.current_ssc += 1
@@ -71,7 +71,7 @@ class DummyHandler:
                             self.last_tc.packet_id, self.last_tc.packet_seq_control
                         )
                     ),
-                    time_provider=current_time_stamp,
+                    timestamp=current_time_stamp.pack(),
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
@@ -80,7 +80,7 @@ class DummyHandler:
                 tm_packer = Service17Tm(
                     subservice=Pus17Subservice.TM_REPLY,
                     apid=self.last_tc.apid,
-                    time_provider=current_time_stamp,
+                    timestamp=current_time_stamp.pack(),
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
@@ -95,7 +95,7 @@ class DummyHandler:
                             self.last_tc.packet_id, self.last_tc.packet_seq_control
                         )
                     ),
-                    time_provider=current_time_stamp,
+                    timestamp=current_time_stamp.pack(),
                 )
                 tm_packet_raw = tm_packer.pack()
                 self.next_telemetry_package.append(tm_packet_raw)
