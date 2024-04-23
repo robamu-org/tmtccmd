@@ -14,7 +14,7 @@ class TestDummy(TestCase):
         dummy_com_if.initialize()
         self.assertTrue(dummy_com_if.initialized)
         self.assertFalse(dummy_com_if.data_available())
-        dummy_com_if.send(PusTelecommand(service=17, subservice=1).pack())
+        dummy_com_if.send(PusTelecommand(apid=0x02, service=17, subservice=1).pack())
         self.assertTrue(dummy_com_if.data_available())
         replies = dummy_com_if.receive()
         # Full verification set (acceptance, start and completion) and ping reply

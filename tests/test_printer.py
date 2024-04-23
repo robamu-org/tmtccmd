@@ -21,6 +21,7 @@ from tmtccmd.logging.pus import (
 # TODO: Use temp files to test loggers?
 class TestPrintersLoggers(TestCase):
     def setUp(self):
+        self.apid = 0x07
         self.log_path = Path(LOG_DIR)
         if not self.log_path.exists():
             self.log_path.mkdir()
@@ -34,8 +35,9 @@ class TestPrintersLoggers(TestCase):
         pus_tc = create_service_17_ping_command()
         raw_tmtc_log.log_tc(pus_tc)
         pus_tm = Service1Tm(
+            apid=self.apid,
             subservice=Subservice.TM_START_SUCCESS,
-            time_provider=CdsShortTimestamp.from_now(),
+            timestamp=CdsShortTimestamp.now().pack(),
             verif_params=VerificationParams(
                 req_id=RequestId(pus_tc.packet_id, pus_tc.packet_seq_control)
             ),

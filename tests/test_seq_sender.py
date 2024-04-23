@@ -14,6 +14,7 @@ from tmtccmd.tmtc.queue import QueueWrapper, DefaultPusQueueHelper
 
 class TestSendReceive(TestCase):
     def setUp(self) -> None:
+        self.apid = 0x22
         self.queue_wrapper = QueueWrapper.empty()
         self.queue_helper = DefaultPusQueueHelper(
             self.queue_wrapper,
@@ -110,7 +111,7 @@ class TestSendReceive(TestCase):
     def test_interpacket_delay(self):
         delay_ms = 20
         inter_packet_delay = timedelta(milliseconds=delay_ms)
-        ping_cmd = PusTelecommand(service=17, subservice=1)
+        ping_cmd = PusTelecommand(apid=self.apid, service=17, subservice=1)
         self.queue_helper.add_pus_tc(ping_cmd)
         self.queue_helper.add_packet_delay_ms(delay_ms)
         self.queue_helper.add_ccsds_tc(ping_cmd.to_space_packet())

@@ -22,6 +22,7 @@ from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 
 class TestTcQueue(TestCase):
     def setUp(self) -> None:
+        self.apid = 0x11
         self.queue_wrapper = QueueWrapper(
             info=TreeCommandingProcedure.empty(), queue=deque()
         )
@@ -33,7 +34,7 @@ class TestTcQueue(TestCase):
             default_pus_apid=None,
             pus_verificator=None,
         )
-        self.pus_cmd = PusTelecommand(service=17, subservice=1)
+        self.pus_cmd = PusTelecommand(apid=self.apid, service=17, subservice=1)
 
     def test_wait_entry(self):
         self.queue_helper.add_wait(timedelta(seconds=2))
@@ -71,7 +72,7 @@ class TestTcQueue(TestCase):
             cast_wrapper.to_wait_entry()
 
     def test_multi_entry(self):
-        pus_cmd = PusTelecommand(service=17, subservice=1)
+        pus_cmd = PusTelecommand(apid=self.apid, service=17, subservice=1)
         self.queue_helper.add_pus_tc(pus_cmd)
         self.assertEqual(len(self.queue_wrapper.queue), 1)
         self.queue_helper.add_log_cmd("Test String")

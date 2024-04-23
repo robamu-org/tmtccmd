@@ -19,8 +19,9 @@ from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 
 
 class TcHandlerMock(TcHandlerBase):
-    def __init__(self):
+    def __init__(self, apid: int):
         super().__init__()
+        self.apid = apid
         self.is_feed_cb_valid = False
         self.feed_cb_call_count = 0
         self.feed_cb_def_proc_count = 0
@@ -56,14 +57,14 @@ class TcHandlerMock(TcHandlerBase):
                 self.send_cb_cmd_path_arg = def_info.cmd_path
                 if def_info.cmd_path == "/ping":
                     self.queue_helper.add_pus_tc(
-                        PusTelecommand(service=17, subservice=1)
+                        PusTelecommand(apid=self.apid, service=17, subservice=1)
                     )
                 elif def_info.cmd_path == "/event":
                     self.queue_helper.add_pus_tc(
-                        PusTelecommand(service=17, subservice=1)
+                        PusTelecommand(apid=self.apid, service=17, subservice=1)
                     )
                     self.queue_helper.add_pus_tc(
-                        PusTelecommand(service=5, subservice=1)
+                        PusTelecommand(apid=self.apid, service=5, subservice=1)
                     )
 
 
@@ -71,7 +72,8 @@ class TestBackend(TestCase):
     def setUp(self) -> None:
         self.com_if = DummyComIF()
         self.tm_listener = MagicMock(specs=CcsdsTmListener)
-        self.tc_handler = TcHandlerMock()
+        self.apid = 0x06
+        self.tc_handler = TcHandlerMock(self.apid)
         self.backend = CcsdsTmtcBackend(
             tc_mode=TcMode.IDLE,
             tm_mode=TmMode.IDLE,
@@ -130,7 +132,9 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
         cast_wrapper = self.tc_handler.send_cb_call_args.entry
         pus_entry = cast_wrapper.to_pus_tc_entry()
-        self.assertEqual(pus_entry.pus_tc, PusTelecommand(service=17, subservice=1))
+        self.assertEqual(
+            pus_entry.pus_tc, PusTelecommand(apid=self.apid, service=17, subservice=1)
+        )
         self.backend.close_com_if()
         self.assertFalse(self.com_if.is_open())
 
@@ -190,5 +194,6 @@ class TestBackend(TestCase):
         cast_wrapper = self.tc_handler.send_cb_call_args.entry
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(
-            pus_entry.pus_tc, PusTelecommand(service=service, subservice=subservice)
+            pus_entry.pus_tc,
+            PusTelecommand(apid=self.apid, service=service, subservice=subservice),
         )

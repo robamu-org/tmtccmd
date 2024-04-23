@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from spacepackets import SpacePacketHeader
 from spacepackets.ccsds.spacepacket import PacketId, PacketSeqCtrl
-from spacepackets.ccsds.time import CdsShortTimestamp, CcsdsTimeProvider
 from spacepackets.ecss import (
     Ptc,
     PusTelemetry,
@@ -62,14 +59,14 @@ class Service20FsfwTm(AbstractPusTm):
         self,
         subservice: int,
         source_data: bytes,
-        time_provider: Optional[CcsdsTimeProvider],
+        timestamp: bytes,
         apid: int = 0,
     ):
         self.pus_tm = PusTelemetry(
             service=PusService.S20_PARAMETER,
             subservice=subservice,
             source_data=source_data,
-            time_provider=time_provider,
+            timestamp=timestamp,
             apid=apid,
         )
 
@@ -83,12 +80,10 @@ class Service20FsfwTm(AbstractPusTm):
             )
 
     @classmethod
-    def unpack(
-        cls, raw_telemetry: bytes, time_reader: Optional[CcsdsTimeProvider]
-    ) -> Service20FsfwTm:
+    def unpack(cls, raw_telemetry: bytes, timestamp_len: int) -> Service20FsfwTm:
         instance = cls.empty()
         instance.pus_tm = PusTelemetry.unpack(
-            data=raw_telemetry, time_reader=time_reader
+            data=raw_telemetry, timestamp_len=timestamp_len
         )
         Service20FsfwTm.__common_checks(instance.pus_tm)
         return instance
@@ -104,8 +99,8 @@ class Service20FsfwTm(AbstractPusTm):
         return self.pus_tm.pack()
 
     @property
-    def time_provider(self) -> Optional[CcsdsTimeProvider]:
-        return self.pus_tm.time_provider
+    def timestamp(self) -> bytes:
+        return self.pus_tm.timestamp
 
     @property
     def object_id(self) -> bytes:
@@ -127,9 +122,9 @@ class Service20FsfwTm(AbstractPusTm):
     def empty(cls) -> Service20FsfwTm:
         return cls(
             subservice=0,
-            time_provider=CdsShortTimestamp.empty(),
             apid=0,
             source_data=bytes([0, 0, 0, 0]),
+            timestamp=bytes(),
         )
 
     @property

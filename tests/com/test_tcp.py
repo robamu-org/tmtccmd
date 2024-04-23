@@ -31,7 +31,7 @@ class TestTcpIf(TestCase):
         self.base_data = bytes([0, 1, 2, 3])
         self.ping_cmd = PusTelecommand(service=17, subservice=1, apid=0x22)
         self.ping_reply = PusTelemetry(
-            service=17, subservice=2, apid=0x22, time_provider=None
+            service=17, subservice=2, apid=0x22, timestamp=bytes()
         )
         self.tcp_client = TcpSpacePacketsClient(
             "tcp",

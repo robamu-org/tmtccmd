@@ -24,6 +24,7 @@ from tmtccmd.pus import VerificationWrapper
 
 class TestPusVerifLog(TestCase):
     def setUp(self) -> None:
+        self.apid = 0x02
         self.log_file_name = RegularTmtcLogWrapper.get_current_tmtc_file_name()
         self.logger = logging.getLogger(__name__)
         add_colorlog_console_logger(self.logger)
@@ -39,11 +40,12 @@ class TestPusVerifLog(TestCase):
 
     def _test_success(self, wrapper: VerificationWrapper):
         verificator = wrapper.verificator
-        tc = PusTelecommand(service=17, subservice=1, seq_count=0)
+        tc = PusTelecommand(apid=self.apid, service=17, subservice=1, seq_count=0)
         verificator.add_tc(tc)
         srv_1_tm = create_acceptance_success_tm(
-            tc, time_provider=CdsShortTimestamp.empty()
+            apid=self.apid, pus_tc=tc, timestamp=CdsShortTimestamp.empty().pack()
         )
+        empty_stamp = CdsShortTimestamp.empty().pack()
 
         def generic_checks():
             self.assertTrue("acc" in cm.output[0])
@@ -59,7 +61,9 @@ class TestPusVerifLog(TestCase):
                 f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
-        srv_1_tm = create_start_success_tm(tc, time_provider=CdsShortTimestamp.empty())
+        srv_1_tm = create_start_success_tm(
+            apid=self.apid, pus_tc=tc, timestamp=empty_stamp
+        )
         res = verificator.add_tm(srv_1_tm)
         with self.assertLogs(self.logger) as cm:
             wrapper.log_to_console(srv_1_tm, res)
@@ -69,7 +73,10 @@ class TestPusVerifLog(TestCase):
             )
             generic_checks()
         srv_1_tm = create_step_success_tm(
-            tc, StepId.with_byte_size(1, 1), time_provider=CdsShortTimestamp.empty()
+            apid=self.apid,
+            pus_tc=tc,
+            step_id=StepId.with_byte_size(1, 1),
+            timestamp=empty_stamp,
         )
         res = verificator.add_tm(srv_1_tm)
         with self.assertLogs(self.logger) as cm:
@@ -80,7 +87,7 @@ class TestPusVerifLog(TestCase):
             )
             generic_checks()
         srv_1_tm = create_completion_success_tm(
-            tc, time_provider=CdsShortTimestamp.empty()
+            apid=self.apid, pus_tc=tc, timestamp=empty_stamp
         )
         res = verificator.add_tm(srv_1_tm)
         with self.assertLogs(self.logger) as cm:
@@ -102,12 +109,13 @@ class TestPusVerifLog(TestCase):
 
     def _test_acc_failure(self, wrapper: VerificationWrapper):
         verificator = wrapper.verificator
-        tc = PusTelecommand(service=17, subservice=1, seq_count=1)
+        tc = PusTelecommand(apid=self.apid, service=17, subservice=1, seq_count=1)
         verificator.add_tc(tc)
         srv_1_tm = create_acceptance_failure_tm(
-            tc,
+            apid=self.apid,
+            pus_tc=tc,
             failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
-            time_provider=CdsShortTimestamp.empty(),
+            timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)
         # TODO: Use self.assertLogs here instead
@@ -116,20 +124,22 @@ class TestPusVerifLog(TestCase):
     def test_console_log_start_failure(self):
         wrapper = VerificationWrapper(PusVerificator(), self.logger, None)
         verificator = wrapper.verificator
-        tc = PusTelecommand(service=17, subservice=1, seq_count=2)
+        tc = PusTelecommand(apid=self.apid, service=17, subservice=1, seq_count=2)
         verificator.add_tc(tc)
         srv_1_tm = create_acceptance_failure_tm(
-            tc,
+            apid=self.apid,
+            pus_tc=tc,
             failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
-            time_provider=CdsShortTimestamp.empty(),
+            timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)
         # TODO: Use self.assertLogs here instead
         wrapper.log_to_console(srv_1_tm, res)
         srv_1_tm = create_start_failure_tm(
-            tc,
+            apid=self.apid,
+            pus_tc=tc,
             failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
-            time_provider=CdsShortTimestamp.empty(),
+            timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)
         # TODO: Use self.assertLogs here instead
@@ -139,23 +149,28 @@ class TestPusVerifLog(TestCase):
         tmtc_logger = RegularTmtcLogWrapper(file_name=self.log_file_name)
         wrapper = VerificationWrapper(PusVerificator(), None, tmtc_logger.logger)
         verificator = wrapper.verificator
-        tc = PusTelecommand(service=17, subservice=1, seq_count=0)
+        tc = PusTelecommand(apid=self.apid, service=17, subservice=1, seq_count=0)
         verificator.add_tc(tc)
         srv_1_tm = create_acceptance_success_tm(
-            tc, time_provider=CdsShortTimestamp.empty()
+            apid=self.apid, pus_tc=tc, timestamp=CdsShortTimestamp.empty().pack()
         )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
-        srv_1_tm = create_start_success_tm(tc, time_provider=CdsShortTimestamp.empty())
+        srv_1_tm = create_start_success_tm(
+            apid=self.apid, pus_tc=tc, timestamp=CdsShortTimestamp.empty().pack()
+        )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
         srv_1_tm = create_step_success_tm(
-            tc, StepId.with_byte_size(1, 1), time_provider=CdsShortTimestamp.empty()
+            apid=self.apid,
+            pus_tc=tc,
+            step_id=StepId.with_byte_size(1, 1),
+            timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)
         srv_1_tm = create_completion_success_tm(
-            tc, time_provider=CdsShortTimestamp.empty()
+            apid=self.apid, pus_tc=tc, timestamp=CdsShortTimestamp.empty().pack()
         )
         res = verificator.add_tm(srv_1_tm)
         wrapper.log_to_file(srv_1_tm, res)

@@ -12,6 +12,6 @@ class TestSrv200Tm(TestCase):
         self.srv_200_tm = PusTelemetry(
             service=200,
             subservice=Subservice.TM_MODE_REPLY,
-            time_provider=CdsShortTimestamp.empty(),
+            timestamp=CdsShortTimestamp.empty().pack(),
             apid=0x02,
         )

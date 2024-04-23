@@ -5,14 +5,16 @@ from tmtccmd.pus.s5_fsfw_event import Service5Tm, Subservice, EventDefinition
 
 class TestSrv5Tm(TestCase):
     def setUp(self):
+        self.apid = 0x08
         self.obj_id = bytes([0x00, 0x01, 0x02, 0x03])
         self.event_def = EventDefinition(
             event_id=5, reporter_id=self.obj_id, param1=22, param2=942
         )
         self.srv5_tm = Service5Tm(
+            apid=self.apid,
             subservice=Subservice.TM_INFO_EVENT,
             event=self.event_def,
-            time_provider=None,
+            timestamp=bytes(),
         )
 
     def test_basic(self):
@@ -34,6 +36,6 @@ class TestSrv5Tm(TestCase):
 
     def test_unpack(self):
         raw_tm = self.srv5_tm.pack()
-        unpacked = Service5Tm.unpack(raw_tm, None)
+        unpacked = Service5Tm.unpack(raw_tm, 0)
         self.assertEqual(self.srv5_tm, unpacked)
         self.assertEqual(unpacked.event_definition, self.event_def)

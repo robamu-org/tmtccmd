@@ -28,6 +28,9 @@ class ApidHandler(SpecificApidHandlerBase):
 
 
 class TestTmHandler(TestCase):
+    def setUp(self) -> None:
+        self.apid = 0x33
+
     def test_basic(self):
         tm_handler = ApidHandler(0x01)
         com_if = MagicMock(specs=ComInterface)
@@ -39,10 +42,16 @@ class TestTmHandler(TestCase):
         self.assertEqual(handled_packets, 0)
         self.assertTrue(ccsds_handler.has_apid(0x01))
         tm0_raw = PusTelemetry(
-            service=1, subservice=12, apid=0x01, time_provider=CdsShortTimestamp.empty()
+            service=1,
+            subservice=12,
+            apid=0x01,
+            timestamp=CdsShortTimestamp.empty().pack(),
         ).pack()
         tm1_raw = PusTelemetry(
-            service=5, subservice=1, apid=0x01, time_provider=CdsShortTimestamp.empty()
+            service=5,
+            subservice=1,
+            apid=0x01,
+            timestamp=CdsShortTimestamp.empty().pack(),
         ).pack()
         com_if.receive.return_value = [tm0_raw]
         handled_packets = tm_listener.operation(com_if)
@@ -58,7 +67,10 @@ class TestTmHandler(TestCase):
         self.assertEqual(tm_handler.packet_queue.pop(), tm0_raw)
         self.assertEqual(tm_handler.packet_queue.pop(), tm1_raw)
         unknown_apid = PusTelemetry(
-            service=1, subservice=12, apid=0x02, time_provider=CdsShortTimestamp.empty()
+            service=1,
+            subservice=12,
+            apid=0x02,
+            timestamp=CdsShortTimestamp.empty().pack(),
         ).pack()
         com_if.receive.return_value = [unknown_apid]
         handled_packets = tm_listener.operation(com_if)
