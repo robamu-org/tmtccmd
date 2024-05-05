@@ -229,7 +229,7 @@ def create_default_tmtc_backend(
     if setup_wrapper.params.backend_params.listener:
         tmtc_backend.keep_listener_mode = True
     tmtc_backend.inter_cmd_delay = timedelta(
-        seconds=setup_wrapper.params.tc_params.delay
+        seconds=setup_wrapper.params.cmd_params.delay
     )
     if init_procedure is not None:
         tmtc_backend.current_procedure = init_procedure.procedure

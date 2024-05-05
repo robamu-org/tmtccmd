@@ -3,6 +3,7 @@
 """
 
 import os
+from collections import deque
 import sys
 import webbrowser
 from multiprocessing import Process
@@ -26,6 +27,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QIcon, QFont, QAction
 from PyQt6.QtCore import (
+    QTimer,
     Qt,
     QThreadPool,
 )
@@ -59,6 +61,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         tmtc_backend.exit_on_com_if_init_failure = False
         self._hook_obj = hook_obj
         self._com_if_list = []
+        self._last_selected_items = deque()
         self._state = FrontendState()
         self._thread_pool = QThreadPool()
         self.logo_path = Path(
@@ -70,7 +73,15 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def start(self, qt_app: Any):
         self._start_ui()
+        self._enable_periodic_interpreter_run()
         sys.exit(qt_app.exec())
+
+    def _enable_periodic_interpreter_run(self):
+        self._interpreter_run_timer = QTimer()
+        self._interpreter_run_timer.start(500)  # You may change this if you wish.
+        self._interpreter_run_timer.timeout.connect(
+            lambda: None
+        )  # Let the interpreter run each 500 ms.
 
     def _start_ui(self):
         self._create_menu_bar()
@@ -290,7 +301,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def _open_command_select_widget(self):
         self.cmd_select_window = CommandPathSelectWidget(
-            self._hook_obj.get_command_definitions()
+            self._hook_obj.get_command_definitions(), self._last_selected_items
         )
         self.cmd_select_window.path_selected_sig.connect(self._receive_selected_path)
         self.cmd_select_window.closed.connect(self._on_treeview_closed)
@@ -305,8 +316,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._state.current_cmd_path = self._cmd_path_text_input.text()
 
     def _on_treeview_closed(self):
-        if self.cmd_select_window is not None:
-            self._open_command_path_select_button.setEnabled(True)
+        self._open_command_path_select_button.setEnabled(True)
 
     def _receive_selected_path(self, path: str):
         self._cmd_path_text_input.setText(path)

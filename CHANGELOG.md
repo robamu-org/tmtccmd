@@ -9,6 +9,21 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.0] 2024-05-05
+
+## Changed
+
+- Renamed `FsfwTmTcPrinter.get_validity_buffer` to `FsfwTmTcPrinter.get_validity_buffer_str`
+- Renamed `ObjectId<$TY>.from_bytes` to `ObjectId<$TY>.from_bytes_typed` to avoid invalid override.
+
+## Added
+
+- Added `fsfw.tmtc_printer.get_validity_buffer_str` function.
+
+## Removed
+
+- Broken FSFW PUS 3, PUS 20, PUS 8 TM unpackers.
+
 # [v8.0.0rc2] 2024-04-23
 
 - Bumped `spacepackets` to release range >=0.24, <0.25.
@@ -22,7 +37,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Renamed `add_default_procedure_arguments` to `add_tree_commanding_arguments`.
 - Renamed `TcProcedureType.DEFAULT` to `TcProcedureType.TREE_COMMANDING`.
 - Replaced `TelemetryListT` by `List[bytes]`.
-- Renamed `TcpSpacePacketsComIF` to `TcpSpacePacketsClient`.
+- Renamed `TcpSpacePacketsComIF` to `TcpSpacepacketsClient`.
 - Renamed `UdpComIF` to `UdpClient`.
 
 ## Removed

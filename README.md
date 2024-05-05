@@ -25,22 +25,20 @@ used either as a command line tool or as a GUI tool which requires a PyQt6 insta
   packets and [CCSDS Space Packets](https://public.ccsds.org/Pubs/133x0b2e1.pdf).
   This library uses the [spacepackets](https://github.com/us-irs/py-spacepackets) library for most
   packet implementations.
-- Support for both CLI and GUI usage
+- Support for both CLI and GUI usage.
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
-- One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences
-- Listener mode to only listen to incoming telemetry
+- One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences.
+- Listener mode to only listen to incoming telemetry.
 - Some components are tailored towards usage with the
   [Flight Software Framework (FSFW)](https://absatsw.irs.uni-stuttgart.de/index.html) and the
   [sat-rs framework](https://absatsw.irs.uni-stuttgart.de/sat-rs.html)
 
-The framework currently supports the following communication interfaces:
+The framework currently supports the following communication interfaces (among others):
 
 1. TCP/IP with UDP and TCP. The TCP interface currently only supports sending CCSDS space packets
    and is able to parse those packets from the received data stream.
-2. Serial Communication with a transport layer using either [COBS](https://pypi.org/project/cobs/)
-   encoded packets or DLE as a simple [ASCII based transport layer](https://pypi.org/project/dle-encoder/).
-3. QEMU, using a virtual serial interface
+2. Serial Communication with a transport layer using [COBS](https://pypi.org/project/cobs/).
 
 It is also possible to supply custom interfaces.
 

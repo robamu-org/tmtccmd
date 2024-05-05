@@ -3,13 +3,13 @@
 
 import logging
 import enum
+from collections.abc import Generator
 from typing import List, Optional
 
 from spacepackets.util import get_printable_data_string, PrintFormats
 
-from tmtccmd.pus.s8_fsfw_action import Service8FsfwTm
 from tmtccmd.tmtc.tm_base import PusTmInfoInterface, PusTmInterface
-from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdBase
+from tmtccmd.util.obj_id import ObjectIdU32
 from tmtccmd.pus.tm.s3_hk_base import HkContentType
 from tmtccmd.logging import get_current_time_string
 
@@ -21,6 +21,39 @@ class DisplayMode(enum.Enum):
 
     SHORT = enum.auto
     LONG = enum.auto
+
+
+def get_validity_buffer_str(validity_buffer: bytes, num_vars: int) -> str:
+    """
+    :param validity_buffer: Validity buffer in bytes format
+    :param num_vars: Number of variables
+    :return:
+    """
+    valid_list = []
+    counter = 0
+    for _index, byte in enumerate(validity_buffer):
+        for bit in range(1, 9):
+            if FsfwTmTcPrinter.bit_extractor(byte, bit) == 1:
+                valid_list.append(True)
+            else:
+                valid_list.append(False)
+            counter += 1
+            if counter == num_vars:
+                break
+    validity_lists = list(FsfwTmTcPrinter.chunks(n=16, lst=valid_list))
+    for valid_list in validity_lists:
+        printout = "Valid: ["
+        for idx, valid in enumerate(valid_list):
+            if valid:
+                printout += "Y"
+            else:
+                printout += "N"
+            if idx < len(valid_list) - 1:
+                printout += ","
+            else:
+                printout += "]"
+        return printout
+    return ""
 
 
 class FsfwTmTcPrinter:
@@ -120,69 +153,19 @@ class FsfwTmTcPrinter:
             self.file_logger.info(f"{get_current_time_string(True)}: {generic_info}")
 
     def print_validity_buffer(self, validity_buffer: bytes, num_vars: int):
-        printout = FsfwTmTcPrinter.get_validity_buffer(validity_buffer, num_vars)
+        printout = FsfwTmTcPrinter.get_validity_buffer_str(validity_buffer, num_vars)
         print(printout)
         if self.file_logger:
             self.file_logger.info(printout)
 
     @staticmethod
-    def get_validity_buffer(validity_buffer: bytes, num_vars: int) -> str:
+    def get_validity_buffer_str(validity_buffer: bytes, num_vars: int) -> str:
         """
         :param validity_buffer: Validity buffer in bytes format
         :param num_vars: Number of variables
         :return:
         """
-        valid_list = []
-        counter = 0
-        for index, byte in enumerate(validity_buffer):
-            for bit in range(1, 9):
-                if FsfwTmTcPrinter.bit_extractor(byte, bit) == 1:
-                    valid_list.append(True)
-                else:
-                    valid_list.append(False)
-                counter += 1
-                if counter == num_vars:
-                    break
-        validity_lists = list(FsfwTmTcPrinter.chunks(n=16, lst=valid_list))
-        for valid_list in validity_lists:
-            printout = "Valid: ["
-            for idx, valid in enumerate(valid_list):
-                if valid:
-                    printout += "Y"
-                else:
-                    printout += "N"
-                if idx < len(valid_list) - 1:
-                    printout += ","
-                else:
-                    printout += "]"
-            return printout
-        return ""
-
-    @staticmethod
-    def generic_action_packet_tm_print(
-        packet: Service8FsfwTm, obj_id: ObjectIdBase
-    ) -> str:
-        print_string = (
-            f"Service 8 data reply from {obj_id} with action ID {packet.action_id} "
-            f"and data size {len(packet.tm_data)}"
-        )
-        return print_string
-
-    def __handle_wiretapping_packet(
-        self, packet_if: PusTmInterface, info_if: PusTmInfoInterface
-    ):
-        """
-        :param packet_if: Core packet interface
-        :param info_if: Information interface
-        :return:
-        """
-        if packet_if.service == 2 and (
-            packet_if.subservice == 131 or packet_if.subservice == 130
-        ):
-            self.__print_buffer = (
-                f"Wiretapping Packet or Raw Reply from TM [{packet_if.service},"
-                f"{packet_if.subservice}]: "
-            )
+        return get_validity_buffer_str(validity_buffer, num_vars)
 
     @staticmethod
     def bit_extractor(byte: int, position: int):
@@ -205,7 +188,7 @@ class FsfwTmTcPrinter:
         _LOGGER.info(string)
 
     @staticmethod
-    def chunks(lst: List, n) -> List[List]:
+    def chunks(lst: List, n) -> Generator[List[List], None, None]:
         """Yield successive n-sized chunks from lst."""
         for i in range(0, len(lst), n):
             yield lst[i : i + n]

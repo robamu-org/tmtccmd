@@ -64,13 +64,3 @@ Objects Submodule
    :members:
    :undoc-members:
    :show-inheritance:
-
-Global Module [deprecated]
------------------------------
-
-This module is deprecated, and usage is discouraged.
-
-.. automodule:: tmtccmd.config.globals
-   :members:
-   :undoc-members:
-   :show-inheritance:

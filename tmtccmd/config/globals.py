@@ -1,21 +1,11 @@
-import collections.abc
 import enum
-import logging
 import pprint
 
 from deprecated.sphinx import deprecated
-from spacepackets.ecss.conf import (
-    set_default_tc_apid,
-    set_default_tm_apid,
-)
-
-from tmtccmd.core.globals_manager import update_global, get_global
+from tmtccmd.core.globals_manager import update_global
 from tmtccmd.config.defs import (
     CoreModeList,
-    CoreServiceList,
-    CORE_COM_IF_DICT,
     CoreComInterfaces,
-    ComIfDictT,
 )
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
 
@@ -64,27 +54,6 @@ class CoreGlobalIds(enum.IntEnum):
 
 
 @deprecated(version="6.0.0rc0", reason="globals module deprecated")
-def set_json_cfg_path(json_cfg_path: str):
-    update_global(CoreGlobalIds.JSON_CFG_PATH, json_cfg_path)
-
-
-@deprecated(version="6.0.0rc0", reason="globals module deprecated")
-def get_json_cfg_path() -> str:
-    return get_global(CoreGlobalIds.JSON_CFG_PATH)
-
-
-@deprecated(version="6.0.0rc0", reason="globals module deprecated")
-def set_glob_com_if_dict(custom_com_if_dict: ComIfDictT):
-    CORE_COM_IF_DICT.update(custom_com_if_dict)
-    update_global(CoreGlobalIds.COM_IF_DICT, CORE_COM_IF_DICT)
-
-
-@deprecated(version="6.0.0rc0", reason="globals module deprecated")
-def get_glob_com_if_dict() -> ComIfDictT:
-    return get_global(CoreGlobalIds.COM_IF_DICT)
-
-
-@deprecated(version="6.0.0rc0", reason="globals module deprecated")
 def set_default_globals_pre_args_parsing(
     apid: int,
     com_if_id: str = CoreComInterfaces.DUMMY.value,
@@ -96,17 +65,14 @@ def set_default_globals_pre_args_parsing(
 ):
     if custom_com_if_dict is None:
         custom_com_if_dict = dict()
-    set_default_tc_apid(tc_apid=apid)
-    set_default_tm_apid(tm_apid=apid)
     update_global(CoreGlobalIds.COM_IF, com_if_id)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, tc_send_timeout_factor)
     update_global(CoreGlobalIds.TM_TIMEOUT, tm_timeout)
     update_global(CoreGlobalIds.DISPLAY_MODE, display_mode)
     update_global(CoreGlobalIds.PRINT_TO_FILE, print_to_file)
-    update_global(CoreGlobalIds.CURRENT_SERVICE, CoreServiceList.SERVICE_17.value)
+    update_global(CoreGlobalIds.CURRENT_SERVICE, 17)
     update_global(CoreGlobalIds.SERIAL_CONFIG, dict())
     update_global(CoreGlobalIds.ETHERNET_CONFIG, dict())
-    set_glob_com_if_dict(custom_com_if_dict=custom_com_if_dict)
     pp = pprint.PrettyPrinter()
     update_global(CoreGlobalIds.PRETTY_PRINTER, pp)
     update_global(CoreGlobalIds.TM_LISTENER_HANDLE, None)
@@ -136,43 +102,6 @@ def check_and_set_other_args(args):
     if args.resend_tc is not None:
         update_global(CoreGlobalIds.RESEND_TC, args.resend_tc)
     update_global(CoreGlobalIds.TC_SEND_TIMEOUT_FACTOR, 3)
-
-
-@deprecated(version="8.0.0", reason="globals module deprecated")
-def check_and_set_core_service_arg(
-    service_arg: any, custom_service_list: collections.abc.Iterable = None
-):
-    from tmtccmd.util.conf_util import check_args_in_dict
-
-    in_enum, service_value = check_args_in_dict(
-        param=service_arg, iterable=CoreServiceList, warning_hint="service"
-    )
-    if in_enum:
-        update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
-        return
-
-    service_arg_invalid = False
-    if custom_service_list is not None:
-        for custom_services_entry in custom_service_list:
-            in_enum, service_value = check_args_in_dict(
-                param=service_arg,
-                iterable=custom_services_entry,
-                warning_hint="custom mode",
-            )
-            if in_enum:
-                break
-        if not in_enum:
-            service_arg_invalid = True
-    else:
-        service_arg_invalid = True
-
-    if service_arg_invalid:
-        logging.getLogger(__name__).warning(
-            "Passed service argument might be invalid, "
-            f"setting to {CoreServiceList.SERVICE_17}"
-        )
-        service_value = CoreServiceList.SERVICE_17
-    update_global(CoreGlobalIds.CURRENT_SERVICE, service_value)
 
 
 @deprecated(version="8.0.0", reason="use command tree API instead")
