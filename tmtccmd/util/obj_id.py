@@ -68,7 +68,7 @@ class ObjectIdU32(ObjectIdBase):
         )
 
     @classmethod
-    def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectIdU32:
+    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ObjectIdU32:
         obj_id = ObjectIdU32(obj_id=0)
         obj_id.obj_id = obj_id_as_bytes
         return obj_id
@@ -88,7 +88,7 @@ class ObjectIdU16(ObjectIdBase):
         )
 
     @classmethod
-    def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectIdU16:
+    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ObjectIdU16:
         obj_id = ObjectIdU16(obj_id=0)
         obj_id.obj_id = obj_id_as_bytes
         return obj_id
@@ -108,7 +108,7 @@ class ObjectIdU8(ObjectIdBase):
         )
 
     @classmethod
-    def from_bytes(cls, obj_id_as_bytes: bytes) -> ObjectIdU8:
+    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ObjectIdU8:
         obj_id = ObjectIdU8(obj_id=0)
         obj_id.obj_id = obj_id_as_bytes
         return obj_id

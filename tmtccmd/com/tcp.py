@@ -8,7 +8,7 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import List, Optional, Sequence
+from typing import Any, List, Optional, Sequence
 
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
@@ -27,7 +27,7 @@ class TcpCommunicationType(enum.Enum):
     SPACE_PACKETS = 0
 
 
-class TcpSpacePacketsClient(ComInterface):
+class TcpSpacepacketsClient(ComInterface):
     """Communication interface for TCP communication. This particular interface expects
     raw space packets to be sent via TCP and uses a list of passed packet IDs to parse for them.
     """
@@ -74,10 +74,10 @@ class TcpSpacePacketsClient(ComInterface):
         except IOError:
             _LOGGER.warning("Could not close TCP communication interface!")
 
-    def initialize(self, args: any = None) -> any:
+    def initialize(self, args: Any = None):
         pass
 
-    def open(self, args: any = None):
+    def open(self, args: Any = None):
         if self.is_open():
             return
         self.__thread_kill_signal.clear()

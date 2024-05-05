@@ -110,13 +110,13 @@ class SetupParams:
     def __init__(
         self,
         com_if: Optional[ComInterface] = None,
-        tc_params: Optional[CommandingParams] = None,
+        cmd_params: Optional[CommandingParams] = None,
         backend_params: Optional[BackendParams] = None,
         app_params: Optional[AppParams] = None,
     ):
         self.com_if = com_if
-        if tc_params is None:
-            self.tc_params = CommandingParams()
+        if cmd_params is None:
+            self.cmd_params = CommandingParams()
         if backend_params is None:
             self.backend_params = BackendParams()
         if app_params is None:
@@ -124,11 +124,11 @@ class SetupParams:
 
     @property
     def apid(self):
-        return self.tc_params.apid
+        return self.cmd_params.apid
 
     @apid.setter
     def apid(self, apid):
-        self.tc_params.apid = apid
+        self.cmd_params.apid = apid
 
     @property
     def use_gui(self):
@@ -458,9 +458,9 @@ def args_to_all_params_for_cfdp(
         CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE
     )
     if pargs.delay is None:
-        params.tc_params.delay = 0.4
+        params.cmd_params.delay = 0.4
     else:
-        params.tc_params.delay = float(pargs.delay)
+        params.cmd_params.delay = float(pargs.delay)
 
 
 def args_to_all_params_tmtc(
@@ -496,14 +496,14 @@ def args_to_all_params_tmtc(
         use_prompts=use_prompts,
         assign_com_if=assign_com_if,
     )
-    params.tc_params.print_tree = False
+    params.cmd_params.print_tree = False
     if pargs.print_tree is not None:
-        params.tc_params.print_tree = True
+        params.cmd_params.print_tree = True
         for arg in pargs.print_tree:
             if "b" in arg:
-                params.tc_params.tree_print_with_description = False
+                params.cmd_params.tree_print_with_description = False
             if arg.isdigit():
-                params.tc_params.tree_print_max_depth = int(arg)
+                params.cmd_params.tree_print_max_depth = int(arg)
     mode_set_explicitely = False
     if pargs.mode is None:
         params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
@@ -521,14 +521,14 @@ def args_to_all_params_tmtc(
         if params.backend_params.mode == CoreModeConverter.get_str(
             CoreModeList.ONE_QUEUE_MODE
         ):
-            params.tc_params.delay = 4.0
+            params.cmd_params.delay = 4.0
         else:
-            params.tc_params.delay = 0.0
+            params.cmd_params.delay = 0.0
     else:
-        params.tc_params.delay = float(pargs.delay)
+        params.cmd_params.delay = float(pargs.delay)
     if (
         params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
-        and not params.tc_params.print_tree
+        and not params.cmd_params.print_tree
     ):
         determine_cmd_path(
             params=params,
@@ -539,18 +539,18 @@ def args_to_all_params_tmtc(
         )
 
 
-def perform_tree_printout(tc_params: CommandingParams, cmd_def_tree: CmdTreeNode):
-    if tc_params.tree_print_with_description:
+def perform_tree_printout(cmd_params: CommandingParams, cmd_def_tree: CmdTreeNode):
+    if cmd_params.tree_print_with_description:
         info_str = "with full descriptions"
     else:
         info_str = "without descriptions"
-    if tc_params.tree_print_max_depth is not None:
-        info_str += f" and maximum depth {tc_params.tree_print_max_depth}"
+    if cmd_params.tree_print_max_depth is not None:
+        info_str += f" and maximum depth {cmd_params.tree_print_max_depth}"
     print(f"Printing command tree {info_str}:")
     print(
         cmd_def_tree.str_for_tree(
-            tc_params.tree_print_with_description,
-            tc_params.tree_print_max_depth,
+            cmd_params.tree_print_with_description,
+            cmd_params.tree_print_max_depth,
         )
     )
 

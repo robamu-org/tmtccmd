@@ -16,7 +16,7 @@ the TMTC commander
 The first way assumes that the OBSW can be run on a host computer and starts a TPC/IP
 server internally. The TMTC commander can then be used to send telecommands via the TCP/IP
 interface. The second way assumes that the OBSW is run on an external microcontroller.
-Here, the serial interface is used to send telecommands. Other ways like sending TMTCs 
+Here, the serial interface is used to send telecommands. Other ways like sending TMTCs
 via Ethernet to a microcontroller running a TCP/IP server are possible as well.
 
 .. _`SOURCE`: https://www.ksat-stuttgart.de/en/our-missions/source/
@@ -33,25 +33,22 @@ Features
   more information and examples.
 - Special support for `Packet Utilisation Standard (PUS)`_ packets and `CCSDS Space Packets`_.
   This library uses the `spacepackets`_ library for most packet implementations.
-- Support for both CLI and GUI usage
+- Support for both CLI and GUI usage.
 - Flexibility in the way to specify telecommands to send and how to handle incoming telemetry.
   This is done by requiring the user to specify callbacks for both TC specification and TM handling.
-- One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences
-- Listener mode to only listen to incoming telemetry
-- Basic logger components which can be used to store sent Telecommands and incoming Telemetry
-  in files
+- One-Queue Mode for simple command sequences and Multi-Queue for more complex command sequences.
+- Listener mode to only listen to incoming telemetry.
 - Some components are tailored towards usage with the
-  `Flight Software Framework (FSFW) <https://egit.irs.uni-stuttgart.de/fsfw/fsfw/>`_.
+  `Flight Software Framework (FSFW) <https://absatsw.irs.uni-stuttgart.de/projects/fsfw/>`_ and the
+  `sat-rs library <https://absatsw.irs.uni-stuttgart.de/projects/sat-rs/>`_.
 
 This framework also has a communication interface abstraction which allows to exchange TMTC through
-different channels. The framework currently supports the following communication interfaces:
+different channels. The framework currently supports (among others) the following communication
+interfaces:
 
-1. TCP/IP with the :py:class:`tmtccmd.com.udp.UdpComIF` and :py:class:`tmtccmd.com.tcp.TcpSpacePacketsComIF`.
+1. TCP/IP with the :py:class:`tmtccmd.com.udp.UdpClient` and :py:class:`tmtccmd.com.tcp.TcpSpacepacketsClient`.
 2. Serial Communication with `COBS <https://pypi.org/project/cobs/>`_ encoded packets by using the
    :py:class:`tmtccmd.com.serial_cobs.SerialCobsComIF`.
-3. The `DLE ASCII based transport layer <https://pypi.org/project/dle-encoder/>`_ by using the
-   :py:class:`tmtccmd.com.serial_dle.SerialDleComIF`.
-4. QEMU, using a virtual serial interface.
 
 It is also possible to supply custom interfaces.
 

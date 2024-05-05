@@ -1,9 +1,13 @@
-from PyQt6.QtCore import pyqtSignal
+from typing import List
+from collections import deque
+from PyQt6.QtCore import QModelIndex, pyqtSignal
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
     QPushButton,
     QTreeView,
     QVBoxLayout,
@@ -20,8 +24,10 @@ class CommandPathSelectWidget(QWidget):
     path_selected_sig = pyqtSignal(str)
     closed = pyqtSignal()
 
-    def __init__(self, root_node: CmdTreeNode):
+    def __init__(self, root_node: CmdTreeNode, last_selected_items: deque):
         super().__init__()
+        self.num_of_display_last_sel_items = 10
+        self.last_selected_items = last_selected_items
         self.root_node = root_node
         self.currently_selected_path = None
         self.init_ui()
@@ -39,7 +45,8 @@ class CommandPathSelectWidget(QWidget):
 
         self.tree_view = QTreeView()
         self.tree_view.setModel(self.tree_model)
-        self.tree_view.expanded.connect(self.on_item_expanded)
+        self.tree_view.expanded.connect(self._on_item_expanded)
+        self.tree_view.doubleClicked.connect(self._on_tree_view_double_click)
 
         self.expand_full_button = QPushButton("Expand All")
         self.expand_full_button.clicked.connect(self.expand_all_items)
@@ -51,18 +58,22 @@ class CommandPathSelectWidget(QWidget):
         button_layout.addWidget(self.expand_full_button)
         button_layout.addWidget(self.fold_all_button)
 
+        self.last_sel_items_button = QPushButton("Last Selected Items")
+        self.last_sel_items_button.clicked.connect(self._last_sel_items_clicked)
         self.select_path_button = QPushButton("Select Current Path")
-        self.select_path_button.clicked.connect(self.select_path_clicked)
+        self.select_path_button.clicked.connect(self._select_path_clicked)
         self.copy_path_button = QPushButton("Copy Current Path to Clipboard")
-        self.copy_path_button.clicked.connect(self.copy_path_clicked)
+        self.copy_path_button.clicked.connect(self._copy_path_clicked)
         self.path_confirmed_button = QPushButton("Confirm Selected Path")
-        self.path_confirmed_button.clicked.connect(self.path_confirmed_clicked)
+        self.path_confirmed_button.clicked.connect(self._path_confirmed_clicked)
 
         self.path_label = QLabel()
 
         layout = QVBoxLayout()
         layout.addLayout(button_layout)
         layout.addWidget(self.tree_view)
+
+        layout.addWidget(self.last_sel_items_button)
         layout.addWidget(self.select_path_button)
         layout.addWidget(self.copy_path_button)
         layout.addWidget(self.path_label)
@@ -75,11 +86,22 @@ class CommandPathSelectWidget(QWidget):
     def collapse_all_items(self):
         self.tree_view.collapseAll()
 
-    def path_confirmed_clicked(self):
+    def _last_sel_items_clicked(self):
+        self.last_sel_cmds_widget = QListWidget()
+        self.last_sel_cmds_widget.setWindowTitle("Last selected items")
+        for item in self.last_selected_items:
+            self.last_sel_cmds_widget.addItem(QListWidgetItem(item))
+        self.last_sel_cmds_widget.doubleClicked.connect(self._last_sel_item_confirmed)
+        self.last_sel_cmds_widget.show()
+
+    def _path_confirmed_clicked(self):
         if self.currently_selected_path is None:
             # TODO: Error handling in some shape or form, maybe message box?
             return
         self.path_selected_sig.emit(self.currently_selected_path)
+        if len(self.last_selected_items) >= self.num_of_display_last_sel_items:
+            self.last_selected_items.popleft()
+        self.last_selected_items.append(self.currently_selected_path)
         self.closed.emit()
         self.close()
 
@@ -93,7 +115,19 @@ class CommandPathSelectWidget(QWidget):
             if child.children:
                 CommandPathSelectWidget.build_tree_model_recursively(new_item, child)
 
-    def on_item_expanded(self, _index: int):
+    def _on_tree_view_double_click(self, _index: int):
+        selected_indexes = self.tree_view.selectedIndexes()
+        if selected_indexes:
+            index = selected_indexes[0]  # Get the first selected index
+            item = self.tree_model.itemFromIndex(index)
+            assert item is not None
+            if not item.hasChildren():
+                self._select_path_clicked_by_index(selected_indexes)
+            else:
+                self.tree_view.expand(selected_indexes[0])
+        self._path_confirmed_clicked()
+
+    def _on_item_expanded(self, _index: int):
         self.tree_view.resizeColumnToContents(CommandPathSelectWidget.NODE_NAME_COLUMN)
         self.tree_view.resizeColumnToContents(
             CommandPathSelectWidget.DESCRIPTION_COLUMN
@@ -107,24 +141,33 @@ class CommandPathSelectWidget(QWidget):
             self.size().height(),
         )
 
-    def select_path_clicked(self):
-        selected_indexes = self.tree_view.selectedIndexes()
+    def _select_path_clicked(self):
+        self._select_path_clicked_by_index(self.tree_view.selectedIndexes())
+
+    def _select_path_clicked_by_index(self, selected_indexes: List[QModelIndex]):
         if selected_indexes:
             index = selected_indexes[0]  # Get the first selected index
             item = self.tree_model.itemFromIndex(index)
-            self.currently_selected_path = f"/{self.get_item_path(item)}"
-            self.path_label.setText(f"Selected: {self.currently_selected_path}")
+            self._update_sel_path_common(f"/{self._get_item_path(item)}")
 
-    def copy_path_clicked(self):
+    def _last_sel_item_confirmed(self, item: QModelIndex):
+        self._update_sel_path_common(self.last_selected_items[item.row()])
+        self.last_sel_cmds_widget.close()
+
+    def _update_sel_path_common(self, path: str):
+        self.currently_selected_path = path
+        self.path_label.setText(f"Selected: {self.currently_selected_path}")
+
+    def _copy_path_clicked(self):
         if self.currently_selected_path is None:
-            self.select_path_clicked()
+            self._select_path_clicked()
         if self.currently_selected_path is not None:
             print(f"Copied path {self.currently_selected_path} to clipboard.")
             clipboard = QApplication.clipboard()
             if clipboard is not None:
                 clipboard.setText(self.currently_selected_path)
 
-    def get_item_path(self, item):
+    def _get_item_path(self, item):
         path = []
         while item:
             path.insert(0, item.text())

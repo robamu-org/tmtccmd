@@ -285,8 +285,8 @@ def main():  # noqa: C901
     else:
         post_args_wrapper.set_params_with_prompts(proc_wrapper)
     params.apid = EXAMPLE_PUS_APID
-    if params.tc_params.print_tree:
-        perform_tree_printout(params.tc_params, hook_obj.get_command_definitions())
+    if params.cmd_params.print_tree and not params.use_gui:
+        perform_tree_printout(params.cmd_params, hook_obj.get_command_definitions())
         sys.exit(0)
     setup_args = SetupWrapper(
         hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper

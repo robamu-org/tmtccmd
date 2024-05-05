@@ -49,7 +49,7 @@ class TestArgs(TestCase):
         self.params.backend_params.mode = ""
         self.params.backend_params.com_if_id = ""
         self.simple_pargs_cli_set()
-        self.assertEqual(self.params.tc_params.delay, 0)
+        self.assertEqual(self.params.cmd_params.delay, 0)
         self.assertEqual(self.params.backend_params.mode, "")
         self.assertEqual(self.params.backend_params.com_if_id, "")
         def_params = TreeCommandingParams(None)
@@ -62,9 +62,9 @@ class TestArgs(TestCase):
             assign_com_if=False,
         )
         # Set to default value
-        self.assertEqual(self.params.tc_params.delay, 4.0)
+        self.assertEqual(self.params.cmd_params.delay, 4.0)
         # Unset
-        self.assertEqual(self.params.tc_params.apid, 0)
+        self.assertEqual(self.params.cmd_params.apid, 0)
         self.assertEqual(self.params.app_params.use_gui, False)
         self.assertEqual(self.params.app_params.use_ansi_colors, True)
         self.assertEqual(def_params.cmd_path, "/PING")
@@ -88,7 +88,7 @@ class TestArgs(TestCase):
             assign_com_if=False,
         )
         self.assertEqual(def_params.cmd_path, "/PING")
-        self.assertEqual(self.params.tc_params.delay, 2.0)
+        self.assertEqual(self.params.cmd_params.delay, 2.0)
 
     def test_cfdp_conversion_basic(self):
         self.pargs.source = "hello.txt"
@@ -147,9 +147,9 @@ class TestArgs(TestCase):
             def_tmtc_params=def_params,
             assign_com_if=False,
         )
-        self.assertTrue(self.params.tc_params.print_tree)
-        self.assertTrue(self.params.tc_params.tree_print_with_description)
-        self.assertIsNone(self.params.tc_params.tree_print_max_depth)
+        self.assertTrue(self.params.cmd_params.print_tree)
+        self.assertTrue(self.params.cmd_params.tree_print_with_description)
+        self.assertIsNone(self.params.cmd_params.tree_print_max_depth)
 
     def test_tree_printout_conversion_with_custom_args(self):
         self.base_cli_set()
@@ -163,9 +163,9 @@ class TestArgs(TestCase):
             def_tmtc_params=def_params,
             assign_com_if=False,
         )
-        self.assertTrue(self.params.tc_params.print_tree)
-        self.assertFalse(self.params.tc_params.tree_print_with_description)
-        self.assertEqual(self.params.tc_params.tree_print_max_depth, 2)
+        self.assertTrue(self.params.cmd_params.print_tree)
+        self.assertFalse(self.params.cmd_params.tree_print_with_description)
+        self.assertEqual(self.params.cmd_params.tree_print_max_depth, 2)
 
     @patch("builtins.print")
     def test_tree_printout_0(self, print_mock: MagicMock):

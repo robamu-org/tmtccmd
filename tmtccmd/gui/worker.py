@@ -8,8 +8,7 @@ from tmtccmd.config.hook import HookBase
 
 from tmtccmd.core import TmMode, TcMode, BackendRequest
 from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCode
-from tmtccmd.tmtc.procedure import DefaultProcedureInfo
-
+from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ class FrontendWorker(QRunnable):
             self._shared.com_if_ref_tracker.add_user()
             assert isinstance(self._locals.op_args, str)
             with self._shared.tc_lock:
-                self._shared.backend.current_procedure = DefaultProcedureInfo(
+                self._shared.backend.current_procedure = TreeCommandingProcedure(
                     self._locals.op_args
                 )
                 self._shared.backend.tc_mode = TcMode.ONE_QUEUE
