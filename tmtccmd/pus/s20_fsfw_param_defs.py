@@ -2,7 +2,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 import struct
-from typing import Optional, Union, Sequence
+from typing import Union, Sequence
 
 from spacepackets.ecss import Ptc, PfcUnsigned, PfcSigned, PfcReal
 
@@ -67,7 +67,7 @@ class FsfwParamId:
 
     object_id: bytes
     param_id: ParameterId
-    ptc: Optional[Ptc]
+    ptc: Ptc
     pfc: int
     rows: int
     columns: int
@@ -135,7 +135,7 @@ class Parameter:
             fsfw_param_id=FsfwParamId(
                 object_id=bytes([0, 0, 0, 0]),
                 param_id=ParameterId.empty(),
-                ptc=None,
+                ptc=Ptc.DEDUCED,
                 pfc=0,
                 rows=0,
                 columns=0,
@@ -247,11 +247,9 @@ def deserialize_scalar_entry(
             if param_len < 8:
                 raise ValueError(f"{__BASE_LEN_ERR} 8")
             return struct.unpack("!d", param_data[0:8])[0]
-        else:
-            raise NotImplementedError(
-                f"Parsing of real (floating point) PTC {ptc} not implemented "
-                f"for PFC {pfc}"
-            )
+    raise NotImplementedError(
+        f"Parsing of real (floating point) PTC {ptc} not implemented " f"for PFC {pfc}"
+    )
 
 
 def create_scalar_boolean_parameter(

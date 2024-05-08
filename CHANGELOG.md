@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.1] 2024-05-08
+
+## Fixed
+
+- PUS TC 20 (Parameters) FSFW interface: Default values for APID.
+
 # [v8.0.0] 2024-05-05
 
 ## Changed

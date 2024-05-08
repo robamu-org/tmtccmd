@@ -31,7 +31,7 @@ from tmtccmd.pus.s20_fsfw_param_defs import (  # noqa: F401
 )
 
 
-def create_load_param_cmd(apid: int, parameter: Parameter) -> PusTelecommand:
+def create_load_param_cmd(parameter: Parameter, apid: int = 0) -> PusTelecommand:
     return PusTelecommand(
         apid=apid,
         service=PusService.S20_PARAMETER,
@@ -40,7 +40,7 @@ def create_load_param_cmd(apid: int, parameter: Parameter) -> PusTelecommand:
     )
 
 
-def create_dump_param_cmd(apid: int, param_fsfw_id: FsfwParamId) -> PusTelecommand:
+def create_dump_param_cmd(param_fsfw_id: FsfwParamId, apid: int = 0) -> PusTelecommand:
     return PusTelecommand(
         apid=apid,
         service=PusService.S20_PARAMETER,
@@ -49,7 +49,9 @@ def create_dump_param_cmd(apid: int, param_fsfw_id: FsfwParamId) -> PusTelecomma
     )
 
 
-def create_load_param_cmd_from_raw(apid: int, parameter_raw: bytes) -> PusTelecommand:
+def create_load_param_cmd_from_raw(
+    parameter_raw: bytes, apid: int = 0
+) -> PusTelecommand:
     return PusTelecommand(
         apid=apid,
         service=PusService.S20_PARAMETER,
