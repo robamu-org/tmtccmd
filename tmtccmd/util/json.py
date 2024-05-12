@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import enum
+from typing import Any
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ def check_json_file(json_cfg_path: str) -> bool:
 
 
 def save_to_json_with_prompt(
-    key: str, value: any, name: str, json_cfg_path: str, json_obj: any
+    key: str, value: Any, name: str, json_cfg_path: str, json_obj: Any
 ) -> bool:
     save_to_json = input(
         f"Do you want to store the {name} to the configuration file? (y/n): "

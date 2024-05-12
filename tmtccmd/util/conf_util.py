@@ -1,6 +1,6 @@
 import collections.abc
 import logging
-from typing import Tuple, Union
+from typing import Any, Tuple, Union
 from contextlib import contextmanager
 
 
@@ -62,11 +62,11 @@ def check_args_in_dict(
 
 
 def __handle_iterable_non_dict(
-    param: any,
+    param: Any,
     iterable: collections.abc.Iterable,
     might_be_integer: bool,
-    init_res_tuple: Tuple[bool, any],
-) -> (bool, any):
+    init_res_tuple: Tuple[bool, Any],
+) -> Tuple[bool, Any]:
     param_list = list()
     for idx, enum_value in enumerate(iterable):
         if isinstance(enum_value.value, str):

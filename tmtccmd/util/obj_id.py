@@ -5,7 +5,7 @@ from typing import Mapping, Union, Optional
 from spacepackets.util import UnsignedByteField
 
 
-class ObjectIdBase(UnsignedByteField):
+class ComponentIdBase(UnsignedByteField):
     """Base class for unsigned object IDs with different byte sizes"""
 
     def __init__(self, obj_id: int, byte_len: int, name: Optional[str] = None):
@@ -44,11 +44,11 @@ class ObjectIdBase(UnsignedByteField):
         self.value = obj_id
 
 
-class ObjectIdU32(ObjectIdBase):
+class ComponentIdU32(ComponentIdBase):
     """A helper object for a unique object identifier which has a raw unsigned
     32-bit representation.
 
-    >>> obj_id = ObjectIdU32(42, "Object with the answer to everything")
+    >>> obj_id = ComponentIdU32(42, "Object with the answer to everything")
     >>> int(obj_id)
     42
     >>> obj_id.name
@@ -68,13 +68,13 @@ class ObjectIdU32(ObjectIdBase):
         )
 
     @classmethod
-    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ObjectIdU32:
-        obj_id = ObjectIdU32(obj_id=0)
+    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ComponentIdU32:
+        obj_id = ComponentIdU32(obj_id=0)
         obj_id.obj_id = obj_id_as_bytes
         return obj_id
 
 
-class ObjectIdU16(ObjectIdBase):
+class ComponentIdU16(ComponentIdBase):
     """A helper object for a unique object identifier which has a raw unsigned
     16-bit representation.
     """
@@ -88,13 +88,13 @@ class ObjectIdU16(ObjectIdBase):
         )
 
     @classmethod
-    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ObjectIdU16:
-        obj_id = ObjectIdU16(obj_id=0)
+    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ComponentIdU16:
+        obj_id = ComponentIdU16(obj_id=0)
         obj_id.obj_id = obj_id_as_bytes
         return obj_id
 
 
-class ObjectIdU8(ObjectIdBase):
+class ComponentIdU8(ComponentIdBase):
     """A helper object for a unique object identifier which has a raw unsigned
     8-bit representation.
     """
@@ -108,10 +108,29 @@ class ObjectIdU8(ObjectIdBase):
         )
 
     @classmethod
-    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ObjectIdU8:
-        obj_id = ObjectIdU8(obj_id=0)
+    def from_bytes_typed(cls, obj_id_as_bytes: bytes) -> ComponentIdU8:
+        obj_id = ComponentIdU8(obj_id=0)
         obj_id.obj_id = obj_id_as_bytes
         return obj_id
 
 
-ObjectIdDictT = Mapping[bytes, ObjectIdBase]
+ComponentIdMapping = Mapping[bytes, ComponentIdBase]
+
+
+ObjectIdBase = ComponentIdBase
+"""Deprecated type defintion for :py:class:`ComponentIdBase`"""
+
+ObjectIdU32 = ComponentIdU32
+"""Deprecated type defintion for :py:class:`ComponentIdU32`"""
+
+ObjectIdU16 = ComponentIdU16
+"""Deprecated type defintion for :py:class:`ComponentIdU16`"""
+
+ObjectIdU8 = ComponentIdU8
+"""Deprecated type defintion for :py:class:`ComponentIdU8`"""
+
+ObjectIdMapping = ComponentIdMapping
+"""Deprecated type defintion for :py:class:`ComponentIdMapping`"""
+
+ObjectIdDictT = ObjectIdMapping
+"""Deprecated type defintion for :py:class:`ObjectIdMapping`"""
