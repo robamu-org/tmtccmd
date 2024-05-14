@@ -1,12 +1,13 @@
 import enum
 from dataclasses import dataclass
-from typing import Any, Tuple, Dict, Union, Optional
+from typing import Any, Tuple, Mapping, Union, Optional
 
 from spacepackets.cfdp import TransmissionMode
 
 # Com Interface Types
-ComIfValueT = Tuple[str, Any]
-ComIfDictT = Dict[str, ComIfValueT]
+ComIfValue = Tuple[str, Any]
+ComIfMapping = Mapping[str, ComIfValue]
+ComIfDictT = ComIfMapping
 
 
 @dataclass
@@ -30,6 +31,10 @@ def default_json_path() -> str:
     return "tmtc_conf.json"
 
 
+def default_toml_path() -> str:
+    return "tmtc_conf.toml"
+
+
 class CoreComInterfaces(str, enum.Enum):
     DUMMY = "dummy"
     UDP = "udp"
@@ -40,7 +45,7 @@ class CoreComInterfaces(str, enum.Enum):
     UNSPECIFIED = "unspec"
 
 
-CORE_COM_IF_DICT: ComIfDictT = {
+CORE_COM_IF_DICT: ComIfMapping = {
     CoreComInterfaces.DUMMY: ("Dummy Interface", None),
     CoreComInterfaces.UDP: ("TCP/IP with UDP datagrams", None),
     CoreComInterfaces.TCP: ("TCP/IP with TCP", None),

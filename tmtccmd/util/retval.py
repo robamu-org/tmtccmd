@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Mapping
 
 
 class RetvalInfo:
@@ -20,4 +20,7 @@ class RetvalInfo:
         return self.id & 0xFF
 
 
-RetvalDictT = Dict[int, RetvalInfo]
+RetvalMapping = Mapping[int, RetvalInfo]
+
+RetvalDictT = RetvalMapping
+"""Deprecatd typedef for :py:class:`RetvalMapping`."""

@@ -44,7 +44,6 @@ from tmtccmd.tmtc import (
     TcProcedureType,
     TcQueueEntryType,
 )
-from tmtccmd.util import ObjectIdDictT
 from spacepackets.seqcount import FileSeqCountProvider, PusFileSeqCountProvider
 
 _LOGGER = logging.getLogger()
@@ -58,7 +57,7 @@ CFDP_REMOTE_ENTITY_ID = UnsignedByteField(byte_len=2, val=EXAMPLE_CFDP_APID)
 
 class ExampleHookClass(HookBase):
     def __init__(self, json_cfg_path: str):
-        super().__init__(json_cfg_path=json_cfg_path)
+        super().__init__(cfg_file_path=json_cfg_path)
 
     def get_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
         assert self.cfg_path is not None
@@ -123,11 +122,6 @@ class ExampleHookClass(HookBase):
     def perform_mode_operation(self, _tmtc_backend: CcsdsTmtcBackend, _mode: int):
         _LOGGER.info("Mode operation hook was called")
         pass
-
-    def get_object_ids(self) -> ObjectIdDictT:
-        from tmtccmd.config.objects import get_core_object_ids
-
-        return get_core_object_ids()
 
 
 class PusTmHandler(SpecificApidHandlerBase):
@@ -238,15 +232,15 @@ class TcHandler(TcHandlerBase):
             log_entry = entry_helper.to_log_entry()
             _LOGGER.info(log_entry.log_str)
 
-    def queue_finished_cb(self, helper: ProcedureWrapper):
-        if helper.proc_type == TcProcedureType.TREE_COMMANDING:
-            def_proc = helper.to_tree_commanding_procedure()
+    def queue_finished_cb(self, info: ProcedureWrapper):
+        if info.proc_type == TcProcedureType.TREE_COMMANDING:
+            def_proc = info.to_tree_commanding_procedure()
             _LOGGER.info(f"Queue handling finished for command {def_proc.cmd_path}")
 
-    def feed_cb(self, helper: ProcedureWrapper, wrapper: FeedWrapper):
+    def feed_cb(self, info: ProcedureWrapper, wrapper: FeedWrapper):
         self.queue_helper.queue_wrapper = wrapper.queue_wrapper
-        if helper.proc_type == TcProcedureType.TREE_COMMANDING:
-            def_proc = helper.to_tree_commanding_procedure()
+        if info.proc_type == TcProcedureType.TREE_COMMANDING:
+            def_proc = info.to_tree_commanding_procedure()
             cmd_path = def_proc.cmd_path
             assert cmd_path is not None
             # Path starts with / so the first entry of the list will be an empty string. We cut
