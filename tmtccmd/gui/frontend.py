@@ -14,7 +14,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QGridLayout,
-    QTableWidget,
     QWidget,
     QLabel,
     QCheckBox,
@@ -22,7 +21,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QComboBox,
     QPushButton,
-    QTableWidgetItem,
     QMenu,
 )
 from PyQt6.QtGui import QPixmap, QIcon, QFont, QAction
@@ -47,6 +45,9 @@ from tmtccmd.gui.defs import SharedArgs, CONNECT_BTTN_STYLE, FrontendState
 from tmtccmd.logging import get_console_logger
 import tmtccmd as mod_root
 
+LOGO_PATH = Path(f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png")
+
+
 LOGGER = get_console_logger()
 
 
@@ -64,9 +65,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         self._last_selected_items = deque()
         self._state = FrontendState()
         self._thread_pool = QThreadPool()
-        self.logo_path = Path(
-            f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png"
-        )
+        self.logo_path = LOGO_PATH
 
     def prepare_start(self, _: Any) -> Process:
         return Process(target=self.start)
@@ -358,18 +357,3 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __number_timeout_changed(self, value: float):
         LOGGER.info("PUS TM timeout changed to: " + str(value))
-
-
-class SingleCommandTable(QTableWidget):
-    def __init__(self):
-        super().__init__()
-        self.setRowCount(1)
-        self.setColumnCount(5)
-        self.setHorizontalHeaderItem(0, QTableWidgetItem("Service"))
-        self.setHorizontalHeaderItem(1, QTableWidgetItem("Subservice"))
-        self.setHorizontalHeaderItem(2, QTableWidgetItem("SSC"))
-        self.setHorizontalHeaderItem(3, QTableWidgetItem("Data"))
-        self.setHorizontalHeaderItem(4, QTableWidgetItem("CRC"))
-        self.setItem(0, 0, QTableWidgetItem("17"))
-        self.setItem(0, 1, QTableWidgetItem("1"))
-        self.setItem(0, 2, QTableWidgetItem("20"))
