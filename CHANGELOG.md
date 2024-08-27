@@ -9,6 +9,12 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.2] 2024-08-27
+
+## Changed
+
+Increase allowed version range for `cfdp-py` dependency to `>=0.1.0, <=0.3`.
+
 # [v8.0.1] 2024-05-08
 
 ## Fixed
