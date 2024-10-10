@@ -9,6 +9,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+## Fixed
+
+- Removed serial port validity check, which does not work for something like symlinks created
+  with udev rules.
+
 # [v8.0.2] 2024-08-27
 
 ## Changed

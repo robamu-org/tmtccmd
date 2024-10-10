@@ -80,7 +80,7 @@ def __det_com_port_with_json_file(
     json_obj = json.load(json_file)
     com_port = ""
     if not reconfig_com_port:
-        reconfig_com_port, try_hint, com_port = __try_com_port_load(json_obj=json_obj)
+        try_hint, com_port = __try_com_port_load(json_obj=json_obj)
     if try_hint:
         reconfig_com_port, com_port = __try_hint_handling(
             json_cfg_path=json_cfg_path,
@@ -102,36 +102,15 @@ def __det_com_port_with_json_file(
     return com_port
 
 
-def __try_com_port_load(json_obj) -> Tuple[bool, bool, str]:
-    reconfig_com_port = False
+def __try_com_port_load(json_obj) -> Tuple[bool, str]:
     try_hint = False
     com_port = ""
     try:
         com_port = json_obj[JsonKeyNames.SERIAL_PORT.value]
         _LOGGER.info(f"Loaded serial port {com_port} from JSON configuration file")
-        if not check_port_validity(com_port):
-            while True:
-                _LOGGER.info(
-                    "Serial port from configuration file not contained within serial"
-                    " port list"
-                )
-                reconfigure = input(
-                    "Reconfigure serial port or try to determine from hint? "
-                    "[r (reconfigure) / h (hint) / c(cancel)]: "
-                )
-                if reconfigure.lower() in ["r"]:
-                    reconfig_com_port = True
-                    break
-                elif reconfigure.lower() in ["h"]:
-                    try_hint = True
-                    break
-                elif reconfigure.lower() in ["c"]:
-                    return com_port
-                else:
-                    continue
     except KeyError:
         try_hint = True
-    return reconfig_com_port, try_hint, com_port
+    return try_hint, com_port
 
 
 def __try_hint_handling(

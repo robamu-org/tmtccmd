@@ -46,7 +46,8 @@ gui = [
     "PyQt6~=6.6",
 ]
 test = [
-    "pyfakefs~=4.5",
+    "pyfakefs~=5.7",
+    "pytest~=8.3"
 ]
 
 [project.urls]
