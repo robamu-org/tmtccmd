@@ -9,6 +9,10 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.0.3] 2024-11-08
+
+- Bump allowed `spacepackets` and `cfdp` range
+
 ## Fixed
 
 - Removed serial port validity check, which does not work for something like symlinks created
