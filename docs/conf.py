@@ -10,16 +10,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from tmtccmd.version import get_version
+from importlib.metadata import version
 
 # -- Project information -----------------------------------------------------
 
 project = "tmtccmd"
-copyright = "2021-2023, Robin Mueller"
+copyright = "2021-2024, Robin Mueller"
 author = "Robin Mueller"
 
 # The full version, including alpha/beta/rc tags
-version = release = get_version()
+release = version = version("tmtccmd")
 
 # -- General configuration ---------------------------------------------------
 

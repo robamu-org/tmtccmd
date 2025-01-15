@@ -23,9 +23,7 @@ from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 class TestTcQueue(TestCase):
     def setUp(self) -> None:
         self.apid = 0x11
-        self.queue_wrapper = QueueWrapper(
-            info=TreeCommandingProcedure.empty(), queue=deque()
-        )
+        self.queue_wrapper = QueueWrapper(info=TreeCommandingProcedure.empty(), queue=deque())
         self.assertEqual(self.queue_wrapper.queue, deque())
         self.queue_helper = DefaultPusQueueHelper(
             self.queue_wrapper,

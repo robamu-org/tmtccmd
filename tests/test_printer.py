@@ -25,9 +25,7 @@ class TestPrintersLoggers(TestCase):
         self.log_path = Path(LOG_DIR)
         if not self.log_path.exists():
             self.log_path.mkdir()
-        self.regular_file_name = Path(
-            RegularTmtcLogWrapper.get_current_tmtc_file_name()
-        )
+        self.regular_file_name = Path(RegularTmtcLogWrapper.get_current_tmtc_file_name())
 
     def test_pus_loggers(self):
         regular_tmtc_logger = RegularTmtcLogWrapper(self.regular_file_name)

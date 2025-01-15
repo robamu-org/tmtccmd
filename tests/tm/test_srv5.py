@@ -7,9 +7,7 @@ class TestSrv5Tm(TestCase):
     def setUp(self):
         self.apid = 0x08
         self.obj_id = bytes([0x00, 0x01, 0x02, 0x03])
-        self.event_def = EventDefinition(
-            event_id=5, reporter_id=self.obj_id, param1=22, param2=942
-        )
+        self.event_def = EventDefinition(event_id=5, reporter_id=self.obj_id, param1=22, param2=942)
         self.srv5_tm = Service5Tm(
             apid=self.apid,
             subservice=Subservice.TM_INFO_EVENT,
@@ -18,9 +16,7 @@ class TestSrv5Tm(TestCase):
         )
 
     def test_basic(self):
-        self.assertEqual(
-            self.srv5_tm.sp_header, self.srv5_tm.pus_tm.space_packet_header
-        )
+        self.assertEqual(self.srv5_tm.sp_header, self.srv5_tm.pus_tm.space_packet_header)
         self.assertEqual(self.srv5_tm.service, 5)
         self.assertEqual(self.srv5_tm.subservice, Subservice.TM_INFO_EVENT)
         self.assertEqual(len(self.srv5_tm.source_data), 14)

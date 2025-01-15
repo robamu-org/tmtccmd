@@ -38,7 +38,6 @@ dependencies = [
     "dle-encoder~=0.2.3",
     "spacepackets>=0.24.0, <=0.25",
     "cfdp-py>=0.1.1, <=0.4",
-    # "cfdp-py @ git+https://github.com/us-irs/cfdp-py.git@main"
 ]
 
 [project.optional-dependencies]
@@ -53,10 +52,13 @@ test = [
 [project.urls]
 "Homepage" = "https://github.com/robamu-org/tmtccmd"
 
-# Auto-Discovery is problematic for some reason, so use custom-discovery
-[tool.setuptools.packages]
-find = {}
-
+[tool.ruff]
+exclude = [
+    ".git",
+    "venv",
+    "docs"
+]
+line-length = 100
 [tool.ruff.lint]
 ignore = ["E501"]
 [tool.ruff.lint.extend-per-file-ignores]

@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.1.0] 2025-01-15
+
 - Drop support for EOL Python 3.8. Minimum supported Python version is now 3.9
 
 # [v8.0.3] 2024-11-08
