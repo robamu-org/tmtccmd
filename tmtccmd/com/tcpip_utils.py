@@ -5,6 +5,7 @@ import socket
 import struct
 import enum
 from dataclasses import dataclass
+from enum import auto
 from typing import Tuple
 
 from tmtccmd.util.json import check_json_file, JsonKeyNames
@@ -34,7 +35,6 @@ class TcpIpType(enum.Enum):
 
 
 class TcpIpConfigIds(enum.Enum):
-    from enum import auto
 
     SEND_ADDRESS = auto()
     RECV_ADDRESS = auto()
