@@ -95,9 +95,7 @@ class TestPromptFunc(TestCase):
         self.base_tree()
         history = InMemoryHistory()
         history.append_string("test")
-        with patch(
-            "tmtccmd.config.prompt.prompt_toolkit.prompt", side_effect=["ping"]
-        ) as prompt:
+        with patch("tmtccmd.config.prompt.prompt_toolkit.prompt", side_effect=["ping"]) as prompt:
             cmd_path = prompt_cmd_path(self.cmd_tree, history=history)
             self.assertEqual(len(prompt.call_args_list), 1)
             self.assertEqual(cmd_path, "/ping")

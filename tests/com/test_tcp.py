@@ -25,14 +25,10 @@ class TestTcpIf(TestCase):
         # Update the address for the client.
         self.addr = self.addr[0], self.tcp_server.getsockname()[1]
         self.tcp_server.listen()
-        self.expected_packet_id = PacketId(
-            apid=0x22, sec_header_flag=True, ptype=PacketType.TM
-        )
+        self.expected_packet_id = PacketId(apid=0x22, sec_header_flag=True, ptype=PacketType.TM)
         self.base_data = bytes([0, 1, 2, 3])
         self.ping_cmd = PusTelecommand(service=17, subservice=1, apid=0x22)
-        self.ping_reply = PusTelemetry(
-            service=17, subservice=2, apid=0x22, timestamp=bytes()
-        )
+        self.ping_reply = PusTelemetry(service=17, subservice=2, apid=0x22, timestamp=bytes())
         self.tcp_client = TcpSpacepacketsClient(
             "tcp",
             space_packet_ids=[self.expected_packet_id],

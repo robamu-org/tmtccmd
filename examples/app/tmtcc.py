@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Example application for the TMTC Commander"""
+
 import logging
 import sys
 import time
@@ -80,9 +81,7 @@ class ExampleHookClass(HookBase):
         root_node = CmdTreeNode.root_node()
         root_node.add_child(CmdTreeNode("ping", "Send PUS ping command"))
         root_node.add_child(CmdTreeNode("test", "Test Node"))
-        root_node.children["test"].add_child(
-            CmdTreeNode("event", "Send PUS event test command")
-        )
+        root_node.children["test"].add_child(CmdTreeNode("event", "Send PUS event test command"))
         return self.build_more_complex_tree(root_node)
 
     def build_more_complex_tree(self, root_node: CmdTreeNode) -> CmdTreeNode:
@@ -105,13 +104,9 @@ class ExampleHookClass(HookBase):
         root_node.add_child(CmdTreeNode("eps", "EPS Subsystem"))
         root_node["eps"].add_child(CmdTreeNode("pcdu", "PCDU"))
         root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_0_on", "Channel 0 on"))
-        root_node["eps"]["pcdu"].add_child(
-            CmdTreeNode("channel_0_off", "Channel 0 off")
-        )
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_0_off", "Channel 0 off"))
         root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_on", "Channel 1 on"))
-        root_node["eps"]["pcdu"].add_child(
-            CmdTreeNode("channel_1_off", "Channel 1 off")
-        )
+        root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_off", "Channel 1 off"))
         return root_node
 
     def get_cmd_history(self) -> Optional[History]:
@@ -137,9 +132,7 @@ class PusTmHandler(SpecificApidHandlerBase):
 
     def handle_tm(self, packet: bytes, _user_args: Any):
         try:
-            tm_packet = PusTelemetry.unpack(
-                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
-            )
+            tm_packet = PusTelemetry.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)
         except ValueError as e:
             _LOGGER.warning("Could not generate PUS TM object from raw data")
             _LOGGER.warning(f"Raw Packet: [{packet.hex(sep=',')}], REPR: {packet!r}")
@@ -157,39 +150,26 @@ class PusTmHandler(SpecificApidHandlerBase):
                     f" {tm_packet.subservice}] with Request ID"
                     f" {verif_tm.tc_req_id.as_u32():#08x}"
                 )
-                _LOGGER.warning(
-                    f"No matching telecommand found for {verif_tm.tc_req_id}"
-                )
+                _LOGGER.warning(f"No matching telecommand found for {verif_tm.tc_req_id}")
             else:
                 self.verif_wrapper.log_to_console(verif_tm, res)
                 self.verif_wrapper.log_to_file(verif_tm, res)
             dedicated_handler = True
         if service == 5:
-            event_tm = Service5Tm.unpack(
-                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
-            )
-            _LOGGER.info(
-                f"Received event packet TM [{event_tm.service}, {event_tm.subservice}]"
-            )
+            event_tm = Service5Tm.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)
+            _LOGGER.info(f"Received event packet TM [{event_tm.service}, {event_tm.subservice}]")
         if service == 17:
-            ping_tm = Service17Tm.unpack(
-                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
-            )
+            ping_tm = Service17Tm.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)
             dedicated_handler = True
             if ping_tm.subservice == 2:
                 _LOGGER.info("Received Ping Reply TM[17,2]")
             else:
                 _LOGGER.info(
-                    "Received Test Packet with unknown subservice"
-                    f" {tm_packet.subservice}"
+                    "Received Test Packet with unknown subservice" f" {tm_packet.subservice}"
                 )
         if tm_packet is None:
-            _LOGGER.info(
-                f"The service {service} is not implemented in Telemetry Factory"
-            )
-            tm_packet = PusTelemetry.unpack(
-                packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE
-            )
+            _LOGGER.info(f"The service {service} is not implemented in Telemetry Factory")
+            tm_packet = PusTelemetry.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)
         # TODO: Insert this into a DB instead. Maybe use sqlite for first variant.
         # self.raw_logger.log_tm(tm_packet)
         if not dedicated_handler:
@@ -221,9 +201,7 @@ class TcHandler(TcHandlerBase):
         if entry_helper.is_tc:
             if entry_helper.entry_type == TcQueueEntryType.PUS_TC:
                 pus_tc_wrapper = entry_helper.to_pus_tc_entry()
-                pus_tc_wrapper.pus_tc.seq_count = (
-                    self.seq_count_provider.get_and_increment()
-                )
+                pus_tc_wrapper.pus_tc.seq_count = self.seq_count_provider.get_and_increment()
                 self.verif_wrapper.add_tc(pus_tc_wrapper.pus_tc)
                 raw_tc = pus_tc_wrapper.pus_tc.pack()
                 _LOGGER.info(f"Sending {pus_tc_wrapper.pus_tc}")
@@ -253,9 +231,7 @@ class TcHandler(TcHandlerBase):
             elif cmd_path_list[0] == "test":
                 if cmd_path_list[1] == "event":
                     return self.queue_helper.add_pus_tc(
-                        PusTelecommand(
-                            apid=EXAMPLE_PUS_APID, service=17, subservice=128
-                        )
+                        PusTelecommand(apid=EXAMPLE_PUS_APID, service=17, subservice=128)
                     )
 
 
@@ -289,9 +265,7 @@ def main():  # noqa: C901
     tmtc_logger = RegularTmtcLogWrapper()
     printer = FsfwTmTcPrinter(tmtc_logger.logger)
     verificator = PusVerificator()
-    verification_wrapper = VerificationWrapper(
-        verificator, _LOGGER, printer.file_logger
-    )
+    verification_wrapper = VerificationWrapper(verificator, _LOGGER, printer.file_logger)
     # Create primary TM handler and add it to the CCSDS Packet Handler
     tm_handler = PusTmHandler(verification_wrapper, printer)
     ccsds_handler = CcsdsTmHandler(generic_handler=None)

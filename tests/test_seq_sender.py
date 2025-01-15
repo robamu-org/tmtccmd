@@ -25,9 +25,7 @@ class TestSendReceive(TestCase):
         )
         self.tc_handler_mock = MagicMock(spec=TcHandlerBase)
         self.com_if = MagicMock(spec=ComInterface)
-        self.seq_sender = SequentialCcsdsSender(
-            self.queue_wrapper, self.tc_handler_mock
-        )
+        self.seq_sender = SequentialCcsdsSender(self.queue_wrapper, self.tc_handler_mock)
 
     def test_basic(self):
         res = self.seq_sender.operation(self.com_if)
@@ -138,9 +136,7 @@ class TestSendReceive(TestCase):
             send_cb_params.entry.to_packet_delay_entry().delay_time.total_seconds(),
             inter_packet_delay.total_seconds(),
         )
-        self.assertTrue(
-            inter_packet_delay * 0.8 <= res.longest_rem_delay <= inter_packet_delay
-        )
+        self.assertTrue(inter_packet_delay * 0.8 <= res.longest_rem_delay <= inter_packet_delay)
         res = self.seq_sender.operation(self.com_if)
         # No TC sent
         self.assertFalse(res.tc_sent)
@@ -155,9 +151,7 @@ class TestSendReceive(TestCase):
         # No TC sent, delay after each packet
         self.assertFalse(res.tc_sent)
         self.assertEqual(len(self.queue_wrapper.queue), 1)
-        self.assertTrue(
-            0.8 * inter_packet_delay < res.longest_rem_delay <= inter_packet_delay
-        )
+        self.assertTrue(0.8 * inter_packet_delay < res.longest_rem_delay <= inter_packet_delay)
         # Delay 10 ms
         time.sleep(inter_packet_delay.total_seconds())
         res = self.seq_sender.operation(self.com_if)

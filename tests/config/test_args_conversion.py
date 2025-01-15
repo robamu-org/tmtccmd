@@ -130,9 +130,7 @@ class TestArgs(TestCase):
             self.params.backend_params.mode,
             CoreModeConverter.get_str(CoreModeList.LISTENER_MODE),
         )
-        self.assertEqual(
-            self.params.mode, CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
-        )
+        self.assertEqual(self.params.mode, CoreModeConverter.get_str(CoreModeList.LISTENER_MODE))
         self.params = SetupParams()
 
     def test_tree_printout_conversion_default(self):

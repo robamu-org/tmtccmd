@@ -162,16 +162,12 @@ class TestSrv20(TestCase):
         self.assertEqual(double_vec_param.ptc, Ptc.REAL)
         self.assertEqual(double_vec_param.pfc, PfcReal.DOUBLE_PRECISION_IEEE)
         self.assertEqual(len(double_vec_param.param_raw), 24)
+        self.assertTrue(abs(struct.unpack("!d", double_vec_param.param_raw[0:8])[0] - 3.0) < 0.0001)
         self.assertTrue(
-            abs(struct.unpack("!d", double_vec_param.param_raw[0:8])[0] - 3.0) < 0.0001
+            abs(struct.unpack("!d", double_vec_param.param_raw[8:16])[0]) - 52.4 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!d", double_vec_param.param_raw[8:16])[0]) - 52.4
-            < 0.0001
-        )
-        self.assertTrue(
-            abs(struct.unpack("!d", double_vec_param.param_raw[16:24])[0] - 38.32)
-            < 0.0001
+            abs(struct.unpack("!d", double_vec_param.param_raw[16:24])[0] - 38.32) < 0.0001
         )
 
     def test_float_vec(self):
@@ -184,15 +180,12 @@ class TestSrv20(TestCase):
         self.assertEqual(double_vec_param.ptc, Ptc.REAL)
         self.assertEqual(double_vec_param.pfc, PfcReal.FLOAT_SIMPLE_PRECISION_IEEE)
         self.assertEqual(len(double_vec_param.param_raw), 12)
-        self.assertTrue(
-            abs(struct.unpack("!f", double_vec_param.param_raw[0:4])[0] - 3.0) < 0.0001
-        )
+        self.assertTrue(abs(struct.unpack("!f", double_vec_param.param_raw[0:4])[0] - 3.0) < 0.0001)
         self.assertTrue(
             abs(struct.unpack("!f", double_vec_param.param_raw[4:8])[0]) - 52.4 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!f", double_vec_param.param_raw[8:12])[0]) - 38.32
-            < 0.0001
+            abs(struct.unpack("!f", double_vec_param.param_raw[8:12])[0]) - 38.32 < 0.0001
         )
 
     def test_float_matrix(self):
@@ -209,28 +202,22 @@ class TestSrv20(TestCase):
         self.assertEqual(float_matrix_param.pfc, PfcReal.FLOAT_SIMPLE_PRECISION_IEEE)
         self.assertEqual(len(float_matrix_param.param_raw), 24)
         self.assertTrue(
-            abs(struct.unpack("!f", float_matrix_param.param_raw[0:4])[0] - 3.0)
-            < 0.0001
+            abs(struct.unpack("!f", float_matrix_param.param_raw[0:4])[0] - 3.0) < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!f", float_matrix_param.param_raw[4:8])[0]) - 52.4
-            < 0.0001
+            abs(struct.unpack("!f", float_matrix_param.param_raw[4:8])[0]) - 52.4 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!f", float_matrix_param.param_raw[8:12])[0]) - 28.32
-            < 0.0001
+            abs(struct.unpack("!f", float_matrix_param.param_raw[8:12])[0]) - 28.32 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!f", float_matrix_param.param_raw[12:16])[0]) - 94924.42
-            < 0.01
+            abs(struct.unpack("!f", float_matrix_param.param_raw[12:16])[0]) - 94924.42 < 0.01
         )
         self.assertTrue(
-            abs(struct.unpack("!f", float_matrix_param.param_raw[16:20])[0]) - 30232.32
-            < 0.01
+            abs(struct.unpack("!f", float_matrix_param.param_raw[16:20])[0]) - 30232.32 < 0.01
         )
         self.assertTrue(
-            abs(struct.unpack("!f", float_matrix_param.param_raw[20:24])[0]) - 9393.2
-            < 0.001
+            abs(struct.unpack("!f", float_matrix_param.param_raw[20:24])[0]) - 9393.2 < 0.001
         )
 
     def test_double_matrix(self):
@@ -247,26 +234,20 @@ class TestSrv20(TestCase):
         self.assertEqual(float_matrix_param.pfc, PfcReal.DOUBLE_PRECISION_IEEE)
         self.assertEqual(len(float_matrix_param.param_raw), 48)
         self.assertTrue(
-            abs(struct.unpack("!d", float_matrix_param.param_raw[0:8])[0] - 3.0)
-            < 0.0001
+            abs(struct.unpack("!d", float_matrix_param.param_raw[0:8])[0] - 3.0) < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!d", float_matrix_param.param_raw[8:16])[0]) - 52.4
-            < 0.0001
+            abs(struct.unpack("!d", float_matrix_param.param_raw[8:16])[0]) - 52.4 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!d", float_matrix_param.param_raw[16:24])[0]) - 28.32
-            < 0.0001
+            abs(struct.unpack("!d", float_matrix_param.param_raw[16:24])[0]) - 28.32 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!d", float_matrix_param.param_raw[24:32])[0]) - 94924.42
-            < 0.0001
+            abs(struct.unpack("!d", float_matrix_param.param_raw[24:32])[0]) - 94924.42 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!d", float_matrix_param.param_raw[32:40])[0]) - 30232.32
-            < 0.0001
+            abs(struct.unpack("!d", float_matrix_param.param_raw[32:40])[0]) - 30232.32 < 0.0001
         )
         self.assertTrue(
-            abs(struct.unpack("!d", float_matrix_param.param_raw[40:48])[0]) - 9393.2
-            < 0.00001
+            abs(struct.unpack("!d", float_matrix_param.param_raw[40:48])[0]) - 9393.2 < 0.00001
         )

@@ -11,9 +11,7 @@ class TestObjectId(TestCase):
     def test_basic(self):
         obj_id0 = ComponentIdU32(1, "Some Name")
         self.assertEqual(str(obj_id0), "Object ID Some Name with ID 0x00000001")
-        self.assertEqual(
-            obj_id0.__repr__(), "ComponentIdU32(object_id=1, name='Some Name')"
-        )
+        self.assertEqual(obj_id0.__repr__(), "ComponentIdU32(object_id=1, name='Some Name')")
         self.assertEqual(obj_id0.as_bytes, bytes([0x00, 0x00, 0x00, 0x01]))
         self.assertEqual(obj_id0.as_hex_string, "0x00000001")
         self.assertEqual(int(obj_id0), 1)

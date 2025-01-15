@@ -61,9 +61,7 @@ class TestPusVerifLog(TestCase):
                 f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
-        srv_1_tm = create_start_success_tm(
-            apid=self.apid, pus_tc=tc, timestamp=empty_stamp
-        )
+        srv_1_tm = create_start_success_tm(apid=self.apid, pus_tc=tc, timestamp=empty_stamp)
         res = verificator.add_tm(srv_1_tm)
         with self.assertLogs(self.logger) as cm:
             wrapper.log_to_console(srv_1_tm, res)
@@ -86,9 +84,7 @@ class TestPusVerifLog(TestCase):
                 f"Request ID {srv_1_tm.tc_req_id.as_u32():#08x}" in cm.output[0]
             )
             generic_checks()
-        srv_1_tm = create_completion_success_tm(
-            apid=self.apid, pus_tc=tc, timestamp=empty_stamp
-        )
+        srv_1_tm = create_completion_success_tm(apid=self.apid, pus_tc=tc, timestamp=empty_stamp)
         res = verificator.add_tm(srv_1_tm)
         with self.assertLogs(self.logger) as cm:
             wrapper.log_to_console(srv_1_tm, res)

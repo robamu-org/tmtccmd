@@ -15,9 +15,7 @@ class TestCmdDefTree(TestCase):
     def tree_with_two_layers(self):
         self.base_tree()
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
 
     def test_state(self):
         self.base_tree()
@@ -41,9 +39,7 @@ class TestCmdDefTree(TestCase):
         assert self.cmd_tree.children["ping"].parent is not None
         self.assertEqual(self.cmd_tree.children["ping"].parent.name, "/")
 
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         self.assertEqual(len(self.cmd_tree.children["acs"].children), 1)
         acs_ctrl_child = self.cmd_tree.children["acs"].children["acs_ctrl"]
         self.assertEqual(acs_ctrl_child.name, "acs_ctrl")
@@ -82,9 +78,7 @@ class TestCmdDefTree(TestCase):
         self.cmd_tree["acs"]["acs_ctrl"].add_child(
             CmdTreeNode("update_params", "Update Parameters")
         )
-        self._generic_subnode_relativ_path_test(
-            self.cmd_tree.extract_subnode("acs/acs_ctrl")
-        )
+        self._generic_subnode_relativ_path_test(self.cmd_tree.extract_subnode("acs/acs_ctrl"))
 
     def test_extract_subnode_relativ_path_by_list(self):
         self.tree_with_two_layers()
@@ -105,16 +99,12 @@ class TestCmdDefTree(TestCase):
 
     def test_path_contained_acs_ctrl(self):
         self.base_tree()
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         self.assertTrue(self.cmd_tree.contains_path("/acs/acs_ctrl"))
 
     def test_named_dict(self):
         self.base_tree()
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         name_dict = self.cmd_tree.name_dict
         root_dict = name_dict.get("/")
         assert root_dict is not None
@@ -174,12 +164,8 @@ class TestCmdDefTree(TestCase):
 
     def test_printout_3(self):
         self.base_tree()
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
-        self.cmd_tree.children["tcs"].add_child(
-            CmdTreeNode("tcs_ctrl", "TCS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
+        self.cmd_tree.children["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
 
         print(self.cmd_tree)
         self.assertEqual(
@@ -195,16 +181,12 @@ class TestCmdDefTree(TestCase):
 
     def test_printout_4(self):
         self.base_tree()
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         self.cmd_tree.children["acs"].add_child(CmdTreeNode("mgm_0", "MGM 0"))
         self.cmd_tree.children["acs"].children["mgm_0"].add_child(
             CmdTreeNode("update_cfg", "Update Configuration")
         )
-        self.cmd_tree.children["tcs"].add_child(
-            CmdTreeNode("tcs_ctrl", "TCS Controller")
-        )
+        self.cmd_tree.children["tcs"].add_child(CmdTreeNode("tcs_ctrl", "TCS Controller"))
         self.cmd_tree.children["tcs"].add_child(CmdTreeNode("pt1000_0", "PT1000 0"))
         self.cmd_tree.add_child(CmdTreeNode("ping", "Ping Command"))
 
@@ -226,9 +208,7 @@ class TestCmdDefTree(TestCase):
 
     def test_printout_5(self):
         self.base_tree()
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         self.cmd_tree.children["acs"].add_child(CmdTreeNode("mgm_0", "MGM 0"))
         self.cmd_tree.children["acs"].children["mgm_0"].add_child(
             CmdTreeNode("update_cfg", "Update Configuration")
@@ -261,16 +241,12 @@ class TestCmdDefTree(TestCase):
 
     def _build_tree_with_hidden_children(self):
         self.base_tree()
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         mgm_0_node = CmdTreeNode("mgm_0", "MGM 0", hide_children_for_print=True)
         self.cmd_tree.children["acs"].add_child(mgm_0_node)
         update_cfg = CmdTreeNode("update_cfg", "Update Configuration")
         self.cmd_tree.children["acs"]["mgm_0"].add_child(update_cfg)
-        tcs_ctrl = CmdTreeNode(
-            "tcs_ctrl", "TCS Controller", hide_children_for_print=True
-        )
+        tcs_ctrl = CmdTreeNode("tcs_ctrl", "TCS Controller", hide_children_for_print=True)
         tcs_ctrl.add_child(CmdTreeNode("set_param", "Set Parameter"))
         self.cmd_tree.children["tcs"].add_child(tcs_ctrl)
         pt1000_node = CmdTreeNode("pt1000_0", "PT1000 0", hide_children_for_print=True)
@@ -325,16 +301,12 @@ class TestCmdDefTree(TestCase):
         )
 
     def _build_tree_with_suppressed_leaves(self):
-        self.cmd_tree.children["acs"].add_child(
-            CmdTreeNode("acs_ctrl", "ACS Controller")
-        )
+        self.cmd_tree.children["acs"].add_child(CmdTreeNode("acs_ctrl", "ACS Controller"))
         mgm_0_node = CmdTreeNode("mgm_0", "MGM 0")
         self.cmd_tree.children["acs"].add_child(mgm_0_node)
         update_cfg = CmdTreeNode("update_cfg", "Update Configuration")
         self.cmd_tree.children["acs"]["mgm_0"].add_child(update_cfg)
-        tcs_ctrl = CmdTreeNode(
-            "tcs_ctrl", "TCS Controller", hide_children_for_print=True
-        )
+        tcs_ctrl = CmdTreeNode("tcs_ctrl", "TCS Controller", hide_children_for_print=True)
         tcs_ctrl.add_child(CmdTreeNode("set_param", "Set Parameter"))
         self.cmd_tree.children["tcs"].add_child(tcs_ctrl)
         pt1000_node = CmdTreeNode("pt1000_0", "PT1000 0", hide_children_for_print=True)
@@ -375,9 +347,7 @@ class TestCmdDefTree(TestCase):
     def test_printout_suppressed_leaves_print_override(self):
         self.base_tree()
         self._build_tree_with_suppressed_leaves()
-        printout = self.cmd_tree.str_for_tree(
-            False, max_depth=None, show_hidden_elements=True
-        )
+        printout = self.cmd_tree.str_for_tree(False, max_depth=None, show_hidden_elements=True)
         print(printout)
         self.assertEqual(
             printout,

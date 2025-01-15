@@ -132,9 +132,7 @@ class TestBackend(TestCase):
         self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
         cast_wrapper = self.tc_handler.send_cb_call_args.entry
         pus_entry = cast_wrapper.to_pus_tc_entry()
-        self.assertEqual(
-            pus_entry.pus_tc, PusTelecommand(apid=self.apid, service=17, subservice=1)
-        )
+        self.assertEqual(pus_entry.pus_tc, PusTelecommand(apid=self.apid, service=17, subservice=1))
         self.backend.close_com_if()
         self.assertFalse(self.com_if.is_open())
 
@@ -181,9 +179,7 @@ class TestBackend(TestCase):
     def test_procedure_handling(self):
         def_proc = TreeCommandingProcedure(cmd_path="/ping")
         self.backend.current_procedure = def_proc
-        self.assertEqual(
-            self.backend.current_procedure.proc_type, TcProcedureType.TREE_COMMANDING
-        )
+        self.assertEqual(self.backend.current_procedure.proc_type, TcProcedureType.TREE_COMMANDING)
         proc_helper = self.backend.current_procedure
         def_proc = proc_helper.to_tree_commanding_procedure()
         self.assertIsNotNone(def_proc)
