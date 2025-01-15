@@ -7,7 +7,7 @@ name = "tmtccmd"
 description = "TMTC Commander Core"
 readme = "README.md"
 version = "8.0.3"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {text = "Apache-2.0 or MIT" }
 authors = [
     {name = "Robin Mueller", email = "robin.mueller.m@gmail.com"}
