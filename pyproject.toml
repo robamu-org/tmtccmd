@@ -36,7 +36,7 @@ dependencies = [
     "Deprecated~=1.2",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets>=0.24.0, <=0.25",
+    "spacepackets>=0.24.0, <=0.27",
     "cfdp-py>=0.1.1, <=0.4",
 ]
 
