@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "tmtccmd"
 description = "TMTC Commander Core"
 readme = "README.md"
-version = "8.1.0"
+version = "8.1.1"
 requires-python = ">=3.9"
 license = {text = "Apache-2.0 or MIT" }
 authors = [
@@ -37,7 +37,7 @@ dependencies = [
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
     "spacepackets>=0.24.0, <=0.27",
-    "cfdp-py>=0.1.1, <=0.4",
+    "cfdp-py>=0.1.1, <=0.5",
 ]
 
 [project.optional-dependencies]
