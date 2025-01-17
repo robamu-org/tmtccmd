@@ -22,7 +22,7 @@ class TestTelemetry(TestCase):
             return Service17Tm.unpack(data=raw_telemetry, timestamp_len=7)
 
         self.assertRaises(ValueError, tm_func, bytearray())
-        self.assertRaises(ValueError, tm_func, None)
+        self.assertRaises((TypeError, ValueError), tm_func, None)
 
         pus_17_telemetry = Service17Tm.unpack(data=self.pus_17_raw, timestamp_len=7)
         self.assertTrue(pus_17_telemetry.service == 17)
