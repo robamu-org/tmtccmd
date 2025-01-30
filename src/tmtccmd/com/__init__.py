@@ -2,10 +2,10 @@
 """Communication module. Provides generic abstraction for communication and commonly used
 concrete implementations."""
 
-from abc import abstractmethod, ABC
-from typing import Any, List, Optional
+from __future__ import annotations
 
-from tmtccmd.tmtc.common import TelemetryListT
+from abc import abstractmethod, ABC
+from typing import Any, Optional
 
 
 class ReceptionDecodeError(Exception):
@@ -61,14 +61,14 @@ class ComInterface(ABC):
         """
 
     @abstractmethod
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         """Send raw data.
 
         :raises SendError: Sending failed for some reason.
         """
 
     @abstractmethod
-    def receive(self, parameters: Any = 0) -> List[bytes]:
+    def receive(self, parameters: Any = 0) -> list[bytes]:
         """Returns a list of received packets. The child class can use a separate thread to poll for
         the packets or use some other mechanism and container like a deque to store packets
         to be returned here.
