@@ -87,7 +87,7 @@ class SerialDleComIF(SerialComBase, ComInterface):
         self.__reception_thread.join(0.4)
         super().close_port()
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         encoded_data = self.__encoder.encode(source_packet=data, add_stx_etx=True)
         self.serial.write(encoded_data)
 

@@ -136,6 +136,6 @@ class DummyComIF(ComInterface):
     def receive(self, parameters: any = 0) -> List[bytes]:
         return self.dummy_handler.receive_reply_package()
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         if data is not None:
             self.dummy_handler.insert_telecommand(data)

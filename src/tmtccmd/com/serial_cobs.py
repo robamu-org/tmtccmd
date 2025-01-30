@@ -49,7 +49,7 @@ class SerialCobsComIF(SerialComBase, ComInterface):
         self.__reception_thread.join(0.4)
         super().close_port()
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         encoded = bytearray([0])
         encoded.extend(cobs.encode(data))
         encoded.append(0)

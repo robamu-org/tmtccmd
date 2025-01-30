@@ -123,7 +123,7 @@ class TcpSpacepacketsClient(ComInterface):
                 self.__connected = False
         self.__tcp_socket = None
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         self.__tc_queue.put(data)
 
     def receive(self, poll_timeout: float = 0) -> List[bytes]:

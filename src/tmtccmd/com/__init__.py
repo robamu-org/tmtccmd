@@ -61,7 +61,7 @@ class ComInterface(ABC):
         """
 
     @abstractmethod
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         """Send raw data.
 
         :raises SendError: Sending failed for some reason.

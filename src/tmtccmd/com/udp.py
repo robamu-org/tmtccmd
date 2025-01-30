@@ -64,7 +64,7 @@ class UdpClient(ComInterface):
         if self.udp_socket is not None:
             self.udp_socket.close()
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         if self.udp_socket is None:
             return
         bytes_sent = self.udp_socket.sendto(data, self.send_address.to_tuple)
