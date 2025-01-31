@@ -32,7 +32,7 @@ class ComponentIdBase(UnsignedByteField):
 
     @property
     def obj_id(self) -> int:
-        return int(self)
+        return self.value
 
     @obj_id.setter
     def obj_id(self, obj_id: Union[int, bytes]):
@@ -50,6 +50,8 @@ class ComponentIdU32(ComponentIdBase):
 
     >>> obj_id = ComponentIdU32(42, "Object with the answer to everything")
     >>> int(obj_id)
+    42
+    >>> obj_id.value
     42
     >>> obj_id.name
     'Object with the answer to everything'

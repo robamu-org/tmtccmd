@@ -9,6 +9,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+# [v8.2.0] 2025-01-31
+
+- Added back `Service3FsfwHkPacket` and `Service8FsfwDataReply` helper classes to parse some
+  FSFW specific custom fields for certain subservices.
+
 # [v8.1.1] 2025-01-17
 
 - Bump allowed `cfdp-py` range to `<=v0.5`
