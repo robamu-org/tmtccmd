@@ -32,7 +32,7 @@ class ComponentIdBase(UnsignedByteField):
 
     @property
     def obj_id(self) -> int:
-        return int(self)
+        return self.value
 
     @obj_id.setter
     def obj_id(self, obj_id: Union[int, bytes]):

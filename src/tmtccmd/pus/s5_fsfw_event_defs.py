@@ -5,8 +5,8 @@ from typing import Optional, Dict
 
 class Severity(enum.IntEnum):
     INFO = 1
-    LOW = (2,)
-    MEDIUM = (3,)
+    LOW = 2
+    MEDIUM = 3
     HIGH = 4
 
 
