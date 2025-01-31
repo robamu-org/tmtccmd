@@ -30,6 +30,36 @@ class TestSrv8FsfwTm(TestCase):
         self.assertEqual(tm_packet.action_id, example_action_id)
         self.assertEqual(tm_packet.reply_data, example_reply_data)
 
+    def test_unpack_not_enough_data(self):
+        for i in range(0, 8):
+            data = bytes([0x01] * i)
+            with self.assertRaises(ValueError):
+                tm = PusTelemetry(
+                    service=PusService.S8_FUNC_CMD,
+                    subservice=CustomSubservice.TM_DATA_REPLY,
+                    source_data=data,
+                    timestamp=bytes(),
+                )
+                Service8FsfwDataReply(tm)
+
+    def test_unpack_empty_reply_data(self):
+        example_obj_id = 0x01020304
+        example_action_id = 0x04030201
+        example_reply_data = bytes()
+        tm = PusTelemetry(
+            service=PusService.S8_FUNC_CMD,
+            subservice=CustomSubservice.TM_DATA_REPLY,
+            source_data=self.pack_data_reply_src_data(
+                example_obj_id, example_action_id, example_reply_data
+            ),
+            timestamp=bytes(),
+        )
+
+        tm_packet = Service8FsfwDataReply(tm)
+        self.assertEqual(tm_packet.object_id.value, example_obj_id)
+        self.assertEqual(tm_packet.action_id, example_action_id)
+        self.assertEqual(tm_packet.reply_data, example_reply_data)
+
     def test_unpack_invalid_subservice(self):
         example_obj_id = 0x01020304
         example_action_id = 0x04030201
