@@ -1,5 +1,7 @@
 """TCP communication interface"""
 
+from __future__ import annotations
+
 import logging
 import queue
 import socket
@@ -8,7 +10,7 @@ import enum
 import threading
 import select
 from collections import deque
-from typing import Any, List, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
 
@@ -123,10 +125,10 @@ class TcpSpacepacketsClient(ComInterface):
                 self.__connected = False
         self.__tcp_socket = None
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         self.__tc_queue.put(data)
 
-    def receive(self, poll_timeout: float = 0) -> List[bytes]:
+    def receive(self, poll_timeout: float = 0) -> list[bytes]:
         self.__tm_queue_to_packet_list()
         tm_packet_list = self.tm_packet_list
         self.tm_packet_list = []

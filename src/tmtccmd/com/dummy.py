@@ -2,7 +2,9 @@
 external hardware or an extra socket
 """
 
-from typing import List, Optional
+from __future__ import annotations
+
+from typing import Optional
 
 from deprecated.sphinx import deprecated
 from spacepackets.ccsds.time import CdsShortTimestamp
@@ -133,9 +135,9 @@ class DummyComIF(ComInterface):
             return True
         return False
 
-    def receive(self, parameters: any = 0) -> List[bytes]:
+    def receive(self, parameters: any = 0) -> list[bytes]:
         return self.dummy_handler.receive_reply_package()
 
-    def send(self, data: bytes):
+    def send(self, data: bytes | bytearray):
         if data is not None:
             self.dummy_handler.insert_telecommand(data)
