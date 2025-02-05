@@ -12,7 +12,10 @@ import select
 from collections import deque
 from typing import Any, Optional, Sequence
 
-from spacepackets.ccsds.spacepacket import parse_space_packets, PacketId
+from spacepackets.ccsds.spacepacket import (
+    PacketId,
+    parse_space_packets_from_deque,
+)
 
 from tmtccmd.com import ComInterface, SendError
 from tmtccmd.com.tcpip_utils import EthAddr
@@ -64,7 +67,7 @@ class TcpSpacepacketsClient(ComInterface):
         self.__tm_queue = queue.Queue()
         self.__tc_queue = queue.Queue()
         self.__analysis_queue = deque()
-        self.tm_packet_list = []
+        self._tm_packet_list = []
 
     @property
     def id(self) -> str:
@@ -115,7 +118,7 @@ class TcpSpacepacketsClient(ComInterface):
         finally:
             self.__tcp_socket.settimeout(None)
 
-    def close(self, args: any = None) -> None:
+    def close(self, args: Any = None) -> None:
         if not self.is_open():
             return
         self.__thread_kill_signal.set()
@@ -128,10 +131,10 @@ class TcpSpacepacketsClient(ComInterface):
     def send(self, data: bytes | bytearray):
         self.__tc_queue.put(data)
 
-    def receive(self, poll_timeout: float = 0) -> list[bytes]:
+    def receive(self, parameters: float = 0) -> list[bytes]:
         self.__tm_queue_to_packet_list()
-        tm_packet_list = self.tm_packet_list
-        self.tm_packet_list = []
+        tm_packet_list = self._tm_packet_list
+        self._tm_packet_list = []
         return tm_packet_list
 
     def __tm_queue_to_packet_list(self):
@@ -139,16 +142,26 @@ class TcpSpacepacketsClient(ComInterface):
             self.__analysis_queue.append(self.__tm_queue.get())
         # TCP is stream based, so there might be broken packets or multiple packets in one recv
         # call. We parse the space packets contained in the stream here
-        if self.com_type == TcpCommunicationType.SPACE_PACKETS:
-            self.tm_packet_list.extend(
-                parse_space_packets(
-                    analysis_queue=self.__analysis_queue,
-                    packet_ids=self.space_packet_ids,
-                )
+        if self.com_type == TcpCommunicationType.SPACE_PACKETS and self.__analysis_queue:
+            result = parse_space_packets_from_deque(
+                analysis_queue=self.__analysis_queue,
+                packet_ids=self.space_packet_ids,
             )
+            for packet in result.tm_list:
+                self._tm_packet_list.append(packet)
+            flattened = bytearray()
+            while self.__analysis_queue:
+                flattened.extend(self.__analysis_queue.popleft())
+            # Might be spammy, but I consider this a configuration error, and the user
+            # should be notified about it.
+            for skipped_range in result.skipped_ranges:
+                _LOGGER.warning("skipped bytes in received TCP datastream:")
+                print(flattened[skipped_range.start : skipped_range.stop])
+                _LOGGER.warning("list of valid packet IDs might be incomplete")
+            self.__analysis_queue.append(flattened[result.scanned_bytes :])
         else:
             while self.__analysis_queue:
-                self.tm_packet_list.append(self.__analysis_queue.popleft())
+                self._tm_packet_list.append(self.__analysis_queue.popleft())
 
     def __tcp_task(self):
         while True and not self.__thread_kill_signal.is_set():
@@ -212,9 +225,9 @@ class TcpSpacepacketsClient(ComInterface):
             #       logs that there might be an issue reading packets
         self.__tm_queue.put(bytes(bytes_recvd))
 
-    def data_available(self, timeout: float = 0, parameters: any = 0) -> int:
+    def data_available(self, timeout: float = 0, parameters: Any = 0) -> int:
         self.__tm_queue_to_packet_list()
-        return len(self.tm_packet_list)
+        return len(self._tm_packet_list)
 
     def __force_shutdown(self):
         assert self.__tcp_socket is not None

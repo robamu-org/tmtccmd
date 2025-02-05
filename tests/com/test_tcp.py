@@ -29,6 +29,9 @@ class TestTcpIf(TestCase):
         self.base_data = bytes([0, 1, 2, 3])
         self.ping_cmd = PusTelecommand(service=17, subservice=1, apid=0x22)
         self.ping_reply = PusTelemetry(service=17, subservice=2, apid=0x22, timestamp=bytes())
+        self.reply_with_other_packet_id = PusTelemetry(
+            service=17, subservice=2, apid=0x40, timestamp=bytes()
+        )
         self.tcp_client = TcpSpacepacketsClient(
             "tcp",
             space_packet_ids=[self.expected_packet_id],
@@ -41,14 +44,15 @@ class TestTcpIf(TestCase):
 
     def test_monolithic(self):
         self._open()
-        tcp_server = threading.Thread(target=self.tcp_server_thread, daemon=True)
+        tcp_server = threading.Thread(target=self.tcp_echo_server_thread, daemon=True)
         tcp_server.start()
         self._test_basic()
         self._test_send()
         self._test_recv()
+        self._test_recv_with_invalid_packet()
         self._test_close_client()
 
-    def tcp_server_thread(self):
+    def tcp_echo_server_thread(self):
         (conn_sock, addr_info) = self.tcp_server.accept()
         while True:
             (data_recv, sender_addr) = conn_sock.recvfrom(4096)
@@ -61,11 +65,8 @@ class TestTcpIf(TestCase):
                 conn_sock.close()
                 break
             else:
-                if data_recv == self.ping_cmd.pack():
-                    self.server_received_packets.appendleft(data_recv)
-                    conn_sock.sendall(self.ping_reply.pack())
-                else:
-                    self.server_received_packets.appendleft(data_recv)
+                self.server_received_packets.appendleft(data_recv)
+                conn_sock.sendall(data_recv)
 
     def _test_basic(self):
         self.assertEqual(self.tcp_client.id, "tcp")
@@ -76,17 +77,37 @@ class TestTcpIf(TestCase):
         self.assertEqual(len(self.server_received_packets), 1)
         packet = self.server_received_packets.pop()
         self.assertEqual(packet, self.base_data)
+        self.server_received_packets.clear()
 
     def _test_close_client(self):
         self.tcp_client.close()
 
     def _test_recv(self):
-        self.tcp_client.send(self.ping_cmd.pack())
+        self.tcp_client.send(self.ping_reply.pack())
         time.sleep(0.2)
         # Assert it arrived at the server
         self.assertEqual(len(self.server_received_packets), 1)
         packet = self.server_received_packets.pop()
-        self.assertEqual(packet, self.ping_cmd.pack())
+        self.assertEqual(packet, self.ping_reply.pack())
+        # Now assert that a ping reply was sent back to the client if a ping command was sent
+        self.assertEqual(self.tcp_client.data_available(), 1)
+        recvd_packets = self.tcp_client.receive()
+        self.assertEqual(len(recvd_packets), 1)
+        self.assertEqual(recvd_packets[0], self.ping_reply.pack())
+        self.assertEqual(len(self.server_received_packets), 0)
+        self.server_received_packets.clear()
+
+    def _test_recv_with_invalid_packet(self):
+        self.tcp_client.send(self.ping_cmd.pack())
+        self.tcp_client.send(self.ping_reply.pack())
+        time.sleep(0.2)
+        # Assert both packets arrived at the server
+        self.assertEqual(len(self.server_received_packets), 2)
+        packet_0 = self.server_received_packets.pop()
+        self.assertEqual(packet_0, self.ping_cmd.pack())
+        packet_1 = self.server_received_packets.pop()
+        self.assertEqual(packet_1, self.ping_reply.pack())
+
         # Now assert that a ping reply was sent back to the client if a ping command was sent
         self.assertEqual(self.tcp_client.data_available(), 1)
         recvd_packets = self.tcp_client.receive()
