@@ -178,7 +178,7 @@ class SequentialCcsdsSender:
         if queue_entry.etype == TcQueueEntryType.WAIT:
             wait_entry = cast_wrapper.to_wait_entry()
             logging.getLogger(__name__).info(
-                "Waiting for" f" {wait_entry.wait_time.total_seconds() * 1000} milliseconds."
+                f"Waiting for {wait_entry.wait_time.total_seconds() * 1000} milliseconds."
             )
             self._wait_cd.reset(new_timeout=wait_entry.wait_time)
         elif queue_entry.etype == TcQueueEntryType.PACKET_DELAY:

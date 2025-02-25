@@ -53,7 +53,7 @@ class UdpClient(ComInterface):
         # See: https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-bind
         if self.recv_addr is not None:
             _LOGGER.info(
-                f"Binding UDP socket to {self.recv_addr.ip_addr} and port" f" {self.recv_addr.port}"
+                f"Binding UDP socket to {self.recv_addr.ip_addr} and port {self.recv_addr.port}"
             )
             self.udp_socket.bind(self.recv_addr.to_tuple)
         # Set non-blocking because we use select

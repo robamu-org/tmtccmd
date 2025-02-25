@@ -125,12 +125,7 @@ class TestCmdDefTree(TestCase):
         print(str(self.cmd_tree))
         self.assertEqual(
             str(self.cmd_tree),
-            (
-                f"/{os.linesep}"
-                f"├── acs{os.linesep}"
-                f"├── tcs{os.linesep}"
-                f"└── ping{os.linesep}"
-            ),
+            (f"/{os.linesep}├── acs{os.linesep}├── tcs{os.linesep}└── ping{os.linesep}"),
         )
 
     def test_prinout_two_sublevels(self):

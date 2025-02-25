@@ -112,9 +112,7 @@ class TcpSpacepacketsClient(ComInterface):
         try:
             self.__tcp_socket.connect(self.target_address.to_tuple)
         except socket.timeout as e:
-            _LOGGER.warning(
-                "Could not connect to socket with address" f" {self.target_address}: {e}"
-            )
+            _LOGGER.warning(f"Could not connect to socket with address {self.target_address}: {e}")
         finally:
             self.__tcp_socket.settimeout(None)
 
@@ -216,9 +214,7 @@ class TcpSpacepacketsClient(ComInterface):
             self.max_packets_stored is not None
             and self.__tm_queue.qsize() >= self.max_packets_stored
         ):
-            _LOGGER.warning(
-                "Number of packets in TCP queue too large. " "Overwriting old packets.."
-            )
+            _LOGGER.warning("Number of packets in TCP queue too large. Overwriting old packets..")
             self.__tm_queue.get()
             # TODO: If segments are received but the receiver is unable to parse packets
             #       properly, it might make sense to have a timeout which then also

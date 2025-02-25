@@ -16,19 +16,21 @@ from tmtccmd.pus.s5_fsfw_event_defs import Severity
 
 @dataclasses.dataclass
 class EventDefinition:
-    event_id: int
+    event: int
     reporter_id: bytes
-    param1: int
-    param2: int
+    param1: int | None
+    param2: int | None
 
     def pack(self) -> bytes:
-        raw = bytearray(struct.pack("!H", self.event_id))
+        raw = bytearray(struct.pack("!I", self.event))
         if len(self.reporter_id) < 4:
             raise ValueError("reporter ID must be at least 4 bytes wide")
         raw.extend(self.reporter_id)
-        raw.extend(struct.pack("!I", self.param1))
-        raw.extend(struct.pack("!I", self.param2))
-        return raw
+        if self.param1 is not None:
+            raw.extend(struct.pack("!I", self.param1))
+        if self.param2 is not None:
+            raw.extend(struct.pack("!I", self.param2))
+        return bytes(raw)
 
     @classmethod
     def empty(cls) -> EventDefinition:
@@ -36,13 +38,17 @@ class EventDefinition:
 
     @classmethod
     def from_bytes(cls, data: bytes) -> EventDefinition:
-        if len(data) < 14:
-            raise ValueError("full FSFW event definition must be at least 14 bytes wide")
-        event_id = struct.unpack("!H", data[0:2])[0]
-        object_id = bytes(data[2:6])
-        param1 = struct.unpack("!I", data[6:10])[0]
-        param2 = struct.unpack("!I", data[10:14])[0]
-        return cls(event_id, object_id, param1, param2)
+        if len(data) < 8:
+            raise ValueError("full FSFW event definition must be at least 8 bytes wide")
+        event = struct.unpack("!I", data[0:4])[0]
+        object_id = bytes(data[4:8])
+        param1 = None
+        param2 = None
+        if len(data) >= 12:
+            param1 = struct.unpack("!I", data[8:12])[0]
+        if len(data) >= 16:
+            param2 = struct.unpack("!I", data[12:16])[0]
+        return cls(event, object_id, param1, param2)
 
 
 class Service5Tm(AbstractPusTm):
