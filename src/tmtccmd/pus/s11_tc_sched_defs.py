@@ -60,8 +60,7 @@ class TcSchedReqId:
 
     def __repr__(self):
         return (
-            f"TcSchedReqId(apid={self.apid:#04x},seq_cnt={self.seq_cnt},"
-            f"src_id={self.src_id:#04x})"
+            f"TcSchedReqId(apid={self.apid:#04x},seq_cnt={self.seq_cnt},src_id={self.src_id:#04x})"
         )
 
     @classmethod

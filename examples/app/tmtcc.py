@@ -15,7 +15,7 @@ from spacepackets.util import UnsignedByteField
 
 import tmtccmd
 from tmtccmd import BackendRequest, CcsdsTmtcBackend, ProcedureParamsWrapper
-from tmtccmd.com import ComInterface
+from com_interface import ComInterface
 from tmtccmd.config import (
     CmdTreeNode,
     HookBase,
@@ -164,9 +164,7 @@ class PusTmHandler(SpecificApidHandlerBase):
             if ping_tm.subservice == 2:
                 _LOGGER.info("Received Ping Reply TM[17,2]")
             else:
-                _LOGGER.info(
-                    "Received Test Packet with unknown subservice" f" {tm_packet.subservice}"
-                )
+                _LOGGER.info(f"Received Test Packet with unknown subservice {tm_packet.subservice}")
         if tm_packet is None:
             _LOGGER.info(f"The service {service} is not implemented in Telemetry Factory")
             tm_packet = PusTelemetry.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)

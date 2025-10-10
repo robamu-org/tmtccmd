@@ -189,7 +189,7 @@ def prompt_com_port() -> str:
                 print("{}: {} [{}]".format(port, desc, hwid))
         else:
             if not check_port_validity(com_port):
-                print("Serial port not in list of available serial ports. Try again?" " ([Y]/n)")
+                print("Serial port not in list of available serial ports. Try again? ([Y]/n)")
                 try_again = input()
                 if try_again.lower() in ["y", "yes", ""]:
                     continue

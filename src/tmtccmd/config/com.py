@@ -4,19 +4,18 @@ from typing import Optional, cast, Sequence
 
 from spacepackets.ccsds import PacketId
 from tmtccmd.config.defs import CoreComInterfaces
-from tmtccmd.com import ComInterface
-from tmtccmd.com.serial_base import (
-    SerialCommunicationType,
+from com_interface import ComInterface
+from com_interface.serial_base import (
     SerialCfg,
 )
 
-from tmtccmd.com.serial_dle import SerialDleComIF
-from tmtccmd.com.serial_cobs import SerialCobsComIF
+from com_interface.serial_dle import SerialDleComIF
+from com_interface.serial_cobs import SerialCobsComIF
 
 from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
 from tmtccmd.com.tcpip_utils import TcpIpType, EthAddr
-from tmtccmd.com.udp import UdpClient
-from tmtccmd.com.tcp import TcpSpacepacketsClient
+from com_interface.udp import UdpClient
+from com_interface.tcp import TcpSpacepacketsClient
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -115,8 +114,7 @@ def create_com_interface_default(cfg: ComCfgBase) -> Optional[ComInterface]:
 
 
 def __create_com_if(cfg: ComCfgBase) -> Optional[ComInterface]:
-    from tmtccmd.com.dummy import DummyComIF
-    from tmtccmd.com.qemu import QEMUComIF
+    from tmtccmd.com.dummy import DummyInterface
 
     if (
         cfg.com_if_key == CoreComInterfaces.UDP.value
@@ -133,15 +131,8 @@ def __create_com_if(cfg: ComCfgBase) -> Optional[ComInterface]:
             json_cfg_path=cfg.json_cfg_path,
             serial_cfg=serial_cfg_wrapper.serial_cfg,
         )
-    elif cfg.com_if_key == CoreComInterfaces.SERIAL_QEMU.value:
-        serial_cfg_wrapper = cast(SerialCfgWrapper, cfg)
-        # TODO: Move to new model where config is passed externally
-        communication_interface = QEMUComIF(
-            serial_cfg=serial_cfg_wrapper.serial_cfg,
-            ser_com_type=SerialCommunicationType.DLE_ENCODING,
-        )
     else:
-        communication_interface = DummyComIF()
+        communication_interface = DummyInterface()
     if communication_interface is None:
         _LOGGER.warning("Invalid communication interface, is None")
         return communication_interface

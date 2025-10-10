@@ -1,15 +1,15 @@
 import atexit
 import logging
 import sys
-from collections import deque
 from datetime import timedelta
-from typing import Optional
+from typing import Any, Optional
 
 from tmtccmd.core.backend_base import BackendBase
 from tmtccmd.core.backend_state import BackendState
 from tmtccmd.core.base import TcMode, TmMode, BackendRequest
 from tmtccmd.tmtc import TcProcedureBase, ProcedureWrapper
 from tmtccmd.tmtc.handler import TcHandlerBase, FeedWrapper
+from tmtccmd.tmtc.procedure import TcProcedureType
 from tmtccmd.util.exit import keyboard_interrupt_handler
 from tmtccmd.tmtc.queue import QueueWrapper
 from tmtccmd.tmtc.ccsds_seq_sender import (
@@ -17,7 +17,7 @@ from tmtccmd.tmtc.ccsds_seq_sender import (
     SenderMode,
 )
 from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
-from tmtccmd.com import ComInterface
+from com_interface import ComInterface
 
 
 class NoValidProcedureSet(Exception):
@@ -49,7 +49,7 @@ class CcsdsTmtcBackend(BackendBase):
         # of a queue
         self.keep_multi_queue_mode = False
         self.keep_listener_mode = False
-        self._queue_wrapper = QueueWrapper(None, deque())
+        self._queue_wrapper = QueueWrapper.empty()
         self._seq_handler = SequentialCcsdsSender(
             tc_handler=tc_handler,
             queue_wrapper=self._queue_wrapper,
@@ -151,7 +151,7 @@ class CcsdsTmtcBackend(BackendBase):
             self.__listener_io_error_handler("close")
         self._com_if_active = False
 
-    def periodic_op(self, _args: Optional[any] = None) -> BackendState:
+    def periodic_op(self, _args: Optional[Any] = None) -> BackendState:
         """Periodic operation. Simply calls the :py:meth:`default_operation` function.
         :raises KeyboardInterrupt: Yields info output and then propagates the exception
         :raises IOError: Yields informative output and propagates exception
@@ -245,8 +245,10 @@ class CcsdsTmtcBackend(BackendBase):
 
     def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
-        if self._queue_wrapper.info is None:
-            raise NoValidProcedureSet("No procedure was set to pass to the feed callback function")
+        if self._queue_wrapper.info.procedure_type == TcProcedureType.TREE_COMMANDING:
+            procedure = ProcedureWrapper(self._queue_wrapper.info).to_tree_commanding_procedure()
+            if procedure.cmd_path is None:
+                raise NoValidProcedureSet("No command path was set in the procedure")
         self._tc_handler.feed_cb(ProcedureWrapper(self._queue_wrapper.info), feed_wrapper)
         if not feed_wrapper.dispatch_next_queue:
             return None

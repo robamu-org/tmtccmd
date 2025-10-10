@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
-from tmtccmd.com.dummy import DummyComIF
+from tmtccmd.com.dummy import DummyInterface
 from tmtccmd.core import TcMode, TmMode, BackendRequest
 from tmtccmd.core.ccsds_backend import NoValidProcedureSet
 from tmtccmd.tmtc import (
@@ -70,7 +70,7 @@ class TcHandlerMock(TcHandlerBase):
 
 class TestBackend(TestCase):
     def setUp(self) -> None:
-        self.com_if = DummyComIF()
+        self.com_if = DummyInterface()
         self.tm_listener = MagicMock(specs=CcsdsTmListener)
         self.apid = 0x06
         self.tc_handler = TcHandlerMock(self.apid)

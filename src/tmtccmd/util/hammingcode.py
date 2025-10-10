@@ -65,7 +65,7 @@ def hamming_compute_256x(data: bytearray) -> bytearray:
     """
     if len(data) % 256 != 0:
         _LOGGER.error(
-            "hamming_compute_256: Invalid input, datablock is not a multiple of " "256 bytes!"
+            "hamming_compute_256: Invalid input, datablock is not a multiple of 256 bytes!"
         )
         return bytearray()
 
@@ -82,7 +82,7 @@ def hamming_compute_256x(data: bytearray) -> bytearray:
 def hamming_verify_256x(data: bytearray, original_hamming_code: bytearray) -> HammingReturnCodes:
     if len(data) % 256 != 0:
         _LOGGER.error(
-            "hamming_compute_256: Invalid input, datablock is not a multiple of " "256 bytes!"
+            "hamming_compute_256: Invalid input, datablock is not a multiple of 256 bytes!"
         )
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != len(data) / 256 * 3:
@@ -105,9 +105,7 @@ def hamming_verify_256x(data: bytearray, original_hamming_code: bytearray) -> Ha
         if error_code == HammingReturnCodes.ERROR_SINGLE_BIT:
             # Assign corrected data
             data[current_data_idx : current_data_idx + 256] = current_data
-            _LOGGER.info(
-                "Corrected single bit error at data block starting at" f" {current_data_idx}"
-            )
+            _LOGGER.info(f"Corrected single bit error at data block starting at {current_data_idx}")
             error_code = HammingReturnCodes.ERROR_SINGLE_BIT
         elif error_code == HammingReturnCodes.ERROR_MULTI_BIT:
             _LOGGER.info(f"Detected multi-bit error at data block starting at {current_data_idx}")
@@ -131,7 +129,7 @@ def hamming_compute_256(data: bytearray) -> bytearray:  # noqa: C901
     hamming_code = bytearray(3)
     if len(data) != 256:
         _LOGGER.error(
-            "hamming_compute_256: Invalid input, data does not have " "a length of 256 bytes!"
+            "hamming_compute_256: Invalid input, data does not have a length of 256 bytes!"
         )
         return hamming_code
 
@@ -246,12 +244,12 @@ def hamming_verify_256(data: bytearray, original_hamming_code: bytearray) -> Ham
     """
     if len(data) != 256:
         _LOGGER.error(
-            "hamming_compute_256: Invalid input, data does not have " "a length of 256 bytes!"
+            "hamming_compute_256: Invalid input, data does not have a length of 256 bytes!"
         )
         return HammingReturnCodes.OTHER_ERROR
     if len(original_hamming_code) != 3:
         _LOGGER.error(
-            "hamming_compute_256: Invalid input, hamming code does not have " "a length of 3 bytes!"
+            "hamming_compute_256: Invalid input, hamming code does not have a length of 3 bytes!"
         )
         return HammingReturnCodes.OTHER_ERROR
 

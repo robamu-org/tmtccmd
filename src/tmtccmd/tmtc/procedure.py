@@ -7,13 +7,14 @@ from tmtccmd.cfdp import CfdpRequestWrapper
 
 class TcProcedureType(enum.Enum):
     TREE_COMMANDING = 0
+    # TODO: We should remove this soon.. and probably overthink the whole architecture here.
     CFDP = 1
     CUSTOM = 2
 
 
 class TcProcedureBase:
-    def __init__(self, ptype: TcProcedureType):
-        self.ptype = ptype
+    def __init__(self, procedure_type: TcProcedureType):
+        self.procedure_type = procedure_type
 
 
 class CustomProcedureInfo(TcProcedureBase):
@@ -30,7 +31,7 @@ class TreeCommandingProcedure(TcProcedureBase):
     of commands. Generally, one procedure is mapped to a specific TC queue which is packed
     during run-time"""
 
-    def __init__(self, cmd_path: Optional[str]):
+    def __init__(self, cmd_path: str | None):
         super().__init__(TcProcedureType.TREE_COMMANDING)
         self.cmd_path = cmd_path
 
@@ -70,7 +71,7 @@ class ProcedureWrapper:
     @property
     def proc_type(self):
         assert self.procedure is not None
-        return self.procedure.ptype
+        return self.procedure.procedure_type
 
     def __cast_internally(
         self,
@@ -79,8 +80,8 @@ class ProcedureWrapper:
         expected_type: TcProcedureType,
     ) -> Any:
         assert self.procedure is not None
-        if obj.ptype != expected_type:
-            raise TypeError(f"Invalid object {obj} for type {self.procedure.ptype}")
+        if obj.procedure_type != expected_type:
+            raise TypeError(f"Invalid object {obj} for type {self.procedure.procedure_type}")
         return cast(obj_type, obj)
 
     def to_tree_commanding_procedure(self) -> TreeCommandingProcedure:

@@ -1,17 +1,12 @@
-from deprecated.sphinx import deprecated
 import logging
 from typing import Optional
 from abc import abstractmethod, ABC
 
 from prompt_toolkit.history import History
-
-from tmtccmd.util.obj_id import ObjectIdDictT
-
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.core import BackendBase
 
 from .com import ComCfgBase, ComInterface
-from .tmtc import TmtcDefinitionWrapper
 from .defs import default_json_path, CORE_COM_IF_DICT, ComIfMapping
 
 
@@ -58,39 +53,3 @@ class HookBase(ABC):
         :return:
         """
         _LOGGER.warning("No custom mode operation implemented")
-
-    @deprecated(version="8.0.0", reason="application specific code")
-    def get_object_ids(self) -> ObjectIdDictT:
-        from tmtccmd.config.objects import get_base_component_id_mapping
-
-        """The user can specify an object ID dictionary here mapping object ID bytearrays to a
-        list. This list could contain containing the string representation or additional
-        information about that object ID.
-        """
-        return get_base_component_id_mapping()
-
-    @deprecated(
-        version="8.0.0rc0",
-        reason="implement and use get_command_definitions instead",
-    )
-    def get_tmtc_definitions(self) -> TmtcDefinitionWrapper:
-        """This is a dicitonary mapping services represented by strings to an operation code
-        dictionary.
-
-        :return:
-        """
-        from tmtccmd.config.globals import get_default_tmtc_defs
-
-        return get_default_tmtc_defs()
-
-    @deprecated(
-        version="8.0.0rc0",
-        reason="implement and use get_communication_interface instead",
-    )
-    def assign_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
-        """Assign the communication interface used by the TMTC commander to send and receive
-        TMTC with.
-
-        :param com_if_key:      String key of the communication interface to be created.
-        """
-        return self.get_communication_interface(com_if_key)
