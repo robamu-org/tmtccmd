@@ -5,7 +5,7 @@ from datetime import timedelta
 from unittest.mock import MagicMock, ANY
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd.com import ComInterface
+from com_interface import ComInterface
 from tmtccmd.tmtc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
 from tmtccmd.tmtc.handler import TcHandlerBase, SendCbParams
 from tmtccmd.tmtc.procedure import TreeCommandingProcedure

@@ -12,7 +12,7 @@ from typing import List, Optional, Sequence, Tuple, Union
 from prompt_toolkit.shortcuts import CompleteStyle
 from spacepackets.cfdp import TransmissionMode
 
-from tmtccmd.com import ComInterface
+from com_interface import ComInterface
 from tmtccmd.com.utils import determine_com_if
 from tmtccmd.config.prompt import prompt_cmd_path
 from tmtccmd.config.tmtc import CmdTreeNode
@@ -289,9 +289,7 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
     from tmtccmd.config import CoreModeConverter, CoreModeList
 
-    help_text = (
-        "Core Modes. Default:" f" {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
-    )
+    help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
     one_q = (
         f' - "{CoreModeList.ONE_QUEUE_MODE}" or '
         f'"{CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}": '
@@ -608,7 +606,7 @@ class PreArgsParsingWrapper:
                 and sys.argv[1] not in ["cfdp", "tmtc", "-h", "--help"]
                 or len(sys.argv) == 1
             ):
-                print("No procedure type specified, inserting 'tmtc' into passed" " arguments")
+                print("No procedure type specified, inserting 'tmtc' into passed arguments")
                 patched_args = ["tmtc"]
                 patched_args.extend(sys.argv[1:])
         if patched_args is None:
@@ -655,9 +653,7 @@ class PreArgsParsingWrapper:
         subparser = self.args_parser.add_subparsers(dest="proc_type")
         tmtc_parser = subparser.add_parser(
             "tmtc",
-            help=(
-                "Default TMTC Procedure Mode.\nDefault if no positional argument is" " specified"
-            ),
+            help=("Default TMTC Procedure Mode.\nDefault if no positional argument is specified"),
             description=(
                 "Default TMTC Procedure Mode using a Service and Operation "
                 "Code Command Tuple to dispatch commands"
@@ -720,7 +716,7 @@ class PostArgsParsingWrapper:
                 return TcProcedureType.CFDP
             else:
                 raise ValueError(
-                    'Procedure type argument destination unknown, should be "tmtc" or' ' "cfdp"'
+                    'Procedure type argument destination unknown, should be "tmtc" or "cfdp"'
                 )
         else:
             return TcProcedureType.TREE_COMMANDING

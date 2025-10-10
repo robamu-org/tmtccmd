@@ -236,7 +236,7 @@ def deserialize_scalar_entry(ptc: int, pfc: int, param_data: bytes) -> Union[int
                 raise ValueError(f"{__BASE_LEN_ERR} 8")
             return struct.unpack("!d", param_data[0:8])[0]
     raise NotImplementedError(
-        f"Parsing of real (floating point) PTC {ptc} not implemented " f"for PFC {pfc}"
+        f"Parsing of real (floating point) PTC {ptc} not implemented for PFC {pfc}"
     )
 
 

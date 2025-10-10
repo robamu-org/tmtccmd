@@ -72,7 +72,7 @@ To run the tests, install the test requirements first with the following command
 a virtual environment:
 
 ```sh
-pip install .[test]
+uv pip install .[test]
 ```
 
 All tests are provided in the `src/test` folder and can be run with coverage information
@@ -85,7 +85,7 @@ coverage run -m pytest
 provided that `pytest` and `coverage` were installed with
 
 ```sh
-pip install coverage pytest
+uv pip install coverage pytest
 ```
 
 ## <a id="install"></a> Installation
@@ -97,7 +97,7 @@ To install the full version with GUI support, run the following command to insta
 source code
 
 ```sh
-pip install .[gui]
+uv pip install .[gui]
 ```
 
 You can omit `[gui]` for a CLI only installation. Alternatively you can also install the package
@@ -110,7 +110,7 @@ The documentation is built with Sphinx
 Install the required dependencies first:
 
 ```sh
-pip install -r docs/requirements.txt
+uv pip install -r docs/requirements.txt
 ```
 
 Then the documentation can be built with

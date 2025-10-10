@@ -11,6 +11,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 - Bumped `spacepackets` to ~=0.31.0 and `cfdp-py` to ~=0.6.0
 
+## Removed
+
+- Various deprecated modules.
+- Move to `com-interface` generic library
+
 # [v8.2.0] 2025-02-10
 
 - Added back `Service3FsfwHkPacket` and `Service8FsfwDataReply` helper classes to parse some
@@ -654,3 +659,7 @@ It is also possible to apply the library log format to an application logger usi
 
 - Applied consistent formatting with `black` tool
 - Some bugfixes for PUS packet stack
+
+[unreleased]: https://github.com/robamu-org/tmtccmd/compare/v9.0.0...HEAD
+[v9.0.0]: https://github.com/robamu-org/tmtccmd/compare/v8.2.0...v9.0.0
+[v8.2.0]: https://github.com/robamu-org/tmtccmd/tag/v8.2.0

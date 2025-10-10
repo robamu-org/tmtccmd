@@ -15,7 +15,7 @@ from importlib.metadata import version
 # -- Project information -----------------------------------------------------
 
 project = "tmtccmd"
-copyright = "2021-2024, Robin Mueller"
+copyright = "2021-2025, Robin Mueller"
 author = "Robin Mueller"
 
 # The full version, including alpha/beta/rc tags
@@ -67,6 +67,7 @@ intersphinx_mapping = {
     "serial": ("https://pyserial.readthedocs.io/en/latest/", None),
     "cfdp-py": ("https://cfdp-py.readthedocs.io/en/latest/", None),
     "spacepackets": ("https://spacepackets.readthedocs.io/en/latest/", None),
+    "com-interface": ("https://com-interface.readthedocs.io/en/latest/", None),
     "prompt-toolkit": ("https://python-prompt-toolkit.readthedocs.io/en/latest/", None),
 }
 

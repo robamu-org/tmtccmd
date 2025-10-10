@@ -1,4 +1,5 @@
 from collections import deque
+from typing import Any
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -9,7 +10,7 @@ from tmtccmd.tmtc import (
     CcsdsTmHandler,
     GenericApidHandlerBase,
 )
-from tmtccmd.com import ComInterface
+from com_interface import ComInterface
 from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 
 
@@ -20,7 +21,7 @@ class ApidHandler(SpecificApidHandlerBase):
         self.called_times = 0
         self.packet_queue = deque()
 
-    def handle_tm(self, packet: bytes, user_args: any):
+    def handle_tm(self, packet: bytes, user_args: Any):
         if not self.was_called:
             self.was_called = True
         self.called_times += 1

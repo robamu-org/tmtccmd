@@ -46,8 +46,7 @@ from .defs import (
     default_json_path,
 )
 from .hook import HookBase
-from .prompt import prompt_op_code, prompt_service
-from .tmtc import CmdTreeNode, OpCodeEntry, OpCodeOptionBase, TmtcDefinitionWrapper
+from .tmtc import CmdTreeNode
 
 
 def backend_mode_conversion(mode: str, mode_wrapper: ModeWrapper):
