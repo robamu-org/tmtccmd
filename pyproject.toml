@@ -36,8 +36,8 @@ dependencies = [
     "Deprecated~=1.2",
     "pyserial~=3.5",
     "dle-encoder~=0.2.3",
-    "spacepackets~=0.28.0",
-    "cfdp-py~=0.5.1",
+    "spacepackets~=0.31.0",
+    "cfdp-py~=0.6.0",
 ]
 
 [project.optional-dependencies]
