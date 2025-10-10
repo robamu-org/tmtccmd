@@ -9,6 +9,8 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 # [unreleased]
 
+- Bumped `spacepackets` to ~=0.31.0 and `cfdp-py` to ~=0.6.0
+
 # [v8.2.0] 2025-02-10
 
 - Added back `Service3FsfwHkPacket` and `Service8FsfwDataReply` helper classes to parse some

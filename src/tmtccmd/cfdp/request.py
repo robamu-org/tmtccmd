@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import cast
 
 from cfdppy.defs import CfdpRequestType
 from tmtccmd.config.defs import CfdpParams
@@ -19,7 +19,7 @@ class PutRequestCfgWrapper(CfdpRequestBase):
 
 
 class CfdpRequestWrapper:
-    def __init__(self, base: Optional[CfdpRequestBase]):
+    def __init__(self, base: CfdpRequestBase):
         self.base = base
 
     @property

@@ -10,7 +10,7 @@ from spacepackets import SpacePacketHeader
 from spacepackets.ccsds.spacepacket import PacketId, PacketSeqCtrl
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.pus_5_event import Subservice
-from spacepackets.ecss.tm import CdsShortTimestamp, AbstractPusTm, PusTelemetry
+from spacepackets.ecss.tm import CdsShortTimestamp, AbstractPusTm, MiscParams, PusTelemetry, PusTm
 from tmtccmd.pus.s5_fsfw_event_defs import Severity
 
 
@@ -28,7 +28,7 @@ class EventDefinition:
         raw.extend(self.reporter_id)
         raw.extend(struct.pack("!I", self.param1))
         raw.extend(struct.pack("!I", self.param2))
-        return raw
+        return bytes(raw)
 
     @classmethod
     def empty(cls) -> EventDefinition:
@@ -53,24 +53,22 @@ class Service5Tm(AbstractPusTm):
         event: EventDefinition,
         timestamp: bytes,
         ssc: int = 0,
-        packet_version: int = 0b000,
-        space_time_ref: int = 0b0000,
         destination_id: int = 0,
+        misc_params: MiscParams | None = None
     ):
         """Create a FSFW tailored Event Service 5 telemetry instance.
         Use the unpack function to create an instance from a raw bytestream instead.
         :raises ValueError: Invalid input arguments
         """
-        self.pus_tm = PusTelemetry(
+        self.pus_tm = PusTm(
             service=PusService.S5_EVENT,
             subservice=subservice,
             timestamp=timestamp,
             seq_count=ssc,
             source_data=event.pack(),
             apid=apid,
-            packet_version=packet_version,
-            space_time_ref=space_time_ref,
             destination_id=destination_id,
+            misc_params=misc_params,
         )
 
     @property
@@ -124,7 +122,7 @@ class Service5Tm(AbstractPusTm):
         return instance
 
     @classmethod
-    def unpack(cls, data: bytes, timestamp_len: int) -> Service5Tm:
+    def unpack(cls, data: bytes | bytearray, timestamp_len: int) -> Service5Tm:
         instance = cls.__empty()
         instance.pus_tm = PusTelemetry.unpack(data=data, timestamp_len=timestamp_len)
         return instance
