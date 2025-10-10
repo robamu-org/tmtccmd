@@ -10,8 +10,8 @@ from tmtccmd import CoreModeConverter, CoreModeList
 from tmtccmd.config import CfdpParams
 from tmtccmd.config.args import (
     CommandingParams,
-    TreeCommandingParams,
     SetupParams,
+    TreeCommandingParams,
     args_to_all_params_tmtc,
     cfdp_args_to_cfdp_params,
     perform_tree_printout,

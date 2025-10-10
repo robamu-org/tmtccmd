@@ -1,9 +1,9 @@
 import json
 import logging
 
-from tmtccmd.util.conf_util import wrapped_prompt
-from tmtccmd.util.json import check_json_file, JsonKeyNames
 from tmtccmd.config.defs import ComIfDictT, CoreComInterfaces
+from tmtccmd.util.conf_util import wrapped_prompt
+from tmtccmd.util.json import JsonKeyNames, check_json_file
 
 
 def determine_com_if(com_if_dict: ComIfDictT, json_cfg_path: str, use_prompts: bool) -> str:
@@ -12,7 +12,7 @@ def determine_com_if(com_if_dict: ComIfDictT, json_cfg_path: str, use_prompts: b
     if not check_json_file(json_cfg_path):
         do_prompt_com_if = True
     if not do_prompt_com_if:
-        with open(json_cfg_path, "r") as read:
+        with open(json_cfg_path) as read:
             com_if_string = ""
             try:
                 load_data = json.load(read)

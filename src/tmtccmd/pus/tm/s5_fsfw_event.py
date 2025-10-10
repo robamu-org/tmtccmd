@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Contains classes and functions to deserialize PUS Service 5 Telemetry"""
 
 from __future__ import annotations
@@ -10,7 +9,8 @@ from spacepackets import SpacePacketHeader
 from spacepackets.ccsds.spacepacket import PacketId, PacketSeqCtrl
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.pus_5_event import Subservice
-from spacepackets.ecss.tm import CdsShortTimestamp, AbstractPusTm, MiscParams, PusTelemetry, PusTm
+from spacepackets.ecss.tm import AbstractPusTm, CdsShortTimestamp, MiscParams, PusTelemetry, PusTm
+
 from tmtccmd.pus.s5_fsfw_event_defs import Severity
 
 

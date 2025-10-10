@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Mapping, Union, Optional
+from collections.abc import Mapping
 
 from spacepackets.util import UnsignedByteField
 
@@ -8,7 +8,7 @@ from spacepackets.util import UnsignedByteField
 class ComponentIdBase(UnsignedByteField):
     """Base class for unsigned object IDs with different byte sizes"""
 
-    def __init__(self, obj_id: int, byte_len: int, name: Optional[str] = None):
+    def __init__(self, obj_id: int, byte_len: int, name: str | None = None):
         super().__init__(val=obj_id, byte_len=byte_len)
         if name is None:
             self.name = "Unknown"
@@ -35,7 +35,7 @@ class ComponentIdBase(UnsignedByteField):
         return self.value
 
     @obj_id.setter
-    def obj_id(self, obj_id: Union[int, bytes]):
+    def obj_id(self, obj_id: int | bytes):
         """This setter function takes a raw byte stream to deserialize an object ID, or the ID
         as an integer.
 
@@ -61,7 +61,7 @@ class ComponentIdU32(ComponentIdBase):
     '0x0000002a'
     """
 
-    def __init__(self, obj_id: int, name: Optional[str] = None):
+    def __init__(self, obj_id: int, name: str | None = None):
         super().__init__(obj_id, 4, name)
 
     def __repr__(self):
@@ -79,7 +79,7 @@ class ComponentIdU16(ComponentIdBase):
     16-bit representation.
     """
 
-    def __init__(self, obj_id: int, name: Optional[str] = None):
+    def __init__(self, obj_id: int, name: str | None = None):
         super().__init__(obj_id, 2, name)
 
     def __repr__(self):
@@ -97,7 +97,7 @@ class ComponentIdU8(ComponentIdBase):
     8-bit representation.
     """
 
-    def __init__(self, obj_id: int, name: Optional[str] = None):
+    def __init__(self, obj_id: int, name: str | None = None):
         super().__init__(obj_id, 1, name)
 
     def __repr__(self):

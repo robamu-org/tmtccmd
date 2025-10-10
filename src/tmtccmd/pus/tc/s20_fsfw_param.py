@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import struct
-from typing import Optional
 
 from deprecated.sphinx import deprecated
 from spacepackets.ecss import PusService
@@ -63,7 +62,7 @@ def create_load_param_cmd_from_raw(parameter_raw: bytes, apid: int = 0) -> PusTe
 )
 def pack_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
-) -> Optional[bytearray]:
+) -> bytearray | None:
     return pack_scalar_boolean_parameter_app_data(object_id, domain_id, unique_id, parameter)
 
 
@@ -73,7 +72,7 @@ def pack_boolean_parameter_app_data(
 )
 def pack_scalar_boolean_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: bool
-) -> Optional[bytearray]:
+) -> bytearray | None:
     """Tailored towards FSFW applications.
 
     :param object_id:
@@ -91,7 +90,7 @@ def pack_scalar_boolean_parameter_app_data(
 )
 def pack_scalar_u8_parameter_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: int
-) -> Optional[bytearray]:
+) -> bytearray | None:
     """Tailored towards FSFW applications.
 
     :param object_id:
@@ -120,7 +119,7 @@ def pack_scalar_u8_parameter_app_data(
 )
 def pack_scalar_double_param_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
-) -> Optional[bytearray]:
+) -> bytearray | None:
     data_to_pack = prepare_param_packet_header(
         object_id=object_id,
         domain_id=domain_id,
@@ -141,7 +140,7 @@ def pack_scalar_double_param_app_data(
 )
 def pack_scalar_float_param_app_data(
     object_id: bytes, domain_id: int, unique_id: int, parameter: float
-) -> Optional[bytearray]:
+) -> bytearray | None:
     data_to_pack = prepare_param_packet_header(
         object_id=object_id,
         domain_id=domain_id,
@@ -169,7 +168,7 @@ def prepare_param_packet_header(
     rows: int,
     columns: int,
     start_at_idx: int = 0,
-) -> Optional[bytearray]:
+) -> bytearray | None:
     parameter_id = bytearray(4)
     parameter_id[0] = domain_id
     if unique_id > 255:

@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import logging
 import time
-from typing import Optional, Any
+from typing import Any
 
-from PyQt6.QtCore import QRunnable, pyqtSlot, QObject, pyqtSignal
+from PyQt6.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
+
 from tmtccmd.config.hook import HookBase
-
-from tmtccmd.core import TmMode, TcMode, BackendRequest
+from tmtccmd.core import BackendRequest, TcMode, TmMode
 from tmtccmd.gui.defs import LocalArgs, SharedArgs, WorkerOperationsCode
 from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 
@@ -94,7 +95,7 @@ class FrontendWorker(QRunnable):
             self._shared.backend.tm_mode = TmMode.LISTENER
         return True
 
-    def __one_queue_mode_cycle(self) -> Optional[bool]:
+    def __one_queue_mode_cycle(self) -> bool | None:
         self._shared.tc_lock.acquire()
         self._shared.backend.tc_operation()
         self._update_backend_mode()
@@ -115,7 +116,7 @@ class FrontendWorker(QRunnable):
         elif state.request == BackendRequest.CALL_NEXT:
             self._shared.tc_lock.release()
 
-    def __listener_cycle(self) -> Optional[bool]:
+    def __listener_cycle(self) -> bool | None:
         if self._stop_signal or self._abort_signal:
             self._shared.com_if_ref_tracker.remove_user()
             if not self._abort_signal:

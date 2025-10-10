@@ -1,15 +1,15 @@
 import json
 import logging
-from typing import TextIO, Tuple
+from typing import TextIO
 
 import serial
 import serial.tools.list_ports
+
 from tmtccmd.util.json import (
-    check_json_file,
     JsonKeyNames,
+    check_json_file,
     save_to_json_with_prompt,
 )
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def determine_baud_rate(json_cfg_path: str) -> int:
         prompt_baud_rate = True
 
     if not prompt_baud_rate:
-        with open(json_cfg_path, "r") as read:
+        with open(json_cfg_path) as read:
             try:
                 load_data = json.load(read)
                 baud_rate = load_data[JsonKeyNames.SERIAL_BAUDRATE.value]
@@ -102,7 +102,7 @@ def __det_com_port_with_json_file(
     return com_port
 
 
-def __try_com_port_load(json_obj) -> Tuple[bool, str]:
+def __try_com_port_load(json_obj) -> tuple[bool, str]:
     try_hint = False
     com_port = ""
     try:
@@ -113,7 +113,7 @@ def __try_com_port_load(json_obj) -> Tuple[bool, str]:
     return try_hint, com_port
 
 
-def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -> Tuple[bool, str]:
+def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -> tuple[bool, str]:
     reconfig_hint = False
     try:
         hint = json_obj[JsonKeyNames.SERIAL_HINT.value]
@@ -123,22 +123,21 @@ def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -
     com_port_found, com_port = find_com_port_from_hint(hint=hint)
     if com_port_found:
         _LOGGER.info(f"Found {com_port} based on hint {hint}")
-        if reconfig_hint:
-            if save_to_json_with_prompt(
-                key=JsonKeyNames.SERIAL_PORT.value,
-                value=com_port,
-                name="serial port",
-                json_cfg_path=json_cfg_path,
-                json_obj=json_obj,
-            ):
-                reconfig_com_port = False
+        if reconfig_hint and save_to_json_with_prompt(
+            key=JsonKeyNames.SERIAL_PORT.value,
+            value=com_port,
+            name="serial port",
+            json_cfg_path=json_cfg_path,
+            json_obj=json_obj,
+        ):
+            reconfig_com_port = False
     else:
         _LOGGER.info("No serial port found based on hint..")
         reconfig_com_port = True
     return reconfig_com_port, com_port
 
 
-def __prompt_hint_handling(json_obj) -> Tuple[bool, str]:
+def __prompt_hint_handling(json_obj) -> tuple[bool, str]:
     reconfig_hint = False
     hint = ""
     ports = serial.tools.list_ports.comports()
@@ -150,7 +149,7 @@ def __prompt_hint_handling(json_obj) -> Tuple[bool, str]:
         while True:
             _LOGGER.info("Found serial devices:")
             for port, desc, hwid in sorted(ports):
-                print("{}: {} [{}]".format(port, desc, hwid))
+                print(f"{port}: {desc} [{hwid}]")
             hint = input("Specify hint: ")
             save_to_json = input(
                 "Do you want to store the hint to the configuration file (y) or "
@@ -165,13 +164,13 @@ def __prompt_hint_handling(json_obj) -> Tuple[bool, str]:
     return reconfig_hint, hint
 
 
-def find_com_port_from_hint(hint: str) -> Tuple[bool, str]:
+def find_com_port_from_hint(hint: str) -> tuple[bool, str]:
     """Find a COM port based on a hint string"""
     if hint == "":
         _LOGGER.warning("Invalid hint, is empty..")
         return False, ""
     ports = serial.tools.list_ports.comports()
-    for port, desc, hwid in sorted(ports):
+    for port, desc, _hwid in sorted(ports):
         if hint in desc:
             return True, port
     return False, ""
@@ -186,7 +185,7 @@ def prompt_com_port() -> str:
         if com_port == "h":
             ports = serial.tools.list_ports.comports()
             for port, desc, hwid in sorted(ports):
-                print("{}: {} [{}]".format(port, desc, hwid))
+                print(f"{port}: {desc} [{hwid}]")
         else:
             if not check_port_validity(com_port):
                 print("Serial port not in list of available serial ports. Try again? ([Y]/n)")
@@ -203,8 +202,6 @@ def prompt_com_port() -> str:
 def check_port_validity(com_port_to_check: str) -> bool:
     port_list = []
     ports = serial.tools.list_ports.comports()
-    for port, desc, hwid in sorted(ports):
+    for port, _desc, _hwid in sorted(ports):
         port_list.append(port)
-    if com_port_to_check not in port_list:
-        return False
-    return True
+    return com_port_to_check in port_list

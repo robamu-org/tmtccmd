@@ -6,19 +6,19 @@ Content:
 * :py:class:`tmtccmd.pus.VerificationWrapper` helper class
 """
 
+import logging
 from enum import IntEnum
 from typing import Optional
 
+import spacepackets.ecss.pus_1_verification as pus_1
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import RequestId
-import spacepackets.ecss.pus_1_verification as pus_1
 from spacepackets.ecss.pus_verificator import (
-    VerificationStatus,
-    StatusField,
     PusVerificator,
+    StatusField,
     TmCheckResult,
+    VerificationStatus,
 )
-import logging
 
 from tmtccmd.util.conf_util import AnsiColors
 

@@ -1,4 +1,3 @@
-from typing import Tuple, List
 import enum
 
 from tmtccmd.util.obj_id import ObjectIdU32
@@ -49,7 +48,7 @@ class Service3Base:
         self._custom_hk_handling = has_custom_hk_handling
 
     @property
-    def hk_definitions_list(self) -> Tuple[List, List]:
+    def hk_definitions_list(self) -> tuple[list, list]:
         """Can be implemented by a child class to print definitions lists. The first list
         should contain a header with parameter names, and the second list shall contain the
         corresponding set IDs"""

@@ -1,6 +1,6 @@
+import warnings
 from threading import Lock
 from typing import Optional
-import warnings
 
 warnings.warn("the globals_manager module is deprecated", DeprecationWarning, stacklevel=2)
 

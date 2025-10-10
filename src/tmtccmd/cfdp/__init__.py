@@ -2,5 +2,6 @@
 to convert CLI or GUI parameters into the internalized CFDP classes. You can find all those
 helpers inside the :py:mod:`tmtccmd.config.cfdp` module."""
 
-from .request import CfdpRequestWrapper
 from spacepackets.cfdp import TransactionId
+
+from .request import CfdpRequestWrapper

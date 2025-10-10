@@ -1,11 +1,12 @@
 import enum
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Tuple, Mapping, Union, Optional
+from typing import Any, Optional, Union
 
 from spacepackets.cfdp import TransmissionMode
 
 # Com Interface Types
-ComIfValue = Tuple[str, Any]
+ComIfValue = tuple[str, Any]
 ComIfMapping = Mapping[str, ComIfValue]
 ComIfDictT = ComIfMapping
 

@@ -1,14 +1,14 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import Optional
-from abc import abstractmethod, ABC
 
 from prompt_toolkit.history import History
+
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.core import BackendBase
 
 from .com import ComCfgBase, ComInterface
-from .defs import default_json_path, CORE_COM_IF_DICT, ComIfMapping
-
+from .defs import CORE_COM_IF_DICT, ComIfMapping, default_json_path
 
 _LOGGER = logging.getLogger(__name__)
 

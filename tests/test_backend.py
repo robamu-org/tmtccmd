@@ -4,14 +4,15 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
-from tmtccmd import CcsdsTmtcBackend, CcsdsTmListener, TcHandlerBase
+
+from tmtccmd import CcsdsTmListener, CcsdsTmtcBackend, TcHandlerBase
 from tmtccmd.com.dummy import DummyInterface
-from tmtccmd.core import TcMode, TmMode, BackendRequest
-from tmtccmd.core.ccsds_backend import NoValidProcedureSet
+from tmtccmd.core import BackendRequest, TcMode, TmMode
+from tmtccmd.core.ccsds_backend import NoValidProcedureSetError
 from tmtccmd.tmtc import (
+    ProcedureWrapper,
     TcProcedureBase,
     TcProcedureType,
-    ProcedureWrapper,
 )
 from tmtccmd.tmtc.handler import FeedWrapper, SendCbParams
 from tmtccmd.tmtc.procedure import TreeCommandingProcedure
@@ -48,24 +49,23 @@ class TcHandlerMock(TcHandlerBase):
         self.feed_cb_call_count += 1
         self.send_cb_cmd_path_arg = None
         self.send_cb_op_code_arg = None
-        if info is not None:
-            if info.proc_type == TcProcedureType.TREE_COMMANDING:
-                self.feed_cb_def_proc_count += 1
-                def_info = info.to_tree_commanding_procedure()
-                if def_info.cmd_path != "/ping":
-                    self.is_feed_cb_valid = False
-                self.send_cb_cmd_path_arg = def_info.cmd_path
-                if def_info.cmd_path == "/ping":
-                    self.queue_helper.add_pus_tc(
-                        PusTelecommand(apid=self.apid, service=17, subservice=1)
-                    )
-                elif def_info.cmd_path == "/event":
-                    self.queue_helper.add_pus_tc(
-                        PusTelecommand(apid=self.apid, service=17, subservice=1)
-                    )
-                    self.queue_helper.add_pus_tc(
-                        PusTelecommand(apid=self.apid, service=5, subservice=1)
-                    )
+        if info is not None and  info.proc_type == TcProcedureType.TREE_COMMANDING:
+            self.feed_cb_def_proc_count += 1
+            def_info = info.to_tree_commanding_procedure()
+            if def_info.cmd_path != "/ping":
+                self.is_feed_cb_valid = False
+            self.send_cb_cmd_path_arg = def_info.cmd_path
+            if def_info.cmd_path == "/ping":
+                self.queue_helper.add_pus_tc(
+                    PusTelecommand(apid=self.apid, service=17, subservice=1)
+                )
+            elif def_info.cmd_path == "/event":
+                self.queue_helper.add_pus_tc(
+                    PusTelecommand(apid=self.apid, service=17, subservice=1)
+                )
+                self.queue_helper.add_pus_tc(
+                    PusTelecommand(apid=self.apid, service=5, subservice=1)
+                )
 
 
 class TestBackend(TestCase):
@@ -116,7 +116,7 @@ class TestBackend(TestCase):
         self.assertEqual(res.request, BackendRequest.DELAY_LISTENER)
         self.backend.tm_mode = TmMode.IDLE
         self.backend.tc_mode = TcMode.ONE_QUEUE
-        with self.assertRaises(NoValidProcedureSet):
+        with self.assertRaises(NoValidProcedureSetError):
             self.backend.periodic_op()
         self.backend.current_procedure = TreeCommandingProcedure(cmd_path="/ping")
 
@@ -186,6 +186,7 @@ class TestBackend(TestCase):
         self.assertEqual(def_proc.cmd_path, "/ping")
 
     def _check_tc_req_recvd(self, service: int, subservice: int):
+        assert self.tc_handler.send_cb_call_args is not None
         self.assertEqual(self.tc_handler.send_cb_call_args.com_if, self.com_if)
         cast_wrapper = self.tc_handler.send_cb_call_args.entry
         pus_entry = cast_wrapper.to_pus_tc_entry()

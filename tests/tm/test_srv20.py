@@ -1,12 +1,13 @@
 from unittest import TestCase
 
 from spacepackets.ecss import PusService
+
+from tmtccmd.pus.s20_fsfw_param import Service20FsfwTm, Service20ParamDumpWrapper
 from tmtccmd.pus.s20_fsfw_param_defs import (
-    create_scalar_boolean_parameter,
     CustomSubservice,
     Parameter,
+    create_scalar_boolean_parameter,
 )
-from tmtccmd.pus.s20_fsfw_param import Service20FsfwTm, Service20ParamDumpWrapper
 
 
 class TestSrv20Tm(TestCase):
@@ -17,12 +18,12 @@ class TestSrv20Tm(TestCase):
         )
         self.tm = Service20FsfwTm(
             subservice=CustomSubservice.TM_DUMP_REPLY,
-            timestamp=bytes(),
+            timestamp=b"",
             source_data=self.boolean_param.pack(),
         )
 
     def test_state(self):
-        self.assertEqual(self.tm.timestamp, bytes())
+        self.assertEqual(self.tm.timestamp, b"")
         self.assertEqual(self.tm.service, PusService.S20_PARAMETER)
         self.assertEqual(self.tm.subservice, CustomSubservice.TM_DUMP_REPLY)
         self.assertEqual(self.tm.source_data, self.boolean_param.pack())

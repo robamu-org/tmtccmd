@@ -1,22 +1,23 @@
 import struct
 from unittest import TestCase
 
-from spacepackets.ecss import Ptc, PfcUnsigned, PfcSigned, PfcReal
+from spacepackets.ecss import PfcReal, PfcSigned, PfcUnsigned, Ptc
+
 from tmtccmd.pus.s20_fsfw_param_defs import (
+    create_matrix_double_parameter,
+    create_matrix_float_parameter,
     create_scalar_boolean_parameter,
-    parse_scalar_param,
     create_scalar_double_parameter,
     create_scalar_float_parameter,
     create_scalar_i8_parameter,
     create_scalar_i16_parameter,
     create_scalar_i32_parameter,
+    create_scalar_u8_parameter,
     create_scalar_u16_parameter,
     create_scalar_u32_parameter,
-    create_scalar_u8_parameter,
-    create_vector_float_parameter,
     create_vector_double_parameter,
-    create_matrix_float_parameter,
-    create_matrix_double_parameter,
+    create_vector_float_parameter,
+    parse_scalar_param,
 )
 
 

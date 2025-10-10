@@ -1,5 +1,5 @@
-from typing import List
 from collections import deque
+
 from PyQt6.QtCore import QModelIndex, pyqtSignal
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
@@ -136,7 +136,7 @@ class CommandPathSelectWidget(QWidget):
     def _select_path_clicked(self):
         self._select_path_clicked_by_index(self.tree_view.selectedIndexes())
 
-    def _select_path_clicked_by_index(self, selected_indexes: List[QModelIndex]):
+    def _select_path_clicked_by_index(self, selected_indexes: list[QModelIndex]):
         if selected_indexes:
             index = selected_indexes[0]  # Get the first selected index
             item = self.tree_model.itemFromIndex(index)

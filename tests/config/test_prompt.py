@@ -1,9 +1,10 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 from prompt_toolkit.history import InMemoryHistory
+
 from tmtccmd.config.prompt import prompt_cmd_path
 from tmtccmd.config.tmtc import CmdTreeNode
-from unittest.mock import MagicMock, patch
 
 
 class TestPromptFunc(TestCase):
@@ -62,15 +63,14 @@ class TestPromptFunc(TestCase):
         with patch(
             "tmtccmd.config.prompt.prompt_toolkit.prompt",
             side_effect=["acss", "acs"],
-        ) as prompt_mock:
-            with patch(
-                "tmtccmd.config.prompt.input",
-                return_value="yes",
-            ) as input_mock:
-                cmd_path = prompt_cmd_path(self.cmd_tree)
-                self.assertEqual(cmd_path, "/acs")
-                self.assertEqual(len(prompt_mock.call_args_list), 2)
-                self.assertEqual(len(input_mock.call_args_list), 1)
+        ) as prompt_mock, patch(
+            "tmtccmd.config.prompt.input",
+            return_value="yes",
+        ) as input_mock:
+            cmd_path = prompt_cmd_path(self.cmd_tree)
+            self.assertEqual(cmd_path, "/acs")
+            self.assertEqual(len(prompt_mock.call_args_list), 2)
+            self.assertEqual(len(input_mock.call_args_list), 1)
 
     @patch("builtins.print")
     def test_prompt_help_reprint(self, mocked_print: MagicMock):

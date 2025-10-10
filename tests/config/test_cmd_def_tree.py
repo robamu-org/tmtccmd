@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 from unittest import TestCase
+
 from tmtccmd.config.tmtc import CmdTreeNode
 
 

@@ -1,14 +1,14 @@
 from __future__ import annotations
+
+import enum
 import json
 import logging
 import socket
 import struct
-import enum
 from dataclasses import dataclass
 from enum import auto
-from typing import Tuple
 
-from tmtccmd.util.json import check_json_file, JsonKeyNames
+from tmtccmd.util.json import JsonKeyNames, check_json_file
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_MAX_RECV_SIZE = 1500
@@ -20,11 +20,11 @@ class EthAddr:
     port: int
 
     @property
-    def to_tuple(self) -> Tuple[str, int]:
+    def to_tuple(self) -> tuple[str, int]:
         return self.ip_addr, self.port
 
     @classmethod
-    def from_tuple(cls, addr: Tuple[str, int]) -> EthAddr:
+    def from_tuple(cls, addr: tuple[str, int]) -> EthAddr:
         return cls(addr[0], addr[1])
 
 
@@ -77,7 +77,7 @@ def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAdd
         json_key_port = JsonKeyNames.TCPIP_UDP_DEST_PORT.value
         info_string = "UDP destination"
 
-    with open(json_cfg_path, "r") as write:
+    with open(json_cfg_path) as write:
         load_data = json.load(write)
         if json_key_address not in load_data or json_key_port not in load_data:
             reconfigure_ip_address = True
@@ -122,7 +122,7 @@ def prompt_ip_address(type_str: str) -> EthAddr:
         if check_ip:
             try:
                 socket.inet_aton(str(ip_address))
-            except socket.error:
+            except OSError:
                 _LOGGER.warning("Invalid IP address format!")
                 continue
 
@@ -151,7 +151,7 @@ def determine_recv_buffer_len(json_cfg_path: str, tcpip_type: TcpIpType):
 
     if not check_json_file(json_cfg_path=json_cfg_path):
         reconfigure_recv_buf_size = True
-    with open(json_cfg_path, "r") as write:
+    with open(json_cfg_path) as write:
         load_data = json.load(write)
         if json_key not in load_data:
             reconfigure_recv_buf_size = True
@@ -170,10 +170,7 @@ def determine_recv_buffer_len(json_cfg_path: str, tcpip_type: TcpIpType):
 
 
 def prompt_recv_buffer_len(tcpip_type: TcpIpType) -> int:
-    if tcpip_type == TcpIpType.UDP:
-        type_str = "UDP"
-    else:
-        type_str = "TCP"
+    type_str = "UDP" if tcpip_type == TcpIpType.UDP else "TCP"
     while True:
         recv_max_size = input(
             f"Please enter maximum receive size for {type_str} packets [1500 default]: "

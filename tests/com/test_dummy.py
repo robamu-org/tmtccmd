@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from spacepackets.ecss import PusTelecommand
+
 from tmtccmd.com.dummy import DummyInterface
 
 

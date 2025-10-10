@@ -1,8 +1,9 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 
 from com_interface import ComInterface
+
 from tmtccmd.tmtc.procedure import ProcedureWrapper
-from tmtccmd.tmtc.queue import QueueWrapper, QueueEntryHelper
+from tmtccmd.tmtc.queue import QueueEntryHelper, QueueWrapper
 
 
 class FeedWrapper:
@@ -46,9 +47,6 @@ class TcHandlerBase(ABC):
     send-callback. It also provides telecommand queues by providing the :py:meth:`feed_cb` queue
     feeder callback.
     """
-
-    def __init__(self):
-        pass
 
     @abstractmethod
     def send_cb(self, send_params: SendCbParams):

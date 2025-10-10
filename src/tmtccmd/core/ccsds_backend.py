@@ -4,23 +4,24 @@ import sys
 from datetime import timedelta
 from typing import Any, Optional
 
-from tmtccmd.core.backend_base import BackendBase
-from tmtccmd.core.backend_state import BackendState
-from tmtccmd.core.base import TcMode, TmMode, BackendRequest
-from tmtccmd.tmtc import TcProcedureBase, ProcedureWrapper
-from tmtccmd.tmtc.handler import TcHandlerBase, FeedWrapper
-from tmtccmd.tmtc.procedure import TcProcedureType
-from tmtccmd.util.exit import keyboard_interrupt_handler
-from tmtccmd.tmtc.queue import QueueWrapper
-from tmtccmd.tmtc.ccsds_seq_sender import (
-    SequentialCcsdsSender,
-    SenderMode,
-)
-from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 from com_interface import ComInterface
 
+from tmtccmd.core.backend_base import BackendBase
+from tmtccmd.core.backend_state import BackendState
+from tmtccmd.core.base import BackendRequest, TcMode, TmMode
+from tmtccmd.tmtc import ProcedureWrapper, TcProcedureBase
+from tmtccmd.tmtc.ccsds_seq_sender import (
+    SenderMode,
+    SequentialCcsdsSender,
+)
+from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
+from tmtccmd.tmtc.handler import FeedWrapper, TcHandlerBase
+from tmtccmd.tmtc.procedure import TcProcedureType
+from tmtccmd.tmtc.queue import QueueWrapper
+from tmtccmd.util.exit import keyboard_interrupt_handler
 
-class NoValidProcedureSet(Exception):
+
+class NoValidProcedureSetError(Exception):
     pass
 
 
@@ -137,7 +138,7 @@ class CcsdsTmtcBackend(BackendBase):
     def open_com_if(self):
         try:
             self._com_if.open()
-        except IOError:
+        except OSError:
             self.__listener_io_error_handler("opened")
         self._com_if_active = True
 
@@ -147,7 +148,7 @@ class CcsdsTmtcBackend(BackendBase):
         """
         try:
             self._com_if.close()
-        except IOError:
+        except OSError:
             self.__listener_io_error_handler("close")
         self._com_if_active = False
 
@@ -248,7 +249,7 @@ class CcsdsTmtcBackend(BackendBase):
         if self._queue_wrapper.info.procedure_type == TcProcedureType.TREE_COMMANDING:
             procedure = ProcedureWrapper(self._queue_wrapper.info).to_tree_commanding_procedure()
             if procedure.cmd_path is None:
-                raise NoValidProcedureSet("No command path was set in the procedure")
+                raise NoValidProcedureSetError("No command path was set in the procedure")
         self._tc_handler.feed_cb(ProcedureWrapper(self._queue_wrapper.info), feed_wrapper)
         if not feed_wrapper.dispatch_next_queue:
             return None

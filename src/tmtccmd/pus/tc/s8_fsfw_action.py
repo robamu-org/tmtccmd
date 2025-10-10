@@ -13,7 +13,7 @@ from tmtccmd.pus.s8_fsfw_action_defs import CustomSubservice
 def make_fsfw_action_cmd(
     object_id: bytes,
     action_id: int,
-    user_data: bytes = bytes(),
+    user_data: bytes = b"",
     apid: int = 0,
     seq_count: int = 0,
 ) -> PusTelecommand:
@@ -29,7 +29,7 @@ def make_fsfw_action_cmd(
 def create_action_cmd(
     object_id: bytes,
     action_id: int,
-    user_data: bytes = bytes(),
+    user_data: bytes = b"",
     apid: int = 0,
     seq_count: int = 0,
 ) -> PusTelecommand:

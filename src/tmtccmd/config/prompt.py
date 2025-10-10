@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 import logging
 import os
 import re
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import prompt_toolkit
 from prompt_toolkit.completion import (
@@ -134,7 +135,7 @@ class NestedCompleter(Completer):
 
 def prompt_cmd_path(
     cmd_def_tree: CmdTreeNode,
-    history: Optional[History] = None,
+    history: History | None = None,
     compl_style: CompleteStyle = CompleteStyle.READLINE_LIKE,
 ) -> str:
     compl_dict = cmd_def_tree.name_dict

@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.tm import PusTelemetry
+
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 
 

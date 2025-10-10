@@ -1,6 +1,7 @@
 import struct
 from unittest import TestCase
-from tmtccmd.pus.s5_fsfw_event import Service5Tm, Subservice, EventDefinition
+
+from tmtccmd.pus.s5_fsfw_event import EventDefinition, Service5Tm, Subservice
 
 
 class TestSrv5Tm(TestCase):
@@ -12,7 +13,7 @@ class TestSrv5Tm(TestCase):
             apid=self.apid,
             subservice=Subservice.TM_INFO_EVENT,
             event=self.event_def,
-            timestamp=bytes(),
+            timestamp=b"",
         )
 
     def test_basic(self):

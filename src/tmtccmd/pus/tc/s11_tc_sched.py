@@ -1,5 +1,6 @@
 from deprecated.sphinx import deprecated
-from spacepackets.ecss import PusTelecommand, PusService
+from spacepackets.ecss import PusService, PusTelecommand
+
 from tmtccmd.pus.s11_tc_sched import Subservice
 
 

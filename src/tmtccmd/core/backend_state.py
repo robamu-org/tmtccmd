@@ -1,15 +1,20 @@
+from __future__ import annotations
+
 from datetime import timedelta
 
-from .base import ModeWrapper, BackendRequest
-from tmtccmd.tmtc.ccsds_seq_sender import SeqResultWrapper, SenderMode
+from tmtccmd.tmtc.ccsds_seq_sender import SenderMode, SeqResultWrapper
+
+from .base import BackendRequest, ModeWrapper
 
 
 class BackendState:
     def __init__(
         self,
-        mode_wrapper: ModeWrapper = ModeWrapper(),
+        mode_wrapper: None | ModeWrapper = None,
         req: BackendRequest = BackendRequest.NONE,
     ):
+        if mode_wrapper is None:
+            mode_wrapper = ModeWrapper()
         self._mode_wrapper = mode_wrapper
         self._req = req
         self._recommended_delay = timedelta()

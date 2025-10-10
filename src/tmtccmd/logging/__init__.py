@@ -2,15 +2,15 @@
 @brief      This module is used to set up the global loggers
 """
 
-from tmtccmd.version import get_version
 import logging
 import os
 import sys
 from datetime import datetime
 
-from deprecated.sphinx import deprecated
 from colorlog import ColoredFormatter
+from deprecated.sphinx import deprecated
 
+from tmtccmd.version import get_version
 
 LOG_DIR = "log"
 ERROR_LOG_FILE_NAME = "tmtc_error.log"

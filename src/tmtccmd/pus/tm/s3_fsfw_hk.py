@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
 """PUS Service 3 components. FSFW specific support."""
 
 from __future__ import annotations
+
 import struct
 
 from spacepackets.ecss.tm import PusTelemetry
+
 from tmtccmd.pus.s3_fsfw_hk import Subservice
 from tmtccmd.util.obj_id import ComponentIdU32
 

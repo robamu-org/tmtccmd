@@ -1,7 +1,7 @@
+import enum
 import json
 import logging
 import os
-import enum
 from typing import Any
 
 _LOGGER = logging.getLogger(__name__)

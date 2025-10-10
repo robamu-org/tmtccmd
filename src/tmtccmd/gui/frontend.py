@@ -3,47 +3,47 @@
 """
 
 import os
-from collections import deque
 import sys
 import webbrowser
+from collections import deque
 from multiprocessing import Process
 from pathlib import Path
-from typing import Any, Tuple
+from typing import Any
 
-from PyQt6.QtWidgets import (
-    QLineEdit,
-    QMainWindow,
-    QGridLayout,
-    QWidget,
-    QLabel,
-    QCheckBox,
-    QDoubleSpinBox,
-    QFrame,
-    QComboBox,
-    QPushButton,
-    QMenu,
-)
-from PyQt6.QtGui import QPixmap, QIcon, QFont, QAction
 from PyQt6.QtCore import (
-    QTimer,
     Qt,
     QThreadPool,
+    QTimer,
+)
+from PyQt6.QtGui import QAction, QFont, QIcon, QPixmap
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMenu,
+    QPushButton,
+    QWidget,
 )
 
+import tmtccmd as mod_root
+from tmtccmd.config import HookBase
 from tmtccmd.core.base import FrontendBase
 from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-from tmtccmd.config import HookBase
 from tmtccmd.gui.buttons import (
-    ConnectButtonParams,
     ButtonArgs,
+    ConnectButtonParams,
+    ConnectButtonWrapper,
     SendButtonWrapper,
     TmButtonWrapper,
-    ConnectButtonWrapper,
 )
 from tmtccmd.gui.cmd_select import CommandPathSelectWidget
-from tmtccmd.gui.defs import SharedArgs, CONNECT_BTTN_STYLE, FrontendState
+from tmtccmd.gui.defs import CONNECT_BTTN_STYLE, FrontendState, SharedArgs
 from tmtccmd.logging import get_console_logger
-import tmtccmd as mod_root
 
 LOGO_PATH = Path(f"{Path(mod_root.__file__).parent.parent}/misc/logo-tiny.png")
 
@@ -53,7 +53,7 @@ LOGGER = get_console_logger()
 
 class TmTcFrontend(QMainWindow, FrontendBase):
     def __init__(self, hook_obj: HookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str):
-        super(TmTcFrontend, self).__init__()
+        super().__init__()
         super(QMainWindow, self).__init__()
         self._app_name = app_name
         self._shared_args = SharedArgs(tmtc_backend)
@@ -150,7 +150,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         else:
             LOGGER.warning("Could not set logo, path invalid!")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event): # noqa: N802
         try:
             pass
             if self.__tm_button_wrapper.is_listening():
@@ -220,7 +220,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
 
     def __set_up_com_if_section(
         self, conn_bttn_params: ConnectButtonParams, grid: QGridLayout, row: int
-    ) -> Tuple[int, ConnectButtonWrapper]:
+    ) -> tuple[int, ConnectButtonWrapper]:
         font = QFont()
         font.setBold(True)
         label = QLabel("Communication Interface")
@@ -228,9 +228,8 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         grid.addWidget(label, row, 0, 1, 1)
         com_if_combo_box = QComboBox()
         all_com_ifs = self._hook_obj.get_com_if_dict()
-        index = 0
         # add all possible ComIFs to the comboBox
-        for id, com_if_value in all_com_ifs.items():
+        for (index, (id, com_if_value)) in enumerate(all_com_ifs.items()):
             com_if_combo_box.addItem(com_if_value[0])
             self._com_if_list.append((id, com_if_value[0]))
             if self._shared_args.backend.com_if_id == id:

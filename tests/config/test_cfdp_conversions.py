@@ -1,15 +1,16 @@
 from pathlib import Path
 from unittest import TestCase
 
+from cfdppy.request import PutRequest
 from spacepackets.cfdp import CfdpLv
 from spacepackets.cfdp.tlv import ProxyMessageType
 from spacepackets.util import ByteFieldU8
-from cfdppy.request import PutRequest
+
 from tmtccmd.config.cfdp import (
-    cfdp_req_to_put_req_regular,
-    cfdp_req_to_put_req_get_req,
-    generic_cfdp_params_to_put_request,
     CfdpParams,
+    cfdp_req_to_put_req_get_req,
+    cfdp_req_to_put_req_regular,
+    generic_cfdp_params_to_put_request,
 )
 
 

@@ -1,5 +1,4 @@
 import warnings
-
 from abc import abstractmethod
 
 from spacepackets.ecss.tm import PusTelemetry

@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 import enum
-from typing import Any, cast, Type, Optional
+from typing import Any, cast
 
 from tmtccmd.cfdp import CfdpRequestWrapper
 
@@ -62,7 +63,7 @@ class ProcedureWrapper:
     """Procedure helper class. It wraps the concrete procedure object but allows easily casting
     it to concrete types supported by the framework."""
 
-    def __init__(self, procedure: Optional[TcProcedureBase]):
+    def __init__(self, procedure: TcProcedureBase | None):
         self.procedure = procedure
 
     def __repr__(self):
@@ -75,7 +76,7 @@ class ProcedureWrapper:
 
     def __cast_internally(
         self,
-        obj_type: Type[TcProcedureBase],
+        obj_type: type[TcProcedureBase],
         obj: TcProcedureBase,
         expected_type: TcProcedureType,
     ) -> Any:

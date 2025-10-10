@@ -1,21 +1,21 @@
 import logging
 import sys
-from typing import Optional, cast, Sequence
+from collections.abc import Sequence
+from typing import Optional, cast
 
-from spacepackets.ccsds import PacketId
-from tmtccmd.config.defs import CoreComInterfaces
 from com_interface import ComInterface
 from com_interface.serial_base import (
     SerialCfg,
 )
-
-from com_interface.serial_dle import SerialDleComIF
 from com_interface.serial_cobs import SerialCobsComIF
-
-from tmtccmd.com.ser_utils import determine_com_port, determine_baud_rate
-from tmtccmd.com.tcpip_utils import TcpIpType, EthAddr
-from com_interface.udp import UdpClient
+from com_interface.serial_dle import SerialDleComIF
 from com_interface.tcp import TcpSpacepacketsClient
+from com_interface.udp import UdpClient
+from spacepackets.ccsds import PacketId
+
+from tmtccmd.com.ser_utils import determine_baud_rate, determine_com_port
+from tmtccmd.com.tcpip_utils import EthAddr, TcpIpType
+from tmtccmd.config.defs import CoreComInterfaces
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def create_com_interface_default(cfg: ComCfgBase) -> Optional[ComInterface]:
         if cfg.com_if_key == CoreComInterfaces.TCP.value:
             _LOGGER.warning("Make sure that a TCP server is running")
         sys.exit(1)
-    except (IOError, OSError):
+    except OSError:
         _LOGGER.exception("Error setting up communication interface")
         sys.exit(1)
 
@@ -157,8 +157,8 @@ def default_tcpip_cfg_setup(
     :return:
     """
     from tmtccmd.com.tcpip_utils import (
-        determine_udp_send_address,
         determine_tcp_send_address,
+        determine_udp_send_address,
     )
 
     if tcpip_type == TcpIpType.UDP:

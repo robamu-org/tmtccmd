@@ -1,11 +1,12 @@
 from unittest import TestCase
 
-from spacepackets.ecss import PfcUnsigned, Ptc, PusTc, PusService
-from tmtccmd.pus.s20_fsfw_param_defs import Parameter, CustomSubservice
+from spacepackets.ecss import PfcUnsigned, Ptc, PusService, PusTc
+
 from tmtccmd.pus.s20_fsfw_param import (
     create_load_param_cmd,
     create_scalar_boolean_parameter,
 )
+from tmtccmd.pus.s20_fsfw_param_defs import CustomSubservice, Parameter
 
 
 class TestSrv20FsfwTc(TestCase):

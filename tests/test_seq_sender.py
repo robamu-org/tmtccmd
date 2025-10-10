@@ -1,15 +1,16 @@
 import time
+from datetime import timedelta
 from typing import cast
 from unittest import TestCase
-from datetime import timedelta
-from unittest.mock import MagicMock, ANY
+from unittest.mock import ANY, MagicMock
 
-from spacepackets.ecss import PusTelecommand
 from com_interface import ComInterface
-from tmtccmd.tmtc.ccsds_seq_sender import SequentialCcsdsSender, SenderMode
-from tmtccmd.tmtc.handler import TcHandlerBase, SendCbParams
+from spacepackets.ecss import PusTelecommand
+
+from tmtccmd.tmtc.ccsds_seq_sender import SenderMode, SequentialCcsdsSender
+from tmtccmd.tmtc.handler import SendCbParams, TcHandlerBase
 from tmtccmd.tmtc.procedure import TreeCommandingProcedure
-from tmtccmd.tmtc.queue import QueueWrapper, DefaultPusQueueHelper
+from tmtccmd.tmtc.queue import DefaultPusQueueHelper, QueueWrapper
 
 
 class TestSendReceive(TestCase):

@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 from spacepackets.ecss import PusTelecommand
 from spacepackets.seqcount import ProvidesSeqCount
 
-
 # Required for eval calls
 # noinspection PyUnresolvedReferences
 from tmtccmd.tmtc import (  # noqa: F401

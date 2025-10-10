@@ -3,35 +3,35 @@ It also re-exports commonly used classes and functions.
 """
 
 import logging
-import sys
 import os
+import sys
 from datetime import timedelta
-from typing import Union, cast, Optional
+from typing import Optional, Union, cast
 
-from tmtccmd.config.args import ProcedureParamsWrapper
-from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
-from tmtccmd.core.base import FrontendBase, BackendRequest
-from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 from tmtccmd.config import (
-    HookBase,
-    backend_mode_conversion,
-    SetupWrapper,
-    SetupParams,
-    PreArgsParsingWrapper,
     CoreModeConverter,
     CoreModeList,
+    HookBase,
+    PreArgsParsingWrapper,
+    SetupParams,
+    SetupWrapper,
     TreeCommandingParams,
+    backend_mode_conversion,
 )
-from tmtccmd.core.ccsds_backend import BackendBase
-from tmtccmd.tmtc import TmTypes, TmHandlerBase, CcsdsTmHandler
+from tmtccmd.config.args import ProcedureParamsWrapper
 from tmtccmd.core import ModeWrapper
+from tmtccmd.core.base import BackendRequest, FrontendBase
+from tmtccmd.core.ccsds_backend import BackendBase, CcsdsTmtcBackend
 from tmtccmd.tmtc import (
-    TreeCommandingProcedure,
-    TcProcedureBase,
+    CcsdsTmHandler,
     ProcedureWrapper,
     TcHandlerBase,
+    TcProcedureBase,
+    TmHandlerBase,
+    TmTypes,
+    TreeCommandingProcedure,
 )
-
+from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 
 __TMTCCMD_LOGGER = logging.getLogger(__name__)
 
@@ -152,8 +152,8 @@ def __start_tmtc_commander_qt_gui(
             sys.exit(1)
         app = QApplication([app_name])
         if tmtc_frontend is None:
-            from tmtccmd.gui import TmTcFrontend
             from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
+            from tmtccmd.gui import TmTcFrontend
 
             tmtc_frontend = TmTcFrontend(
                 hook_obj=hook_obj,

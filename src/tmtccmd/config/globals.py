@@ -2,12 +2,13 @@ import enum
 import pprint
 
 from deprecated.sphinx import deprecated
-from tmtccmd.core.globals_manager import update_global
+
 from tmtccmd.config.defs import (
-    CoreModeList,
     CoreComInterfaces,
+    CoreModeList,
 )
 from tmtccmd.config.tmtc import TmtcDefinitionWrapper
+from tmtccmd.core.globals_manager import update_global
 
 DEF_WRAPPER = None
 

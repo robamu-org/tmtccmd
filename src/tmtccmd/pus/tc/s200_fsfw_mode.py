@@ -6,6 +6,7 @@ from typing import Union
 
 from deprecated.sphinx import deprecated
 from spacepackets.ecss import PusTelecommand
+
 from tmtccmd.pus import CustomFsfwPusService
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 

@@ -1,7 +1,7 @@
 import collections.abc
 import logging
-from typing import Any, Tuple, Union
 from contextlib import contextmanager
+from typing import Any, Union
 
 
 def wrapped_prompt(text: str):
@@ -21,7 +21,7 @@ class AnsiColors:
 
 def check_args_in_dict(
     param: any, iterable: Union[collections.abc.Iterable, dict], warning_hint: str
-) -> Tuple[bool, int]:
+) -> tuple[bool, int]:
     """This functions checks whether the integer representation of a given parameter in
     contained within the passed collections, for example an (integer) enumeration.
     Please note that if the passed parameter has a string representation but is a digit,
@@ -65,19 +65,18 @@ def __handle_iterable_non_dict(
     param: Any,
     iterable: collections.abc.Iterable,
     might_be_integer: bool,
-    init_res_tuple: Tuple[bool, Any],
-) -> Tuple[bool, Any]:
+    init_res_tuple: tuple[bool, Any],
+) -> tuple[bool, Any]:
     param_list = list()
-    for idx, enum_value in enumerate(iterable):
+    for _idx, enum_value in enumerate(iterable):
         if isinstance(enum_value.value, str):
             # Make this case insensitive
             param_list.append(enum_value.value.lower())
         else:
             param_list.append(enum_value.value)
     if param not in param_list:
-        if might_be_integer:
-            if int(param) in param_list:
-                return True, int(param)
+        if might_be_integer and int(param) in param_list:
+            return True, int(param)
         return False, 0
     return init_res_tuple
 

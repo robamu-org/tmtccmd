@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import enum
 import copy
+import enum
 import os
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 
 class TreePart(enum.Enum):
@@ -19,7 +19,7 @@ class DepthInfo:
         depth: int,
         last_child: bool,
         max_depth: int | None = None,
-        layer_is_last_set: Optional[Set[int]] = None,
+        layer_is_last_set: set[int] | None = None,
     ) -> None:
         self.depth = depth
         self.last_child = last_child
@@ -87,8 +87,8 @@ class CmdTreeNode:
         """
         self.name = name
         self.description = description
-        self.parent: Optional[CmdTreeNode] = parent
-        self.children: Dict[str, CmdTreeNode] = {}
+        self.parent: CmdTreeNode | None = parent
+        self.children: dict[str, CmdTreeNode] = {}
         self.hide_children_for_print = hide_children_for_print
         self.hide_children_which_are_leaves = hide_children_which_are_leaves
 
@@ -116,7 +116,7 @@ class CmdTreeNode:
             return False
         return self.contains_path_from_node_list(path.split("/"))
 
-    def contains_path_from_node_list(self, node_name_list: List[str]) -> bool:
+    def contains_path_from_node_list(self, node_name_list: list[str]) -> bool:
         """Check whether the given list of nodes are contained within the command tree."""
         if len(node_name_list) == 0:
             return False
@@ -134,13 +134,13 @@ class CmdTreeNode:
                 return child.contains_path_from_node_list(node_name_list[1:])
         return False
 
-    def extract_subnode(self, path: str) -> Optional[CmdTreeNode]:
+    def extract_subnode(self, path: str) -> CmdTreeNode | None:
         """Extract a subnode given a relative path."""
         if path == "":
             return None
         return self.extract_subnode_by_node_list(path.split("/"))
 
-    def extract_subnode_by_node_list(self, node_list: List[str]) -> Optional[CmdTreeNode]:
+    def extract_subnode_by_node_list(self, node_list: list[str]) -> CmdTreeNode | None:
         """Extract a subnode given a list which would form a relative path if it were joined
         using slashes."""
         if not self.contains_path_from_node_list(node_list):
@@ -150,7 +150,7 @@ class CmdTreeNode:
         return self.children[node_list[0]].extract_subnode_by_node_list(node_list[1:])
 
     @property
-    def name_dict(self) -> Dict[str, Optional[Dict[str, Any]]]:
+    def name_dict(self) -> dict[str, dict[str, Any] | None]:
         """Returns a nested dictionary where the key is always the name of the node, and the
         value is one nested name dictionary for each child node."""
         children_dict = {}
@@ -163,7 +163,7 @@ class CmdTreeNode:
     def str_for_tree(
         self,
         with_description: bool,
-        max_depth: Optional[int] = None,
+        max_depth: int | None = None,
         show_hidden_elements: bool = False,
     ) -> str:
         """Retrieve the a human readable printout of the tree.
@@ -287,7 +287,7 @@ class CmdTreeNode:
         with_description: bool,
         depth_info: DepthInfo,
         child_depth_info: DepthInfo,
-    ) -> Optional[str]:
+    ) -> str | None:
         string = ""
         children_which_are_not_leaves = []
         some_children_which_are_leaves = False

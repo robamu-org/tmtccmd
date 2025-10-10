@@ -1,19 +1,19 @@
 import logging
 from typing import Callable, Optional
 
-from PyQt6.QtCore import QThreadPool, QRunnable
+from PyQt6.QtCore import QRunnable, QThreadPool
 from PyQt6.QtWidgets import QPushButton
 
 from tmtccmd import HookBase
 from tmtccmd.gui.defs import (
-    SharedArgs,
-    LocalArgs,
-    WorkerOperationsCode,
-    DISCONNECT_BTTN_STYLE,
-    CONNECT_BTTN_STYLE,
     COMMAND_BUTTON_STYLE,
+    CONNECT_BTTN_STYLE,
+    DISCONNECT_BTTN_STYLE,
+    FrontendState,
+    LocalArgs,
+    SharedArgs,
+    WorkerOperationsCode,
 )
-from tmtccmd.gui.defs import FrontendState
 from tmtccmd.gui.worker import FrontendWorker
 
 LOGGER = logging.getLogger(__name__)
