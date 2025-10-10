@@ -3,14 +3,15 @@ from typing import Any
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-from spacepackets.ecss import PusTelemetry
+from com_interface import ComInterface
 from spacepackets.ccsds.time import CdsShortTimestamp
+from spacepackets.ecss import PusTelemetry
+
 from tmtccmd.tmtc import (
-    SpecificApidHandlerBase,
     CcsdsTmHandler,
     GenericApidHandlerBase,
+    SpecificApidHandlerBase,
 )
-from com_interface import ComInterface
 from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
 
 

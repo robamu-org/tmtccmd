@@ -5,9 +5,9 @@ import logging
 from datetime import timedelta
 from typing import Optional
 
+from com_interface import ComInterface
 from spacepackets.countdown import Countdown
 
-from com_interface import ComInterface
 from tmtccmd.tmtc import (
     ProcedureWrapper,
     QueueEntryHelper,

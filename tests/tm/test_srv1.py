@@ -1,13 +1,14 @@
 import struct
 from unittest import TestCase
 
-from spacepackets.ecss import RequestId, PusTc, PacketFieldU8
+from spacepackets.ecss import PacketFieldU8, PusTc, RequestId
 from spacepackets.ecss.pus_1_verification import (
+    FailureNotice,
     Service1Tm,
     Subservice,
     VerificationParams,
-    FailureNotice,
 )
+
 from tmtccmd.pus.tm.s1_verification import Service1FsfwWrapper
 
 
@@ -28,7 +29,7 @@ class TestVerif1TmWrapper(TestCase):
         service_1_tm = Service1Tm(
             apid=self.apid,
             subservice=Subservice.TM_START_FAILURE,
-            timestamp=bytes(),
+            timestamp=b"",
             verif_params=VerificationParams(
                 step_id=None,
                 req_id=RequestId.from_pus_tc(self.ping_tc),

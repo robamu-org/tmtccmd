@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import enum
 import threading
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from tmtccmd import CcsdsTmtcBackend
@@ -65,9 +65,7 @@ class ComIfRefCount:
 
     def is_used(self):
         with self.lock:
-            if self.user_cnt > 0:
-                return True
-            return False
+            return self.user_cnt > 0
 
 
 class LocalArgs:

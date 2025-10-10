@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 import enum
 import logging
-from pathlib import Path
-from typing import Optional, Union
 from datetime import datetime
+from logging import FileHandler
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from pathlib import Path
 
 from spacepackets.ecss import PusTelecommand, PusTelemetry
+
 from tmtccmd.logging import LOG_DIR
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-from logging import FileHandler
 
 RAW_PUS_LOGGER_NAME = "tmtccmd_raw_pus_log"
 RAW_PUS_FILE_BASE_NAME = "_".join(RAW_PUS_LOGGER_NAME.split("_")[:-1])
@@ -16,8 +17,8 @@ RAW_PUS_FILE_BASE_NAME = "_".join(RAW_PUS_LOGGER_NAME.split("_")[:-1])
 TMTC_LOGGER_NAME = "tmtccmd_file_log"
 TMTC_FILE_BASE_NAME = "_".join(TMTC_LOGGER_NAME.split("_")[:-1])
 
-__TMTC_LOGGER: Optional[logging.Logger] = None
-__RAW_PUS_LOGGER: Optional[logging.Logger] = None
+__TMTC_LOGGER: logging.Logger | None = None
+__RAW_PUS_LOGGER: logging.Logger | None = None
 
 
 def date_suffix() -> str:
@@ -60,7 +61,7 @@ class RawTmtcLogBase:
             self.log_bytes_repr(prefix, raw)
         self.counter += 1
 
-    def log_repr(self, prefix: str, packet: Union[PusTelecommand, PusTelemetry]):
+    def log_repr(self, prefix: str, packet: PusTelecommand | PusTelemetry):
         self.logger.info(f"{prefix} repr: {packet!r}")
 
     @staticmethod
@@ -83,9 +84,9 @@ class RawTmtcTimedLogWrapper(RawTmtcLogBase):
         self,
         when: TimedLogWhen,
         interval: int,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}"),
-        suffix: Optional[str] = f"{date_suffix()}.log",
+        suffix: str | None = f"{date_suffix()}.log",
     ):
         """Create a raw TMTC timed rotating log wrapper.
         See the official Python documentation at
@@ -119,9 +120,9 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
         self,
         max_bytes: int,
         backup_count: int,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         file_name: Path = Path(f"{LOG_DIR}/{RAW_PUS_FILE_BASE_NAME}"),
-        suffix: Optional[str] = f"{date_suffix()}.log",
+        suffix: str | None = f"{date_suffix()}.log",
     ):
         """Create a raw TMTC rotating log wrapper.
         See the official Python documentation at
@@ -161,7 +162,7 @@ class RawTmtcRotatingLogWrapper(RawTmtcLogBase):
 
 
 class RegularTmtcLogWrapper:
-    def __init__(self, file_name: Optional[Path] = None, logger: Optional[logging.Logger] = None):
+    def __init__(self, file_name: Path | None = None, logger: logging.Logger | None = None):
         if logger is None:
             logger = logging.getLogger(TMTC_LOGGER_NAME)
             logger.propagate = False

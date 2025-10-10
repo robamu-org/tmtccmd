@@ -1,5 +1,5 @@
-from unittest import TestCase
 import struct
+from unittest import TestCase
 
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import PusTelemetry
@@ -22,7 +22,7 @@ class TestSrv3FsfwTm(TestCase):
             source_data=self.pack_data_reply_src_data(
                 example_obj_id, example_set_id, example_hk_data
             ),
-            timestamp=bytes(),
+            timestamp=b"",
         )
 
         tm_packet = Service3FsfwHkPacket(tm)
@@ -38,7 +38,7 @@ class TestSrv3FsfwTm(TestCase):
                     service=PusService.S8_FUNC_CMD,
                     subservice=Subservice.TM_HK_REPORT,
                     source_data=data,
-                    timestamp=bytes(),
+                    timestamp=b"",
                 )
                 Service3FsfwHkPacket(tm)
 
@@ -55,7 +55,7 @@ class TestSrv3FsfwTm(TestCase):
                 source_data=self.pack_data_reply_src_data(
                     example_obj_id, example_action_id, example_reply_data
                 ),
-                timestamp=bytes(),
+                timestamp=b"",
             )
             with self.assertRaises(ValueError):
                 Service3FsfwHkPacket(tm)

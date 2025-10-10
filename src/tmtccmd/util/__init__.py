@@ -1,14 +1,14 @@
 from .obj_id import (
-    ComponentIdU32,
-    ComponentIdU16,
-    ComponentIdU8,
     ComponentIdBase,
     ComponentIdMapping,
-    ObjectIdU32,
-    ObjectIdU16,
-    ObjectIdU8,
+    ComponentIdU8,
+    ComponentIdU16,
+    ComponentIdU32,
     ObjectIdBase,
-    ObjectIdMapping,
     ObjectIdDictT,
+    ObjectIdMapping,
+    ObjectIdU8,
+    ObjectIdU16,
+    ObjectIdU32,
 )
 from .retval import RetvalDictT

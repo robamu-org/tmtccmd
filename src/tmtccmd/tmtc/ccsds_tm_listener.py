@@ -1,21 +1,19 @@
 """Contains the TmListener which can be used to listen to Telemetry in the background"""
 
-from typing import Dict, List, Tuple
 
+from com_interface import ComInterface
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
 
-from tmtccmd.tmtc.common import TelemetryQueueT, CcsdsTmHandler
-from com_interface import ComInterface
-
+from tmtccmd.tmtc.common import CcsdsTmHandler, TelemetryQueueT
 
 INVALID_APID = -2
 UNKNOWN_TARGET_ID = -1
-QueueDictT = Dict[int, Tuple[TelemetryQueueT, int]]
-QueueListT = List[Tuple[int, TelemetryQueueT]]
+QueueDictT = dict[int, tuple[TelemetryQueueT, int]]
+QueueListT = list[tuple[int, TelemetryQueueT]]
 
 
-class PacketsTooSmallForCcsds(Exception):
-    def __init__(self, packets: List[bytes]):
+class PacketsTooSmallForCcsdsError(Exception):
+    def __init__(self, packets: list[bytes]):
         self.packets = packets
 
 
@@ -59,4 +57,4 @@ class CcsdsTmListener:
             self.__tm_handler.handle_packet(apid, tm_packet)
             return True
         if len(invalid_packets) > 0:
-            raise PacketsTooSmallForCcsds(invalid_packets)
+            raise PacketsTooSmallForCcsdsError(invalid_packets)

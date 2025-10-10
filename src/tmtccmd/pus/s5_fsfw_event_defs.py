@@ -1,6 +1,6 @@
 import dataclasses
 import enum
-from typing import Optional, Dict
+from typing import Optional
 
 
 class Severity(enum.IntEnum):
@@ -9,16 +9,16 @@ class Severity(enum.IntEnum):
     MEDIUM = 3
     HIGH = 4
 
+STR_TO_SEVERITY = {
+    "INFO": Severity.INFO,
+    "LOW": Severity.LOW,
+    "MEDIUM": Severity.MEDIUM,
+    "HIGH": Severity.HIGH,
+}
+
 
 def str_to_severity(string: str) -> Optional[Severity]:
-    if string == "INFO":
-        return Severity.INFO
-    elif string == "LOW":
-        return Severity.LOW
-    elif string == "MEDIUM":
-        return Severity.MEDIUM
-    elif string == "HIGH":
-        return Severity.HIGH
+    STR_TO_SEVERITY.get(string)
 
 
 @dataclasses.dataclass
@@ -30,4 +30,4 @@ class EventInfo:
     file_location: str = ""
 
 
-EventDictT = Dict[int, EventInfo]
+EventDictT = dict[int, EventInfo]

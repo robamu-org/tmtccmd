@@ -5,6 +5,7 @@ from __future__ import annotations
 import struct
 
 from spacepackets.ecss.tm import PusTelemetry
+
 from tmtccmd.pus.s200_fsfw_mode import Subservice
 
 
@@ -27,9 +28,7 @@ class Service200FsfwReader:
             self.submode = tm.source_data[8]
 
     def contains_mode(self) -> bool:
-        if self.mode is not None and self.submode is not None:
-            return True
-        return False
+        return bool(self.mode is not None and self.submode is not None)
 
     def is_cant_reach_mode_reply(self) -> bool:
         return self.tm.subservice == Subservice.TM_CANT_REACH_MODE

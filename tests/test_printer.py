@@ -5,17 +5,17 @@ from unittest import TestCase
 from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_1_verification import (
     RequestId,
-    VerificationParams,
-    Subservice,
     Service1Tm,
+    Subservice,
+    VerificationParams,
 )
 
-from tmtccmd.pus.s17_test import create_service_17_ping_command
 from tmtccmd.logging import LOG_DIR
 from tmtccmd.logging.pus import (
-    RegularTmtcLogWrapper,
     RawTmtcRotatingLogWrapper,
+    RegularTmtcLogWrapper,
 )
+from tmtccmd.pus.s17_test import create_service_17_ping_command
 
 
 # TODO: Use temp files to test loggers?

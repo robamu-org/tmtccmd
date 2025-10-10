@@ -1,5 +1,5 @@
-from unittest import TestCase
 import struct
+from unittest import TestCase
 
 from spacepackets.ecss.defs import PusService
 from spacepackets.ecss.tm import PusTelemetry
@@ -22,7 +22,7 @@ class TestSrv8FsfwTm(TestCase):
             source_data=self.pack_data_reply_src_data(
                 example_obj_id, example_action_id, example_reply_data
             ),
-            timestamp=bytes(),
+            timestamp=b"",
         )
 
         tm_packet = Service8FsfwDataReply(tm)
@@ -38,21 +38,21 @@ class TestSrv8FsfwTm(TestCase):
                     service=PusService.S8_FUNC_CMD,
                     subservice=CustomSubservice.TM_DATA_REPLY,
                     source_data=data,
-                    timestamp=bytes(),
+                    timestamp=b"",
                 )
                 Service8FsfwDataReply(tm)
 
     def test_unpack_empty_reply_data(self):
         example_obj_id = 0x01020304
         example_action_id = 0x04030201
-        example_reply_data = bytes()
+        example_reply_data = b""
         tm = PusTelemetry(
             service=PusService.S8_FUNC_CMD,
             subservice=CustomSubservice.TM_DATA_REPLY,
             source_data=self.pack_data_reply_src_data(
                 example_obj_id, example_action_id, example_reply_data
             ),
-            timestamp=bytes(),
+            timestamp=b"",
         )
 
         tm_packet = Service8FsfwDataReply(tm)
@@ -74,7 +74,7 @@ class TestSrv8FsfwTm(TestCase):
                 source_data=self.pack_data_reply_src_data(
                     example_obj_id, example_action_id, example_reply_data
                 ),
-                timestamp=bytes(),
+                timestamp=b"",
             )
             with self.assertRaises(ValueError):
                 Service8FsfwDataReply(tm)

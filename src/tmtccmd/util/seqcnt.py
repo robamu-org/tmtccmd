@@ -1,11 +1,11 @@
+import warnings
+
 from spacepackets.seqcount import (  # noqa: F401
-    ProvidesSeqCount,
     FileSeqCountProvider,
+    ProvidesSeqCount,
     PusFileSeqCountProvider,
     SeqCountProvider,
 )
-
-import warnings
 
 warnings.warn(
     "the countdown module is deprecated and was moved to spacepackets.countdown",

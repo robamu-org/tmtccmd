@@ -31,7 +31,7 @@ jobs:
         sphinx-build -b doctest docs docs/_build
 
     - name: Lint with Ruff
-      uses: chartboost/ruff-action@v1
+      uses: astral-sh/ruff-action@v3
 
     - name: Run tests and generate coverage data
       run: |

@@ -1,6 +1,5 @@
 from tmtccmd.util.obj_id import ComponentIdMapping, ObjectIdU32
 
-
 INVALID_ID = bytes([0xFF, 0xFF, 0xFF, 0xFF])
 
 

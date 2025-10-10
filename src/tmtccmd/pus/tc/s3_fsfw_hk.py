@@ -1,11 +1,10 @@
 """Contains definitions and functions related to PUS Service 3 Telecommands."""
 
 import struct
-from typing import Tuple
 
 from deprecated.sphinx import deprecated
-from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.ecss.pus_3_hk import Subservice
+from spacepackets.ecss.tc import PusTelecommand
 
 
 def make_sid(object_id: bytes, set_id: int) -> bytearray:
@@ -44,7 +43,7 @@ def create_enable_periodic_hk_command_with_diag(diag: bool, sid: bytes) -> PusTe
 )
 def create_enable_periodic_hk_command_with_interval_with_diag(
     diag: bool, sid: bytes, interval_seconds: float
-) -> Tuple[PusTelecommand, PusTelecommand]:
+) -> tuple[PusTelecommand, PusTelecommand]:
     cmd0 = create_modify_collection_interval_cmd_with_diag(diag, sid, interval_seconds)
     cmd1 = __generate_periodic_hk_command_legacy(diag=diag, enable=True, sid=sid)
     return cmd0, cmd1
@@ -52,7 +51,7 @@ def create_enable_periodic_hk_command_with_interval_with_diag(
 
 def create_enable_periodic_hk_command_with_interval(
     sid: bytes, interval_seconds: float
-) -> Tuple[PusTelecommand, PusTelecommand]:
+) -> tuple[PusTelecommand, PusTelecommand]:
     cmd0 = create_modify_collection_interval_cmd(sid, interval_seconds)
     cmd1 = __generate_periodic_hk_command(enable=True, sid=sid)
     return cmd0, cmd1
@@ -64,7 +63,7 @@ def create_enable_periodic_hk_command_with_interval(
 )
 def enable_periodic_hk_command_with_interval(
     diag: bool, sid: bytes, interval_seconds: float
-) -> Tuple[PusTelecommand, PusTelecommand]:
+) -> tuple[PusTelecommand, PusTelecommand]:
     return create_enable_periodic_hk_command_with_interval_with_diag(diag, sid, interval_seconds)
 
 

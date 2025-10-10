@@ -1,7 +1,7 @@
 import dataclasses
 import functools
 
-from tmtccmd.tmtc import TcHandlerBase
+from tmtccmd.tmtc.handler import TcHandlerBase
 from tmtccmd.tmtc.procedure import TreeCommandingProcedure
 from tmtccmd.tmtc.queue import DefaultPusQueueHelper
 

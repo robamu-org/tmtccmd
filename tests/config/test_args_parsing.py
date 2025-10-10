@@ -2,9 +2,9 @@ import argparse
 from unittest import TestCase
 
 from tmtccmd.config.args import (
-    add_tmtc_mode_arguments,
-    add_generic_arguments,
     add_default_com_if_arguments,
+    add_generic_arguments,
+    add_tmtc_mode_arguments,
     add_tree_commanding_arguments,
 )
 

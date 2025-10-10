@@ -1,6 +1,6 @@
-from typing import Any
 import enum
 from abc import abstractmethod
+from typing import Any
 
 
 class FrontendBase:

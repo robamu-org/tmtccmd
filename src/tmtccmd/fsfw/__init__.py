@@ -1,9 +1,10 @@
+import copy
 import csv
 import os
-import copy
-from typing import Optional, List
-from tmtccmd.util.obj_id import ObjectIdU32, ObjectIdDictT
-from tmtccmd.pus.s5_fsfw_event import EventInfo, EventDictT
+from typing import Optional
+
+from tmtccmd.pus.s5_fsfw_event import EventDictT, EventInfo
+from tmtccmd.util.obj_id import ObjectIdDictT, ObjectIdU32
 from tmtccmd.util.retval import RetvalDictT, RetvalInfo
 
 
@@ -78,7 +79,7 @@ def bit_extractor(byte: int, position: int):
     return (byte >> shift_number) & 1
 
 
-def validity_buffer_list(validity_buffer: bytes, num_vars: int) -> List[bool]:
+def validity_buffer_list(validity_buffer: bytes, num_vars: int) -> list[bool]:
     """
     :param validity_buffer: Validity buffer in bytes format
     :param num_vars: Number of variables
@@ -86,7 +87,7 @@ def validity_buffer_list(validity_buffer: bytes, num_vars: int) -> List[bool]:
     """
     valid_list = []
     counter = 0
-    for index, byte in enumerate(validity_buffer):
+    for _index, byte in enumerate(validity_buffer):
         for bit in range(1, 9):
             if bit_extractor(byte, bit) == 1:
                 valid_list.append(True)

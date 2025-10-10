@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import dataclasses
 import enum
 import struct
-from typing import Union, Sequence
+from collections.abc import Sequence
 
-from spacepackets.ecss import Ptc, PfcUnsigned, PfcSigned, PfcReal
+from spacepackets.ecss import PfcReal, PfcSigned, PfcUnsigned, Ptc
 
 
 class CustomSubservice(enum.IntEnum):
@@ -33,10 +34,10 @@ class ParameterId:
             raise ValueError(f"unique ID {self.unique_id} too large, max value is {pow(2, 8) - 1}")
         raw = bytearray([self.domain_id, self.unique_id])
         raw.extend(struct.pack("!H", self.linear_index))
-        return raw
+        return bytes(raw)
 
     @classmethod
-    def unpack(cls, data: bytes) -> ParameterId:
+    def unpack(cls, data: bytes | bytearray) -> ParameterId:
         if len(data) < 4:
             raise ValueError("raw parameter ID must be at least 4 bytes wide")
         domain_id = data[0]
@@ -69,15 +70,15 @@ class FsfwParamId:
     columns: int
 
     @classmethod
-    def unpack(cls, data: bytes) -> FsfwParamId:
+    def unpack(cls, data: bytes | bytearray) -> FsfwParamId:
         if len(data) < 12:
             raise ValueError("passed raw parameter data size smaller than 12 bytes")
         try:
             ptc = Ptc(data[8])
-        except TypeError:
-            raise ValueError(f"ptc with unknown raw value {data[8]}")
+        except TypeError as e:
+            raise ValueError(f"ptc with unknown raw value {data[8]}") from e
         return cls(
-            object_id=data[0:4],
+            object_id=bytes(data[0:4]),
             param_id=ParameterId.unpack(data[4:8]),
             ptc=ptc,
             pfc=data[9],
@@ -136,7 +137,7 @@ class Parameter:
                 rows=0,
                 columns=0,
             ),
-            param_raw=bytes(),
+            param_raw=b"",
         )
 
     def pack(self) -> bytearray:
@@ -146,23 +147,23 @@ class Parameter:
         return raw
 
     @classmethod
-    def unpack(cls, data: bytes) -> Parameter:
+    def unpack(cls, data: bytes | bytearray) -> Parameter:
         if len(data) < 12:
             raise ValueError("passed raw parameter data size smaller than 12 bytes")
         try:
             Ptc(data[8])
-        except TypeError:
-            raise ValueError(f"ptc with unknown raw value {data[8]}")
+        except TypeError as e:
+            raise ValueError(f"ptc with unknown raw value {data[8]}") from e
         return cls(
             fsfw_param_id=FsfwParamId.unpack(data),
-            param_raw=data[12:],
+            param_raw=bytes(data[12:]),
         )
 
-    def parse_scalar_param(self) -> Union[int, float]:
+    def parse_scalar_param(self) -> int | float:
         return parse_scalar_param(self)
 
 
-def parse_scalar_param(wrapper: Parameter) -> Union[int, float]:
+def parse_scalar_param(wrapper: Parameter) -> int | float:
     return deserialize_scalar_entry(wrapper.ptc, wrapper.pfc, wrapper.param_raw)
 
 
@@ -213,7 +214,7 @@ def __deserialize_signed_scalar_entry(pfc: int, ptc: int, tm_data: bytes, param_
         raise NotImplementedError(f"Parsing of signed PTC {ptc} not implemented for PFC {pfc}")
 
 
-def deserialize_scalar_entry(ptc: int, pfc: int, param_data: bytes) -> Union[int, float]:
+def deserialize_scalar_entry(ptc: int, pfc: int, param_data: bytes) -> int | float:
     """Try to deserialize a scalar parameter entry (row = 1 and column = 1).
 
     :raises ValueError: Passed parameter data length invalid.
@@ -403,7 +404,7 @@ def create_vector_float_parameter(
             rows=1,
             columns=len(parameters),
         ),
-        param_raw=param_raw,
+        param_raw=bytes(param_raw),
     )
 
 
@@ -424,7 +425,7 @@ def create_vector_double_parameter(
             rows=1,
             columns=len(parameters),
         ),
-        param_raw=param_raw,
+        param_raw=bytes(param_raw),
     )
 
 
@@ -453,7 +454,7 @@ def create_matrix_float_parameter(
             rows=rows,
             columns=columns,
         ),
-        param_raw=param_raw,
+        param_raw=bytes(param_raw),
     )
 
 
@@ -482,5 +483,5 @@ def create_matrix_double_parameter(
             rows=rows,
             columns=columns,
         ),
-        param_raw=param_raw,
+        param_raw=bytes(param_raw),
     )

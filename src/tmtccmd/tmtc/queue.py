@@ -5,7 +5,7 @@ from abc import ABC
 from collections import deque
 from datetime import timedelta
 from enum import Enum
-from typing import Any, Deque, Optional, Type, cast
+from typing import Any, cast
 
 from spacepackets.ccsds import SpacePacket
 from spacepackets.ecss import PusService, PusVerificator, check_pus_crc
@@ -13,7 +13,7 @@ from spacepackets.ecss.tc import PusTelecommand
 from spacepackets.seqcount import ProvidesSeqCount
 
 from tmtccmd.pus.s11_tc_sched import Subservice as Pus11Subservice
-from tmtccmd.tmtc.procedure import TreeCommandingProcedure, TcProcedureBase
+from tmtccmd.tmtc.procedure import TcProcedureBase, TreeCommandingProcedure
 
 
 class TcQueueEntryType(Enum):
@@ -34,16 +34,10 @@ class TcQueueEntryBase:
 
     def is_tc(self) -> bool:
         """Check whether concrete object is an actual telecommand"""
-        if (
-            self.etype == TcQueueEntryType.PUS_TC
-            or self.etype == TcQueueEntryType.RAW_TC
-            or self.etype == TcQueueEntryType.CCSDS_TC
-        ):
-            return True
-        return False
+        return bool(self.etype == TcQueueEntryType.PUS_TC or self.etype == TcQueueEntryType.RAW_TC or self.etype == TcQueueEntryType.CCSDS_TC)
 
 
-QueueDequeT = Deque[TcQueueEntryBase]
+QueueDequeT = deque[TcQueueEntryBase]
 
 
 class PusTcEntry(TcQueueEntryBase):
@@ -109,7 +103,7 @@ class PacketDelayEntry(TcQueueEntryBase):
 
 
 class QueueEntryHelper:
-    def __init__(self, base: Optional[TcQueueEntryBase]):
+    def __init__(self, base: TcQueueEntryBase | None):
         self.entry = base
 
     @property
@@ -124,7 +118,7 @@ class QueueEntryHelper:
 
     def __cast_internally(
         self,
-        obj_type: Type[TcQueueEntryBase],
+        obj_type: type[TcQueueEntryBase],
         expected_type: TcQueueEntryType,
     ) -> Any:
         assert self.entry is not None
@@ -227,9 +221,9 @@ class DefaultPusQueueHelper(QueueHelperBase):
         self,
         queue_wrapper: QueueWrapper,
         tc_sched_timestamp_len: int,
-        seq_cnt_provider: Optional[ProvidesSeqCount],
-        pus_verificator: Optional[PusVerificator],
-        default_pus_apid: Optional[int],
+        seq_cnt_provider: ProvidesSeqCount | None,
+        pus_verificator: PusVerificator | None,
+        default_pus_apid: int | None,
     ):
         """
         :param queue_wrapper: Queue Wrapper. All entries are inserted here

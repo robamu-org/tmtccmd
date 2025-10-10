@@ -1,9 +1,9 @@
 from unittest import TestCase
 
 from tmtccmd.util.obj_id import (
+    ComponentIdU8,
     ComponentIdU16,
     ComponentIdU32,
-    ComponentIdU8,
 )
 
 
@@ -20,7 +20,7 @@ class TestObjectId(TestCase):
         obj_from_raw = ComponentIdU32.from_bytes(obj_id0.as_bytes)
         self.assertEqual(obj_from_raw, obj_id0)
         with self.assertRaises(ValueError):
-            ComponentIdU32.from_bytes(bytes())
+            ComponentIdU32.from_bytes(b"")
         with self.assertRaises(ValueError):
             ComponentIdU32.from_bytes(bytes([0, 1, 2]))
         with self.assertRaises(ValueError):

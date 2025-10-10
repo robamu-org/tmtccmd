@@ -1,10 +1,13 @@
 """Contains classes and functions to handle PUS Service 8 telemetry."""
 
 from __future__ import annotations
+
 import struct
+
 from spacepackets.ecss.tm import PusTelemetry
-from tmtccmd.util.obj_id import ComponentIdU32
+
 from tmtccmd.pus.s8_fsfw_action_defs import CustomSubservice
+from tmtccmd.util.obj_id import ComponentIdU32
 
 
 class Service8FsfwDataReply:

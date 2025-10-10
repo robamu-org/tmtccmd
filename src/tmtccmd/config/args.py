@@ -6,13 +6,13 @@ import argparse
 import logging
 import os
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple, Union
 
+from com_interface import ComInterface
 from prompt_toolkit.shortcuts import CompleteStyle
 from spacepackets.cfdp import TransmissionMode
 
-from com_interface import ComInterface
 from tmtccmd.com.utils import determine_com_if
 from tmtccmd.config.prompt import prompt_cmd_path
 from tmtccmd.config.tmtc import CmdTreeNode
@@ -42,7 +42,7 @@ def get_default_descript_txt() -> str:
 
 def create_default_args_parser(
     parent_parser: argparse.ArgumentParser,
-    descript_txt: Optional[str] = None,
+    descript_txt: str | None = None,
 ) -> argparse.ArgumentParser:
     if descript_txt is None:
         descript_txt = get_default_descript_txt()
@@ -62,7 +62,7 @@ class ProcedureParamsWrapper:
     def ptype(self):
         return self._ptype
 
-    def set_params(self, params: Union[TreeCommandingParams, CfdpParams]):
+    def set_params(self, params: TreeCommandingParams | CfdpParams):
         if isinstance(params, TreeCommandingParams):
             self._params = params
             self._ptype = TcProcedureType.TREE_COMMANDING
@@ -70,12 +70,12 @@ class ProcedureParamsWrapper:
             self._params = params
             self._ptype = TcProcedureType.CFDP
 
-    def tree_commanding_params(self) -> Optional[TreeCommandingParams]:
+    def tree_commanding_params(self) -> TreeCommandingParams | None:
         if self._ptype == TcProcedureType.TREE_COMMANDING:
             return self._params
         return None
 
-    def cfdp_params(self) -> Optional[CfdpParams]:
+    def cfdp_params(self) -> CfdpParams | None:
         if self._ptype == TcProcedureType.CFDP:
             return self._params
         return None
@@ -87,7 +87,7 @@ class CommandingParams:
     apid: int = 0
     print_tree: bool = False
     tree_print_with_description: bool = True
-    tree_print_max_depth: Optional[int] = None
+    tree_print_max_depth: int | None = None
 
 
 @dataclass
@@ -109,10 +109,10 @@ class AppParams:
 class SetupParams:
     def __init__(
         self,
-        com_if: Optional[ComInterface] = None,
-        cmd_params: Optional[CommandingParams] = None,
-        backend_params: Optional[BackendParams] = None,
-        app_params: Optional[AppParams] = None,
+        com_if: ComInterface | None = None,
+        cmd_params: CommandingParams | None = None,
+        backend_params: BackendParams | None = None,
+        app_params: AppParams | None = None,
     ):
         self.com_if = com_if
         if cmd_params is None:
@@ -168,7 +168,7 @@ def parse_default_tmtccmd_input_arguments(
     parser: argparse.ArgumentParser,
     print_known_args: bool = False,
     print_unknown_args: bool = False,
-) -> Tuple[argparse.Namespace, List[str]]:
+) -> tuple[argparse.Namespace, list[str]]:
     """Parses all input arguments by calling :py:meth:`argparse.ArgumentParser.parse_known_args`.
     It is recommended to use the :py:class:`PreArgsParsingWrapper` instead of using this function
     directly.
@@ -406,7 +406,7 @@ def args_to_params_generic(
     else:
         params.com_if_id = pargs.com_if
     if assign_com_if:
-        params.com_if = hook_obj.assign_communication_interface(params.com_if_id)
+        params.com_if = hook_obj.get_communication_interface(params.com_if_id)
 
 
 def cfdp_args_to_cfdp_params(pargs: argparse.Namespace, cfdp_params: CfdpParams):
@@ -563,8 +563,8 @@ class PreArgsParsingWrapper:
     """
 
     def __init__(self):
-        self.parent_parser: Optional[argparse.ArgumentParser] = None
-        self.args_parser: Optional[argparse.ArgumentParser] = None
+        self.parent_parser: argparse.ArgumentParser | None = None
+        self.args_parser: argparse.ArgumentParser | None = None
         self.print_known_args = False
         self.print_unknown_args = False
         self._parse_was_called = False
@@ -600,15 +600,14 @@ class PreArgsParsingWrapper:
             raise ValueError("Create parser with create_default_parser or assign a parser first")
         """Parse all CLI arguments with the given argument parser"""
         patched_args = None
-        if self._monkey_patch_missing_subparser:
-            if (
-                len(sys.argv) > 1
-                and sys.argv[1] not in ["cfdp", "tmtc", "-h", "--help"]
-                or len(sys.argv) == 1
-            ):
-                print("No procedure type specified, inserting 'tmtc' into passed arguments")
-                patched_args = ["tmtc"]
-                patched_args.extend(sys.argv[1:])
+        if self._monkey_patch_missing_subparser and (
+            len(sys.argv) > 1
+            and sys.argv[1] not in ["cfdp", "tmtc", "-h", "--help"]
+            or len(sys.argv) == 1
+        ):
+            print("No procedure type specified, inserting 'tmtc' into passed arguments")
+            patched_args = ["tmtc"]
+            patched_args.extend(sys.argv[1:])
         if patched_args is None:
             patched_args = sys.argv[1:]
         assert self.args_parser is not None
@@ -647,7 +646,7 @@ class PreArgsParsingWrapper:
 
     def add_def_proc_and_cfdp_as_subparsers(
         self,
-    ) -> Tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
+    ) -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
         """Add the default tmtc and cfdp procedure as subparsers."""
         self._monkey_patch_missing_subparser = True
         subparser = self.args_parser.add_subparsers(dest="proc_type")
@@ -685,7 +684,7 @@ class PostArgsParsingWrapper:
     def __init__(
         self,
         args_raw: argparse.Namespace,
-        unknown_args: List[str],
+        unknown_args: list[str],
         params: SetupParams,
         hook_obj: HookBase,
     ):
@@ -775,10 +774,10 @@ class PostArgsParsingWrapper:
                 def_tmtc_params=def_tmtc_params,
                 assign_com_if=self.assign_com_if_on_conversion_if_applicable,
             )
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             raise KeyboardInterrupt(
                 "Keyboard interrupt while converting CLI args to application parameters"
-            )
+            ) from e
 
     def _set_cfdp_params(self, cfdp_params: CfdpParams, use_prompts: bool):
         try:
@@ -790,7 +789,7 @@ class PostArgsParsingWrapper:
                 use_prompts=use_prompts,
                 assign_com_if=self.assign_com_if_on_conversion_if_applicable,
             )
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
             raise KeyboardInterrupt(
                 "Keyboard interrupt while converting CLI args to application parameters"
-            )
+            ) from e

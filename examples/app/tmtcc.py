@@ -6,16 +6,21 @@ import sys
 import time
 from typing import Any, Optional
 
+from com_interface import ComInterface
 from prompt_toolkit.history import FileHistory, History
 from spacepackets.ccsds import CdsShortTimestamp
 from spacepackets.ecss import PusTelecommand, PusTelemetry, PusVerificator
-from spacepackets.ecss.pus_1_verification import Service1Tm, UnpackParams
+from spacepackets.ecss.pus_1_verification import (
+    ManagedParamsVerification,
+    Service1Tm,
+)
 from spacepackets.ecss.pus_17_test import Service17Tm
+from spacepackets.ecss.tm import ManagedParams
+from spacepackets.seqcount import FileSeqCountProvider, PusFileSeqCountProvider
 from spacepackets.util import UnsignedByteField
 
 import tmtccmd
 from tmtccmd import BackendRequest, CcsdsTmtcBackend, ProcedureParamsWrapper
-from com_interface import ComInterface
 from tmtccmd.config import (
     CmdTreeNode,
     HookBase,
@@ -45,7 +50,6 @@ from tmtccmd.tmtc import (
     TcProcedureType,
     TcQueueEntryType,
 )
-from spacepackets.seqcount import FileSeqCountProvider, PusFileSeqCountProvider
 
 _LOGGER = logging.getLogger()
 
@@ -141,7 +145,9 @@ class PusTmHandler(SpecificApidHandlerBase):
         dedicated_handler = False
         if service == 1:
             verif_tm = Service1Tm.unpack(
-                data=packet, params=UnpackParams(CdsShortTimestamp.TIMESTAMP_SIZE, 1, 2)
+                data=packet,
+                managed_params=ManagedParams(CdsShortTimestamp.TIMESTAMP_SIZE),
+                verif_params=ManagedParamsVerification(1, 2)
             )
             res = self.verif_wrapper.add_tm(verif_tm)
             if res is None:
@@ -183,7 +189,7 @@ class TcHandler(TcHandlerBase):
         seq_count_provider: FileSeqCountProvider,
         verif_wrapper: VerificationWrapper,
     ):
-        super(TcHandler, self).__init__()
+        super().__init__()
         self.seq_count_provider = seq_count_provider
         self.verif_wrapper = verif_wrapper
         self.queue_helper = DefaultPusQueueHelper(
@@ -226,11 +232,10 @@ class TcHandler(TcHandlerBase):
                 return self.queue_helper.add_pus_tc(
                     PusTelecommand(apid=EXAMPLE_PUS_APID, service=17, subservice=1)
                 )
-            elif cmd_path_list[0] == "test":
-                if cmd_path_list[1] == "event":
-                    return self.queue_helper.add_pus_tc(
-                        PusTelecommand(apid=EXAMPLE_PUS_APID, service=17, subservice=128)
-                    )
+            elif cmd_path_list[0] == "test" and cmd_path_list[1] == "event":
+                return self.queue_helper.add_pus_tc(
+                    PusTelecommand(apid=EXAMPLE_PUS_APID, service=17, subservice=128)
+                )
 
 
 # Note about lint disable: I could split up the function but I prefer to have the whole

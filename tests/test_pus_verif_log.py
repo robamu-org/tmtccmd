@@ -3,21 +3,22 @@ import os
 from pathlib import Path
 from unittest import TestCase
 
-from tmtccmd.logging import add_colorlog_console_logger
+from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss import PusTelecommand
 from spacepackets.ecss.pus_1_verification import (
+    ErrorCode,
+    FailureNotice,
+    StepId,
+    create_acceptance_failure_tm,
     create_acceptance_success_tm,
+    create_completion_success_tm,
+    create_start_failure_tm,
     create_start_success_tm,
     create_step_success_tm,
-    StepId,
-    create_completion_success_tm,
-    create_acceptance_failure_tm,
-    FailureNotice,
-    ErrorCode,
-    create_start_failure_tm,
 )
-from spacepackets.ccsds.time import CdsShortTimestamp
 from spacepackets.ecss.pus_verificator import PusVerificator
+
+from tmtccmd.logging import add_colorlog_console_logger
 from tmtccmd.logging.pus import RegularTmtcLogWrapper
 from tmtccmd.pus import VerificationWrapper
 
@@ -110,7 +111,7 @@ class TestPusVerifLog(TestCase):
         srv_1_tm = create_acceptance_failure_tm(
             apid=self.apid,
             pus_tc=tc,
-            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
+            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=b""),
             timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)
@@ -125,7 +126,7 @@ class TestPusVerifLog(TestCase):
         srv_1_tm = create_acceptance_failure_tm(
             apid=self.apid,
             pus_tc=tc,
-            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
+            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=b""),
             timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)
@@ -134,7 +135,7 @@ class TestPusVerifLog(TestCase):
         srv_1_tm = create_start_failure_tm(
             apid=self.apid,
             pus_tc=tc,
-            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=bytes()),
+            failure_notice=FailureNotice(code=ErrorCode(pfc=8, val=1), data=b""),
             timestamp=CdsShortTimestamp.empty().pack(),
         )
         res = verificator.add_tm(srv_1_tm)

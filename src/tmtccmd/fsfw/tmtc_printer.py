@@ -1,16 +1,16 @@
 """Contains classes and functions that perform all printing functionalities."""
 
-import logging
 import enum
+import logging
 from collections.abc import Generator
-from typing import List, Optional
+from typing import Optional
 
-from spacepackets.util import get_printable_data_string, PrintFormats
+from spacepackets.util import PrintFormats, get_printable_data_string
 
+from tmtccmd.logging import get_current_time_string
+from tmtccmd.pus.tm.s3_hk_base import HkContentType
 from tmtccmd.tmtc.tm_base import PusTmInfoInterface, PusTmInterface
 from tmtccmd.util.obj_id import ObjectIdU32
-from tmtccmd.pus.tm.s3_hk_base import HkContentType
-from tmtccmd.logging import get_current_time_string
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -185,7 +185,7 @@ class FsfwTmTcPrinter:
         _LOGGER.info(string)
 
     @staticmethod
-    def chunks(lst: List, n) -> Generator[List[List], None, None]:
+    def chunks(lst: list, n) -> Generator[list[list], None, None]:
         """Yield successive n-sized chunks from lst."""
         for i in range(0, len(lst), n):
             yield lst[i : i + n]

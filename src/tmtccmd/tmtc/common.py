@@ -1,19 +1,20 @@
-import enum
 import abc
+import enum
 import logging
-from typing import Deque, List, Any, Dict, Optional
+from collections import deque
+from typing import Any, Optional
+
 from spacepackets.ecss.tm import PusTelemetry
 
-
-TelemetryList = List[bytes]
+TelemetryList = list[bytes]
 # Deprecated type alias.
 TelemetryListT = TelemetryList
-TelemetryQueueT = Deque[bytes]
+TelemetryQueueT = deque[bytes]
 
-PusTmQueue = Deque[PusTelemetry]
-PusTmListT = List[PusTelemetry]
+PusTmQueue = deque[PusTelemetry]
+PusTmListT = list[PusTelemetry]
 
-PusTmQueueT = Deque[PusTmListT]
+PusTmQueueT = deque[PusTmListT]
 
 
 class SpecificApidHandlerBase(abc.ABC):
@@ -50,7 +51,7 @@ class DefaultApidHandler(GenericApidHandlerBase):
         logging.getLogger(__name__).warning(f"No TM handling implemented for unknown APID {apid}")
 
 
-HandlerDictT = Dict[int, SpecificApidHandlerBase]
+HandlerDictT = dict[int, SpecificApidHandlerBase]
 
 
 class TmTypes(enum.Enum):

@@ -193,7 +193,7 @@ def hamming_compute_256(data: bytearray) -> bytearray:  # noqa: C901
     hamming_code[1] = 0
     hamming_code[2] = 0
 
-    for index in range(4):
+    for _ in range(4):
         hamming_code[0] <<= 2
         hamming_code[1] <<= 2
         hamming_code[2] <<= 2

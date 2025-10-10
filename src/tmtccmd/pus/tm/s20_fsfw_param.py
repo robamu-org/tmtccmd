@@ -12,7 +12,7 @@ from spacepackets.ecss.tm import AbstractPusTm
 from tmtccmd.pus.s20_fsfw_param import (
     CustomSubservice,
 )
-from tmtccmd.pus.s20_fsfw_param_defs import ParameterId, Parameter, FsfwParamId
+from tmtccmd.pus.s20_fsfw_param_defs import FsfwParamId, Parameter, ParameterId
 
 
 class Service20ParamDumpWrapper:
@@ -35,8 +35,8 @@ class Service20ParamDumpWrapper:
         param_id = ParameterId.unpack(self.param_tm.source_data[4:8])
         try:
             ptc = Ptc(self.param_tm.source_data[8])
-        except TypeError:
-            raise ValueError(f"unknown PTC {self.param_tm.source_data[8]}")
+        except TypeError as e:
+            raise ValueError(f"unknown PTC {self.param_tm.source_data[8]}") from e
         pfc = self.param_tm.source_data[9]
         rows = self.param_tm.source_data[10]
         columns = self.param_tm.source_data[11]
@@ -120,7 +120,7 @@ class Service20FsfwTm(AbstractPusTm):
             subservice=0,
             apid=0,
             source_data=bytes([0, 0, 0, 0]),
-            timestamp=bytes(),
+            timestamp=b"",
         )
 
     @property
