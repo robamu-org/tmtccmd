@@ -41,8 +41,8 @@ from .defs import (
     CfdpParams,
     ComIfDictT,
     CoreComInterfaces,
+    CoreMode,
     CoreModeConverter,
-    CoreModeList,
     default_json_path,
 )
 from .hook import HookBase
@@ -50,13 +50,13 @@ from .tmtc import CmdTreeNode
 
 
 def backend_mode_conversion(mode: str, mode_wrapper: ModeWrapper):
-    if mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
+    if mode == CoreModeConverter.get_str(CoreMode.LISTENER_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.IDLE
-    elif mode == CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE):
+    elif mode == CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE):
         mode_wrapper.tm_mode = TmMode.LISTENER
         mode_wrapper.tc_mode = TcMode.ONE_QUEUE
-    elif mode == CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE):
+    elif mode == CoreModeConverter.get_str(CoreMode.MULTI_INTERACTIVE_QUEUE_MODE):
         mode_wrapper.tc_mode = TcMode.MULTI_QUEUE
         mode_wrapper.tm_mode = TmMode.LISTENER
 

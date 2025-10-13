@@ -3,7 +3,7 @@ import threading
 from dataclasses import dataclass
 from typing import Any
 
-from tmtccmd import CcsdsTmtcBackend
+from tmtccmd import CcsdsTmtcWorker
 from tmtccmd.config import CoreComInterfaces
 
 CONNECT_BTTN_STYLE = (
@@ -75,7 +75,7 @@ class LocalArgs:
 
 
 class SharedArgs:
-    def __init__(self, backend: CcsdsTmtcBackend):
+    def __init__(self, backend: CcsdsTmtcWorker):
         self.state_lock = threading.Lock()
         self.com_if_ref_tracker = ComIfRefCount()
         self.tc_lock = threading.Lock()

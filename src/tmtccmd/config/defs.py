@@ -58,7 +58,7 @@ CORE_COM_IF_DICT: ComIfMapping = {
 
 
 # Mode options, set by args parser
-class CoreModeList(enum.IntEnum):
+class CoreMode(enum.IntEnum):
     """These are the core modes which will be translated to different TC and TM modes
     for the CCSDS backend
 
@@ -68,28 +68,27 @@ class CoreModeList(enum.IntEnum):
     2. LISTENER_MODE: Only listen to TM
     3. MULTI_INTERACTIVE_QUEUE_MODE:
     """
-
-    #
     ONE_QUEUE_MODE = 0
     LISTENER_MODE = 1
-    # This mode is optimized for the handling of multiple queues. It will configure the backend
-    # to request additional queues or a mode change from the user instead of requesting program
-    # termination
     MULTI_INTERACTIVE_QUEUE_MODE = 3
-    # The program will not do anything in this mode. This includes polling TM and sending any TCs
+    """This mode is optimized for the handling of multiple queues. It will configure the backend
+    to request additional queues or a mode change from the user instead of requesting program
+    termination"""
     IDLE = 5
+    """The program will not do anything in this mode. This includes polling TM and sending any TCs
+    """
 
 
 class CoreModeConverter:
     @staticmethod
-    def get_str(mode: CoreModeList | int) -> str:
-        if mode == CoreModeList.LISTENER_MODE:
+    def get_str(mode: CoreMode | int) -> str:
+        if mode == CoreMode.LISTENER_MODE:
             return "listener"
-        elif mode == CoreModeList.ONE_QUEUE_MODE:
+        elif mode == CoreMode.ONE_QUEUE_MODE:
             return "one-q"
-        elif mode == CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE:
+        elif mode == CoreMode.MULTI_INTERACTIVE_QUEUE_MODE:
             return "multi-q"
-        elif mode == CoreModeList.IDLE:
+        elif mode == CoreMode.IDLE:
             return "idle"
         else:
             return ""

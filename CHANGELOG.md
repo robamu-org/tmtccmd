@@ -16,6 +16,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 - Various deprecated modules.
 - Move to `com-interface` generic library
 
+## Renamed
+
+- `CcsdsTmtcBackend` to `CcsdsTmtcWorker`
+- `tmtccmd.core.ccsds_backend` to `tmtccmd.core.ccsds`
+
 # [v8.2.0] 2025-02-10
 
 - Added back `Service3FsfwHkPacket` and `Service8FsfwDataReply` helper classes to parse some

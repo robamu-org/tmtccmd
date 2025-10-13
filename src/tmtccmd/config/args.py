@@ -21,8 +21,8 @@ from tmtccmd.tmtc.procedure import TcProcedureType
 from .defs import (
     CfdpParams,
     CoreComInterfaces,
+    CoreMode,
     CoreModeConverter,
-    CoreModeList,
     TreeCommandingParams,
 )
 from .hook import HookBase
@@ -287,21 +287,21 @@ def add_generic_arguments(arg_parser: argparse.ArgumentParser):
 
 
 def add_tmtc_mode_arguments(arg_parser: argparse.ArgumentParser):
-    from tmtccmd.config import CoreModeConverter, CoreModeList
+    from tmtccmd.config import CoreMode, CoreModeConverter
 
-    help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}\n"
+    help_text = f"Core Modes. Default: {CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE)}\n"
     one_q = (
-        f' - "{CoreModeList.ONE_QUEUE_MODE}" or '
-        f'"{CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)}": '
+        f' - "{CoreMode.ONE_QUEUE_MODE}" or '
+        f'"{CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE)}": '
         "One Queue Command Mode\n"
     )
     listener_help = (
-        f' - "{CoreModeList.LISTENER_MODE}" or '
-        f'"{CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)}": Listener Mode\n'
+        f' - "{CoreMode.LISTENER_MODE}" or '
+        f'"{CoreModeConverter.get_str(CoreMode.LISTENER_MODE)}": Listener Mode\n'
     )
     multi_q = (
-        f' - "{CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE}" or '
-        f'"{CoreModeConverter.get_str(CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE)}": '
+        f' - "{CoreMode.MULTI_INTERACTIVE_QUEUE_MODE}" or '
+        f'"{CoreModeConverter.get_str(CoreMode.MULTI_INTERACTIVE_QUEUE_MODE)}": '
         "Multi Queue and Interactive Command Mode\n"
     )
     help_text += one_q + listener_help + multi_q
@@ -450,7 +450,7 @@ def args_to_all_params_for_cfdp(
     #       Not sure if one queue mode is relevant here. A file transfer might always be split up
     #       in multiple queue fragments and might require feedback before finishing properly.
     params.backend_params.mode = CoreModeConverter.get_str(
-        CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE
+        CoreMode.MULTI_INTERACTIVE_QUEUE_MODE
     )
     if pargs.delay is None:
         params.cmd_params.delay = 0.4
@@ -501,7 +501,7 @@ def args_to_all_params_tmtc(
                 params.cmd_params.tree_print_max_depth = int(arg)
     mode_set_explicitely = False
     if pargs.mode is None:
-        params.mode = CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE)
+        params.mode = CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE)
     else:
         mode_set_explicitely = True
         params.mode = pargs.mode
@@ -511,16 +511,16 @@ def args_to_all_params_tmtc(
         and not mode_set_explicitely
         and (not pargs.prompt_proc)
     ):
-        params.mode = CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
+        params.mode = CoreModeConverter.get_str(CoreMode.LISTENER_MODE)
     if pargs.delay is None:
-        if params.backend_params.mode == CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE):
+        if params.backend_params.mode == CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE):
             params.cmd_params.delay = 4.0
         else:
             params.cmd_params.delay = 0.0
     else:
         params.cmd_params.delay = float(pargs.delay)
     if (
-        params.mode != CoreModeConverter.get_str(CoreModeList.LISTENER_MODE)
+        params.mode != CoreModeConverter.get_str(CoreMode.LISTENER_MODE)
         and not params.cmd_params.print_tree
     ):
         determine_cmd_path(
