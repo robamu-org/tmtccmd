@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, call, patch
 from spacepackets.cfdp import TransmissionMode
 
 from tests.hook_obj_mock import create_hook_mock
-from tmtccmd import CoreModeConverter, CoreModeList
+from tmtccmd import CoreMode, CoreModeConverter
 from tmtccmd.config import CfdpParams
 from tmtccmd.config.args import (
     CommandingParams,
@@ -70,7 +70,7 @@ class TestArgs(TestCase):
         self.assertEqual(def_params.cmd_path, "/PING")
         self.assertEqual(
             self.params.backend_params.mode,
-            CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE),
+            CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE),
         )
         self.assertEqual(self.params.backend_params.listener, False)
         self.assertEqual(self.params.backend_params.com_if_id, "dummy")
@@ -128,9 +128,9 @@ class TestArgs(TestCase):
         self.assertIsNone(def_params.cmd_path)
         self.assertEqual(
             self.params.backend_params.mode,
-            CoreModeConverter.get_str(CoreModeList.LISTENER_MODE),
+            CoreModeConverter.get_str(CoreMode.LISTENER_MODE),
         )
-        self.assertEqual(self.params.mode, CoreModeConverter.get_str(CoreModeList.LISTENER_MODE))
+        self.assertEqual(self.params.mode, CoreModeConverter.get_str(CoreMode.LISTENER_MODE))
         self.params = SetupParams()
 
     def test_tree_printout_conversion_default(self):

@@ -4,10 +4,10 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 
-from tmtccmd import CcsdsTmListener, CcsdsTmtcBackend, TcHandlerBase
+from tmtccmd import CcsdsTmListener, CcsdsTmtcWorker, TcHandlerBase
 from tmtccmd.com.dummy import DummyInterface
 from tmtccmd.core import BackendRequest, TcMode, TmMode
-from tmtccmd.core.ccsds_backend import NoValidProcedureSetError
+from tmtccmd.core.ccsds import NoValidProcedureSetError
 from tmtccmd.tmtc import (
     ProcedureWrapper,
     TcProcedureBase,
@@ -73,7 +73,7 @@ class TestBackend(TestCase):
         self.tm_listener = MagicMock(specs=CcsdsTmListener)
         self.apid = 0x06
         self.tc_handler = TcHandlerMock(self.apid)
-        self.backend = CcsdsTmtcBackend(
+        self.backend = CcsdsTmtcWorker(
             tc_mode=TcMode.IDLE,
             tm_mode=TmMode.IDLE,
             com_if=self.com_if,

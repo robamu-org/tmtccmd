@@ -2,6 +2,8 @@
 It also re-exports commonly used classes and functions.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import sys
@@ -9,8 +11,8 @@ from datetime import timedelta
 from typing import Optional, Union, cast
 
 from tmtccmd.config import (
+    CoreMode,
     CoreModeConverter,
-    CoreModeList,
     HookBase,
     PreArgsParsingWrapper,
     SetupParams,
@@ -21,7 +23,7 @@ from tmtccmd.config import (
 from tmtccmd.config.args import ProcedureParamsWrapper
 from tmtccmd.core import ModeWrapper
 from tmtccmd.core.base import BackendRequest, FrontendBase
-from tmtccmd.core.ccsds_backend import BackendBase, CcsdsTmtcBackend
+from tmtccmd.core.ccsds import BackendBase, CcsdsTmtcWorker
 from tmtccmd.tmtc import (
     CcsdsTmHandler,
     ProcedureWrapper,
@@ -32,6 +34,13 @@ from tmtccmd.tmtc import (
     TreeCommandingProcedure,
 )
 from tmtccmd.tmtc.ccsds_tm_listener import CcsdsTmListener
+
+__all__ = [
+    "PreArgsParsingWrapper",
+    "SetupParams",
+    "TreeCommandingParams",
+    "BackendRequest",
+]
 
 __TMTCCMD_LOGGER = logging.getLogger(__name__)
 
@@ -152,12 +161,12 @@ def __start_tmtc_commander_qt_gui(
             sys.exit(1)
         app = QApplication([app_name])
         if tmtc_frontend is None:
-            from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
+            from tmtccmd.core.ccsds import CcsdsTmtcWorker
             from tmtccmd.gui import TmTcFrontend
 
             tmtc_frontend = TmTcFrontend(
                 hook_obj=hook_obj,
-                tmtc_backend=cast(CcsdsTmtcBackend, tmtc_backend),
+                tmtc_backend=cast(CcsdsTmtcWorker, tmtc_backend),
                 app_name=app_name,
             )
         tmtc_frontend.start(app)
@@ -168,10 +177,10 @@ def __start_tmtc_commander_qt_gui(
 
 def create_default_tmtc_backend(
     setup_wrapper: SetupWrapper,
-    tm_handler: TmHandlerBase,
+    tm_handler: CcsdsTmHandler,
     tc_handler: TcHandlerBase,
     init_procedure: ProcedureWrapper | None,
-) -> BackendBase:
+) -> CcsdsTmtcWorker:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 
     :param init_procedure:
@@ -182,36 +191,26 @@ def create_default_tmtc_backend(
     """
     global __SETUP_WAS_CALLED
 
-    from typing import cast
-
     if not __SETUP_WAS_CALLED:
         __TMTCCMD_LOGGER.warning("setup_tmtccmd was not called first. Call it first")
         sys.exit(1)
-    if tm_handler is None:
-        __TMTCCMD_LOGGER.warning(
-            "No TM Handler specified! Make sure to specify at least one TM handler"
-        )
-        sys.exit(1)
-    else:
-        if tm_handler.get_type() == TmTypes.CCSDS_SPACE_PACKETS:
-            tm_handler = cast(CcsdsTmHandler, tm_handler)
     com_if = setup_wrapper.params.com_if
     if com_if is None:
         com_if = setup_wrapper.hook_obj.get_communication_interface(setup_wrapper.params.com_if_id)
     tm_listener = CcsdsTmListener(tm_handler)
     mode_wrapper = ModeWrapper()
     backend_mode_conversion(setup_wrapper.params.mode, mode_wrapper)
-    if setup_wrapper.params.mode == CoreModeConverter.get_str(CoreModeList.LISTENER_MODE):
+    if setup_wrapper.params.mode == CoreModeConverter.get_str(CoreMode.LISTENER_MODE):
         print("-- Backend Listener Mode --")
-    elif setup_wrapper.params.mode == CoreModeConverter.get_str(CoreModeList.ONE_QUEUE_MODE):
+    elif setup_wrapper.params.mode == CoreModeConverter.get_str(CoreMode.ONE_QUEUE_MODE):
         print("-- One Queue Mode --")
     elif setup_wrapper.params.mode == CoreModeConverter.get_str(
-        CoreModeList.MULTI_INTERACTIVE_QUEUE_MODE
+        CoreMode.MULTI_INTERACTIVE_QUEUE_MODE
     ):
         print("-- Multi Queue Mode --")
     assert com_if is not None
     # The global variables are set by the argument parser.
-    tmtc_backend = CcsdsTmtcBackend(
+    tmtc_backend = CcsdsTmtcWorker(
         com_if=com_if,
         tm_listener=tm_listener,
         tc_handler=tc_handler,
@@ -221,11 +220,11 @@ def create_default_tmtc_backend(
     if setup_wrapper.params.backend_params.listener:
         tmtc_backend.keep_listener_mode = True
     tmtc_backend.inter_cmd_delay = timedelta(seconds=setup_wrapper.params.cmd_params.delay)
-    if init_procedure is not None:
+    if init_procedure is not None and init_procedure.procedure is not None:
         tmtc_backend.current_procedure = init_procedure.procedure
     return tmtc_backend
 
 
-def setup_backend_def_procedure(backend: CcsdsTmtcBackend, tmtc_params: TreeCommandingProcedure):
+def setup_backend_def_procedure(backend: CcsdsTmtcWorker, tmtc_params: TreeCommandingProcedure):
     assert tmtc_params.cmd_path is not None
     backend.current_procedure = TreeCommandingProcedure(tmtc_params.cmd_path)

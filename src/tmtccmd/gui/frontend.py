@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import (
 import tmtccmd as mod_root
 from tmtccmd.config import HookBase
 from tmtccmd.core.base import FrontendBase
-from tmtccmd.core.ccsds_backend import CcsdsTmtcBackend
+from tmtccmd.core.ccsds_backend import CcsdsTmtcWorker
 from tmtccmd.gui.buttons import (
     ButtonArgs,
     ConnectButtonParams,
@@ -52,7 +52,7 @@ LOGGER = get_console_logger()
 
 
 class TmTcFrontend(QMainWindow, FrontendBase):
-    def __init__(self, hook_obj: HookBase, tmtc_backend: CcsdsTmtcBackend, app_name: str):
+    def __init__(self, hook_obj: HookBase, tmtc_backend: CcsdsTmtcWorker, app_name: str):
         super().__init__()
         super(QMainWindow, self).__init__()
         self._app_name = app_name

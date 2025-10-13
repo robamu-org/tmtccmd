@@ -25,7 +25,7 @@ class NoValidProcedureSetError(Exception):
     pass
 
 
-class CcsdsTmtcBackend(BackendBase):
+class CcsdsTmtcWorker(BackendBase):
     """This is the primary class which handles TMTC reception and sending"""
 
     def __init__(
@@ -254,3 +254,7 @@ class CcsdsTmtcBackend(BackendBase):
         if not feed_wrapper.dispatch_next_queue:
             return None
         return feed_wrapper.queue_wrapper
+
+
+CcsdsTmtcBackend = CcsdsTmtcWorker
+"""Deprecated type defintion for :py:class:`CcsdsTmtcWorker`"""
