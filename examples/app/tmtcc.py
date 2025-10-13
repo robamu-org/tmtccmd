@@ -61,25 +61,25 @@ CFDP_REMOTE_ENTITY_ID = UnsignedByteField(byte_len=2, val=EXAMPLE_CFDP_APID)
 
 
 class ExampleHookClass(HookBase):
-    def __init__(self, json_cfg_path: str):
-        super().__init__(cfg_file_path=json_cfg_path)
+    def __init__(self, cfg_path: str):
+        super().__init__(cfg_file_path=cfg_path)
 
     def get_communication_interface(self, com_if_key: str) -> ComInterface | None:
         assert self.cfg_path is not None
         print("Communication interface assignment function was called")
         from tmtccmd.config.com import (
-            create_com_interface_cfg_default,
+            create_com_interface_config_default,
             create_com_interface_default,
         )
 
         assert self.cfg_path is not None
-        cfg = create_com_interface_cfg_default(
+        config = create_com_interface_config_default(
             com_if_key=com_if_key,
-            json_cfg_path=self.cfg_path,
+            cfg_path=self.cfg_path,
             space_packet_ids=None,
         )
-        assert cfg is not None
-        return create_com_interface_default(cfg)
+        assert config is not None
+        return create_com_interface_default(config)
 
     def get_command_definitions(self) -> CmdTreeNode:
         root_node = CmdTreeNode.root_node()
@@ -245,7 +245,7 @@ def main():  # noqa: C901
     # to application logger.
     add_colorlog_console_logger(_LOGGER)
     tmtccmd.init_printout(False)
-    hook_obj = ExampleHookClass(json_cfg_path=default_json_path())
+    hook_obj = ExampleHookClass(cfg_path=default_json_path())
     parser_wrapper = PreArgsParsingWrapper()
     parser_wrapper.create_default_parent_parser()
     parser_wrapper.create_default_parser()

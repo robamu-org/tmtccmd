@@ -6,7 +6,7 @@ from prompt_toolkit.history import History
 from tmtccmd.config.tmtc import CmdTreeNode
 from tmtccmd.core import BackendBase
 
-from .com import ComCfgBase, ComInterface
+from .com import ComConfigCommon, ComInterface
 from .defs import CORE_COM_IF_DICT, ComIfMapping, default_json_path
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class HookBase(ABC):
         from tmtccmd.config.com import create_com_interface_default
 
         assert self.cfg_path is not None
-        cfg_base = ComCfgBase(com_if_key=com_if_key, json_cfg_path=self.cfg_path)
+        cfg_base = ComConfigCommon(com_if_key=com_if_key, cfg_path=self.cfg_path)
         return create_com_interface_default(cfg_base)
 
     @abstractmethod
