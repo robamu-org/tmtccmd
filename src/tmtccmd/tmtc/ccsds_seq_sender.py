@@ -3,7 +3,6 @@
 import enum
 import logging
 from datetime import timedelta
-from typing import Optional
 
 from com_interface import ComInterface
 from spacepackets.countdown import Countdown
@@ -53,8 +52,8 @@ class SequentialCcsdsSender:
         self._current_res = SeqResultWrapper(self._mode)
         self._current_res.longest_rem_delay = queue_wrapper.inter_cmd_delay
         self._op_divider = 0
-        self._last_queue_entry: Optional[TcQueueEntryBase] = None
-        self._last_tc: Optional[TcQueueEntryBase] = None
+        self._last_queue_entry: TcQueueEntryBase | None = None
+        self._last_tc: TcQueueEntryBase | None = None
 
     @property
     def queue_wrapper(self):

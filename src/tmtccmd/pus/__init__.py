@@ -31,8 +31,8 @@ class VerificationWrapper:
     def __init__(
         self,
         pus_verificator: PusVerificator,
-        console_logger: Optional[logging.Logger],
-        file_logger: Optional[logging.Logger],
+        console_logger: logging.Logger | None,
+        file_logger: logging.Logger | None,
     ):
         self.pus_verificator = pus_verificator
         self.console_logger = console_logger
@@ -64,7 +64,7 @@ class VerificationWrapper:
         self,
         req_id: RequestId,
         res: TmCheckResult,
-        subservice: Optional[pus_1.Subservice] = None,
+        subservice: pus_1.Subservice | None = None,
     ):
         return self.log_progress_to_console_from_status(res.status, req_id, subservice)
 
@@ -75,7 +75,7 @@ class VerificationWrapper:
         self,
         req_id: RequestId,
         res: TmCheckResult,
-        subservice: Optional[pus_1.Subservice] = None,
+        subservice: pus_1.Subservice | None = None,
     ):
         self.log_to_file_from_status(res.status, req_id, subservice)
 
@@ -83,7 +83,7 @@ class VerificationWrapper:
         self,
         status: VerificationStatus,
         req_id: RequestId,
-        subservice: Optional[pus_1.Subservice] = None,
+        subservice: pus_1.Subservice | None = None,
     ):
         if self.file_logger is None:
             raise ValueError("No valid file logger was set")
@@ -108,7 +108,7 @@ class VerificationWrapper:
         self,
         status: VerificationStatus,
         req_id: RequestId,
-        subservice: Optional[pus_1.Subservice] = None,
+        subservice: pus_1.Subservice | None = None,
     ):
         if self.console_logger is None:
             raise ValueError("Invalid console logger")

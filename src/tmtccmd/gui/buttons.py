@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from PyQt6.QtCore import QRunnable, QThreadPool
 from PyQt6.QtWidgets import QPushButton
@@ -37,7 +37,7 @@ class ConnectButtonParams:
         hook_obj: HookBase,
         connect_cb: Callable[[], None],
         disconnect_cb: Callable[[], None],
-        tm_listener_bttn: Optional[QPushButton],
+        tm_listener_bttn: QPushButton | None,
     ):
         self.hook_obj = hook_obj
         self.connect_cb = connect_cb
@@ -121,7 +121,7 @@ class TmButtonWrapper:
     def __init__(self, button: QPushButton, args: ButtonArgs, conn_button: QPushButton):
         self.button = button
         self.args = args
-        self.worker: Optional[QRunnable] = None
+        self.worker: QRunnable | None = None
         self._listening = False
         self._next_listener_state = False
         self.button.setStyleSheet(CONNECT_BTTN_STYLE)

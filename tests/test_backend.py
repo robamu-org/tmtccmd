@@ -1,5 +1,4 @@
 from datetime import timedelta
-from typing import Optional
 from unittest import TestCase
 from unittest.mock import MagicMock
 
@@ -34,8 +33,8 @@ class TcHandlerMock(TcHandlerBase):
             default_pus_apid=None,
             seq_cnt_provider=None,
         )
-        self.send_cb_call_args: Optional[SendCbParams] = None
-        self.send_cb_cmd_path_arg: Optional[str] = None
+        self.send_cb_call_args: SendCbParams | None = None
+        self.send_cb_cmd_path_arg: str | None = None
 
     def send_cb(self, send_params: SendCbParams):
         self.send_cb_call_count += 1

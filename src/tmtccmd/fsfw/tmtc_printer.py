@@ -3,7 +3,6 @@
 import enum
 import logging
 from collections.abc import Generator
-from typing import Optional
 
 from spacepackets.util import PrintFormats, get_printable_data_string
 
@@ -60,7 +59,7 @@ class FsfwTmTcPrinter:
 
     def __init__(
         self,
-        file_logger: Optional[logging.Logger],
+        file_logger: logging.Logger | None,
         display_mode: DisplayMode = DisplayMode.LONG,
     ):
         """

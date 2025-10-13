@@ -2,7 +2,6 @@
 
 import enum
 import struct
-from typing import Union
 
 from deprecated.sphinx import deprecated
 from spacepackets.ecss import PusTelecommand
@@ -21,7 +20,7 @@ class Mode(enum.IntEnum):
     RAW = 3
 
 
-def pack_mode_data(object_id: bytes, mode: Union[Mode, int], submode: int) -> bytearray:
+def pack_mode_data(object_id: bytes, mode: Mode | int, submode: int) -> bytearray:
     """FSFW modes: Mode 0: Off, Mode 1: Mode On, Mode 2: Mode Normal, Mode 3: Mode Raw"""
     mode_data = bytearray()
     mode_data += object_id + struct.pack("!I", mode) + struct.pack("B", submode)
@@ -32,11 +31,11 @@ def pack_mode_data(object_id: bytes, mode: Union[Mode, int], submode: int) -> by
     version="v4.0.0a2",
     reason="use create... API instead",
 )
-def pack_mode_command(object_id: bytes, mode: Union[int, Mode], submode: int) -> PusTelecommand:
+def pack_mode_command(object_id: bytes, mode: int | Mode, submode: int) -> PusTelecommand:
     return create_mode_command(object_id, mode, submode)
 
 
-def create_mode_command(object_id: bytes, mode: Union[int, Mode], submode: int) -> PusTelecommand:
+def create_mode_command(object_id: bytes, mode: int | Mode, submode: int) -> PusTelecommand:
     return PusTelecommand(
         service=CustomFsfwPusService.SERVICE_200_MODE,
         subservice=Subservice.TC_MODE_COMMAND,

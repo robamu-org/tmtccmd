@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from .backend_state import BackendState
 
@@ -15,5 +15,5 @@ class BackendBase:
         pass
 
     @abstractmethod
-    def periodic_op(self, args: Optional[Any]) -> BackendState:
+    def periodic_op(self, args: Any | None) -> BackendState:
         pass

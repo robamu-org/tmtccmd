@@ -2,7 +2,7 @@ import abc
 import enum
 import logging
 from collections import deque
-from typing import Any, Optional
+from typing import Any
 
 from spacepackets.ecss.tm import PusTelemetry
 
@@ -72,7 +72,7 @@ class CcsdsTmHandler(TmHandlerBase):
     CCSDS packets by adding dedicated APID handlers or a generic handler for all APIDs with no
     dedicated handler"""
 
-    def __init__(self, generic_handler: Optional[GenericApidHandlerBase]):
+    def __init__(self, generic_handler: GenericApidHandlerBase | None):
         super().__init__(tm_type=TmTypes.CCSDS_SPACE_PACKETS)
         self._handler_dict: HandlerDictT = dict()
         if generic_handler is None:
