@@ -20,48 +20,50 @@ from tmtccmd.config.defs import CoreComInterfaces
 _LOGGER = logging.getLogger(__name__)
 
 
-class ComCfgBase:
+class ComConfigCommon:
     def __init__(
         self,
         com_if_key: str,
-        json_cfg_path: str,
+        cfg_path: str,
     ):
         self.com_if_key = com_if_key
-        self.json_cfg_path = json_cfg_path
+        self.json_cfg_path = cfg_path
 
 
-class TcpipCfg(ComCfgBase):
+class TcpipConfig(ComConfigCommon):
     def __init__(
         self,
         if_type: TcpIpType,
         com_if_key: str,
-        json_cfg_path: str,
+        config_path: str,
         send_addr: EthAddr,
         space_packet_ids: Sequence[PacketId] | None,
         recv_addr: EthAddr | None = None,
     ):
-        super().__init__(com_if_key, json_cfg_path)
+        super().__init__(com_if_key, config_path)
         self.space_packet_ids = space_packet_ids
         self.if_type = if_type
         self.send_addr = send_addr
         self.recv_addr = recv_addr
 
 
-class SerialCfgWrapper(ComCfgBase):
-    def __init__(self, com_if_key: str, json_cfg_path: str, serial_cfg: SerialCfg):
-        super().__init__(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
+class SerialConfigCommon(ComConfigCommon):
+    def __init__(self, com_if_key: str, config_path: str, serial_cfg: SerialCfg):
+        super().__init__(com_if_key=com_if_key, cfg_path=config_path)
         self.serial_cfg = serial_cfg
 
+class DummyConfig(ComConfigCommon):
+    pass
 
-def create_com_interface_cfg_default(
-    com_if_key: str, json_cfg_path: str, space_packet_ids: Sequence[PacketId] | None
-) -> ComCfgBase | None:
+def create_com_interface_config_default(
+    com_if_key: str, cfg_path: str, space_packet_ids: Sequence[PacketId] | None
+) -> TcpipConfig | SerialConfigCommon | DummyConfig:
     if com_if_key == CoreComInterfaces.DUMMY.value:
-        return ComCfgBase(com_if_key=com_if_key, json_cfg_path=json_cfg_path)
+        return DummyConfig(com_if_key=com_if_key, cfg_path=cfg_path)
     elif com_if_key == CoreComInterfaces.UDP.value:
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
-            json_cfg_path=json_cfg_path,
+            json_cfg_path=cfg_path,
             tcpip_type=TcpIpType.UDP,
             space_packet_ids=space_packet_ids,
         )
@@ -69,7 +71,7 @@ def create_com_interface_cfg_default(
         assert space_packet_ids is not None
         return default_tcpip_cfg_setup(
             com_if_key=com_if_key,
-            json_cfg_path=json_cfg_path,
+            json_cfg_path=cfg_path,
             tcpip_type=TcpIpType.TCP,
             space_packet_ids=space_packet_ids,
         )
@@ -82,30 +84,28 @@ def create_com_interface_cfg_default(
         # baud rate and serial port which need to be set once but are expected to stay
         # the same for a given machine. Therefore, we use a JSON file to store and extract
         # those values
-        cfg = SerialCfg(baud_rate=0, com_if_id=com_if_key, serial_timeout=0, serial_port="")
-        default_serial_cfg_baud_and_port_setup(json_cfg_path, cfg)
-        return SerialCfgWrapper(com_if_key=com_if_key, json_cfg_path=json_cfg_path, serial_cfg=cfg)
+        cfg = SerialCfg(baud_rate=0, com_if_id=com_if_key, serial_port="")
+        default_serial_cfg_baud_and_port_setup(cfg_path, cfg)
+        return SerialConfigCommon(com_if_key=com_if_key, config_path=cfg_path, serial_cfg=cfg)
     else:
         return None
 
 
-def create_com_interface_default(cfg: ComCfgBase) -> ComInterface | None:
+def create_com_interface_default(config: TcpipConfig | SerialConfigCommon | DummyConfig) -> ComInterface | None:
     """Return the desired communication interface object
 
     :param cfg: Generic configuration
     :return:
     """
-    if cfg is None:
-        raise ValueError("Passed ComIF configuration is empty")
-    if cfg.com_if_key == "":
+    if config.com_if_key == "":
         _LOGGER.warning("COM Interface key string is empty. Using dummy COM interface")
     try:
-        return __create_com_if(cfg)
+        return __create_com_if(config)
     except ConnectionRefusedError:
         _LOGGER.exception("TCP/IP connection refused")
-        if cfg.com_if_key == CoreComInterfaces.UDP.value:
+        if config.com_if_key == CoreComInterfaces.UDP.value:
             _LOGGER.warning("Make sure that a UDP server is running")
-        if cfg.com_if_key == CoreComInterfaces.TCP.value:
+        if config.com_if_key == CoreComInterfaces.TCP.value:
             _LOGGER.warning("Make sure that a TCP server is running")
         sys.exit(1)
     except OSError:
@@ -113,19 +113,21 @@ def create_com_interface_default(cfg: ComCfgBase) -> ComInterface | None:
         sys.exit(1)
 
 
-def __create_com_if(cfg: ComCfgBase) -> ComInterface | None:
+def __create_com_if(cfg: TcpipConfig | SerialConfigCommon | DummyConfig) -> ComInterface | None:
     from tmtccmd.com.dummy import DummyInterface
 
     if (
         cfg.com_if_key == CoreComInterfaces.UDP.value
         or cfg.com_if_key == CoreComInterfaces.TCP.value
     ):
-        communication_interface = create_default_tcpip_interface(cast(TcpipCfg, cfg))
+        assert isinstance(cfg, TcpipConfig)
+        communication_interface = create_default_tcpip_interface(cast(TcpipConfig, cfg))
     elif cfg.com_if_key in [
         CoreComInterfaces.SERIAL_DLE.value,
         CoreComInterfaces.SERIAL_COBS.value,
     ]:
-        serial_cfg_wrapper = cast(SerialCfgWrapper, cfg)
+        assert isinstance(cfg, SerialConfigCommon)
+        serial_cfg_wrapper = cast(SerialConfigCommon, cfg)
         communication_interface = create_default_serial_interface(
             com_if_key=cfg.com_if_key,
             json_cfg_path=cfg.json_cfg_path,
@@ -145,7 +147,7 @@ def default_tcpip_cfg_setup(
     tcpip_type: TcpIpType,
     json_cfg_path: str,
     space_packet_ids: Sequence[PacketId] | None,
-) -> TcpipCfg:
+) -> TcpipConfig:
     """Default setup for TCP/IP communication interfaces. This intantiates all required data in the
     globals manager so a TCP/IP communication interface can be built with
     :func:`create_default_tcpip_interface`
@@ -167,10 +169,10 @@ def default_tcpip_cfg_setup(
         send_addr = determine_tcp_send_address(json_cfg_path=json_cfg_path)
     else:
         raise ValueError("Invalid TCP/IP server type")
-    cfg = TcpipCfg(
+    cfg = TcpipConfig(
         com_if_key=com_if_key,
         if_type=tcpip_type,
-        json_cfg_path=json_cfg_path,
+        config_path=json_cfg_path,
         send_addr=send_addr,
         space_packet_ids=space_packet_ids,
     )
@@ -190,7 +192,7 @@ def default_serial_cfg_baud_and_port_setup(json_cfg_path: str, cfg: SerialCfg):
     cfg.baud_rate = baud_rate
 
 
-def create_default_tcpip_interface(tcpip_cfg: TcpipCfg) -> ComInterface | None:
+def create_default_tcpip_interface(tcpip_cfg: TcpipConfig) -> ComInterface | None:
     """Create a default serial interface. Requires a certain set of global variables set up. See
     :py:func:`default_tcpip_cfg_setup` for more details.
 
