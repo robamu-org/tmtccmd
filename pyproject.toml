@@ -28,16 +28,17 @@ classifiers = [
     "Topic :: Scientific/Engineering"
 ]
 dependencies = [
-    "crcmod~=1.7",
-    "colorama~=0.4.0",
-    "colorlog~=6.6",
-    "cobs~=1.2",
-    "prompt-toolkit~=3.0",
-    "Deprecated~=1.2",
-    "pyserial~=3.5",
-    "spacepackets~=0.31.0",
-    "cfdp-py~=0.6.0",
-    "com-interface~=0.2.0"
+    "crcmod ~= 1.7",
+    "colorama ~= 0.4.0",
+    "colorlog ~= 6.6",
+    "cobs ~= 1.2",
+    "prompt-toolkit ~= 3.0",
+    "Deprecated ~= 1.2",
+    "pyserial ~= 3.5",
+    "spacepackets ~= 0.31.0",
+    "cfdp-py ~= 0.6.0",
+    "com-interface ~= 0.2.0",
+    "tomli ~= 2.3.0"
 ]
 
 [project.optional-dependencies]
@@ -45,8 +46,9 @@ gui = [
     "PyQt6~=6.6",
 ]
 test = [
+    "pytest",
+    "coverage",
     "pyfakefs~=5.7",
-    "pytest~=8.3"
 ]
 
 [project.urls]

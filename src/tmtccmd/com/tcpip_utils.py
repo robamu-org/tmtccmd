@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    import tomli as tomllib  # Fallback for older versions
+
 import json
 import logging
 import socket
@@ -13,64 +20,73 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_MAX_RECV_SIZE = 1500
 
 
-def determine_udp_send_address(json_cfg_path: str) -> EthAddr:
-    return determine_tcpip_address(tcpip_type=TcpIpType.UDP, json_cfg_path=json_cfg_path)
+def determine_udp_send_address(cfg_path: str) -> EthAddr | None:
+    if cfg_path.endswith("json"):
+        return load_tcpip_address_json(tcpip_type=TcpIpType.UDP, json_cfg_path=cfg_path)
+    elif cfg_path.endswith("toml"):
+        return load_tcpip_address_from_toml(tcpip_type=TcpIpType.UDP, toml_cfg_path=cfg_path)
+    else:
+        raise ValueError(f"invalid configuration file {cfg_path}, can only handle JSON or TOML")
 
 
-def determine_tcp_send_address(json_cfg_path: str) -> EthAddr:
-    return determine_tcpip_address(tcpip_type=TcpIpType.TCP, json_cfg_path=json_cfg_path)
+def determine_tcp_send_address(cfg_path: str) -> EthAddr | None:
+    if cfg_path.endswith("json"):
+        return load_tcpip_address_json(tcpip_type=TcpIpType.TCP, json_cfg_path=cfg_path)
+    elif cfg_path.endswith("toml"):
+        return load_tcpip_address_from_toml(tcpip_type=TcpIpType.TCP, toml_cfg_path=cfg_path)
+    else:
+        raise ValueError(f"invalid configuration file {cfg_path}, can only handle JSON or TOML")
 
 
-def determine_udp_recv_address(json_cfg_path: str) -> EthAddr:
-    return determine_tcpip_address(tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=json_cfg_path)
+def determine_udp_recv_address(cfg_path: str) -> EthAddr | None:
+    return load_tcpip_address_json(tcpip_type=TcpIpType.UDP_RECV, json_cfg_path=cfg_path)
 
 
-def determine_tcpip_address(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAddr:
+def load_tcpip_address_from_toml(tcpip_type: TcpIpType, toml_cfg_path: str) -> EthAddr | None:
     addr = EthAddr("", 0)
-    reconfigure_ip_address = False
+
+    if tcpip_type == TcpIpType.TCP:
+        toml_key = "tcp"
+    elif tcpip_type == TcpIpType.UDP or tcpip_type == TcpIpType.UDP_RECV:
+        toml_key = "udp"
+
+    try:
+        with Path(toml_cfg_path).open("rb") as f:
+            cfg = tomllib.load(f)
+
+        section = cfg[toml_key]
+        ip_address = section["addr"]
+        port = int(section["port"])
+        addr = EthAddr(ip_address, port)
+    except (FileNotFoundError, KeyError, tomllib.TOMLDecodeError, ValueError):
+        pass
+
+    return addr
+
+
+def load_tcpip_address_json(tcpip_type: TcpIpType, json_cfg_path: str) -> EthAddr | None:
+    addr = EthAddr("", 0)
     if not check_json_file(json_cfg_path=json_cfg_path):
-        reconfigure_ip_address = True
+        return None
 
     if tcpip_type == TcpIpType.TCP:
         json_key_address = JsonKeyNames.TCPIP_TCP_DEST_IP_ADDRESS.value
         json_key_port = JsonKeyNames.TCPIP_TCP_DEST_PORT.value
-        info_string = "TCP destination"
     elif tcpip_type == TcpIpType.UDP:
         json_key_address = JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value
         json_key_port = JsonKeyNames.TCPIP_UDP_DEST_PORT.value
-        info_string = "UDP destination"
     elif tcpip_type == TcpIpType.UDP_RECV:
         json_key_address = JsonKeyNames.TCPIP_UDP_RECV_IP_ADDRESS.value
         json_key_port = JsonKeyNames.TCPIP_UDP_RECV_PORT.value
-        info_string = "UDP receive destination"
-    else:
-        json_key_address = JsonKeyNames.TCPIP_UDP_DEST_IP_ADDRESS.value
-        json_key_port = JsonKeyNames.TCPIP_UDP_DEST_PORT.value
-        info_string = "UDP destination"
 
     with open(json_cfg_path) as write:
         load_data = json.load(write)
         if json_key_address not in load_data or json_key_port not in load_data:
-            reconfigure_ip_address = True
+            return None
         else:
             ip_address = load_data[json_key_address]
             port = int(load_data[json_key_port])
             addr = EthAddr(ip_address, port)
-
-    if reconfigure_ip_address:
-        addr = prompt_ip_address(type_str=info_string)
-        save_to_json = input(f"Do you want to store the {info_string} configuration? ([Y]/n): ")
-        if save_to_json.lower() in ["y", "yes", ""]:
-            with open(json_cfg_path, "r+") as file:
-                json_dict = json.load(file)
-                json_dict[json_key_address] = addr.ip_addr
-                json_dict[json_key_port] = addr.port
-                file.seek(0)
-                json.dump(json_dict, file, indent=4)
-            _LOGGER.info(f"{info_string} was stored to the JSON file config/tmtcc_config.json.")
-            _LOGGER.info("Delete this file or edit it manually to change the used addresses.")
-        else:
-            _LOGGER.info(f"{info_string} configuration was not stored")
     return addr
 
 

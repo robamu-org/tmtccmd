@@ -48,7 +48,7 @@ class TcHandlerMock(TcHandlerBase):
         self.feed_cb_call_count += 1
         self.send_cb_cmd_path_arg = None
         self.send_cb_op_code_arg = None
-        if info is not None and  info.proc_type == TcProcedureType.TREE_COMMANDING:
+        if info is not None and info.proc_type == TcProcedureType.TREE_COMMANDING:
             self.feed_cb_def_proc_count += 1
             def_info = info.to_tree_commanding_procedure()
             if def_info.cmd_path != "/ping":

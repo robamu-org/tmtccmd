@@ -34,7 +34,11 @@ class TcQueueEntryBase:
 
     def is_tc(self) -> bool:
         """Check whether concrete object is an actual telecommand"""
-        return bool(self.etype == TcQueueEntryType.PUS_TC or self.etype == TcQueueEntryType.RAW_TC or self.etype == TcQueueEntryType.CCSDS_TC)
+        return bool(
+            self.etype == TcQueueEntryType.PUS_TC
+            or self.etype == TcQueueEntryType.RAW_TC
+            or self.etype == TcQueueEntryType.CCSDS_TC
+        )
 
 
 QueueDequeT = deque[TcQueueEntryBase]

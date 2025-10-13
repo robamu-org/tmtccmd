@@ -150,7 +150,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         else:
             LOGGER.warning("Could not set logo, path invalid!")
 
-    def closeEvent(self, event): # noqa: N802
+    def closeEvent(self, event):  # noqa: N802
         try:
             pass
             if self.__tm_button_wrapper.is_listening():
@@ -229,7 +229,7 @@ class TmTcFrontend(QMainWindow, FrontendBase):
         com_if_combo_box = QComboBox()
         all_com_ifs = self._hook_obj.get_com_if_dict()
         # add all possible ComIFs to the comboBox
-        for (index, (id, com_if_value)) in enumerate(all_com_ifs.items()):
+        for index, (id, com_if_value) in enumerate(all_com_ifs.items()):
             com_if_combo_box.addItem(com_if_value[0])
             self._com_if_list.append((id, com_if_value[0]))
             if self._shared_args.backend.com_if_id == id:

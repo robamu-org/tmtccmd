@@ -43,12 +43,7 @@ def check_json_file(json_cfg_path: str) -> bool:
             try:
                 json.load(file)
             except json.decoder.JSONDecodeError:
-                _LOGGER.warning("JSON decode error, file format might be invalid. Replacing JSON")
-                file.flush()
-                file.truncate(0)
-                file.seek(0)
-                void_data = dict()
-                json.dump(void_data, file)
+                _LOGGER.warning("JSON decode error, file format might be invalid.")
                 return False
     return True
 

@@ -1,6 +1,5 @@
 """Contains the TmListener which can be used to listen to Telemetry in the background"""
 
-
 from com_interface import ComInterface
 from spacepackets.ccsds.spacepacket import get_apid_from_raw_space_packet
 
