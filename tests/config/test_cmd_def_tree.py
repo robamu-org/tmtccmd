@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 from unittest import TestCase
 
 from tmtccmd.config.tmtc import CmdTreeNode
@@ -69,7 +68,7 @@ class TestCmdDefTree(TestCase):
         self.assertEqual(acs_node.name, "acs")
         self.assertIsNotNone(acs_node.children["acs_ctrl"] is not None)
 
-    def _generic_subnode_relativ_path_test(self, acs_ctrl_node: Optional[CmdTreeNode]):
+    def _generic_subnode_relativ_path_test(self, acs_ctrl_node: CmdTreeNode | None):
         assert acs_ctrl_node is not None
         self.assertEqual(acs_ctrl_node.name, "acs_ctrl")
         self.assertIsNotNone(acs_ctrl_node.children["update_params"] is not None)

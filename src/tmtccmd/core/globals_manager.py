@@ -1,6 +1,5 @@
 import warnings
 from threading import Lock
-from typing import Optional
 
 warnings.warn("the globals_manager module is deprecated", DeprecationWarning, stacklevel=2)
 
@@ -28,7 +27,7 @@ def update_global(global_param_id: int, parameter: any, lock: bool = False):
         __GLOBALS_LOCK.release()
 
 
-def lock_global_pool(blocking: Optional[bool] = None, timeout: Optional[float] = None) -> bool:
+def lock_global_pool(blocking: bool | None = None, timeout: float | None = None) -> bool:
     """Lock the global objects. This is important if the values are changed. Don't forget to unlock
     the pool after finishing work with the globals!
     :param timeout_seconds: Attempt to lock for this many second. Default value -1 blocks

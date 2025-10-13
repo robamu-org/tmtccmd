@@ -1,6 +1,5 @@
 import dataclasses
 import enum
-from typing import Optional
 
 
 class Severity(enum.IntEnum):
@@ -17,7 +16,7 @@ STR_TO_SEVERITY = {
 }
 
 
-def str_to_severity(string: str) -> Optional[Severity]:
+def str_to_severity(string: str) -> Severity | None:
     STR_TO_SEVERITY.get(string)
 
 

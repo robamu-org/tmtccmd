@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from cfdppy.request import PutRequest
 from spacepackets.cfdp import CfdpLv
@@ -11,7 +10,7 @@ from tmtccmd.config.defs import CfdpParams
 
 def cfdp_req_to_put_req_regular(
     params: CfdpParams, dest_id: UnsignedByteField
-) -> Optional[PutRequest]:
+) -> PutRequest | None:
     if not params.proxy_op:
         return PutRequest(
             destination_id=dest_id,
@@ -25,7 +24,7 @@ def cfdp_req_to_put_req_regular(
 
 def cfdp_req_to_put_req_get_req(
     params: CfdpParams, local_id: UnsignedByteField, remote_id: UnsignedByteField
-) -> Optional[PutRequest]:
+) -> PutRequest | None:
     """This function converts the internalized CFDP parameters to the get request variant of the
     :py:class:`tmtccmd.cfdp.request.PutRequest` class. Please note that the local ID refers to
     the receiver of the target of the file copy operation for a get request while the remote ID
@@ -39,7 +38,7 @@ def cfdp_req_to_put_req_proxy_put_req(
     params: CfdpParams,
     dest_id_put_request: UnsignedByteField,
     dest_id_proxy_put_req: UnsignedByteField,
-) -> Optional[PutRequest]:
+) -> PutRequest | None:
     """Generic function to convert the internalized CFDP parameters to a proxy put request.
 
     :param params: CFDP parameters
@@ -70,7 +69,7 @@ def generic_cfdp_params_to_put_request(
     local_id: UnsignedByteField,  # noqa
     remote_id: UnsignedByteField,
     dest_id_proxy_put_req: UnsignedByteField,
-) -> Optional[PutRequest]:
+) -> PutRequest | None:
     """Please note that this function currently only has the following functionality. It
     might be extended in the future to have more functionality, or be converted to a factory
     class.

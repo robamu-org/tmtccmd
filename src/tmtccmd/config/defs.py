@@ -1,7 +1,7 @@
 import enum
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Optional, Union
+from typing import Any
 
 from spacepackets.cfdp import TransmissionMode
 
@@ -13,7 +13,7 @@ ComIfDictT = ComIfMapping
 
 @dataclass
 class TreeCommandingParams:
-    cmd_path: Optional[str]
+    cmd_path: str | None
 
 
 @dataclass
@@ -82,7 +82,7 @@ class CoreModeList(enum.IntEnum):
 
 class CoreModeConverter:
     @staticmethod
-    def get_str(mode: Union[CoreModeList, int]) -> str:
+    def get_str(mode: CoreModeList | int) -> str:
         if mode == CoreModeList.LISTENER_MODE:
             return "listener"
         elif mode == CoreModeList.ONE_QUEUE_MODE:

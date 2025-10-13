@@ -2,7 +2,7 @@ import atexit
 import logging
 import sys
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any
 
 from com_interface import ComInterface
 
@@ -152,7 +152,7 @@ class CcsdsTmtcBackend(BackendBase):
             self.__listener_io_error_handler("close")
         self._com_if_active = False
 
-    def periodic_op(self, _args: Optional[Any] = None) -> BackendState:
+    def periodic_op(self, _args: Any | None = None) -> BackendState:
         """Periodic operation. Simply calls the :py:meth:`default_operation` function.
         :raises KeyboardInterrupt: Yields info output and then propagates the exception
         :raises IOError: Yields informative output and propagates exception
@@ -244,7 +244,7 @@ class CcsdsTmtcBackend(BackendBase):
             self._seq_handler.resume()
         self._state._sender_res = self._seq_handler.operation(self._com_if)
 
-    def __prepare_tc_queue(self, auto_dispatch: bool = True) -> Optional[QueueWrapper]:
+    def __prepare_tc_queue(self, auto_dispatch: bool = True) -> QueueWrapper | None:
         feed_wrapper = FeedWrapper(self._queue_wrapper, auto_dispatch)
         if self._queue_wrapper.info.procedure_type == TcProcedureType.TREE_COMMANDING:
             procedure = ProcedureWrapper(self._queue_wrapper.info).to_tree_commanding_procedure()

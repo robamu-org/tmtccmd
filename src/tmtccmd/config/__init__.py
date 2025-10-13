@@ -69,7 +69,7 @@ class SetupWrapper:
         hook_obj: HookBase,
         setup_params: SetupParams,
         proc_param_wrapper: ProcedureParamsWrapper,
-        json_cfg_path: Optional[str] = None,
+        json_cfg_path: str | None = None,
     ):
         """
         :param hook_obj: User hook object. Needs to be implemented by the user

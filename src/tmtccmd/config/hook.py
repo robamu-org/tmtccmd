@@ -1,6 +1,5 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from prompt_toolkit.history import History
 
@@ -19,13 +18,13 @@ class HookBase(ABC):
     TMTC commander core.
     """
 
-    def __init__(self, cfg_file_path: Optional[str] = None):
+    def __init__(self, cfg_file_path: str | None = None):
         self.cfg_path = cfg_file_path
         if self.cfg_path is None:
             self.cfg_path = default_json_path()
 
     @abstractmethod
-    def get_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
+    def get_communication_interface(self, com_if_key: str) -> ComInterface | None:
         from tmtccmd.config.com import create_com_interface_default
 
         assert self.cfg_path is not None
@@ -40,7 +39,7 @@ class HookBase(ABC):
     def get_com_if_dict(self) -> ComIfMapping:
         return CORE_COM_IF_DICT
 
-    def get_cmd_history(self) -> Optional[History]:
+    def get_cmd_history(self) -> History | None:
         """Optionlly return a history class for the past command paths which will be used
         when prompting a command path from the user in CLI mode."""
         return None

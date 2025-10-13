@@ -91,7 +91,7 @@ def setup(setup_args: SetupWrapper):
 def start(
     tmtc_backend: BackendBase,
     hook_obj: HookBase,
-    tmtc_frontend: Optional[FrontendBase] = None,
+    tmtc_frontend: FrontendBase | None = None,
     app_name: str = "TMTC Commander",
 ):
     """This is the primary function to run the TMTC commander. Users should call this function to
@@ -140,7 +140,7 @@ def __start_tmtc_commander_cli(tmtc_backend: BackendBase):
 def __start_tmtc_commander_qt_gui(
     tmtc_backend: BackendBase,
     hook_obj: HookBase,
-    tmtc_frontend: Union[None, FrontendBase] = None,
+    tmtc_frontend: None | FrontendBase = None,
     app_name: str = "TMTC Commander",
 ):
     global __SETUP_WAS_CALLED
@@ -170,7 +170,7 @@ def create_default_tmtc_backend(
     setup_wrapper: SetupWrapper,
     tm_handler: TmHandlerBase,
     tc_handler: TcHandlerBase,
-    init_procedure: Optional[ProcedureWrapper],
+    init_procedure: ProcedureWrapper | None,
 ) -> BackendBase:
     """Creates a default TMTC backend instance which can be passed to the tmtccmd runner
 

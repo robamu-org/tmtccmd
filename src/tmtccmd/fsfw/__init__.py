@@ -8,7 +8,7 @@ from tmtccmd.util.obj_id import ObjectIdDictT, ObjectIdU32
 from tmtccmd.util.retval import RetvalDictT, RetvalInfo
 
 
-def parse_fsfw_objects_csv(csv_file: str) -> Optional[ObjectIdDictT]:
+def parse_fsfw_objects_csv(csv_file: str) -> ObjectIdDictT | None:
     if os.path.exists(csv_file):
         obj_id_dict = dict()
         obj_id = ObjectIdU32(obj_id=0)
@@ -24,7 +24,7 @@ def parse_fsfw_objects_csv(csv_file: str) -> Optional[ObjectIdDictT]:
         return None
 
 
-def parse_fsfw_events_csv(csv_file: str) -> Optional[EventDictT]:
+def parse_fsfw_events_csv(csv_file: str) -> EventDictT | None:
     if os.path.exists(csv_file):
         event_dict = dict()
         with open(csv_file) as csvfile:
@@ -44,7 +44,7 @@ def parse_fsfw_events_csv(csv_file: str) -> Optional[EventDictT]:
         return None
 
 
-def parse_fsfw_returnvalues_csv(csv_file: str) -> Optional[RetvalDictT]:
+def parse_fsfw_returnvalues_csv(csv_file: str) -> RetvalDictT | None:
     if os.path.exists(csv_file):
         retval_dict = dict()
         with open(csv_file) as csvfile:

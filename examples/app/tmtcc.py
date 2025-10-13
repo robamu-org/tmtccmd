@@ -4,7 +4,7 @@
 import logging
 import sys
 import time
-from typing import Any, Optional
+from typing import Any
 
 from com_interface import ComInterface
 from prompt_toolkit.history import FileHistory, History
@@ -64,7 +64,7 @@ class ExampleHookClass(HookBase):
     def __init__(self, json_cfg_path: str):
         super().__init__(cfg_file_path=json_cfg_path)
 
-    def get_communication_interface(self, com_if_key: str) -> Optional[ComInterface]:
+    def get_communication_interface(self, com_if_key: str) -> ComInterface | None:
         assert self.cfg_path is not None
         print("Communication interface assignment function was called")
         from tmtccmd.config.com import (
@@ -113,7 +113,7 @@ class ExampleHookClass(HookBase):
         root_node["eps"]["pcdu"].add_child(CmdTreeNode("channel_1_off", "Channel 1 off"))
         return root_node
 
-    def get_cmd_history(self) -> Optional[History]:
+    def get_cmd_history(self) -> History | None:
         """Optionlly return a history class for the past command paths which will be used
         when prompting a commad path from the user in CLI mode."""
         return FileHistory(".tmtc-cli-history.txt")

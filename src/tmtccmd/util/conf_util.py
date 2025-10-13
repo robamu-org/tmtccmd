@@ -1,7 +1,7 @@
 import collections.abc
 import logging
 from contextlib import contextmanager
-from typing import Any, Union
+from typing import Any
 
 
 def wrapped_prompt(text: str):
@@ -20,7 +20,7 @@ class AnsiColors:
 
 
 def check_args_in_dict(
-    param: any, iterable: Union[collections.abc.Iterable, dict], warning_hint: str
+    param: any, iterable: collections.abc.Iterable | dict, warning_hint: str
 ) -> tuple[bool, int]:
     """This functions checks whether the integer representation of a given parameter in
     contained within the passed collections, for example an (integer) enumeration.
