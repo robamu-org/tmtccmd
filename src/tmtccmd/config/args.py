@@ -449,9 +449,7 @@ def args_to_all_params_for_cfdp(
     #       no transaction parameter are specified
     #       Not sure if one queue mode is relevant here. A file transfer might always be split up
     #       in multiple queue fragments and might require feedback before finishing properly.
-    params.backend_params.mode = CoreModeConverter.get_str(
-        CoreMode.MULTI_INTERACTIVE_QUEUE_MODE
-    )
+    params.backend_params.mode = CoreModeConverter.get_str(CoreMode.MULTI_INTERACTIVE_QUEUE_MODE)
     if pargs.delay is None:
         params.cmd_params.delay = 0.4
     else:

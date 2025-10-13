@@ -54,7 +54,7 @@ class Service5Tm(AbstractPusTm):
         timestamp: bytes,
         ssc: int = 0,
         destination_id: int = 0,
-        misc_params: MiscParams | None = None
+        misc_params: MiscParams | None = None,
     ):
         """Create a FSFW tailored Event Service 5 telemetry instance.
         Use the unpack function to create an instance from a raw bytestream instead.

@@ -1,5 +1,10 @@
 import json
 import logging
+
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    import tomli as tomllib  # Fallback for older versions
 from typing import TextIO
 
 import serial
@@ -8,31 +13,66 @@ import serial.tools.list_ports
 from tmtccmd.util.json import (
     JsonKeyNames,
     check_json_file,
-    save_to_json_with_prompt,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def determine_baud_rate(json_cfg_path: str) -> int:
+def load_baud_rate_from_json(cfg_path: str) -> int | None:
+    baud_rate = None
+    if not check_json_file(json_cfg_path=cfg_path):
+        return None
+    with open(cfg_path) as read:
+        try:
+            load_data = json.load(read)
+            baud_rate = load_data[JsonKeyNames.SERIAL_BAUDRATE.value]
+        except KeyError:
+            pass
+    return baud_rate
+
+
+def load_baud_rate_from_toml(cfg_path: str) -> int | None:
+    baud_rate = None
+    try:
+        with open(cfg_path, "rb") as f:
+            cfg = tomllib.load(f)
+        baud_rate = cfg["serial"]["baud"]
+    except (FileNotFoundError, KeyError, tomllib.TOMLDecodeError):
+        pass
+    return baud_rate
+
+
+def load_serial_port_from_toml(cfg_path: str) -> str | None:
+    baud_rate = None
+    try:
+        with open(cfg_path, "rb") as f:
+            cfg = tomllib.load(f)
+        baud_rate = cfg["serial"]["port"]
+    except (FileNotFoundError, KeyError, tomllib.TOMLDecodeError):
+        pass
+    return baud_rate
+
+
+def determine_baud_rate(cfg_path: str) -> int | None:
     """Determine baud rate. Tries to read from JSON first. If the baud rate is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
 
     :return: Determined baud rate
     """
-    baud_rate = 0
+    baud_rate = None
     prompt_baud_rate = False
-    if not check_json_file(json_cfg_path=json_cfg_path):
-        prompt_baud_rate = True
+    if cfg_path.endswith("json"):
+        baud_rate = load_baud_rate_from_json(cfg_path=cfg_path)
+    elif cfg_path.endswith("toml"):
+        baud_rate = load_baud_rate_from_toml(cfg_path=cfg_path)
 
-    if not prompt_baud_rate:
-        with open(json_cfg_path) as read:
+    if baud_rate is None:
+        with open(cfg_path) as read:
             try:
                 load_data = json.load(read)
                 baud_rate = load_data[JsonKeyNames.SERIAL_BAUDRATE.value]
             except KeyError:
                 prompt_baud_rate = True
-
     if prompt_baud_rate:
         while True:
             baud_rate = input("Please enter the baudrate for the serial protocol: ")
@@ -41,64 +81,44 @@ def determine_baud_rate(json_cfg_path: str) -> int:
                 break
             else:
                 print("Invalid baud rate specified, try again.")
-        with open(json_cfg_path, "r+") as json_file:
-            json_obj = json.load(fp=json_file)
-            if save_to_json_with_prompt(
-                key=JsonKeyNames.SERIAL_BAUDRATE.value,
-                value=baud_rate,
-                json_cfg_path=json_cfg_path,
-                json_obj=json_obj,
-                name="baudrate",
-            ):
-                json_file.seek(0)
-                json.dump(json_obj, json_file, indent=4)
     return baud_rate
 
 
-def determine_com_port(json_cfg_path: str) -> str:
+def determine_com_port(cfg_path: str) -> str | None:
     """Determine serial port. Tries to read from JSON first. If the serial port is not contained
     in the config JSON, prompt it from user instead with the option to store value in JSON file.
 
     :return: Determined serial port
     """
     reconfig_com_port = False
-    if not check_json_file(json_cfg_path=json_cfg_path):
-        reconfig_com_port = True
-    with open(json_cfg_path, "r+") as json_file:
-        com_port = __det_com_port_with_json_file(
-            json_cfg_path=json_cfg_path,
-            json_file=json_file,
-            reconfig_com_port=reconfig_com_port,
-        )
+    if cfg_path.endswith("json"):
+        if not check_json_file(json_cfg_path=cfg_path):
+            reconfig_com_port = True
+        with open(cfg_path, "r+") as json_file:
+            com_port = __determine_com_port_with_json_file(
+                json_file=json_file,
+                reconfig_com_port=reconfig_com_port,
+            )
+    if cfg_path.endswith("toml"):
+        com_port = load_serial_port_from_toml(cfg_path=cfg_path)
     return com_port
 
 
-def __det_com_port_with_json_file(
-    json_cfg_path: str, json_file: TextIO, reconfig_com_port: bool
-) -> str:
+def __determine_com_port_with_json_file(json_file: TextIO, reconfig_com_port: bool) -> str | None:
     try_hint = False
     json_obj = json.load(json_file)
     com_port = ""
     if not reconfig_com_port:
         try_hint, com_port = __try_com_port_load(json_obj=json_obj)
     if try_hint:
-        reconfig_com_port, com_port = __try_hint_handling(
-            json_cfg_path=json_cfg_path,
-            reconfig_com_port=reconfig_com_port,
+        com_port = __try_hint_handling(
             json_obj=json_obj,
         )
+        if com_port is None:
+            return None
 
     if reconfig_com_port:
         com_port = prompt_com_port()
-        save_to_json_with_prompt(
-            key=JsonKeyNames.SERIAL_PORT.value,
-            value=com_port,
-            name="serial port",
-            json_cfg_path=json_cfg_path,
-            json_obj=json_obj,
-        )
-    json_file.seek(0)
-    json.dump(json_obj, json_file, indent=4)
     return com_port
 
 
@@ -113,32 +133,21 @@ def __try_com_port_load(json_obj) -> tuple[bool, str]:
     return try_hint, com_port
 
 
-def __try_hint_handling(json_cfg_path: str, reconfig_com_port: bool, json_obj) -> tuple[bool, str]:
-    reconfig_hint = False
+def __try_hint_handling(json_obj) -> str | None:
     try:
         hint = json_obj[JsonKeyNames.SERIAL_HINT.value]
     except KeyError:
-        reconfig_hint, hint = __prompt_hint_handling(json_obj=json_obj)
+        hint = __prompt_hint_handling()
 
     com_port_found, com_port = find_com_port_from_hint(hint=hint)
     if com_port_found:
         _LOGGER.info(f"Found {com_port} based on hint {hint}")
-        if reconfig_hint and save_to_json_with_prompt(
-            key=JsonKeyNames.SERIAL_PORT.value,
-            value=com_port,
-            name="serial port",
-            json_cfg_path=json_cfg_path,
-            json_obj=json_obj,
-        ):
-            reconfig_com_port = False
     else:
         _LOGGER.info("No serial port found based on hint..")
-        reconfig_com_port = True
-    return reconfig_com_port, com_port
+    return com_port
 
 
-def __prompt_hint_handling(json_obj) -> tuple[bool, str]:
-    reconfig_hint = False
+def __prompt_hint_handling() -> str:
     hint = ""
     ports = serial.tools.list_ports.comports()
     prompt_hint = input(
@@ -151,17 +160,7 @@ def __prompt_hint_handling(json_obj) -> tuple[bool, str]:
             for port, desc, hwid in sorted(ports):
                 print(f"{port}: {desc} [{hwid}]")
             hint = input("Specify hint: ")
-            save_to_json = input(
-                "Do you want to store the hint to the configuration file (y) or "
-                "specify a new one (r)? ([Y]/r): "
-            )
-            if save_to_json.lower() in ["y", "yes", "1", ""]:
-                json_obj[JsonKeyNames.SERIAL_HINT.value] = hint
-                reconfig_hint = True
-                break
-            elif save_to_json in ["r"]:
-                continue
-    return reconfig_hint, hint
+    return hint
 
 
 def find_com_port_from_hint(hint: str) -> tuple[bool, str]:

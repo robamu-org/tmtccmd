@@ -20,22 +20,23 @@ from spacepackets.seqcount import FileSeqCountProvider, PusFileSeqCountProvider
 from spacepackets.util import UnsignedByteField
 
 import tmtccmd
-from tmtccmd import BackendRequest, CcsdsTmtcBackend, ProcedureParamsWrapper
+from tmtccmd import BackendRequest, CcsdsTmtcWorker, ProcedureParamsWrapper
 from tmtccmd.config import (
     CmdTreeNode,
     HookBase,
     PreArgsParsingWrapper,
     SetupParams,
     SetupWrapper,
-    default_json_path,
     params_to_procedure_conversion,
 )
 from tmtccmd.config.args import perform_tree_printout
-from tmtccmd.fsfw.tmtc_printer import FsfwTmTcPrinter
-from tmtccmd.logging import add_colorlog_console_logger
-from tmtccmd.logging.pus import (
-    RegularTmtcLogWrapper,
+from tmtccmd.config.com import (
+    DummyConfig,
+    create_com_interface_config_default,
+    create_com_interface_default,
 )
+from tmtccmd.config.defs import default_toml_path
+from tmtccmd.logging import add_colorlog_console_logger
 from tmtccmd.pus import VerificationWrapper
 from tmtccmd.pus.s5_fsfw_event import Service5Tm
 from tmtccmd.tmtc import (
@@ -61,16 +62,12 @@ CFDP_REMOTE_ENTITY_ID = UnsignedByteField(byte_len=2, val=EXAMPLE_CFDP_APID)
 
 
 class ExampleHookClass(HookBase):
-    def __init__(self, cfg_path: str):
-        super().__init__(cfg_file_path=cfg_path)
+    def __init__(self, toml_cfg_path: str):
+        super().__init__(cfg_file_path=toml_cfg_path)
 
     def get_communication_interface(self, com_if_key: str) -> ComInterface | None:
         assert self.cfg_path is not None
         print("Communication interface assignment function was called")
-        from tmtccmd.config.com import (
-            create_com_interface_config_default,
-            create_com_interface_default,
-        )
 
         assert self.cfg_path is not None
         config = create_com_interface_config_default(
@@ -78,7 +75,11 @@ class ExampleHookClass(HookBase):
             cfg_path=self.cfg_path,
             space_packet_ids=None,
         )
-        assert config is not None
+        if config:
+            _LOGGER.info(f"COM interface: {com_if_key}, config file path {config.cfg_path}")
+        else:
+            _LOGGER.warning("could not determine COM interface config, setting dummy config")
+            config = DummyConfig(com_if_key=com_if_key, cfg_path=self.cfg_path)
         return create_com_interface_default(config)
 
     def get_command_definitions(self) -> CmdTreeNode:
@@ -118,7 +119,7 @@ class ExampleHookClass(HookBase):
         when prompting a commad path from the user in CLI mode."""
         return FileHistory(".tmtc-cli-history.txt")
 
-    def perform_mode_operation(self, _tmtc_backend: CcsdsTmtcBackend, _mode: int):
+    def perform_mode_operation(self, _tmtc_backend: CcsdsTmtcWorker, _mode: int):
         _LOGGER.info("Mode operation hook was called")
         pass
 
@@ -127,12 +128,9 @@ class PusTmHandler(SpecificApidHandlerBase):
     def __init__(
         self,
         verif_wrapper: VerificationWrapper,
-        printer: FsfwTmTcPrinter,
     ):
         super().__init__(EXAMPLE_PUS_APID, None)
-        self.printer = printer
         self.verif_wrapper = verif_wrapper
-        assert self.printer.file_logger is not None
 
     def handle_tm(self, packet: bytes, _user_args: Any):
         try:
@@ -147,7 +145,7 @@ class PusTmHandler(SpecificApidHandlerBase):
             verif_tm = Service1Tm.unpack(
                 data=packet,
                 managed_params=ManagedParams(CdsShortTimestamp.TIMESTAMP_SIZE),
-                verif_params=ManagedParamsVerification(1, 2)
+                verif_params=ManagedParamsVerification(1, 2),
             )
             res = self.verif_wrapper.add_tm(verif_tm)
             if res is None:
@@ -159,7 +157,6 @@ class PusTmHandler(SpecificApidHandlerBase):
                 _LOGGER.warning(f"No matching telecommand found for {verif_tm.tc_req_id}")
             else:
                 self.verif_wrapper.log_to_console(verif_tm, res)
-                self.verif_wrapper.log_to_file(verif_tm, res)
             dedicated_handler = True
         if service == 5:
             event_tm = Service5Tm.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)
@@ -174,8 +171,6 @@ class PusTmHandler(SpecificApidHandlerBase):
         if tm_packet is None:
             _LOGGER.info(f"The service {service} is not implemented in Telemetry Factory")
             tm_packet = PusTelemetry.unpack(packet, timestamp_len=CdsShortTimestamp.TIMESTAMP_SIZE)
-        # TODO: Insert this into a DB instead. Maybe use sqlite for first variant.
-        # self.raw_logger.log_tm(tm_packet)
         if not dedicated_handler:
             _LOGGER.info(
                 f"Received PUS TM [{tm_packet.service}, {tm_packet.subservice}] with not dedicated "
@@ -227,7 +222,7 @@ class TcHandler(TcHandlerBase):
             assert cmd_path is not None
             # Path starts with / so the first entry of the list will be an empty string. We cut
             # off that string.
-            cmd_path_list = cmd_path.split("/")[1:]
+            cmd_path_list = cmd_path.split("/")[1:] if cmd_path[0] == "/" else cmd_path.split("/")
             if cmd_path_list[0] == "ping":
                 return self.queue_helper.add_pus_tc(
                     PusTelecommand(apid=EXAMPLE_PUS_APID, service=17, subservice=1)
@@ -245,7 +240,7 @@ def main():  # noqa: C901
     # to application logger.
     add_colorlog_console_logger(_LOGGER)
     tmtccmd.init_printout(False)
-    hook_obj = ExampleHookClass(cfg_path=default_json_path())
+    hook_obj = ExampleHookClass(toml_cfg_path=default_toml_path())
     parser_wrapper = PreArgsParsingWrapper()
     parser_wrapper.create_default_parent_parser()
     parser_wrapper.create_default_parser()
@@ -265,12 +260,10 @@ def main():  # noqa: C901
         hook_obj=hook_obj, setup_params=params, proc_param_wrapper=proc_wrapper
     )
     # Create console logger helper and file loggers
-    tmtc_logger = RegularTmtcLogWrapper()
-    printer = FsfwTmTcPrinter(tmtc_logger.logger)
     verificator = PusVerificator()
-    verification_wrapper = VerificationWrapper(verificator, _LOGGER, printer.file_logger)
+    verification_wrapper = VerificationWrapper(verificator, _LOGGER, None)
     # Create primary TM handler and add it to the CCSDS Packet Handler
-    tm_handler = PusTmHandler(verification_wrapper, printer)
+    tm_handler = PusTmHandler(verification_wrapper)
     ccsds_handler = CcsdsTmHandler(generic_handler=None)
     ccsds_handler.add_apid_handler(tm_handler)
 

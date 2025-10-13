@@ -60,13 +60,16 @@ class TestPromptFunc(TestCase):
 
     def test_prompt_cmd_path_retry_prompted(self):
         self.base_tree()
-        with patch(
-            "tmtccmd.config.prompt.prompt_toolkit.prompt",
-            side_effect=["acss", "acs"],
-        ) as prompt_mock, patch(
-            "tmtccmd.config.prompt.input",
-            return_value="yes",
-        ) as input_mock:
+        with (
+            patch(
+                "tmtccmd.config.prompt.prompt_toolkit.prompt",
+                side_effect=["acss", "acs"],
+            ) as prompt_mock,
+            patch(
+                "tmtccmd.config.prompt.input",
+                return_value="yes",
+            ) as input_mock,
+        ):
             cmd_path = prompt_cmd_path(self.cmd_tree)
             self.assertEqual(cmd_path, "/acs")
             self.assertEqual(len(prompt_mock.call_args_list), 2)

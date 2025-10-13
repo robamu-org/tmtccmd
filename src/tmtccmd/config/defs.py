@@ -68,6 +68,7 @@ class CoreMode(enum.IntEnum):
     2. LISTENER_MODE: Only listen to TM
     3. MULTI_INTERACTIVE_QUEUE_MODE:
     """
+
     ONE_QUEUE_MODE = 0
     LISTENER_MODE = 1
     MULTI_INTERACTIVE_QUEUE_MODE = 3

@@ -8,6 +8,7 @@ class Severity(enum.IntEnum):
     MEDIUM = 3
     HIGH = 4
 
+
 STR_TO_SEVERITY = {
     "INFO": Severity.INFO,
     "LOW": Severity.LOW,
