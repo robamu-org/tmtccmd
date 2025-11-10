@@ -173,7 +173,7 @@ def default_tcpip_config(
     """
 
     send_addr = None
-    if cfg_path.endswith("json"):
+    if cfg_path.endswith("json") or cfg_path.endswith("toml"):
         if tcpip_type == TcpIpType.UDP:
             send_addr = determine_udp_send_address(cfg_path=cfg_path)
         elif tcpip_type == TcpIpType.TCP:
@@ -192,15 +192,15 @@ def default_tcpip_config(
     return cfg
 
 
-def default_serial_cfg_baud_and_port_setup(com_if_id: str, json_cfg_path: str) -> SerialCfg:
+def default_serial_cfg_baud_and_port_setup(com_if_id: str, cfg_path: str) -> SerialCfg:
     """Default setup for serial interfaces.
 
     :param json_cfg_path:
     :param cfg: The baud and serial port parameter will be set in this dataclass
     :return:
     """
-    baud_rate = determine_baud_rate(json_cfg_path=json_cfg_path)
-    serial_port = determine_com_port(json_cfg_path=json_cfg_path)
+    baud_rate = determine_baud_rate(cfg_path=cfg_path)
+    serial_port = determine_com_port(cfg_path=cfg_path)
     return SerialCfg(com_if_id, serial_port, baud_rate)
 
 
