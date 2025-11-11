@@ -167,7 +167,7 @@ def default_tcpip_config(
 
     :param com_if_key:
     :param tcpip_type:
-    :param cfg_path:              Path to JSON or TOML config file  
+    :param cfg_path:              Path to JSON or TOML config file
     :param space_packet_ids:      Required if the TCP com interface needs to parse space packets
     :return:
     """
@@ -179,10 +179,8 @@ def default_tcpip_config(
         send_addr = determine_tcp_send_address(cfg_path=cfg_path)
     else:
         raise ValueError("Invalid TCP/IP server type")
-    
     if send_addr is None:
         return None
-    
     cfg = TcpipConfig(
         com_if_key=com_if_key,
         if_type=tcpip_type,
@@ -196,9 +194,9 @@ def default_tcpip_config(
 def default_serial_cfg_baud_and_port_setup(com_if_id: str, cfg_path: str) -> SerialCfg:
     """Default setup for serial interfaces.
 
-    :param cfg_path: Path to JSON or TOML config
-    :param cfg: The baud and serial port parameter will be set in this dataclass
-    :return:
+    :param com_if_id: Identifier for the communication interface
+    :param cfg_path: Path to JSON or TOML config file
+    :return: SerialCfg object with baud rate and serial port set from config
     """
     baud_rate = determine_baud_rate(cfg_path=cfg_path)
     serial_port = determine_com_port(cfg_path=cfg_path)
