@@ -232,7 +232,6 @@ def create_default_serial_interface(com_if_key: str, serial_cfg: SerialCfg) -> C
     :func:`set_up_serial_cfg` for more details.
 
     :param com_if_key:
-    :param cfg_path: Path to JSON or TOML config
     :param serial_cfg: Generic serial configuration parameters
     :return:
     """
