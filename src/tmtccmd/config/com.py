@@ -97,8 +97,7 @@ def create_com_interface_config_default(
         # baud rate and serial port which need to be set once but are expected to stay
         # the same for a given machine. Therefore, we use a config file (JSON or TOML) to store and extract
         # those values
-        cfg = SerialCfg(baud_rate=0, com_if_id=com_if_key, serial_port="")
-        cfg = default_serial_cfg_baud_and_port_setup(cfg_path, cfg)
+        cfg = default_serial_cfg_baud_and_port_setup(com_if_id=com_if_key, cfg_path=cfg_path)
         return SerialConfigCommon(com_if_key=com_if_key, config_path=cfg_path, serial_cfg=cfg)
     else:
         return None
