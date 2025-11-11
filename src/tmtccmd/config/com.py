@@ -95,7 +95,7 @@ def create_com_interface_config_default(
     ]:
         # For a serial communication interface, there are some configuration values like
         # baud rate and serial port which need to be set once but are expected to stay
-        # the same for a given machine. Therefore, we use a JSON file to store and extract
+        # the same for a given machine. Therefore, we use a config file (JSON or TOML) to store and extract
         # those values
         cfg = SerialCfg(baud_rate=0, com_if_id=com_if_key, serial_port="")
         cfg = default_serial_cfg_baud_and_port_setup(cfg_path, cfg)
@@ -167,21 +167,22 @@ def default_tcpip_config(
 
     :param com_if_key:
     :param tcpip_type:
-    :param json_cfg_path:
-    :param space_packet_ids:       Required if the TCP com interface needs to parse space packets
+    :param cfg_path:              Path to JSON or TOML config file  
+    :param space_packet_ids:      Required if the TCP com interface needs to parse space packets
     :return:
     """
 
     send_addr = None
-    if cfg_path.endswith("json") or cfg_path.endswith("toml"):
-        if tcpip_type == TcpIpType.UDP:
-            send_addr = determine_udp_send_address(cfg_path=cfg_path)
-        elif tcpip_type == TcpIpType.TCP:
-            send_addr = determine_tcp_send_address(cfg_path=cfg_path)
-        else:
-            raise ValueError("Invalid TCP/IP server type")
+    if tcpip_type == TcpIpType.UDP:
+        send_addr = determine_udp_send_address(cfg_path=cfg_path)
+    elif tcpip_type == TcpIpType.TCP:
+        send_addr = determine_tcp_send_address(cfg_path=cfg_path)
+    else:
+        raise ValueError("Invalid TCP/IP server type")
+    
     if send_addr is None:
         return None
+    
     cfg = TcpipConfig(
         com_if_key=com_if_key,
         if_type=tcpip_type,
@@ -195,7 +196,7 @@ def default_tcpip_config(
 def default_serial_cfg_baud_and_port_setup(com_if_id: str, cfg_path: str) -> SerialCfg:
     """Default setup for serial interfaces.
 
-    :param json_cfg_path:
+    :param cfg_path: Path to JSON or TOML config
     :param cfg: The baud and serial port parameter will be set in this dataclass
     :return:
     """
@@ -234,7 +235,7 @@ def create_default_serial_interface(com_if_key: str, serial_cfg: SerialCfg) -> C
     :func:`set_up_serial_cfg` for more details.
 
     :param com_if_key:
-    :param json_cfg_path:
+    :param cfg_path: Path to JSON or TOML config
     :param serial_cfg: Generic serial configuration parameters
     :return:
     """
