@@ -33,7 +33,7 @@ from PyQt6.QtWidgets import (
 import tmtccmd as mod_root
 from tmtccmd.config import HookBase
 from tmtccmd.core.base import FrontendBase
-from tmtccmd.core.ccsds_backend import CcsdsTmtcWorker
+from tmtccmd.core.ccsds import CcsdsTmtcWorker
 from tmtccmd.gui.buttons import (
     ButtonArgs,
     ConnectButtonParams,
