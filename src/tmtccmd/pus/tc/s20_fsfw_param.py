@@ -42,7 +42,7 @@ def create_dump_param_cmd(param_fsfw_id: FsfwParamId, apid: int = 0) -> PusTelec
     return PusTelecommand(
         apid=apid,
         service=PusService.S20_PARAMETER,
-        subservice=CustomSubservice.TC_LOAD,
+        subservice=CustomSubservice.TC_DUMP,
         app_data=param_fsfw_id.pack(),
     )
 
