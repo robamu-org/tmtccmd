@@ -39,11 +39,13 @@ def create_load_param_cmd(parameter: Parameter, apid: int = 0) -> PusTelecommand
 
 
 def create_dump_param_cmd(param_fsfw_id: FsfwParamId, apid: int = 0) -> PusTelecommand:
+    app_data = bytearray(param_fsfw_id.object_id)
+    app_data.extend(param_fsfw_id.param_id.pack())
     return PusTelecommand(
         apid=apid,
         service=PusService.S20_PARAMETER,
         subservice=CustomSubservice.TC_DUMP,
-        app_data=param_fsfw_id.pack(),
+        app_data=app_data,
     )
 
 
