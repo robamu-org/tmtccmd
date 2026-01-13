@@ -7,7 +7,7 @@ from deprecated.sphinx import deprecated
 from spacepackets.ecss import PusTelecommand
 
 from tmtccmd.pus import CustomFsfwPusService
-from tmtccmd.pus.s200_fsfw_mode import Subservice
+from tmtccmd.pus.s200_fsfw_mode_defs import Subservice
 
 
 class Mode(enum.IntEnum):
