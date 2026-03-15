@@ -35,7 +35,7 @@ dependencies = [
     "prompt-toolkit ~= 3.0",
     "Deprecated ~= 1.2",
     "pyserial ~= 3.5",
-    "spacepackets @git+https://github.com/us-irs/py-spacepackets.git@abba178451e39974ad96d0a4478a554365a14e05",
+    "spacepackets @git+https://github.com/mokagio/spacepackets-py.git@3924a9f1836c88b5339ed5c5ec1e0f2f8bd1db88",
     "cfdp-py ~= 0.6.0",
     "com-interface ~= 0.2.0",
     "tomli ~= 2.3.0"
