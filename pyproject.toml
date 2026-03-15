@@ -35,7 +35,7 @@ dependencies = [
     "prompt-toolkit ~= 3.0",
     "Deprecated ~= 1.2",
     "pyserial ~= 3.5",
-    "spacepackets ~= 0.31.0",
+    "spacepackets @git+https://github.com/us-irs/py-spacepackets.git@abba178451e39974ad96d0a4478a554365a14e05",
     "cfdp-py ~= 0.6.0",
     "com-interface ~= 0.2.0",
     "tomli ~= 2.3.0"
@@ -67,3 +67,6 @@ select = ["F", "E", "W", "I", "N", "UP", "B", "SIM"]
 ignore = ["E501"]
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
