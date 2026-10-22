@@ -11,6 +11,11 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 
 - Bumped `spacepackets` to ~=0.31.0 and `cfdp-py` to ~=0.6.0
 
+## Fixed
+
+- `DefaultPusQueueHelper` failed the CRC check on every time-tagged TC because it read the
+  contained TC from the wrong buffer.
+
 ## Removed
 
 - Various deprecated modules.

@@ -1,3 +1,4 @@
+import struct
 from collections import deque
 from datetime import timedelta
 from typing import cast
@@ -6,6 +7,8 @@ from unittest.mock import MagicMock
 
 from spacepackets.ecss import PusTelecommand
 from spacepackets.seqcount import ProvidesSeqCount
+
+from tmtccmd.pus.s11_tc_sched import create_time_tagged_cmd
 
 # Required for eval calls
 # noinspection PyUnresolvedReferences
@@ -58,6 +61,19 @@ class TestTcQueue(TestCase):
         cast_wrapper = QueueEntryHelper(self.queue_wrapper.queue.popleft())
         pus_entry = cast_wrapper.to_pus_tc_entry()
         self.assertEqual(pus_entry.pus_tc.seq_count, 5)
+
+    def test_time_tagged_tc_stamping(self):
+        self.queue_helper.pus_apid = 0x22
+        release_time = struct.pack("!I", 1234)
+        self.queue_helper.add_pus_tc(
+            create_time_tagged_cmd(release_time=release_time, tc_to_insert=self.pus_cmd)
+        )
+        cast_wrapper = QueueEntryHelper(self.queue_wrapper.queue.popleft())
+        pus_entry = cast_wrapper.to_pus_tc_entry()
+        self.assertEqual(pus_entry.pus_tc.app_data[:4], release_time)
+        inner_tc = PusTelecommand.unpack(pus_entry.pus_tc.app_data[4:])
+        self.assertEqual(inner_tc.service, 17)
+        self.assertEqual(inner_tc.apid, 0x22)
 
     def test_faulty_cast(self):
         self.queue_helper.add_pus_tc(self.pus_cmd)
