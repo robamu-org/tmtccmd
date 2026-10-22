@@ -10,6 +10,7 @@ Starting from v4.0.0, this project adheres to [Semantic Versioning](http://semve
 # [unreleased]
 
 - Bumped `spacepackets` to ~=0.31.0 and `cfdp-py` to ~=0.6.0
+- Allow `cfdp-py` v0.7, which has no breaking API changes.
 
 ## Fixed
 

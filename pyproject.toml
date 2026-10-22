@@ -36,7 +36,7 @@ dependencies = [
     "Deprecated ~= 1.2",
     "pyserial ~= 3.5",
     "spacepackets ~= 0.31.0",
-    "cfdp-py ~= 0.6.0",
+    "cfdp-py >= 0.6.0, < 0.8",
     "com-interface ~= 0.2.0",
     "tomli ~= 2.3.0"
 ]
