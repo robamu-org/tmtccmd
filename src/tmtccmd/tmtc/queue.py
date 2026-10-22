@@ -254,7 +254,7 @@ class DefaultPusQueueHelper(QueueHelperBase):
     def _handle_time_tagged_tc(self, pus_tc: PusTelecommand):
         new_pus_tc_app_data = bytearray()
         new_pus_tc_app_data.extend(pus_tc.app_data[: self.tc_sched_timestamp_len])
-        pus_tc_raw = new_pus_tc_app_data[self.tc_sched_timestamp_len :]
+        pus_tc_raw = pus_tc.app_data[self.tc_sched_timestamp_len :]
         if not check_pus_crc(pus_tc_raw):
             raise ValueError(f"crc check on contained PUS TC with length {len(pus_tc_raw)} failed")
         time_tagged_tc = PusTelecommand.unpack(pus_tc_raw)
